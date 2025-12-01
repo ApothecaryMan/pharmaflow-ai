@@ -711,7 +711,6 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                             <div className="space-y-3">
                                 <div><label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t.elements.storeName}</label><input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm" /></div>
                                 <div><label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t.elements.hotline}</label><input type="text" value={hotline} onChange={e => setHotline(e.target.value)} className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm" /></div>
-                                <div><label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t.elements.image}</label><input type="file" accept="image/*" onChange={handleLogoUpload} className="text-xs w-full text-slate-500"/></div>
                             </div>
 
                              {/* Border */}
