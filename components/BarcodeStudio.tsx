@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useContextMenu } from '../components/ContextMenu';
 import { Drug } from '../types';
 import * as QRCode from 'qrcode';
 
@@ -40,6 +41,7 @@ interface LabelElement {
     isVisible: boolean;
     color?: string;
     field?: keyof Drug | 'unit' | 'store' | 'hotline';
+    locked?: boolean;
 }
 
 interface SavedTemplate {
@@ -49,6 +51,7 @@ interface SavedTemplate {
 }
 
 export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, t }) => {
+  const { showMenu } = useContextMenu();
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -345,6 +348,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
   const handleMouseDown = (e: React.MouseEvent, id: string) => {
       e.stopPropagation();
+      if (elements.find(el => el.id === id)?.locked) return;
       setSelectedElementId(id);
       dragStartSnapshot.current = elements;
       isDragging.current = true;
@@ -354,6 +358,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   };
 
   const handleTouchStart = (e: React.TouchEvent, id: string) => {
+      if (elements.find(el => el.id === id)?.locked) return;
       e.stopPropagation();
       setSelectedElementId(id);
       dragStartSnapshot.current = elements;
@@ -639,6 +644,32 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                         left: `${el.x * MM_TO_PX}px`, top: `${el.y * MM_TO_PX}px`,
                                         transform: `translate(${el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0'}, 0)`,
                                         fontSize: `${el.fontSize}px`, fontWeight: el.fontWeight, color: el.color || 'black', whiteSpace: 'nowrap'
+                                    }}
+                                    onContextMenu={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        showMenu(e.clientX, e.clientY, [
+                                            { label: t.inspector.elements.remove, icon: 'delete', action: () => setElements(prev => prev.filter(item => item.id !== el.id)), danger: true },
+                                            { separator: true },
+                                            { label: t.inspector.elements.duplicate, icon: 'content_copy', action: () => {
+                                                saveToHistory();
+                                                const newEl = { ...el, id: Date.now().toString(), x: el.x + 2, y: el.y + 2 };
+                                                setElements(prev => [...prev, newEl]);
+                                            }},
+                                            { label: el.locked ? t.inspector.elements.unlock : t.inspector.elements.lock, icon: el.locked ? 'lock_open' : 'lock', action: () => {
+                                                saveToHistory();
+                                                setElements(prev => prev.map(item => item.id === el.id ? { ...item, locked: !item.locked } : item));
+                                            }},
+                                            { separator: true },
+                                            { label: 'Bring to Front', icon: 'flip_to_front', action: () => {
+                                                saveToHistory();
+                                                setElements(prev => [...prev.filter(item => item.id !== el.id), el]);
+                                            }},
+                                            { label: 'Send to Back', icon: 'flip_to_back', action: () => {
+                                                saveToHistory();
+                                                setElements(prev => [el, ...prev.filter(item => item.id !== el.id)]);
+                                            }}
+                                        ]);
                                     }}
                                 >
                                     {el.type === 'text' && getElementContent(el)}

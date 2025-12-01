@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useContextMenu } from '../components/ContextMenu';
 import { Drug } from '../types';
 
 interface InventoryProps {
@@ -11,6 +12,7 @@ interface InventoryProps {
 }
 
 export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUpdateDrug, onDeleteDrug, color, t }) => {
+  const { showMenu } = useContextMenu();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDrug, setEditingDrug] = useState<Drug | null>(null);
@@ -130,6 +132,25 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     setActiveMenuId(null);
   };
 
+  const handleDuplicate = (drug: Drug) => {
+    setEditingDrug(null); // Set as new drug
+    const { id, ...rest } = drug;
+    setFormData({ ...rest, name: `${rest.name} (Copy)` });
+    setIsModalOpen(true);
+    setActiveMenuId(null);
+  };
+
+  const handleQuickStockAdjust = (drug: Drug) => {
+      const newStock = prompt(`Adjust stock for ${drug.name}:`, drug.stock.toString());
+      if (newStock !== null) {
+          const val = parseFloat(newStock);
+          if (!isNaN(val)) {
+              onUpdateDrug({ ...drug, stock: val });
+          }
+      }
+      setActiveMenuId(null);
+  };
+
   const handleDelete = (id: string) => {
       onDeleteDrug(id);
       setActiveMenuId(null);
@@ -209,7 +230,24 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredInventory.slice(0, 100).map(drug => (
-                <tr key={drug.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <tr 
+                    key={drug.id} 
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    onContextMenu={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showMenu(e.clientX, e.clientY, [
+                            { label: t.actionsMenu.edit, icon: 'edit', action: () => handleOpenEdit(drug) },
+                            { label: t.actionsMenu.view, icon: 'visibility', action: () => handleViewDetails(drug.id) },
+                            { label: t.actionsMenu.printBarcode, icon: 'qr_code_2', action: () => handlePrintBarcode(drug) },
+                            { separator: true },
+                            { label: t.actionsMenu.duplicate, icon: 'content_copy', action: () => handleDuplicate(drug) },
+                            { label: t.actionsMenu.adjustStock, icon: 'inventory_2', action: () => handleQuickStockAdjust(drug) },
+                            { separator: true },
+                            { label: t.actionsMenu.delete, icon: 'delete', action: () => handleDelete(drug.id), danger: true },
+                        ]);
+                    }}
+                >
                   <td className="p-4">
                     <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">{drug.name}</div>
                     <div className="text-xs text-slate-500">{drug.genericName}</div>

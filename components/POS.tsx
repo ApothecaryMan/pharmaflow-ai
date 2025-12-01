@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useContextMenu } from '../components/ContextMenu';
 import { Drug, CartItem } from '../types';
 
 interface POSProps {
@@ -9,6 +10,7 @@ interface POSProps {
 }
 
 export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t }) => {
+  const { showMenu } = useContextMenu();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState('');
   // Selected category state key: 'All', 'Medicine', 'Cosmetics', 'Non-Medicine'
@@ -339,6 +341,16 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
                     <div 
                         key={drug.id} 
                         onClick={() => addGroupToCart(group)}
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            showMenu(e.clientX, e.clientY, [
+                                { label: 'Add to Cart', icon: 'add_shopping_cart', action: () => addGroupToCart(group) },
+                                { label: 'View Details', icon: 'info', action: () => setViewingDrug(drug) },
+                                { separator: true },
+                                { label: t.actions.showSimilar, icon: 'category', action: () => setSelectedCategory(drug.category) }
+                            ]);
+                        }}
                         role="button"
                         className={`relative flex flex-col text-start p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all hover:shadow-md hover:border-${color}-300 dark:hover:border-${color}-700 group cursor-pointer active:scale-95 select-none ${totalStock === 0 ? 'opacity-50' : ''}`}
                     >
@@ -471,7 +483,37 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
                 </div>
             ) : (
                 cart.map(item => (
-                    <div key={item.id} className="flex flex-col p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 relative group">
+                    <div 
+                        key={item.id} 
+                        className="flex flex-col p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 relative group"
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            showMenu(e.clientX, e.clientY, [
+                                { label: 'Remove Item', icon: 'delete', action: () => removeFromCart(item.id), danger: true },
+                                { separator: true },
+                                { 
+                                    label: item.isUnit ? `Switch to ${t.pack}` : `Switch to ${t.unit}`, 
+                                    icon: 'swap_horiz', 
+                                    action: () => toggleUnitMode(item.id),
+                                    disabled: !item.unitsPerPack || item.unitsPerPack <= 1
+                                },
+                                { 
+                                    label: t.actions.discount, 
+                                    icon: 'percent', 
+                                    action: () => {
+                                        const disc = prompt('Enter discount percentage (0-100):', item.discount?.toString() || '0');
+                                        if (disc !== null) {
+                                            const val = parseFloat(disc);
+                                            if (!isNaN(val) && val >= 0 && val <= 100) {
+                                                setCart(prev => prev.map(i => i.id === item.id ? { ...i, discount: val } : i));
+                                            }
+                                        }
+                                    } 
+                                }
+                            ]);
+                        }}
+                    >
                         {/* Row 1: Name and Price */}
                         <div className="flex justify-between items-start mb-1.5 pe-4">
                             <div className="min-w-0">

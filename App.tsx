@@ -120,8 +120,39 @@ const LANGUAGES: { code: Language; label: string }[] = [
   { code: 'AR', label: 'Arabic' },
 ];
 
+import { ContextMenuProvider, useContextMenu } from './components/ContextMenu';
+
+const GlobalContextMenuWrapper: React.FC<{ children: React.ReactNode, t: any, toggleTheme: () => void, toggleFullscreen: () => void }> = ({ children, t, toggleTheme, toggleFullscreen }) => {
+    const { showMenu } = useContextMenu();
+    
+    return (
+        <div 
+            className="w-full h-full"
+            onContextMenu={(e) => {
+                if (e.defaultPrevented) return;
+                e.preventDefault();
+                showMenu(e.clientX, e.clientY, [
+                    { label: t.global.actions.theme, icon: 'palette', action: toggleTheme },
+                    { label: t.global.actions.fullscreen, icon: 'fullscreen', action: toggleFullscreen },
+                    { separator: true },
+                    { label: t.global.actions.reload, icon: 'refresh', action: () => window.location.reload() },
+                    { label: t.global.actions.help, icon: 'help', action: () => alert('Help & Support\n\nContact support@pharmaflow.ai for assistance.') }
+                ]);
+            }}
+        >
+            {children}
+        </div>
+    );
+};
+
 const App: React.FC = () => {
-  const [view, setView] = useState<ViewState>('dashboard');
+  const [view, setView] = useState<ViewState>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pharma_view');
+      return (saved as ViewState) || 'dashboard';
+    }
+    return 'dashboard';
+  });
 
   // Initialize State from LocalStorage
   const [theme, setTheme] = useState<ThemeColor>(() => {
@@ -195,6 +226,10 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('pharma_theme', JSON.stringify(theme));
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('pharma_view', view);
+  }, [view]);
 
   useEffect(() => {
     localStorage.setItem('pharma_darkMode', JSON.stringify(darkMode));
@@ -474,6 +509,24 @@ const App: React.FC = () => {
   };
 
   return (
+    <ContextMenuProvider>
+    <GlobalContextMenuWrapper 
+        t={t} 
+        toggleTheme={() => {
+            const currentIndex = THEMES.findIndex(th => th.name === theme.name);
+            const nextIndex = (currentIndex + 1) % THEMES.length;
+            setTheme(THEMES[nextIndex]);
+        }}
+        toggleFullscreen={() => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }}
+    >
     <div className={`flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-500`} dir={language === 'AR' ? 'rtl' : 'ltr'}>
       
       {/* Desktop Sidebar */}
@@ -570,6 +623,8 @@ const App: React.FC = () => {
           <button onClick={() => setView('purchases')} className={`p-2 rounded-xl shrink-0 ${view === 'purchases' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-slate-400'}`}><span className="material-symbols-rounded">shopping_cart_checkout</span></button>
        </div>
     </div>
+    </GlobalContextMenuWrapper>
+    </ContextMenuProvider>
   );
 };
 

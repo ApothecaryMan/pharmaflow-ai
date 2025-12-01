@@ -1,4 +1,3 @@
-
 export const TRANSLATIONS = {
   EN: {
     appTitle: 'PharmaFlow',
@@ -15,7 +14,17 @@ export const TRANSLATIONS = {
       theme: 'Theme',
       language: 'Language',
       darkMode: 'Dark Mode',
-      appearance: 'Appearance & Language'
+      appearance: 'Appearance & Language',
+      fullscreen: 'Toggle Fullscreen',
+      reload: 'Reload App'
+    },
+    global: {
+      actions: {
+        theme: 'Switch Theme',
+        fullscreen: 'Fullscreen',
+        reload: 'Reload',
+        help: 'Help & Support'
+      }
     },
     inventory: {
       title: 'Inventory',
@@ -36,7 +45,9 @@ export const TRANSLATIONS = {
         edit: 'Edit Drug',
         delete: 'Remove Drug',
         view: 'View Details',
-        printBarcode: 'Print Barcode'
+        printBarcode: 'Print Barcode',
+        duplicate: 'Duplicate Drug',
+        adjustStock: 'Quick Stock Adjust'
       },
       noResults: 'No drugs found matching your search.',
       modal: {
@@ -100,7 +111,11 @@ export const TRANSLATIONS = {
       },
       historyTitle: 'Purchase History',
       viewHistory: 'View History',
-      newPurchase: 'New Purchase'
+      newPurchase: 'New Purchase',
+      actions: {
+        viewDetails: 'View Drug Details',
+        editQty: 'Edit Quantity'
+      }
     },
     pos: {
       searchPlaceholder: 'Scan barcode, name, desc...',
@@ -125,6 +140,12 @@ export const TRANSLATIONS = {
       pack: 'Pack',
       unit: 'Unit',
       perUnit: '/unit',
+      actions: {
+        checkStock: 'Check Stock',
+        showSimilar: 'Show Similar',
+        discount: 'Apply Discount',
+        changeQty: 'Change Quantity'
+      }
     },
     salesHistory: {
       title: 'Sales History',
@@ -231,7 +252,10 @@ export const TRANSLATIONS = {
         align: 'Alignment',
         content: 'Content',
         remove: 'Remove Element',
-        elements: 'Elements'
+        elements: 'Elements',
+        duplicate: 'Duplicate Element',
+        lock: 'Lock Position',
+        unlock: 'Unlock Position'
       },
       elements: {
         storeName: 'Store Name',
@@ -264,7 +288,17 @@ export const TRANSLATIONS = {
       theme: 'السمة',
       language: 'اللغة',
       darkMode: 'الوضع الداكن',
-      appearance: 'المظهر واللغة'
+      appearance: 'المظهر واللغة',
+      fullscreen: 'ملء الشاشة',
+      reload: 'إعادة تحميل'
+    },
+    global: {
+      actions: {
+        theme: 'تغيير السمة',
+        fullscreen: 'ملء الشاشة',
+        reload: 'إعادة تحميل',
+        help: 'المساعدة والدعم'
+      }
     },
     inventory: {
       title: 'المخزون',
@@ -285,7 +319,9 @@ export const TRANSLATIONS = {
         edit: 'تعديل الدواء',
         delete: 'حذف الدواء',
         view: 'عرض التفاصيل',
-        printBarcode: 'طباعة الباركود'
+        printBarcode: 'طباعة الباركود',
+        duplicate: 'نسخ الدواء',
+        adjustStock: 'تعديل سريع للمخزون'
       },
       noResults: 'لم يتم العثور على أدوية مطابقة لبحثك.',
       modal: {
@@ -349,7 +385,11 @@ export const TRANSLATIONS = {
       },
       historyTitle: 'سجل المشتريات',
       viewHistory: 'عرض السجل',
-      newPurchase: 'شراء جديد'
+      newPurchase: 'شراء جديد',
+      actions: {
+        viewDetails: 'عرض تفاصيل الدواء',
+        editQty: 'تعديل الكمية'
+      }
     },
     pos: {
       searchPlaceholder: 'امسح الباركود، الاسم، الوصف...',
@@ -374,6 +414,12 @@ export const TRANSLATIONS = {
       pack: 'عبوة',
       unit: 'وحدة',
       perUnit: '/وحدة',
+      actions: {
+        checkStock: 'فحص المخزون',
+        showSimilar: 'عرض بدائل',
+        discount: 'تطبيق خصم',
+        changeQty: 'تغيير الكمية'
+      }
     },
     salesHistory: {
       title: 'سجل المبيعات',
@@ -480,7 +526,10 @@ export const TRANSLATIONS = {
         align: 'المحاذاة',
         content: 'المحتوى',
         remove: 'حذف العنصر',
-        elements: 'العناصر'
+        elements: 'العناصر',
+        duplicate: 'نسخ العنصر',
+        lock: 'قفل الموقع',
+        unlock: 'فك القفل'
       },
       elements: {
         storeName: 'اسم المتجر',

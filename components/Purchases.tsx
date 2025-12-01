@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useContextMenu } from '../components/ContextMenu';
 import { Drug, Supplier, Purchase, PurchaseItem } from '../types';
 
 interface PurchasesProps {
@@ -12,6 +13,7 @@ interface PurchasesProps {
 }
 
 export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purchases, onPurchaseComplete, color, t }) => {
+  const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
   const [search, setSearch] = useState('');
@@ -152,6 +154,15 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                 {filteredDrugs.map(drug => (
                                     <div key={drug.id} 
                                          onClick={() => handleAddItem(drug)}
+                                         onContextMenu={(e) => {
+                                             e.preventDefault();
+                                             e.stopPropagation();
+                                             showMenu(e.clientX, e.clientY, [
+                                                 { label: 'Add to Order', icon: 'add_shopping_cart', action: () => handleAddItem(drug) },
+                                                 { separator: true },
+                                                 { label: t.actions.viewDetails, icon: 'visibility', action: () => alert(`Details for ${drug.name}\nGeneric: ${drug.genericName}\nStock: ${drug.stock}`) }
+                                             ]);
+                                         }}
                                          className={`p-3 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-${color}-300 cursor-pointer transition-all active:scale-95 group`}>
                                         <div className="flex justify-between items-start">
                                             <div>
@@ -191,7 +202,27 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                            <div className="text-center text-slate-400 py-10">{t.emptyCart}</div>
                        ) : (
                            cart.map(item => (
-                               <div key={item.drugId} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl relative">
+                               <div 
+                                   key={item.drugId} 
+                                   className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl relative"
+                                   onContextMenu={(e) => {
+                                       e.preventDefault();
+                                       e.stopPropagation();
+                                       showMenu(e.clientX, e.clientY, [
+                                           { label: t.actions.viewDetails, icon: 'visibility', action: () => alert(`Details for ${item.name}\nQuantity: ${item.quantity}\nCost Price: ${item.costPrice}`) },
+                                           { 
+                                               label: t.actions.editQty, 
+                                               icon: 'edit', 
+                                               action: () => {
+                                                   const qty = prompt('Enter quantity:', item.quantity.toString());
+                                                   if (qty) updateItem(item.drugId, 'quantity', parseFloat(qty) || 1);
+                                               } 
+                                           },
+                                           { separator: true },
+                                           { label: 'Remove Item', icon: 'delete', action: () => removeItem(item.drugId), danger: true }
+                                       ]);
+                                   }}
+                               >
                                    <button onClick={() => removeItem(item.drugId)} className="absolute top-2 right-2 text-slate-400 hover:text-red-500">
                                        <span className="material-symbols-rounded text-sm">close</span>
                                    </button>
