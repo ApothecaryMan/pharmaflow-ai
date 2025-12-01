@@ -1,0 +1,5 @@
+{
+  "name": "PharmaFlow AI",
+  "description": "A modern, Material 3 Expressive pharmacy management system featuring inventory control, point-of-sale (POS), sales analytics, and an AI-powered drug interaction assistant using Gemini. Supports dynamic coloring and dark mode.",
+  "requestFramePermissions": []
+}
