@@ -68,3 +68,17 @@ export interface ThemeColor {
 export type ViewState = 'dashboard' | 'inventory' | 'pos' | 'sales-history' | 'suppliers' | 'purchases' | 'barcode-studio';
 
 export type Language = 'EN' | 'AR';
+
+// Dashboard Expand Functionality Types
+export type ExpandedView = 'revenue' | 'expenses' | 'profit' | 'lowStock' | 'salesChart' | 'topSelling' | 'expiring' | 'recentSales' | null;
+
+export interface DateRange {
+  start: string;
+  end: string;
+}
+
+export type ExportFormat = 'csv' | 'json' | 'image';
+
+export type ChartViewMode = 'daily' | 'weekly' | 'monthly';
+
+export type SortOption = 'name' | 'quantity' | 'revenue' | 'date' | 'stock' | 'expiry' | 'amount';

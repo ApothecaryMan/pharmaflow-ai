@@ -1,8 +1,9 @@
 
 
 import React, { useState, useMemo } from 'react';
-import { Drug, Sale, Purchase } from '../types';
+import { Drug, Sale, Purchase, ExpandedView } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
+import { ExpandedModal } from './ExpandedModal';
 
 interface DashboardProps {
   inventory: Drug[];
@@ -16,22 +17,32 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchases, color, t, onRestock }) => {
   const [restockDrug, setRestockDrug] = useState<Drug | null>(null);
   const [restockQty, setRestockQty] = useState(10);
+  const [expandedView, setExpandedView] = useState<ExpandedView>(null);
 
-  // --- Nested/Future Functions for Item Actions ---
-  const handleWidgetRefresh = (widgetName: string) => {
-    console.log(`[Future Implementation] Refreshing data for widget: ${widgetName}`);
-  };
-
-  const handleExportWidget = (widgetName: string) => {
-    console.log(`[Future Implementation] Exporting data for widget: ${widgetName}`);
+  // --- Helper Functions ---
+  const exportToCSV = (data: any[], filename: string) => {
+    if (data.length === 0) return;
+    
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+      headers.join(','),
+      ...data.map(row => headers.map(header => {
+        const value = row[header];
+        return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+      }).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
   };
 
   // --- STATS ---
   const lowStockItems = useMemo(() => inventory.filter(d => d.stock <= 10), [inventory]);
   const totalRevenue = useMemo(() => sales.reduce((sum, sale) => sum + sale.total, 0), [sales]);
   const totalExpenses = useMemo(() => purchases.reduce((sum, p) => sum + p.totalCost, 0), [purchases]);
-  // Simple Profit calculation: Revenue - Expenses. 
-  // Note: For accounting, we usually track cost of goods sold (COGS), but this is a simplified view.
   const netProfit = totalRevenue - totalExpenses;
 
   // --- CHART DATA (Sales by Date) ---
@@ -62,6 +73,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       .slice(0, 5);
   }, [sales]);
 
+  const topSelling20 = useMemo(() => {
+    const productSales: Record<string, { qty: number, revenue: number }> = {};
+    sales.forEach(sale => {
+      sale.items.forEach(item => {
+        if (!productSales[item.name]) {
+          productSales[item.name] = { qty: 0, revenue: 0 };
+        }
+        productSales[item.name].qty += item.quantity;
+        productSales[item.name].revenue += item.price * item.quantity;
+      });
+    });
+    return Object.entries(productSales)
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 20);
+  }, [sales]);
+
   // --- EXPIRING SOON ITEMS (Next 3 months) ---
   const expiringItems = useMemo(() => {
     const today = new Date();
@@ -83,6 +111,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       .slice(0, 5);
   }, [sales]);
 
+  const recentSales20 = useMemo(() => {
+    return [...sales]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 20);
+  }, [sales]);
+
   const handleRestockSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (restockDrug && restockQty > 0) {
@@ -97,6 +131,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
+  // Expand button component
+  const ExpandButton = ({ onClick, title }: { onClick: () => void, title?: string }) => (
+    <button 
+      onClick={onClick}
+      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+      title={title || t.expand?.expand || 'Expand'}
+    >
+      <span className="material-symbols-rounded text-[18px]">open_in_full</span>
+    </button>
+  );
+
   return (
     <div className="h-full overflow-y-auto pe-2 space-y-4 animate-fade-in pb-10">
       <h2 className="text-2xl font-medium tracking-tight mb-4">{t.title}</h2>
@@ -104,7 +149,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       {/* Stats Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         {/* Revenue */}
-        <div className={`p-5 rounded-3xl bg-${color}-50 dark:bg-${color}-950/20 border border-${color}-100 dark:border-${color}-900 flex flex-col justify-between min-h-[120px]`}>
+        <div className={`p-5 rounded-3xl bg-${color}-50 dark:bg-${color}-950/20 border border-${color}-100 dark:border-${color}-900 flex flex-col justify-between min-h-[120px] group relative`}>
+          <div className="absolute top-3 right-3">
+            <ExpandButton onClick={() => setExpandedView('revenue')} />
+          </div>
           <div className={`text-${color}-600 dark:text-${color}-400 mb-1`}>
             <span className="material-symbols-rounded text-3xl">payments</span>
           </div>
@@ -115,7 +163,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         </div>
 
         {/* Expenses */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between min-h-[120px]">
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between min-h-[120px] group relative">
+          <div className="absolute top-3 right-3">
+            <ExpandButton onClick={() => setExpandedView('expenses')} />
+          </div>
            <div className="text-red-500 mb-1">
             <span className="material-symbols-rounded text-3xl">shopping_cart_checkout</span>
           </div>
@@ -126,7 +177,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         </div>
 
         {/* Net Profit */}
-         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between min-h-[120px]">
+         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between min-h-[120px] group relative">
+          <div className="absolute top-3 right-3">
+            <ExpandButton onClick={() => setExpandedView('profit')} />
+          </div>
            <div className="text-emerald-500 mb-1">
             <span className="material-symbols-rounded text-3xl">trending_up</span>
           </div>
@@ -137,7 +191,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         </div>
 
         {/* Low Stock */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between min-h-[120px]">
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between min-h-[120px] group relative">
+          <div className="absolute top-3 right-3">
+            <ExpandButton onClick={() => setExpandedView('lowStock')} />
+          </div>
           <div className="text-orange-500 mb-1">
             <span className="material-symbols-rounded text-3xl">warning</span>
           </div>
@@ -154,9 +211,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         <div className="lg:col-span-2 p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-80 relative group">
           <div className="flex justify-between items-center mb-2">
               <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">{t.trend}</h3>
-              <button onClick={() => handleExportWidget('SalesTrend')} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-slate-400 hover:text-slate-600">
-                  <span className="material-symbols-rounded text-sm">download</span>
-              </button>
+              <ExpandButton onClick={() => setExpandedView('salesChart')} />
           </div>
           <ResponsiveContainer width="100%" height="90%">
             <AreaChart data={salesData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
@@ -185,9 +240,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                     <span className="material-symbols-rounded text-yellow-500 text-[20px]">hotel_class</span>
                     {t.topSelling}
                 </h3>
-                <button onClick={() => handleWidgetRefresh('TopSelling')} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-slate-400 hover:text-slate-600">
-                    <span className="material-symbols-rounded text-sm">refresh</span>
-                </button>
+                <ExpandButton onClick={() => setExpandedView('topSelling')} />
             </div>
             <div className="flex-1 overflow-y-auto space-y-3 pe-1">
                 {topSelling.length === 0 ? (
@@ -218,20 +271,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         <div className="flex flex-col gap-4">
             
             {/* Low Stock List */}
-            <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-64 flex flex-col">
-                <h3 className="text-base font-semibold mb-2 text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                    <span className="material-symbols-rounded text-orange-500 text-[20px]">priority_high</span>
-                    {t.attention}
-                </h3>
+            <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-64 flex flex-col group">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <span className="material-symbols-rounded text-orange-500 text-[20px]">priority_high</span>
+                      {t.attention}
+                  </h3>
+                  <ExpandButton onClick={() => setExpandedView('lowStock')} />
+                </div>
                 <div className="flex-1 overflow-y-auto space-y-2 pe-1">
                     {lowStockItems.length === 0 ? (
                         <div className="h-full flex items-center justify-center text-slate-400 text-sm">{t.allGood}</div>
                     ) : (
-                        lowStockItems.map(item => (
+                        lowStockItems.slice(0, 5).map(item => (
                             <div key={item.id} className="flex justify-between items-center p-2.5 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/50">
                                 <div>
                                     <p className="font-medium text-sm text-slate-900 dark:text-slate-100">{item.name}</p>
-                                    <p className="text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase">{item.stock} {t.restock ? 'left' : ''}</p>
+                                    <p className="text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase">{item.stock} left</p>
                                 </div>
                                 <button 
                                     onClick={() => setRestockDrug(item)}
@@ -246,16 +302,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             </div>
 
             {/* Expiring Soon List */}
-            <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-64 flex flex-col">
-                <h3 className="text-base font-semibold mb-2 text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                    <span className="material-symbols-rounded text-red-500 text-[20px]">event_busy</span>
-                    {t.expiringSoon}
-                </h3>
+            <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-64 flex flex-col group">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <span className="material-symbols-rounded text-red-500 text-[20px]">event_busy</span>
+                      {t.expiringSoon}
+                  </h3>
+                  <ExpandButton onClick={() => setExpandedView('expiring')} />
+                </div>
                 <div className="flex-1 overflow-y-auto space-y-2 pe-1">
                     {expiringItems.length === 0 ? (
                         <div className="h-full flex items-center justify-center text-slate-400 text-sm">{t.noExpiring}</div>
                     ) : (
-                        expiringItems.map(item => {
+                        expiringItems.slice(0, 5).map(item => {
                             const days = getDaysUntilExpiry(item.expiryDate);
                             const isExpired = days < 0;
                             return (
@@ -279,11 +338,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         </div>
 
         {/* Recent Transactions */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-auto max-h-[530px] flex flex-col">
-            <h3 className="text-base font-semibold mb-4 text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                <span className="material-symbols-rounded text-blue-500 text-[20px]">receipt_long</span>
-                {t.recentSales}
-            </h3>
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-auto max-h-[530px] flex flex-col group">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                  <span className="material-symbols-rounded text-blue-500 text-[20px]">receipt_long</span>
+                  {t.recentSales}
+              </h3>
+              <ExpandButton onClick={() => setExpandedView('recentSales')} />
+            </div>
             <div className="flex-1 overflow-y-auto space-y-0 divide-y divide-slate-100 dark:divide-slate-800">
                 {recentSales.length === 0 ? (
                     <div className="h-full flex items-center justify-center text-slate-400 text-sm">{t.noResults || "No transactions yet"}</div>
@@ -375,6 +437,444 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
           </div>
         </div>
       )}
+
+      {/* Expanded Modals */}
+      {/* Revenue Expanded */}
+      <ExpandedModal
+        isOpen={expandedView === 'revenue'}
+        onClose={() => setExpandedView(null)}
+        title={t.revenue}
+        color={color}
+        actions={
+          <button
+            onClick={() => exportToCSV([{ metric: 'Total Revenue', value: totalRevenue }], 'revenue')}
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+          >
+            <span className="material-symbols-rounded text-[18px]">download</span>
+            {t.expand?.exportCSV || 'Export'}
+          </button>
+        }
+      >
+        <div className="space-y-6">
+          <div className={`p-6 rounded-2xl bg-${color}-50 dark:bg-${color}-950/20 border border-${color}-100 dark:border-${color}-900`}>
+            <p className={`text-sm font-bold text-${color}-800 dark:text-${color}-300 uppercase mb-2`}>{t.revenue}</p>
+            <p className={`text-4xl font-bold text-${color}-900 dark:text-${color}-100`}>${totalRevenue.toFixed(2)}</p>
+            <p className="text-sm text-slate-500 mt-2">{t.expand?.historicalTrend || 'Based on all sales'}</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.metrics || 'Total Sales'}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{sales.length}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.amount || 'Average Sale'}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                ${sales.length > 0 ? (totalRevenue / sales.length).toFixed(2) : '0.00'}
+              </p>
+            </div>
+          </div>
+
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={salesData}>
+                <defs>
+                  <linearGradient id="colorSalesExpanded" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={`var(--color-${color}-500)`} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={`var(--color-${color}-500)`} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Area type="monotone" dataKey="sales" stroke={`var(--color-${color}-500)`} fillOpacity={1} fill="url(#colorSalesExpanded)" strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </ExpandedModal>
+
+      {/* Expenses Expanded */}
+      <ExpandedModal
+        isOpen={expandedView === 'expenses'}
+        onClose={() => setExpandedView(null)}
+        title={t.expenses}
+        color={color}
+        actions={
+          <button
+            onClick={() => exportToCSV([{ metric: 'Total Expenses', value: totalExpenses }], 'expenses')}
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+          >
+            <span className="material-symbols-rounded text-[18px]">download</span>
+            {t.expand?.exportCSV || 'Export'}
+          </button>
+        }
+      >
+        <div className="space-y-6">
+          <div className="p-6 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900">
+            <p className="text-sm font-bold text-red-800 dark:text-red-300 uppercase mb-2">{t.expenses}</p>
+            <p className="text-4xl font-bold text-red-900 dark:text-red-100">${totalExpenses.toFixed(2)}</p>
+            <p className="text-sm text-slate-500 mt-2">{t.expand?.historicalTrend || 'Based on all purchases'}</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.metrics || 'Total Purchases'}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{purchases.length}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.amount || 'Average Purchase'}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                ${purchases.length > 0 ? (totalExpenses / purchases.length).toFixed(2) : '0.00'}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">{t.expand?.detailedView || 'Recent Purchases'}</h4>
+            {purchases.slice(0, 10).map(purchase => (
+              <div key={purchase.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
+                <div>
+                  <p className="font-medium text-sm text-slate-900 dark:text-slate-100">{purchase.supplierName}</p>
+                  <p className="text-xs text-slate-500">{new Date(purchase.date).toLocaleDateString()}</p>
+                </div>
+                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">${purchase.totalCost.toFixed(2)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </ExpandedModal>
+
+      {/* Profit Expanded */}
+      <ExpandedModal
+        isOpen={expandedView === 'profit'}
+        onClose={() => setExpandedView(null)}
+        title={t.profit}
+        color={color}
+        actions={
+          <button
+            onClick={() => exportToCSV([
+              { metric: 'Total Revenue', value: totalRevenue },
+              { metric: 'Total Expenses', value: totalExpenses },
+              { metric: 'Net Profit', value: netProfit }
+            ], 'profit')}
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+          >
+            <span className="material-symbols-rounded text-[18px]">download</span>
+            {t.expand?.exportCSV || 'Export'}
+          </button>
+        }
+      >
+        <div className="space-y-6">
+          <div className={`p-6 rounded-2xl ${netProfit >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900' : 'bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900'}`}>
+            <p className={`text-sm font-bold uppercase mb-2 ${netProfit >= 0 ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}`}>{t.profit}</p>
+            <p className={`text-4xl font-bold ${netProfit >= 0 ? 'text-emerald-900 dark:text-emerald-100' : 'text-red-900 dark:text-red-100'}`}>${netProfit.toFixed(2)}</p>
+            <p className="text-sm text-slate-500 mt-2">{t.expand?.breakdown || 'Revenue - Expenses'}</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.revenue}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">${totalRevenue.toFixed(2)}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expenses}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">${totalExpenses.toFixed(2)}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.profitMargin || 'Margin'}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0'}%
+              </p>
+            </div>
+          </div>
+        </div>
+      </ExpandedModal>
+
+      {/* Low Stock Expanded */}
+      <ExpandedModal
+        isOpen={expandedView === 'lowStock'}
+        onClose={() => setExpandedView(null)}
+        title={`${t.lowStock} (${lowStockItems.length})`}
+        color={color}
+        actions={
+          <button
+            onClick={() => exportToCSV(
+              lowStockItems.map(item => ({
+                name: item.name,
+                category: item.category,
+                stock: item.stock,
+                price: item.price
+              })),
+              'low_stock_items'
+            )}
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+          >
+            <span className="material-symbols-rounded text-[18px]">download</span>
+            {t.expand?.exportCSV || 'Export'}
+          </button>
+        }
+      >
+        <div className="space-y-4">
+          {lowStockItems.length === 0 ? (
+            <div className="text-center py-12 text-slate-400">{t.allGood}</div>
+          ) : (
+            <div className="grid gap-3">
+              {lowStockItems.map(item => (
+                <div key={item.id} className="p-4 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/50 flex justify-between items-center">
+                  <div className="flex-1">
+                    <p className="font-medium text-slate-900 dark:text-slate-100">{item.name}</p>
+                    <p className="text-sm text-slate-500">{item.category}</p>
+                    <p className="text-xs text-orange-600 dark:text-orange-400 font-bold uppercase mt-1">
+                      {item.stock} {t.expand?.allItems || 'units left'}
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setRestockDrug(item);
+                      setExpandedView(null);
+                    }}
+                    className={`px-4 py-2 rounded-full bg-white dark:bg-slate-800 shadow-sm font-medium text-${color}-600 hover:bg-${color}-50 dark:hover:bg-slate-700 transition-colors`}
+                  >
+                    {t.restock}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </ExpandedModal>
+
+      {/* Top Selling Expanded */}
+      <ExpandedModal
+        isOpen={expandedView === 'topSelling'}
+        onClose={() => setExpandedView(null)}
+        title={t.expand?.top20 || 'Top 20 Products'}
+        color={color}
+        actions={
+          <button
+            onClick={() => exportToCSV(
+              topSelling20.map((item, i) => ({
+                rank: i + 1,
+                name: item.name,
+                quantity: item.qty,
+                revenue: item.revenue.toFixed(2)
+              })),
+              'top_selling_products'
+            )}
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+          >
+            <span className="material-symbols-rounded text-[18px]">download</span>
+            {t.expand?.exportCSV || 'Export'}
+          </button>
+        }
+      >
+        <div className="space-y-3">
+          {topSelling20.length === 0 ? (
+            <div className="text-center py-12 text-slate-400">{t.expand?.noData || 'No sales data'}</div>
+          ) : (
+            topSelling20.map((item, index) => (
+              <div key={item.name} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className={`w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 font-bold flex items-center justify-center shrink-0`}>
+                    {index + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-900 dark:text-slate-100 truncate">{item.name}</p>
+                    <p className="text-sm text-slate-500">{item.qty} {t.sold} • ${item.revenue.toFixed(2)} {t.revenue}</p>
+                  </div>
+                </div>
+                <div className="text-end">
+                  <div className="w-24 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                    <div 
+                      className={`bg-${color}-500 h-2 rounded-full`}
+                      style={{ width: `${(item.qty / topSelling20[0].qty) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </ExpandedModal>
+
+      {/* Expiring Items Expanded */}
+      <ExpandedModal
+        isOpen={expandedView === 'expiring'}
+        onClose={() => setExpandedView(null)}
+        title={`${t.expiringSoon} (${expiringItems.length})`}
+        color={color}
+        actions={
+          <button
+            onClick={() => exportToCSV(
+              expiringItems.map(item => ({
+                name: item.name,
+                category: item.category,
+                stock: item.stock,
+                expiryDate: item.expiryDate,
+                daysUntilExpiry: getDaysUntilExpiry(item.expiryDate)
+              })),
+              'expiring_items'
+            )}
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+          >
+            <span className="material-symbols-rounded text-[18px]">download</span>
+            {t.expand?.exportCSV || 'Export'}
+          </button>
+        }
+      >
+        <div className="space-y-3">
+          {expiringItems.length === 0 ? (
+            <div className="text-center py-12 text-slate-400">{t.noExpiring}</div>
+          ) : (
+            expiringItems.map(item => {
+              const days = getDaysUntilExpiry(item.expiryDate);
+              const isExpired = days < 0;
+              return (
+                <div key={item.id} className={`p-4 rounded-2xl border ${isExpired ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/50' : 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-100 dark:border-yellow-900/50'}`}>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <p className="font-medium text-slate-900 dark:text-slate-100">{item.name}</p>
+                      <p className="text-sm text-slate-500">{item.category} • {item.stock} in stock</p>
+                      <p className={`text-xs font-bold uppercase mt-1 ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-500'}`}>
+                        {isExpired ? t.expired : `${days} ${t.days}`}
+                      </p>
+                    </div>
+                    <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                      {item.expiryDate}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </ExpandedModal>
+
+      {/* Recent Sales Expanded */}
+      <ExpandedModal
+        isOpen={expandedView === 'recentSales'}
+        onClose={() => setExpandedView(null)}
+        title={`${t.recentSales} (${recentSales20.length})`}
+        color={color}
+        actions={
+          <button
+            onClick={() => exportToCSV(
+              recentSales20.map(sale => ({
+                id: sale.id,
+                date: new Date(sale.date).toLocaleString(),
+                customer: sale.customerName || 'Guest',
+                items: sale.items.length,
+                total: sale.total.toFixed(2)
+              })),
+              'recent_transactions'
+            )}
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+          >
+            <span className="material-symbols-rounded text-[18px]">download</span>
+            {t.expand?.exportCSV || 'Export'}
+          </button>
+        }
+      >
+        <div className="space-y-3">
+          {recentSales20.length === 0 ? (
+            <div className="text-center py-12 text-slate-400">{t.expand?.noData || 'No transactions yet'}</div>
+          ) : (
+            recentSales20.map(sale => (
+              <div key={sale.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-full bg-${color}-50 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-600 dark:text-${color}-400`}>
+                      <span className="material-symbols-rounded">shopping_bag</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900 dark:text-slate-100">
+                        {sale.customerName || "Guest"}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {new Date(sale.date).toLocaleDateString()} • {new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-end">
+                    <p className="text-lg font-bold text-slate-900 dark:text-slate-100">${sale.total.toFixed(2)}</p>
+                    <p className="text-xs text-slate-500">{sale.items.length} {t.items || "items"}</p>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                  <p className="text-xs font-bold text-slate-500 uppercase mb-2">{t.expand?.transactionDetails || 'Items'}</p>
+                  <div className="space-y-1">
+                    {sale.items.map((item, idx) => (
+                      <div key={idx} className="flex justify-between text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">{item.name} x{item.quantity}</span>
+                        <span className="text-slate-900 dark:text-slate-100 font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </ExpandedModal>
+
+      {/* Sales Chart Expanded */}
+      <ExpandedModal
+        isOpen={expandedView === 'salesChart'}
+        onClose={() => setExpandedView(null)}
+        title={t.trend}
+        color={color}
+        actions={
+          <button
+            onClick={() => exportToCSV(salesData, 'sales_trend')}
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+          >
+            <span className="material-symbols-rounded text-[18px]">download</span>
+            {t.expand?.exportCSV || 'Export'}
+          </button>
+        }
+      >
+        <div className="space-y-6">
+          <div className="h-96">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={salesData}>
+                <defs>
+                  <linearGradient id="colorSalesChartExpanded" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={`var(--color-${color}-500)`} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={`var(--color-${color}-500)`} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 13}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 13}} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  cursor={{ stroke: `var(--color-${color}-300)`, strokeWidth: 2 }}
+                />
+                <Area type="monotone" dataKey="sales" stroke={`var(--color-${color}-500)`} fillOpacity={1} fill="url(#colorSalesChartExpanded)" strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.metrics || 'Total Sales'}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{sales.length}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.revenue}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">${totalRevenue.toFixed(2)}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.amount || 'Average'}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                ${sales.length > 0 ? (totalRevenue / sales.length).toFixed(2) : '0.00'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </ExpandedModal>
     </div>
   );
 };
