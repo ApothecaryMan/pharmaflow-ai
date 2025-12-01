@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Drug, CartItem } from '../types';
 
 interface POSProps {
@@ -18,6 +18,42 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  
+  // Sidebar Resize Logic
+  const [sidebarWidth, setSidebarWidth] = useState(350);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const isResizing = useRef(false);
+
+  const startResizing = useCallback(() => {
+    isResizing.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, []);
+
+  const stopResizing = useCallback(() => {
+    isResizing.current = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }, []);
+
+  const resize = useCallback((e: MouseEvent) => {
+    if (isResizing.current && sidebarRef.current) {
+        const rightEdge = sidebarRef.current.getBoundingClientRect().right;
+        const newWidth = rightEdge - e.clientX;
+        if (newWidth > 280 && newWidth < 800) {
+            setSidebarWidth(newWidth);
+        }
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('mousemove', resize);
+    window.addEventListener('mouseup', stopResizing);
+    return () => {
+      window.removeEventListener('mousemove', resize);
+      window.removeEventListener('mouseup', stopResizing);
+    };
+  }, [resize, stopResizing]);
 
   const categories = [
     { id: 'All', label: t.categories.all },
@@ -291,7 +327,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
 
         {/* Grid */}
         <div className="flex-1 overflow-y-auto pe-1 pb-24 lg:pb-0">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-2">
                 {groupedDrugs.slice(0, 100).map(group => {
                     const drug = group[0];
                     const totalStock = group.reduce((sum, d) => sum + d.stock, 0);
@@ -329,32 +365,18 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
                             </div>
                         </div>
                         
-                        {/* Batches List (Exp Dates) */}
-                        <div className="mb-1 space-y-0.5 min-h-[1.5em]">
-                            {(isExpanded ? group : group.slice(0, 3)).map(batch => (
-                                <div key={batch.id} className="flex justify-between items-center text-[9px] text-slate-500 dark:text-slate-400 px-0.5">
-                                    <span>Exp: {new Date(batch.expiryDate).toLocaleDateString('en-US', {month: '2-digit', year: '2-digit'})}</span>
-                                    <span className={batch.stock < 5 ? 'text-red-500 font-bold' : ''}>Qty: {batch.stock}</span>
-                                </div>
-                            ))}
-                            {group.length > 3 && (
-                                <div 
-                                    onClick={(e) => toggleBatchList(e, drug.name)}
-                                    className={`text-[9px] font-bold px-0.5 cursor-pointer hover:underline mt-1 flex items-center gap-1 ${isExpanded ? `text-${color}-600` : 'text-slate-400 italic'}`}
-                                >
-                                    {isExpanded ? (
-                                        <>
-                                            <span>Show less</span>
-                                            <span className="material-symbols-rounded text-[10px]">expand_less</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span>+{group.length - 3} more batches...</span>
-                                            <span className="material-symbols-rounded text-[10px]">expand_more</span>
-                                        </>
-                                    )}
-                                </div>
-                            )}
+                        {/* Batches Combobox */}
+                        <div className="mb-2">
+                            <select 
+                                className="w-full p-1 text-[10px] rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 focus:outline-none cursor-pointer"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {group.map(batch => (
+                                    <option key={batch.id} value={batch.id}>
+                                        {new Date(batch.expiryDate).toLocaleDateString('en-US', {month: '2-digit', year: '2-digit'})} • Qty: {batch.stock}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="mt-auto flex justify-between items-center w-full pt-1 border-t border-slate-50 dark:border-slate-800 relative">
@@ -393,8 +415,19 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
         </button>
       </div>
 
+      {/* Resize Handle (Desktop Only) */}
+      <div 
+        className="hidden lg:flex w-4 items-center justify-center cursor-col-resize group z-10 -mx-2"
+        onMouseDown={startResizing}
+      >
+        <div className="w-1 h-16 rounded-full bg-slate-200 dark:bg-slate-700 group-hover:bg-blue-500 transition-colors"></div>
+      </div>
+
       {/* Cart Sidebar - Hidden on Mobile if Products Tab is active */}
-      <div className={`w-full lg:w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden h-full ${mobileTab === 'products' ? 'hidden lg:flex' : 'flex'}`}>
+      <div 
+        ref={sidebarRef}
+        style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}
+        className={`w-full lg:w-[var(--sidebar-width)] bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden h-full ${mobileTab === 'products' ? 'hidden lg:flex' : 'flex'}`}>
         <div className={`p-3 bg-${color}-50 dark:bg-${color}-950/30 space-y-2 shrink-0`}>
             <div className="flex items-center justify-between">
                 <h2 className={`text-sm font-bold text-${color}-900 dark:text-${color}-100 flex items-center gap-2`}>

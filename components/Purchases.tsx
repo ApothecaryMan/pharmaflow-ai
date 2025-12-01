@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Drug, Supplier, Purchase, PurchaseItem } from '../types';
 
 interface PurchasesProps {
@@ -16,6 +16,42 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState<PurchaseItem[]>([]);
+  
+  // Sidebar Resize Logic
+  const [sidebarWidth, setSidebarWidth] = useState(384); // Default lg:w-96 is 24rem = 384px
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const isResizing = useRef(false);
+
+  const startResizing = useCallback(() => {
+    isResizing.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, []);
+
+  const stopResizing = useCallback(() => {
+    isResizing.current = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }, []);
+
+  const resize = useCallback((e: MouseEvent) => {
+    if (isResizing.current && sidebarRef.current) {
+        const rightEdge = sidebarRef.current.getBoundingClientRect().right;
+        const newWidth = rightEdge - e.clientX;
+        if (newWidth > 300 && newWidth < 800) {
+            setSidebarWidth(newWidth);
+        }
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('mousemove', resize);
+    window.addEventListener('mouseup', stopResizing);
+    return () => {
+      window.removeEventListener('mousemove', resize);
+      window.removeEventListener('mouseup', stopResizing);
+    };
+  }, [resize, stopResizing]);
 
   const handleAddItem = (drug: Drug) => {
     setCart(prev => {
@@ -131,8 +167,20 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                    </div>
                </div>
 
+               {/* Resize Handle (Desktop Only) */}
+               <div 
+                 className="hidden lg:flex w-4 items-center justify-center cursor-col-resize group z-10 -mx-2"
+                 onMouseDown={startResizing}
+               >
+                 <div className="w-1 h-16 rounded-full bg-slate-200 dark:bg-slate-700 group-hover:bg-blue-500 transition-colors"></div>
+               </div>
+
                {/* RIGHT: Order Cart */}
-               <div className="w-full lg:w-96 bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col shadow-xl">
+               <div 
+                 ref={sidebarRef}
+                 style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}
+                 className="w-full lg:w-[var(--sidebar-width)] bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col shadow-xl"
+               >
                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
                        <span className="material-symbols-rounded">shopping_cart</span>
                        {t.cartTitle}

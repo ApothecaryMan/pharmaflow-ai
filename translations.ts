@@ -250,7 +250,7 @@ export const TRANSLATIONS = {
     }
   },
   AR: {
-    appTitle: 'فارما فلو',
+    appTitle: 'PharmaFlow',
     nav: {
       dashboard: 'لوحة التحكم',
       inventory: 'المخزون',

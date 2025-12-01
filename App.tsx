@@ -344,7 +344,7 @@ const App: React.FC = () => {
     
     return (
     <>
-      <div className={`mb-8 flex items-center ${collapsed ? 'justify-center flex-col gap-4' : 'justify-between ps-4 pe-4 md:pe-0'}`}>
+      <div className={`mb-6 flex items-center ${collapsed ? 'justify-center flex-col gap-4 w-full' : 'justify-between ps-2 pe-2'}`}>
         <div className={`flex items-center gap-3 ${collapsed ? 'flex-col' : ''}`}>
           <div className={`w-10 h-10 rounded-xl bg-${theme.primary}-600 flex items-center justify-center shadow-lg shadow-${theme.primary}-500/30 shrink-0`}>
             <span className="material-symbols-rounded text-white">local_pharmacy</span>
@@ -358,9 +358,9 @@ const App: React.FC = () => {
         {!isMobile && (
              <button 
                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className="hidden md:flex p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
+                className={`hidden md:flex p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors ${collapsed ? 'mt-2' : ''}`}
              >
-                <span className="material-symbols-rounded rtl:rotate-180">
+                <span className="material-symbols-rounded rtl:rotate-180 text-[20px]">
                     {isSidebarCollapsed ? 'last_page' : 'first_page'} 
                 </span>
              </button>
@@ -477,7 +477,7 @@ const App: React.FC = () => {
     <div className={`flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-500`} dir={language === 'AR' ? 'rtl' : 'ltr'}>
       
       {/* Desktop Sidebar */}
-      <aside className={`hidden md:flex flex-col p-6 border-e border-slate-200 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl z-10 transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-[88px]' : 'w-80'}`}>
+      <aside className={`hidden md:flex flex-col ${isSidebarCollapsed ? 'p-2 w-[72px]' : 'p-4 w-72'} border-e border-slate-200 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl z-10 transition-all duration-300 ease-in-out`}>
         <SidebarContent />
       </aside>
 
