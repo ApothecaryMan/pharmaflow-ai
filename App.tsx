@@ -326,16 +326,16 @@ const App: React.FC = () => {
       }}
       className={`flex items-center transition-all duration-300 group
         ${isSidebarCollapsed && !mobileMenuOpen
-          ? 'w-12 h-12 justify-center rounded-2xl mx-auto' 
-          : 'w-full px-6 py-4 gap-4 rounded-full'}
+          ? 'w-10 h-10 justify-center rounded-xl mx-auto mb-2' 
+          : 'w-full px-4 py-2.5 gap-3 rounded-xl mb-1'}
         ${view === id 
-        ? `bg-${theme.primary}-100 dark:bg-${theme.primary}-900/40 text-${theme.primary}-900 dark:text-${theme.primary}-100 font-bold` 
-        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}
+        ? `bg-${theme.primary}-50 dark:bg-${theme.primary}-900/20 text-${theme.primary}-700 dark:text-${theme.primary}-300 font-bold shadow-sm ring-1 ring-${theme.primary}-200 dark:ring-${theme.primary}-800` 
+        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-700 dark:hover:text-slate-200'}
       `}
       title={isSidebarCollapsed && !mobileMenuOpen ? label : ''}
     >
-      <span className={`material-symbols-rounded text-2xl group-hover:scale-110 transition-transform ${view === id ? 'icon-filled' : ''}`}>{icon}</span>
-      {(!isSidebarCollapsed || mobileMenuOpen) && <span className="text-sm tracking-wide whitespace-nowrap">{label}</span>}
+      <span className={`material-symbols-rounded text-[22px] group-hover:scale-110 transition-transform ${view === id ? 'icon-filled' : ''}`}>{icon}</span>
+      {(!isSidebarCollapsed || mobileMenuOpen) && <span className="text-sm font-medium tracking-wide whitespace-nowrap">{label}</span>}
     </button>
   );
 
