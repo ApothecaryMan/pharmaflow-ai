@@ -391,35 +391,36 @@ const App: React.FC = () => {
       <div className={`mt-auto space-y-4 pt-4 ${collapsed ? 'flex flex-col items-center' : ''}`}>
         
         {!collapsed ? (
-            <div className="p-4 rounded-3xl bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 shadow-sm">
-                <p className="text-xs font-bold text-slate-400 uppercase mb-3 ms-1">{t.settings.appearance}</p>
+            <div className="mx-2 mb-2 p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
                 
-                {/* Theme Colors */}
-                <div className="flex justify-between px-1 mb-4">
-                    {THEMES.map(themeOption => (
-                    <button
-                        key={themeOption.name}
-                        onClick={() => setTheme(themeOption)}
-                        className={`w-7 h-7 rounded-full border-2 transition-transform hover:scale-110 ${theme.name === themeOption.name ? 'border-slate-600 dark:border-white scale-110' : 'border-transparent'}`}
-                        style={{ backgroundColor: themeOption.hex }}
-                        title={themeOption.name}
-                    />
-                    ))}
+                {/* Theme Selection */}
+                <div className="flex justify-between items-center mb-3">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.settings.theme}</span>
+                    <div className="flex gap-1.5">
+                        {THEMES.map(themeOption => (
+                        <button
+                            key={themeOption.name}
+                            onClick={() => setTheme(themeOption)}
+                            className={`w-4 h-4 rounded-full transition-all duration-300 ${theme.name === themeOption.name ? 'ring-2 ring-offset-1 ring-slate-300 dark:ring-slate-600 scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                            style={{ backgroundColor: themeOption.hex }}
+                            title={themeOption.name}
+                        />
+                        ))}
+                    </div>
                 </div>
 
-                <div className="h-px bg-slate-200 dark:bg-slate-700 my-3"></div>
-
-                {/* Language & Dark Mode */}
+                {/* Controls Row */}
                 <div className="flex items-center gap-2">
-                     <div className="flex-1 bg-slate-200 dark:bg-slate-900/50 p-1 rounded-xl flex">
+                     {/* Language Toggle */}
+                     <div className="flex-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg flex relative">
                         {LANGUAGES.map(lang => (
                         <button
                             key={lang.code}
                             onClick={() => setLanguage(lang.code)}
-                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            className={`flex-1 py-1.5 rounded-md text-[10px] font-bold transition-all z-10 ${
                             language === lang.code 
-                            ? `bg-white dark:bg-slate-700 text-${theme.primary}-600 shadow-sm` 
-                            : 'text-slate-500 dark:text-slate-400'
+                            ? `text-${theme.primary}-600 bg-white dark:bg-slate-700 shadow-sm` 
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
                             }`}
                         >
                             {lang.label}
@@ -427,11 +428,13 @@ const App: React.FC = () => {
                         ))}
                     </div>
 
+                    {/* Dark Mode Toggle */}
                     <button 
                         onClick={() => setDarkMode(!darkMode)}
-                        className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition-colors ${darkMode ? `bg-${theme.primary}-600 text-white` : 'bg-slate-300 text-slate-600'}`}
+                        className={`w-9 h-9 shrink-0 rounded-lg flex items-center justify-center transition-all ${darkMode ? `bg-slate-800 text-${theme.primary}-400 border border-slate-700` : `bg-slate-100 text-slate-500 hover:bg-slate-200`}`}
+                        title={t.settings.darkMode}
                     >
-                        <span className="material-symbols-rounded text-[20px]">
+                        <span className="material-symbols-rounded text-[18px] transition-transform duration-500 rotate-0 dark:-rotate-180">
                             {darkMode ? 'dark_mode' : 'light_mode'}
                         </span>
                     </button>
