@@ -1,18 +1,22 @@
 
 
 import React, { useState } from 'react';
-import { Sale, CartItem } from '../types';
+import { Sale, CartItem, Return } from '../types';
+import { ReturnModal } from './ReturnModal';
 
 interface SalesHistoryProps {
   sales: Sale[];
+  returns: Return[];
+  onProcessReturn: (returnData: Return) => void;
   color: string;
   t: any;
 }
 
-export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, color, t }) => {
+export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onProcessReturn, color, t }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'high' | 'low'>('newest');
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [returnModalOpen, setReturnModalOpen] = useState(false);
 
   // --- Nested/Future Functions for Item Actions ---
   const handleEmailReceipt = (saleId: string) => {
@@ -309,7 +313,20 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, color, t }) =
                       {sale.items.length} items
                     </span>
                   </td>
-                  <td className="p-4 font-bold text-slate-700 dark:text-slate-300 text-sm">${sale.total.toFixed(2)}</td>
+                  <td className="p-4 font-bold text-slate-700 dark:text-slate-300 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span>${sale.total.toFixed(2)}</span>
+                      {sale.hasReturns && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          sale.netTotal !== undefined && sale.netTotal <= 0 
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                        }`}>
+                          {sale.netTotal !== undefined && sale.netTotal <= 0 ? t.returns?.returned : t.returns?.partiallyReturned}
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="p-4 text-end flex items-center justify-end gap-2">
                      {/* Future Action */}
                     <button 
@@ -417,6 +434,15 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, color, t }) =
               </div>
 
               <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex gap-3">
+                  {!selectedSale.hasReturns && (
+                    <button 
+                      onClick={() => setReturnModalOpen(true)}
+                      className={`flex-1 py-2.5 rounded-full font-medium text-white bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center gap-2`}
+                    >
+                        <span className="material-symbols-rounded">keyboard_return</span>
+                        {t.returns?.processReturn || 'Process Return'}
+                    </button>
+                  )}
                   <button 
                     onClick={() => handlePrint(selectedSale)}
                     className={`flex-1 py-2.5 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 transition-colors flex items-center justify-center gap-2`}
@@ -434,6 +460,25 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, color, t }) =
            </div>
         </div>
       )}
+
+       {/* Return Modal */}
+       {selectedSale && returnModalOpen && (
+         <ReturnModal
+           isOpen={returnModalOpen}
+           sale={selectedSale}
+           onClose={() => {
+             setReturnModalOpen(false);
+             setSelectedSale(null);
+           }}
+           onConfirm={(returnData) => {
+             onProcessReturn(returnData);
+             setReturnModalOpen(false);
+             setSelectedSale(null);
+           }}
+           color={color}
+           t={t}
+         />
+       )}
     </div>
   );
 };

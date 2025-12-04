@@ -8,6 +8,7 @@ export interface Drug {
   price: number;
   costPrice: number; // New: Buying price
   stock: number;
+  damagedStock?: number; // Damaged/unsellable stock
   expiryDate: string;
   description: string;
   barcode?: string;
@@ -47,7 +48,47 @@ export interface Sale {
   subtotal?: number;
   customerName?: string;
   globalDiscount?: number;
+  // Return tracking
+  hasReturns?: boolean;
+  returnIds?: string[];
+  netTotal?: number; // Total after returns
+  itemReturnedQuantities?: Record<string, number>; // drugId -> quantity returned
 }
+
+// Return/Refund System Types
+export type ReturnType = 'full' | 'partial' | 'unit';
+
+export type ReturnReason = 
+  | 'customer_request'
+  | 'wrong_item'
+  | 'damaged'
+  | 'expired'
+  | 'defective'
+  | 'other';
+
+export interface ReturnItem {
+  drugId: string;
+  name: string;
+  quantityReturned: number; // Packs or units
+  isUnit: boolean;
+  originalPrice: number;
+  refundAmount: number;
+  reason?: ReturnReason;
+  condition: 'sellable' | 'damaged' | 'expired'; // Item condition
+}
+
+export interface Return {
+  id: string;
+  saleId: string;
+  date: string;
+  returnType: ReturnType;
+  items: ReturnItem[];
+  totalRefund: number;
+  reason: ReturnReason;
+  notes?: string;
+  processedBy?: string;
+}
+
 
 export interface Purchase {
   id: string;
@@ -82,3 +123,13 @@ export type ExportFormat = 'csv' | 'json' | 'image';
 export type ChartViewMode = 'daily' | 'weekly' | 'monthly';
 
 export type SortOption = 'name' | 'quantity' | 'revenue' | 'date' | 'stock' | 'expiry' | 'amount';
+
+// Return Policy Configuration
+export interface ReturnPolicy {
+  returnWindowDays: number; // Default: 30
+  allowExpiredReturns: boolean; // Default: false
+  allowDamagedReturns: boolean; // Default: true
+  restockingFeePercent: number; // Default: 0
+  requireManagerApproval: boolean; // Default: false
+  managerApprovalThreshold: number; // Default: 1000
+}

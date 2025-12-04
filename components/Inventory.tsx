@@ -23,6 +23,59 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
   // Form State
   const [formData, setFormData] = useState<Partial<Drug>>({});
 
+  // Column Order State with lazy initialization from localStorage
+  const [columnOrder, setColumnOrder] = useState<string[]>(() => {
+    const saved = localStorage.getItem('inventory_column_order');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to load column order', e);
+      }
+    }
+    return ['name', 'codes', 'category', 'stock', 'price', 'cost', 'expiry', 'actions'];
+  });
+  const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  
+  // Column Visibility State with lazy initialization from localStorage
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('inventory_hidden_columns');
+    if (saved) {
+      try {
+        return new Set(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to load hidden columns', e);
+      }
+    }
+    return new Set();
+  });
+
+  const toggleColumnVisibility = (columnId: string) => {
+    setHiddenColumns(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(columnId)) {
+        newSet.delete(columnId);
+      } else {
+        // Don't allow hiding all columns
+        if (newSet.size < columnOrder.length - 1) {
+          newSet.add(columnId);
+        }
+      }
+      return newSet;
+    });
+  };
+
+  // Save column order to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('inventory_column_order', JSON.stringify(columnOrder));
+  }, [columnOrder]);
+
+  // Save hidden columns to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('inventory_hidden_columns', JSON.stringify(Array.from(hiddenColumns)));
+  }, [hiddenColumns]);
+
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -182,6 +235,170 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     );
   }, [inventory, searchTerm]);
 
+  // Column Drag Handlers
+  const handleColumnDragStart = (e: React.DragEvent | React.TouchEvent, columnId: string) => {
+    setDraggedColumn(columnId);
+    if ('dataTransfer' in e) {
+      e.dataTransfer.effectAllowed = 'move';
+    }
+  };
+
+  const handleColumnDragOver = (e: React.DragEvent, columnId: string) => {
+    e.preventDefault();
+    if (draggedColumn && draggedColumn !== columnId) {
+      setDragOverColumn(columnId);
+    }
+  };
+
+  const handleColumnTouchMove = (e: React.TouchEvent) => {
+    if (!draggedColumn) return;
+    
+    const touch = e.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+    if (element && element.tagName === 'TH') {
+      const columnId = element.getAttribute('data-column-id');
+      if (columnId && columnId !== draggedColumn) {
+        setDragOverColumn(columnId);
+      }
+    }
+  };
+
+  const handleColumnDrop = (e: React.DragEvent | React.TouchEvent, targetColumnId: string) => {
+    e.preventDefault();
+    if (!draggedColumn || draggedColumn === targetColumnId) return;
+
+    const newOrder = [...columnOrder];
+    const draggedIndex = newOrder.indexOf(draggedColumn);
+    const targetIndex = newOrder.indexOf(targetColumnId);
+
+    newOrder.splice(draggedIndex, 1);
+    newOrder.splice(targetIndex, 0, draggedColumn);
+
+    setColumnOrder(newOrder);
+    setDraggedColumn(null);
+    setDragOverColumn(null);
+  };
+
+  const handleColumnTouchEnd = (e: React.TouchEvent) => {
+    if (!draggedColumn) return;
+    
+    const touch = e.changedTouches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+    if (element && element.tagName === 'TH') {
+      const targetColumnId = element.getAttribute('data-column-id');
+      if (targetColumnId && targetColumnId !== draggedColumn) {
+        const newOrder = [...columnOrder];
+        const draggedIndex = newOrder.indexOf(draggedColumn);
+        const targetIndex = newOrder.indexOf(targetColumnId);
+
+        newOrder.splice(draggedIndex, 1);
+        newOrder.splice(targetIndex, 0, draggedColumn);
+
+        setColumnOrder(newOrder);
+      }
+    }
+    
+    setDraggedColumn(null);
+    setDragOverColumn(null);
+  };
+
+  const handleColumnDragEnd = () => {
+    setDraggedColumn(null);
+    setDragOverColumn(null);
+  };
+
+  // Column definitions
+  const columns = {
+    name: { label: t.headers.name, className: 'p-4 text-start' },
+    codes: { label: t.headers.codes, className: 'p-4 text-start' },
+    category: { label: t.headers.category, className: 'p-4 text-start' },
+    stock: { label: t.headers.stock, className: 'p-4 text-start' },
+    price: { label: t.headers.price, className: 'p-4 text-start' },
+    cost: { label: t.headers.cost, className: 'p-4 text-start hidden lg:table-cell' },
+    expiry: { label: t.headers.expiry, className: 'p-4 text-start' },
+    actions: { label: t.headers.actions, className: 'p-4 text-end' }
+  };
+
+  const renderCellContent = (drug: Drug, columnId: string) => {
+    switch (columnId) {
+      case 'name':
+        return (
+          <>
+            <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">{drug.name}</div>
+            <div className="text-xs text-slate-500">{drug.genericName}</div>
+          </>
+        );
+      case 'codes':
+        return (
+          <>
+            {drug.barcode && <div className="text-slate-600 dark:text-slate-400 text-xs"><span className="opacity-50">BC:</span> {drug.barcode}</div>}
+            {drug.internalCode && <div className="text-slate-600 dark:text-slate-400 text-xs"><span className="opacity-50">INT:</span> {drug.internalCode}</div>}
+            {!drug.barcode && !drug.internalCode && <span className="text-slate-300">-</span>}
+          </>
+        );
+      case 'category':
+        return (
+          <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+            {drug.category}
+          </span>
+        );
+      case 'stock':
+        return (
+          <div className={`font-medium text-sm ${drug.stock < 20 ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
+            {parseFloat(drug.stock.toFixed(2))}
+          </div>
+        );
+      case 'price':
+        return <span className="text-slate-700 dark:text-slate-300 text-sm font-bold">${drug.price.toFixed(2)}</span>;
+      case 'cost':
+        return <span className="text-slate-500 text-xs hidden lg:table-cell">${drug.costPrice ? drug.costPrice.toFixed(2) : '-'}</span>;
+      case 'expiry':
+        return <span className="text-slate-500 text-sm">{drug.expiryDate}</span>;
+      case 'actions':
+        return (
+          <div className="relative">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveMenuId(activeMenuId === drug.id ? null : drug.id);
+              }}
+              className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <span className="material-symbols-rounded text-[20px]">more_vert</span>
+            </button>
+            {activeMenuId === drug.id && (
+              <div 
+                ref={menuRef}
+                className="absolute right-8 top-10 z-20 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-1 rtl:right-auto rtl:left-8 text-start animate-fade-in"
+              >
+                <button onClick={() => handleOpenEdit(drug)} className="w-full px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors">
+                  <span className="material-symbols-rounded text-lg text-slate-400">edit</span>
+                  {t.actionsMenu.edit}
+                </button>
+                <button onClick={() => handleViewDetails(drug.id)} className="w-full px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors">
+                  <span className="material-symbols-rounded text-lg text-slate-400">visibility</span>
+                  {t.actionsMenu.view}
+                </button>
+                <button onClick={() => handlePrintBarcode(drug)} className="w-full px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors">
+                  <span className="material-symbols-rounded text-lg text-slate-400">qr_code_2</span>
+                  {t.actionsMenu.printBarcode}
+                </button>
+                <div className="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
+                <button onClick={() => handleDelete(drug.id)} className="w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-3 transition-colors">
+                  <span className="material-symbols-rounded text-lg">delete</span>
+                  {t.actionsMenu.delete}
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="h-full flex flex-col space-y-4 animate-fade-in">
       {/* Header */}
@@ -218,14 +435,46 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
           <table className="w-full text-start border-collapse">
             <thead className={`bg-${color}-50 dark:bg-${color}-950/30 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider`}>
               <tr>
-                <th className="p-4 text-start">{t.headers.name}</th>
-                <th className="p-4 text-start">{t.headers.codes}</th>
-                <th className="p-4 text-start">{t.headers.category}</th>
-                <th className="p-4 text-start">{t.headers.stock}</th>
-                <th className="p-4 text-start">{t.headers.price}</th>
-                <th className="p-4 text-start hidden lg:table-cell">{t.headers.cost}</th>
-                <th className="p-4 text-start">{t.headers.expiry}</th>
-                <th className="p-4 text-end">{t.headers.actions}</th>
+                {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
+                  <th
+                    key={columnId}
+                    data-column-id={columnId}
+                    className={`${columns[columnId as keyof typeof columns].className} cursor-move select-none transition-all ${
+                      draggedColumn === columnId ? 'opacity-50' : ''
+                    } ${dragOverColumn === columnId ? `bg-${color}-100 dark:bg-${color}-900/50` : ''}`}
+                    draggable
+                    onDragStart={(e) => handleColumnDragStart(e, columnId)}
+                    onDragOver={(e) => handleColumnDragOver(e, columnId)}
+                    onDrop={(e) => handleColumnDrop(e, columnId)}
+                    onDragEnd={handleColumnDragEnd}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                      handleColumnDragStart(e, columnId);
+                    }}
+                    onTouchMove={handleColumnTouchMove}
+                    onTouchEnd={handleColumnTouchEnd}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      showMenu(e.clientX, e.clientY, [
+                        { 
+                          label: 'Show/Hide Columns', 
+                          icon: 'visibility', 
+                          action: () => {} 
+                        },
+                        { separator: true },
+                        ...Object.keys(columns).map(colId => ({
+                          label: columns[colId as keyof typeof columns].label,
+                          icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
+                          action: () => toggleColumnVisibility(colId)
+                        }))
+                      ]);
+                    }}
+                    title="Drag to reorder | Right-click for options"
+                  >
+                    {columns[columnId as keyof typeof columns].label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -248,84 +497,16 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                         ]);
                     }}
                 >
-                  <td className="p-4">
-                    <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">{drug.name}</div>
-                    <div className="text-xs text-slate-500">{drug.genericName}</div>
-                  </td>
-                  <td className="p-4 text-xs">
-                     {drug.barcode && <div className="text-slate-600 dark:text-slate-400"><span className="opacity-50">BC:</span> {drug.barcode}</div>}
-                     {drug.internalCode && <div className="text-slate-600 dark:text-slate-400"><span className="opacity-50">INT:</span> {drug.internalCode}</div>}
-                     {!drug.barcode && !drug.internalCode && <span className="text-slate-300">-</span>}
-                  </td>
-                  <td className="p-4">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300`}>
-                      {drug.category}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className={`font-medium text-sm ${drug.stock < 20 ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
-                      {parseFloat(drug.stock.toFixed(2))}
-                    </div>
-                  </td>
-                  <td className="p-4 text-slate-700 dark:text-slate-300 text-sm font-bold">${drug.price.toFixed(2)}</td>
-                  <td className="p-4 text-slate-500 text-xs hidden lg:table-cell">${drug.costPrice ? drug.costPrice.toFixed(2) : '-'}</td>
-                  <td className="p-4 text-slate-500 text-sm">{drug.expiryDate}</td>
-                  
-                  {/* Action Menu Column */}
-                  <td className="p-4 text-end relative">
-                     <button 
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveMenuId(activeMenuId === drug.id ? null : drug.id);
-                        }}
-                        className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
-                     >
-                        <span className="material-symbols-rounded text-[20px]">more_vert</span>
-                     </button>
-                     
-                     {/* Dropdown Menu */}
-                     {activeMenuId === drug.id && (
-                        <div 
-                            ref={menuRef}
-                            className="absolute right-8 top-10 z-20 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-1 rtl:right-auto rtl:left-8 text-start animate-fade-in"
-                        >
-                            <button 
-                                onClick={() => handleOpenEdit(drug)}
-                                className="w-full px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
-                            >
-                                <span className="material-symbols-rounded text-lg text-slate-400">edit</span>
-                                {t.actionsMenu.edit}
-                            </button>
-                            <button 
-                                onClick={() => handleViewDetails(drug.id)}
-                                className="w-full px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
-                            >
-                                <span className="material-symbols-rounded text-lg text-slate-400">visibility</span>
-                                {t.actionsMenu.view}
-                            </button>
-                            <button 
-                                onClick={() => handlePrintBarcode(drug)}
-                                className="w-full px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
-                            >
-                                <span className="material-symbols-rounded text-lg text-slate-400">qr_code_2</span>
-                                {t.actionsMenu.printBarcode}
-                            </button>
-                            <div className="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
-                            <button 
-                                onClick={() => handleDelete(drug.id)}
-                                className="w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-3 transition-colors"
-                            >
-                                <span className="material-symbols-rounded text-lg">delete</span>
-                                {t.actionsMenu.delete}
-                            </button>
-                        </div>
-                     )}
-                  </td>
+                  {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
+                    <td key={columnId} className={columns[columnId as keyof typeof columns].className}>
+                      {renderCellContent(drug, columnId)}
+                    </td>
+                  ))}
                 </tr>
               ))}
               {filteredInventory.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="p-12 text-center text-slate-400">
+                  <td colSpan={columnOrder.length - hiddenColumns.size} className="p-12 text-center text-slate-400">
                     {t.noResults}
                   </td>
                 </tr>

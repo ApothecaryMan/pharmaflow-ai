@@ -329,6 +329,25 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
 
         {/* Grid */}
         <div className="flex-1 overflow-y-auto pe-1 pb-24 lg:pb-0">
+            {search.trim() === '' ? (
+              <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-3 p-8">
+                <span className="material-symbols-rounded text-6xl opacity-20">search</span>
+                <p className="text-sm font-medium">{t.searchPlaceholder}</p>
+                <p className="text-xs text-center max-w-xs opacity-70">
+                  {t.startSearching || 'Start searching for products to add them to cart'}
+                </p>
+              </div>
+            ) : groupedDrugs.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-3 p-8">
+                <span className="material-symbols-rounded text-6xl opacity-20">search_off</span>
+                <p className="text-sm font-medium">
+                  {t.noResults || 'No results found'}
+                </p>
+                <p className="text-xs text-center max-w-xs opacity-70">
+                  {t.tryDifferentKeywords || 'Try searching with different keywords'}
+                </p>
+              </div>
+            ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-2">
                 {groupedDrugs.slice(0, 100).map(group => {
                     const drug = group[0];
@@ -410,6 +429,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
                     </div>
                 )})}
             </div>
+            )}
         </div>
       </div>
 

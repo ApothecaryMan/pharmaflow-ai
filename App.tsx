@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase } from './types';
+import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, Return } from './types';
 import { Inventory } from './components/Inventory';
 import { POS } from './components/POS';
 import { Dashboard } from './components/Dashboard';
@@ -7,7 +7,11 @@ import { SalesHistory } from './components/SalesHistory';
 import { Suppliers } from './components/Suppliers';
 import { Purchases } from './components/Purchases';
 import { BarcodeStudio } from './components/BarcodeStudio';
+import { Toast } from './components/Toast';
 import { TRANSLATIONS } from './translations';
+import { PHARMACY_MENU } from './menuData';
+import { SidebarMenu } from './components/SidebarMenu';
+import { Navbar } from './components/Navbar';
 
 // Inventory Generator
 const generateInventory = (): Drug[] => {
@@ -216,9 +220,22 @@ const App: React.FC = () => {
     return [];
   });
 
+  const [returns, setReturns] = useState<Return[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pharma_returns');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
   const [tip, setTip] = useState<string>("Loading tip...");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [activeModule, setActiveModule] = useState<string>('dashboard');
+  
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+  } | null>(null);
 
   const t = TRANSLATIONS[language];
 
@@ -261,6 +278,10 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('pharma_purchases', JSON.stringify(purchases));
   }, [purchases]);
+
+  useEffect(() => {
+    localStorage.setItem('pharma_returns', JSON.stringify(returns));
+  }, [returns]);
 
   useEffect(() => {
     // Static tips generator
@@ -353,156 +374,135 @@ const App: React.FC = () => {
     setSales([...sales, newSale]);
   };
 
-  const NavItem = ({ id, icon, label }: { id: ViewState, icon: string, label: string }) => (
-    <button
-      onClick={() => {
-        setView(id);
-        setMobileMenuOpen(false);
-      }}
-      className={`flex items-center transition-all duration-300 group
-        ${isSidebarCollapsed && !mobileMenuOpen
-          ? 'w-10 h-10 justify-center rounded-xl mx-auto mb-2' 
-          : 'w-full px-4 py-2.5 gap-3 rounded-xl mb-1'}
-        ${view === id 
-        ? `bg-${theme.primary}-50 dark:bg-${theme.primary}-900/20 text-${theme.primary}-700 dark:text-${theme.primary}-300 font-bold shadow-sm ring-1 ring-${theme.primary}-200 dark:ring-${theme.primary}-800` 
-        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-700 dark:hover:text-slate-200'}
-      `}
-      title={isSidebarCollapsed && !mobileMenuOpen ? label : ''}
-    >
-      <span className={`material-symbols-rounded text-[22px] group-hover:scale-110 transition-transform ${view === id ? 'icon-filled' : ''}`}>{icon}</span>
-      {(!isSidebarCollapsed || mobileMenuOpen) && <span className="text-sm font-medium tracking-wide whitespace-nowrap">{label}</span>}
-    </button>
-  );
+  const handleProcessReturn = (returnData: Return) => {
+    // Add return record
+    setReturns([returnData, ...returns]);
+    
+    // Update sale record
+    setSales(prev => prev.map(sale => {
+      if (sale.id === returnData.saleId) {
+        const existingReturns = sale.returnIds || [];
+        const totalReturned = returns
+          .filter(r => r.saleId === sale.id)
+          .reduce((sum, r) => sum + r.totalRefund, 0) + returnData.totalRefund;
+        
+        // Track returned quantities per item
+        const itemReturnedQuantities = { ...(sale.itemReturnedQuantities || {}) };
+        returnData.items.forEach(item => {
+          itemReturnedQuantities[item.drugId] = 
+            (itemReturnedQuantities[item.drugId] || 0) + item.quantityReturned;
+        });
+        
+        return {
+          ...sale,
+          hasReturns: true,
+          returnIds: [...existingReturns, returnData.id],
+          netTotal: sale.total - totalReturned,
+          itemReturnedQuantities
+        };
+      }
+      return sale;
+    }));
+    
+    // Restore inventory
+    setInventory(prev => prev.map(drug => {
+      const returnedItem = returnData.items.find(i => i.drugId === drug.id);
+      if (returnedItem) {
+        let quantityToRestore = returnedItem.quantityReturned;
+        
+        // Convert units back to packs if necessary
+        if (returnedItem.isUnit && drug.unitsPerPack && drug.unitsPerPack > 0) {
+          quantityToRestore = returnedItem.quantityReturned / drug.unitsPerPack;
+        }
+        
+        return {
+          ...drug,
+          stock: drug.stock + quantityToRestore
+        };
+      }
+      return drug;
+    }));
+    
+    // Show success notification
+    setToast({
+      message: `Return processed successfully. Refund: $${returnData.totalRefund.toFixed(2)}`,
+      type: 'success'
+    });
+  };
 
   const SidebarContent = ({ isMobile = false }) => {
-    const collapsed = isSidebarCollapsed && !isMobile;
-    
     return (
     <>
-      <div className={`mb-6 flex items-center ${collapsed ? 'justify-center flex-col gap-4 w-full' : 'justify-between ps-2 pe-2'}`}>
-        <div className={`flex items-center gap-3 ${collapsed ? 'flex-col' : ''}`}>
-          <div className={`w-10 h-10 rounded-xl bg-${theme.primary}-600 flex items-center justify-center shadow-lg shadow-${theme.primary}-500/30 shrink-0`}>
-            <span className="material-symbols-rounded text-white">local_pharmacy</span>
-          </div>
-          {!collapsed && (
-             <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100 animate-fade-in whitespace-nowrap">{t.appTitle}</h1>
-          )}
-        </div>
-        
-        {/* Desktop Toggle */}
-        {!isMobile && (
-             <button 
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className={`hidden md:flex p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors ${collapsed ? 'mt-2' : ''}`}
-             >
-                <span className="material-symbols-rounded rtl:rotate-180 text-[20px]">
-                    {isSidebarCollapsed ? 'last_page' : 'first_page'} 
-                </span>
-             </button>
-        )}
 
-        {/* Mobile Close */}
-        {isMobile && (
-          <button 
-            onClick={() => setMobileMenuOpen(false)} 
-            className="md:hidden p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-          >
-            <span className="material-symbols-rounded">close</span>
-          </button>
-        )}
-      </div>
+      <SidebarMenu 
+        menuItems={PHARMACY_MENU}
+        activeModule={activeModule}
+        currentView={view}
+        onNavigate={(viewId) => {
+          setView(viewId as ViewState);
+          setMobileMenuOpen(false);
+        }}
+        isMobile={isMobile}
+        theme={theme.primary}
+        translations={t}
+        language={language}
+      />
 
-      <nav className="flex-1 space-y-1 w-full overflow-y-auto max-h-[calc(100vh-300px)] scrollbar-hide">
-        <NavItem id="dashboard" icon="dashboard" label={t.nav.dashboard} />
-        <NavItem id="pos" icon="point_of_sale" label={t.nav.pos} />
-        <NavItem id="inventory" icon="inventory_2" label={t.nav.inventory} />
-        <NavItem id="purchases" icon="shopping_cart_checkout" label={t.nav.purchases} />
-        <NavItem id="sales-history" icon="receipt_long" label={t.nav.salesHistory} />
-        <NavItem id="suppliers" icon="local_shipping" label={t.nav.suppliers} />
-        <NavItem id="barcode-studio" icon="qr_code_2" label={t.nav.barcodeStudio} />
-      </nav>
 
       {/* Dynamic Theme & Dark Mode Controls - Unified Block */}
-      <div className={`mt-auto space-y-4 pt-4 ${collapsed ? 'flex flex-col items-center' : ''}`}>
+      <div className="mt-auto space-y-4 pt-4">
+        <div className="mx-2 mb-2 p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          {/* Theme Selection */}
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.settings.theme}</span>
+            <div className="flex gap-1.5">
+              {THEMES.map(themeOption => (
+                <button
+                  key={themeOption.name}
+                  onClick={() => setTheme(themeOption)}
+                  className={`w-4 h-4 rounded-full transition-all duration-300 ${theme.name === themeOption.name ? 'ring-2 ring-offset-1 ring-slate-300 dark:ring-slate-600 scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                  style={{ backgroundColor: themeOption.hex }}
+                  title={themeOption.name}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Controls Row */}
+          <div className="flex items-center gap-2">
+            {/* Language Toggle */}
+            <div className="flex-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg flex relative">
+              {LANGUAGES.map(lang => (
+                <button
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code)}
+                  className={`flex-1 py-1.5 rounded-md text-[10px] font-bold transition-all z-10 ${
+                    language === lang.code 
+                      ? `text-${theme.primary}-600 bg-white dark:bg-slate-700 shadow-sm` 
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                  }`}
+                >
+                  {lang.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Dark Mode Toggle */}
+            <button 
+              onClick={() => setDarkMode(!darkMode)}
+              className={`w-9 h-9 shrink-0 rounded-lg flex items-center justify-center transition-all ${darkMode ? `bg-slate-800 text-${theme.primary}-400 border border-slate-700` : `bg-slate-100 text-slate-500 hover:bg-slate-200`}`}
+              title={t.settings.darkMode}
+            >
+              <span className="material-symbols-rounded text-[18px] transition-transform duration-500 rotate-0 dark:-rotate-180">
+                {darkMode ? 'dark_mode' : 'light_mode'}
+              </span>
+            </button>
+          </div>
+        </div>
         
-        {!collapsed ? (
-            <div className="mx-2 mb-2 p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-                
-                {/* Theme Selection */}
-                <div className="flex justify-between items-center mb-3">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.settings.theme}</span>
-                    <div className="flex gap-1.5">
-                        {THEMES.map(themeOption => (
-                        <button
-                            key={themeOption.name}
-                            onClick={() => setTheme(themeOption)}
-                            className={`w-4 h-4 rounded-full transition-all duration-300 ${theme.name === themeOption.name ? 'ring-2 ring-offset-1 ring-slate-300 dark:ring-slate-600 scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
-                            style={{ backgroundColor: themeOption.hex }}
-                            title={themeOption.name}
-                        />
-                        ))}
-                    </div>
-                </div>
-
-                {/* Controls Row */}
-                <div className="flex items-center gap-2">
-                     {/* Language Toggle */}
-                     <div className="flex-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg flex relative">
-                        {LANGUAGES.map(lang => (
-                        <button
-                            key={lang.code}
-                            onClick={() => setLanguage(lang.code)}
-                            className={`flex-1 py-1.5 rounded-md text-[10px] font-bold transition-all z-10 ${
-                            language === lang.code 
-                            ? `text-${theme.primary}-600 bg-white dark:bg-slate-700 shadow-sm` 
-                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-                            }`}
-                        >
-                            {lang.label}
-                        </button>
-                        ))}
-                    </div>
-
-                    {/* Dark Mode Toggle */}
-                    <button 
-                        onClick={() => setDarkMode(!darkMode)}
-                        className={`w-9 h-9 shrink-0 rounded-lg flex items-center justify-center transition-all ${darkMode ? `bg-slate-800 text-${theme.primary}-400 border border-slate-700` : `bg-slate-100 text-slate-500 hover:bg-slate-200`}`}
-                        title={t.settings.darkMode}
-                    >
-                        <span className="material-symbols-rounded text-[18px] transition-transform duration-500 rotate-0 dark:-rotate-180">
-                            {darkMode ? 'dark_mode' : 'light_mode'}
-                        </span>
-                    </button>
-                </div>
-            </div>
-        ) : (
-            /* Collapsed Settings */
-            <div className="flex flex-col gap-3 items-center w-full pb-4">
-                 <button 
-                    onClick={() => setDarkMode(!darkMode)}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${darkMode ? `bg-${theme.primary}-600 text-white` : 'bg-slate-200 text-slate-600'}`}
-                    title={t.settings.darkMode}
-                  >
-                    <span className="material-symbols-rounded text-[20px]">
-                        {darkMode ? 'dark_mode' : 'light_mode'}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setLanguage(language === 'EN' ? 'AR' : 'EN')}
-                    className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                    title={t.settings.language}
-                  >
-                    {language === 'EN' ? 'AR' : 'EN'}
-                  </button>
-            </div>
-        )}
-        
-        {!collapsed && (
-            <div className={`px-4 pb-2 text-center text-[10px] text-slate-400`}>
-                <p>{tip}</p>
-            </div>
-        )}
+        <div className="px-4 pb-2 text-center text-[10px] text-slate-400">
+          <p>{tip}</p>
+        </div>
       </div>
     </>
     );
@@ -527,41 +527,92 @@ const App: React.FC = () => {
             }
         }}
     >
-    <div className={`flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-500`} dir={language === 'AR' ? 'rtl' : 'ltr'}>
+    <div className="h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-500" dir={language === 'AR' ? 'rtl' : 'ltr'}>
       
-      {/* Desktop Sidebar */}
-      <aside className={`hidden md:flex flex-col ${isSidebarCollapsed ? 'p-2 w-[72px]' : 'p-4 w-72'} border-e border-slate-200 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl z-10 transition-all duration-300 ease-in-out`}>
-        <SidebarContent />
-      </aside>
+      {/* Navbar */}
+      <Navbar 
+        menuItems={PHARMACY_MENU}
+        activeModule={activeModule}
+        onModuleChange={React.useCallback((moduleId: string) => {
+          setActiveModule(moduleId);
+          // Map module IDs to ViewState
+          const viewMapping: Record<string, ViewState> = {
+            'dashboard': 'dashboard',
+            'inventory': 'inventory',
+            'sales': 'pos',
+            'purchase': 'purchases',
+            'customers': 'dashboard',
+            'prescriptions': 'dashboard',
+            'finance': 'dashboard',
+            'reports': 'dashboard',
+            'hr': 'dashboard',
+            'compliance': 'dashboard',
+            'settings': 'dashboard',
+          };
+          const newView = viewMapping[moduleId] || 'dashboard';
+          setView(newView);
+        }, [])}
+        theme={theme.primary}
+        darkMode={darkMode}
+        appTitle={t.appTitle}
+        onMobileMenuToggle={() => setMobileMenuOpen(true)}
+        language={language}
+      />
 
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[60] flex md:hidden">
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
-            onClick={() => setMobileMenuOpen(false)}
-          ></div>
-          {/* Panel */}
-          <aside className="relative w-80 max-w-[85vw] flex flex-col p-6 bg-white dark:bg-slate-900 h-full shadow-2xl overflow-y-auto">
-             <SidebarContent isMobile={true} />
-          </aside>
-        </div>
-      )}
+      {/* Main Layout: Sidebar + Content */}
+      <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+        {/* Desktop Sidebar */}
+        <aside className="hidden md:flex flex-col w-72 border-e border-slate-200 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl transition-all duration-300 ease-in-out">
+          <SidebarContent />
+        </aside>
 
-      {/* Mobile Header (visible only on small screens) */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 z-50">
-         <div className="flex items-center gap-2">
-            <span className={`material-symbols-rounded text-${theme.primary}-600`}>local_pharmacy</span>
-            <span className="font-bold text-slate-900 dark:text-white">{t.appTitle}</span>
-         </div>
-         <button onClick={() => setMobileMenuOpen(true)} className="p-2 text-slate-600 dark:text-slate-300">
-            <span className="material-symbols-rounded">menu</span>
-         </button>
-      </div>
+        {/* Mobile Drawer */}
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-[60] flex md:hidden">
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
+              onClick={() => setMobileMenuOpen(false)}
+            ></div>
+            {/* Panel */}
+            <aside className="relative w-80 max-w-[85vw] flex flex-col bg-white dark:bg-slate-900 h-full shadow-2xl overflow-y-auto">
+              {/* Mobile Module Selector */}
+              <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Modules</h3>
+                  <button 
+                    onClick={() => setMobileMenuOpen(false)} 
+                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                  >
+                    <span className="material-symbols-rounded text-[20px]">close</span>
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {PHARMACY_MENU.map(module => (
+                    <button
+                      key={module.id}
+                      onClick={() => {
+                        setActiveModule(module.id);
+                      }}
+                      className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all ${
+                        activeModule === module.id
+                          ? `bg-${theme.primary}-100 dark:bg-${theme.primary}-900/30 text-${theme.primary}-700 dark:text-${theme.primary}-400`
+                          : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      <span className="material-symbols-rounded text-[20px]">{module.icon}</span>
+                      <span className="text-[10px] font-medium text-center line-clamp-2">{module.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <SidebarContent isMobile={true} />
+            </aside>
+          </div>
+        )}
 
-      {/* Main Content */}
-      <main className="flex-1 h-full overflow-hidden relative pt-16 md:pt-0">
+        {/* Main Content */}
+        <main className="flex-1 h-full overflow-hidden relative">
         <div className="h-full max-w-7xl mx-auto p-4 md:p-8 overflow-y-auto scrollbar-hide">
           {view === 'dashboard' && (
              <Dashboard 
@@ -584,7 +635,7 @@ const App: React.FC = () => {
             />
           )}
           {view === 'pos' && <POS inventory={inventory} onCompleteSale={handleCompleteSale} color={theme.primary} t={t.pos} />}
-          {view === 'sales-history' && <SalesHistory sales={sales} color={theme.primary} t={t.salesHistory} />}
+          {view === 'sales-history' && <SalesHistory sales={sales} returns={returns} onProcessReturn={handleProcessReturn} color={theme.primary} t={t.salesHistory} />}
           {view === 'suppliers' && (
              <Suppliers 
                suppliers={suppliers}
@@ -612,8 +663,8 @@ const App: React.FC = () => {
                t={t.barcodeStudio}
             />
           )}
-        </div>
-      </main>
+          </div>
+        </main>
 
        {/* Mobile Bottom Nav */}
        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-around p-3 z-50 overflow-x-auto">
@@ -621,10 +672,21 @@ const App: React.FC = () => {
           <button onClick={() => setView('pos')} className={`p-2 rounded-xl shrink-0 ${view === 'pos' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-slate-400'}`}><span className="material-symbols-rounded">point_of_sale</span></button>
           <button onClick={() => setView('inventory')} className={`p-2 rounded-xl shrink-0 ${view === 'inventory' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-slate-400'}`}><span className="material-symbols-rounded">inventory_2</span></button>
           <button onClick={() => setView('purchases')} className={`p-2 rounded-xl shrink-0 ${view === 'purchases' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-slate-400'}`}><span className="material-symbols-rounded">shopping_cart_checkout</span></button>
-       </div>
+        </div>
+      </div>
     </div>
+
+    {/* Toast Notifications */}
+    {toast && (
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(null)}
+      />
+    )}
     </GlobalContextMenuWrapper>
     </ContextMenuProvider>
+    
   );
 };
 

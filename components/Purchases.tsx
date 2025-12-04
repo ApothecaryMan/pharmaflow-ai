@@ -150,6 +150,25 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                             onChange={e => setSearch(e.target.value)}
                         />
                         <div className="flex-1 overflow-y-auto">
+                            {search.trim() === '' ? (
+                              <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-3 p-8">
+                                <span className="material-symbols-rounded text-6xl opacity-20">search</span>
+                                <p className="text-sm font-medium">{t.searchDrug}</p>
+                                <p className="text-xs text-center max-w-xs opacity-70">
+                                  {t.startSearching || 'Start searching for products to add to purchase order'}
+                                </p>
+                              </div>
+                            ) : filteredDrugs.length === 0 ? (
+                              <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-3 p-8">
+                                <span className="material-symbols-rounded text-6xl opacity-20">search_off</span>
+                                <p className="text-sm font-medium">
+                                  {t.noResults || 'No results found'}
+                                </p>
+                                <p className="text-xs text-center max-w-xs opacity-70">
+                                  {t.tryDifferentKeywords || 'Try searching with different keywords'}
+                                </p>
+                              </div>
+                            ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
                                 {filteredDrugs.map(drug => (
                                     <div key={drug.id} 
@@ -174,6 +193,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                     </div>
                                 ))}
                             </div>
+                            )}
                         </div>
                    </div>
                </div>
