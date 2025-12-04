@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, Return } from './types';
+import { Dashboard } from './components/Dashboard';
 import { Inventory } from './components/Inventory';
 import { POS } from './components/POS';
-import { Dashboard } from './components/Dashboard';
 import { SalesHistory } from './components/SalesHistory';
 import { Suppliers } from './components/Suppliers';
 import { Purchases } from './components/Purchases';
@@ -12,6 +12,7 @@ import { TRANSLATIONS } from './translations';
 import { PHARMACY_MENU } from './menuData';
 import { SidebarMenu } from './components/SidebarMenu';
 import { Navbar } from './components/Navbar';
+import { useTheme } from './hooks/useTheme';
 
 // Inventory Generator
 const generateInventory = (): Drug[] => {
@@ -182,6 +183,9 @@ const App: React.FC = () => {
     }
     return 'EN';
   });
+
+  // Apply theme system - updates CSS variables
+  useTheme(theme.primary, darkMode);
 
   const [inventory, setInventory] = useState<Drug[]>(() => {
     if (typeof window !== 'undefined') {
@@ -442,6 +446,10 @@ const App: React.FC = () => {
           setView(viewId as ViewState);
           setMobileMenuOpen(false);
         }}
+        onViewChange={(viewId) => {
+          setView(viewId as ViewState);
+          setMobileMenuOpen(false);
+        }}
         isMobile={isMobile}
         theme={theme.primary}
         translations={t}
@@ -527,7 +535,14 @@ const App: React.FC = () => {
             }
         }}
     >
-    <div className="h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-500" dir={language === 'AR' ? 'rtl' : 'ltr'}>
+    <div 
+      className="min-h-screen transition-colors duration-200"
+      style={{ 
+        backgroundColor: 'var(--bg-primary)',
+        color: 'var(--text-primary)'
+      }}
+      dir={language === 'AR' ? 'rtl' : 'ltr'}
+    >
       
       {/* Navbar */}
       <Navbar 
@@ -562,7 +577,13 @@ const App: React.FC = () => {
       {/* Main Layout: Sidebar + Content */}
       <div className="flex h-[calc(100vh-64px)] overflow-hidden">
         {/* Desktop Sidebar */}
-        <aside className="hidden md:flex flex-col w-72 border-e border-slate-200 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl transition-all duration-300 ease-in-out">
+        <aside 
+          className="hidden md:flex flex-col w-72 backdrop-blur-xl transition-all duration-300 ease-in-out"
+          style={{
+            borderRight: '1px solid var(--border-primary)',
+            backgroundColor: 'var(--bg-secondary)'
+          }}
+        >
           <SidebarContent />
         </aside>
 

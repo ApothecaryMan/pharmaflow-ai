@@ -3,14 +3,12 @@ export interface MenuItem {
   label: string;
   icon?: string;
   order?: number;
-  submenus?: Submenu[];
-  hasPage?: boolean; // Indicates if this module has an implemented page
-}
-
-export interface Submenu {
-  id: string;
-  label: string;
-  items: string[];
+  hasPage?: boolean;
+  submenus?: {
+    id: string;
+    label: string;
+    items: (string | { label: string; view?: string })[];
+  }[];
 }
 
 export const PHARMACY_MENU: MenuItem[] = [
@@ -280,11 +278,24 @@ export const PHARMACY_MENU: MenuItem[] = [
         items: [
           "All Products",
           "Add New Product",
-          "Edit Products",
-          "Product Search",
-          "Bulk Upload",
+          "Bulk Import",
+          "Bulk Update",
+          "Product Categories",
+          "Product Attributes",
+          "Barcodes/SKU",
+          { label: "Barcode Studio", view: "barcode-studio" },
           "Product Images",
-          "Barcodes/SKU"
+          "Product Bundles",
+          "Product Kits",
+          "Product Variants",
+          "Product Pricing Rules",
+          "Product Discounts",
+          "Product Tags",
+          "Product Reviews",
+          "Product Warranty",
+          "Product Manuals",
+          "Product Certifications",
+          "Product Compliance"
         ]
       },
       {

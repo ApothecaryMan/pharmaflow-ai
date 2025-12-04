@@ -163,7 +163,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         </div>
 
         {/* Expenses */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between min-h-[120px] group relative">
+        <div 
+          className="p-5 rounded-3xl flex flex-col justify-between min-h-[120px] group relative"
+          style={{
+            backgroundColor: 'var(--bg-primary)',
+            borderWidth: '1px',
+            borderStyle: 'solid',
+            borderColor: 'var(--border-primary)'
+          }}
+        >
           <div className="absolute top-3 right-3">
             <ExpandButton onClick={() => setExpandedView('expenses')} />
           </div>
@@ -177,7 +185,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         </div>
 
         {/* Net Profit */}
-         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between min-h-[120px] group relative">
+         <div 
+          className="p-5 rounded-3xl flex flex-col justify-between min-h-[120px] group relative"
+          style={{
+            backgroundColor: 'var(--bg-primary)',
+            borderWidth: '1px',
+            borderStyle: 'solid',
+            borderColor: 'var(--border-primary)'
+          }}
+        >
           <div className="absolute top-3 right-3">
             <ExpandButton onClick={() => setExpandedView('profit')} />
           </div>
@@ -191,7 +207,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         </div>
 
         {/* Low Stock */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between min-h-[120px] group relative">
+        <div 
+          className="p-5 rounded-3xl flex flex-col justify-between min-h-[120px] group relative"
+          style={{
+            backgroundColor: 'var(--bg-primary)',
+            borderWidth: '1px',
+            borderStyle: 'solid',
+            borderColor: 'var(--border-primary)'
+          }}
+        >
           <div className="absolute top-3 right-3">
             <ExpandButton onClick={() => setExpandedView('lowStock')} />
           </div>

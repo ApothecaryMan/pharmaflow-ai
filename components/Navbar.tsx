@@ -26,7 +26,14 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
   language
 }) => {
   return (
-    <nav className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center px-4 sticky top-0 z-50 shadow-sm">
+    <nav 
+      className="h-16 flex items-center px-4 sticky top-0 z-50"
+      style={{
+        backgroundColor: 'var(--bg-primary)',
+        borderBottom: '1px solid var(--border-primary)',
+        boxShadow: 'var(--shadow-sm)'
+      }}
+    >
       {/* Logo & Title */}
       <div className="flex items-center gap-3 mr-6 shrink-0">
         <div className={`w-10 h-10 rounded-xl bg-${theme}-600 flex items-center justify-center shadow-lg shadow-${theme}-500/30`}>
