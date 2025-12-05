@@ -175,14 +175,14 @@ export const TabBar: React.FC<TabBarProps> = ({
                   }}
                   className={`
                     absolute right-1.5 top-1/2 -translate-y-1/2
-                    w-6 h-6 flex items-center justify-center rounded-full transition-all 
+                    w-5 h-5 flex items-center justify-center rounded-full transition-all 
                     opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100
                     hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-600
                     bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm
                     ${isActive ? 'text-slate-400' : 'text-slate-400'}
                   `}
                 >
-                  <span className="material-symbols-rounded text-[14px]">close</span>
+                  <span className="material-symbols-rounded text-[13px]">close</span>
                 </button>
               )}
             </div>

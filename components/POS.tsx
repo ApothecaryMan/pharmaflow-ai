@@ -546,7 +546,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
                     />
                 ) : (
                     <span className="text-slate-600 dark:text-slate-400 truncate">
-                        {currentBatch ? `${formatDate(currentBatch.expiryDate)} • Stock: ${currentBatch.stock}` : 'No Stock'}
+                        {currentBatch ? `${formatDate(currentBatch.expiryDate)} • ${currentBatch.stock}` : 'No Stock'}
                     </span>
                 )}
                 <span className="material-symbols-rounded text-[14px] text-slate-400">arrow_drop_down</span>
@@ -837,96 +837,149 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
                 </div>
             ) : (
                 cart.map(item => (
-                    <div 
-                        key={item.id} 
-                        className="flex flex-col p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 relative group"
+                    <div
+                        key={item.id}
+                        className="flex flex-col p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 relative group transition-all hover:shadow-sm"
                         onContextMenu={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             showMenu(e.clientX, e.clientY, [
                                 { label: 'Remove Item', icon: 'delete', action: () => removeFromCart(item.id), danger: true },
                                 { separator: true },
-                                { 
-                                    label: item.isUnit ? `Switch to ${t.pack}` : `Switch to ${t.unit}`, 
-                                    icon: 'swap_horiz', 
+                                {
+                                    label: item.isUnit ? `Switch to ${t.pack}` : `Switch to ${t.unit}`,
+                                    icon: 'swap_horiz',
                                     action: () => toggleUnitMode(item.id),
                                     disabled: !item.unitsPerPack || item.unitsPerPack <= 1
                                 },
-                                { 
-                                    label: t.actions.discount, 
-                                    icon: 'percent', 
+                                {
+                                    label: t.actions.discount,
+                                    icon: 'percent',
                                     action: () => {
                                         const disc = prompt('Enter discount percentage (0-100):', item.discount?.toString() || '0');
                                         if (disc !== null) {
                                             const val = parseFloat(disc);
                                             if (!isNaN(val) && val >= 0 && val <= 100) {
-                                                setCart(prev => prev.map(i => i.id === item.id ? { ...i, discount: val } : i));
+                                                const maxDisc = item.maxDiscount ?? 10;
+                                                if (val > maxDisc) {
+                                                    alert(`Discount cannot exceed ${maxDisc}%`);
+                                                } else {
+                                                    setCart(prev => prev.map(i => i.id === item.id ? { ...i, discount: val } : i));
+                                                    if (val > 0) setGlobalDiscount(0);
+                                                }
                                             }
                                         }
-                                    } 
+                                    }
                                 }
                             ]);
                         }}
                     >
-                        {/* Row 1: Name and Price */}
-                        <div className="flex justify-between items-start mb-1.5 pe-4">
-                            <div className="min-w-0">
-                                <h4 className="font-bold text-xs truncate text-slate-900 dark:text-slate-100 leading-tight">{item.name}</h4>
-                                <div className="flex gap-1 items-center mt-0.5">
-                                    <span className="text-[9px] text-slate-500 bg-slate-200 dark:bg-slate-700 px-1 rounded">
-                                        Exp: {new Date(item.expiryDate).toLocaleDateString('en-US', {month: '2-digit', year: '2-digit'})}
-                                    </span>
-                                    {item.isUnit && <span className="text-[9px] text-slate-400">/ {t.unit}</span>}
-                                </div>
-                            </div>
+                        {/* Delete Button - Absolute Top Right */}
+                        <button
+                            onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
+                            className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50 text-red-600 opacity-0 group-hover:opacity-100 transition-all shadow-sm z-10 hover:scale-110"
+                        >
+                            <span className="material-symbols-rounded text-[14px]">close</span>
+                        </button>
+
+                        {/* Row 1: Name & Price */}
+                        <div className="flex justify-between items-start gap-2 mb-1">
+                            <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100 leading-tight line-clamp-2 flex-1" title={item.name}>
+                                {item.name}
+                            </h4>
                             <div className="text-end shrink-0">
-                                <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                <div className="text-sm font-bold text-slate-900 dark:text-white">
                                     ${calculateItemTotal(item).toFixed(2)}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Absolute delete button top-right */}
-                        <button onClick={() => removeFromCart(item.id)} className="absolute top-1.5 right-1 text-slate-400 hover:text-red-500 p-0.5 opacity-60 hover:opacity-100 rtl:right-auto rtl:left-1">
-                            <span className="material-symbols-rounded text-[14px]">close</span>
-                        </button>
-                        
-                        {/* Row 2: Controls */}
-                        <div className="flex items-center justify-between gap-1">
-                            
-                            {/* Qty */}
-                            <div className="flex items-center bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 shadow-sm h-5">
-                                <button onClick={() => updateQuantity(item.id, -1)} className="w-5 h-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500">
-                                    <span className="material-symbols-rounded text-[12px]">remove</span>
-                                </button>
-                                <span className="text-[10px] font-bold w-5 text-center leading-none">{item.quantity}</span>
-                                <button onClick={() => updateQuantity(item.id, 1)} className="w-5 h-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500">
-                                    <span className="material-symbols-rounded text-[12px]">add</span>
-                                </button>
+                        {/* Row 2: Meta & Controls */}
+                        <div className="flex items-center justify-between gap-2 mt-1">
+                            {/* Meta Info */}
+                            <div className="flex flex-col gap-0.5">
+                                <div className="flex items-center gap-1">
+                                    <span className="text-[9px] text-slate-500 font-medium bg-slate-100 dark:bg-slate-700/50 px-1 rounded">
+                                        {new Date(item.expiryDate).toLocaleDateString('en-US', {month: '2-digit', year: '2-digit'})}
+                                    </span>
+                                    {item.isUnit && <span className="text-[9px] text-blue-600 dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-900/20 px-1 rounded">{t.unit}</span>}
+                                </div>
                             </div>
 
-                            {/* Unit Toggle (Compact) */}
-                            {item.unitsPerPack && item.unitsPerPack > 1 && (
-                                <button 
-                                    onClick={() => toggleUnitMode(item.id)}
-                                    className={`px-1.5 h-5 rounded text-[9px] font-bold border transition-colors truncate max-w-[50px] ${item.isUnit ? `bg-${color}-50 border-${color}-200 text-${color}-700` : 'bg-white border-slate-200 text-slate-600'}`}
-                                    title={item.isUnit ? t.unit : t.pack}
-                                >
-                                    {item.isUnit ? t.unit : t.pack}
-                                </button>
-                            )}
+                            {/* Controls */}
+                            <div className="flex items-center gap-1">
+                                {/* Unit Toggle (if applicable) */}
+                                {item.unitsPerPack && item.unitsPerPack > 1 && (
+                                    <button
+                                        onClick={() => toggleUnitMode(item.id)}
+                                        className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 transition-colors"
+                                        title={item.isUnit ? "Switch to Pack" : "Switch to Unit"}
+                                    >
+                                        <span className="material-symbols-rounded text-[14px]">swap_horiz</span>
+                                    </button>
+                                )}
 
-                            {/* Discount */}
-                            <div className="flex items-center gap-1 ms-auto">
-                                <span className="text-[9px] text-slate-400">%</span>
-                                <input 
-                                    type="number" 
-                                    value={item.discount || ''}
-                                    placeholder="0"
-                                    onChange={(e) => updateItemDiscount(item.id, parseFloat(e.target.value) || 0)}
-                                    className="w-7 h-5 text-[10px] rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 text-center p-0"
-                                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                                />
+                                {/* Discount Button & Input */}
+                                <div className="flex items-center gap-1">
+                                    <button 
+                                        onClick={() => {
+                                            const currentDiscount = item.discount || 0;
+                                            if (currentDiscount > 0) {
+                                                // Remove discount
+                                                setCart(prev => prev.map(i => i.id === item.id ? { ...i, discount: 0 } : i));
+                                            } else {
+                                                // Apply max discount (default 10%)
+                                                const maxDisc = item.maxDiscount ?? 10;
+                                                setCart(prev => prev.map(i => i.id === item.id ? { ...i, discount: maxDisc } : i));
+                                                setGlobalDiscount(0);
+                                            }
+                                        }}
+                                        className={`w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors ${(item.discount || 0) > 0 ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30' : 'text-slate-400'}`}
+                                        title={`Toggle Max Discount (${item.maxDiscount ?? 10}%)`}
+                                    >
+                                        <span className="material-symbols-rounded text-[14px]">percent</span>
+                                    </button>
+                                    <input 
+                                        type="number" 
+                                        value={item.discount || ''}
+                                        placeholder="0"
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value);
+                                            if (!isNaN(val) && val >= 0 && val <= 100) {
+                                                const maxDisc = item.maxDiscount ?? 10;
+                                                if (val > maxDisc) {
+                                                    setCart(prev => prev.map(i => i.id === item.id ? { ...i, discount: maxDisc } : i));
+                                                    if (maxDisc > 0) setGlobalDiscount(0);
+                                                } else {
+                                                    setCart(prev => prev.map(i => i.id === item.id ? { ...i, discount: val } : i));
+                                                    if (val > 0) setGlobalDiscount(0);
+                                                }
+                                            } else if (e.target.value === '') {
+                                                 setCart(prev => prev.map(i => i.id === item.id ? { ...i, discount: 0 } : i));
+                                            }
+                                        }}
+                                        className="w-7 h-5 text-[10px] rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 text-center p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                </div>
+
+                                {/* Qty Control */}
+                                <div className="flex items-center bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm h-6 overflow-hidden">
+                                    <button
+                                        onClick={() => updateQuantity(item.id, -1)}
+                                        className="w-6 h-full flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 active:bg-slate-100"
+                                    >
+                                        <span className="material-symbols-rounded text-[14px]">remove</span>
+                                    </button>
+                                    <div className="w-8 h-full flex items-center justify-center text-xs font-bold border-x border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+                                        {item.quantity}
+                                    </div>
+                                    <button
+                                        onClick={() => updateQuantity(item.id, 1)}
+                                        className="w-6 h-full flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 active:bg-slate-100"
+                                    >
+                                        <span className="material-symbols-rounded text-[14px]">add</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -945,16 +998,25 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
                 
                 <div className="flex justify-between items-center text-[10px]">
                     <span className="text-slate-500 dark:text-slate-400">{t.orderDiscount}</span>
-                    <input 
-                        type="number" 
-                        min="0"
-                        max="100"
-                        value={globalDiscount || ''}
-                        placeholder="0"
-                        onChange={(e) => setGlobalDiscount(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                        className="w-10 px-1 py-0.5 text-end rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-1 text-slate-700 dark:text-slate-300"
-                        style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    />
+                    <div className="flex items-center gap-1">
+                        <span className="material-symbols-rounded text-[14px] text-slate-400">percent</span>
+                        <input 
+                            type="number" 
+                            min="0"
+                            max="100"
+                            value={globalDiscount || ''}
+                            placeholder="0"
+                            onChange={(e) => {
+                                const val = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
+                                setGlobalDiscount(val);
+                                if (val > 0) {
+                                    setCart(prev => prev.map(item => ({ ...item, discount: 0 })));
+                                }
+                            }}
+                            className="w-10 px-1 py-0.5 text-end rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-1 text-slate-700 dark:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                        />
+                    </div>
                 </div>
 
                 <div className="flex justify-between items-center text-sm font-medium pt-2 border-t border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400">

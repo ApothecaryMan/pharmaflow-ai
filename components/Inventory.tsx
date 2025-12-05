@@ -140,14 +140,14 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
   const handleOpenAdd = () => {
     setEditingDrug(null);
     setFormData({
-      name: '', genericName: '', category: 'General', price: 0, costPrice: 0, stock: 0, expiryDate: '', description: '', barcode: '', internalCode: '', unitsPerPack: 1
+      name: '', genericName: '', category: 'General', price: 0, costPrice: 0, stock: 0, expiryDate: '', description: '', barcode: '', internalCode: '', unitsPerPack: 1, maxDiscount: 10
     });
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (drug: Drug) => {
     setEditingDrug(drug);
-    setFormData({ ...drug });
+    setFormData({ ...drug, maxDiscount: drug.maxDiscount ?? 10 });
     setIsModalOpen(true);
     setActiveMenuId(null);
   };
@@ -667,7 +667,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase">{t.modal.price}</label>
                   <input type="number" step="0.01" required className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all font-bold text-green-600 dark:text-green-400" 
@@ -679,6 +679,13 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   <input type="number" step="0.01" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all text-slate-500" 
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                     value={formData.costPrice || 0} onChange={e => setFormData({...formData, costPrice: parseFloat(e.target.value) || 0})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Max Disc (%)</label>
+                  <input type="number" min="0" max="100" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all text-red-500" 
+                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                    placeholder="No Limit"
+                    value={formData.maxDiscount || ''} onChange={e => setFormData({...formData, maxDiscount: parseFloat(e.target.value)})} />
                 </div>
               </div>
 

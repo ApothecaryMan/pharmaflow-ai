@@ -15,6 +15,7 @@ export interface Drug {
   internalCode?: string;
   unitsPerPack?: number;
   supplierId?: string; // Preferred supplier
+  maxDiscount?: number; // Maximum allowed discount percentage
 }
 
 export interface Supplier {
