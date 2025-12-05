@@ -61,6 +61,8 @@ export interface Sale {
   customerName: string;
   customerCode?: string;
   paymentMethod: 'cash' | 'visa';
+  saleType?: 'walk-in' | 'delivery';
+  deliveryFee?: number;
   globalDiscount: number;
   // Return tracking
   hasReturns?: boolean;

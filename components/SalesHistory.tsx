@@ -277,6 +277,11 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
             <span>Order Discount (${sale.globalDiscount}%)</span>
             <span>-$${((sale.subtotal || 0) * sale.globalDiscount / 100).toFixed(2)}</span>
           </div>` : ''}
+          ${sale.deliveryFee && sale.deliveryFee > 0 ? `
+          <div class="total-row">
+            <span>Delivery Fee</span>
+            <span>+$${sale.deliveryFee.toFixed(2)}</span>
+          </div>` : ''}
           <div class="total-row final">
             <span>Total Amount</span>
             <span>$${sale.total.toFixed(2)}</span>
@@ -284,12 +289,23 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
         </div>
 
         <div class="footer">
+          <svg id="barcode"></svg>
           <p>Thank you for choosing PharmaFlow.<br>We wish you good health!</p>
           <p>For inquiries, please keep this receipt.</p>
         </div>
 
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
         <script>
-          window.onload = function() { window.print(); }
+          window.onload = function() { 
+            JsBarcode("#barcode", "${sale.id}", {
+              format: "CODE128",
+              lineColor: "#0f172a",
+              width: 2,
+              height: 40,
+              displayValue: true
+            });
+            setTimeout(() => window.print(), 500);
+          }
         </script>
       </body>
       </html>
@@ -397,8 +413,11 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                 <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">
                                     {new Date(sale.date).toLocaleDateString()}
                                 </div>
-                                <div className="text-xs text-slate-500">
+                                <div className="text-xs text-slate-500 flex items-center gap-1">
                                     {new Date(sale.date).toLocaleTimeString()}
+                                    {sale.saleType === 'delivery' && (
+                                        <span className="material-symbols-rounded text-[14px] text-blue-500" title="Delivery Order">local_shipping</span>
+                                    )}
                                 </div>
                             </td>
                         );
@@ -438,6 +457,11 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                         return (
                             <td key={col.key} className="p-4 font-bold text-slate-900 dark:text-slate-100">
                                 ${sale.total.toFixed(2)}
+                                {sale.deliveryFee && sale.deliveryFee > 0 && (
+                                    <div className="text-[10px] text-slate-400 font-normal">
+                                        +${sale.deliveryFee.toFixed(2)} delivery
+                                    </div>
+                                )}
                             </td>
                         );
                     }
@@ -548,6 +572,12 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                            <div className="flex justify-between text-green-600 dark:text-green-400">
                                <span>{t.modal.discount} ({selectedSale.globalDiscount}%)</span>
                                <span>-${(selectedSale.subtotal! * selectedSale.globalDiscount / 100).toFixed(2)}</span>
+                           </div>
+                       )}
+                       {selectedSale.deliveryFee && selectedSale.deliveryFee > 0 && (
+                           <div className="flex justify-between text-slate-500">
+                               <span>Delivery Fee</span>
+                               <span>+${selectedSale.deliveryFee.toFixed(2)}</span>
                            </div>
                        )}
                        <div className="flex justify-between text-lg font-bold text-slate-900 dark:text-white pt-2 border-t border-slate-100 dark:border-slate-800">

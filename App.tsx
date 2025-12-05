@@ -377,7 +377,7 @@ const App: React.FC = () => {
     }));
   };
 
-  const handleCompleteSale = (saleData: { items: CartItem[], customerName: string, customerCode?: string, paymentMethod: 'cash' | 'visa', globalDiscount: number, subtotal: number, total: number }) => {
+  const handleCompleteSale = (saleData: { items: CartItem[], customerName: string, customerCode?: string, paymentMethod: 'cash' | 'visa', saleType?: 'walk-in' | 'delivery', deliveryFee?: number, globalDiscount: number, subtotal: number, total: number }) => {
     // Generate Serial ID (simple increment based on count)
     const serialId = (100001 + sales.length).toString();
 
@@ -401,6 +401,12 @@ const App: React.FC = () => {
     }));
 
     setSales([...sales, newSale]);
+    
+    // Show success notification
+    setToast({
+      message: `Order #${serialId} completed successfully!`,
+      type: 'success'
+    });
   };
 
   const handleProcessReturn = (returnData: Return) => {

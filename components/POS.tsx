@@ -8,7 +8,7 @@ import { TabBar } from './TabBar';
 
 interface POSProps {
   inventory: Drug[];
-  onCompleteSale: (saleData: { items: CartItem[], customerName: string, globalDiscount: number, subtotal: number, total: number }) => void;
+  onCompleteSale: (saleData: { items: CartItem[], customerName: string, customerCode?: string, paymentMethod: 'cash' | 'visa', saleType?: 'walk-in' | 'delivery', deliveryFee?: number, globalDiscount: number, subtotal: number, total: number }) => void;
   color: string;
   t: any;
 }
@@ -334,16 +334,24 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
   const cartTotal = subtotal * (1 - (globalDiscount / 100));
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleCheckout = () => {
+  const handleCheckout = (saleType: 'walk-in' | 'delivery' = 'walk-in') => {
     if (cart.length === 0) return;
+
+    let deliveryFee = 0;
+    if (saleType === 'delivery') {
+        deliveryFee = 5;
+    }
+
     onCompleteSale({
         items: cart,
         customerName: customerName || 'Guest Customer',
         customerCode,
         paymentMethod,
+        saleType,
+        deliveryFee,
         globalDiscount,
         subtotal,
-        total: cartTotal
+        total: cartTotal + deliveryFee
     });
     // Close the current tab after successful checkout
     removeTab(activeTabId);
@@ -1119,14 +1127,24 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
                 </div>
             </div>
 
-            <button 
-                onClick={handleCheckout}
-                disabled={cart.length === 0}
-                className={`w-full py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-slate-300 dark:disabled:bg-slate-800 text-white font-bold text-sm shadow-md shadow-${color}-200 dark:shadow-none transition-all active:scale-95 flex justify-center items-center gap-2`}
-            >
-                <span className="material-symbols-rounded text-[18px]">payments</span>
-                {t.completeOrder}
-            </button>
+            <div className="flex gap-2">
+                <button 
+                    onClick={() => handleCheckout('walk-in')}
+                    disabled={cart.length === 0}
+                    className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-slate-300 dark:disabled:bg-slate-800 text-white font-bold text-sm shadow-md shadow-${color}-200 dark:shadow-none transition-all active:scale-95 flex justify-center items-center gap-2`}
+                >
+                    <span className="material-symbols-rounded text-[18px]">payments</span>
+                    {t.completeOrder}
+                </button>
+                <button
+                    onClick={() => handleCheckout('delivery')}
+                    disabled={cart.length === 0}
+                    className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 transition-all active:scale-95 flex justify-center items-center`}
+                    title="Delivery Order"
+                >
+                    <span className="material-symbols-rounded text-[20px]">local_shipping</span>
+                </button>
+            </div>
         </div>
       </div>
       

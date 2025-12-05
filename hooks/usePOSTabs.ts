@@ -57,12 +57,12 @@ export const usePOSTabs = () => {
     setTabs(prev => {
       const tabToRemove = prev.find(t => t.id === tabId);
       
-      // Warn if tab has items
-      if (tabToRemove && tabToRemove.cart.length > 0) {
+      // Warn if tab has items - REMOVED per user request
+      /* if (tabToRemove && tabToRemove.cart.length > 0) {
         if (!window.confirm('This tab has items. Are you sure you want to close it?')) {
           return prev;
         }
-      }
+      } */
 
       const newTabs = prev.filter(t => t.id !== tabId);
       
