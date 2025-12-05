@@ -32,6 +32,16 @@ export interface CartItem extends Drug {
   isUnit?: boolean;
 }
 
+export interface SaleTab {
+  id: string;
+  name: string;
+  cart: CartItem[];
+  customerName: string;
+  discount: number;
+  createdAt: number;
+  isPinned?: boolean; // For pinning tabs
+}
+
 export interface PurchaseItem {
   drugId: string;
   name: string;

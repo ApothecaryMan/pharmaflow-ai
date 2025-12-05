@@ -536,7 +536,7 @@ const App: React.FC = () => {
         }}
     >
     <div 
-      className="min-h-screen transition-colors duration-200"
+      className="min-h-screen transition-colors duration-200 select-none"
       style={{ 
         backgroundColor: 'var(--bg-primary)',
         color: 'var(--text-primary)'
@@ -634,7 +634,7 @@ const App: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 h-full overflow-hidden relative">
-        <div className="h-full max-w-7xl mx-auto p-4 md:p-8 overflow-y-auto scrollbar-hide">
+        <div className={`h-full max-w-7xl mx-auto overflow-y-auto scrollbar-hide ${view === 'pos' ? 'p-3' : 'p-4 md:p-8'}`}>
           {view === 'dashboard' && (
              <Dashboard 
                 inventory={inventory} 

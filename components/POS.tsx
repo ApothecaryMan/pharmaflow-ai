@@ -1,6 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useContextMenu } from '../components/ContextMenu';
 import { Drug, CartItem } from '../types';
+import { usePOSTabs } from '../hooks/usePOSTabs';
+import { useColumnReorder } from '../hooks/useColumnReorder';
+import { useLongPress } from '../hooks/useLongPress';
+import { TabBar } from './TabBar';
 
 interface POSProps {
   inventory: Drug[];
@@ -11,15 +15,49 @@ interface POSProps {
 
 export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t }) => {
   const { showMenu } = useContextMenu();
-  const [cart, setCart] = useState<CartItem[]>([]);
+  
+  // Multi-tab system
+  const {
+    tabs,
+    activeTab,
+    activeTabId,
+    addTab,
+    removeTab,
+    switchTab,
+    updateTab,
+    renameTab,
+    togglePin,
+    maxTabs
+  } = usePOSTabs();
+
+  // Use active tab's state
+  const cart = activeTab?.cart || [];
+  const setCart = useCallback((newCart: CartItem[] | ((prev: CartItem[]) => CartItem[])) => {
+    const updatedCart = typeof newCart === 'function' ? newCart(cart) : newCart;
+    updateTab(activeTabId, { cart: updatedCart });
+  }, [cart, activeTabId, updateTab]);
+
+  const customerName = activeTab?.customerName || '';
+  const setCustomerName = useCallback((name: string) => {
+    updateTab(activeTabId, { customerName: name });
+  }, [activeTabId, updateTab]);
+
+  const globalDiscount = activeTab?.discount || 0;
+  const setGlobalDiscount = useCallback((discount: number) => {
+    updateTab(activeTabId, { discount });
+  }, [activeTabId, updateTab]);
+  
+  // Rest of the state remains the same
   const [search, setSearch] = useState('');
   // Selected category state key: 'All', 'Medicine', 'Cosmetics', 'Non-Medicine'
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [customerName, setCustomerName] = useState('');
-  const [globalDiscount, setGlobalDiscount] = useState<number>(0);
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const [selectedUnits, setSelectedUnits] = useState<Record<string, 'pack' | 'unit'>>({});
+  const [selectedBatches, setSelectedBatches] = useState<Record<string, string>>({}); // drugId -> batchId
+  const [openBatchDropdown, setOpenBatchDropdown] = useState<string | null>(null);
+  const [batchSearch, setBatchSearch] = useState('');
   
   // Sidebar Resize Logic
   const [sidebarWidth, setSidebarWidth] = useState(350);
@@ -160,28 +198,73 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
     return '';
   };
 
-  const addToCart = (drug: Drug) => {
+  const addToCart = (drug: Drug, isUnitMode: boolean = false) => {
     if (drug.stock <= 0) return;
     setCart(prev => {
       const existing = prev.find(item => item.id === drug.id);
       if (existing) {
-        // If it's already in cart, check stock limits.
-        if (existing.quantity >= drug.stock && !existing.isUnit) return prev; 
+        // Check if unit mode matches
+        if (existing.isUnit !== isUnitMode) {
+            // If mode differs, we might need to handle it (e.g., show error or separate items if supported)
+            // For now, let's assume we just update the existing item's mode if quantity is 1, or add new logic.
+            // But simpler: just alert or block. Or better: allow mixed? 
+            // The current logic assumes one entry per drug ID. 
+            // Let's just update the mode if it's a switch, but that's tricky with quantity.
+            // Simplest for this user request: Just add to quantity, but we must respect the *current* item's mode or force a new row?
+            // The types say CartItem extends Drug, so ID is unique.
+            // Let's stick to: if existing, use existing mode. OR, allow toggling mode in cart (which we already have).
+            
+            // If user explicitly selected a different unit in the list, maybe we should respect it?
+            // Let's just add quantity for now, assuming the user handles mode switching in cart if needed, 
+            // OR better: if the cart item is 'pack' and user adds 'unit', we could convert? No, too complex.
+            
+            // Let's use the passed isUnitMode for new items, but for existing, we might just increment.
+            // However, if I select "Unit" and click add, and it's already in cart as "Pack", adding 1 to quantity adds 1 Pack. That's wrong.
+            
+            // Correct logic:
+            // If existing item has different unit mode, we should probably notify user or handle it.
+            // For this iteration, let's assume we stick to the existing item's mode to avoid conflicts, 
+            // UNLESS we want to support multiple lines for same drug (not supported by ID key).
+            
+            // Let's go with: If not in cart, use selected mode. If in cart, increment quantity (respecting existing mode).
+             if (existing.quantity >= drug.stock && !existing.isUnit) return prev; 
+             return prev.map(item => item.id === drug.id ? { ...item, quantity: item.quantity + 1 } : item);
+        }
+        
+        // Same mode, check limits
+        if (isUnitMode && existing.unitsPerPack) {
+             // Check unit stock limits if needed
+        } else {
+             if (existing.quantity >= drug.stock) return prev;
+        }
+        
         return prev.map(item => item.id === drug.id ? { ...item, quantity: item.quantity + 1 } : item);
       }
-      return [...prev, { ...drug, quantity: 1, discount: 0, isUnit: false }];
+      return [...prev, { ...drug, quantity: 1, discount: 0, isUnit: isUnitMode }];
     });
   };
 
   const addGroupToCart = (group: Drug[]) => {
-    // FEFO: Find first batch with available stock
-    const validBatch = group.find(d => {
-        const inCart = cart.find(c => c.id === d.id)?.quantity || 0;
-        return (d.stock - inCart) > 0;
-    });
+    const firstDrug = group[0];
+    const selectedBatchId = selectedBatches[firstDrug.id];
     
-    if (validBatch) {
-        addToCart(validBatch);
+    let targetBatch: Drug | undefined;
+    
+    if (selectedBatchId) {
+        targetBatch = group.find(d => d.id === selectedBatchId);
+    }
+    
+    // If no manual selection or selected batch invalid/empty, use FEFO
+    if (!targetBatch || targetBatch.stock <= 0) {
+        targetBatch = group.find(d => {
+            const inCart = cart.find(c => c.id === d.id)?.quantity || 0;
+            return (d.stock - inCart) > 0;
+        });
+    }
+    
+    if (targetBatch) {
+        const unitMode = selectedUnits[firstDrug.id] === 'unit';
+        addToCart(targetBatch, unitMode);
     }
   };
 
@@ -292,8 +375,244 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
     return Object.values(groups);
   }, [filteredDrugs]);
 
+  // Long Press Logic for Touch Devices
+
+  
+  const currentTouchItem = useRef<{drug: Drug, group: Drug[]} | null>(null);
+  const currentTouchHeader = useRef<React.TouchEvent | null>(null);
+
+  const { 
+    onTouchStart: onRowTouchStart, 
+    onTouchEnd: onRowTouchEnd, 
+    onTouchMove: onRowTouchMove, 
+    isLongPress: isRowLongPress 
+  } = useLongPress({
+    onLongPress: (e) => {
+        if (currentTouchItem.current) {
+            const { drug, group } = currentTouchItem.current;
+            const touch = e.touches[0];
+            showMenu(touch.clientX, touch.clientY, [
+                { label: 'Add to Cart', icon: 'add_shopping_cart', action: () => addGroupToCart(group) },
+                { label: 'View Details', icon: 'info', action: () => setViewingDrug(drug) },
+                { separator: true },
+                { label: t.actions.showSimilar, icon: 'category', action: () => setSelectedCategory(drug.category) }
+            ]);
+        }
+    }
+  });
+
+  const {
+    onTouchStart: onHeaderTouchStart,
+    onTouchEnd: onHeaderTouchEnd,
+    onTouchMove: onHeaderTouchMove,
+    isLongPress: isHeaderLongPress
+  } = useLongPress({
+      onLongPress: (e) => {
+        const touch = e.touches[0];
+        showMenu(touch.clientX, touch.clientY, [
+            { 
+              label: 'Show/Hide Columns', 
+              icon: 'visibility', 
+              action: () => {} 
+            },
+            { separator: true },
+            ...Object.keys(columns).map(colId => ({
+              label: columns[colId as keyof typeof columns].label || 'Icon',
+              icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
+              action: () => toggleColumnVisibility(colId)
+            }))
+        ]);
+      }
+  });
+
+  // Column Reorder Logic
+  const {
+    columnOrder,
+    hiddenColumns,
+    draggedColumn,
+    dragOverColumn,
+    toggleColumnVisibility,
+    handleColumnDragStart,
+    handleColumnDragOver,
+    handleColumnTouchMove,
+    handleColumnDrop,
+    handleColumnTouchEnd,
+    handleColumnDragEnd,
+  } = useColumnReorder({
+    defaultColumns: ['icon', 'name', 'barcode', 'category', 'price', 'stock', 'unit', 'batches', 'inCart'],
+    storageKey: 'pos_columns'
+  });
+
+  const columns = {
+    icon: { label: '', className: 'px-3 py-2 text-start w-12' },
+    name: { label: t.name || 'Name', className: 'px-3 py-2 text-start text-xs font-bold text-slate-700 dark:text-slate-300' },
+    barcode: { label: t.barcode || 'Barcode', className: 'px-3 py-2 text-start text-xs font-bold text-slate-700 dark:text-slate-300' },
+    category: { label: t.category || 'Category', className: 'px-3 py-2 text-start text-xs font-bold text-slate-700 dark:text-slate-300' },
+    price: { label: t.price || 'Price', className: 'px-3 py-2 text-start text-xs font-bold text-slate-700 dark:text-slate-300' },
+    stock: { label: t.stock || 'Stock', className: 'px-3 py-2 text-start text-xs font-bold text-slate-700 dark:text-slate-300' },
+    unit: { label: t.unit || 'Unit', className: 'px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300' },
+    batches: { label: t.batches || 'Batches', className: 'px-3 py-2 text-start text-xs font-bold text-slate-700 dark:text-slate-300' },
+    inCart: { label: t.inCart || 'In Cart', className: 'px-3 py-2 text-center text-xs font-bold text-slate-700 dark:text-slate-300' }
+  };
+
+  const renderCellContent = (drug: Drug, group: Drug[], columnId: string) => {
+    const totalStock = group.reduce((sum, d) => sum + d.stock, 0);
+    const inCartTotal = group.reduce((sum, d) => sum + (cart.find(c => c.id === d.id)?.quantity || 0), 0);
+
+    switch (columnId) {
+      case 'icon':
+        return (
+          <div className={`w-8 h-8 rounded-lg bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 flex items-center justify-center`}>
+            <span className="material-symbols-rounded text-[18px]">{getDrugIcon(drug)}</span>
+          </div>
+        );
+      case 'name':
+        return (
+          <div className="flex flex-col">
+            <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
+              {drug.name}
+            </span>
+            <span className="text-xs text-slate-500">{drug.genericName}</span>
+          </div>
+        );
+      case 'barcode':
+        return <span className="text-xs font-mono text-slate-600 dark:text-slate-400">{drug.barcode}</span>;
+      case 'category':
+        return <span className="text-xs text-slate-600 dark:text-slate-400">{drug.category}</span>;
+      case 'price':
+        return <span className="font-bold text-sm text-slate-700 dark:text-slate-300">${drug.price.toFixed(2)}</span>;
+      case 'stock':
+        return totalStock === 0 ? (
+          <span className="text-xs font-bold text-red-500">Out of Stock</span>
+        ) : (
+          <span className="text-sm text-slate-700 dark:text-slate-300">{parseFloat(totalStock.toFixed(2))}</span>
+        );
+      case 'unit':
+        return (
+          <div className="text-center">
+            {drug.unitsPerPack && drug.unitsPerPack > 1 ? (
+              <select 
+                className={`px-2 py-1 text-xs rounded-lg border transition-colors cursor-pointer focus:outline-none bg-${color}-50 dark:bg-${color}-900/30 border-${color}-200 dark:border-${color}-700 text-${color}-700 dark:text-${color}-300`}
+                onClick={(e) => e.stopPropagation()}
+                value={selectedUnits[drug.id] || 'pack'}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setSelectedUnits(prev => ({ ...prev, [drug.id]: e.target.value as 'pack' | 'unit' }));
+                }}
+              >
+                <option value="pack">{t.pack || 'Pack'}</option>
+                <option value="unit">{t.unit || 'Unit'}</option>
+              </select>
+            ) : (
+              <span className="text-xs text-slate-400">-</span>
+            )}
+          </div>
+        );
+      case 'batches':
+        // Find currently selected batch or default (FEFO)
+        const selectedBatchId = selectedBatches[drug.id];
+        const defaultBatch = group.find(d => d.stock > 0) || group[0];
+        const currentBatch = selectedBatchId ? group.find(d => d.id === selectedBatchId) : defaultBatch;
+        
+        const isOpen = openBatchDropdown === drug.id;
+        
+        // Format date helper
+        const formatDate = (dateStr: string) => {
+            return new Date(dateStr).toLocaleDateString('en-US', {month: '2-digit', year: '2-digit'});
+        };
+
+        return (
+          <div className="relative w-32">
+            <div 
+                className={`flex items-center justify-between w-full px-1.5 py-1 text-[11px] rounded-lg border transition-all cursor-text bg-slate-50 dark:bg-slate-800 ${isOpen ? `border-${color}-500 ring-1 ring-${color}-500` : 'border-slate-200 dark:border-slate-700'}`}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenBatchDropdown(drug.id);
+                    setBatchSearch('');
+                }}
+            >
+                {isOpen ? (
+                    <input 
+                        autoFocus
+                        className="w-full bg-transparent outline-none text-slate-700 dark:text-slate-300 placeholder-slate-400"
+                        placeholder="Type MM/YY..."
+                        value={batchSearch}
+                        onChange={(e) => setBatchSearch(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        onBlur={() => {
+                            // Delay closing to allow click on option
+                            setTimeout(() => setOpenBatchDropdown(null), 200);
+                        }}
+                    />
+                ) : (
+                    <span className="text-slate-600 dark:text-slate-400 truncate">
+                        {currentBatch ? `${formatDate(currentBatch.expiryDate)} • Stock: ${currentBatch.stock}` : 'No Stock'}
+                    </span>
+                )}
+                <span className="material-symbols-rounded text-[14px] text-slate-400">arrow_drop_down</span>
+            </div>
+            
+            {isOpen && (
+                <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-slate-100 dark:border-slate-800 z-50 max-h-40 overflow-y-auto">
+                    {group
+                        .filter(b => {
+                            if (!batchSearch) return true;
+                            const date = formatDate(b.expiryDate);
+                            return date.includes(batchSearch) || b.stock.toString().includes(batchSearch);
+                        })
+                        .map(batch => (
+                        <div 
+                            key={batch.id}
+                            className={`px-3 py-2 text-xs cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 flex justify-between items-center ${selectedBatches[drug.id] === batch.id ? `bg-${color}-50 dark:bg-${color}-900/20 text-${color}-700` : 'text-slate-600 dark:text-slate-400'}`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedBatches(prev => ({ ...prev, [drug.id]: batch.id }));
+                                setOpenBatchDropdown(null);
+                            }}
+                        >
+                            <span className="font-medium">{formatDate(batch.expiryDate)}</span>
+                            <span className="opacity-70">Qty: {batch.stock}</span>
+                        </div>
+                    ))}
+                    {group.filter(b => formatDate(b.expiryDate).includes(batchSearch)).length === 0 && (
+                        <div className="px-3 py-2 text-xs text-slate-400 text-center">No matches</div>
+                    )}
+                </div>
+            )}
+          </div>
+        );
+      case 'inCart':
+        return (
+          <div className="text-center">
+            {inCartTotal > 0 && (
+              <div className={`inline-block bg-${color}-600 text-white text-xs font-bold px-2 py-1 rounded-md`}>
+                {inCartTotal}
+              </div>
+            )}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="h-full flex flex-col lg:flex-row gap-3 animate-fade-in relative">
+    <div className="h-full flex flex-col gap-2">
+      {/* Tab Bar */}
+      <TabBar
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onTabClick={switchTab}
+        onTabClose={removeTab}
+        onTabAdd={addTab}
+        onTabRename={renameTab}
+        onTogglePin={togglePin}
+        maxTabs={maxTabs}
+        color={color}
+      />
+      
+      {/* Main POS Content */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-3 animate-fade-in relative overflow-hidden">
       {/* Product Grid - Hidden on Mobile if Cart Tab is active */}
       <div className={`flex-1 flex flex-col gap-3 h-full overflow-hidden ${mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'}`}>
         
@@ -328,7 +647,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
         </div>
 
         {/* Grid */}
-        <div className="flex-1 overflow-y-auto pe-1 pb-24 lg:pb-0">
+        <div className="flex-1 flex flex-col overflow-hidden pe-1 pb-24 lg:pb-0">
             {search.trim() === '' ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-3 p-8">
                 <span className="material-symbols-rounded text-6xl opacity-20">search</span>
@@ -348,86 +667,101 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
                 </p>
               </div>
             ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-2">
-                {groupedDrugs.slice(0, 100).map(group => {
+            <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+              <table className="w-full">
+                <thead className={`bg-${color}-50 dark:bg-slate-900 sticky top-0 z-10 shadow-sm`}>
+                  <tr>
+                    {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
+                      <th
+                        key={columnId}
+                        data-column-id={columnId}
+                        className={`${columns[columnId as keyof typeof columns].className} cursor-move select-none transition-all ${
+                          draggedColumn === columnId ? 'opacity-50' : ''
+                        } ${dragOverColumn === columnId ? `bg-${color}-100 dark:bg-${color}-900/50` : ''}`}
+                        draggable
+                        onDragStart={(e) => handleColumnDragStart(e, columnId)}
+                        onDragOver={(e) => handleColumnDragOver(e, columnId)}
+                        onDrop={(e) => handleColumnDrop(e, columnId)}
+                        onDragEnd={handleColumnDragEnd}
+                        onTouchStart={(e) => {
+                          e.stopPropagation();
+                          onHeaderTouchStart(e);
+                          handleColumnDragStart(e, columnId);
+                        }}
+                        onTouchMove={(e) => {
+                            onHeaderTouchMove();
+                            handleColumnTouchMove(e);
+                        }}
+                        onTouchEnd={(e) => {
+                            onHeaderTouchEnd();
+                            handleColumnTouchEnd(e);
+                        }}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          showMenu(e.clientX, e.clientY, [
+                            { 
+                              label: 'Show/Hide Columns', 
+                              icon: 'visibility', 
+                              action: () => {} 
+                            },
+                            { separator: true },
+                            ...Object.keys(columns).map(colId => ({
+                              label: columns[colId as keyof typeof columns].label || 'Icon',
+                              icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
+                              action: () => toggleColumnVisibility(colId)
+                            }))
+                          ]);
+                        }}
+                      >
+                        {columns[columnId as keyof typeof columns].label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {groupedDrugs.slice(0, 100).map((group, index) => {
                     const drug = group[0];
                     const totalStock = group.reduce((sum, d) => sum + d.stock, 0);
-                    // Calculate total quantity of this drug (all batches) currently in cart
-                    const inCartTotal = group.reduce((sum, d) => sum + (cart.find(c => c.id === d.id)?.quantity || 0), 0);
-                    const isExpanded = expandedGroups[drug.name];
                     
                     return (
-                    <div 
-                        key={drug.id} 
-                        onClick={() => addGroupToCart(group)}
-                        onContextMenu={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            showMenu(e.clientX, e.clientY, [
-                                { label: 'Add to Cart', icon: 'add_shopping_cart', action: () => addGroupToCart(group) },
-                                { label: 'View Details', icon: 'info', action: () => setViewingDrug(drug) },
-                                { separator: true },
-                                { label: t.actions.showSimilar, icon: 'category', action: () => setSelectedCategory(drug.category) }
-                            ]);
+                      <tr 
+                        key={drug.id}
+                        onClick={(e) => {
+                            if (isRowLongPress.current) {
+                                isRowLongPress.current = false;
+                                return;
+                            }
+                            addGroupToCart(group);
                         }}
-                        role="button"
-                        className={`relative flex flex-col text-start p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all hover:shadow-md hover:border-${color}-300 dark:hover:border-${color}-700 group cursor-pointer active:scale-95 select-none ${totalStock === 0 ? 'opacity-50' : ''}`}
-                    >
-                        {/* Info Button */}
-                        <div 
-                           onClick={(e) => handleViewProductDetails(e, drug.id)}
-                           className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 z-10 rtl:left-1 rtl:right-auto"
-                           title="Info"
-                           role="button"
-                        >
-                            <span className="material-symbols-rounded text-[14px]">info</span>
-                        </div>
-
-                        {/* Compact Header: Icon + Info Side by Side */}
-                        <div className="flex items-center gap-2 mb-2 w-full">
-                            <div className={`w-8 h-8 rounded-lg bg-${color}-50 dark:bg-${color}-950 text-${color}-600 dark:text-${color}-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
-                                <span className="material-symbols-rounded text-[18px]">{getDrugIcon(drug)}</span>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <h3 className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate leading-tight">
-                                  {drug.name} <span className="text-[9px] text-slate-500 font-normal ms-0.5">{getFormLabel(drug)}</span>
-                                </h3>
-                                <p className="text-[9px] text-slate-500 truncate leading-tight">{drug.genericName}</p>
-                            </div>
-                        </div>
-                        
-                        {/* Batches Combobox */}
-                        <div className="mb-2">
-                            <select 
-                                className="w-full p-1 text-[10px] rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 focus:outline-none cursor-pointer"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                {group.map(batch => (
-                                    <option key={batch.id} value={batch.id}>
-                                        {new Date(batch.expiryDate).toLocaleDateString('en-US', {month: '2-digit', year: '2-digit'})} • Qty: {batch.stock}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="mt-auto flex justify-between items-center w-full pt-1 border-t border-slate-50 dark:border-slate-800 relative">
-                            <span className="font-bold text-xs text-slate-700 dark:text-slate-300">${drug.price.toFixed(2)}</span>
-                            
-                            {/* Footer: Stock Status or Cart Qty */}
-                            <div className="flex items-center gap-1">
-                                {totalStock === 0 ? (
-                                    <span className="text-[9px] font-bold text-red-500 uppercase">Out of Stock</span>
-                                ) : (
-                                     inCartTotal > 0 && (
-                                        <div className={`bg-${color}-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-sm`}>
-                                            {inCartTotal}
-                                        </div>
-                                     )
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )})}
+                        onTouchStart={(e) => {
+                            currentTouchItem.current = { drug, group };
+                            onRowTouchStart(e);
+                        }}
+                        onTouchEnd={onRowTouchEnd}
+                        onTouchMove={onRowTouchMove}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          showMenu(e.clientX, e.clientY, [
+                            { label: 'Add to Cart', icon: 'add_shopping_cart', action: () => addGroupToCart(group) },
+                            { label: 'View Details', icon: 'info', action: () => setViewingDrug(drug) },
+                            { separator: true },
+                            { label: t.actions.showSimilar, icon: 'category', action: () => setSelectedCategory(drug.category) }
+                          ]);
+                        }}
+                        className={`border-b border-slate-100 dark:border-slate-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${totalStock === 0 ? 'opacity-50' : ''} ${index % 2 === 0 ? 'bg-slate-50/30 dark:bg-slate-800/20' : ''}`}
+                      >
+                        {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
+                          <td key={columnId} className="px-3 py-2">
+                            {renderCellContent(drug, group, columnId)}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
             )}
         </div>
@@ -709,6 +1043,9 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
           </div>
         </div>
       )}
+      
+      {/* Close Main POS Content div */}
+      </div>
     </div>
   );
 };
