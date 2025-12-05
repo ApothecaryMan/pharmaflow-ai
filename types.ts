@@ -41,6 +41,7 @@ export interface SaleTab {
   discount: number;
   createdAt: number;
   isPinned?: boolean; // For pinning tabs
+  searchQuery?: string;
 }
 
 export interface PurchaseItem {

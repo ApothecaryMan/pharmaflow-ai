@@ -48,7 +48,12 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
   }, [activeTabId, updateTab]);
   
   // Rest of the state remains the same
-  const [search, setSearch] = useState('');
+  // Use active tab's search query
+  const search = activeTab?.searchQuery || '';
+  const setSearch = useCallback((query: string | ((prev: string) => string)) => {
+    const newQuery = typeof query === 'function' ? query(search) : query;
+    updateTab(activeTabId, { searchQuery: newQuery });
+  }, [search, activeTabId, updateTab]);
   // Selected category state key: 'All', 'Medicine', 'Cosmetics', 'Non-Medicine'
   const [customerCode, setCustomerCode] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'visa'>('cash');
@@ -340,12 +345,8 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
         subtotal,
         total: cartTotal
     });
-    setCart([]);
-    setCustomerName('');
-    setCustomerCode('');
-    setPaymentMethod('cash');
-    setGlobalDiscount(0);
-    setMobileTab('products');
+    // Close the current tab after successful checkout
+    removeTab(activeTabId);
   };
 
   const filteredDrugs = useMemo(() => {

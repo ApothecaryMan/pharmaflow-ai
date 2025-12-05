@@ -11,6 +11,7 @@ const createNewTab = (index: number): SaleTab => ({
   cart: [],
   customerName: '',
   discount: 0,
+  searchQuery: '',
   createdAt: Date.now()
 });
 
