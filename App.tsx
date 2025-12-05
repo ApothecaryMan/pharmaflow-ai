@@ -184,8 +184,21 @@ const App: React.FC = () => {
     return 'EN';
   });
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [textTransform, setTextTransform] = useState<'normal' | 'uppercase'>('normal');
+  const [profileImage, setProfileImage] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('pharma_profileImage');
+    }
+    return null;
+  });
+
+  const [textTransform, setTextTransform] = useState<'normal' | 'uppercase'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pharma_textTransform');
+      return (saved as 'normal' | 'uppercase') || 'normal';
+    }
+    return 'normal';
+  });
+
   const [sidebarVisible, setSidebarVisible] = useState(true);
 
   // Apply theme system - updates CSS variables
@@ -199,6 +212,7 @@ const App: React.FC = () => {
     } else {
         document.body.classList.remove('uppercase-mode');
     }
+    localStorage.setItem('pharma_textTransform', textTransform);
   }, [textTransform]);
 
   const [inventory, setInventory] = useState<Drug[]>(() => {
@@ -550,8 +564,6 @@ const App: React.FC = () => {
           };
           const newView = viewMapping[moduleId] || 'dashboard';
           setView(newView);
-          // Auto-hide sidebar for POS, show for others
-          setSidebarVisible(newView !== 'pos');
         }, [])}
         theme={theme.primary}
         darkMode={darkMode}
