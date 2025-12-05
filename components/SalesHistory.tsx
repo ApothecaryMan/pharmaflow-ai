@@ -15,8 +15,23 @@ interface SalesHistoryProps {
 export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onProcessReturn, color, t }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'high' | 'low'>('newest');
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [returnModalOpen, setReturnModalOpen] = useState(false);
+
+  // Column definitions
+  const initialColumns = [
+    { key: 'id', label: 'modal.id', sortable: true },
+    { key: 'date', label: 'headers.date', sortable: true },
+    { key: 'customer', label: 'headers.customer', sortable: true },
+    { key: 'payment', label: 'headers.payment', sortable: true },
+    { key: 'items', label: 'headers.items', sortable: true },
+    { key: 'total', label: 'headers.total', sortable: true },
+    { key: 'actions', label: 'headers.actions', sortable: false }
+  ];
+
+  const [columns, setColumns] = useState(initialColumns);
+  const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
 
   // --- Nested/Future Functions for Item Actions ---
   const handleEmailReceipt = (saleId: string) => {
@@ -27,6 +42,34 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
   const handleDownloadPDF = (saleId: string) => {
     console.log(`[Future Implementation] Download PDF for Sale ID: ${saleId}`);
     // Future: Generate PDF blob and trigger download
+  };
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const handleDragStart = (e: React.DragEvent, key: string) => {
+    setDraggedColumn(key);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, key: string) => {
+    e.preventDefault();
+    if (!draggedColumn || draggedColumn === key) return;
+    
+    const sourceIndex = columns.findIndex(col => col.key === draggedColumn);
+    const targetIndex = columns.findIndex(col => col.key === key);
+    
+    if (sourceIndex !== -1 && targetIndex !== -1) {
+        const newColumns = [...columns];
+        const [removed] = newColumns.splice(sourceIndex, 1);
+        newColumns.splice(targetIndex, 0, removed);
+        setColumns(newColumns);
+    }
   };
 
   const filteredSales = sales
@@ -43,6 +86,34 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
       );
     })
     .sort((a, b) => {
+      if (sortConfig) {
+        const { key, direction } = sortConfig;
+        let aValue: any = a[key as keyof Sale];
+        let bValue: any = b[key as keyof Sale];
+
+        // Handle specific keys
+        if (key === 'items') {
+            aValue = a.items.length;
+            bValue = b.items.length;
+        } else if (key === 'date') {
+            aValue = new Date(a.date).getTime();
+            bValue = new Date(b.date).getTime();
+        } else if (key === 'customer') {
+            aValue = a.customerName || '';
+            bValue = b.customerName || '';
+        } else if (key === 'payment') {
+            // Sort by translated name
+            aValue = a.paymentMethod === 'visa' ? t.visa : t.cash;
+            bValue = b.paymentMethod === 'visa' ? t.visa : t.cash;
+        }
+
+        if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+        
+        // Secondary sort by date (always newest first for stability)
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      }
+
       switch (sortOrder) {
         case 'newest': return new Date(b.date).getTime() - new Date(a.date).getTime();
         case 'oldest': return new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -57,13 +128,15 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
   const exportToCSV = () => {
     if (filteredSales.length === 0) return;
 
-    const headers = ['ID', 'Date', 'Customer', 'Items Count', 'Subtotal', 'Global Discount (%)', 'Total'];
+    const headers = ['ID', 'Date', 'Customer', 'Customer Code', 'Payment Method', 'Items Count', 'Subtotal', 'Global Discount (%)', 'Total'];
     const escape = (str: string | number | undefined) => `"${String(str || '').replace(/"/g, '""')}"`;
 
     const rows = filteredSales.map(sale => [
       sale.id,
       new Date(sale.date).toLocaleString(),
       sale.customerName || 'Guest',
+      sale.customerCode || '-',
+      sale.paymentMethod === 'visa' ? 'Visa' : 'Cash',
       sale.items.length,
       (sale.subtotal || 0).toFixed(2),
       sale.globalDiscount || 0,
@@ -152,6 +225,11 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
           <div class="meta-item">
             <span class="meta-label">Customer</span>
             <span class="meta-value">${sale.customerName || 'Walk-in Guest'}</span>
+            ${sale.customerCode ? `<span class="meta-value" style="font-size: 10px; color: #64748b;">Code: ${sale.customerCode}</span>` : ''}
+          </div>
+          <div class="meta-item text-right">
+            <span class="meta-label">Payment Method</span>
+            <span class="meta-value" style="text-transform: uppercase;">${sale.paymentMethod || 'Cash'}</span>
           </div>
         </div>
 
@@ -281,74 +359,108 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
       <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col">
         <div className="overflow-x-auto flex-1">
           <table className="w-full text-start border-collapse">
-            <thead className={`bg-${color}-50 dark:bg-${color}-950/30 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider`}>
+            <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>
               <tr>
-                <th className="p-4 text-start">{t.headers.date}</th>
-                <th className="p-4 text-start">{t.headers.customer}</th>
-                <th className="p-4 text-start">{t.headers.items}</th>
-                <th className="p-4 text-start">{t.headers.total}</th>
-                <th className="p-4 text-end">{t.headers.actions}</th>
+                {columns.map((col) => (
+                    <th 
+                        key={col.key}
+                        draggable={true}
+                        onDragStart={(e) => handleDragStart(e, col.key)}
+                        onDragOver={(e) => handleDragOver(e, col.key)}
+                        className={`px-3 py-2 text-${col.key === 'actions' ? 'end' : 'start'} ${col.sortable ? 'cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800' : 'cursor-move'} transition-colors`}
+                        onDoubleClick={() => col.sortable && handleSort(col.key)}
+                    >
+                        <div className={`flex items-center gap-1 ${col.key === 'actions' ? 'justify-end' : ''}`}>
+                            {t[col.label.split('.')[0]][col.label.split('.')[1]]}
+                            <span className={`material-symbols-rounded text-[14px] transition-opacity ${sortConfig?.key === col.key ? 'opacity-100' : 'opacity-0'}`}>
+                                {sortConfig?.key === col.key && sortConfig.direction === 'desc' ? 'arrow_downward' : 'arrow_upward'}
+                            </span>
+                        </div>
+                    </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredSales.map(sale => (
                 <tr key={sale.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td className="p-4">
-                    <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">
-                        {new Date(sale.date).toLocaleDateString()}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                        {new Date(sale.date).toLocaleTimeString()}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                     {sale.customerName ? (
-                        <div className="font-medium text-slate-700 dark:text-slate-300 text-sm">{sale.customerName}</div>
-                     ) : (
-                        <span className="text-slate-400 italic text-sm">Guest</span>
-                     )}
-                  </td>
-                  <td className="p-4">
-                    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                      {sale.items.length} items
-                    </span>
-                  </td>
-                  <td className="p-4 font-bold text-slate-700 dark:text-slate-300 text-sm">
-                    <div className="flex items-center gap-2">
-                      <span>${sale.total.toFixed(2)}</span>
-                      {sale.hasReturns && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          sale.netTotal !== undefined && sale.netTotal <= 0 
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
-                        }`}>
-                          {sale.netTotal !== undefined && sale.netTotal <= 0 ? t.returns?.returned : t.returns?.partiallyReturned}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-4 text-end flex items-center justify-end gap-2">
-                     {/* Future Action */}
-                    <button 
-                      onClick={() => handleEmailReceipt(sale.id)}
-                      className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
-                      title="Email Receipt (Future)"
-                    >
-                      <span className="material-symbols-rounded text-[18px]">mail</span>
-                    </button>
-
-                    <button 
-                      onClick={() => setSelectedSale(sale)}
-                      className={`px-3 py-1.5 rounded-xl bg-${color}-50 hover:bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:hover:bg-${color}-900/50 dark:text-${color}-300 text-xs font-medium transition-colors`}
-                    >
-                      {t.headers.actions}
-                    </button>
-                  </td>
+                  {columns.map(col => {
+                    if (col.key === 'id') {
+                        return (
+                            <td key={col.key} className="p-4 font-mono text-xs text-slate-500">
+                                #{sale.id}
+                            </td>
+                        );
+                    }
+                    if (col.key === 'date') {
+                        return (
+                            <td key={col.key} className="p-4">
+                                <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">
+                                    {new Date(sale.date).toLocaleDateString()}
+                                </div>
+                                <div className="text-xs text-slate-500">
+                                    {new Date(sale.date).toLocaleTimeString()}
+                                </div>
+                            </td>
+                        );
+                    }
+                    if (col.key === 'customer') {
+                        return (
+                            <td key={col.key} className="p-4">
+                                <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">
+                                    {sale.customerName || "Guest"}
+                                </div>
+                                {sale.customerCode && (
+                                    <div className="text-xs text-slate-500">
+                                        #{sale.customerCode}
+                                    </div>
+                                )}
+                            </td>
+                        );
+                    }
+                    if (col.key === 'payment') {
+                        return (
+                            <td key={col.key} className="p-4">
+                                <span className={`flex items-center gap-1 ${sale.paymentMethod === 'visa' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
+                                    <span className="material-symbols-rounded text-[16px]">{sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}</span>
+                                    <span className="text-sm font-medium">{sale.paymentMethod === 'visa' ? t.visa : t.cash}</span>
+                                </span>
+                            </td>
+                        );
+                    }
+                    if (col.key === 'items') {
+                        return (
+                            <td key={col.key} className="p-4 text-sm text-slate-600 dark:text-slate-400">
+                                {sale.items.length} {t.items || "items"}
+                            </td>
+                        );
+                    }
+                    if (col.key === 'total') {
+                        return (
+                            <td key={col.key} className="p-4 font-bold text-slate-900 dark:text-slate-100">
+                                ${sale.total.toFixed(2)}
+                            </td>
+                        );
+                    }
+                    if (col.key === 'actions') {
+                        return (
+                            <td key={col.key} className="p-4 text-end">
+                                <button 
+                                    onClick={() => setSelectedSale(sale)}
+                                    className={`p-2 rounded-full hover:bg-${color}-50 dark:hover:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 transition-colors`}
+                                    title={t.viewDetails}
+                                >
+                                    <span className="material-symbols-rounded">visibility</span>
+                                </button>
+                            </td>
+                        );
+                    }
+                    return null;
+                  })}
                 </tr>
               ))}
               {filteredSales.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-12 text-center text-slate-400">
+                  <td colSpan={6} className="p-12 text-center text-slate-400">
                     {t.noResults}
                   </td>
                 </tr>
@@ -383,7 +495,19 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                       </div>
                       <div className="col-span-2">
                           <p className="text-slate-500">{t.modal.customer}</p>
-                          <p className="font-bold text-base text-slate-800 dark:text-slate-200">{selectedSale.customerName || 'Guest'}</p>
+                          <div className="flex justify-between items-center">
+                            <p className="font-bold text-base text-slate-800 dark:text-slate-200">{selectedSale.customerName || 'Guest'}</p>
+                            {selectedSale.customerCode && <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-500">#{selectedSale.customerCode}</span>}
+                          </div>
+                      </div>
+                      <div className="col-span-2">
+                          <p className="text-slate-500">{t.modal.payment}</p>
+                          <p className="font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                            <span className="material-symbols-rounded text-[18px] text-slate-400">
+                              {selectedSale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
+                            </span>
+                            {selectedSale.paymentMethod === 'visa' ? t.visa : t.cash}
+                          </p>
                       </div>
                   </div>
 
@@ -395,7 +519,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                              return (
                               <div key={idx} className="flex justify-between items-center text-sm p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                                   <div>
-                                      <p className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                                      <p className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-1 item-name">
                                         {item.name}
                                         {item.isUnit && <span className="text-[9px] bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1 rounded font-bold">UNIT</span>}
                                       </p>

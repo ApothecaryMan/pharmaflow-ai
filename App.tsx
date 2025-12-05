@@ -184,8 +184,22 @@ const App: React.FC = () => {
     return 'EN';
   });
 
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [textTransform, setTextTransform] = useState<'normal' | 'uppercase'>('normal');
+  const [sidebarVisible, setSidebarVisible] = useState(true);
+
   // Apply theme system - updates CSS variables
   useTheme(theme.primary, darkMode);
+
+  // Apply text transform globally
+  useEffect(() => {
+    document.documentElement.style.setProperty('--text-transform', textTransform === 'uppercase' ? 'uppercase' : 'none');
+    if (textTransform === 'uppercase') {
+        document.body.classList.add('uppercase-mode');
+    } else {
+        document.body.classList.remove('uppercase-mode');
+    }
+  }, [textTransform]);
 
   const [inventory, setInventory] = useState<Drug[]>(() => {
     if (typeof window !== 'undefined') {
@@ -266,6 +280,14 @@ const App: React.FC = () => {
     document.documentElement.lang = language.toLowerCase();
     document.documentElement.dir = language === 'AR' ? 'rtl' : 'ltr';
   }, [language]);
+
+  useEffect(() => {
+    if (profileImage) {
+      localStorage.setItem('pharma_profileImage', profileImage);
+    } else {
+      localStorage.removeItem('pharma_profileImage');
+    }
+  }, [profileImage]);
 
   useEffect(() => {
     localStorage.setItem('pharma_inventory', JSON.stringify(inventory));
@@ -355,9 +377,12 @@ const App: React.FC = () => {
     }));
   };
 
-  const handleCompleteSale = (saleData: { items: CartItem[], customerName: string, globalDiscount: number, subtotal: number, total: number }) => {
+  const handleCompleteSale = (saleData: { items: CartItem[], customerName: string, customerCode?: string, paymentMethod: 'cash' | 'visa', globalDiscount: number, subtotal: number, total: number }) => {
+    // Generate Serial ID (simple increment based on count)
+    const serialId = (100001 + sales.length).toString();
+
     const newSale: Sale = {
-      id: Date.now().toString(),
+      id: serialId,
       date: new Date().toISOString(),
       ...saleData
     };
@@ -459,54 +484,7 @@ const App: React.FC = () => {
 
       {/* Dynamic Theme & Dark Mode Controls - Unified Block */}
       <div className="mt-auto space-y-4 pt-4">
-        <div className="mx-2 mb-2 p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-          {/* Theme Selection */}
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.settings.theme}</span>
-            <div className="flex gap-1.5">
-              {THEMES.map(themeOption => (
-                <button
-                  key={themeOption.name}
-                  onClick={() => setTheme(themeOption)}
-                  className={`w-4 h-4 rounded-full transition-all duration-300 ${theme.name === themeOption.name ? 'ring-2 ring-offset-1 ring-slate-300 dark:ring-slate-600 scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
-                  style={{ backgroundColor: themeOption.hex }}
-                  title={themeOption.name}
-                />
-              ))}
-            </div>
-          </div>
 
-          {/* Controls Row */}
-          <div className="flex items-center gap-2">
-            {/* Language Toggle */}
-            <div className="flex-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg flex relative">
-              {LANGUAGES.map(lang => (
-                <button
-                  key={lang.code}
-                  onClick={() => setLanguage(lang.code)}
-                  className={`flex-1 py-1.5 rounded-md text-[10px] font-bold transition-all z-10 ${
-                    language === lang.code 
-                      ? `text-${theme.primary}-600 bg-white dark:bg-slate-700 shadow-sm` 
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-                  }`}
-                >
-                  {lang.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Dark Mode Toggle */}
-            <button 
-              onClick={() => setDarkMode(!darkMode)}
-              className={`w-9 h-9 shrink-0 rounded-lg flex items-center justify-center transition-all ${darkMode ? `bg-slate-800 text-${theme.primary}-400 border border-slate-700` : `bg-slate-100 text-slate-500 hover:bg-slate-200`}`}
-              title={t.settings.darkMode}
-            >
-              <span className="material-symbols-rounded text-[18px] transition-transform duration-500 rotate-0 dark:-rotate-180">
-                {darkMode ? 'dark_mode' : 'light_mode'}
-              </span>
-            </button>
-          </div>
-        </div>
         
         <div className="px-4 pb-2 text-center text-[10px] text-slate-400">
           <p>{tip}</p>
@@ -566,19 +544,32 @@ const App: React.FC = () => {
           };
           const newView = viewMapping[moduleId] || 'dashboard';
           setView(newView);
+          // Auto-hide sidebar for POS, show for others
+          setSidebarVisible(newView !== 'pos');
         }, [])}
         theme={theme.primary}
         darkMode={darkMode}
         appTitle={t.appTitle}
         onMobileMenuToggle={() => setMobileMenuOpen(true)}
         language={language}
+        setTheme={setTheme}
+        setDarkMode={setDarkMode}
+        setLanguage={setLanguage}
+        availableThemes={THEMES}
+        availableLanguages={LANGUAGES}
+        currentTheme={theme}
+        profileImage={profileImage}
+        setProfileImage={setProfileImage}
+        textTransform={textTransform}
+        setTextTransform={setTextTransform}
+        onLogoClick={() => setSidebarVisible(!sidebarVisible)}
       />
 
       {/* Main Layout: Sidebar + Content */}
       <div className="flex h-[calc(100vh-64px)] overflow-hidden">
         {/* Desktop Sidebar */}
         <aside 
-          className="hidden md:flex flex-col w-72 backdrop-blur-xl transition-all duration-300 ease-in-out"
+          className={`hidden ${view === 'pos' && !sidebarVisible ? '' : 'md:flex'} flex-col w-72 backdrop-blur-xl transition-all duration-300 ease-in-out`}
           style={{
             borderRight: '1px solid var(--border-primary)',
             backgroundColor: 'var(--bg-secondary)'
@@ -634,7 +625,7 @@ const App: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 h-full overflow-hidden relative">
-        <div className={`h-full max-w-7xl mx-auto overflow-y-auto scrollbar-hide ${view === 'pos' ? 'p-3' : 'p-4 md:p-8'}`}>
+        <div className={`h-full overflow-y-auto scrollbar-hide ${view === 'pos' ? 'p-2' : 'max-w-7xl mx-auto p-4 md:p-8'}`}>
           {view === 'dashboard' && (
              <Dashboard 
                 inventory={inventory} 

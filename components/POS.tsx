@@ -50,6 +50,8 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
   // Rest of the state remains the same
   const [search, setSearch] = useState('');
   // Selected category state key: 'All', 'Medicine', 'Cosmetics', 'Non-Medicine'
+  const [customerCode, setCustomerCode] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'visa'>('cash');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
@@ -59,12 +61,14 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
   const [openBatchDropdown, setOpenBatchDropdown] = useState<string | null>(null);
   const [batchSearch, setBatchSearch] = useState('');
   
+  const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'out_of_stock'>('in_stock');
+  
   // Sidebar Resize Logic
   const [sidebarWidth, setSidebarWidth] = useState(350);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef(false);
 
-  const startResizing = useCallback(() => {
+  const startResizing = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     isResizing.current = true;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
@@ -76,10 +80,11 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
     document.body.style.userSelect = '';
   }, []);
 
-  const resize = useCallback((e: MouseEvent) => {
+  const resize = useCallback((e: MouseEvent | TouchEvent) => {
     if (isResizing.current && sidebarRef.current) {
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
         const rightEdge = sidebarRef.current.getBoundingClientRect().right;
-        const newWidth = rightEdge - e.clientX;
+        const newWidth = rightEdge - clientX;
         if (newWidth > 280 && newWidth < 800) {
             setSidebarWidth(newWidth);
         }
@@ -89,9 +94,13 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
   useEffect(() => {
     window.addEventListener('mousemove', resize);
     window.addEventListener('mouseup', stopResizing);
+    window.addEventListener('touchmove', resize);
+    window.addEventListener('touchend', stopResizing);
     return () => {
       window.removeEventListener('mousemove', resize);
       window.removeEventListener('mouseup', stopResizing);
+      window.removeEventListener('touchmove', resize);
+      window.removeEventListener('touchend', stopResizing);
     };
   }, [resize, stopResizing]);
 
@@ -209,17 +218,11 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
             // For now, let's assume we just update the existing item's mode if quantity is 1, or add new logic.
             // But simpler: just alert or block. Or better: allow mixed? 
             // The current logic assumes one entry per drug ID. 
-            // Let's just update the mode if it's a switch, but that's tricky with quantity.
-            // Simplest for this user request: Just add to quantity, but we must respect the *current* item's mode or force a new row?
-            // The types say CartItem extends Drug, so ID is unique.
             // Let's stick to: if existing, use existing mode. OR, allow toggling mode in cart (which we already have).
             
             // If user explicitly selected a different unit in the list, maybe we should respect it?
             // Let's just add quantity for now, assuming the user handles mode switching in cart if needed, 
             // OR better: if the cart item is 'pack' and user adds 'unit', we could convert? No, too complex.
-            
-            // Let's use the passed isUnitMode for new items, but for existing, we might just increment.
-            // However, if I select "Unit" and click add, and it's already in cart as "Pack", adding 1 to quantity adds 1 Pack. That's wrong.
             
             // Correct logic:
             // If existing item has different unit mode, we should probably notify user or handle it.
@@ -330,34 +333,47 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
     if (cart.length === 0) return;
     onCompleteSale({
         items: cart,
-        customerName,
+        customerName: customerName || 'Guest Customer',
+        customerCode,
+        paymentMethod,
         globalDiscount,
         subtotal,
         total: cartTotal
     });
     setCart([]);
     setCustomerName('');
+    setCustomerCode('');
+    setPaymentMethod('cash');
     setGlobalDiscount(0);
     setMobileTab('products');
   };
 
   const filteredDrugs = useMemo(() => {
-    const term = search.toLowerCase();
+    const term = search.trim();
+    const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = escapedTerm.split(/\s+/).join('.*');
+    const searchRegex = new RegExp(pattern, 'i');
+
     return inventory.filter(d => {
         const drugBroadCat = getBroadCategory(d.category);
         const matchesCategory = selectedCategory === 'All' || drugBroadCat === selectedCategory;
         
         const matchesSearch = 
-            d.name.toLowerCase().includes(term) || 
-            d.genericName.toLowerCase().includes(term) ||
-            d.description.toLowerCase().includes(term) ||
-            d.category.toLowerCase().includes(term) ||
-            (d.barcode && d.barcode.toLowerCase().includes(term)) ||
-            (d.internalCode && d.internalCode.toLowerCase().includes(term));
+            searchRegex.test(d.name) || 
+            searchRegex.test(d.genericName) ||
+            searchRegex.test(d.description) ||
+            searchRegex.test(d.category) ||
+            (d.barcode && searchRegex.test(d.barcode)) ||
+            (d.internalCode && searchRegex.test(d.internalCode));
         
-        return matchesCategory && matchesSearch;
+        const matchesStock = 
+            stockFilter === 'all' || 
+            (stockFilter === 'in_stock' && d.stock > 0) || 
+            (stockFilter === 'out_of_stock' && d.stock <= 0);
+
+        return matchesCategory && matchesSearch && matchesStock;
     });
-  }, [inventory, search, selectedCategory]);
+  }, [inventory, search, selectedCategory, stockFilter]);
 
   // Group drugs by name and sort batches by expiry
   const groupedDrugs = useMemo(() => {
@@ -469,7 +485,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
       case 'name':
         return (
           <div className="flex flex-col">
-            <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
+            <span className="font-bold text-sm text-slate-900 dark:text-slate-100 drug-name">
               {drug.name}
             </span>
             <span className="text-xs text-slate-500">{drug.genericName}</span>
@@ -616,6 +632,62 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
       {/* Product Grid - Hidden on Mobile if Cart Tab is active */}
       <div className={`flex-1 flex flex-col gap-3 h-full overflow-hidden ${mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'}`}>
         
+        {/* Customer Details */}
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t.customerName}</label>
+              <div className="relative">
+                <span className="material-symbols-rounded absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">person</span>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full ps-9 pe-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder={t.customerName}
+                />
+              </div>
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t.customerCode}</label>
+              <div className="relative">
+                <span className="material-symbols-rounded absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">badge</span>
+                <input
+                  type="text"
+                  value={customerCode}
+                  onChange={(e) => setCustomerCode(e.target.value)}
+                  className="w-full ps-9 pe-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder={t.customerCode}
+                />
+              </div>
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t.paymentMethod}</label>
+              <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
+                <button
+                  onClick={() => setPaymentMethod('cash')}
+                  className={`flex-1 py-1.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                    paymentMethod === 'cash'
+                      ? 'bg-white dark:bg-slate-700 text-green-600 dark:text-green-400 shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <span className="material-symbols-rounded text-[18px]">payments</span>
+                  {t.cash}
+                </button>
+                <button
+                  onClick={() => setPaymentMethod('visa')}
+                  className={`flex-1 py-1.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                    paymentMethod === 'visa'
+                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <span className="material-symbols-rounded text-[18px]">credit_card</span>
+                  {t.visa}
+                </button>
+              </div>
+            </div>
+          </div>
         {/* Search & Filter */}
         <div className="bg-white dark:bg-slate-900 p-2.5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-2 shrink-0">
             <div className="relative flex-1">
@@ -627,22 +699,51 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                     value={search} 
                     onChange={e => setSearch(e.target.value)}
+                    onContextMenu={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const selection = window.getSelection()?.toString();
+                        showMenu(e.clientX, e.clientY, [
+                            ...(selection ? [{ label: 'Copy', icon: 'content_copy', action: () => navigator.clipboard.writeText(selection) }] : []),
+                            { label: 'Paste', icon: 'content_paste', action: async () => {
+                                try {
+                                    const text = await navigator.clipboard.readText();
+                                    setSearch(prev => prev + text);
+                                } catch (err) {
+                                    console.error('Failed to read clipboard', err);
+                                }
+                            }},
+                            { separator: true },
+                            { label: 'Clear', icon: 'backspace', action: () => setSearch('') }
+                        ]);
+                    }}
                 />
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
-                {categories.map(cat => (
-                    <button 
-                        key={cat.id}
-                        onClick={() => setSelectedCategory(cat.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                            selectedCategory === cat.id 
-                            ? `bg-${color}-100 dark:bg-${color}-900 text-${color}-800 dark:text-${color}-200` 
-                            : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
-                        }`}
-                    >
-                        {cat.label}
-                    </button>
-                ))}
+            <div className="relative min-w-[150px]">
+                <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full appearance-none ps-3 pe-8 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border-none focus:ring-2 transition-all text-sm font-medium text-slate-700 dark:text-slate-200 cursor-pointer outline-none"
+                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                >
+                    {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.label}</option>
+                    ))}
+                </select>
+                <span className="material-symbols-rounded absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">expand_more</span>
+            </div>
+            <div className="relative min-w-[150px]">
+                <select
+                    value={stockFilter}
+                    onChange={(e) => setStockFilter(e.target.value as 'all' | 'in_stock' | 'out_of_stock')}
+                    className="w-full appearance-none ps-3 pe-8 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border-none focus:ring-2 transition-all text-sm font-medium text-slate-700 dark:text-slate-200 cursor-pointer outline-none"
+                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                >
+                    <option value="all">{t.allStock || 'All Stock'}</option>
+                    <option value="in_stock">{t.inStock || 'In Stock'}</option>
+                    <option value="out_of_stock">{t.outOfStock || 'Out of Stock'}</option>
+                </select>
+                <span className="material-symbols-rounded absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">expand_more</span>
             </div>
         </div>
 
@@ -747,6 +848,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
                             { label: 'Add to Cart', icon: 'add_shopping_cart', action: () => addGroupToCart(group) },
                             { label: 'View Details', icon: 'info', action: () => setViewingDrug(drug) },
                             { separator: true },
+                            { label: 'Copy Name', icon: 'content_copy', action: () => navigator.clipboard.writeText(drug.name) },
                             { label: t.actions.showSimilar, icon: 'category', action: () => setSelectedCategory(drug.category) }
                           ]);
                         }}
@@ -785,6 +887,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
       <div 
         className="hidden lg:flex w-4 items-center justify-center cursor-col-resize group z-10 -mx-2"
         onMouseDown={startResizing}
+        onTouchStart={startResizing}
       >
         <div className="w-1 h-16 rounded-full bg-slate-200 dark:bg-slate-700 group-hover:bg-blue-500 transition-colors"></div>
       </div>
@@ -810,17 +913,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
                 </button>
             </div>
 
-            {/* Customer Input */}
-            <div>
-              <input 
-                type="text" 
-                placeholder={t.customerName}
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 text-xs"
-                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-              />
-            </div>
+
         </div>
         
         <div className="flex-1 overflow-y-auto p-2 space-y-2">
@@ -884,7 +977,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
 
                         {/* Row 1: Name & Price */}
                         <div className="flex justify-between items-start gap-2 mb-1">
-                            <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100 leading-tight line-clamp-2 flex-1" title={item.name}>
+                            <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100 leading-tight line-clamp-2 flex-1 drug-name" title={item.name}>
                                 {item.name}
                             </h4>
                             <div className="text-end shrink-0">

@@ -57,8 +57,10 @@ export interface Sale {
   items: CartItem[];
   total: number;
   subtotal?: number;
-  customerName?: string;
-  globalDiscount?: number;
+  customerName: string;
+  customerCode?: string;
+  paymentMethod: 'cash' | 'visa';
+  globalDiscount: number;
   // Return tracking
   hasReturns?: boolean;
   returnIds?: string[];

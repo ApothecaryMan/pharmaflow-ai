@@ -24,7 +24,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef(false);
 
-  const startResizing = useCallback(() => {
+  const startResizing = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     isResizing.current = true;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
@@ -36,10 +36,11 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     document.body.style.userSelect = '';
   }, []);
 
-  const resize = useCallback((e: MouseEvent) => {
+  const resize = useCallback((e: MouseEvent | TouchEvent) => {
     if (isResizing.current && sidebarRef.current) {
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
         const rightEdge = sidebarRef.current.getBoundingClientRect().right;
-        const newWidth = rightEdge - e.clientX;
+        const newWidth = rightEdge - clientX;
         if (newWidth > 300 && newWidth < 800) {
             setSidebarWidth(newWidth);
         }
@@ -49,9 +50,13 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
   useEffect(() => {
     window.addEventListener('mousemove', resize);
     window.addEventListener('mouseup', stopResizing);
+    window.addEventListener('touchmove', resize);
+    window.addEventListener('touchend', stopResizing);
     return () => {
       window.removeEventListener('mousemove', resize);
       window.removeEventListener('mouseup', stopResizing);
+      window.removeEventListener('touchmove', resize);
+      window.removeEventListener('touchend', stopResizing);
     };
   }, [resize, stopResizing]);
 
@@ -148,6 +153,24 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                             style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
+                            onContextMenu={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const selection = window.getSelection()?.toString();
+                                showMenu(e.clientX, e.clientY, [
+                                    ...(selection ? [{ label: 'Copy', icon: 'content_copy', action: () => navigator.clipboard.writeText(selection) }] : []),
+                                    { label: 'Paste', icon: 'content_paste', action: async () => {
+                                        try {
+                                            const text = await navigator.clipboard.readText();
+                                            setSearch(prev => prev + text);
+                                        } catch (err) {
+                                            console.error('Failed to read clipboard', err);
+                                        }
+                                    }},
+                                    { separator: true },
+                                    { label: 'Clear', icon: 'backspace', action: () => setSearch('') }
+                                ]);
+                            }}
                         />
                         <div className="flex-1 overflow-y-auto">
                             {search.trim() === '' ? (
@@ -175,17 +198,18 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                          onClick={() => handleAddItem(drug)}
                                          onContextMenu={(e) => {
                                              e.preventDefault();
-                                             e.stopPropagation();
-                                             showMenu(e.clientX, e.clientY, [
-                                                 { label: 'Add to Order', icon: 'add_shopping_cart', action: () => handleAddItem(drug) },
-                                                 { separator: true },
-                                                 { label: t.actions.viewDetails, icon: 'visibility', action: () => alert(`Details for ${drug.name}\nGeneric: ${drug.genericName}\nStock: ${drug.stock}`) }
-                                             ]);
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            showMenu(e.clientX, e.clientY, [
+                                                { label: 'Add to Order', icon: 'add_shopping_cart', action: () => handleAddItem(drug) },
+                                                { separator: true },
+                                                { label: 'Copy Name', icon: 'content_copy', action: () => navigator.clipboard.writeText(drug.name) }
+                                            ]);
                                          }}
-                                         className={`p-3 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-${color}-300 cursor-pointer transition-all active:scale-95 group`}>
-                                        <div className="flex justify-between items-start">
+                                         className={`p-3 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-${color}-50 dark:hover:bg-${color}-900/20 cursor-pointer transition-colors group`}
+                                    >    <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="font-bold text-sm text-slate-800 dark:text-slate-200">{drug.name}</p>
+                                                <p className="font-bold text-sm text-slate-800 dark:text-slate-200 drug-name">{drug.name}</p>
                                                 <p className="text-xs text-slate-500">{drug.genericName}</p>
                                             </div>
                                             <span className={`material-symbols-rounded text-${color}-600 opacity-0 group-hover:opacity-100`}>add_circle</span>
@@ -202,6 +226,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                <div 
                  className="hidden lg:flex w-4 items-center justify-center cursor-col-resize group z-10 -mx-2"
                  onMouseDown={startResizing}
+                 onTouchStart={startResizing}
                >
                  <div className="w-1 h-16 rounded-full bg-slate-200 dark:bg-slate-700 group-hover:bg-blue-500 transition-colors"></div>
                </div>
@@ -246,7 +271,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                    <button onClick={() => removeItem(item.drugId)} className="absolute top-2 right-2 text-slate-400 hover:text-red-500">
                                        <span className="material-symbols-rounded text-sm">close</span>
                                    </button>
-                                   <p className="font-bold text-sm mb-2 pe-6">{item.name}</p>
+                                   <p className="font-bold text-sm mb-2 pe-6 drug-name">{item.name}</p>
                                    <div className="flex gap-2">
                                        <div className="flex-1">
                                            <label className="text-[10px] text-slate-400 uppercase font-bold">{t.headers.cost}</label>

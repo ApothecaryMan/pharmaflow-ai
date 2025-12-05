@@ -391,7 +391,8 @@ export const PHARMACY_MENU: MenuItem[] = [
           "Monthly Sales",
           "Sales by Product",
           "Sales by Customer",
-          "Sales by Counter"
+          "Sales by Counter",
+          { label: "Sales History", view: "sales-history" }
         ]
       },
       {

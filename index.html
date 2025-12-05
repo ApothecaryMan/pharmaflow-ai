@@ -116,6 +116,16 @@
       .icon-filled {
         font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
       }
+      
+      /* Text Transform Utility */
+      :root {
+        --text-transform: none;
+      }
+      
+      .uppercase-mode .drug-name,
+      .uppercase-mode .item-name {
+        text-transform: uppercase !important;
+      }
     </style>
     <script>
       tailwind.config = {

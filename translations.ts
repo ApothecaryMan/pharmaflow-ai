@@ -24,6 +24,13 @@ export const TRANSLATIONS = {
       fullscreen: 'Toggle Fullscreen',
       reload: 'Reload App'
     },
+    profile: {
+      name: 'John Doe',
+      role: 'Pharmacist',
+      changePhoto: 'Change Photo',
+      reset: 'Reset',
+      signOut: 'Sign Out'
+    },
     global: {
       actions: {
         theme: 'Switch Theme',
@@ -134,6 +141,10 @@ export const TRANSLATIONS = {
       cartTitle: 'Current Sale',
       emptyCart: 'Cart is empty',
       customerName: 'Customer Name',
+      customerCode: 'Customer Code',
+      paymentMethod: 'Payment Method',
+      cash: 'Cash',
+      visa: 'Visa',
       discount: 'Disc %',
       subtotal: 'Subtotal',
       orderDiscount: 'Order Disc %',
@@ -151,7 +162,10 @@ export const TRANSLATIONS = {
         showSimilar: 'Show Similar',
         discount: 'Apply Discount',
         changeQty: 'Change Quantity'
-      }
+      },
+      allStock: 'All Stock',
+      inStock: 'In Stock',
+      outOfStock: 'Out of Stock'
     },
     salesHistory: {
       title: 'Sales History',
@@ -167,16 +181,20 @@ export const TRANSLATIONS = {
       headers: {
         date: 'Date',
         customer: 'Customer',
+        payment: 'Payment',
         items: 'Items Count',
         total: 'Total',
         actions: 'Actions'
       },
       noResults: 'No sales records found.',
+      visa: 'Visa',
+      cash: 'Cash',
       modal: {
         title: 'Sale Details',
         id: 'Transaction ID',
         date: 'Date',
         customer: 'Customer',
+        payment: 'Payment Method',
         items: 'Items Purchased',
         subtotal: 'Subtotal',
         discount: 'Global Discount',
@@ -254,10 +272,11 @@ export const TRANSLATIONS = {
       topSelling: 'Top Selling Products',
       recentSales: 'Recent Transactions',
       sold: 'sold',
-      days: 'days',
-      expired: 'Expired',
-      noExpiring: 'No items expiring soon.',
-      items: 'items',
+      days: 'days left',
+      customerCode: 'Code',
+      paymentMethod: 'Payment',
+      cash: 'Cash',
+      visa: 'Visa',
       modal: {
         title: 'Restock Product',
         qty: 'Quantity to Add',
@@ -409,6 +428,13 @@ export const TRANSLATIONS = {
       fullscreen: 'ملء الشاشة',
       reload: 'إعادة تحميل'
     },
+    profile: {
+      name: 'John Doe',
+      role: 'صيدلي',
+      changePhoto: 'تغيير الصورة',
+      reset: 'إعادة تعيين',
+      signOut: 'تسجيل الخروج'
+    },
     global: {
       actions: {
         theme: 'تغيير السمة',
@@ -519,6 +545,10 @@ export const TRANSLATIONS = {
       cartTitle: 'البيع الحالي',
       emptyCart: 'السلة فارغة',
       customerName: 'اسم العميل',
+      customerCode: 'كود العميل',
+      paymentMethod: 'طريقة الدفع',
+      cash: 'كاش',
+      visa: 'فيزا',
       discount: 'خصم %',
       subtotal: 'المجموع الفرعي',
       orderDiscount: 'خصم الطلب %',
@@ -536,7 +566,10 @@ export const TRANSLATIONS = {
         showSimilar: 'عرض بدائل',
         discount: 'تطبيق خصم',
         changeQty: 'تغيير الكمية'
-      }
+      },
+      allStock: 'كل المخزون',
+      inStock: 'متوفر',
+      outOfStock: 'غير متوفر'
     },
     salesHistory: {
       title: 'سجل المبيعات',
@@ -552,16 +585,20 @@ export const TRANSLATIONS = {
       headers: {
         date: 'التاريخ',
         customer: 'العميل',
+        payment: 'الدفع',
         items: 'عدد العناصر',
         total: 'الإجمالي',
         actions: 'إجراءات'
       },
       noResults: 'لم يتم العثور على سجلات مبيعات.',
+      visa: 'فيزا',
+      cash: 'كاش',
       modal: {
         title: 'تفاصيل البيع',
         id: 'رقم المعاملة',
         date: 'التاريخ',
         customer: 'العميل',
+        payment: 'طريقة الدفع',
         items: 'العناصر المشتراة',
         subtotal: 'المجموع الفرعي',
         discount: 'الخصم العام',
@@ -639,10 +676,11 @@ export const TRANSLATIONS = {
       topSelling: 'الأكثر مبيعاً',
       recentSales: 'أحدث المعاملات',
       sold: 'مباع',
-      days: 'أيام',
-      expired: 'منتهية',
-      noExpiring: 'لا توجد عناصر تنتهي صلاحيتها قريباً.',
-      items: 'عناصر',
+      days: 'أيام متبقية',
+      customerCode: 'كود',
+      paymentMethod: 'دفع',
+      cash: 'كاش',
+      visa: 'فيزا',
       modal: {
         title: 'إعادة تعبئة المنتج',
         qty: 'الكمية المضافة',

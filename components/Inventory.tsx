@@ -219,7 +219,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       case 'name':
         return (
           <>
-            <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">{drug.name}</div>
+            <div className="font-medium text-slate-900 dark:text-slate-100 text-sm drug-name">{drug.name}</div>
             <div className="text-xs text-slate-500">{drug.genericName}</div>
           </>
         );

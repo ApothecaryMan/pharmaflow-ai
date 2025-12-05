@@ -276,7 +276,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                                 <div className={`w-6 h-6 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 font-bold text-xs flex items-center justify-center shrink-0`}>
                                     {index + 1}
                                 </div>
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{item.name}</span>
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate item-name">{item.name}</span>
                             </div>
                             <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md whitespace-nowrap">
                                 {item.qty} {t.sold}
@@ -310,7 +310,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                         lowStockItems.slice(0, 5).map(item => (
                             <div key={item.id} className="flex justify-between items-center p-2.5 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/50">
                                 <div>
-                                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">{item.name}</p>
+                                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100 item-name">{item.name}</p>
                                     <p className="text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase">{item.stock} left</p>
                                 </div>
                                 <button 
@@ -344,7 +344,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                             return (
                                 <div key={item.id} className={`flex justify-between items-center p-2.5 rounded-2xl border ${isExpired ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/50' : 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-100 dark:border-yellow-900/50'}`}>
                                     <div>
-                                        <p className="font-medium text-sm text-slate-900 dark:text-slate-100">{item.name}</p>
+                                        <p className="font-medium text-sm text-slate-900 dark:text-slate-100 item-name">{item.name}</p>
                                         <p className={`text-[10px] font-bold uppercase ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-500'}`}>
                                             {isExpired ? t.expired : `${days} ${t.days}`}
                                         </p>
@@ -381,11 +381,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                                     <span className="material-symbols-rounded">shopping_bag</span>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
                                         {sale.customerName || "Guest"}
+                                        {sale.customerCode && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">#{sale.customerCode}</span>}
                                     </p>
-                                    <p className="text-xs text-slate-500">
-                                        {new Date(sale.date).toLocaleDateString()} • {new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    <p className="text-xs text-slate-500 flex items-center gap-2">
+                                        <span>{new Date(sale.date).toLocaleDateString()} • {new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                        <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                                        <span className="font-mono text-xs text-slate-400">#{sale.id}</span>
+                                        <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                                        <span className={`flex items-center gap-1 ${sale.paymentMethod === 'visa' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
+                                            <span className="material-symbols-rounded text-[14px]">{sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}</span>
+                                            {sale.paymentMethod === 'visa' ? t.visa : t.cash}
+                                        </span>
                                     </p>
                                 </div>
                             </div>
@@ -705,7 +713,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                     {index + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-900 dark:text-slate-100 truncate">{item.name}</p>
+                    <p className="font-medium text-slate-900 dark:text-slate-100 truncate item-name">{item.name}</p>
                     <p className="text-sm text-slate-500">{item.qty} {t.sold} • ${item.revenue.toFixed(2)} {t.revenue}</p>
                   </div>
                 </div>
@@ -759,7 +767,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                 <div key={item.id} className={`p-4 rounded-2xl border ${isExpired ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/50' : 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-100 dark:border-yellow-900/50'}`}>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <p className="font-medium text-slate-900 dark:text-slate-100">{item.name}</p>
+                      <p className="font-medium text-slate-900 dark:text-slate-100 item-name">{item.name}</p>
                       <p className="text-sm text-slate-500">{item.category} • {item.stock} in stock</p>
                       <p className={`text-xs font-bold uppercase mt-1 ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-500'}`}>
                         {isExpired ? t.expired : `${days} ${t.days}`}
@@ -789,6 +797,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                 id: sale.id,
                 date: new Date(sale.date).toLocaleString(),
                 customer: sale.customerName || 'Guest',
+                code: sale.customerCode || '-',
+                payment: sale.paymentMethod === 'visa' ? 'Visa' : 'Cash',
                 items: sale.items.length,
                 total: sale.total.toFixed(2)
               })),
@@ -813,11 +823,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                       <span className="material-symbols-rounded">shopping_bag</span>
                     </div>
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-slate-100">
+                      <p className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
                         {sale.customerName || "Guest"}
+                        {sale.customerCode && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">#{sale.customerCode}</span>}
                       </p>
-                      <p className="text-xs text-slate-500">
-                        {new Date(sale.date).toLocaleDateString()} • {new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                        <span>{new Date(sale.date).toLocaleDateString()} • {new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                        <span className="font-mono text-xs text-slate-400">#{sale.id}</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                        <span className={`flex items-center gap-1 ${sale.paymentMethod === 'visa' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
+                            <span className="material-symbols-rounded text-[14px]">{sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}</span>
+                            {sale.paymentMethod === 'visa' ? t.visa : t.cash}
+                        </span>
                       </p>
                     </div>
                   </div>
@@ -831,7 +849,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                   <div className="space-y-1">
                     {sale.items.map((item, idx) => (
                       <div key={idx} className="flex justify-between text-sm">
-                        <span className="text-slate-600 dark:text-slate-400">{item.name} x{item.quantity}</span>
+                        <span className="text-slate-600 dark:text-slate-400 item-name">{item.name} x{item.quantity}</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">${(item.price * item.quantity).toFixed(2)}</span>
                       </div>
                     ))}
