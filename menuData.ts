@@ -373,11 +373,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "point-of-sale",
         label: "Point of Sale",
         items: [
-          "New Sale/Invoice",
-          "Quick Sale",
-          "Barcode Scan",
-          "Hold/Resume Bill",
-          "Split Payment",
+          { label: "New Sale", view: "pos" },
           "Cash Register"
         ]
       },
@@ -385,13 +381,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "sales-management",
         label: "Sales Management",
         items: [
-          "All Sales",
           "Today's Sales",
-          "Weekly Sales",
-          "Monthly Sales",
-          "Sales by Product",
-          "Sales by Customer",
-          "Sales by Counter",
           { label: "Sales History", view: "sales-history" }
         ]
       },
@@ -400,44 +390,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         label: "Returns & Refunds",
         items: [
           "Process Return",
-          "Return History",
-          "Refund Management",
-          "Exchange Items",
-          "Return Reasons",
-          "Credit Notes"
-        ]
-      },
-      {
-        id: "quotations-estimates",
-        label: "Quotations & Estimates",
-        items: [
-          "Create Quotation",
-          "Quotation List",
-          "Convert to Sale",
-          "Quotation Templates",
-          "Expired Quotations"
-        ]
-      },
-      {
-        id: "discounts-promotions",
-        label: "Discounts & Promotions",
-        items: [
-          "Apply Discount",
-          "Discount Rules",
-          "Promotional Campaigns",
-          "Coupon Management",
-          "Loyalty Discounts",
-          "Bundle Offers"
-        ]
-      },
-      {
-        id: "counter-management",
-        label: "Counter Management",
-        items: [
-          "Active Counters",
-          "Counter Assignment",
-          "Counter Reports",
-          "Shift Management"
+          "Return History"
         ]
       }
     ]

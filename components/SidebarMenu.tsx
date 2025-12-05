@@ -146,6 +146,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
                 {submenu.items.slice(0, 15).map((item, idx) => {
                   const itemLabel = typeof item === 'string' ? item : item.label;
                   const itemView = typeof item === 'object' && item.view ? item.view : null;
+                  const isActive = itemView === currentView;
                   
                   return (
                     <button
@@ -157,10 +158,11 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
                           handleItemClick(submenu.label, itemLabel);
                         }
                       }}
-                      className="w-full ltr:text-left rtl:text-right px-3 py-2 rounded-lg text-sm transition-all"
-                      style={{ color: 'var(--text-primary)' }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-hover)'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      className={`w-full ltr:text-left rtl:text-right px-3 py-2 rounded-lg text-sm transition-all ${
+                        isActive 
+                          ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold` 
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
                     >
                       {getMenuTranslation(itemLabel, language)}
                     </button>
