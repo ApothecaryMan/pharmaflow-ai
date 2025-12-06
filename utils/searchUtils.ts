@@ -1,4 +1,7 @@
 export const createSearchRegex = (term: string): RegExp => {
+  // Check for leading whitespace BEFORE trimming to determine anchor type
+  const hasLeadingSpace = /^\s/.test(term);
+  
   const trimmed = term.trim();
   if (!trimmed) return /.*/; // Match everything if empty
 
@@ -8,25 +11,28 @@ export const createSearchRegex = (term: string): RegExp => {
   // Split by whitespace
   const parts = escaped.split(/\s+/);
   
-  // First word: must match from word boundary (start of a word)
-  // Subsequent words: can match anywhere in the string
+  // Determine anchor for the first word
+  // If leading space exists -> \b (word boundary, anywhere)
+  // If NO leading space -> ^ (start of string)
+  const firstWordAnchor = hasLeadingSpace ? '\\b' : '^';
+
   let pattern = '';
   if (parts.length === 1) {
-    // Single word: match from word boundary
-    pattern = `\\b${parts[0]}`;
+    pattern = `${firstWordAnchor}${parts[0]}`;
   } else {
-    // Multi-word: first word from word boundary, rest can match anywhere
-    pattern = `\\b${parts[0]}.*${parts.slice(1).join('.*')}`;
+    // Multi-word: first word anchored based on leading space, rest can match anywhere
+    pattern = `${firstWordAnchor}${parts[0]}.*${parts.slice(1).join('.*')}`;
   }
   
   return new RegExp(pattern, 'i');
 };
 
 export const parseSearchTerm = (term: string): { mode: 'normal' | 'ingredient'; regex: RegExp } => {
-  const trimmed = term.trim();
+  const trimmedStart = term.trimStart();
   
-  if (trimmed.startsWith('@')) {
-    const ingredientTerm = trimmed.substring(1).trim();
+  if (trimmedStart.startsWith('@')) {
+    // Remove '@' but preserve potential leading space after it (e.g. "@ pan" vs "@pan")
+    const ingredientTerm = trimmedStart.substring(1);
     return {
       mode: 'ingredient',
       regex: createSearchRegex(ingredientTerm)
@@ -35,6 +41,6 @@ export const parseSearchTerm = (term: string): { mode: 'normal' | 'ingredient'; 
 
   return {
     mode: 'normal',
-    regex: createSearchRegex(trimmed)
+    regex: createSearchRegex(term)
   };
 };

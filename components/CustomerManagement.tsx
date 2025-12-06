@@ -23,12 +23,14 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   t,
   language
 }) => {
+  const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isKioskMode, setIsKioskMode] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const { showMenu } = useContextMenu();
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState<Partial<Customer>>({});
@@ -124,11 +126,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     return maxId + 1;
   };
 
-  const handleOpenModal = (customer?: Customer) => {
-    if (customer) {
-      setEditingCustomer(customer);
-      setFormData(customer);
-    } else {
+  const handleOpenAdd = () => {
+      setMode('add');
       setEditingCustomer(null);
       setFormData({
         code: generateUniqueCode(),
@@ -140,8 +139,28 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         preferredContact: 'phone',
         chronicConditions: []
       });
-    }
+  };
+
+  const handleOpenEdit = (customer: Customer) => {
+    setEditingCustomer(customer);
+    setFormData(customer);
     setIsModalOpen(true);
+  };
+
+  const handleOpenKiosk = () => {
+      setEditingCustomer(null);
+      setFormData({
+        code: generateUniqueCode(),
+        serialId: getNextSerialId(),
+        status: 'active',
+        points: 0,
+        totalPurchases: 0,
+        lastVisit: new Date().toISOString(),
+        preferredContact: 'phone',
+        chronicConditions: []
+      });
+      setIsKioskMode(true);
+      setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
@@ -164,14 +183,22 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
     if (editingCustomer) {
       onUpdateCustomer({ ...editingCustomer, ...formData } as Customer);
+      handleCloseModal();
     } else {
       onAddCustomer({
         id: Date.now().toString(),
         ...formData,
         serialId: formData.serialId || getNextSerialId()
       } as Customer);
+      
+      if (isKioskMode) {
+          handleCloseModal();
+      } else {
+          setShowSuccess(true);
+          setTimeout(() => setShowSuccess(false), 3000);
+          setMode('list');
+      }
     }
-    handleCloseModal();
   };
 
   const toggleCondition = (condition: string) => {
@@ -186,7 +213,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const handleContextMenu = (e: React.MouseEvent, customer: Customer) => {
     e.preventDefault();
     showMenu(e.clientX, e.clientY, [
-        { label: t.modal.edit, icon: 'edit', action: () => handleOpenModal(customer) },
+        { label: t.modal.edit, icon: 'edit', action: () => handleOpenEdit(customer) },
         { label: t.modal.delete || 'Delete', icon: 'delete', action: () => onDeleteCustomer(customer.id), danger: true },
         { separator: true },
         { label: 'Copy Code', icon: 'content_copy', action: () => navigator.clipboard.writeText(customer.code) }
@@ -283,7 +310,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       render: (c) => (
         <div className="flex items-center justify-end gap-1">
             <button 
-                onClick={() => handleOpenModal(c)}
+                onClick={() => handleOpenEdit(c)}
                 className={`p-1.5 rounded-lg hover:bg-${color}-100 dark:hover:bg-${color}-900/50 text-${color}-600 dark:text-${color}-400 transition-colors`}
                 title={t.modal.edit}
             >
@@ -396,65 +423,266 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-medium tracking-tight">{t.title}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t.subtitle}</p>
+          <h2 className="text-2xl font-medium tracking-tight">{mode === 'list' ? t.title : (t.addCustomer || 'Add New Customer')}</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{mode === 'list' ? t.subtitle : (t.addCustomerSubtitle || 'Register a new customer')}</p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
             <button
-            onClick={() => {
-                handleOpenModal();
-                setIsKioskMode(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl transition-all"
+            onClick={handleOpenKiosk}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-full transition-all text-xs font-bold"
             title="Open Patient Self-Entry Mode"
             >
-            <span className="material-symbols-rounded">monitor_heart</span>
-            <span className="font-medium hidden md:inline">{t.modal.kioskMode}</span>
+            <span className="material-symbols-rounded text-[18px]">monitor_heart</span>
+            <span className="hidden md:inline">{t.modal.kioskMode}</span>
             </button>
-            <button
-            onClick={() => handleOpenModal()}
-            className={`flex items-center gap-2 px-4 py-2.5 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl transition-all shadow-lg shadow-${color}-500/20`}
-            >
-            <span className="material-symbols-rounded">add</span>
-            <span className="font-medium">{t.addCustomer}</span>
-            </button>
+
+            <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-full flex text-xs font-bold">
+              <button 
+                onClick={() => setMode('list')}
+                className={`px-4 py-2 rounded-full transition-all ${mode === 'list' ? `bg-${color}-600 text-white shadow-md` : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+              >
+                {t.allCustomers || 'All Customers'}
+              </button>
+              <button 
+                onClick={handleOpenAdd}
+                className={`px-4 py-2 rounded-full transition-all ${mode === 'add' ? `bg-${color}-600 text-white shadow-md` : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+              >
+                {t.addCustomer || 'Add New Customer'}
+              </button>
+            </div>
         </div>
       </div>
 
-      {/* Search & Content */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="relative group flex-1 w-full">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                <span className="material-symbols-rounded text-[20px]">search</span>
-            </span>
-            <input
-                type="text"
-                placeholder={t.searchPlaceholder}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-full text-sm w-full focus:ring-2 focus:ring-blue-500/20 text-slate-900 dark:text-slate-100 placeholder-slate-400 transition-all"
-            />
+      {/* Success Message */}
+      {showSuccess && mode === 'add' && (
+        <div className={`p-4 rounded-2xl bg-${color}-50 dark:bg-${color}-950/30 border border-${color}-200 dark:border-${color}-800 flex items-center gap-3 animate-fade-in`}>
+          <span className={`material-symbols-rounded text-${color}-600 dark:text-${color}-400`}>check_circle</span>
+          <span className={`text-sm font-medium text-${color}-700 dark:text-${color}-300`}>{t.customerAddedSuccess || 'Customer added successfully!'}</span>
+        </div>
+      )}
+
+      {mode === 'list' ? (
+        <>
+          {/* Search & Content */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="relative group flex-1 w-full">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                    <span className="material-symbols-rounded text-[20px]">search</span>
+                </span>
+                <input
+                    type="text"
+                    placeholder={t.searchPlaceholder}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-full text-sm w-full focus:ring-2 focus:ring-blue-500/20 text-slate-900 dark:text-slate-100 placeholder-slate-400 transition-all"
+                />
+              </div>
           </div>
-      </div>
 
-      {/* Table Card */}
-      <DataTable
-        data={filteredCustomers}
-        columns={columns}
-        onSort={handleSort}
-        onRowContextMenu={handleContextMenu}
-        color={color}
-        t={t}
-      />
+          {/* Table Card */}
+          <DataTable
+            data={filteredCustomers}
+            columns={columns}
+            onSort={handleSort}
+            onRowContextMenu={handleContextMenu}
+            color={color}
+            t={t}
+          />
+        </>
+      ) : (
+        /* ADD CUSTOMER FORM VIEW - INLINE */
+        <div className="flex-1 overflow-y-auto">
+           <form onSubmit={handleSubmit} className="grid grid-cols-1 xl:grid-cols-3 gap-6 pb-20">
+              
+              {/* LEFT COLUMN: Main Info */}
+              <div className="xl:col-span-2 space-y-6">
+                 {/* Basic Details Card */}
+                 <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                    <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-4">
+                      <span className="material-symbols-rounded text-blue-500">person</span>
+                      {t.basicInfo || 'Basic Information'}
+                    </h3>
 
-      {/* Admin Modal */}
-      {isModalOpen && !isKioskMode && (
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.code} *</label>
+                            <div className="flex gap-2">
+                                <input
+                                type="text"
+                                required
+                                value={formData.code || ''}
+                                onChange={e => setFormData({...formData, code: e.target.value})}
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-sm"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({...formData, code: generateUniqueCode()})}
+                                    className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg transition-colors"
+                                    title={t.modal.generateCode}
+                                >
+                                    <span className="material-symbols-rounded text-[18px]">autorenew</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div className="col-span-2">
+                            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.name} *</label>
+                            <input
+                            type="text"
+                            required
+                            value={formData.name || ''}
+                            onChange={e => setFormData({...formData, name: e.target.value})}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.phone} *</label>
+                          <input
+                            type="tel"
+                            required
+                            value={formData.phone || ''}
+                            onChange={e => setFormData({...formData, phone: e.target.value})}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.email}</label>
+                          <input
+                            type="email"
+                            value={formData.email || ''}
+                            onChange={e => setFormData({...formData, email: e.target.value})}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                          />
+                        </div>
+                    </div>
+
+                    <div className="mt-4">
+                        <AddressForm />
+                    </div>
+                 </div>
+
+                 {/* Medical Info Card */}
+                 <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                    <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-4">
+                      <span className="material-symbols-rounded text-blue-500">medical_services</span>
+                      {t.modal.conditions || 'Medical Conditions'}
+                    </h3>
+                    
+                    <div className="flex flex-wrap gap-2">
+                        {['Diabetes', 'Hypertension', 'Asthma', 'Allergies', 'Heart Disease', 'Arthritis'].map(condition => (
+                            <button
+                                key={condition}
+                                type="button"
+                                onClick={() => toggleCondition(condition)}
+                                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                                    (formData.chronicConditions || []).includes(condition)
+                                        ? `bg-${color}-100 text-${color}-700 border border-${color}-200`
+                                        : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
+                                }`}
+                            >
+                                {condition}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="mt-4">
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.notes}</label>
+                        <textarea
+                          value={formData.notes || ''}
+                          onChange={e => setFormData({...formData, notes: e.target.value})}
+                          rows={2}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm resize-none"
+                        />
+                    </div>
+                 </div>
+              </div>
+
+              {/* RIGHT COLUMN: Additional Info */}
+              <div className="xl:col-span-1 space-y-6">
+                  <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm h-full">
+                      <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-4">
+                        <span className="material-symbols-rounded text-blue-500">settings</span>
+                        Preferences & Insurance
+                      </h3>
+
+                      <div className="space-y-4">
+                          <div>
+                            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.contact}</label>
+                            <select
+                                value={formData.preferredContact || 'phone'}
+                                onChange={e => setFormData({...formData, preferredContact: e.target.value as any})}
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                            >
+                                <option value="phone">Phone Call</option>
+                                <option value="sms">SMS / WhatsApp</option>
+                                <option value="email">Email</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.location}</label>
+                            <input
+                                type="text"
+                                value={formData.preferredLocation || ''}
+                                onChange={e => setFormData({...formData, preferredLocation: e.target.value})}
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                                placeholder="e.g. Downtown Branch"
+                            />
+                          </div>
+
+                          <div className="border-t border-slate-100 dark:border-slate-800 my-4"></div>
+                          
+                          <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">{t.modal.insurance}</h4>
+                          <div>
+                              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.insurance}</label>
+                              <input
+                                  type="text"
+                                  value={formData.insuranceProvider || ''}
+                                  onChange={e => setFormData({...formData, insuranceProvider: e.target.value})}
+                                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                              />
+                          </div>
+                          <div>
+                              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.policy}</label>
+                              <input
+                                  type="text"
+                                  value={formData.policyNumber || ''}
+                                  onChange={e => setFormData({...formData, policyNumber: e.target.value})}
+                                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                              />
+                          </div>
+                      </div>
+
+                      <div className="mt-8">
+                          <button
+                            type="submit"
+                            className={`w-full py-3 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all font-bold`}
+                          >
+                            {t.modal.save || 'Save Customer'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setMode('list')}
+                            className="w-full py-3 mt-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors text-sm font-medium"
+                          >
+                            {t.modal.cancel}
+                          </button>
+                      </div>
+                  </div>
+              </div>
+           </form>
+        </div>
+      )}
+
+      {/* Admin Modal - ONLY FOR EDITING NOW */}
+      {isModalOpen && !isKioskMode && editingCustomer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-scale-in max-h-[90vh] flex flex-col">
             <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center shrink-0">
               <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                {editingCustomer ? t.modal.edit : t.modal.add}
+                {t.modal.edit}
               </h3>
               <button onClick={handleCloseModal} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                 <span className="material-symbols-rounded">close</span>
@@ -474,14 +702,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                         onChange={e => setFormData({...formData, code: e.target.value})}
                         className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-sm"
                         />
-                        <button
-                            type="button"
-                            onClick={() => setFormData({...formData, code: generateUniqueCode()})}
-                            className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg transition-colors"
-                            title={t.modal.generateCode}
-                        >
-                            <span className="material-symbols-rounded text-[18px]">autorenew</span>
-                        </button>
                     </div>
                  </div>
                  <div className="col-span-2">
@@ -518,7 +738,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 </div>
               </div>
 
-              {/* Address Section (Replaces old address field) */}
+              {/* Address Section */}
               <AddressForm />
 
               {/* Preferences */}
