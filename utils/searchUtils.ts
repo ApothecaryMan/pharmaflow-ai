@@ -5,8 +5,19 @@ export const createSearchRegex = (term: string): RegExp => {
   // Escape special regex characters
   const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   
-  // Replace whitespace with .* to allow matching any characters in between
-  const pattern = escaped.split(/\s+/).join('.*');
+  // Split by whitespace
+  const parts = escaped.split(/\s+/);
+  
+  // First word: must match from word boundary (start of a word)
+  // Subsequent words: can match anywhere in the string
+  let pattern = '';
+  if (parts.length === 1) {
+    // Single word: match from word boundary
+    pattern = `\\b${parts[0]}`;
+  } else {
+    // Multi-word: first word from word boundary, rest can match anywhere
+    pattern = `\\b${parts[0]}.*${parts.slice(1).join('.*')}`;
+  }
   
   return new RegExp(pattern, 'i');
 };

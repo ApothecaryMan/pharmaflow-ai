@@ -236,7 +236,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       }
 
       // Normal search: Check composite string for cross-field matches (e.g. "Pana Tablet")
-      const searchableText = `${d.name} ${d.dosageForm || ''} ${d.genericName} ${d.description} ${d.category}`;
+      const searchableText = d.name + ' ' + (d.dosageForm || '') + ' ' + d.category;
       
       return (
         regex.test(searchableText) ||

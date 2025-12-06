@@ -88,7 +88,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
         searchRegex.test(sale.id) ||
         sale.items.some(item => 
            searchRegex.test(item.name) || 
-           searchRegex.test(item.genericName) ||
            (item.barcode && searchRegex.test(item.barcode))
         )
       );

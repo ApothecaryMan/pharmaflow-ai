@@ -1,7 +1,7 @@
-```
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useContextMenu } from '../components/ContextMenu';
-import { Drug, Supplier, Purchase } from '../types';
+import { Drug, Supplier, Purchase, PurchaseItem } from '../types';
 import { createSearchRegex, parseSearchTerm } from '../utils/searchUtils';
 
 interface PurchasesProps {
@@ -98,14 +98,14 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     setSelectedSupplierId('');
   };
 
-  const { mode, regex } = parseSearchTerm(search);
+  const { mode: searchMode, regex } = parseSearchTerm(search);
 
   const filteredDrugs = inventory.filter(d => {
-    if (mode === 'ingredient') {
+    if (searchMode === 'ingredient') {
         return d.activeIngredients && d.activeIngredients.some(ing => regex.test(ing));
     }
     
-    const searchableText = `${d.name} ${d.dosageForm || ''} ${d.genericName}`;
+    const searchableText = d.name + ' ' + (d.dosageForm || '');
     return regex.test(searchableText);
   });
 

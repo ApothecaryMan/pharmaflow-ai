@@ -35,7 +35,46 @@ const generateInventory = (): Drug[] => {
 
   const inventory: Drug[] = [];
 
-  // Generate 10000 items
+  // Add some real-world examples for testing
+  const REAL_DRUGS = [
+    { name: 'Panadol Extra', generic: 'Paracetamol', form: 'Tablets', category: 'Painkillers' },
+    { name: 'Panadol Advance', generic: 'Paracetamol', form: 'Tablets', category: 'Painkillers' },
+    { name: 'Brufen 400', generic: 'Ibuprofen', form: 'Tablets', category: 'Painkillers' },
+    { name: 'Amoxil', generic: 'Amoxicillin', form: 'Capsules', category: 'Antibiotics' },
+    { name: 'Augmentin', generic: 'Amoxicillin + Clavulanic Acid', form: 'Tablets', category: 'Antibiotics' },
+    { name: 'Cataflam', generic: 'Diclofenac Potassium', form: 'Tablets', category: 'Painkillers' },
+    { name: 'Zyrtec', generic: 'Cetirizine', form: 'Tablets', category: 'Allergy' },
+    { name: 'Claritin', generic: 'Loratadine', form: 'Tablets', category: 'Allergy' },
+    { name: 'Ventolin', generic: 'Salbutamol', form: 'Inhaler', category: 'Respiratory' },
+    { name: 'Glucophage', generic: 'Metformin', form: 'Tablets', category: 'Diabetes' },
+    { name: 'Lipitor', generic: 'Atorvastatin', form: 'Tablets', category: 'Cardiovascular' },
+    { name: 'Nexium', generic: 'Esomeprazole', form: 'Tablets', category: 'Digestive' },
+    { name: 'Voltaren', generic: 'Diclofenac Sodium', form: 'Gel', category: 'Painkillers' },
+    { name: 'Aspirin Protect', generic: 'Acetylsalicylic Acid', form: 'Tablets', category: 'Cardiovascular' },
+    { name: 'Roaccutane', generic: 'Isotretinoin', form: 'Capsules', category: 'Skin Care' }
+  ];
+
+  REAL_DRUGS.forEach((drug, index) => {
+    const cost = parseFloat((Math.random() * 50 + 1).toFixed(2));
+    const price = parseFloat((cost * (1.2 + Math.random() * 0.5)).toFixed(2));
+    
+    inventory.push({
+      id: `real-${index}`,
+      name: drug.name,
+      genericName: drug.generic,
+      category: drug.category,
+      price: price,
+      costPrice: cost,
+      stock: Math.floor(Math.random() * 200) + 50,
+      expiryDate: new Date(Date.now() + Math.random() * 1000 * 60 * 60 * 24 * 365 * 2).toISOString().split('T')[0],
+      description: `Original ${drug.name} (${drug.generic})`,
+      barcode: `888${index.toString().padStart(9, '0')}`,
+      internalCode: `REAL-${index.toString().padStart(4, '0')}`,
+      unitsPerPack: 1,
+      dosageForm: drug.form,
+      activeIngredients: drug.generic.split(' + ').map(i => i.trim()),
+    });
+  });
   for (let i = 1; i <= 10000; i++) {
     const typeRoll = Math.random();
     let category = '';
@@ -104,6 +143,7 @@ const generateInventory = (): Drug[] => {
       internalCode: `INT-${i.toString().padStart(5, '0')}`,
       unitsPerPack: units,
       dosageForm: dosageForm,
+      activeIngredients: [generic], // Use generic name as active ingredient for mock data
     });
   }
 
@@ -230,11 +270,10 @@ const App: React.FC = () => {
   const [inventory, setInventory] = useState<Drug[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pharma_inventory');
-      // If saved inventory is small (old sample data), replace with new large generator
+      // If saved inventory is small (old sample data) or missing new fields, replace with new large generator
       if (saved) {
          const parsed = JSON.parse(saved);
-         // Check if data is large enough AND has the new dosageForm field
-         if (parsed.length > 5000 && parsed[0].dosageForm !== undefined) return parsed;
+         if (parsed.length > 5000 && parsed[0].dosageForm && parsed[0].activeIngredients) return parsed;
       }
       return INITIAL_INVENTORY;
     }

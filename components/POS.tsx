@@ -6,8 +6,6 @@ import { getLocationName } from '../data/locations';
 import { usePOSTabs } from '../hooks/usePOSTabs';
 import { useColumnReorder } from '../hooks/useColumnReorder';
 import { useLongPress } from '../hooks/useLongPress';
-import { useLongPress } from '../hooks/useLongPress';
-import { useLongPress } from '../hooks/useLongPress';
 import { TabBar } from './TabBar';
 import { createSearchRegex, parseSearchTerm } from '../utils/searchUtils';
 
@@ -441,7 +439,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
         if (mode === 'ingredient') {
             matchesSearch = !!d.activeIngredients && d.activeIngredients.some(ing => regex.test(ing));
         } else {
-            const searchableText = `${d.name} ${d.dosageForm || ''} ${d.genericName} ${d.description} ${d.category}`;
+            const searchableText = d.name + ' ' + (d.dosageForm || '') + ' ' + d.category;
             matchesSearch = 
                 regex.test(searchableText) ||
                 (d.barcode && regex.test(d.barcode)) ||
