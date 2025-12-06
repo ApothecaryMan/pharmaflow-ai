@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import { MenuItem } from '../menuData';
 import { getMenuTranslation } from '../menuTranslations';
 
@@ -27,6 +27,27 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
 }) => {
   const [expandedSubmenus, setExpandedSubmenus] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const navRef = useRef<HTMLElement>(null);
+  const scrollPosRef = useRef(0);
+
+  // Reset scroll when module changes
+  useEffect(() => {
+    scrollPosRef.current = 0;
+    if (navRef.current) navRef.current.scrollTop = 0;
+  }, [activeModule]);
+
+  // Restore scroll after render
+  useLayoutEffect(() => {
+    if (navRef.current) {
+      navRef.current.scrollTop = scrollPosRef.current;
+    }
+  });
+
+  const handleScroll = () => {
+    if (navRef.current) {
+      scrollPosRef.current = navRef.current.scrollTop;
+    }
+  };
 
   // Get the active module's data
   const activeModuleData = useMemo(() => {
@@ -41,10 +62,10 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
     const query = searchQuery.toLowerCase();
     return activeModuleData.submenus.map(submenu => {
       const matchesSubmenu = submenu.label.toLowerCase().includes(query);
-      const filteredItems = submenu.items.filter(item => 
-        item.toLowerCase().includes(query)
-      );
-
+      const filteredItems = submenu.items.filter(item => {
+      const label = typeof item === 'string' ? item : item.label;
+      return label.toLowerCase().includes(query);
+    });
       if (matchesSubmenu || filteredItems.length > 0) {
         return { ...submenu, items: matchesSubmenu ? submenu.items : filteredItems };
       }
@@ -120,7 +141,11 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
       </div>
 
       {/* Submenus - Simplified Flat List */}
-      <nav className="flex-1 space-y-1 w-full overflow-y-auto px-3 pb-3">
+      <nav 
+        ref={navRef}
+        onScroll={handleScroll}
+        className="flex-1 space-y-1 w-full overflow-y-auto px-3 pb-3"
+      >
         {filteredSubmenus.length === 0 ? (
           <div className="text-center py-8 text-slate-400 text-sm">
             <span className="material-symbols-rounded text-[32px] mb-2 block opacity-50">search_off</span>
@@ -145,26 +170,31 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
               <div className="space-y-0.5">
                 {submenu.items.slice(0, 15).map((item, idx) => {
                   const itemLabel = typeof item === 'string' ? item : item.label;
-                  const itemView = typeof item === 'object' && item.view ? item.view : null;
+                  const itemView = typeof item === 'object' && item.view ? item.view : itemLabel;
+                  const isImplemented = typeof item === 'object' && !!item.view;
                   const isActive = itemView === currentView;
                   
                   return (
                     <button
                       key={idx}
+                      disabled={!isImplemented}
                       onClick={() => {
-                        if (itemView && onViewChange) {
-                          onViewChange(itemView as any);
+                        if (onViewChange) {
+                          onViewChange(itemView);
                         } else {
                           handleItemClick(submenu.label, itemLabel);
                         }
                       }}
                       className={`w-full ltr:text-left rtl:text-right px-3 py-2 rounded-lg text-sm transition-all ${
-                        isActive 
-                          ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold` 
-                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        !isImplemented
+                          ? 'opacity-40 cursor-not-allowed text-slate-400 dark:text-slate-600'
+                          : isActive 
+                            ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold` 
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
                       {getMenuTranslation(itemLabel, language)}
+                      {!isImplemented && <span className="text-[10px] opacity-60 ltr:ml-2 rtl:mr-2 border border-slate-300 dark:border-slate-700 px-1 rounded">Soon</span>}
                     </button>
                   );
                 })}

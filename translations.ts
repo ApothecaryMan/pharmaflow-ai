@@ -37,12 +37,30 @@ export const TRANSLATIONS = {
         fullscreen: 'Fullscreen',
         reload: 'Reload',
         help: 'Help & Support'
+      },
+      datePicker: {
+        cancel: 'Cancel',
+        ok: 'OK',
+        hour: 'Hour',
+        minute: 'Minute'
       }
     },
     inventory: {
       title: 'Inventory',
       subtitle: 'Manage your pharmaceutical stock',
       addDrug: 'Add New Drug',
+      allProducts: 'All Products',
+      addNewProduct: 'Add New Product',
+      addProductSubtitle: 'Add a new item to your inventory',
+      productAddedSuccess: 'Product added successfully!',
+      basicInfo: 'Basic Information',
+      productCodes: 'Product Codes',
+      stockDetails: 'Stock Details',
+      pricing: 'Pricing',
+      additionalInfo: 'Additional Information',
+      autoGenerate: 'Auto-Generate',
+      clearForm: 'Clear Form',
+      saveAndAddAnother: 'Save & Add Another',
       searchPlaceholder: 'Search name, code, category, or desc...',
       headers: {
         name: 'Name',
@@ -171,6 +189,8 @@ export const TRANSLATIONS = {
       title: 'Sales History',
       subtitle: 'View and manage past transactions',
       searchPlaceholder: 'Search customer, ID, or item name...',
+      dateFrom: 'From',
+      dateTo: 'To',
       sortBy: 'Sort by',
       sortNewest: 'Newest First',
       sortOldest: 'Oldest First',
@@ -401,6 +421,177 @@ export const TRANSLATIONS = {
         hotline: 'Hotline',
         genericName: 'Generic Name'
       }
+    },
+    returnHistory: {
+      title: 'Return History',
+      subtitle: 'View and manage processed returns',
+      searchPlaceholder: 'Search returns, Sale ID, or Customer...',
+      dateFrom: 'From',
+      dateTo: 'To',
+      headers: {
+        returnId: 'Return ID',
+        date: 'Date',
+        saleId: 'Sale ID',
+        customer: 'Customer',
+        refundAmount: 'Refund Amount',
+        reason: 'Reason',
+        actions: 'Actions',
+        notes: 'Notes',
+        totalRefund: 'Total Refund'
+      },
+      noResults: 'No return records found.',
+      reasons: {
+        customer_request: 'Customer Request',
+        wrong_item: 'Wrong Item',
+        damaged: 'Damaged',
+        expired: 'Expired',
+        defective: 'Defective',
+        other: 'Other'
+      },
+      actions: {
+        viewDetails: 'View Details'
+      },
+      modal: {
+        title: 'Return Details',
+        itemsReturned: 'Items Returned',
+        item: 'Item',
+        qty: 'Qty',
+        refund: 'Refund',
+        unit: 'Unit',
+        pack: 'Pack'
+      }
+    },
+    customers: {
+      title: 'Customer Management',
+      subtitle: 'Manage your customer database',
+      addCustomer: 'Add Customer',
+      searchPlaceholder: 'Search by name, phone, or email...',
+      headers: {
+        name: 'Name',
+        contact: 'Contact Info',
+        purchases: 'Total Purchases',
+        points: 'Points',
+        lastVisit: 'Last Visit',
+        status: 'Status',
+        actions: 'Actions'
+      },
+      modal: {
+        add: 'Add New Customer',
+        edit: 'Edit Customer',
+        code: 'Customer Code',
+        name: 'Full Name',
+        phone: 'Phone Number',
+        email: 'Email Address',
+        address: 'Address',
+        insurance: 'Insurance Provider',
+        policy: 'Policy Number',
+        location: 'Preferred Pharmacy Location',
+        contact: 'Preferred Contact Method',
+        conditions: 'Chronic Conditions',
+        governorate: 'Governorate',
+        city: 'City',
+        area: 'Area',
+        streetAddress: 'Street Address',
+        selectGovernorate: 'Select Governorate',
+        selectCity: 'Select City',
+        selectArea: 'Select Area',
+        notes: 'Notes',
+        cancel: 'Cancel',
+        save: 'Save Customer',
+        kioskMode: 'Patient Entry Mode',
+        generateCode: 'Generate Code'
+      },
+      noResults: 'No customers found.'
+    },
+    customerOverview: {
+      title: 'Customer Overview',
+      subtitle: 'Comprehensive customer analytics and insights',
+      totalCustomers: 'Total Customers',
+      active: 'Active',
+      inactive: 'Inactive',
+      lifetimeValue: 'Avg. Lifetime Value',
+      perCustomer: 'Per Customer',
+      newCustomers: 'New Customers',
+      thisWeek: 'This Week',
+      thisMonth: 'This Month',
+      loyaltyPoints: 'Loyalty Points',
+      avgPoints: 'Avg',
+      locationDistribution: 'Location Distribution',
+      noData: 'No data available',
+      topCustomers: 'Top Customers',
+      noCustomers: 'No customer data',
+      healthInsights: 'Health Insights',
+      withInsurance: 'With Insurance',
+      withoutInsurance: 'Without Insurance',
+      chronicConditions: 'Chronic Conditions',
+      tracked: 'Types Tracked',
+      patients: 'patients',
+      engagement: 'Customer Engagement',
+      activeRate: 'Active Rate',
+      avgDays: 'Avg Days Since Visit',
+      inactive90: 'Inactive 90d+',
+      segmentation: 'Customer Segmentation',
+      vip: 'VIP',
+      regular: 'Regular',
+      basic: 'Basic',
+      atRisk: 'At Risk',
+      daysInactive: 'days inactive',
+      contactPrefs: 'Contact Preferences',
+      phone: 'Phone',
+      email: 'Email',
+      sms: 'SMS/WhatsApp',
+      recentActivity: 'Recent Customer Activity',
+      satisfaction: 'Satisfaction Metrics',
+      repeatRate: 'Repeat Rate',
+      avgOrder: 'Avg Order',
+      returnRate: 'Return Rate',
+      lastVisit: 'Last Visit',
+      expand: 'Expand',
+      exportCSV: 'Export'
+    },
+    addProduct: {
+      title: 'Add New Product',
+      subtitle: 'Add a new item to your inventory',
+      sections: {
+        basicInfo: 'Basic Information',
+        codes: 'Product Codes',
+        stock: 'Stock Details',
+        pricing: 'Pricing',
+        additional: 'Additional Information'
+      },
+      fields: {
+        brandName: 'Brand Name',
+        genericName: 'Generic Name',
+        category: 'Category',
+        barcode: 'Barcode',
+        internalCode: 'Internal Code',
+        stock: 'Stock Quantity',
+        unitsPerPack: 'Units Per Pack',
+        sellingPrice: 'Selling Price ($)',
+        costPrice: 'Cost Price ($)',
+        maxDiscount: 'Max Discount (%)',
+        expiryDate: 'Expiry Date',
+        description: 'Description'
+      },
+      placeholders: {
+        brandName: 'e.g., Panadol Extra',
+        genericName: 'e.g., Paracetamol',
+        barcode: 'Scan or enter barcode',
+        internalCode: 'Auto-generated or custom',
+        description: 'Product description, usage instructions...'
+      },
+      actions: {
+        save: 'Add Product',
+        saveAndNew: 'Save & Add Another',
+        clear: 'Clear Form',
+        cancel: 'Cancel',
+        generateCode: 'Auto-Generate'
+      },
+      messages: {
+        success: 'Product added successfully!',
+        error: 'Failed to add product. Please check all fields.',
+        cleared: 'Form cleared'
+      }
     }
   },
   AR: {
@@ -441,12 +632,30 @@ export const TRANSLATIONS = {
         fullscreen: 'ملء الشاشة',
         reload: 'إعادة تحميل',
         help: 'المساعدة والدعم'
+      },
+      datePicker: {
+        cancel: 'إلغاء',
+        ok: 'موافق',
+        hour: 'ساعة',
+        minute: 'دقيقة'
       }
     },
     inventory: {
       title: 'المخزون',
       subtitle: 'إدارة المخزون الدوائي',
       addDrug: 'إضافة دواء',
+      allProducts: 'جميع المنتجات',
+      addNewProduct: 'إضافة منتج جديد',
+      addProductSubtitle: 'إضافة عنصر جديد إلى المخزون',
+      productAddedSuccess: 'تمت إضافة المنتج بنجاح!',
+      basicInfo: 'المعلومات الأساسية',
+      productCodes: 'أكواد المنتج',
+      stockDetails: 'تفاصيل المخزون',
+      pricing: 'التسعير',
+      additionalInfo: 'معلومات إضافية',
+      autoGenerate: 'توليد تلقائي',
+      clearForm: 'مسح النموذج',
+      saveAndAddAnother: 'حفظ وإضافة آخر',
       searchPlaceholder: 'بحث بالاسم، الكود، الفئة أو الوصف...',
       headers: {
         name: 'الاسم',
@@ -575,6 +784,8 @@ export const TRANSLATIONS = {
       title: 'سجل المبيعات',
       subtitle: 'عرض وإدارة المعاملات السابقة',
       searchPlaceholder: 'بحث بالعميل، المعرف أو اسم المنتج...',
+      dateFrom: 'من',
+      dateTo: 'إلى',
       sortBy: 'ترتيب حسب',
       sortNewest: 'الأحدث أولاً',
       sortOldest: 'الأقدم أولاً',
@@ -660,6 +871,94 @@ export const TRANSLATIONS = {
         totalItems: 'إجمالي العناصر',
         itemsSelected: 'عناصر محددة'
       }
+    },
+    customers: {
+      title: 'إدارة العملاء',
+      subtitle: 'إدارة قاعدة بيانات العملاء',
+      addCustomer: 'إضافة عميل',
+      searchPlaceholder: 'بحث بالاسم، الهاتف، أو البريد...',
+      headers: {
+        name: 'الاسم',
+        contact: 'معلومات الاتصال',
+        purchases: 'إجمالي المشتريات',
+        points: 'النقاط',
+        lastVisit: 'آخر زيارة',
+        status: 'الحالة',
+        actions: 'إجراءات'
+      },
+      modal: {
+        add: 'إضافة عميل جديد',
+        edit: 'تعديل بيانات العميل',
+        code: 'كود العميل',
+        name: 'الاسم الكامل',
+        phone: 'رقم الهاتف',
+        email: 'البريد الإلكتروني',
+        address: 'العنوان',
+        insurance: 'شركة التأمين',
+        policy: 'رقم البوليصة',
+        location: 'موقع الصيدلية المفضل',
+        contact: 'طريقة التواصل المفضلة',
+        conditions: 'الأمراض المزمنة',
+        governorate: 'المحافظة',
+        city: 'المدينة',
+        area: 'المنطقة',
+        streetAddress: 'العنوان بالتفصيل',
+        selectGovernorate: 'اختر المحافظة',
+        selectCity: 'اختر المدينة',
+        selectArea: 'اختر المنطقة',
+        notes: 'ملاحظات',
+        cancel: 'إلغاء',
+        save: 'حفظ العميل',
+        kioskMode: 'وضع إدخال المريض',
+        generateCode: 'توليد كود'
+      },
+      noResults: 'لم يتم العثور على عملاء.'
+    },
+    customerOverview: {
+      title: 'نظرة عامة على العملاء',
+      subtitle: 'تحليلات ورؤى شاملة للعملاء',
+      totalCustomers: 'إجمالي العملاء',
+      active: 'نشط',
+      inactive: 'غير نشط',
+      lifetimeValue: 'متوسط قيمة العميل',
+      perCustomer: 'لكل عميل',
+      newCustomers: 'عملاء جدد',
+      thisWeek: 'هذا الأسبوع',
+      thisMonth: 'هذا الشهر',
+      loyaltyPoints: 'نقاط الولاء',
+      avgPoints: 'متوسط',
+      locationDistribution: 'توزيع المواقع',
+      noData: 'لا توجد بيانات',
+      topCustomers: 'أفضل العملاء',
+      noCustomers: 'لا توجد بيانات عملاء',
+      healthInsights: 'رؤى صحية',
+      withInsurance: 'مع تأمين',
+      withoutInsurance: 'بدون تأمين',
+      chronicConditions: 'الأمراض المزمنة',
+      tracked: 'أنواع متتبعة',
+      patients: 'مريض',
+      engagement: 'تفاعل العملاء',
+      activeRate: 'معدل النشاط',
+      avgDays: 'متوسط الأيام منذ الزيارة',
+      inactive90: 'غير نشط 90 يوم+',
+      segmentation: 'تصنيف العملاء',
+      vip: 'VIP',
+      regular: 'عادي',
+      basic: 'أساسي',
+      atRisk: 'في خطر',
+      daysInactive: 'أيام غير نشط',
+      contactPrefs: 'تفضيلات التواصل',
+      phone: 'الهاتف',
+      email: 'البريد',
+      sms: 'رسائل/واتساب',
+      recentActivity: 'نشاط العملاء الأخير',
+      satisfaction: 'مقاييس الرضا',
+      repeatRate: 'معدل التكرار',
+      avgOrder: 'متوسط الطلب',
+      returnRate: 'معدل الإرجاع',
+      lastVisit: 'آخر زيارة',
+      expand: 'توسيع',
+      exportCSV: 'تصدير'
     },
     dashboard: {
       title: 'نظرة عامة',
@@ -804,6 +1103,89 @@ export const TRANSLATIONS = {
         image: 'شعار/صورة',
         hotline: 'الخط الساخن',
         genericName: 'الاسم العلمي'
+      }
+    },
+    returnHistory: {
+      title: 'سجل المرتجعات',
+      subtitle: 'عرض وإدارة المرتجعات التي تمت معالجتها',
+      searchPlaceholder: 'بحث في المرتجعات، رقم البيع، أو العميل...',
+      dateFrom: 'من',
+      dateTo: 'إلى',
+      headers: {
+        returnId: 'رقم المرتجع',
+        date: 'التاريخ',
+        saleId: 'رقم البيع',
+        customer: 'العميل',
+        refundAmount: 'مبلغ الاسترداد',
+        reason: 'السبب',
+        actions: 'إجراءات',
+        notes: 'ملاحظات',
+        totalRefund: 'إجمالي الاسترداد'
+      },
+      noResults: 'لا توجد سجلات مرتجعات.',
+      reasons: {
+        customer_request: 'طلب العميل',
+        wrong_item: 'صنف خاطئ',
+        damaged: 'تالف',
+        expired: 'منتهي الصلاحية',
+        defective: 'معيب',
+        other: 'أخرى'
+      },
+      actions: {
+        viewDetails: 'عرض التفاصيل'
+      },
+      modal: {
+        title: 'تفاصيل المرتجع',
+        itemsReturned: 'الأصناف المرتجعة',
+        item: 'الصنف',
+        qty: 'الكمية',
+        refund: 'الاسترداد',
+        unit: 'وحدة',
+        pack: 'عبوة'
+      }
+    },
+    addProduct: {
+      title: 'إضافة منتج جديد',
+      subtitle: 'إضافة عنصر جديد إلى المخزون',
+      sections: {
+        basicInfo: 'المعلومات الأساسية',
+        codes: 'أكواد المنتج',
+        stock: 'تفاصيل المخزون',
+        pricing: 'التسعير',
+        additional: 'معلومات إضافية'
+      },
+      fields: {
+        brandName: 'الاسم التجاري',
+        genericName: 'الاسم العلمي',
+        category: 'الفئة',
+        barcode: 'الباركود',
+        internalCode: 'الكود الداخلي',
+        stock: 'كمية المخزون',
+        unitsPerPack: 'وحدات لكل عبوة',
+        sellingPrice: 'سعر البيع ($)',
+        costPrice: 'سعر الشراء ($)',
+        maxDiscount: 'الحد الأقصى للخصم (%)',
+        expiryDate: 'تاريخ الانتهاء',
+        description: 'الوصف'
+      },
+      placeholders: {
+        brandName: 'مثال: بنادول إكسترا',
+        genericName: 'مثال: باراسيتامول',
+        barcode: 'امسح أو أدخل الباركود',
+        internalCode: 'تلقائي أو مخصص',
+        description: 'وصف المنتج، تعليمات الاستخدام...'
+      },
+      actions: {
+        save: 'إضافة المنتج',
+        saveAndNew: 'حفظ وإضافة آخر',
+        clear: 'مسح النموذج',
+        cancel: 'إلغاء',
+        generateCode: 'توليد تلقائي'
+      },
+      messages: {
+        success: 'تمت إضافة المنتج بنجاح!',
+        error: 'فشل في إضافة المنتج. يرجى التحقق من جميع الحقول.',
+        cleared: 'تم مسح النموذج'
       }
     }
   }

@@ -1,6 +1,6 @@
 
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Drug, Sale, Purchase, ExpandedView } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 import { ExpandedModal } from './ExpandedModal';
@@ -12,12 +12,43 @@ interface DashboardProps {
   color: string;
   t: any;
   onRestock: (id: string, qty: number) => void;
+  subView?: string;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchases, color, t, onRestock }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchases, color, t, onRestock, subView }) => {
   const [restockDrug, setRestockDrug] = useState<Drug | null>(null);
   const [restockQty, setRestockQty] = useState(10);
   const [expandedView, setExpandedView] = useState<ExpandedView>(null);
+
+  // Map subView to expandedView
+  useEffect(() => {
+    if (!subView) return;
+    
+    switch (subView) {
+      case 'Top Selling Products':
+        setExpandedView('topSelling');
+        break;
+      case 'Sales Trends (7 days)':
+      case 'Sales Trends (30 days)':
+        setExpandedView('salesChart');
+        break;
+      case 'Slow Moving Products':
+      case 'Low Stock Alerts':
+        setExpandedView('lowStock');
+        break;
+      case 'Expiring Soon':
+        setExpandedView('expiring');
+        break;
+      case 'Recent Activities':
+      case 'Real-time Sales Monitor':
+        setExpandedView('recentSales');
+        break;
+      case 'Executive Summary':
+      default:
+        setExpandedView(null);
+        break;
+    }
+  }, [subView]);
 
   // --- Helper Functions ---
   const exportToCSV = (data: any[], filename: string) => {
@@ -142,8 +173,74 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
     </button>
   );
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top when subView changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [subView]);
+
+  // --- CUSTOM TOOLTIP ---
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{label}</p>
+          <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+            ${payload[0].value.toFixed(2)}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // --- CHART COLOR LOGIC ---
+  const chartStatus = useMemo(() => {
+    if (salesData.length < 2) return 'default';
+    const first = salesData[0].sales;
+    const last = salesData[salesData.length - 1].sales;
+    
+    if (last > first) return 'up';
+    if (last < first) return 'down';
+    return 'flat';
+  }, [salesData]);
+
+  const getChartColors = (status: string) => {
+    switch (status) {
+      case 'up':
+        return {
+          main: '#10b981', // emerald-500
+          start: '#34d399', // emerald-400
+          end: '#059669',   // emerald-600
+        };
+      case 'down':
+        return {
+          main: '#ef4444', // red-500
+          start: '#f87171', // red-400
+          end: '#dc2626',   // red-600
+        };
+      case 'flat':
+        return {
+          main: '#f97316', // orange-500
+          start: '#fb923c', // orange-400
+          end: '#ea580c',   // orange-600
+        };
+      default:
+        return {
+          main: `var(--primary-500)`,
+          start: `var(--primary-400)`,
+          end: `var(--primary-600)`,
+        };
+    }
+  };
+
+  const chartColors = getChartColors(chartStatus);
+
   return (
-    <div className="h-full overflow-y-auto pe-2 space-y-4 animate-fade-in pb-10">
+    <div ref={scrollContainerRef} className="h-full overflow-y-auto pe-2 space-y-4 animate-fade-in pb-10">
       <h2 className="text-2xl font-medium tracking-tight mb-4">{t.title}</h2>
       
       {/* Stats Cards Row */}
@@ -241,18 +338,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             <AreaChart data={salesData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={`var(--color-${color}-500)`} stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor={`var(--color-${color}-500)`} stopOpacity={0}/>
+                  <stop offset="5%" stopColor={chartColors.main} stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor={chartColors.main} stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="strokeSales" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor={chartColors.start} stopOpacity={1}/>
+                  <stop offset="100%" stopColor={chartColors.end} stopOpacity={1}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} dy={10} />
               <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} />
               <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                cursor={{ stroke: `var(--color-${color}-300)`, strokeWidth: 2 }}
+                content={<CustomTooltip />}
+                cursor={{ stroke: chartColors.start, strokeWidth: 2 }}
               />
-              <Area type="monotone" dataKey="sales" stroke={`var(--color-${color}-500)`} fillOpacity={1} fill="url(#colorSales)" strokeWidth={3} />
+              <Area type="monotone" dataKey="sales" stroke="url(#strokeSales)" fillOpacity={1} fill="url(#colorSales)" strokeWidth={3} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -512,15 +613,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
               <AreaChart data={salesData}>
                 <defs>
                   <linearGradient id="colorSalesExpanded" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={`var(--color-${color}-500)`} stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor={`var(--color-${color}-500)`} stopOpacity={0}/>
+                    <stop offset="5%" stopColor={chartColors.main} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={chartColors.main} stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="strokeSalesExpanded" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor={chartColors.start} stopOpacity={1}/>
+                    <stop offset="100%" stopColor={chartColors.end} stopOpacity={1}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Area type="monotone" dataKey="sales" stroke={`var(--color-${color}-500)`} fillOpacity={1} fill="url(#colorSalesExpanded)" strokeWidth={3} />
+                <Tooltip content={<CustomTooltip />} cursor={{ stroke: chartColors.start, strokeWidth: 2 }} />
+                <Area type="monotone" dataKey="sales" stroke="url(#strokeSalesExpanded)" fillOpacity={1} fill="url(#colorSalesExpanded)" strokeWidth={3} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -883,18 +988,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
               <AreaChart data={salesData}>
                 <defs>
                   <linearGradient id="colorSalesChartExpanded" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={`var(--color-${color}-500)`} stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor={`var(--color-${color}-500)`} stopOpacity={0}/>
+                    <stop offset="5%" stopColor={chartColors.main} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={chartColors.main} stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="strokeSalesChartExpanded" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor={chartColors.start} stopOpacity={1}/>
+                    <stop offset="100%" stopColor={chartColors.end} stopOpacity={1}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 13}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 13}} />
                 <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  cursor={{ stroke: `var(--color-${color}-300)`, strokeWidth: 2 }}
+                  content={<CustomTooltip />}
+                  cursor={{ stroke: chartColors.start, strokeWidth: 2 }}
                 />
-                <Area type="monotone" dataKey="sales" stroke={`var(--color-${color}-500)`} fillOpacity={1} fill="url(#colorSalesChartExpanded)" strokeWidth={3} />
+                <Area type="monotone" dataKey="sales" stroke="url(#strokeSalesChartExpanded)" fillOpacity={1} fill="url(#colorSalesChartExpanded)" strokeWidth={3} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

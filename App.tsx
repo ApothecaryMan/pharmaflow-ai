@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, Return } from './types';
+import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, Return, Customer } from './types';
 import { Dashboard } from './components/Dashboard';
 import { Inventory } from './components/Inventory';
 import { POS } from './components/POS';
 import { SalesHistory } from './components/SalesHistory';
+import { ReturnHistory } from './components/ReturnHistory';
 import { Suppliers } from './components/Suppliers';
 import { Purchases } from './components/Purchases';
 import { BarcodeStudio } from './components/BarcodeStudio';
+import { CustomerManagement } from './components/CustomerManagement';
+import { CustomerOverview } from './components/CustomerOverview';
 import { Toast } from './components/Toast';
 import { TRANSLATIONS } from './translations';
 import { PHARMACY_MENU } from './menuData';
@@ -40,6 +43,7 @@ const generateInventory = (): Drug[] => {
     let generic = '';
     let desc = '';
     let units = 1;
+    let dosageForm: string | undefined;
 
     if (typeRoll < 0.6) {
       // Medicine (60%)
@@ -53,6 +57,7 @@ const generateInventory = (): Drug[] => {
       category = ['Antibiotics', 'Painkillers', 'Cardiovascular', 'Respiratory', 'Digestive', 'Allergy', 'Vitamins', 'General'][Math.floor(Math.random() * 8)];
       desc = `${category} ${form.toLowerCase()} for treatment`;
       units = (form === 'Tablets' || form === 'Capsules' || form === 'Injection') ? Math.floor(Math.random() * 3) + 1 : 1;
+      dosageForm = form;
     } else if (typeRoll < 0.8) {
       // Cosmetics (20%)
       const brand = cosmeticBrands[Math.floor(Math.random() * cosmeticBrands.length)];
@@ -95,9 +100,10 @@ const generateInventory = (): Drug[] => {
       stock: Math.floor(Math.random() * 150),
       expiryDate: new Date(Date.now() + Math.random() * 1000 * 60 * 60 * 24 * 365 * 2).toISOString().split('T')[0], // Next 2 years
       description: desc,
-      barcode: `629${Math.floor(Math.random() * 10000000000)}`,
-      internalCode: `${category.substring(0, 2).toUpperCase()}-${String(i).padStart(4, '0')}`,
-      unitsPerPack: units
+      barcode: Math.floor(Math.random() * 1000000000000).toString(),
+      internalCode: `INT-${i.toString().padStart(5, '0')}`,
+      unitsPerPack: units,
+      dosageForm: dosageForm,
     });
   }
 
@@ -199,7 +205,13 @@ const App: React.FC = () => {
     return 'normal';
   });
 
-  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [sidebarVisible, setSidebarVisible] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pharma_sidebarVisible');
+      return saved ? JSON.parse(saved) : true;
+    }
+    return true;
+  });
 
   // Apply theme system - updates CSS variables
   useTheme(theme.primary, darkMode);
@@ -221,7 +233,8 @@ const App: React.FC = () => {
       // If saved inventory is small (old sample data), replace with new large generator
       if (saved) {
          const parsed = JSON.parse(saved);
-         if (parsed.length > 5000) return parsed;
+         // Check if data is large enough AND has the new dosageForm field
+         if (parsed.length > 5000 && parsed[0].dosageForm !== undefined) return parsed;
       }
       return INITIAL_INVENTORY;
     }
@@ -260,9 +273,22 @@ const App: React.FC = () => {
     return [];
   });
 
+  const [customers, setCustomers] = useState<Customer[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pharma_customers');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
   const [tip, setTip] = useState<string>("Loading tip...");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeModule, setActiveModule] = useState<string>('dashboard');
+  const [activeModule, setActiveModule] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('pharma_activeModule') || 'dashboard';
+    }
+    return 'dashboard';
+  });
   
   const [toast, setToast] = useState<{
     message: string;
@@ -288,6 +314,14 @@ const App: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
+
+  useEffect(() => {
+    localStorage.setItem('pharma_activeModule', activeModule);
+  }, [activeModule]);
+
+  useEffect(() => {
+    localStorage.setItem('pharma_sidebarVisible', JSON.stringify(sidebarVisible));
+  }, [sidebarVisible]);
 
   useEffect(() => {
     localStorage.setItem('pharma_language', language);
@@ -322,6 +356,10 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('pharma_returns', JSON.stringify(returns));
   }, [returns]);
+
+  useEffect(() => {
+    localStorage.setItem('pharma_customers', JSON.stringify(customers));
+  }, [customers]);
 
   useEffect(() => {
     // Static tips generator
@@ -362,6 +400,22 @@ const App: React.FC = () => {
 
   const handleDeleteSupplier = (id: string) => {
     setSuppliers(suppliers.filter(s => s.id !== id));
+  };
+
+  // Customer Management
+  const handleAddCustomer = (customer: Customer) => {
+    setCustomers([...customers, customer]);
+    setToast({ message: 'Customer added successfully', type: 'success' });
+  };
+
+  const handleUpdateCustomer = (customer: Customer) => {
+    setCustomers(customers.map(c => c.id === customer.id ? customer : c));
+    setToast({ message: 'Customer updated successfully', type: 'success' });
+  };
+
+  const handleDeleteCustomer = (id: string) => {
+    setCustomers(customers.filter(c => c.id !== id));
+    setToast({ message: 'Customer removed successfully', type: 'success' });
   };
 
   // Stock Management
@@ -479,6 +533,8 @@ const App: React.FC = () => {
     });
   };
 
+  const [dashboardSubView, setDashboardSubView] = useState<string>('dashboard');
+
   const SidebarContent = ({ isMobile = false }) => {
     return (
     <>
@@ -486,13 +542,22 @@ const App: React.FC = () => {
       <SidebarMenu 
         menuItems={PHARMACY_MENU}
         activeModule={activeModule}
-        currentView={view}
+        currentView={activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view}
         onNavigate={(viewId) => {
           setView(viewId as ViewState);
           setMobileMenuOpen(false);
         }}
         onViewChange={(viewId) => {
-          setView(viewId as ViewState);
+          if (activeModule === 'dashboard') {
+            if (viewId === 'customer-overview') {
+              setView('customer-overview');
+            } else {
+              setDashboardSubView(viewId);
+              setView('dashboard');
+            }
+          } else {
+            setView(viewId as ViewState);
+          }
           setMobileMenuOpen(false);
         }}
         isMobile={isMobile}
@@ -554,13 +619,15 @@ const App: React.FC = () => {
             'inventory': 'inventory',
             'sales': 'pos',
             'purchase': 'purchases',
-            'customers': 'dashboard',
+            'customers': 'customers',
+            'customer-overview': 'customer-overview',
             'prescriptions': 'dashboard',
             'finance': 'dashboard',
             'reports': 'dashboard',
             'hr': 'dashboard',
             'compliance': 'dashboard',
             'settings': 'dashboard',
+            'return-history': 'return-history',
           };
           const newView = viewMapping[moduleId] || 'dashboard';
           setView(newView);
@@ -582,6 +649,7 @@ const App: React.FC = () => {
         setTextTransform={setTextTransform}
         onLogoClick={() => setSidebarVisible(!sidebarVisible)}
       />
+      {console.log('Current View:', view)}
 
       {/* Main Layout: Sidebar + Content */}
       <div className="flex h-[calc(100vh-64px)] overflow-hidden">
@@ -664,8 +732,28 @@ const App: React.FC = () => {
               t={t.inventory}
             />
           )}
-          {view === 'pos' && <POS inventory={inventory} onCompleteSale={handleCompleteSale} color={theme.primary} t={t.pos} />}
-          {view === 'sales-history' && <SalesHistory sales={sales} returns={returns} onProcessReturn={handleProcessReturn} color={theme.primary} t={t.salesHistory} />}
+          {view === 'pos' && <POS inventory={inventory} customers={customers} onCompleteSale={handleCompleteSale} color={theme.primary} t={t.pos} />}
+          {view === 'sales-history' && (
+            <SalesHistory 
+                sales={sales} 
+                returns={returns} 
+                onProcessReturn={handleProcessReturn} 
+                color={theme.primary} 
+                t={t.salesHistory} 
+                language={language}
+                datePickerTranslations={t.global.datePicker}
+            />
+          )}
+          {view === 'return-history' && (
+            <ReturnHistory 
+              returns={returns}
+              sales={sales}
+              color={theme.primary}
+              t={t.returnHistory}
+              language={language}
+              datePickerTranslations={t.global.datePicker}
+            />
+          )}
           {view === 'suppliers' && (
              <Suppliers 
                suppliers={suppliers}
@@ -691,6 +779,26 @@ const App: React.FC = () => {
                inventory={inventory}
                color={theme.primary}
                t={t.barcodeStudio}
+            />
+          )}
+          {view === 'customers' && (
+            <CustomerManagement 
+              customers={customers}
+              onAddCustomer={handleAddCustomer}
+              onUpdateCustomer={handleUpdateCustomer}
+              onDeleteCustomer={handleDeleteCustomer}
+              color={theme.primary}
+              t={t.customers}
+              language={language}
+            />
+          )}
+          {view === 'customer-overview' && (
+            <CustomerOverview 
+              customers={customers}
+              sales={sales}
+              color={theme.primary}
+              t={t.customerOverview}
+              language={language}
             />
           )}
           </div>

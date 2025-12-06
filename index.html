@@ -6,7 +6,7 @@
     <title>PharmaFlow AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+      href="https://cdn.jsdelivr.net/npm/@fontsource/google-sans-flex@5.0.13/index.css"
       rel="stylesheet"
     />
     <link
@@ -19,7 +19,8 @@
     />
     <style>
       body {
-        font-family: "Roboto", sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Google Sans Flex",
+          sans-serif;
       }
       /* Universal Theme System - CSS Variables */
       :root {
@@ -34,31 +35,31 @@
         --primary-700: #1d4ed8;
         --primary-800: #1e40af;
         --primary-900: #1e3a8a;
-        
+
         /* Semantic Colors */
         --color-primary: var(--primary-600);
         --color-primary-hover: var(--primary-700);
         --color-primary-light: var(--primary-50);
         --color-primary-dark: var(--primary-800);
-        
+
         /* Background Colors - Light Mode */
         --bg-primary: #ffffff;
         --bg-secondary: #f8fafc;
         --bg-tertiary: #f1f5f9;
         --bg-accent: var(--primary-50);
         --bg-hover: #f1f5f9;
-        
+
         /* Text Colors - Light Mode */
         --text-primary: #0f172a;
         --text-secondary: #64748b;
         --text-tertiary: #94a3b8;
         --text-inverse: #ffffff;
-        
+
         /* Border Colors */
         --border-primary: #e2e8f0;
         --border-secondary: #cbd5e1;
         --border-accent: var(--primary-200);
-        
+
         /* Shadow Colors */
         --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
         --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
@@ -66,7 +67,7 @@
         --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
         --shadow-primary: 0 10px 15px -3px var(--primary-500);
       }
-      
+
       /* Dark Mode Variables */
       .dark {
         --bg-primary: #0f172a;
@@ -74,16 +75,16 @@
         --bg-tertiary: #334155;
         --bg-accent: #1e3a8a;
         --bg-hover: #334155;
-        
+
         --text-primary: #f1f5f9;
         --text-secondary: #cbd5e1;
         --text-tertiary: #94a3b8;
         --text-inverse: #0f172a;
-        
+
         --border-primary: #334155;
         --border-secondary: #475569;
         --border-accent: var(--primary-700);
-        
+
         --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
         --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3);
         --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3);
@@ -91,15 +92,29 @@
       }
 
       /* Utility Classes for Theme */
-      .bg-theme-primary { background-color: var(--color-primary) !important; }
-      .bg-theme-light { background-color: var(--color-primary-light) !important; }
-      .bg-theme-hover:hover { background-color: var(--color-primary-hover) !important; }
-      
-      .text-theme-primary { color: var(--color-primary) !important; }
-      .text-theme-hover:hover { color: var(--color-primary-hover) !important; }
-      
-      .border-theme-primary { border-color: var(--color-primary) !important; }
-      .border-theme-accent { border-color: var(--border-accent) !important; }
+      .bg-theme-primary {
+        background-color: var(--color-primary) !important;
+      }
+      .bg-theme-light {
+        background-color: var(--color-primary-light) !important;
+      }
+      .bg-theme-hover:hover {
+        background-color: var(--color-primary-hover) !important;
+      }
+
+      .text-theme-primary {
+        color: var(--color-primary) !important;
+      }
+      .text-theme-hover:hover {
+        color: var(--color-primary-hover) !important;
+      }
+
+      .border-theme-primary {
+        border-color: var(--color-primary) !important;
+      }
+      .border-theme-accent {
+        border-color: var(--border-accent) !important;
+      }
 
       /* Hide ALL scrollbars globally */
       * {
@@ -116,15 +131,27 @@
       .icon-filled {
         font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
       }
-      
+
       /* Text Transform Utility */
       :root {
         --text-transform: none;
       }
-      
+
       .uppercase-mode .drug-name,
       .uppercase-mode .item-name {
         text-transform: uppercase !important;
+      }
+
+      /* Hide Number Input Arrows */
+      /* Chrome, Safari, Edge, Opera */
+      input::-webkit-outer-spin-button,
+      input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      /* Firefox */
+      input[type="number"] {
+        -moz-appearance: textfield;
       }
     </style>
     <script>

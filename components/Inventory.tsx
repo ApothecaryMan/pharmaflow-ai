@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { SmartDateInput } from './SmartDateInput';
+import { Combobox } from './Combobox';
 import { useContextMenu } from '../components/ContextMenu';
 import { useColumnReorder } from '../hooks/useColumnReorder';
 import { useLongPress } from '../hooks/useLongPress';
 import { Drug } from '../types';
+import { createSearchRegex, parseSearchTerm } from '../utils/searchUtils';
 
 interface InventoryProps {
   inventory: Drug[];
@@ -15,15 +18,20 @@ interface InventoryProps {
 
 export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUpdateDrug, onDeleteDrug, color, t }) => {
   const { showMenu } = useContextMenu();
+  const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDrug, setEditingDrug] = useState<Drug | null>(null);
-  const [viewingDrug, setViewingDrug] = useState<Drug | null>(null); // New state for Details View
+  const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  // Form State
-  const [formData, setFormData] = useState<Partial<Drug>>({});
+  // Form State for Add Product
+  const [formData, setFormData] = useState<Partial<Drug>>({
+    name: '', genericName: '', category: 'General', price: 0, costPrice: 0, stock: 0, expiryDate: '', description: '', barcode: '', internalCode: '', unitsPerPack: 1, maxDiscount: 10,
+    additionalBarcodes: [], dosageForm: 'Tablet', activeIngredients: []
+  });
 
   // Use column reorder hook
   const {
@@ -138,11 +146,10 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
   };
 
   const handleOpenAdd = () => {
-    setEditingDrug(null);
+    setMode('add');
     setFormData({
       name: '', genericName: '', category: 'General', price: 0, costPrice: 0, stock: 0, expiryDate: '', description: '', barcode: '', internalCode: '', unitsPerPack: 1, maxDiscount: 10
     });
-    setIsModalOpen(true);
   };
 
   const handleOpenEdit = (drug: Drug) => {
@@ -176,30 +183,67 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       setActiveMenuId(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent, addAnother: boolean = false) => {
     e.preventDefault();
     if (editingDrug) {
       onUpdateDrug({ ...editingDrug, ...formData } as Drug);
+      setIsModalOpen(false);
     } else {
       const newDrug: Drug = {
         id: Date.now().toString(),
         ...formData as Omit<Drug, 'id'>
       };
       onAddDrug(newDrug);
+      
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      
+      if (addAnother) {
+        const currentCategory = formData.category;
+        setFormData({
+          name: '', genericName: '', category: currentCategory, price: 0, costPrice: 0, stock: 0, expiryDate: '', description: '', barcode: '', internalCode: '', unitsPerPack: 1, maxDiscount: 10
+        });
+      } else {
+        setMode('list');
+      }
     }
-    setIsModalOpen(false);
   };
 
+  const handleClear = () => {
+    setFormData({
+      name: '', genericName: '', category: 'General', price: 0, costPrice: 0, stock: 0, expiryDate: '', description: '', barcode: '', internalCode: '', unitsPerPack: 1, maxDiscount: 10
+    });
+  };
+
+  const generateInternalCode = () => {
+    const prefix = formData.category?.substring(0, 2).toUpperCase() || 'GN';
+    const nextId = inventory.length + 1;
+    const code = `${prefix}-${String(nextId).padStart(4, '0')}`;
+    setFormData({ ...formData, internalCode: code });
+  };
+
+  const allCategories = Array.from(new Set([
+    'Antibiotics', 'Painkillers', 'Supplements', 'First Aid', 'Cardiovascular', 'Skin Care', 'Personal Care', 'Respiratory', 'Medical Equipment', 'Medical Supplies', 'Baby Care', 'General',
+    ...inventory.map(drug => drug.category)
+  ])).sort();
+
   const filteredInventory = useMemo(() => {
-    const term = searchTerm.toLowerCase();
-    return inventory.filter(d => 
-      d.name.toLowerCase().includes(term) || 
-      d.genericName.toLowerCase().includes(term) ||
-      d.description.toLowerCase().includes(term) ||
-      d.category.toLowerCase().includes(term) ||
-      (d.barcode && d.barcode.toLowerCase().includes(term)) ||
-      (d.internalCode && d.internalCode.toLowerCase().includes(term))
-    );
+    const { mode, regex } = parseSearchTerm(searchTerm);
+    
+    return inventory.filter(d => {
+      if (mode === 'ingredient') {
+        return d.activeIngredients && d.activeIngredients.some(ing => regex.test(ing));
+      }
+
+      // Normal search: Check composite string for cross-field matches (e.g. "Pana Tablet")
+      const searchableText = `${d.name} ${d.dosageForm || ''} ${d.genericName} ${d.description} ${d.category}`;
+      
+      return (
+        regex.test(searchableText) ||
+        (d.barcode && regex.test(d.barcode)) ||
+        (d.internalCode && regex.test(d.internalCode))
+      );
+    });
   }, [inventory, searchTerm]);
 
   // Column definitions
@@ -219,7 +263,9 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       case 'name':
         return (
           <>
-            <div className="font-medium text-slate-900 dark:text-slate-100 text-sm drug-name">{drug.name}</div>
+            <div className="font-medium text-slate-900 dark:text-slate-100 text-sm drug-name">
+              {drug.name} {drug.dosageForm ? <span className="text-slate-500 font-normal">({drug.dosageForm})</span> : ''}
+            </div>
             <div className="text-xs text-slate-500">{drug.genericName}</div>
           </>
         );
@@ -348,21 +394,38 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
   return (
     <div className="h-full flex flex-col space-y-4 animate-fade-in">
-      {/* Header */}
+      {/* Header with toggle */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-medium tracking-tight">{t.title}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t.subtitle}</p>
+          <h2 className="text-2xl font-medium tracking-tight">{mode === 'list' ? t.title : (t.addNewProduct || 'Add New Product')}</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{mode === 'list' ? t.subtitle : (t.addProductSubtitle || 'Add a new item to your inventory')}</p>
         </div>
-        <button
-          onClick={handleOpenAdd}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-${color}-600 hover:bg-${color}-700 text-white font-medium text-sm transition-all shadow-lg shadow-${color}-200 dark:shadow-none active:scale-95`}
-        >
-          <span className="material-symbols-rounded text-lg">add</span>
-          {t.addDrug}
-        </button>
+        <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-full flex text-xs font-bold">
+          <button 
+            onClick={() => setMode('list')}
+            className={`px-4 py-2 rounded-full transition-all ${mode === 'list' ? `bg-${color}-600 text-white shadow-md` : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+          >
+            {t.allProducts || 'All Products'}
+          </button>
+          <button 
+            onClick={() => { setMode('add'); handleOpenAdd(); }}
+            className={`px-4 py-2 rounded-full transition-all ${mode === 'add' ? `bg-${color}-600 text-white shadow-md` : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+          >
+            {t.addNewProduct || 'Add New Product'}
+          </button>
+        </div>
       </div>
 
+      {/* Success Message */}
+      {showSuccess && mode === 'add' && (
+        <div className={`p-4 rounded-2xl bg-${color}-50 dark:bg-${color}-950/30 border border-${color}-200 dark:border-${color}-800 flex items-center gap-3 animate-fade-in`}>
+          <span className={`material-symbols-rounded text-${color}-600 dark:text-${color}-400`}>check_circle</span>
+          <span className={`text-sm font-medium text-${color}-700 dark:text-${color}-300`}>{t.productAddedSuccess || 'Product added successfully!'}</span>
+        </div>
+      )}
+
+      {mode === 'list' ? (
+        <>
       {/* Search Bar */}
       <div className="relative">
         <span className="material-symbols-rounded absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none rtl:left-auto rtl:right-4 ltr:left-4">search</span>
@@ -380,7 +443,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col">
         <div className="overflow-x-auto flex-1 pb-20 lg:pb-0"> {/* Extra padding for dropdown visibility */}
           <table className="w-full text-start border-collapse">
-            <thead className={`bg-${color}-50 dark:bg-${color}-950/30 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider`}>
+            <thead className={`bg-${color}-50 dark:bg-slate-900 sticky top-0 z-10 shadow-sm`}>
               <tr>
                 {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
                   <th
@@ -433,11 +496,11 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredInventory.slice(0, 100).map(drug => (
+              {filteredInventory.slice(0, 100).map((drug, index) => (
                 <tr
                     key={drug.id}
-                    className={`border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
-                        drug.stock <= (drug.minStock || 0) ? 'bg-red-50/50 dark:bg-red-900/10' : ''
+                    className={`border-b border-slate-100 dark:border-slate-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${
+                        drug.stock <= (drug.minStock || 0) ? 'bg-red-50/50 dark:bg-red-900/10' : (index % 2 === 0 ? 'bg-slate-50/30 dark:bg-slate-800/20' : '')
                     }`}
                     onClick={(e) => {
                         if (isRowLongPress.current) {
@@ -485,6 +548,287 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
           </table>
         </div>
       </div>
+      </>
+      ) : (
+        /* ADD PRODUCT FORM VIEW - COMPACT LAYOUT */
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 xl:grid-cols-3 gap-6 pb-20">
+            
+            {/* LEFT COLUMN: Main Info */}
+            <div className="xl:col-span-2 space-y-6">
+              {/* Basic Details Card */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-4">
+                  <span className="material-symbols-rounded text-blue-500">info</span>
+                  {t.basicInfo || 'Basic Information'}
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.brand} *</label>
+                    <input
+                      required
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                      placeholder="e.g., Panadol Extra"
+                      value={formData.name}
+                      onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.generic} *</label>
+                    <input
+                      required
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                      placeholder="e.g., Paracetamol"
+                      value={formData.genericName}
+                      onChange={e => setFormData({ ...formData, genericName: e.target.value })}
+                    />
+                  </div>
+                  
+                  {/* Category & Dosage Form */}
+                  <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.category} *</label>
+                      <Combobox
+                        options={allCategories}
+                        value={formData.category}
+                        onChange={(val) => setFormData({ ...formData, category: val })}
+                        placeholder="Select or type category..."
+                        allowCustom={true}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Dosage Form</label>
+                      <Combobox
+                        options={['Tablet', 'Capsule', 'Syrup', 'Suspension', 'Injection', 'Cream', 'Ointment', 'Gel', 'Drops', 'Spray', 'Inhaler', 'Suppository', 'Patch', 'Sachet', 'Other']}
+                        value={formData.dosageForm || 'Tablet'}
+                        onChange={(val) => setFormData({ ...formData, dosageForm: val })}
+                        placeholder="Select dosage form..."
+                        allowCustom={true}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Active Ingredients */}
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Active Ingredients (Comma separated)</label>
+                    <input
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                      placeholder="e.g., Paracetamol, Caffeine"
+                      value={formData.activeIngredients?.join(', ') || ''}
+                      onChange={e => setFormData({ ...formData, activeIngredients: e.target.value.split(',').map(s => s.trim()) })}
+                    />
+                  </div>
+
+                  {/* Multi-Barcode Input */}
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.barcode}</label>
+                    <div className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]">
+                      {/* Primary Barcode Chip */}
+                      {formData.barcode && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium border border-blue-200 dark:border-blue-800">
+                          <span className="material-symbols-rounded text-[14px]">qr_code_2</span>
+                          {formData.barcode}
+                          <button 
+                            type="button"
+                            onClick={() => setFormData({ ...formData, barcode: '' })}
+                            className="hover:text-blue-900 dark:hover:text-blue-100"
+                          >
+                            <span className="material-symbols-rounded text-[14px]">close</span>
+                          </button>
+                        </span>
+                      )}
+                      
+                      {/* Additional Barcodes Chips */}
+                      {formData.additionalBarcodes?.map((code, idx) => (
+                        <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium border border-slate-300 dark:border-slate-600">
+                          {code}
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const newCodes = [...(formData.additionalBarcodes || [])];
+                              newCodes.splice(idx, 1);
+                              setFormData({ ...formData, additionalBarcodes: newCodes });
+                            }}
+                            className="hover:text-slate-900 dark:hover:text-slate-100"
+                          >
+                            <span className="material-symbols-rounded text-[14px]">close</span>
+                          </button>
+                        </span>
+                      ))}
+
+                      <input
+                        className="flex-1 bg-transparent border-none outline-none text-sm min-w-[120px]"
+                        placeholder={!formData.barcode ? "Scan primary barcode" : "Add more barcodes..."}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = e.currentTarget.value.trim();
+                            if (val) {
+                              if (!formData.barcode) {
+                                setFormData({ ...formData, barcode: val });
+                              } else {
+                                setFormData({ 
+                                  ...formData, 
+                                  additionalBarcodes: [...(formData.additionalBarcodes || []), val] 
+                                });
+                              }
+                              e.currentTarget.value = '';
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1 ml-1">Press Enter to add multiple barcodes</p>
+                  </div>
+
+                  {/* Internal Code with Icon */}
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.internalCode}</label>
+                    <div className="relative">
+                      <input
+                        className="w-full pl-3 pr-10 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-mono"
+                        placeholder="Auto-generated or custom"
+                        value={formData.internalCode || ''}
+                        onChange={e => setFormData({ ...formData, internalCode: e.target.value })}
+                      />
+                      <button
+                        type="button"
+                        onClick={generateInternalCode}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-blue-500 transition-colors"
+                        title={t.autoGenerate || 'Auto-Generate'}
+                      >
+                        <span className="material-symbols-rounded text-[20px]">autorenew</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.desc}</label>
+                    <textarea
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm resize-none"
+                      rows={2}
+                      placeholder="Description..."
+                      value={formData.description}
+                      onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN: Details */}
+            <div className="xl:col-span-1 space-y-6">
+              {/* Stock & Pricing Card */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm h-full">
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-4">
+                  <span className="material-symbols-rounded text-blue-500">inventory</span>
+                  Inventory & Pricing
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.stock} *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                        value={formData.stock}
+                        onChange={e => setFormData({ ...formData, stock: parseFloat(e.target.value) || 0 })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.unitsPerPack}</label>
+                      <input
+                        type="number"
+                        min="1"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                        value={formData.unitsPerPack || 1}
+                        onChange={e => setFormData({ ...formData, unitsPerPack: parseInt(e.target.value) || 1 })}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.expiry} *</label>
+                    <SmartDateInput
+                      required
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                      value={formData.expiryDate}
+                      onChange={val => setFormData({ ...formData, expiryDate: val })}
+                    />
+                  </div>
+
+                  <div className="border-t border-slate-100 dark:border-slate-800 my-4"></div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.price} *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold text-green-600"
+                        value={formData.price}
+                        onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.cost}</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                        value={formData.costPrice || 0}
+                        onChange={e => setFormData({ ...formData, costPrice: parseFloat(e.target.value) || 0 })}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Max Discount (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm text-red-500"
+                      value={formData.maxDiscount || ''}
+                      onChange={e => setFormData({ ...formData, maxDiscount: parseFloat(e.target.value) })}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="xl:col-span-3 flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleClear}
+                className="px-6 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors font-medium text-sm"
+              >
+                {t.clearForm || 'Clear Form'}
+              </button>
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e, true)}
+                className={`px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl transition-all font-medium text-sm`}
+              >
+                {t.saveAndAddAnother || 'Save & Add Another'}
+              </button>
+              <button
+                type="submit"
+                className={`px-8 py-2.5 bg-${color}-600 hover:bg-${color}-700 text-white rounded-xl shadow-lg shadow-${color}-200 dark:shadow-none transition-all font-medium text-sm`}
+              >
+                {t.addDrug}
+              </button>
+            </div>
+
+          </form>
+        </div>
+      )}
 
       {/* Details View Modal */}
       {viewingDrug && (
@@ -503,7 +847,9 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
             <div className="p-6 overflow-y-auto space-y-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{viewingDrug.name}</h2>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                            {viewingDrug.name} {viewingDrug.dosageForm ? <span className="text-lg text-slate-500 font-normal">({viewingDrug.dosageForm})</span> : ''}
+                        </h2>
                         <p className="text-slate-500 font-medium">{viewingDrug.genericName}</p>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase bg-${color}-100 text-${color}-700 dark:bg-${color}-900/50 dark:text-${color}-300`}>
@@ -582,7 +928,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       {/* Add/Edit Modal Overlay */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
               <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100`}>
                 {editingDrug ? t.modal.edit : t.modal.add}
@@ -592,115 +938,172 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">{t.modal.brand}</label>
-                  <input required className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all" 
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                {/* LEFT COLUMN: Main Info */}
+                <div className="md:col-span-2 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.brand} *</label>
+                      <input required className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
+                        value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.generic} *</label>
+                      <input required className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
+                        value={formData.genericName} onChange={e => setFormData({...formData, genericName: e.target.value})} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.category} *</label>
+                      <Combobox
+                        options={allCategories}
+                        value={formData.category}
+                        onChange={(val) => setFormData({ ...formData, category: val })}
+                        placeholder="Select or type category..."
+                        allowCustom={true}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Dosage Form</label>
+                      <Combobox
+                        options={['Tablet', 'Capsule', 'Syrup', 'Suspension', 'Injection', 'Cream', 'Ointment', 'Gel', 'Drops', 'Spray', 'Inhaler', 'Suppository', 'Patch', 'Sachet', 'Other']}
+                        value={formData.dosageForm || 'Tablet'}
+                        onChange={(val) => setFormData({ ...formData, dosageForm: val })}
+                        placeholder="Select dosage form..."
+                        allowCustom={true}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Active Ingredients</label>
+                    <input className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                      placeholder="e.g., Paracetamol, Caffeine"
+                      value={formData.activeIngredients?.join(', ') || ''}
+                      onChange={e => setFormData({ ...formData, activeIngredients: e.target.value.split(',').map(s => s.trim()) })}
+                    />
+                  </div>
+
+                  {/* Multi-Barcode Input */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.barcode}</label>
+                    <div className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]">
+                      {formData.barcode && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium border border-blue-200 dark:border-blue-800">
+                          <span className="material-symbols-rounded text-[14px]">qr_code_2</span>
+                          {formData.barcode}
+                          <button type="button" onClick={() => setFormData({ ...formData, barcode: '' })} className="hover:text-blue-900 dark:hover:text-blue-100">
+                            <span className="material-symbols-rounded text-[14px]">close</span>
+                          </button>
+                        </span>
+                      )}
+                      {formData.additionalBarcodes?.map((code, idx) => (
+                        <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium border border-slate-300 dark:border-slate-600">
+                          {code}
+                          <button type="button" onClick={() => {
+                              const newCodes = [...(formData.additionalBarcodes || [])];
+                              newCodes.splice(idx, 1);
+                              setFormData({ ...formData, additionalBarcodes: newCodes });
+                            }} className="hover:text-slate-900 dark:hover:text-slate-100">
+                            <span className="material-symbols-rounded text-[14px]">close</span>
+                          </button>
+                        </span>
+                      ))}
+                      <input className="flex-1 bg-transparent border-none outline-none text-sm min-w-[120px]"
+                        placeholder={!formData.barcode ? "Scan primary barcode" : "Add more..."}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = e.currentTarget.value.trim();
+                            if (val) {
+                              if (!formData.barcode) setFormData({ ...formData, barcode: val });
+                              else setFormData({ ...formData, additionalBarcodes: [...(formData.additionalBarcodes || []), val] });
+                              e.currentTarget.value = '';
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.internalCode}</label>
+                    <div className="relative">
+                      <input className="w-full pl-3 pr-10 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-mono"
+                        placeholder="Auto-generated"
+                        value={formData.internalCode || ''} onChange={e => setFormData({ ...formData, internalCode: e.target.value })} />
+                      <button type="button" onClick={generateInternalCode} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-blue-500 transition-colors" title="Auto-Generate">
+                        <span className="material-symbols-rounded text-[20px]">autorenew</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.desc}</label>
+                    <textarea className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm resize-none" rows={2}
+                      value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}></textarea>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">{t.modal.generic}</label>
-                  <input required className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all" 
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    value={formData.genericName} onChange={e => setFormData({...formData, genericName: e.target.value})} />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">{t.modal.category}</label>
-                  <select className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all"
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                    <option>Antibiotics</option>
-                    <option>Painkillers</option>
-                    <option>Supplements</option>
-                    <option>First Aid</option>
-                    <option>Cardiovascular</option>
-                    <option>Skin Care</option>
-                    <option>Personal Care</option>
-                    <option>Respiratory</option>
-                    <option>Medical Equipment</option>
-                    <option>Medical Supplies</option>
-                    <option>Baby Care</option>
-                    <option>General</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">{t.modal.expiry}</label>
-                  <input type="date" required className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all text-slate-500" 
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    value={formData.expiryDate} onChange={e => setFormData({...formData, expiryDate: e.target.value})} />
+
+                {/* RIGHT COLUMN: Details */}
+                <div className="space-y-4">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 space-y-4">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                      <span className="material-symbols-rounded text-base">inventory</span> Inventory
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.stock}</label>
+                        <input type="number" step="0.01" required className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
+                          value={formData.stock} onChange={e => setFormData({...formData, stock: parseFloat(e.target.value) || 0})} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.unitsPerPack}</label>
+                        <input type="number" min="1" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
+                          value={formData.unitsPerPack || 1} onChange={e => setFormData({...formData, unitsPerPack: parseInt(e.target.value) || 1})} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.expiry}</label>
+                      <SmartDateInput required className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
+                        value={formData.expiryDate} onChange={val => setFormData({ ...formData, expiryDate: val })} />
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 space-y-4">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                      <span className="material-symbols-rounded text-base">payments</span> Pricing
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.price}</label>
+                        <input type="number" step="0.01" required className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold text-green-600" 
+                          value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value) || 0})} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.cost}</label>
+                        <input type="number" step="0.01" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
+                          value={formData.costPrice || 0} onChange={e => setFormData({...formData, costPrice: parseFloat(e.target.value) || 0})} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Max Discount (%)</label>
+                      <input type="number" min="0" max="100" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm text-red-500" 
+                        value={formData.maxDiscount || ''} onChange={e => setFormData({...formData, maxDiscount: parseFloat(e.target.value)})} />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">{t.modal.barcode}</label>
-                  <input className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all" 
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    placeholder="Scan or type..."
-                    value={formData.barcode || ''} onChange={e => setFormData({...formData, barcode: e.target.value})} />
-                </div>
-                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">{t.modal.internalCode}</label>
-                  <input className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all" 
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    value={formData.internalCode || ''} onChange={e => setFormData({...formData, internalCode: e.target.value})} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">{t.modal.stock}</label>
-                  <input type="number" step="0.01" required className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all" 
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    value={formData.stock} onChange={e => setFormData({...formData, stock: parseFloat(e.target.value) || 0})} />
-                </div>
-                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">{t.modal.unitsPerPack}</label>
-                  <input type="number" min="1" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all" 
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    value={formData.unitsPerPack || 1} onChange={e => setFormData({...formData, unitsPerPack: parseInt(e.target.value) || 1})} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">{t.modal.price}</label>
-                  <input type="number" step="0.01" required className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all font-bold text-green-600 dark:text-green-400" 
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value) || 0})} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">{t.modal.cost}</label>
-                  <input type="number" step="0.01" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all text-slate-500" 
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    value={formData.costPrice || 0} onChange={e => setFormData({...formData, costPrice: parseFloat(e.target.value) || 0})} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">Max Disc (%)</label>
-                  <input type="number" min="0" max="100" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all text-red-500" 
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    placeholder="No Limit"
-                    value={formData.maxDiscount || ''} onChange={e => setFormData({...formData, maxDiscount: parseFloat(e.target.value)})} />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t.modal.desc}</label>
-                <textarea className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all" rows={2}
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                  value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}></textarea>
-              </div>
-
-              <div className="pt-4 flex gap-3">
-                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 rounded-full font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors">
+              <div className="pt-6 flex gap-3 border-t border-slate-100 dark:border-slate-800 mt-6">
+                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 rounded-xl font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors">
                   {t.modal.cancel}
                 </button>
-                <button type="submit" className={`flex-1 py-3 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all active:scale-95`}>
+                <button type="submit" className={`flex-1 py-3 rounded-xl font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all active:scale-95`}>
                   {t.modal.save}
                 </button>
               </div>

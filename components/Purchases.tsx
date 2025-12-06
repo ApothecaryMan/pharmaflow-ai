@@ -1,7 +1,8 @@
-
+```
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useContextMenu } from '../components/ContextMenu';
-import { Drug, Supplier, Purchase, PurchaseItem } from '../types';
+import { Drug, Supplier, Purchase } from '../types';
+import { createSearchRegex, parseSearchTerm } from '../utils/searchUtils';
 
 interface PurchasesProps {
   inventory: Drug[];
@@ -66,7 +67,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
       if (existing) {
         return prev.map(i => i.drugId === drug.id ? { ...i, quantity: i.quantity + 1 } : i);
       }
-      return [...prev, { drugId: drug.id, name: drug.name, quantity: 1, costPrice: drug.costPrice || 0 }];
+      return [...prev, { drugId: drug.id, name: drug.name, quantity: 1, costPrice: drug.costPrice || 0, dosageForm: drug.dosageForm }];
     });
   };
 
@@ -97,10 +98,16 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     setSelectedSupplierId('');
   };
 
-  const filteredDrugs = inventory.filter(d => 
-    d.name.toLowerCase().includes(search.toLowerCase()) || 
-    d.genericName.toLowerCase().includes(search.toLowerCase())
-  );
+  const { mode, regex } = parseSearchTerm(search);
+
+  const filteredDrugs = inventory.filter(d => {
+    if (mode === 'ingredient') {
+        return d.activeIngredients && d.activeIngredients.some(ing => regex.test(ing));
+    }
+    
+    const searchableText = `${d.name} ${d.dosageForm || ''} ${d.genericName}`;
+    return regex.test(searchableText);
+  });
 
   return (
     <div className="h-full flex flex-col space-y-4 animate-fade-in">
@@ -209,7 +216,9 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                          className={`p-3 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-${color}-50 dark:hover:bg-${color}-900/20 cursor-pointer transition-colors group`}
                                     >    <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="font-bold text-sm text-slate-800 dark:text-slate-200 drug-name">{drug.name}</p>
+                                                <p className="font-bold text-sm text-slate-800 dark:text-slate-200 drug-name">
+                                                    {drug.name} {drug.dosageForm ? <span className="font-normal text-slate-500">({drug.dosageForm})</span> : ''}
+                                                </p>
                                                 <p className="text-xs text-slate-500">{drug.genericName}</p>
                                             </div>
                                             <span className={`material-symbols-rounded text-${color}-600 opacity-0 group-hover:opacity-100`}>add_circle</span>
@@ -271,7 +280,9 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                    <button onClick={() => removeItem(item.drugId)} className="absolute top-2 right-2 text-slate-400 hover:text-red-500">
                                        <span className="material-symbols-rounded text-sm">close</span>
                                    </button>
-                                   <p className="font-bold text-sm mb-2 pe-6 drug-name">{item.name}</p>
+                                   <p className="font-bold text-sm mb-2 pe-6 drug-name">
+                                       {item.name} {item.dosageForm ? <span className="font-normal text-slate-500">({item.dosageForm})</span> : ''}
+                                   </p>
                                    <div className="flex gap-2">
                                        <div className="flex-1">
                                            <label className="text-[10px] text-slate-400 uppercase font-bold">{t.headers.cost}</label>

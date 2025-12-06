@@ -23,7 +23,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "main-dashboard",
         label: "Main Dashboard",
         items: [
-          "Executive Summary",
+          { label: "Dashboard Overview", view: "dashboard" },
           "Business Overview",
           "Quick Actions Panel",
           "Favorites & Shortcuts",
@@ -103,7 +103,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "customer-dashboard",
         label: "Customer Dashboard",
         items: [
-          "Customer Overview",
+          { label: "Customer Overview", view: "customer-overview" },
           "New Customers Today",
           "Active Customers",
           "Customer Growth Trend",
@@ -276,8 +276,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "product-management",
         label: "Product Management",
         items: [
-          "All Products",
-          "Add New Product",
+          { label: "Inventory", view: "inventory" },
           "Bulk Import",
           "Bulk Update",
           "Product Categories",
@@ -390,7 +389,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         label: "Returns & Refunds",
         items: [
           "Process Return",
-          "Return History"
+          { label: "Return History", view: "return-history" }
         ]
       }
     ]
@@ -468,13 +467,14 @@ export const PHARMACY_MENU: MenuItem[] = [
     label: "Customer Management",
     icon: "group",
     order: 5,
-    hasPage: false,
+    hasPage: true,
     submenus: [
       {
         id: "customer-database",
         label: "Customer Database",
         items: [
-          "All Customers",
+
+          { label: "All Customers", view: "customers" },
           "Add Customer",
           "Edit Customer",
           "Customer Profile",

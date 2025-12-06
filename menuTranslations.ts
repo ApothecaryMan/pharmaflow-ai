@@ -229,6 +229,7 @@ export const MENU_TRANSLATIONS = {
     'Warehouse Management': 'إدارة المستودعات',
     
     // Product Management Items
+    'Inventory': 'المخزون',
     'All Products': 'جميع المنتجات',
     'Add New Product': 'إضافة منتج جديد',
     'Edit Products': 'تعديل المنتجات',

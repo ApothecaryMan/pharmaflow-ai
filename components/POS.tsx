@@ -1,19 +1,25 @@
+
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useContextMenu } from '../components/ContextMenu';
-import { Drug, CartItem } from '../types';
+import { Drug, CartItem, Customer } from '../types';
+import { getLocationName } from '../data/locations';
 import { usePOSTabs } from '../hooks/usePOSTabs';
 import { useColumnReorder } from '../hooks/useColumnReorder';
 import { useLongPress } from '../hooks/useLongPress';
+import { useLongPress } from '../hooks/useLongPress';
+import { useLongPress } from '../hooks/useLongPress';
 import { TabBar } from './TabBar';
+import { createSearchRegex, parseSearchTerm } from '../utils/searchUtils';
 
 interface POSProps {
   inventory: Drug[];
   onCompleteSale: (saleData: { items: CartItem[], customerName: string, customerCode?: string, paymentMethod: 'cash' | 'visa', saleType?: 'walk-in' | 'delivery', deliveryFee?: number, globalDiscount: number, subtotal: number, total: number }) => void;
   color: string;
   t: any;
+  customers: Customer[];
 }
 
-export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t }) => {
+export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, customers }) => {
   const { showMenu } = useContextMenu();
   
   // Multi-tab system
@@ -54,8 +60,20 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
     const newQuery = typeof query === 'function' ? query(search) : query;
     updateTab(activeTabId, { searchQuery: newQuery });
   }, [search, activeTabId, updateTab]);
+  // Customer Search State
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
+  
+  // Enhanced Customer UX State
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [showCodeDropdown, setShowCodeDropdown] = useState(false);
+  const [filteredByCode, setFilteredByCode] = useState<Customer[]>([]);
   // Selected category state key: 'All', 'Medicine', 'Cosmetics', 'Non-Medicine'
-  const [customerCode, setCustomerCode] = useState('');
+
+  const customerCode = activeTab?.customerCode || '';
+  const setCustomerCode = useCallback((code: string) => {
+    updateTab(activeTabId, { customerCode: code });
+  }, [activeTabId, updateTab]);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'visa'>('cash');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
@@ -357,23 +375,78 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
     removeTab(activeTabId);
   };
 
+  // Filter customers when name changes
+  useEffect(() => {
+    if (customerName && showCustomerDropdown && !selectedCustomer) {
+      const term = customerName.toLowerCase();
+      const results = customers.filter(c => 
+        c.name.toLowerCase().includes(term) || 
+        c.phone.includes(term)
+      ).slice(0, 5);
+      setFilteredCustomers(results);
+    } else {
+      setFilteredCustomers([]);
+    }
+  }, [customerName, customers, showCustomerDropdown, selectedCustomer]);
+
+  // Sync selectedCustomer with activeTab.customerCode (for persistence)
+  useEffect(() => {
+    if (customerCode && (!selectedCustomer || (selectedCustomer.code !== customerCode && selectedCustomer.serialId?.toString() !== customerCode))) {
+      const found = customers.find(c => c.code === customerCode || c.serialId?.toString() === customerCode);
+      if (found) {
+        setSelectedCustomer(found);
+      }
+    } else if (!customerCode && selectedCustomer) {
+      setSelectedCustomer(null);
+    }
+  }, [customerCode, customers, selectedCustomer]);
+
+  // Filter customers when code changes
+  useEffect(() => {
+    if (customerCode && showCodeDropdown && !selectedCustomer) {
+      const term = customerCode.toLowerCase();
+      const results = customers.filter(c => 
+        (c.code && c.code.toLowerCase().includes(term)) ||
+        (c.serialId && c.serialId.toString().includes(term))
+      ).slice(0, 5);
+      setFilteredByCode(results);
+    } else {
+      setFilteredByCode([]);
+    }
+  }, [customerCode, customers, showCodeDropdown, selectedCustomer]);
+
+  const handleCustomerSelect = (customer: Customer) => {
+    setCustomerName(customer.name);
+    setCustomerCode(customer.code || customer.serialId?.toString() || '');
+    setSelectedCustomer(customer);
+    setShowCustomerDropdown(false);
+    setShowCodeDropdown(false);
+  };
+
+  const clearCustomerSelection = () => {
+    setCustomerName('');
+    setCustomerCode('');
+    setSelectedCustomer(null);
+  };
+
   const filteredDrugs = useMemo(() => {
-    const term = search.trim();
-    const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const pattern = escapedTerm.split(/\s+/).join('.*');
-    const searchRegex = new RegExp(pattern, 'i');
+    const { mode, regex } = parseSearchTerm(search);
 
     return inventory.filter(d => {
         const drugBroadCat = getBroadCategory(d.category);
         const matchesCategory = selectedCategory === 'All' || drugBroadCat === selectedCategory;
         
-        const matchesSearch = 
-            searchRegex.test(d.name) || 
-            searchRegex.test(d.genericName) ||
-            searchRegex.test(d.description) ||
-            searchRegex.test(d.category) ||
-            (d.barcode && searchRegex.test(d.barcode)) ||
-            (d.internalCode && searchRegex.test(d.internalCode));
+        let matchesSearch = false;
+
+        if (mode === 'ingredient') {
+            matchesSearch = !!d.activeIngredients && d.activeIngredients.some(ing => regex.test(ing));
+        } else {
+            const searchableText = `${d.name} ${d.dosageForm || ''} ${d.genericName} ${d.description} ${d.category}`;
+            matchesSearch = 
+                regex.test(searchableText) ||
+                (d.barcode && regex.test(d.barcode)) ||
+                (d.internalCode && regex.test(d.internalCode));
+        }
         
         const matchesStock = 
             stockFilter === 'all' || 
@@ -495,7 +568,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
         return (
           <div className="flex flex-col">
             <span className="font-bold text-sm text-slate-900 dark:text-slate-100 drug-name">
-              {drug.name}
+              {drug.name} {drug.dosageForm ? <span className="text-slate-500 font-normal">({drug.dosageForm})</span> : ''}
             </span>
             <span className="text-xs text-slate-500">{drug.genericName}</span>
           </div>
@@ -642,60 +715,178 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
       <div className={`flex-1 flex flex-col gap-3 h-full overflow-hidden ${mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'}`}>
         
         {/* Customer Details */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t.customerName}</label>
-              <div className="relative">
-                <span className="material-symbols-rounded absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">person</span>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full ps-9 pe-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder={t.customerName}
-                />
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-sm border border-slate-200 dark:border-slate-700">
+            {selectedCustomer ? (
+              // Locked Customer Card
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in">
+                 <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-full bg-${color}-100 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-600 dark:text-${color}-400`}>
+                      <span className="material-symbols-rounded text-[24px]">person</span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 text-lg">
+                        {selectedCustomer.name}
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-xs text-slate-500 font-mono border border-slate-200 dark:border-slate-600">
+                          {selectedCustomer.code || `#${selectedCustomer.serialId}`}
+                        </span>
+                      </h3>
+                      <p className="text-sm text-slate-500 flex items-center gap-1 mt-0.5">
+                        <span className="material-symbols-rounded text-[16px]">call</span>
+                        {selectedCustomer.phone}
+                      </p>
+                    </div>
+                 </div>
+                 
+                 <div className="flex-1 border-s-2 border-slate-100 dark:border-slate-700 ps-6 ms-2 hidden sm:block">
+                    <p className="text-xs font-bold text-slate-400 uppercase mb-1 flex items-center gap-1">
+                      <span className="material-symbols-rounded text-[14px]">location_on</span>
+                      Address
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                      {selectedCustomer.streetAddress ? selectedCustomer.streetAddress + ' - ' : ''}
+                      {selectedCustomer.area ? getLocationName(selectedCustomer.area, 'area', 'AR') + ' - ' : ''}
+                      {selectedCustomer.city ? getLocationName(selectedCustomer.city, 'city', 'AR') : ''}
+                    </p>
+                 </div>
+
+                 <div className="flex flex-col gap-2 min-w-[140px]">
+                    <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
+                        <button
+                        onClick={() => setPaymentMethod('cash')}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all ${
+                            paymentMethod === 'cash'
+                            ? 'bg-white dark:bg-slate-700 text-green-600 dark:text-green-400 shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                        }`}
+                        >
+                        <span className="material-symbols-rounded text-[16px]">payments</span>
+                        {t.cash}
+                        </button>
+                        <button
+                        onClick={() => setPaymentMethod('visa')}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all ${
+                            paymentMethod === 'visa'
+                            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                        }`}
+                        >
+                        <span className="material-symbols-rounded text-[16px]">credit_card</span>
+                        {t.visa}
+                        </button>
+                    </div>
+                    <button 
+                        onClick={clearCustomerSelection}
+                        className="w-full py-1.5 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center justify-center gap-1"
+                    >
+                        <span className="material-symbols-rounded text-[16px]">close</span>
+                        Change Customer
+                    </button>
+                 </div>
               </div>
-            </div>
-            <div className="flex-1">
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t.customerCode}</label>
-              <div className="relative">
-                <span className="material-symbols-rounded absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">badge</span>
-                <input
-                  type="text"
-                  value={customerCode}
-                  onChange={(e) => setCustomerCode(e.target.value)}
-                  className="w-full ps-9 pe-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder={t.customerCode}
-                />
+            ) : (
+              // Search Inputs
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1 relative">
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t.customerName}</label>
+                <div className="relative">
+                    <span className="material-symbols-rounded absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">person</span>
+                    <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => {
+                        setCustomerName(e.target.value);
+                        setShowCustomerDropdown(true);
+                    }}
+                    onFocus={() => setShowCustomerDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
+                    className="w-full ps-9 pe-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder={t.customerName}
+                    />
+                    
+                    {/* Customer Dropdown */}
+                    {showCustomerDropdown && filteredCustomers.length > 0 && (
+                    <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 z-50 max-h-48 overflow-y-auto">
+                        {filteredCustomers.map(customer => (
+                        <div
+                            key={customer.id}
+                            className="px-3 py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 flex flex-col border-b border-slate-50 dark:border-slate-700 last:border-0"
+                            onClick={() => handleCustomerSelect(customer)}
+                        >
+                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{customer.name}</span>
+                            <div className="flex gap-2 text-xs text-slate-500">
+                            <span>{customer.phone}</span>
+                            {customer.code && <span>• {customer.code}</span>}
+                            </div>
+                        </div>
+                        ))}
+                    </div>
+                    )}
+                </div>
+                </div>
+                <div className="flex-1">
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t.customerCode}</label>
+                <div className="relative">
+                    <span className="material-symbols-rounded absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">badge</span>
+                    <input
+                    type="text"
+                    value={customerCode}
+                    onChange={(e) => {
+                        setCustomerCode(e.target.value);
+                        setShowCodeDropdown(true);
+                    }}
+                    onFocus={() => setShowCodeDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowCodeDropdown(false), 200)}
+                    className="w-full ps-9 pe-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder={t.customerCode}
+                    />
+                    {/* Code Dropdown */}
+                    {showCodeDropdown && filteredByCode.length > 0 && (
+                        <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 z-50 max-h-48 overflow-y-auto">
+                            {filteredByCode.map(customer => (
+                            <div
+                                key={customer.id}
+                                className="px-3 py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 flex flex-col border-b border-slate-50 dark:border-slate-700 last:border-0"
+                                onClick={() => handleCustomerSelect(customer)}
+                            >
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{customer.code || customer.serialId}</span>
+                                    <span className="text-xs text-slate-500">{customer.name}</span>
+                                </div>
+                            </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                </div>
+                <div className="flex-1">
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t.paymentMethod}</label>
+                <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
+                    <button
+                    onClick={() => setPaymentMethod('cash')}
+                    className={`flex-1 py-1.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                        paymentMethod === 'cash'
+                        ? 'bg-white dark:bg-slate-700 text-green-600 dark:text-green-400 shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                    }`}
+                    >
+                    <span className="material-symbols-rounded text-[18px]">payments</span>
+                    {t.cash}
+                    </button>
+                    <button
+                    onClick={() => setPaymentMethod('visa')}
+                    className={`flex-1 py-1.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                        paymentMethod === 'visa'
+                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                    }`}
+                    >
+                    <span className="material-symbols-rounded text-[18px]">credit_card</span>
+                    {t.visa}
+                    </button>
+                </div>
+                </div>
               </div>
-            </div>
-            <div className="flex-1">
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t.paymentMethod}</label>
-              <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
-                <button
-                  onClick={() => setPaymentMethod('cash')}
-                  className={`flex-1 py-1.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                    paymentMethod === 'cash'
-                      ? 'bg-white dark:bg-slate-700 text-green-600 dark:text-green-400 shadow-sm'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <span className="material-symbols-rounded text-[18px]">payments</span>
-                  {t.cash}
-                </button>
-                <button
-                  onClick={() => setPaymentMethod('visa')}
-                  className={`flex-1 py-1.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                    paymentMethod === 'visa'
-                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <span className="material-symbols-rounded text-[18px]">credit_card</span>
-                  {t.visa}
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         {/* Search & Filter */}
         <div className="bg-white dark:bg-slate-900 p-2.5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-2 shrink-0">
@@ -987,7 +1178,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
                         {/* Row 1: Name & Price */}
                         <div className="flex justify-between items-start gap-2 mb-1">
                             <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100 leading-tight line-clamp-2 flex-1 drug-name" title={item.name}>
-                                {item.name}
+                                {item.name} {item.dosageForm ? <span className="font-normal text-slate-500">({item.dosageForm})</span> : ''}
                             </h4>
                             <div className="text-end shrink-0">
                                 <div className="text-sm font-bold text-slate-900 dark:text-white">
@@ -1164,7 +1355,9 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t })
             
             <div className="p-6 overflow-y-auto space-y-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{viewingDrug.name}</h2>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                        {viewingDrug.name} {viewingDrug.dosageForm ? <span className="text-lg text-slate-500 font-normal">({viewingDrug.dosageForm})</span> : ''}
+                    </h2>
                     <p className="text-slate-500 font-medium">{viewingDrug.genericName}</p>
                 </div>
 

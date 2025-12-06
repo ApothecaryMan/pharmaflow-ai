@@ -16,6 +16,9 @@ export interface Drug {
   unitsPerPack?: number;
   supplierId?: string; // Preferred supplier
   maxDiscount?: number; // Maximum allowed discount percentage
+  additionalBarcodes?: string[]; // Multiple barcodes support
+  dosageForm?: string; // Tablet, Capsule, Syrup, etc.
+  activeIngredients?: string[]; // For formula/composition
 }
 
 export interface Supplier {
@@ -25,6 +28,30 @@ export interface Supplier {
   phone: string;
   email: string;
   address: string;
+}
+
+export interface Customer {
+  id: string;
+  serialId: number; // Auto-generated serial ID (1, 2, 3...)
+  code: string; // Unique, Not Null
+  name: string;
+  phone: string;
+  email?: string;
+  // Address Details
+  governorate?: string;
+  city?: string;
+  area?: string;
+  streetAddress?: string; // Specific address details
+  insuranceProvider?: string;
+  policyNumber?: string;
+  preferredLocation?: string;
+  preferredContact?: 'phone' | 'email' | 'sms';
+  chronicConditions?: string[];
+  totalPurchases: number; // Total value of purchases
+  points: number; // Loyalty points
+  lastVisit: string;
+  notes?: string;
+  status: 'active' | 'inactive';
 }
 
 export interface CartItem extends Drug {
@@ -42,6 +69,7 @@ export interface SaleTab {
   createdAt: number;
   isPinned?: boolean; // For pinning tabs
   searchQuery?: string;
+  customerCode?: string;
 }
 
 export interface PurchaseItem {
@@ -50,6 +78,7 @@ export interface PurchaseItem {
   quantity: number; // Packs
   costPrice: number; // Cost per pack at time of purchase
   expiryDate?: string;
+  dosageForm?: string;
 }
 
 export interface Sale {
@@ -122,7 +151,7 @@ export interface ThemeColor {
   hex: string;
 }
 
-export type ViewState = 'dashboard' | 'inventory' | 'pos' | 'sales-history' | 'suppliers' | 'purchases' | 'barcode-studio';
+export type ViewState = 'dashboard' | 'inventory' | 'pos' | 'sales-history' | 'suppliers' | 'purchases' | 'barcode-studio' | 'return-history' | 'customers' | 'customer-overview' | 'add-product';
 
 export type Language = 'EN' | 'AR';
 

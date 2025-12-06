@@ -1,8 +1,10 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Sale, CartItem, Return } from '../types';
 import { ReturnModal } from './ReturnModal';
+import { DatePicker } from './DatePicker';
+import { createSearchRegex } from '../utils/searchUtils';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -10,13 +12,19 @@ interface SalesHistoryProps {
   onProcessReturn: (returnData: Return) => void;
   color: string;
   t: any;
+  language: string;
+  datePickerTranslations: any;
 }
 
-export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onProcessReturn, color, t }) => {
+export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onProcessReturn, color, t, language, datePickerTranslations }) => {
+  // Determine locale based on language
+  const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'high' | 'low'>('newest');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [expandedSaleId, setExpandedSaleId] = useState<string | null>(null);
   const [returnModalOpen, setReturnModalOpen] = useState(false);
 
   // Column definitions
@@ -74,16 +82,27 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
 
   const filteredSales = sales
     .filter(sale => {
-      const term = searchTerm.toLowerCase();
-      return (
-        (sale.customerName?.toLowerCase() || '').includes(term) ||
-        sale.id.toLowerCase().includes(term) ||
+      const searchRegex = createSearchRegex(searchTerm);
+      const matchesTerm = (
+        searchRegex.test(sale.customerName || '') ||
+        searchRegex.test(sale.id) ||
         sale.items.some(item => 
-           item.name.toLowerCase().includes(term) || 
-           item.genericName.toLowerCase().includes(term) ||
-           (item.barcode && item.barcode.toLowerCase().includes(term))
+           searchRegex.test(item.name) || 
+           searchRegex.test(item.genericName) ||
+           (item.barcode && searchRegex.test(item.barcode))
         )
       );
+
+      if (!matchesTerm) return false;
+
+      const saleDate = new Date(sale.date);
+      const start = startDate ? new Date(startDate) : null;
+      const end = endDate ? new Date(endDate) : null;
+      
+      if (start && saleDate < start) return false;
+      if (end && saleDate > end) return false;
+
+      return true;
     })
     .sort((a, b) => {
       if (sortConfig) {
@@ -114,13 +133,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
         return new Date(b.date).getTime() - new Date(a.date).getTime();
       }
 
-      switch (sortOrder) {
-        case 'newest': return new Date(b.date).getTime() - new Date(a.date).getTime();
-        case 'oldest': return new Date(a.date).getTime() - new Date(b.date).getTime();
-        case 'high': return b.total - a.total;
-        case 'low': return a.total - b.total;
-        default: return 0;
-      }
+      // Default sort: Newest first
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
 
   const totalRevenue = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
@@ -252,7 +266,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
               return `
               <tr>
                 <td>
-                  <div class="item-name">${item.name}</div>
+                  <div class="item-name">${item.name} ${item.dosageForm ? `(${item.dosageForm})` : ''}</div>
                   ${item.isUnit ? `<span class="unit-badge">UNIT</span>` : ''}
                   ${item.discount && item.discount > 0 
                     ? `<span class="discount-badge">-${item.discount}% OFF</span>` 
@@ -327,48 +341,59 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
         {/* Total Revenue Card */}
         <div className={`px-4 py-2 rounded-2xl bg-${color}-50 dark:bg-${color}-900/20 border border-${color}-100 dark:border-${color}-900/50 flex flex-col items-end min-w-[140px]`}>
             <span className={`text-[10px] font-bold uppercase text-${color}-600 dark:text-${color}-400`}>{t.totalRevenue}</span>
-            <span className={`text-xl font-bold text-${color}-900 dark:text-${color}-100`}>${totalRevenue.toFixed(2)}</span>
+            <span className={`text-xl font-bold text-${color}-900 dark:text-${color}-100`}>${sales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}</span>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <span className="material-symbols-rounded absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none rtl:left-auto rtl:right-4 ltr:left-4">search</span>
-          <input 
-            type="text" 
-            placeholder={t.searchPlaceholder}
-            className="w-full ps-12 pe-4 py-2.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 transition-all text-sm"
-            style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="flex gap-2">
-            <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-slate-500 whitespace-nowrap hidden md:block">{t.sortBy}</label>
-            <select 
-                className="px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 transition-all text-sm"
-                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as any)}
-            >
-                <option value="newest">{t.sortNewest}</option>
-                <option value="oldest">{t.sortOldest}</option>
-                <option value="high">{t.sortHighTotal}</option>
-                <option value="low">{t.sortLowTotal}</option>
-            </select>
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:flex-1">
+            <div className="relative group flex-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                    <span className="material-symbols-rounded text-[20px]">search</span>
+                </span>
+                <input
+                    type="text"
+                    placeholder={t.searchPlaceholder || "Search sales..."}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-full text-sm w-full focus:ring-2 focus:ring-blue-500/20 text-slate-900 dark:text-slate-100 placeholder-slate-400 transition-all"
+                />
             </div>
             
-            <button 
-                onClick={exportToCSV}
-                disabled={filteredSales.length === 0}
-                className={`px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 text-slate-700 dark:text-slate-200`}
-            >
-                <span className="material-symbols-rounded text-lg">download</span>
-                <span className="hidden md:inline">{t.exportCSV}</span>
-            </button>
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 p-1 rounded-full border border-slate-200 dark:border-slate-700">
+                <DatePicker
+                    value={startDate}
+                    onChange={setStartDate}
+                    label={t.dateFrom || "From"}
+                    color={color}
+                    icon="calendar_today"
+                    locale={locale}
+                    translations={datePickerTranslations}
+                />
+                <span className="text-slate-300 dark:text-slate-700 rtl:rotate-180">
+                    <span className="material-symbols-rounded text-[16px]">arrow_forward</span>
+                </span>
+                <DatePicker
+                    value={endDate}
+                    onChange={setEndDate}
+                    label={t.dateTo || "To"}
+                    color={color}
+                    icon="event"
+                    locale={locale}
+                    translations={datePickerTranslations}
+                />
+            </div>
         </div>
+            
+        <button 
+            onClick={exportToCSV}
+            disabled={filteredSales.length === 0}
+            className={`px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 text-slate-700 dark:text-slate-200`}
+        >
+            <span className="material-symbols-rounded text-lg">download</span>
+            <span className="hidden md:inline">{t.exportCSV}</span>
+        </button>
       </div>
 
       {/* Table Card */}
@@ -397,24 +422,27 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredSales.map(sale => (
-                <tr key={sale.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+              {filteredSales.map((sale, index) => (
+                <React.Fragment key={sale.id}>
+                <tr 
+                    className={`border-b border-slate-100 dark:border-slate-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 transition-colors ${index % 2 === 0 ? 'bg-slate-50/30 dark:bg-slate-800/20' : ''} ${expandedSaleId === sale.id ? `bg-${color}-50/50 dark:bg-${color}-900/10` : ''}`}
+                >
                   {columns.map(col => {
                     if (col.key === 'id') {
                         return (
-                            <td key={col.key} className="p-4 font-mono text-xs text-slate-500">
+                            <td key={col.key} className="px-3 py-2 font-mono text-xs text-slate-500">
                                 #{sale.id}
                             </td>
                         );
                     }
                     if (col.key === 'date') {
                         return (
-                            <td key={col.key} className="p-4">
+                            <td key={col.key} className="px-3 py-2">
                                 <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">
                                     {new Date(sale.date).toLocaleDateString()}
                                 </div>
                                 <div className="text-xs text-slate-500 flex items-center gap-1">
-                                    {new Date(sale.date).toLocaleTimeString()}
+                                    {new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                     {sale.saleType === 'delivery' && (
                                         <span className="material-symbols-rounded text-[14px] text-blue-500" title="Delivery Order">local_shipping</span>
                                     )}
@@ -424,7 +452,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                     }
                     if (col.key === 'customer') {
                         return (
-                            <td key={col.key} className="p-4">
+                            <td key={col.key} className="px-3 py-2">
                                 <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">
                                     {sale.customerName || "Guest"}
                                 </div>
@@ -438,7 +466,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                     }
                     if (col.key === 'payment') {
                         return (
-                            <td key={col.key} className="p-4">
+                            <td key={col.key} className="px-3 py-2">
                                 <span className={`flex items-center gap-1 ${sale.paymentMethod === 'visa' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
                                     <span className="material-symbols-rounded text-[16px]">{sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}</span>
                                     <span className="text-sm font-medium">{sale.paymentMethod === 'visa' ? t.visa : t.cash}</span>
@@ -448,14 +476,14 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                     }
                     if (col.key === 'items') {
                         return (
-                            <td key={col.key} className="p-4 text-sm text-slate-600 dark:text-slate-400">
+                            <td key={col.key} className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400">
                                 {sale.items.length} {t.items || "items"}
                             </td>
                         );
                     }
                     if (col.key === 'total') {
                         return (
-                            <td key={col.key} className="p-4 font-bold text-slate-900 dark:text-slate-100">
+                            <td key={col.key} className="px-3 py-2 font-bold text-slate-900 dark:text-slate-100">
                                 ${sale.total.toFixed(2)}
                                 {sale.deliveryFee && sale.deliveryFee > 0 && (
                                     <div className="text-[10px] text-slate-400 font-normal">
@@ -467,20 +495,117 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                     }
                     if (col.key === 'actions') {
                         return (
-                            <td key={col.key} className="p-4 text-end">
-                                <button 
-                                    onClick={() => setSelectedSale(sale)}
-                                    className={`p-2 rounded-full hover:bg-${color}-50 dark:hover:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 transition-colors`}
-                                    title={t.viewDetails}
-                                >
-                                    <span className="material-symbols-rounded">visibility</span>
-                                </button>
+                            <td key={col.key} className="px-3 py-2 text-end">
+                                <div className="flex items-center justify-end gap-1">
+                                    <button 
+                                        onClick={() => setExpandedSaleId(expandedSaleId === sale.id ? null : sale.id)}
+                                        className={`p-1.5 rounded-lg hover:bg-${color}-100 dark:hover:bg-${color}-900/50 text-${color}-600 dark:text-${color}-400 transition-colors`}
+                                        title={expandedSaleId === sale.id ? "Collapse" : "Expand"}
+                                    >
+                                        <span className="material-symbols-rounded text-[20px]">
+                                            {expandedSaleId === sale.id ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+                                        </span>
+                                    </button>
+                                    <button 
+                                        onClick={() => setSelectedSale(sale)}
+                                        className={`p-1.5 rounded-lg hover:bg-${color}-100 dark:hover:bg-${color}-900/50 text-${color}-600 dark:text-${color}-400 transition-colors`}
+                                        title={t.viewDetails}
+                                    >
+                                        <span className="material-symbols-rounded text-[20px]">visibility</span>
+                                    </button>
+                                </div>
                             </td>
                         );
                     }
                     return null;
                   })}
                 </tr>
+                {expandedSaleId === sale.id && (
+                    <tr className="animate-fade-in">
+                        <td colSpan={columns.length} className="p-0 border-b border-slate-100 dark:border-slate-800">
+                            <div className={`bg-${color}-50/30 dark:bg-${color}-900/5 p-3 flex flex-col md:flex-row gap-4 items-start`}>
+                                {/* Items List - Grid Layout for Compactness */}
+                                <div className="flex-1 w-full">
+                                    <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider flex items-center gap-2">
+                                        <span className="material-symbols-rounded text-[14px]">shopping_bag</span>
+                                        {t.modal.items} <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 rounded text-[9px]">{sale.items.length}</span>
+                                    </h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                        {sale.items.map((item, idx) => {
+                                            const effectivePrice = (item.isUnit && item.unitsPerPack) ? item.price / item.unitsPerPack : item.price;
+                                            return (
+                                                <div key={idx} className="flex items-center gap-2 p-1.5 rounded border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:border-slate-200 dark:hover:border-slate-700 transition-colors">
+                                                    <div className="h-8 w-8 rounded bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400 shrink-0">
+                                                        {item.quantity}
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate flex items-center gap-1">
+                                                            {item.name} {item.dosageForm ? `(${item.dosageForm})` : ''}
+                                                            {item.isUnit && <span className="text-[8px] bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1 rounded font-bold">UNIT</span>}
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                                                            ${effectivePrice.toFixed(2)}
+                                                            {item.discount && item.discount > 0 ? <span className="text-green-600 dark:text-green-400">(-{item.discount}%)</span> : ''}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">
+                                                        ${((effectivePrice * item.quantity) * (1 - (item.discount || 0)/100)).toFixed(2)}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Summary & Actions - Compact Sidebar */}
+                                <div className="w-full md:w-56 shrink-0 flex flex-col gap-3 md:border-s border-slate-100 dark:border-slate-800 md:ps-4">
+                                    <div className="space-y-1.5">
+                                        <div className="flex justify-between text-xs text-slate-500">
+                                            <span>{t.modal.subtotal}</span>
+                                            <span>${(sale.subtotal || 0).toFixed(2)}</span>
+                                        </div>
+                                        {sale.globalDiscount && sale.globalDiscount > 0 && (
+                                            <div className="flex justify-between text-xs text-green-600 dark:text-green-400">
+                                                <span>Disc. ({sale.globalDiscount}%)</span>
+                                                <span>-${((sale.subtotal || 0) * sale.globalDiscount / 100).toFixed(2)}</span>
+                                            </div>
+                                        )}
+                                        {sale.deliveryFee && sale.deliveryFee > 0 && (
+                                            <div className="flex justify-between text-xs text-slate-500">
+                                                <span>Delivery</span>
+                                                <span>+${sale.deliveryFee.toFixed(2)}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between text-sm font-bold text-slate-900 dark:text-white pt-1.5 border-t border-slate-100 dark:border-slate-800 border-dashed">
+                                            <span>{t.modal.total}</span>
+                                            <span>${sale.total.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {!sale.hasReturns && (
+                                            <button 
+                                                onClick={() => setReturnModalOpen(true)}
+                                                className="py-1.5 px-2 rounded-md text-[10px] font-bold uppercase tracking-wide text-white bg-orange-500 hover:bg-orange-600 transition-colors flex items-center justify-center gap-1 shadow-sm shadow-orange-200 dark:shadow-none"
+                                            >
+                                                <span className="material-symbols-rounded text-[14px]">keyboard_return</span>
+                                                Return
+                                            </button>
+                                        )}
+                                        <button 
+                                            onClick={() => handlePrint(sale)}
+                                            className={`py-1.5 px-2 rounded-md text-[10px] font-bold uppercase tracking-wide text-white bg-${color}-600 hover:bg-${color}-700 transition-colors flex items-center justify-center gap-1 shadow-sm shadow-${color}-200 dark:shadow-none ${sale.hasReturns ? 'col-span-2' : ''}`}
+                                        >
+                                            <span className="material-symbols-rounded text-[14px]">print</span>
+                                            Receipt
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                )}
+                </React.Fragment>
               ))}
               {filteredSales.length === 0 && (
                 <tr>
@@ -544,7 +669,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                               <div key={idx} className="flex justify-between items-center text-sm p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                                   <div>
                                       <p className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-1 item-name">
-                                        {item.name}
+                                        {item.name} {item.dosageForm ? `(${item.dosageForm})` : ''}
                                         {item.isUnit && <span className="text-[9px] bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1 rounded font-bold">UNIT</span>}
                                       </p>
                                       <p className="text-xs text-slate-500">
