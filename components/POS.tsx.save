@@ -1,9 +1,7 @@
 
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+OOBimport React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useContextMenu } from '../components/ContextMenu';
 import { Drug, CartItem, Customer } from '../types';
-
-import { useExpandingDropdown } from '../hooks/useExpandingDropdown';
 import { getLocationName } from '../data/locations';
 import { usePOSTabs } from '../hooks/usePOSTabs';
 import { useColumnReorder } from '../hooks/useColumnReorder';
@@ -729,35 +727,62 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
         return (
           <div className="text-center">
             {drug.unitsPerPack && drug.unitsPerPack > 1 ? (
-                <PosDropdown 
-                    items={['pack', 'unit']}
-                    selectedItem={(selectedUnits[drug.id] || 'pack')}
-                    isOpen={openUnitDropdown === drug.id}
-                    onToggle={() => {
+              <div className="relative w-24 mx-auto">
+                 <div 
+                    id={`unit-dropdown-${drug.id}`}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Space') {
+                            e.preventDefault();
+                            setOpenUnitDropdown(openUnitDropdown === drug.id ? null : drug.id);
+                            setOpenBatchDropdown(null);
+                        }
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addGroupToCart(group);
+                            setSearch('');
+                            setActiveIndex(0);
+                            searchInputRef.current?.focus();
+                        }
+                        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            const current = selectedUnits[drug.id] || 'pack';
+                            const next = current === 'pack' ? 'unit' : 'pack';
+                            setSelectedUnits(prev => ({ ...prev, [drug.id]: next }));
+                        }
+                    }}
+                    className={`flex items-center justify-between w-full px-2 py-1 text-[11px] rounded-lg border transition-all cursor-pointer bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-${color}-500 ${openUnitDropdown === drug.id ? `border-${color}-500 ring-1 ring-${color}-500` : 'border-gray-200 dark:border-gray-700'}`}
+                    onClick={(e) => {
+                        e.stopPropagation();
                         setOpenUnitDropdown(openUnitDropdown === drug.id ? null : drug.id);
+                        // Close other dropdowns
                         setOpenBatchDropdown(null);
                     }}
-                    onSelect={(item) => setSelectedUnits(prev => ({ ...prev, [drug.id]: item as 'pack' | 'unit' }))}
-                    keyExtractor={(item) => item as string}
-                    renderSelected={(item) => (
-                        <div className="w-full px-2 py-1 text-[11px] font-medium text-center text-gray-600 dark:text-gray-400">
-                             {(item as string) === 'pack' ? (t.pack || 'Pack') : (t.unit || 'Unit')}
-                        </div>
-                    )}
-                    renderItem={(item) => (
-                        <div className="w-full px-2 py-1 text-[11px] text-center text-gray-600 dark:text-gray-400">
-                            <span className="font-medium capitalize">{(item as string) === 'pack' ? (t.pack || 'Pack') : (t.unit || 'Unit')}</span>
-                        </div>
-                    )}
-                    onEnter={() => {
-                        addGroupToCart(group);
-                        setSearch('');
-                        setActiveIndex(0);
-                        searchInputRef.current?.focus();
-                    }}
-                    className="h-7 w-24 mx-auto"
-                    color={color}
-                />
+                >
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">
+                        {(selectedUnits[drug.id] || 'pack') === 'pack' ? (t.pack || 'Pack') : (t.unit || 'Unit')}
+                    </span>
+                    <span className="material-symbols-rounded text-[14px] text-gray-400">arrow_drop_down</span>
+                 </div>
+                 
+                 {openUnitDropdown === drug.id && (
+                     <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-100 dark:border-gray-800 z-50 overflow-hidden">
+                        {['pack', 'unit'].map((unitType) => (
+                             <div 
+                                key={unitType}
+                                className={`px-3 py-2 text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 flex justify-between items-center ${(selectedUnits[drug.id] || 'pack') === unitType ? `bg-${color}-50 dark:bg-${color}-900/20 text-${color}-700` : 'text-gray-600 dark:text-gray-400'}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedUnits(prev => ({ ...prev, [drug.id]: unitType as 'pack' | 'unit' }));
+                                    setOpenUnitDropdown(null);
+                                }}
+                            >
+                                <span className="font-medium capitalize">{unitType === 'pack' ? (t.pack || 'Pack') : (t.unit || 'Unit')}</span>
+                            </div>
+                        ))}
+                     </div>
+                 )}
+              </div>
             ) : (
               <span className="text-xs text-gray-400">-</span>
             )}
@@ -777,41 +802,77 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
         };
 
         return (
-          <PosDropdown 
-            items={group}
-            selectedItem={currentBatch}
-            isOpen={isOpen}
-            onToggle={() => {
-                setOpenBatchDropdown(isOpen ? null : drug.id);
-                setOpenUnitDropdown(null);
-            }}
-            onSelect={(item) => setSelectedBatches(prev => ({ ...prev, [drug.id]: (item as Drug).id }))}
-            keyExtractor={(item) => (item as Drug).id}
-            renderSelected={(item) => {
-                const i = item as Drug | undefined;
-                return (
-                <div className="w-full px-2 py-1 text-[11px] text-center truncate text-gray-600 dark:text-gray-400">
-                    {i ? `${formatDate(i.expiryDate)} • ${i.stock}` : 'No Stock'}
+          <div className="relative w-32">
+            <div 
+                id={`batch-dropdown-${drug.id}`}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === 'Space') {
+                        e.preventDefault();
+                        setOpenBatchDropdown(isOpen ? null : drug.id);
+                        setOpenUnitDropdown(null);
+                    }
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addGroupToCart(group);
+                        setSearch('');
+                        setActiveIndex(0);
+                        searchInputRef.current?.focus();
+                    }
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const currentId = currentBatch?.id;
+                        if (!currentId) return;
+                        
+                        const currentIndex = group.findIndex(g => g.id === currentId);
+                        if (currentIndex === -1) return;
+
+                        let nextIndex;
+                        if (e.key === 'ArrowDown') {
+                             nextIndex = (currentIndex + 1) % group.length;
+                        } else {
+                             nextIndex = (currentIndex - 1 + group.length) % group.length;
+                        }
+                        
+                        const nextBatch = group[nextIndex];
+                        if (nextBatch) {
+                            setSelectedBatches(prev => ({ ...prev, [drug.id]: nextBatch.id }));
+                        }
+                    }
+                }}
+                className={`flex items-center justify-between w-full px-2 py-1 text-[11px] rounded-lg border transition-all cursor-pointer bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-${color}-500 ${isOpen ? `border-${color}-500 ring-1 ring-${color}-500` : 'border-gray-200 dark:border-gray-700'}`}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenBatchDropdown(isOpen ? null : drug.id);
+                    setOpenUnitDropdown(null);
+                }}
+            >
+                <span className="text-gray-600 dark:text-gray-400 truncate">
+                    {currentBatch ? `${formatDate(currentBatch.expiryDate)} • ${currentBatch.stock}` : 'No Stock'}
+                </span>
+                <span className="material-symbols-rounded text-[14px] text-gray-400">arrow_drop_down</span>
+            </div>
+            
+            {isOpen && (
+                <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-100 dark:border-gray-800 z-50 max-h-40 overflow-y-auto">
+                    {group
+                        .map(batch => (
+                        <div 
+                            key={batch.id}
+                            className={`px-3 py-2 text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 flex justify-between items-center ${selectedBatches[drug.id] === batch.id ? `bg-${color}-50 dark:bg-${color}-900/20 text-${color}-700` : 'text-gray-600 dark:text-gray-400'}`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedBatches(prev => ({ ...prev, [drug.id]: batch.id }));
+                                setOpenBatchDropdown(null);
+                            }}
+                        >
+                            <span className="font-medium">{formatDate(batch.expiryDate)}</span>
+                            <span className="opacity-70">Qty: {batch.stock}</span>
+                        </div>
+                    ))}
                 </div>
-            )}}
-            renderItem={(item) => {
-                const i = item as Drug;
-                return (
-                <div className="w-full px-2 py-1 text-[11px] text-center text-gray-600 dark:text-gray-400">
-                    <span className="font-medium mr-1">{formatDate(i.expiryDate)}</span>
-                    <span className="opacity-70 text-[10px]">({i.stock})</span>
-                </div>
-            )}}
-            onEnter={() => {
-                addGroupToCart(group);
-                setSearch('');
-                setActiveIndex(0);
-                searchInputRef.current?.focus();
-            }}
-            className="h-7 w-32"
-            color={color}
-            transparentIfSingle={true}
-          />
+            )}
+          </div>
         );
       case 'inCart':
         return (
@@ -852,7 +913,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
       <div className={`flex-1 flex flex-col gap-3 h-full overflow-hidden ${mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'}`}>
         
         {/* Customer Details */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border border-gray-200 dark:border-gray-800">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-200 dark:border-gray-700">
             {selectedCustomer ? (
               // Locked Customer Card
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in">
@@ -924,7 +985,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
               // Search Inputs
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 relative">
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{t.customerInfo || 'Customer Information'}</label>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{t.customerName} / {t.customerCode}</label>
                 <SearchInput
                   value={customerName}
                   onSearchChange={(val) => {
@@ -935,7 +996,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                   onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
                   placeholder={t.customers?.searchPlaceholder || 'Search by name, phone, code...'}
                   icon="person"
-                  className="border-gray-200 dark:border-gray-700"
+                  className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                 />    
                     {/* Customer Dropdown */}
                     {showCustomerDropdown && filteredCustomers.length > 0 && (
@@ -956,10 +1017,11 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                     </div>
                     )}
                 </div>
+                </div>
 
                 <div className="flex-none">
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{t.paymentMethod}</label>
-                <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl gap-1">
+                <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl gap-1">
                     <button
                     onClick={() => setPaymentMethod('cash')}
                     className={`w-24 py-1.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
@@ -998,7 +1060,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                         setActiveIndex(0);
                     }}
                     placeholder={t.searchPlaceholder}
-                    className="border-gray-200 dark:border-gray-800"
+                    className="bg-gray-50 dark:bg-gray-950 border-none"
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                     onKeyDown={(e) => {
                         const term = search.trim();
@@ -1594,80 +1656,3 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
     </div>
   );
 };
-
-// --- Local Component for Dropdown ---
-// Inlined to avoid extra files, reusing the generic hook efficiently.
-interface PosDropdownProps<T> {
-    items: T[];
-    selectedItem: T | undefined;
-    isOpen: boolean;
-    onToggle: () => void;
-    onSelect: (item: T) => void;
-    renderItem: (item: T, isSelected: boolean) => React.ReactNode;
-    renderSelected: (item: T | undefined) => React.ReactNode;
-    keyExtractor: (item: T) => string;
-    onEnter?: () => void;
-    className?: string;
-    transparentIfSingle?: boolean;
-    color?: string;
-}
-
-function PosDropdown<T>({
-    items,
-    selectedItem,
-    isOpen,
-    onToggle,
-    onSelect,
-    renderItem,
-    renderSelected,
-    keyExtractor,
-    onEnter,
-    className = "",
-    transparentIfSingle = false
-}: PosDropdownProps<T>) {
-    
-    const { handleKeyDown, handleBlur, handleClick, handleOptionClick } = useExpandingDropdown({
-        items,
-        selectedItem,
-        isOpen,
-        onToggle,
-        onSelect,
-        keyExtractor,
-        onEnter
-    });
-
-    const isSingle = items.length <= 1;
-    const isTransparent = transparentIfSingle && isSingle;
-
-    return (
-        <div className={`relative ${className}`}>
-             <div 
-                tabIndex={0}
-                onKeyDown={handleKeyDown}
-                onBlur={handleBlur}
-                className={`absolute top-0 left-0 w-full flex flex-col items-center justify-center rounded-lg border transition-all cursor-pointer overflow-hidden focus:outline-none 
-                    ${isTransparent ? 'bg-transparent border-transparent' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'} 
-                    ${isOpen ? `z-[5] border-gray-200 dark:border-gray-700 shadow-xl bg-white dark:bg-gray-900` : 'z-0'}
-                `}
-                onClick={handleClick}
-            >
-                {renderSelected(selectedItem)}
-                {isOpen && (
-                    <div className="w-full border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto">
-                        {items
-                            .filter(item => keyExtractor(item) !== (selectedItem ? keyExtractor(selectedItem) : ''))
-                            .map(item => (
-                                <div 
-                                    key={keyExtractor(item)}
-                                    className={`w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800`}
-                                    onClick={(e) => handleOptionClick(e, item)}
-                                >
-                                    {renderItem(item, false)}
-                                </div>
-                        ))}
-                    </div>
-                )}
-             </div>
-        </div>
-    );
-}

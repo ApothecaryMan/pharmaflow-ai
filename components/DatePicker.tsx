@@ -201,7 +201,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                             ? `bg-${color}-600 text-white font-bold` 
                             : isToday 
                                 ? `text-${color}-600 font-bold border border-${color}-200 dark:border-${color}-800` 
-                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }
                     `}
                 >
@@ -231,7 +231,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all cursor-pointer select-none focus:outline-none focus:ring-2 ring-${color}-500
                     ${value 
                         ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-800 text-${color}-700 dark:text-${color}-300` 
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
+                        : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
                     }
                 `}
                 onClick={() => setIsOpen(!isOpen)}
@@ -267,18 +267,18 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     aria-modal="true"
                     aria-label={label}
                     tabIndex={-1}
-                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-slate-900 rounded-[28px] shadow-xl border border-slate-200 dark:border-slate-800 p-4 w-[320px] animate-fade-in outline-none"
+                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-900 rounded-[28px] shadow-xl border border-gray-200 dark:border-gray-800 p-4 w-[320px] animate-fade-in outline-none"
                     dir={locale === 'ar-EG' || locale.startsWith('ar') ? 'rtl' : 'ltr'}
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between mb-4">
-                        <button onClick={handlePrevMonth} className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 rtl:rotate-180" aria-label="Previous month">
+                        <button onClick={handlePrevMonth} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 rtl:rotate-180" aria-label="Previous month">
                             <span className="material-symbols-rounded">chevron_left</span>
                         </button>
-                        <span className="text-sm font-bold text-slate-800 dark:text-slate-200" aria-live="polite">
+                        <span className="text-sm font-bold text-gray-800 dark:text-gray-200" aria-live="polite">
                             {viewDate.toLocaleString(locale, { month: 'long', year: 'numeric' })}
                         </span>
-                        <button onClick={handleNextMonth} className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 rtl:rotate-180" aria-label="Next month">
+                        <button onClick={handleNextMonth} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 rtl:rotate-180" aria-label="Next month">
                             <span className="material-symbols-rounded">chevron_right</span>
                         </button>
                     </div>
@@ -286,7 +286,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     {/* Weekdays */}
                     <div className="grid grid-cols-7 mb-2" aria-hidden="true">
                         {weekDays.map((day, i) => (
-                            <div key={i} className="w-8 h-8 flex items-center justify-center text-xs font-medium text-slate-400">
+                            <div key={i} className="w-8 h-8 flex items-center justify-center text-xs font-medium text-gray-400">
                                 {day}
                             </div>
                         ))}
@@ -299,28 +299,28 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
                     {/* Time Selection */}
                     {selectedDate && (
-                        <div className="flex items-center justify-center gap-2 mb-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center justify-center gap-2 mb-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                             <div className="flex flex-col items-center">
-                                <label htmlFor="hour-input" className="text-[10px] text-slate-400 mb-1">{translations.hour}</label>
+                                <label htmlFor="hour-input" className="text-[10px] text-gray-400 mb-1">{translations.hour}</label>
                                 <input 
                                     id="hour-input"
                                     type="number" 
                                     min="0" 
                                     max="23" 
-                                    className={`w-12 p-1 text-center rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 ring-${color}-500 outline-none`}
+                                    className={`w-12 p-1 text-center rounded bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 ring-${color}-500 outline-none`}
                                     value={selectedDate.getHours()}
                                     onChange={(e) => handleTimeChange('hours', e.target.value)}
                                 />
                             </div>
-                            <span className="text-slate-400 mt-4">:</span>
+                            <span className="text-gray-400 mt-4">:</span>
                             <div className="flex flex-col items-center">
-                                <label htmlFor="minute-input" className="text-[10px] text-slate-400 mb-1">{translations.minute}</label>
+                                <label htmlFor="minute-input" className="text-[10px] text-gray-400 mb-1">{translations.minute}</label>
                                 <input 
                                     id="minute-input"
                                     type="number" 
                                     min="0" 
                                     max="59" 
-                                    className={`w-12 p-1 text-center rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 ring-${color}-500 outline-none`}
+                                    className={`w-12 p-1 text-center rounded bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 ring-${color}-500 outline-none`}
                                     value={selectedDate.getMinutes()}
                                     onChange={(e) => handleTimeChange('minutes', e.target.value)}
                                 />
@@ -332,7 +332,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     <div className="flex justify-end gap-2">
                         <button 
                             onClick={() => setIsOpen(false)}
-                            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors focus:outline-none focus:ring-2 ring-slate-400"
+                            className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors focus:outline-none focus:ring-2 ring-gray-400"
                         >
                             {translations.cancel}
                         </button>

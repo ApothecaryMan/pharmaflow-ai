@@ -112,11 +112,11 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-medium tracking-tight">{t.addProduct.title}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t.addProduct.subtitle}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t.addProduct.subtitle}</p>
         </div>
         <button
           onClick={() => onNavigate && onNavigate('inventory')}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
           <span className="material-symbols-rounded text-lg">arrow_back</span>
           {t.addProduct.actions.cancel}
@@ -132,21 +132,21 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
       )}
 
       {/* Form Card */}
-      <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+      <div className="flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
         <form onSubmit={(e) => handleSubmit(e, false)} className="p-6 md:p-8 space-y-8">
           
           {/* Basic Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <span className="material-symbols-rounded text-xl">info</span>
               {t.addProduct.sections.basicInfo}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t.addProduct.fields.brandName} *</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.brandName} *</label>
                 <input
                   required
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all"
+                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   placeholder={t.addProduct.placeholders.brandName}
                   value={formData.name}
@@ -154,10 +154,10 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t.addProduct.fields.genericName} *</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.genericName} *</label>
                 <input
                   required
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all"
+                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   placeholder={t.addProduct.placeholders.genericName}
                   value={formData.genericName}
@@ -165,9 +165,9 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t.addProduct.fields.category} *</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.category} *</label>
                 <select
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all"
+                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   value={formData.category}
                   onChange={e => setFormData({ ...formData, category: e.target.value })}
@@ -182,15 +182,15 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
 
           {/* Product Codes */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <span className="material-symbols-rounded text-xl">qr_code_2</span>
               {t.addProduct.sections.codes}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t.addProduct.fields.barcode}</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.barcode}</label>
                 <input
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all"
+                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   placeholder={t.addProduct.placeholders.barcode}
                   value={formData.barcode || ''}
@@ -198,7 +198,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase flex items-center justify-between">
+                <label className="text-xs font-bold text-gray-500 uppercase flex items-center justify-between">
                   <span>{t.addProduct.fields.internalCode}</span>
                   <button
                     type="button"
@@ -209,7 +209,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                   </button>
                 </label>
                 <input
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all"
+                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   placeholder={t.addProduct.placeholders.internalCode}
                   value={formData.internalCode || ''}
@@ -221,40 +221,40 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
 
           {/* Stock Details */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <span className="material-symbols-rounded text-xl">inventory_2</span>
               {t.addProduct.sections.stock}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t.addProduct.fields.stock} *</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.stock} *</label>
                 <input
                   type="number"
                   step="0.01"
                   required
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all"
+                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   value={formData.stock}
                   onChange={e => setFormData({ ...formData, stock: parseFloat(e.target.value) || 0 })}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t.addProduct.fields.unitsPerPack}</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.unitsPerPack}</label>
                 <input
                   type="number"
                   min="1"
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all"
+                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   value={formData.unitsPerPack || 1}
                   onChange={e => setFormData({ ...formData, unitsPerPack: parseInt(e.target.value) || 1 })}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t.addProduct.fields.expiryDate} *</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.expiryDate} *</label>
                 <input
                   type="date"
                   required
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all text-slate-500"
+                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all text-gray-500"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   value={formData.expiryDate}
                   onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
@@ -265,41 +265,41 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
 
           {/* Pricing */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <span className="material-symbols-rounded text-xl">payments</span>
               {t.addProduct.sections.pricing}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t.addProduct.fields.sellingPrice} *</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.sellingPrice} *</label>
                 <input
                   type="number"
                   step="0.01"
                   required
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all font-bold text-green-600 dark:text-green-400"
+                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all font-bold text-green-600 dark:text-green-400"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   value={formData.price}
                   onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t.addProduct.fields.costPrice}</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.costPrice}</label>
                 <input
                   type="number"
                   step="0.01"
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all text-slate-500"
+                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all text-gray-500"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   value={formData.costPrice || 0}
                   onChange={e => setFormData({ ...formData, costPrice: parseFloat(e.target.value) || 0 })}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t.addProduct.fields.maxDiscount}</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.maxDiscount}</label>
                 <input
                   type="number"
                   min="0"
                   max="100"
-                  className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all text-red-500"
+                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all text-red-500"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   placeholder="No Limit"
                   value={formData.maxDiscount || ''}
@@ -311,14 +311,14 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
 
           {/* Additional Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <span className="material-symbols-rounded text-xl">description</span>
               {t.addProduct.sections.additional}
             </h3>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">{t.addProduct.fields.description}</label>
+              <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.description}</label>
               <textarea
-                className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-inset transition-all"
+                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all"
                 style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                 rows={4}
                 placeholder={t.addProduct.placeholders.description}
@@ -333,7 +333,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
             <button
               type="button"
               onClick={handleClear}
-              className="flex-1 py-3 rounded-full font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-3 rounded-full font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
             >
               <span className="material-symbols-rounded text-lg">refresh</span>
               {t.addProduct.actions.clear}

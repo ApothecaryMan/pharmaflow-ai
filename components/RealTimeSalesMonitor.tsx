@@ -340,12 +340,12 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           <span className="material-symbols-rounded text-emerald-500">monitoring</span>
           {t.realTimeSales?.title || 'Real-time Sales Monitor'}
         </h2>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
            <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
             </span>
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 tracking-wider">LIVE</span>
+            <span className="text-xs font-bold text-gray-700 dark:text-gray-300 tracking-wider">LIVE</span>
         </div>
       </div>
 
@@ -354,21 +354,21 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* 1. Revenue Card */}
         <div 
             onClick={() => setExpandedView('revenue')}
-            className={`p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 cursor-pointer hover:border-${color}-300 transition-colors group relative`}
+            className={`p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4 cursor-pointer hover:border-${color}-300 transition-colors group relative`}
         >
-             <span className="material-symbols-rounded absolute top-2 right-2 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2">open_in_full</span>
+             <span className="material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2">open_in_full</span>
           <div className={`text-${color}-600 dark:text-${color}-400`}>
             <span className="material-symbols-rounded text-4xl">payments</span>
           </div>
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-0.5">{t.realTimeSales?.todayRevenue || "Today's Revenue"}</p>
+            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">{t.realTimeSales?.todayRevenue || "Today's Revenue"}</p>
             <div className="flex items-center gap-2">
-              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
                   <AnimatedCounter value={todayStats.revenue} prefix="$" fractionDigits={2} />
               </div>
               <div className={`flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
                   todayStats.revenueChange > 0 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                  'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                  'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
               }`}>
                  {todayStats.revenueChange > 0 ? '+' : ''}{Math.abs(todayStats.revenueChange).toFixed(1)}%
               </div>
@@ -379,19 +379,19 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* 2. Transactions Card */}
         <div 
             onClick={() => setExpandedView('transactions')}
-            className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 cursor-pointer hover:border-blue-300 transition-colors group relative"
+            className="p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4 cursor-pointer hover:border-blue-300 transition-colors group relative"
         >
-             <span className="material-symbols-rounded absolute top-2 right-2 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2">open_in_full</span>
+             <span className="material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2">open_in_full</span>
           <div className="text-blue-600 dark:text-blue-400">
             <span className="material-symbols-rounded text-4xl">receipt_long</span>
           </div>
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-0.5">{t.realTimeSales?.totalTransactions || 'Total Transactions'}</p>
+            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">{t.realTimeSales?.totalTransactions || 'Total Transactions'}</p>
             <div className="flex items-baseline gap-2">
-              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
                 <AnimatedCounter value={todayStats.transactions} />
               </div>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-gray-400">
                 ${todayStats.avgTransactionValue.toFixed(0)} avg
               </p>
             </div>
@@ -401,19 +401,19 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* 3. Items Sold Card */}
         <div 
             onClick={() => setExpandedView('items')}
-            className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 cursor-pointer hover:border-purple-300 transition-colors group relative"
+            className="p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4 cursor-pointer hover:border-purple-300 transition-colors group relative"
         >
-            <span className="material-symbols-rounded absolute top-2 right-2 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2">open_in_full</span>
+            <span className="material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2">open_in_full</span>
           <div className="text-purple-600 dark:text-purple-400">
             <span className="material-symbols-rounded text-4xl">inventory_2</span>
           </div>
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-0.5">{t.realTimeSales?.itemsSold || 'Items Sold'}</p>
+            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">{t.realTimeSales?.itemsSold || 'Items Sold'}</p>
              <div className="flex items-baseline gap-2">
-              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
                   <AnimatedCounter value={todayStats.itemsSold} />
               </div>
-              <p className="text-[10px] text-slate-400 truncate max-w-[80px]" title={todayStats.topCategory}>
+              <p className="text-[10px] text-gray-400 truncate max-w-[80px]" title={todayStats.topCategory}>
                 {todayStats.topCategory}
               </p>
             </div>
@@ -423,9 +423,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* 4. Active Counters Card */}
         <div 
             onClick={() => setExpandedView('counters')}
-             className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 cursor-pointer hover:border-amber-300 transition-colors group relative"
+             className="p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4 cursor-pointer hover:border-amber-300 transition-colors group relative"
         >
-            <span className="material-symbols-rounded absolute top-2 right-2 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2">open_in_full</span>
+            <span className="material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2">open_in_full</span>
           <div className="text-amber-600 dark:text-amber-400 relative">
             <span className="material-symbols-rounded text-4xl">point_of_sale</span>
             <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -434,13 +434,13 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             </span>
           </div>
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-0.5">{t.realTimeSales?.activeCounters || 'Active Counters'}</p>
+            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">{t.realTimeSales?.activeCounters || 'Active Counters'}</p>
             <div className="flex items-baseline gap-2">
-              <div className="flex items-center text-2xl font-bold text-slate-900 dark:text-slate-100">
+              <div className="flex items-center text-2xl font-bold text-gray-900 dark:text-gray-100">
                    <AnimatedCounter value={todayStats.activeCounters} />
-                   <span className="text-sm font-normal text-slate-400 ms-1">/{todayStats.totalCounters}</span>
+                   <span className="text-sm font-normal text-gray-400 ms-1">/{todayStats.totalCounters}</span>
               </div>
-               <p className="text-[10px] text-slate-400">
+               <p className="text-[10px] text-gray-400">
                 {todayStats.onHoldCount} hold
               </p>
             </div>
@@ -454,23 +454,23 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* Left Column: Transactions + Insight Cards */}
         <div className="lg:col-span-3 flex flex-col gap-4">
             {/* Recent Transactions Feed */}
-            <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-[400px] overflow-hidden">
+            <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col h-[400px] overflow-hidden">
            <div className="flex items-center justify-between mb-4">
-               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                 <span className="material-symbols-rounded text-slate-400 text-xl">history</span>
+               <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                 <span className="material-symbols-rounded text-gray-400 text-xl">history</span>
                  {t.realTimeSales?.recentTransactions || 'Recent Transactions'}
                </h3>
                
                {/* Filters */}
-                <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
                     {['ALL', 'VIP', 'HIGH_VALUE'].map((filter) => (
                         <button
                             key={filter}
                             onClick={() => setActiveFilter(filter as any)}
                             className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
                                 activeFilter === filter
-                                    ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm'
-                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                                    ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                             }`}
                         >
                             {filter === 'ALL' ? 'All' : filter === 'VIP' ? 'VIP' : 'High Value'}
@@ -481,8 +481,8 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
            
            <div className="flex-1 overflow-y-auto custom-scrollbar">
               <table className="w-full text-left rtl:text-right border-collapse">
-                  <thead className="sticky top-0 bg-white dark:bg-slate-900 z-10">
-                      <tr className="border-b border-slate-100 dark:border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <thead className="sticky top-0 bg-white dark:bg-gray-900 z-10">
+                      <tr className="border-b border-gray-100 dark:border-gray-800 text-xs font-bold text-gray-500 uppercase tracking-wider">
                           <th className="pb-3 px-2">Time</th>
                           <th className="pb-3 px-2">ID</th>
                           <th className="pb-3 px-2">Items</th>
@@ -504,13 +504,13 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                           }
 
                           return (
-                          <tr key={sale.id} className={`border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${sale.isNew ? 'new-transaction' : ''} ${(isVIP || isHighValue) ? 'bg-amber-50/30 dark:bg-amber-900/10' : ''}`}>
-                              <td className="py-3 px-2 text-sm text-slate-500">
+                          <tr key={sale.id} className={`border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${sale.isNew ? 'new-transaction' : ''} ${(isVIP || isHighValue) ? 'bg-amber-50/30 dark:bg-amber-900/10' : ''}`}>
+                              <td className="py-3 px-2 text-sm text-gray-500">
                                   {new Date(sale.date).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                               </td>
-                              <td className="py-3 px-2 text-sm font-medium text-slate-900 dark:text-slate-200">#{sale.id}</td>
-                              <td className="py-3 px-2 text-sm text-slate-600 dark:text-slate-400">{sale.items.length}</td>
-                              <td className="py-3 px-2 text-sm font-bold text-slate-900 dark:text-slate-100">
+                              <td className="py-3 px-2 text-sm font-medium text-gray-900 dark:text-gray-200">#{sale.id}</td>
+                              <td className="py-3 px-2 text-sm text-gray-600 dark:text-gray-400">{sale.items.length}</td>
+                              <td className="py-3 px-2 text-sm font-bold text-gray-900 dark:text-gray-100">
                                   ${sale.total.toFixed(2)}
                               </td>
                               <td className="py-3 px-2 text-xs">
@@ -549,7 +549,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                       })}
                       {todayStats.todaysSales.length === 0 && (
                           <tr>
-                              <td colSpan={6} className="py-10 text-center text-slate-400">
+                              <td colSpan={6} className="py-10 text-center text-gray-400">
                                   No transactions yet today.
                               </td>
                           </tr>
@@ -562,58 +562,58 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             {/* --- Insight Cards (Moved from bottom) --- */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3">
                 {/* Hourly Sales Rate */}
-                <div className="md:col-span-2 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Sales Rate</p>
-                        <div className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+                <div className="md:col-span-2 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col justify-center">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Sales Rate</p>
+                        <div className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
                              <AnimatedCounter value={todayStats.hourlySalesRate} prefix="$" fractionDigits={0} />
-                             <span className="text-[10px] text-slate-400 font-normal ms-1">/hr</span>
+                             <span className="text-[10px] text-gray-400 font-normal ms-1">/hr</span>
                         </div>
                 </div>
 
                 {/* Hourly Invoice Rate */}
-                <div className="md:col-span-2 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Invoices</p>
-                        <div className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+                <div className="md:col-span-2 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col justify-center">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Invoices</p>
+                        <div className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
                             <AnimatedCounter value={todayStats.hourlyInvoiceRate} fractionDigits={1} />
-                            <span className="text-[10px] text-slate-400 font-normal ms-1">/hr</span>
+                            <span className="text-[10px] text-gray-400 font-normal ms-1">/hr</span>
                         </div>
                 </div>
 
                 {/* New Customers Per Hour */}
-                <div className="md:col-span-2 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">New Cust.</p>
-                        <div className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+                <div className="md:col-span-2 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col justify-center">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">New Cust.</p>
+                        <div className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
                             <AnimatedCounter value={todayStats.hourlyNewCustomerRate} fractionDigits={1} />
-                            <span className="text-[10px] text-slate-400 font-normal ms-1">/hr</span>
+                            <span className="text-[10px] text-gray-400 font-normal ms-1">/hr</span>
                         </div>
                 </div>
 
                 {/* Order Distribution (Simple) */}
-                <div className="md:col-span-3 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-row items-center justify-between gap-4">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0">Orders</p>
+                <div className="md:col-span-3 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-row items-center justify-between gap-4">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0">Orders</p>
                     <div className="flex-1 flex items-center gap-4 text-[10px]">
                         <div className="flex-1">
-                            <div className="flex justify-between mb-1"><span className="text-slate-500">Walk-in</span> <span className="font-bold">{todayStats.walkInRate.toFixed(0)}%</span></div>
-                            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5"><div className="bg-indigo-500 h-1.5 rounded-full" style={{ width: `${todayStats.walkInRate}%` }}></div></div>
+                            <div className="flex justify-between mb-1"><span className="text-gray-500">Walk-in</span> <span className="font-bold">{todayStats.walkInRate.toFixed(0)}%</span></div>
+                            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5"><div className="bg-indigo-500 h-1.5 rounded-full" style={{ width: `${todayStats.walkInRate}%` }}></div></div>
                         </div>
                         <div className="flex-1">
-                            <div className="flex justify-between mb-1"><span className="text-slate-500">Delivery</span> <span className="font-bold">{todayStats.deliveryRate.toFixed(0)}%</span></div>
-                            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5"><div className="bg-orange-500 h-1.5 rounded-full" style={{ width: `${todayStats.deliveryRate}%` }}></div></div>
+                            <div className="flex justify-between mb-1"><span className="text-gray-500">Delivery</span> <span className="font-bold">{todayStats.deliveryRate.toFixed(0)}%</span></div>
+                            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5"><div className="bg-orange-500 h-1.5 rounded-full" style={{ width: `${todayStats.deliveryRate}%` }}></div></div>
                         </div>
                     </div>
                 </div>
 
                 {/* Customer Loyalty (Simple) */}
-                <div className="md:col-span-3 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-row items-center justify-between gap-4">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0">Customers</p>
+                <div className="md:col-span-3 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-row items-center justify-between gap-4">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0">Customers</p>
                     <div className="flex-1 flex items-center gap-4 text-[10px]">
                         <div className="flex-1">
-                            <div className="flex justify-between mb-1"><span className="text-slate-500">Reg.</span> <span className="font-bold">{todayStats.registeredRate.toFixed(0)}%</span></div>
-                            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5"><div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${todayStats.registeredRate}%` }}></div></div>
+                            <div className="flex justify-between mb-1"><span className="text-gray-500">Reg.</span> <span className="font-bold">{todayStats.registeredRate.toFixed(0)}%</span></div>
+                            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5"><div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${todayStats.registeredRate}%` }}></div></div>
                         </div>
                         <div className="flex-1">
-                            <div className="flex justify-between mb-1"><span className="text-slate-500">Anon.</span> <span className="font-bold">{todayStats.anonymousRate.toFixed(0)}%</span></div>
-                            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5"><div className="bg-slate-400 h-1.5 rounded-full" style={{ width: `${todayStats.anonymousRate}%` }}></div></div>
+                            <div className="flex justify-between mb-1"><span className="text-gray-500">Anon.</span> <span className="font-bold">{todayStats.anonymousRate.toFixed(0)}%</span></div>
+                            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5"><div className="bg-gray-400 h-1.5 rounded-full" style={{ width: `${todayStats.anonymousRate}%` }}></div></div>
                         </div>
                     </div>
                 </div>
@@ -623,8 +623,8 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* Right: Top Products & Hourly Chart */}
         <div className="lg:col-span-2 space-y-4">
              {/* Hourly Chart (Compact) */}
-             <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm min-h-[220px]">
-                <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase mb-4">Hourly Trend</h3>
+             <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm min-h-[220px]">
+                <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase mb-4">Hourly Trend</h3>
                 <div className="h-[180px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                          <AreaChart data={hourlyData}>
@@ -641,9 +641,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                                 content={({ active, payload, label }) => {
                                     if (active && payload && payload.length) {
                                     return (
-                                        <div className="bg-white dark:bg-slate-800 p-3 border border-slate-100 dark:border-slate-700 shadow-xl rounded-xl">
-                                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">{label}</p>
-                                            <p className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                                        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-100 dark:border-gray-700 shadow-xl rounded-xl">
+                                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">{label}</p>
+                                            <p className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1">
                                                 ${Number(payload[0].value).toFixed(2)}
                                             </p>
                                         </div>
@@ -659,32 +659,32 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
              </div>
 
              {/* Top Products List */}
-             <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex-1">
+             <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex-1">
                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Top Products</h3>
-                    <span className="text-xs text-slate-400">by Qty</span>
+                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Top Products</h3>
+                    <span className="text-xs text-gray-400">by Qty</span>
                  </div>
                  <div className="space-y-3">
                      {topProducts.map((p, idx) => (
-                         <div key={idx} className="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors group">
+                         <div key={idx} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors group">
                              <div className="flex items-center gap-3 overflow-hidden">
                                  <div className={`w-8 h-8 rounded-lg bg-${color}-50 dark:bg-${color}-900/20 text-${color}-600 dark:text-${color}-400 flex items-center justify-center font-bold text-xs shrink-0`}>
                                      {idx + 1}
                                  </div>
                                  <div className="truncate">
-                                     <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate group-hover:text-amber-600 transition-colors">{p.name}</p>
-                                     <p className="text-xs text-slate-400">{p.qty} sold</p>
+                                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate group-hover:text-amber-600 transition-colors">{p.name}</p>
+                                     <p className="text-xs text-gray-400">{p.qty} sold</p>
                                  </div>
                              </div>
                              <div className="text-right shrink-0">
-                                 <div className="text-sm font-bold text-slate-900 dark:text-slate-100 flex justify-end">
+                                 <div className="text-sm font-bold text-gray-900 dark:text-gray-100 flex justify-end">
                                       <AnimatedCounter value={p.revenue} prefix="$" fractionDigits={0} />
                                  </div>
                              </div>
                          </div>
                      ))}
                      {topProducts.length === 0 && (
-                         <div className="text-center py-4 text-slate-400 text-sm">No data yet</div>
+                         <div className="text-center py-4 text-gray-400 text-sm">No data yet</div>
                      )}
                  </div>
              </div>
@@ -695,8 +695,8 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
           
           {/* Payment Methods Chart */}
-          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm min-h-[300px] flex flex-col">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">Payment Methods</h3>
+          <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm min-h-[300px] flex flex-col">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4">Payment Methods</h3>
               <div className="flex-1 w-full relative">
                   <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -722,8 +722,8 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   {/* Legend */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                       <div className="text-center">
-                          <p className="text-xs text-slate-400">Total</p>
-                          <div className="text-xl font-bold text-slate-800 dark:text-slate-200 flex justify-center">
+                          <p className="text-xs text-gray-400">Total</p>
+                          <div className="text-xl font-bold text-gray-800 dark:text-gray-200 flex justify-center">
                               <AnimatedCounter value={todayStats.revenue} prefix="$" fractionDigits={0} />
                           </div>
                       </div>
@@ -732,18 +732,18 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
               <div className="flex justify-center gap-6 mt-2">
                   <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-                      <span className="text-sm text-slate-600 dark:text-slate-400">{t.cash || 'Cash'}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{t.cash || 'Cash'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-indigo-500"></span>
-                      <span className="text-sm text-slate-600 dark:text-slate-400">{t.visa || 'Card'}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{t.visa || 'Card'}</span>
                   </div>
               </div>
           </div>
 
           {/* Category Distribution */}
-          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm min-h-[300px] flex flex-col">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">Sales by Category</h3>
+          <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm min-h-[300px] flex flex-col">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4">Sales by Category</h3>
               <div className="w-full h-[250px] relative">
                   {(() => {
                       // Group data into the 3 specific categories
@@ -785,7 +785,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
                       if (chartData.length === 0) {
                            return (
-                              <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                              <div className="flex flex-col items-center justify-center h-full text-gray-400">
                                   <span className="material-symbols-rounded text-4xl mb-2 opacity-50">donut_small</span>
                                   <p className="text-sm">No sales data yet</p>
                               </div>
@@ -816,12 +816,12 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                                                   if (active && payload && payload.length) {
                                                       const data = payload[0];
                                                       return (
-                                                          <div className="bg-white dark:bg-slate-800 p-3 border border-slate-100 dark:border-slate-700 shadow-xl rounded-xl">
+                                                          <div className="bg-white dark:bg-gray-800 p-3 border border-gray-100 dark:border-gray-700 shadow-xl rounded-xl">
                                                               <div className="flex items-center gap-2 mb-1">
                                                                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: data.payload.color }}></span>
-                                                                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{data.name}</p>
+                                                                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400">{data.name}</p>
                                                               </div>
-                                                              <p className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                                                              <p className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1">
                                                                   ${Number(data.value).toFixed(2)}
                                                               </p>
                                                           </div>
@@ -834,8 +834,8 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                                   </ResponsiveContainer>
                                   {/* Center Text */}
                                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                      <span className="text-xs text-slate-400 font-medium uppercase">Total</span>
-                                      <div className="text-xl font-bold text-slate-800 dark:text-slate-200 flex justify-center">
+                                      <span className="text-xs text-gray-400 font-medium uppercase">Total</span>
+                                      <div className="text-xl font-bold text-gray-800 dark:text-gray-200 flex justify-center">
                                           <AnimatedCounter value={chartData.reduce((sum, item) => sum + item.value, 0)} prefix="$" fractionDigits={0} />
                                       </div>
                                   </div>
@@ -846,9 +846,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                                       <div key={idx}>
                                           <div className="flex items-center gap-2 mb-1">
                                               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></span>
-                                              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{item.name}</span>
+                                              <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{item.name}</span>
                                           </div>
-                                          <p className="text-sm font-bold text-slate-900 dark:text-slate-100 pl-4.5">${item.value.toFixed(2)}</p>
+                                          <p className="text-sm font-bold text-gray-900 dark:text-gray-100 pl-4.5">${item.value.toFixed(2)}</p>
                                       </div>
                                   ))}
                               </div>
@@ -859,9 +859,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           </div>
 
           {/* Returns Summary */}
-            <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm min-h-[300px] flex flex-col">
+            <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm min-h-[300px] flex flex-col">
               <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Return Activity</h3>
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Return Activity</h3>
                   <span className="text-xs font-bold px-2 py-1 bg-rose-100 text-rose-700 rounded-lg">Today</span>
               </div>
               <div className="flex-1 flex flex-col justify-center items-center text-center space-y-4">
@@ -869,14 +869,14 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                        <span className="material-symbols-rounded text-4xl">assignment_return</span>
                    </div>
                    <div>
-                       <div className="text-3xl font-bold text-slate-900 dark:text-slate-100 flex justify-center">
+                       <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex justify-center">
                            <AnimatedCounter value={todayStats.todaysSales.reduce((sum, s) => sum + (s.hasReturns ? 1 : 0), 0)} />
                        </div>
-                       <p className="text-sm text-slate-500">Returns Processed</p>
+                       <p className="text-sm text-gray-500">Returns Processed</p>
                    </div>
-                   <div className="w-full pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-4">
+                   <div className="w-full pt-4 border-t border-gray-100 dark:border-gray-800 grid grid-cols-2 gap-4">
                        <div>
-                           <p className="text-xs text-slate-400 uppercase">Value</p>
+                           <p className="text-xs text-gray-400 uppercase">Value</p>
                            <div className="text-lg font-bold text-rose-600 flex justify-center">
                                <AnimatedCounter 
                                    value={todayStats.todaysSales
@@ -897,8 +897,8 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                            </div>
                        </div>
                        <div>
-                           <p className="text-xs text-slate-400 uppercase">Rate</p>
-                           <div className="text-lg font-bold text-slate-700 dark:text-slate-300 flex justify-center">
+                           <p className="text-xs text-gray-400 uppercase">Rate</p>
+                           <div className="text-lg font-bold text-gray-700 dark:text-gray-300 flex justify-center">
                                <AnimatedCounter 
                                    value={(todayStats.transactions > 0 
                                   ? (todayStats.todaysSales.filter(s => s.hasReturns).length / todayStats.transactions * 100) 
@@ -926,7 +926,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         color={color}
       >
         <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm">
                 <div className="h-[400px]">
                      <ResponsiveContainer width="100%" height="100%">
                           <AreaChart data={hourlyData}>
@@ -967,9 +967,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                                         const timeLabel = `${hour12} ${ampm}`;
 
                                         return (
-                                            <div className="bg-white dark:bg-slate-800 p-3 border border-slate-100 dark:border-slate-700 shadow-xl rounded-xl">
-                                                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">{timeLabel}</p>
-                                                <p className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                                            <div className="bg-white dark:bg-gray-800 p-3 border border-gray-100 dark:border-gray-700 shadow-xl rounded-xl">
+                                                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">{timeLabel}</p>
+                                                <p className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1">
                                                     ${Number(payload[0].value).toFixed(2)}
                                                 </p>
                                             </div>
@@ -1001,23 +1001,23 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         title="Today's Transactions"
         color="blue"
       >
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden">
                <table className="w-full text-left rtl:text-right">
-                   <thead className="bg-slate-50 dark:bg-slate-800/50">
+                   <thead className="bg-gray-50 dark:bg-gray-800/50">
                        <tr>
-                           <th className="p-4 text-sm font-bold text-slate-500">ID</th>
-                           <th className="p-4 text-sm font-bold text-slate-500">Time</th>
-                           <th className="p-4 text-sm font-bold text-slate-500">Items</th>
-                           <th className="p-4 text-sm font-bold text-slate-500">Customer</th>
-                           <th className="p-4 text-sm font-bold text-slate-500">Payment</th>
-                           <th className="p-4 text-sm font-bold text-slate-500 text-end">Total</th>
+                           <th className="p-4 text-sm font-bold text-gray-500">ID</th>
+                           <th className="p-4 text-sm font-bold text-gray-500">Time</th>
+                           <th className="p-4 text-sm font-bold text-gray-500">Items</th>
+                           <th className="p-4 text-sm font-bold text-gray-500">Customer</th>
+                           <th className="p-4 text-sm font-bold text-gray-500">Payment</th>
+                           <th className="p-4 text-sm font-bold text-gray-500 text-end">Total</th>
                        </tr>
                    </thead>
                    <tbody>
                        {todayStats.todaysSales.map(sale => (
-                           <tr key={sale.id} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                           <tr key={sale.id} className="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                <td className="p-4 text-sm font-bold">#{sale.id}</td>
-                               <td className="p-4 text-sm text-slate-500">{new Date(sale.date).toLocaleTimeString()}</td>
+                               <td className="p-4 text-sm text-gray-500">{new Date(sale.date).toLocaleTimeString()}</td>
                                <td className="p-4 text-sm">{sale.items.length} items</td>
                                <td className="p-4 text-sm">{sale.customerName}</td>
                                <td className="p-4 text-sm">{getPaymentMethodLabel(sale.paymentMethod)}</td>
@@ -1036,30 +1036,30 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         title="Inventory Analysis"
         color="purple"
       >
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-             <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+        <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+             <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
                  <h3 className="font-bold text-lg">Top Performing Products</h3>
                  <div className="flex gap-2">
                      <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-bold">By Quantity</span>
-                     <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-xs font-bold">By Revenue</span>
+                     <span className="px-3 py-1 bg-gray-100 text-gray-500 rounded-lg text-xs font-bold">By Revenue</span>
                  </div>
              </div>
              <table className="w-full text-left rtl:text-right">
-                 <thead className="bg-slate-50 dark:bg-slate-800/50">
+                 <thead className="bg-gray-50 dark:bg-gray-800/50">
                      <tr>
-                         <th className="p-4 text-sm font-bold text-slate-500">Rank</th>
-                         <th className="p-4 text-sm font-bold text-slate-500">Product Name</th>
-                         <th className="p-4 text-sm font-bold text-slate-500">Category</th>
-                         <th className="p-4 text-sm font-bold text-slate-500 text-end">Qty Sold</th>
-                         <th className="p-4 text-sm font-bold text-slate-500 text-end">Revenue</th>
+                         <th className="p-4 text-sm font-bold text-gray-500">Rank</th>
+                         <th className="p-4 text-sm font-bold text-gray-500">Product Name</th>
+                         <th className="p-4 text-sm font-bold text-gray-500">Category</th>
+                         <th className="p-4 text-sm font-bold text-gray-500 text-end">Qty Sold</th>
+                         <th className="p-4 text-sm font-bold text-gray-500 text-end">Revenue</th>
                      </tr>
                  </thead>
                  <tbody>
                      {topProducts.map((p, idx) => (
-                         <tr key={idx} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                             <td className="p-4 text-sm text-slate-500">#{idx + 1}</td>
+                         <tr key={idx} className="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                             <td className="p-4 text-sm text-gray-500">#{idx + 1}</td>
                              <td className="p-4 text-sm font-bold">{p.name}</td>
-                             <td className="p-4 text-sm text-slate-500">General</td>
+                             <td className="p-4 text-sm text-gray-500">General</td>
                              <td className="p-4 text-sm font-bold text-end">{p.qty}</td>
                              <td className="p-4 text-sm font-bold text-end">${p.revenue.toFixed(2)}</td>
                          </tr>
@@ -1078,29 +1078,29 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3, 4, 5].map(id => (
-                <div key={id} className={`p-6 rounded-2xl border ${id <= 3 ? 'border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-900' : 'border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700'}`}>
+                <div key={id} className={`p-6 rounded-2xl border ${id <= 3 ? 'border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-900' : 'border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700'}`}>
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
                             <span className="material-symbols-rounded text-2xl">point_of_sale</span>
                             <div>
                                 <h4 className="font-bold text-lg">Counter {id}</h4>
-                                <p className="text-xs text-slate-500">Main Hall</p>
+                                <p className="text-xs text-gray-500">Main Hall</p>
                             </div>
                         </div>
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${id <= 3 ? 'bg-green-200 text-green-800' : 'bg-slate-200 text-slate-600'}`}>
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${id <= 3 ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
                             {id <= 3 ? 'ONLINE' : 'OFFLINE'}
                         </span>
                     </div>
                     <div className="flex justify-between items-end">
                          <div>
-                             <p className="text-xs text-slate-500 mb-1">Operator</p>
+                             <p className="text-xs text-gray-500 mb-1">Operator</p>
                              <div className="flex items-center gap-2">
-                                 <div className="w-6 h-6 rounded-full bg-slate-300"></div>
+                                 <div className="w-6 h-6 rounded-full bg-gray-300"></div>
                                  <span className="text-sm font-medium">{id <= 3 ? `User ${id}` : 'Unmanned'}</span>
                              </div>
                          </div>
                          <div className="text-right">
-                             <p className="text-xs text-slate-500 mb-0.5">Today's Sales</p>
+                             <p className="text-xs text-gray-500 mb-0.5">Today's Sales</p>
                              <p className="font-bold text-lg">{id <= 3 ? `$${(Math.random() * 1000).toFixed(2)}` : '-'}</p>
                          </div>
                     </div>

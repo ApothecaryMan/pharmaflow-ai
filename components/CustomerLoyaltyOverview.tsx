@@ -150,16 +150,16 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
   const getTierInfo = (points: number) => {
     if (points > 2000) return { tier: 'Platinum', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' };
     if (points > 1000) return { tier: 'Gold', color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-50 dark:bg-yellow-900/20' };
-    if (points > 500) return { tier: 'Silver', color: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-slate-800' };
+    if (points > 500) return { tier: 'Silver', color: 'text-gray-500 dark:text-gray-400', bg: 'bg-gray-100 dark:bg-gray-800' };
     return { tier: 'Bronze', color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/20' };
   };
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 text-left rtl:text-right">
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{payload[0].payload.name}</p>
-          <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+        <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 text-left rtl:text-right">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{payload[0].payload.name}</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
             {payload[0].value.toFixed(1)} {t.loyalty?.pts || 'pts'}
           </p>
         </div>
@@ -191,35 +191,35 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
         </div>
 
         {/* Total Points Issued */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between min-h-[120px]">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex flex-col justify-between min-h-[120px]">
           <div className="text-amber-500 mb-1">
             <span className="material-symbols-rounded text-3xl">stars</span>
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase">{t.loyalty?.totalPoints || 'Total Points Issued'}</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{loyaltyStats.totalPoints.toFixed(1)}</p>
+            <p className="text-xs font-bold text-gray-500 uppercase">{t.loyalty?.totalPoints || 'Total Points Issued'}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{loyaltyStats.totalPoints.toFixed(1)}</p>
           </div>
         </div>
 
         {/* Average Points */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between min-h-[120px]">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex flex-col justify-between min-h-[120px]">
           <div className="text-emerald-500 mb-1">
             <span className="material-symbols-rounded text-3xl">trending_up</span>
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase">{t.loyalty?.avgPoints || 'Avg Points/Customer'}</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{loyaltyStats.avgPoints.toFixed(1)}</p>
+            <p className="text-xs font-bold text-gray-500 uppercase">{t.loyalty?.avgPoints || 'Avg Points/Customer'}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{loyaltyStats.avgPoints.toFixed(1)}</p>
           </div>
         </div>
 
         {/* Top Tier Customers */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between min-h-[120px]">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex flex-col justify-between min-h-[120px]">
           <div className="text-purple-500 mb-1">
             <span className="material-symbols-rounded text-3xl">workspace_premium</span>
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase">{t.loyalty?.topTier || 'Top Tier (>1000)'}</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{loyaltyStats.topTierCount}</p>
+            <p className="text-xs font-bold text-gray-500 uppercase">{t.loyalty?.topTier || 'Top Tier (>1000)'}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{loyaltyStats.topTierCount}</p>
           </div>
         </div>
       </div>
@@ -227,8 +227,8 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Points Distribution */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-80">
-          <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 mb-3">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80">
+          <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">
             {t.loyalty?.distribution || 'Points Distribution'}
           </h3>
           <ResponsiveContainer width="100%" height="90%">
@@ -243,8 +243,8 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
         </div>
 
         {/* Points Trend */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-80">
-          <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 mb-3">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80">
+          <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">
             {t.loyalty?.trend || 'Points Issued (30 Days)'}
           </h3>
           <ResponsiveContainer width="100%" height="90%">
@@ -262,23 +262,23 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Points Activity */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-96 flex flex-col">
-          <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-96 flex flex-col">
+          <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
             <span className="material-symbols-rounded text-blue-500 text-[20px]">history</span>
             {t.loyalty?.recentActivity || 'Recent Points Activity'}
           </h3>
           <div className="flex-1 overflow-y-auto space-y-2 pe-1">
             {recentPointsActivity.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+              <div className="h-full flex items-center justify-center text-gray-400 text-sm">
                 {t.noResults || 'No activity yet'}
               </div>
             ) : (
               recentPointsActivity.map(sale => (
-                <div key={sale.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <div key={sale.id} className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                   <div className="flex justify-between items-start mb-1">
                     <div>
-                      <p className="font-medium text-sm text-slate-900 dark:text-slate-100">{sale.customerName}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="font-medium text-sm text-gray-900 dark:text-gray-100">{sale.customerName}</p>
+                      <p className="text-xs text-gray-500">
                         {new Date(sale.date).toLocaleDateString()} • #{sale.id}
                       </p>
                     </div>
@@ -286,7 +286,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                       +{sale.pointsEarned} {t.loyalty?.pts || 'pts'}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     {t.loyalty?.order || 'Order'}: ${sale.total.toFixed(2)}
                   </p>
                 </div>
@@ -296,32 +296,32 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
         </div>
 
         {/* Top Loyalty Customers */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-96 flex flex-col">
-          <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-96 flex flex-col">
+          <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
             <span className="material-symbols-rounded text-yellow-500 text-[20px]">hotel_class</span>
             {t.loyalty?.topCustomers || 'Top Loyalty Customers'}
           </h3>
           <div className="flex-1 overflow-y-auto space-y-2 pe-1">
             {topLoyaltyCustomers.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+              <div className="h-full flex items-center justify-center text-gray-400 text-sm">
                 {t.noResults || 'No customers yet'}
               </div>
             ) : (
               topLoyaltyCustomers.map((customer, index) => {
                 const tierInfo = getTierInfo(customer.points || 0);
                 return (
-                  <div key={customer.id} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <div key={customer.id} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <div className="flex items-center gap-3 overflow-hidden flex-1">
                       <div className={`w-7 h-7 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 font-bold text-xs flex items-center justify-center shrink-0`}>
                         {index + 1}
                       </div>
                       <div className="overflow-hidden">
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{customer.name}</p>
-                        <p className="text-xs text-slate-500">${customer.totalPurchases.toFixed(2)} {t.loyalty?.totalSuffix || 'total'}</p>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">{customer.name}</p>
+                        <p className="text-xs text-gray-500">${customer.totalPurchases.toFixed(2)} {t.loyalty?.totalSuffix || 'total'}</p>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{(customer.points || 0).toFixed(1)} {t.loyalty?.pts || 'pts'}</span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{(customer.points || 0).toFixed(1)} {t.loyalty?.pts || 'pts'}</span>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tierInfo.bg} ${tierInfo.color}`}>
                         {tierInfo.tier}
                       </span>

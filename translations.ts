@@ -161,11 +161,12 @@ export const TRANSLATIONS = {
       },
       cartTitle: 'Current Sale',
       emptyCart: 'Cart is empty',
+      customerInfo: 'Customer Information',
       customerName: 'Customer Name',
       customerCode: 'Customer Code',
       paymentMethod: 'Payment Method',
       cash: 'Cash',
-      visa: 'Visa',
+      visa: 'Card',
       discount: 'Disc %',
       subtotal: 'Subtotal',
       orderDiscount: 'Order Disc %',
@@ -210,7 +211,7 @@ export const TRANSLATIONS = {
         actions: 'Actions'
       },
       noResults: 'No sales records found.',
-      visa: 'Visa',
+      visa: 'Card',
       cash: 'Cash',
       modal: {
         title: 'Sale Details',
@@ -299,7 +300,7 @@ export const TRANSLATIONS = {
       customerCode: 'Code',
       paymentMethod: 'Payment',
       cash: 'Cash',
-      visa: 'Visa',
+      visa: 'Card',
       modal: {
         title: 'Restock Product',
         qty: 'Quantity to Add',
@@ -840,7 +841,7 @@ export const TRANSLATIONS = {
       customerCode: 'كود العميل',
       paymentMethod: 'طريقة الدفع',
       cash: 'كاش',
-      visa: 'فيزا',
+      visa: 'كرت',
       discount: 'خصم %',
       subtotal: 'المجموع الفرعي',
       orderDiscount: 'خصم الطلب %',
@@ -885,7 +886,7 @@ export const TRANSLATIONS = {
         actions: 'إجراءات'
       },
       noResults: 'لم يتم العثور على سجلات مبيعات.',
-      visa: 'فيزا',
+      visa: 'كرت',
       cash: 'كاش',
       modal: {
         title: 'تفاصيل البيع',
@@ -1063,7 +1064,7 @@ export const TRANSLATIONS = {
       customerCode: 'كود',
       paymentMethod: 'دفع',
       cash: 'كاش',
-      visa: 'فيزا',
+      visa: 'كرت',
       modal: {
         title: 'إعادة تعبئة المنتج',
         qty: 'الكمية المضافة',

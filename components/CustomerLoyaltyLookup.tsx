@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Customer, Sale } from '../types';
+import { useSmartDirection } from '../hooks/useSmartDirection';
+import { SearchInput } from './SearchInput';
 
 interface CustomerLoyaltyLookupProps {
   customers: Customer[];
@@ -156,9 +158,9 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
     };
     if (points > 500) return { 
       tier: 'Silver', 
-      color: 'text-slate-500 dark:text-slate-400', 
-      bg: 'bg-slate-100 dark:bg-slate-800',
-      border: 'border-slate-200 dark:border-slate-700',
+      color: 'text-gray-500 dark:text-gray-400', 
+      bg: 'bg-gray-100 dark:bg-gray-800',
+      border: 'border-gray-200 dark:border-gray-700',
       icon: 'shield'
     };
     return { 
@@ -181,38 +183,35 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       </h2>
 
       {/* Search Section */}
-      <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative z-20">
-        <div className="flex gap-3 relative" ref={dropdownRef}>
-          <div className="flex-1 relative">
-            <span className={`material-symbols-rounded absolute top-1/2 -translate-y-1/2 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`}>search</span>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setShowDropdown(true);
-              }}
-              onFocus={() => setShowDropdown(true)}
-              placeholder={t.loyalty?.searchPlaceholder || 'Search by name, code, or phone...'}
-              className={`w-full py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-inset transition-all ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
-              style={{ '--tw-ring-color': 'var(--primary-500)' } as any}
-            />
+      <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm relative z-20">
+        <div className="relative" ref={dropdownRef}>
+          <SearchInput
+            value={searchTerm}
+            onSearchChange={(val) => {
+              setSearchTerm(val);
+              setShowDropdown(true);
+            }}
+            onFocus={() => setShowDropdown(true)}
+            placeholder={t.loyalty?.searchPlaceholder || 'Search by name, code, or phone...'}
+            className="ps-10 pe-4 py-3 border-gray-200 dark:border-gray-800"
+            style={{ '--tw-ring-color': 'var(--primary-500)' } as any}
+          />
             
             {/* Autocomplete Dropdown */}
             {showDropdown && searchTerm && filteredCustomers.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-h-60 overflow-y-auto z-50">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto z-50">
                 {filteredCustomers.map(customer => (
                   <button
                     key={customer.id}
                     onClick={() => handleCustomerSelect(customer)}
-                    className="w-full text-left rtl:text-right px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center justify-between group transition-colors border-b border-slate-100 dark:border-slate-700/50 last:border-0"
+                    className="w-full text-left rtl:text-right px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-between group transition-colors border-b border-gray-100 dark:border-gray-700/50 last:border-0"
                   >
                     <div>
-                      <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">{customer.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{customer.phone}</p>
+                      <p className="font-bold text-gray-800 dark:text-gray-200 text-sm">{customer.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{customer.phone}</p>
                     </div>
                     <div className="text-right rtl:text-left">
-                      <span className="text-xs font-mono bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-400 block mb-1">
+                      <span className="text-xs font-mono bg-gray-100 dark:bg-gray-900 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-400 block mb-1">
                         {customer.code || customer.serialId}
                       </span>
                       {customer.points && customer.points > 0 && (
@@ -231,19 +230,18 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
           {selectedCustomer && (
             <button
               onClick={handleClear}
-              className="px-6 py-3 rounded-xl font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+              className="px-6 py-3 rounded-xl font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
             >
               {t.clear || 'Clear'}
             </button>
           )}
         </div>
-      </div>
 
       {/* Results */}
       {selectedCustomer === null && searchTerm && !showDropdown && (
-        <div className="p-8 rounded-3xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-center">
-          <span className="material-symbols-rounded text-5xl text-slate-300 dark:text-slate-600 mb-2">person_search</span>
-          <p className="text-lg font-medium text-slate-600 dark:text-slate-400">
+        <div className="p-8 rounded-3xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 text-center">
+          <span className="material-symbols-rounded text-5xl text-gray-300 dark:text-gray-600 mb-2">person_search</span>
+          <p className="text-lg font-medium text-gray-600 dark:text-gray-400">
             {t.loyalty?.startSearch || 'Search for a customer to view loyalty details'}
           </p>
         </div>
@@ -252,19 +250,19 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       {selectedCustomer && (
         <>
           {/* Customer Profile Card */}
-          <div className={`p-6 rounded-3xl border ${tierInfo?.bg} ${tierInfo?.border} bg-white dark:bg-slate-900`}>
+          <div className={`p-6 rounded-3xl border ${tierInfo?.bg} ${tierInfo?.border} bg-white dark:bg-gray-900`}>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
               <div className="flex items-center gap-4">
                 <div className={`w-16 h-16 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 flex items-center justify-center font-bold text-2xl`}>
                   {selectedCustomer.name.substring(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{selectedCustomer.name}</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{selectedCustomer.name}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-400">
+                    <span className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-400">
                       {selectedCustomer.code || selectedCustomer.serialId}
                     </span>
-                    <span className={`text-xs font-medium px-2 py-1 rounded ${selectedCustomer.status === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'}`}>
+                    <span className={`text-xs font-medium px-2 py-1 rounded ${selectedCustomer.status === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}>
                       {selectedCustomer.status}
                     </span>
                   </div>
@@ -272,7 +270,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
               </div>
               
               {/* Tier Badge */}
-              <div className={`flex flex-col items-center p-4 rounded-2xl ${tierInfo?.bg} ${tierInfo?.border} border-2 bg-white/50 dark:bg-slate-900/50`}>
+              <div className={`flex flex-col items-center p-4 rounded-2xl ${tierInfo?.bg} ${tierInfo?.border} border-2 bg-white/50 dark:bg-gray-900/50`}>
                 <span className={`material-symbols-rounded text-5xl ${tierInfo?.color}`}>{tierInfo?.icon}</span>
                 <p className={`text-lg font-bold ${tierInfo?.color} mt-1`}>{tierInfo?.tier}</p>
               </div>
@@ -280,21 +278,21 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
 
             {/* Points Summary */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
-                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{t.loyalty?.currentPoints || 'Current Points'}</p>
+              <div className="p-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
+                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{t.loyalty?.currentPoints || 'Current Points'}</p>
                 <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{(selectedCustomer.points || 0).toFixed(1)}</p>
               </div>
-              <div className="p-4 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
-                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{t.loyalty?.totalPurchases || 'Total Purchases'}</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">${selectedCustomer.totalPurchases.toFixed(2)}</p>
+              <div className="p-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
+                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{t.loyalty?.totalPurchases || 'Total Purchases'}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${selectedCustomer.totalPurchases.toFixed(2)}</p>
               </div>
-              <div className="p-4 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
-                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{t.loyalty?.totalOrders || 'Total Orders'}</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{customerSales.length}</p>
+              <div className="p-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
+                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{t.loyalty?.totalOrders || 'Total Orders'}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{customerSales.length}</p>
               </div>
-              <div className="p-4 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
-                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{t.loyalty?.avgOrder || 'Avg Order'}</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              <div className="p-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
+                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{t.loyalty?.avgOrder || 'Avg Order'}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   ${customerSales.length > 0 ? (selectedCustomer.totalPurchases / customerSales.length).toFixed(2) : '0.00'}
                 </p>
               </div>
@@ -302,14 +300,14 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
           </div>
 
           {/* Points History */}
-          <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
+          <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
               <span className="material-symbols-rounded text-blue-500">receipt_long</span>
               {t.loyalty?.pointsHistory || 'Points History'}
             </h3>
             
             {customerSales.length === 0 ? (
-              <div className="py-12 text-center text-slate-400">
+              <div className="py-12 text-center text-gray-400">
                 {t.loyalty?.noHistory || 'No purchase history'}
               </div>
             ) : (
@@ -326,14 +324,14 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
                       <th className={`px-3 py-3 ${isRTL ? 'text-left' : 'text-right'}`}>{t.loyalty?.balance || 'Balance'}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                     {customerSales.map((sale) => (
-                      <tr key={sale.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-400">
+                      <tr key={sale.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                        <td className="px-3 py-3 text-sm text-gray-600 dark:text-gray-400">
                           {new Date(sale.date).toLocaleDateString()}
                         </td>
-                        <td className="px-3 py-3 text-sm font-mono text-slate-500">#{sale.id}</td>
-                        <td className={`px-3 py-3 text-sm font-medium text-slate-900 dark:text-slate-100 ${isRTL ? 'text-left' : 'text-right'}`}>
+                        <td className="px-3 py-3 text-sm font-mono text-gray-500">#{sale.id}</td>
+                        <td className={`px-3 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 ${isRTL ? 'text-left' : 'text-right'}`}>
                           ${sale.total.toFixed(2)}
                         </td>
                         <td className={`px-3 py-3 text-sm text-blue-600 dark:text-blue-400 ${isRTL ? 'text-left' : 'text-right'}`}>
@@ -345,7 +343,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
                         <td className={`px-3 py-3 text-sm font-bold text-amber-600 dark:text-amber-400 ${isRTL ? 'text-left' : 'text-right'}`}>
                           +{sale.totalPoints.toFixed(1)}
                         </td>
-                        <td className={`px-3 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 ${isRTL ? 'text-left' : 'text-right'}`}>
+                        <td className={`px-3 py-3 text-sm font-bold text-gray-900 dark:text-gray-100 ${isRTL ? 'text-left' : 'text-right'}`}>
                           {sale.runningBalance.toFixed(1)}
                         </td>
                       </tr>

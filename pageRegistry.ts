@@ -12,6 +12,7 @@ import { CustomerOverview } from './components/CustomerOverview';
 import { CustomerLoyaltyOverview } from './components/CustomerLoyaltyOverview';
 import { CustomerLoyaltyLookup } from './components/CustomerLoyaltyLookup';
 import { RealTimeSalesMonitor } from './components/RealTimeSalesMonitor';
+import { InventoryManagement } from './components/InventoryManagement';
 
 export interface PageConfig {
   id: string;
@@ -41,6 +42,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'inventory_2',
     category: 'inventory',
     requiredProps: ['inventory', 'setInventory', 'color', 't', 'language', 'onAddProduct']
+  },
+  'inventory-beta': {
+    id: 'inventory-beta',
+    component: InventoryManagement,
+    menuLabel: 'Inventory (Beta)',
+    menuLabelAr: 'المخزون (تجريبي)',
+    icon: 'table_view',
+    category: 'inventory',
+    requiredProps: ['inventory', 'color', 't', 'language']
   },
   'pos': {
     id: 'pos',

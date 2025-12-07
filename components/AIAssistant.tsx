@@ -32,36 +32,36 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
 
   return (
     <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto animate-fade-in">
-      <div className={`w-full bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-xl border border-slate-200 dark:border-slate-800`}>
+      <div className={`w-full bg-white dark:bg-gray-900 p-6 rounded-[2rem] shadow-xl border border-gray-200 dark:border-gray-800`}>
         <div className="flex flex-col items-center mb-6 text-center">
             <div className={`w-14 h-14 rounded-full bg-${color}-100 dark:bg-${color}-900 flex items-center justify-center mb-3`}>
                 <span className={`material-symbols-rounded text-3xl text-${color}-600 dark:text-${color}-400`}>smart_toy</span>
             </div>
-            <h2 className="text-2xl font-medium tracking-tight text-slate-900 dark:text-slate-50">{t.title}</h2>
-            <p className="text-slate-500 max-w-sm mt-1 text-sm">{t.subtitle}</p>
+            <h2 className="text-2xl font-medium tracking-tight text-gray-900 dark:text-gray-50">{t.title}</h2>
+            <p className="text-gray-500 max-w-sm mt-1 text-sm">{t.subtitle}</p>
         </div>
 
         <form onSubmit={handleAnalyze} className="space-y-4 w-full">
             <div>
-                <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1 ms-4">{t.drugLabel}</label>
+                <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1 ms-4">{t.drugLabel}</label>
                 <input 
                     type="text" 
                     required
                     value={drugName}
                     onChange={(e) => setDrugName(e.target.value)}
                     placeholder={t.placeholderDrug}
-                    className="w-full p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 transition-all"
+                    className="w-full p-3 rounded-2xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 transition-all"
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                 />
             </div>
             <div>
-                <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1 ms-4">{t.questionLabel}</label>
+                <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1 ms-4">{t.questionLabel}</label>
                 <input 
                     type="text" 
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={t.placeholderQuestion}
-                    className="w-full p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 transition-all"
+                    className="w-full p-3 rounded-2xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 transition-all"
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                 />
             </div>
@@ -86,10 +86,10 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
         </form>
 
         {response && (
-            <div className="mt-6 p-5 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 animate-fade-in">
+            <div className="mt-6 p-5 bg-gray-50 dark:bg-gray-950 rounded-3xl border border-gray-200 dark:border-gray-800 animate-fade-in">
                 <div className="flex items-start gap-3">
                     <span className={`material-symbols-rounded text-${color}-600 mt-0.5 text-xl`}>info</span>
-                    <div className="prose dark:prose-invert text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-line">
+                    <div className="prose dark:prose-invert text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">
                         {response}
                     </div>
                 </div>

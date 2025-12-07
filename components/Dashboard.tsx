@@ -166,7 +166,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
   const ExpandButton = ({ onClick, title }: { onClick: () => void, title?: string }) => (
     <button 
       onClick={onClick}
-      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
       title={title || t.expand?.expand || 'Expand'}
     >
       <span className="material-symbols-rounded text-[18px]">open_in_full</span>
@@ -186,9 +186,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700">
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{label}</p>
-          <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+        <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{label}</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
             ${payload[0].value.toFixed(2)}
           </p>
         </div>
@@ -276,8 +276,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             <span className="material-symbols-rounded text-3xl">shopping_cart_checkout</span>
           </div>
            <div>
-            <p className="text-xs font-bold text-slate-500 uppercase">{t.expenses}</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">${totalExpenses.toFixed(2)}</p>
+            <p className="text-xs font-bold text-gray-500 uppercase">{t.expenses}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${totalExpenses.toFixed(2)}</p>
           </div>
         </div>
 
@@ -298,7 +298,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             <span className="material-symbols-rounded text-3xl">trending_up</span>
           </div>
            <div>
-            <p className="text-xs font-bold text-slate-500 uppercase">{t.profit}</p>
+            <p className="text-xs font-bold text-gray-500 uppercase">{t.profit}</p>
             <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>${netProfit.toFixed(2)}</p>
           </div>
         </div>
@@ -320,8 +320,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             <span className="material-symbols-rounded text-3xl">warning</span>
           </div>
            <div>
-            <p className="text-xs font-bold text-slate-500 uppercase">{t.lowStock}</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{lowStockItems.length}</p>
+            <p className="text-xs font-bold text-gray-500 uppercase">{t.lowStock}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{lowStockItems.length}</p>
           </div>
         </div>
       </div>
@@ -329,9 +329,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       {/* Row 2: Chart & Top Selling */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Sales Chart (2 Cols) */}
-        <div className="lg:col-span-2 p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-80 relative group">
+        <div className="lg:col-span-2 p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80 relative group">
           <div className="flex justify-between items-center mb-2">
-              <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">{t.trend}</h3>
+              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">{t.trend}</h3>
               <ExpandButton onClick={() => setExpandedView('salesChart')} />
           </div>
           <ResponsiveContainer width="100%" height="90%">
@@ -359,9 +359,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         </div>
 
         {/* Top Selling Products (1 Col) */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-80 flex flex-col group">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80 flex flex-col group">
             <div className="flex justify-between items-center mb-3">
-                <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                     <span className="material-symbols-rounded text-yellow-500 text-[20px]">hotel_class</span>
                     {t.topSelling}
                 </h3>
@@ -369,17 +369,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             </div>
             <div className="flex-1 overflow-y-auto space-y-3 pe-1">
                 {topSelling.length === 0 ? (
-                     <div className="h-full flex items-center justify-center text-slate-400 text-sm">{t.noResults || "No sales data"}</div>
+                     <div className="h-full flex items-center justify-center text-gray-400 text-sm">{t.noResults || "No sales data"}</div>
                 ) : (
                     topSelling.map((item, index) => (
-                        <div key={item.name} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <div key={item.name} className="flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                             <div className="flex items-center gap-3 overflow-hidden">
                                 <div className={`w-6 h-6 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 font-bold text-xs flex items-center justify-center shrink-0`}>
                                     {index + 1}
                                 </div>
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate item-name">{item.name}</span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate item-name">{item.name}</span>
                             </div>
-                            <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md whitespace-nowrap">
+                            <span className="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md whitespace-nowrap">
                                 {item.qty} {t.sold}
                             </span>
                         </div>
@@ -396,9 +396,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         <div className="flex flex-col gap-4">
             
             {/* Low Stock List */}
-            <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-64 flex flex-col group">
+            <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-64 flex flex-col group">
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                       <span className="material-symbols-rounded text-orange-500 text-[20px]">priority_high</span>
                       {t.attention}
                   </h3>
@@ -406,17 +406,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                 </div>
                 <div className="flex-1 overflow-y-auto space-y-2 pe-1">
                     {lowStockItems.length === 0 ? (
-                        <div className="h-full flex items-center justify-center text-slate-400 text-sm">{t.allGood}</div>
+                        <div className="h-full flex items-center justify-center text-gray-400 text-sm">{t.allGood}</div>
                     ) : (
                         lowStockItems.slice(0, 5).map(item => (
                             <div key={item.id} className="flex justify-between items-center p-2.5 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/50">
                                 <div>
-                                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100 item-name">{item.name}</p>
+                                    <p className="font-medium text-sm text-gray-900 dark:text-gray-100 item-name">{item.name}</p>
                                     <p className="text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase">{item.stock} left</p>
                                 </div>
                                 <button 
                                     onClick={() => setRestockDrug(item)}
-                                    className={`text-xs px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 shadow-sm font-medium text-${color}-600 hover:bg-${color}-50 dark:hover:bg-slate-700 transition-colors`}
+                                    className={`text-xs px-3 py-1.5 rounded-full bg-white dark:bg-gray-800 shadow-sm font-medium text-${color}-600 hover:bg-${color}-50 dark:hover:bg-gray-700 transition-colors`}
                                 >
                                     {t.restock}
                                 </button>
@@ -427,9 +427,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             </div>
 
             {/* Expiring Soon List */}
-            <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-64 flex flex-col group">
+            <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-64 flex flex-col group">
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                       <span className="material-symbols-rounded text-red-500 text-[20px]">event_busy</span>
                       {t.expiringSoon}
                   </h3>
@@ -437,7 +437,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                 </div>
                 <div className="flex-1 overflow-y-auto space-y-2 pe-1">
                     {expiringItems.length === 0 ? (
-                        <div className="h-full flex items-center justify-center text-slate-400 text-sm">{t.noExpiring}</div>
+                        <div className="h-full flex items-center justify-center text-gray-400 text-sm">{t.noExpiring}</div>
                     ) : (
                         expiringItems.slice(0, 5).map(item => {
                             const days = getDaysUntilExpiry(item.expiryDate);
@@ -445,12 +445,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                             return (
                                 <div key={item.id} className={`flex justify-between items-center p-2.5 rounded-2xl border ${isExpired ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/50' : 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-100 dark:border-yellow-900/50'}`}>
                                     <div>
-                                        <p className="font-medium text-sm text-slate-900 dark:text-slate-100 item-name">{item.name}</p>
+                                        <p className="font-medium text-sm text-gray-900 dark:text-gray-100 item-name">{item.name}</p>
                                         <p className={`text-[10px] font-bold uppercase ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-500'}`}>
                                             {isExpired ? t.expired : `${days} ${t.days}`}
                                         </p>
                                     </div>
-                                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                                         {item.expiryDate}
                                     </span>
                                 </div>
@@ -463,34 +463,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         </div>
 
         {/* Recent Transactions */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-auto max-h-[530px] flex flex-col group">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-auto max-h-[530px] flex flex-col group">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                   <span className="material-symbols-rounded text-blue-500 text-[20px]">receipt_long</span>
                   {t.recentSales}
               </h3>
               <ExpandButton onClick={() => setExpandedView('recentSales')} />
             </div>
-            <div className="flex-1 overflow-y-auto space-y-0 divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="flex-1 overflow-y-auto space-y-0 divide-y divide-gray-100 dark:divide-gray-800">
                 {recentSales.length === 0 ? (
-                    <div className="h-full flex items-center justify-center text-slate-400 text-sm">{t.noResults || "No transactions yet"}</div>
+                    <div className="h-full flex items-center justify-center text-gray-400 text-sm">{t.noResults || "No transactions yet"}</div>
                 ) : (
                     recentSales.map(sale => (
-                        <div key={sale.id} className="py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/30 px-2 rounded-lg transition-colors">
+                        <div key={sale.id} className="py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/30 px-2 rounded-lg transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-full bg-${color}-50 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-600 dark:text-${color}-400`}>
                                     <span className="material-symbols-rounded">shopping_bag</span>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                                         {sale.customerName || "Guest"}
-                                        {sale.customerCode && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">#{sale.customerCode}</span>}
+                                        {sale.customerCode && <span className="text-[10px] bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-500">#{sale.customerCode}</span>}
                                     </p>
-                                    <p className="text-xs text-slate-500 flex items-center gap-2">
+                                    <p className="text-xs text-gray-500 flex items-center gap-2">
                                         <span>{new Date(sale.date).toLocaleDateString()} • {new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                        <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                                        <span className="font-mono text-xs text-slate-400">#{sale.id}</span>
-                                        <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                                        <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+                                        <span className="font-mono text-xs text-gray-400">#{sale.id}</span>
+                                        <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
                                         <span className={`flex items-center gap-1 ${sale.paymentMethod === 'visa' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
                                             <span className="material-symbols-rounded text-[14px]">{sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}</span>
                                             {sale.paymentMethod === 'visa' ? t.visa : t.cash}
@@ -499,8 +499,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                                 </div>
                             </div>
                             <div className="text-end">
-                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">${sale.total.toFixed(2)}</p>
-                                <p className="text-xs text-slate-500">{sale.items.length} {t.items || "items"}</p>
+                                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">${sale.total.toFixed(2)}</p>
+                                <p className="text-xs text-gray-500">{sale.items.length} {t.items || "items"}</p>
                             </div>
                         </div>
                     ))
@@ -512,23 +512,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
 
        {/* Restock Modal */}
        {restockDrug && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden flex flex-col">
              <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900`}>
                  <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100`}>
                     {t.modal.title}
                  </h3>
-                 <p className="text-xs text-slate-500 mt-1">{restockDrug.name} ({restockDrug.stock} left)</p>
+                 <p className="text-xs text-gray-500 mt-1">{restockDrug.name} ({restockDrug.stock} left)</p>
              </div>
              
              <form onSubmit={handleRestockSubmit} className="p-5 space-y-5">
                 <div className="space-y-2">
-                   <label className="text-xs font-bold text-slate-500 uppercase">{t.modal.qty}</label>
+                   <label className="text-xs font-bold text-gray-500 uppercase">{t.modal.qty}</label>
                    <div className="flex items-center gap-3">
                        <button 
                          type="button" 
                          onClick={() => setRestockQty(Math.max(1, restockQty - 5))}
-                         className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
+                         className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
                        >
                            <span className="material-symbols-rounded text-lg">remove</span>
                        </button>
@@ -536,7 +536,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                           type="number" 
                           required
                           min="1"
-                          className="flex-1 p-2 text-center text-lg font-bold rounded-xl bg-slate-50 dark:bg-slate-950 border-none focus:ring-2 focus:ring-inset transition-all"
+                          className="flex-1 p-2 text-center text-lg font-bold rounded-xl bg-gray-50 dark:bg-gray-950 border-none focus:ring-2 focus:ring-inset transition-all"
                           style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                           value={restockQty} 
                           onChange={e => setRestockQty(parseInt(e.target.value) || 0)} 
@@ -544,7 +544,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                        <button 
                          type="button" 
                          onClick={() => setRestockQty(restockQty + 5)}
-                         className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
+                         className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
                        >
                            <span className="material-symbols-rounded text-lg">add</span>
                        </button>
@@ -555,7 +555,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                    <button 
                      type="button" 
                      onClick={() => setRestockDrug(null)} 
-                     className="flex-1 py-2.5 rounded-full font-medium text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+                     className="flex-1 py-2.5 rounded-full font-medium text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
                    >
                      {t.modal.cancel}
                    </button>
@@ -581,7 +581,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         actions={
           <button
             onClick={() => exportToCSV([{ metric: 'Total Revenue', value: totalRevenue }], 'revenue')}
-            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-rounded text-[18px]">download</span>
             {t.expand?.exportCSV || 'Export'}
@@ -592,17 +592,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
           <div className={`p-6 rounded-2xl bg-${color}-50 dark:bg-${color}-950/20 border border-${color}-100 dark:border-${color}-900`}>
             <p className={`text-sm font-bold text-${color}-800 dark:text-${color}-300 uppercase mb-2`}>{t.revenue}</p>
             <p className={`text-4xl font-bold text-${color}-900 dark:text-${color}-100`}>${totalRevenue.toFixed(2)}</p>
-            <p className="text-sm text-slate-500 mt-2">{t.expand?.historicalTrend || 'Based on all sales'}</p>
+            <p className="text-sm text-gray-500 mt-2">{t.expand?.historicalTrend || 'Based on all sales'}</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.metrics || 'Total Sales'}</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{sales.length}</p>
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.expand?.metrics || 'Total Sales'}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{sales.length}</p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.amount || 'Average Sale'}</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.expand?.amount || 'Average Sale'}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 ${sales.length > 0 ? (totalRevenue / sales.length).toFixed(2) : '0.00'}
               </p>
             </div>
@@ -641,7 +641,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         actions={
           <button
             onClick={() => exportToCSV([{ metric: 'Total Expenses', value: totalExpenses }], 'expenses')}
-            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-rounded text-[18px]">download</span>
             {t.expand?.exportCSV || 'Export'}
@@ -652,31 +652,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
           <div className="p-6 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900">
             <p className="text-sm font-bold text-red-800 dark:text-red-300 uppercase mb-2">{t.expenses}</p>
             <p className="text-4xl font-bold text-red-900 dark:text-red-100">${totalExpenses.toFixed(2)}</p>
-            <p className="text-sm text-slate-500 mt-2">{t.expand?.historicalTrend || 'Based on all purchases'}</p>
+            <p className="text-sm text-gray-500 mt-2">{t.expand?.historicalTrend || 'Based on all purchases'}</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.metrics || 'Total Purchases'}</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{purchases.length}</p>
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.expand?.metrics || 'Total Purchases'}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{purchases.length}</p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.amount || 'Average Purchase'}</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.expand?.amount || 'Average Purchase'}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 ${purchases.length > 0 ? (totalExpenses / purchases.length).toFixed(2) : '0.00'}
               </p>
             </div>
           </div>
 
           <div className="space-y-2">
-            <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">{t.expand?.detailedView || 'Recent Purchases'}</h4>
+            <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t.expand?.detailedView || 'Recent Purchases'}</h4>
             {purchases.slice(0, 10).map(purchase => (
-              <div key={purchase.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
+              <div key={purchase.id} className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
                 <div>
-                  <p className="font-medium text-sm text-slate-900 dark:text-slate-100">{purchase.supplierName}</p>
-                  <p className="text-xs text-slate-500">{new Date(purchase.date).toLocaleDateString()}</p>
+                  <p className="font-medium text-sm text-gray-900 dark:text-gray-100">{purchase.supplierName}</p>
+                  <p className="text-xs text-gray-500">{new Date(purchase.date).toLocaleDateString()}</p>
                 </div>
-                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">${purchase.totalCost.toFixed(2)}</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">${purchase.totalCost.toFixed(2)}</p>
               </div>
             ))}
           </div>
@@ -696,7 +696,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
               { metric: 'Total Expenses', value: totalExpenses },
               { metric: 'Net Profit', value: netProfit }
             ], 'profit')}
-            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-rounded text-[18px]">download</span>
             {t.expand?.exportCSV || 'Export'}
@@ -707,21 +707,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
           <div className={`p-6 rounded-2xl ${netProfit >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900' : 'bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900'}`}>
             <p className={`text-sm font-bold uppercase mb-2 ${netProfit >= 0 ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}`}>{t.profit}</p>
             <p className={`text-4xl font-bold ${netProfit >= 0 ? 'text-emerald-900 dark:text-emerald-100' : 'text-red-900 dark:text-red-100'}`}>${netProfit.toFixed(2)}</p>
-            <p className="text-sm text-slate-500 mt-2">{t.expand?.breakdown || 'Revenue - Expenses'}</p>
+            <p className="text-sm text-gray-500 mt-2">{t.expand?.breakdown || 'Revenue - Expenses'}</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.revenue}</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">${totalRevenue.toFixed(2)}</p>
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.revenue}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${totalRevenue.toFixed(2)}</p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expenses}</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">${totalExpenses.toFixed(2)}</p>
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.expenses}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${totalExpenses.toFixed(2)}</p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.profitMargin || 'Margin'}</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.expand?.profitMargin || 'Margin'}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0'}%
               </p>
             </div>
@@ -746,7 +746,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
               })),
               'low_stock_items'
             )}
-            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-rounded text-[18px]">download</span>
             {t.expand?.exportCSV || 'Export'}
@@ -755,14 +755,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       >
         <div className="space-y-4">
           {lowStockItems.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">{t.allGood}</div>
+            <div className="text-center py-12 text-gray-400">{t.allGood}</div>
           ) : (
             <div className="grid gap-3">
               {lowStockItems.map(item => (
                 <div key={item.id} className="p-4 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/50 flex justify-between items-center">
                   <div className="flex-1">
-                    <p className="font-medium text-slate-900 dark:text-slate-100">{item.name}</p>
-                    <p className="text-sm text-slate-500">{item.category}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{item.name}</p>
+                    <p className="text-sm text-gray-500">{item.category}</p>
                     <p className="text-xs text-orange-600 dark:text-orange-400 font-bold uppercase mt-1">
                       {item.stock} {t.expand?.allItems || 'units left'}
                     </p>
@@ -772,7 +772,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                       setRestockDrug(item);
                       setExpandedView(null);
                     }}
-                    className={`px-4 py-2 rounded-full bg-white dark:bg-slate-800 shadow-sm font-medium text-${color}-600 hover:bg-${color}-50 dark:hover:bg-slate-700 transition-colors`}
+                    className={`px-4 py-2 rounded-full bg-white dark:bg-gray-800 shadow-sm font-medium text-${color}-600 hover:bg-${color}-50 dark:hover:bg-gray-700 transition-colors`}
                   >
                     {t.restock}
                   </button>
@@ -800,7 +800,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
               })),
               'top_selling_products'
             )}
-            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-rounded text-[18px]">download</span>
             {t.expand?.exportCSV || 'Export'}
@@ -809,21 +809,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       >
         <div className="space-y-3">
           {topSelling20.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">{t.expand?.noData || 'No sales data'}</div>
+            <div className="text-center py-12 text-gray-400">{t.expand?.noData || 'No sales data'}</div>
           ) : (
             topSelling20.map((item, index) => (
-              <div key={item.name} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors">
+              <div key={item.name} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
                 <div className="flex items-center gap-4 flex-1">
                   <div className={`w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 font-bold flex items-center justify-center shrink-0`}>
                     {index + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-900 dark:text-slate-100 truncate item-name">{item.name}</p>
-                    <p className="text-sm text-slate-500">{item.qty} {t.sold} • ${item.revenue.toFixed(2)} {t.revenue}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate item-name">{item.name}</p>
+                    <p className="text-sm text-gray-500">{item.qty} {t.sold} • ${item.revenue.toFixed(2)} {t.revenue}</p>
                   </div>
                 </div>
                 <div className="text-end">
-                  <div className="w-24 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                  <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div 
                       className={`bg-${color}-500 h-2 rounded-full`}
                       style={{ width: `${(item.qty / topSelling20[0].qty) * 100}%` }}
@@ -854,7 +854,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
               })),
               'expiring_items'
             )}
-            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-rounded text-[18px]">download</span>
             {t.expand?.exportCSV || 'Export'}
@@ -863,7 +863,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       >
         <div className="space-y-3">
           {expiringItems.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">{t.noExpiring}</div>
+            <div className="text-center py-12 text-gray-400">{t.noExpiring}</div>
           ) : (
             expiringItems.map(item => {
               const days = getDaysUntilExpiry(item.expiryDate);
@@ -872,13 +872,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                 <div key={item.id} className={`p-4 rounded-2xl border ${isExpired ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/50' : 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-100 dark:border-yellow-900/50'}`}>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <p className="font-medium text-slate-900 dark:text-slate-100 item-name">{item.name}</p>
-                      <p className="text-sm text-slate-500">{item.category} • {item.stock} in stock</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100 item-name">{item.name}</p>
+                      <p className="text-sm text-gray-500">{item.category} • {item.stock} in stock</p>
                       <p className={`text-xs font-bold uppercase mt-1 ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-500'}`}>
                         {isExpired ? t.expired : `${days} ${t.days}`}
                       </p>
                     </div>
-                    <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
                       {item.expiryDate}
                     </span>
                   </div>
@@ -909,7 +909,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
               })),
               'recent_transactions'
             )}
-            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-rounded text-[18px]">download</span>
             {t.expand?.exportCSV || 'Export'}
@@ -918,25 +918,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       >
         <div className="space-y-3">
           {recentSales20.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">{t.expand?.noData || 'No transactions yet'}</div>
+            <div className="text-center py-12 text-gray-400">{t.expand?.noData || 'No transactions yet'}</div>
           ) : (
             recentSales20.map(sale => (
-              <div key={sale.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors">
+              <div key={sale.id} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <div className={`w-12 h-12 rounded-full bg-${color}-50 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-600 dark:text-${color}-400`}>
                       <span className="material-symbols-rounded">shopping_bag</span>
                     </div>
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      <p className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                         {sale.customerName || "Guest"}
-                        {sale.customerCode && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">#{sale.customerCode}</span>}
+                        {sale.customerCode && <span className="text-[10px] bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-500">#{sale.customerCode}</span>}
                       </p>
-                      <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
                         <span>{new Date(sale.date).toLocaleDateString()} • {new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                        <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                        <span className="font-mono text-xs text-slate-400">#{sale.id}</span>
-                        <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                        <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+                        <span className="font-mono text-xs text-gray-400">#{sale.id}</span>
+                        <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
                         <span className={`flex items-center gap-1 ${sale.paymentMethod === 'visa' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
                             <span className="material-symbols-rounded text-[14px]">{sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}</span>
                             {sale.paymentMethod === 'visa' ? t.visa : t.cash}
@@ -945,17 +945,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                     </div>
                   </div>
                   <div className="text-end">
-                    <p className="text-lg font-bold text-slate-900 dark:text-slate-100">${sale.total.toFixed(2)}</p>
-                    <p className="text-xs text-slate-500">{sale.items.length} {t.items || "items"}</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">${sale.total.toFixed(2)}</p>
+                    <p className="text-xs text-gray-500">{sale.items.length} {t.items || "items"}</p>
                   </div>
                 </div>
-                <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-                  <p className="text-xs font-bold text-slate-500 uppercase mb-2">{t.expand?.transactionDetails || 'Items'}</p>
+                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-2">{t.expand?.transactionDetails || 'Items'}</p>
                   <div className="space-y-1">
                     {sale.items.map((item, idx) => (
                       <div key={idx} className="flex justify-between text-sm">
-                        <span className="text-slate-600 dark:text-slate-400 item-name">{item.name} x{item.quantity}</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                        <span className="text-gray-600 dark:text-gray-400 item-name">{item.name} x{item.quantity}</span>
+                        <span className="text-gray-900 dark:text-gray-100 font-medium">${(item.price * item.quantity).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
@@ -975,7 +975,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         actions={
           <button
             onClick={() => exportToCSV(salesData, 'sales_trend')}
-            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-rounded text-[18px]">download</span>
             {t.expand?.exportCSV || 'Export'}
@@ -1009,17 +1009,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.metrics || 'Total Sales'}</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{sales.length}</p>
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.expand?.metrics || 'Total Sales'}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{sales.length}</p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.revenue}</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">${totalRevenue.toFixed(2)}</p>
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.revenue}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${totalRevenue.toFixed(2)}</p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <p className="text-xs font-bold text-slate-500 uppercase mb-1">{t.expand?.amount || 'Average'}</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.expand?.amount || 'Average'}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 ${sales.length > 0 ? (totalRevenue / sales.length).toFixed(2) : '0.00'}
               </p>
             </div>

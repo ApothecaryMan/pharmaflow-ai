@@ -45,7 +45,7 @@ export const DataTable = <T extends { id: string }>({
   };
 
   return (
-    <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col">
+    <div className="flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm flex flex-col">
       <div className="overflow-x-auto flex-1">
         <table className="w-full text-start border-collapse">
           <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>
@@ -53,7 +53,7 @@ export const DataTable = <T extends { id: string }>({
               {columns.map((col) => (
                 <th 
                   key={col.key}
-                  className={`px-3 py-3 text-${col.align || 'left'} ${col.sortable ? 'cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800' : ''} transition-colors`}
+                  className={`px-3 py-3 text-${col.align || 'left'} ${col.sortable ? 'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-800' : ''} transition-colors`}
                   onDoubleClick={() => col.sortable && handleSort(col.key)}
                 >
                   <div className={`flex items-center gap-1 ${col.align === 'right' ? 'justify-end' : col.align === 'center' ? 'justify-center' : ''}`}>
@@ -68,10 +68,10 @@ export const DataTable = <T extends { id: string }>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {isLoading ? (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center text-slate-400">
+                <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-400">
                   <div className="flex flex-col items-center gap-2">
                     <span className="material-symbols-rounded text-4xl animate-spin">progress_activity</span>
                     <p>Loading...</p>
@@ -80,7 +80,7 @@ export const DataTable = <T extends { id: string }>({
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center text-slate-400">
+                <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-400">
                   <span className="material-symbols-rounded text-4xl mb-2 opacity-50">group_off</span>
                   <p>{emptyMessage || t.noResults}</p>
                 </td>
@@ -89,7 +89,7 @@ export const DataTable = <T extends { id: string }>({
               data.map((item, index) => (
                 <tr 
                   key={item.id} 
-                  className={`border-b border-slate-100 dark:border-slate-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 transition-colors ${index % 2 === 0 ? 'bg-slate-50/30 dark:bg-slate-800/20' : ''}`}
+                  className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 transition-colors ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''}`}
                   onClick={() => onRowClick && onRowClick(item)}
                   onContextMenu={(e) => onRowContextMenu && onRowContextMenu(e, item)}
                 >

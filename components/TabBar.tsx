@@ -124,10 +124,10 @@ const SortableTab = ({
         group relative flex items-center gap-2 pl-3 pr-8 py-2 rounded-xl transition-all duration-200 ease-out cursor-pointer border
         min-w-[100px] max-w-[180px] touch-manipulation
         ${isActive 
-          ? `bg-white dark:bg-slate-800 border-${color}-200 dark:border-${color}-800 shadow-sm ring-1 ring-${color}-100 dark:ring-${color}-900` 
-          : 'bg-transparent border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400'
+          ? `bg-white dark:bg-gray-800 border-${color}-200 dark:border-${color}-800 shadow-sm ring-1 ring-${color}-100 dark:ring-${color}-900` 
+          : 'bg-transparent border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 text-gray-600 dark:text-gray-400'
         }
-        ${isDragging ? 'shadow-xl scale-105 ring-2 ring-blue-500 z-50 bg-white dark:bg-slate-800' : ''}
+        ${isDragging ? 'shadow-xl scale-105 ring-2 ring-blue-500 z-50 bg-white dark:bg-gray-800' : ''}
       `}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -154,7 +154,7 @@ const SortableTab = ({
     >
       {/* Pin Indicator */}
       {isPinned && (
-        <span className={`material-symbols-rounded text-[14px] ${isActive ? `text-${color}-500` : 'text-slate-400'}`}>
+        <span className={`material-symbols-rounded text-[14px] ${isActive ? `text-${color}-500` : 'text-gray-400'}`}>
           push_pin
         </span>
       )}
@@ -170,7 +170,7 @@ const SortableTab = ({
             if (e.key === 'Enter') handleRename(tab.id);
             if (e.key === 'Escape') setEditingTabId(null);
           }}
-          className="flex-1 w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-semibold text-slate-900 dark:text-white"
+          className="flex-1 w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-semibold text-gray-900 dark:text-white"
           autoFocus
           onPointerDown={(e) => e.stopPropagation()} // Prevent drag start on input interaction
           onClick={(e) => e.stopPropagation()}
@@ -180,7 +180,7 @@ const SortableTab = ({
             className="flex-1 flex items-center gap-2 overflow-hidden"
             onDoubleClick={() => onRenameStart(tab)}
         >
-            <span className={`text-sm font-semibold truncate ${isActive ? 'text-slate-900 dark:text-white' : ''}`}>
+            <span className={`text-sm font-semibold truncate ${isActive ? 'text-gray-900 dark:text-white' : ''}`}>
                 {tab.name}
             </span>
             
@@ -190,7 +190,7 @@ const SortableTab = ({
                     flex items-center justify-center h-5 min-w-[20px] px-1 rounded-full text-[10px] font-bold
                     ${isActive 
                         ? `bg-${color}-100 dark:bg-${color}-900/50 text-${color}-700 dark:text-${color}-300` 
-                        : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     }
                 `}>
                     {tab.cart.length}
@@ -212,8 +212,8 @@ const SortableTab = ({
             w-5 h-5 flex items-center justify-center rounded-full transition-all 
             opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100
             hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-600
-            bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm
-            ${isActive ? 'text-slate-400' : 'text-slate-400'}
+            bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm
+            ${isActive ? 'text-gray-400' : 'text-gray-400'}
           `}
         >
           <span className="material-symbols-rounded text-[13px]">close</span>
@@ -340,8 +340,8 @@ export const TabBar: React.FC<TabBarProps> = ({
             onClick={onTabAdd}
             className={`
               flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200
-              hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700
-              text-slate-500 hover:text-${color}-600 dark:text-slate-400 dark:hover:text-${color}-400
+              hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm border border-transparent hover:border-gray-200 dark:hover:border-gray-700
+              text-gray-500 hover:text-${color}-600 dark:text-gray-400 dark:hover:text-${color}-400
               shrink-0
             `}
             title="New Tab"

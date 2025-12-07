@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useContextMenu } from '../components/ContextMenu';
 import { Drug } from '../types';
 import * as QRCode from 'qrcode';
+import { useSmartDirection } from '../hooks/useSmartDirection';
+import { SearchInput } from './SearchInput';
 
 interface BarcodeStudioProps {
   inventory: Drug[];
@@ -549,7 +551,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
             <div>
                 <h2 className="text-2xl font-medium tracking-tight">{t.title}</h2>
                 <div className="flex items-center gap-2">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{t.subtitle}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{t.subtitle}</p>
                     {activeTemplateId && (
                          <span className={`px-2 py-0.5 rounded text-[10px] bg-${color}-100 text-${color}-700 font-bold uppercase`}>
                              {templates.find(t => t.id === activeTemplateId)?.name}
@@ -557,28 +559,28 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                     )}
                 </div>
             </div>
-             <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+             <div className="flex items-center gap-2 bg-white dark:bg-gray-900 p-1.5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
                 {/* History Group */}
-                <div className="flex items-center gap-1 pr-2 border-e border-slate-200 dark:border-slate-800">
-                    <button onClick={handleUndo} disabled={history.length === 0} className="p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 text-slate-500 transition-colors" title={t.undo}>
+                <div className="flex items-center gap-1 pr-2 border-e border-gray-200 dark:border-gray-800">
+                    <button onClick={handleUndo} disabled={history.length === 0} className="p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-30 text-gray-500 transition-colors" title={t.undo}>
                         <span className="material-symbols-rounded text-[20px]">undo</span>
                     </button>
-                    <button onClick={handleRedo} disabled={redoStack.length === 0} className="p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 text-slate-500 transition-colors" title={t.redo}>
+                    <button onClick={handleRedo} disabled={redoStack.length === 0} className="p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-30 text-gray-500 transition-colors" title={t.redo}>
                         <span className="material-symbols-rounded text-[20px]">redo</span>
                     </button>
-                    <button onClick={() => initializeLayout(selectedPreset)} className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-500 transition-colors" title="Reset Layout">
+                    <button onClick={() => initializeLayout(selectedPreset)} className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-500 transition-colors" title="Reset Layout">
                         <span className="material-symbols-rounded text-[20px]">restart_alt</span>
                     </button>
                 </div>
                 
                 {/* Actions Group */}
                 <div className="flex items-center gap-1 pl-1">
-                    <button onClick={handleSaveClick} className={`p-2 px-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-${color}-600 font-medium text-xs flex items-center gap-2 transition-colors`}>
+                    <button onClick={handleSaveClick} className={`p-2 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 text-${color}-600 font-medium text-xs flex items-center gap-2 transition-colors`}>
                          <span className="material-symbols-rounded text-[20px]">save</span>
                          <span className="hidden sm:inline">{saveStatus || t.saveTemplate}</span>
                     </button>
                     
-                     <button onClick={handlePrint} disabled={!selectedDrug} className={`py-2 px-4 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 text-white font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center gap-2`}>
+                     <button onClick={handlePrint} disabled={!selectedDrug} className={`py-2 px-4 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 text-white font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center gap-2`}>
                          <span className="material-symbols-rounded text-[20px]">print</span>
                          <span>{t.print}</span>
                     </button>
@@ -590,18 +592,18 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
             {/* LEFT: Canvas */}
             <div className="flex-1 flex flex-col gap-4">
                  {/* Top Toolbar */}
-                 <div className="bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-3 shadow-sm">
-                    <div className="flex items-center gap-2 px-2 border-e border-slate-200 dark:border-slate-800">
-                        <button onClick={() => setZoom(Math.max(1, zoom - 0.5))} className="p-1 hover:bg-slate-100 rounded text-slate-500"><span className="material-symbols-rounded">remove</span></button>
+                 <div className="bg-white dark:bg-gray-900 p-2 rounded-xl border border-gray-200 dark:border-gray-800 flex items-center gap-3 shadow-sm">
+                    <div className="flex items-center gap-2 px-2 border-e border-gray-200 dark:border-gray-800">
+                        <button onClick={() => setZoom(Math.max(1, zoom - 0.5))} className="p-1 hover:bg-gray-100 rounded text-gray-500"><span className="material-symbols-rounded">remove</span></button>
                         <span className="text-xs font-bold w-8 text-center">{Math.round(zoom * 100)}%</span>
-                        <button onClick={() => setZoom(Math.min(5, zoom + 0.5))} className="p-1 hover:bg-slate-100 rounded text-slate-500"><span className="material-symbols-rounded">add</span></button>
+                        <button onClick={() => setZoom(Math.min(5, zoom + 0.5))} className="p-1 hover:bg-gray-100 rounded text-gray-500"><span className="material-symbols-rounded">add</span></button>
                     </div>
                     
-                    <div className="flex items-center gap-1 px-2 border-e border-slate-200 dark:border-slate-800">
-                        <button onClick={() => addElement('text')} className="p-1 hover:bg-slate-100 rounded text-slate-500" title="Add Text">
+                    <div className="flex items-center gap-1 px-2 border-e border-gray-200 dark:border-gray-800">
+                        <button onClick={() => addElement('text')} className="p-1 hover:bg-gray-100 rounded text-gray-500" title="Add Text">
                             <span className="material-symbols-rounded">title</span>
                         </button>
-                        <button onClick={() => document.getElementById('img-upload-hidden')?.click()} className="p-1 hover:bg-slate-100 rounded text-slate-500" title="Add Image">
+                        <button onClick={() => document.getElementById('img-upload-hidden')?.click()} className="p-1 hover:bg-gray-100 rounded text-gray-500" title="Add Image">
                             <span className="material-symbols-rounded">image</span>
                         </button>
                         <input type="file" id="img-upload-hidden" className="hidden" accept="image/*" onChange={handleAddImageElement} />
@@ -609,7 +611,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
                     <div className="flex gap-1 overflow-x-auto scrollbar-hide">
                         {elements.map(el => (
-                            <button key={el.id} onClick={() => toggleVisibility(el.id)} className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase border ${el.isVisible ? `bg-${color}-50 border-${color}-200 text-${color}-700` : 'bg-slate-50 border-transparent text-slate-400'}`}>
+                            <button key={el.id} onClick={() => toggleVisibility(el.id)} className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase border ${el.isVisible ? `bg-${color}-50 border-${color}-200 text-${color}-700` : 'bg-gray-50 border-transparent text-gray-400'}`}>
                                 {el.label}
                             </button>
                         ))}
@@ -618,12 +620,12 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
                  {/* Canvas */}
                  <div 
-                    className="flex-1 bg-slate-100 dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 relative overflow-hidden flex items-center justify-center bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)]"
+                    className="flex-1 bg-gray-100 dark:bg-gray-950 rounded-3xl border border-gray-200 dark:border-gray-800 relative overflow-hidden flex items-center justify-center bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)]"
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                  >
                     {!selectedDrug ? (
-                        <div className="text-center text-slate-400"><span className="material-symbols-rounded text-6xl opacity-20 mb-2">touch_app</span><p>{t.noProductSelected}</p></div>
+                        <div className="text-center text-gray-400"><span className="material-symbols-rounded text-6xl opacity-20 mb-2">touch_app</span><p>{t.noProductSelected}</p></div>
                     ) : (
                         <div 
                             ref={canvasRef} onMouseDown={() => setSelectedElementId(null)} onTouchStart={() => setSelectedElementId(null)}
@@ -684,8 +686,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
             </div>
 
             {/* RIGHT: Inspector */}
-            <div className="w-full lg:w-80 bg-white dark:bg-slate-900 border-s border-slate-200 dark:border-slate-800 flex flex-col">
-                <div className={`p-4 border-b border-slate-100 dark:border-slate-800 bg-${color}-50 dark:bg-${color}-900/10`}>
+            <div className="w-full lg:w-80 bg-white dark:bg-gray-900 border-s border-gray-200 dark:border-gray-800 flex flex-col">
+                <div className={`p-4 border-b border-gray-100 dark:border-gray-800 bg-${color}-50 dark:bg-${color}-900/10`}>
                     <h3 className={`font-bold text-sm uppercase text-${color}-700 dark:text-${color}-300`}>
                         {selectedElementId ? t.inspector.properties : t.inspector.noSelection}
                     </h3>
@@ -695,10 +697,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                     {!selectedElementId ? (
                         <>
                              {/* Templates Section */}
-                             <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                                <label className="text-xs font-bold text-slate-500 uppercase block mb-2">{t.templates}</label>
+                             <div className="bg-gray-50 dark:bg-gray-950 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                                <label className="text-xs font-bold text-gray-500 uppercase block mb-2">{t.templates}</label>
                                 <select 
-                                    className="w-full p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm mb-2"
+                                    className="w-full p-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm mb-2"
                                     value={activeTemplateId || ''}
                                     onChange={(e) => loadTemplate(e.target.value)}
                                 >
@@ -710,16 +712,22 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                 )}
                              </div>
 
-                             <hr className="border-slate-100 dark:border-slate-800"/>
+                             <hr className="border-gray-100 dark:border-gray-800"/>
 
                              {/* Global Settings (Product, Size, etc.) */}
                              <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase block mb-2">{t.selectProduct}</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase block mb-2">{t.selectProduct}</label>
                                 <div className="relative">
-                                    <input type="text" placeholder={t.searchPlaceholder} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any} />
+                                    <SearchInput
+                                        value={searchTerm}
+                                        onSearchChange={setSearchTerm}
+                                        placeholder={t.searchPlaceholder}
+                                        className="p-2.5 rounded-xl border-gray-200 dark:border-gray-800 ps-10"
+                                        style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                                    />
                                     {searchTerm && !selectedDrug && (
-                                        <div className="absolute z-20 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-lg max-h-40 overflow-y-auto">
-                                             {filteredDrugs.map(d => <div key={d.id} onClick={() => { setSelectedDrug(d); setSearchTerm(''); }} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-sm">{d.name}</div>)}
+                                        <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                                             {filteredDrugs.map(d => <div key={d.id} onClick={() => { setSelectedDrug(d); setSearchTerm(''); }} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer text-sm">{d.name}</div>)}
                                         </div>
                                     )}
                                 </div>
@@ -732,23 +740,23 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                             </div>
                             
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase block mb-2">{t.labelSize}</label>
-                                <select value={selectedPreset} onChange={handlePresetChange} className="w-full p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border-none text-sm">
+                                <label className="text-xs font-bold text-gray-500 uppercase block mb-2">{t.labelSize}</label>
+                                <select value={selectedPreset} onChange={handlePresetChange} className="w-full p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 border-none text-sm">
                                     {Object.entries(LABEL_PRESETS).map(([key, val]) => <option key={key} value={key}>{val.label}</option>)}
                                 </select>
                             </div>
 
                             {/* Inputs for Store/Hotline */}
                             <div className="space-y-3">
-                                <div><label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t.elements.storeName}</label><input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm" /></div>
-                                <div><label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t.elements.hotline}</label><input type="text" value={hotline} onChange={e => setHotline(e.target.value)} className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm" /></div>
+                                <div><label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">{t.elements.storeName}</label><input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm" /></div>
+                                <div><label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">{t.elements.hotline}</label><input type="text" value={hotline} onChange={e => setHotline(e.target.value)} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm" /></div>
                             </div>
 
                              {/* Border */}
                              <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase block mb-2">{t.borderStyle}</label>
-                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                                    {(['none', 'solid', 'dashed'] as const).map(style => <button key={style} onClick={() => setBorderStyle(style)} className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${borderStyle === style ? 'bg-white shadow-sm' : 'text-slate-500'}`}>{style}</button>)}
+                                <label className="text-xs font-bold text-gray-500 uppercase block mb-2">{t.borderStyle}</label>
+                                <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+                                    {(['none', 'solid', 'dashed'] as const).map(style => <button key={style} onClick={() => setBorderStyle(style)} className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${borderStyle === style ? 'bg-white shadow-sm' : 'text-gray-500'}`}>{style}</button>)}
                                 </div>
                             </div>
                         </>
@@ -757,35 +765,35 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                         selectedElement && (
                             <>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="text-[10px] font-bold text-slate-400 uppercase">{t.inspector.x}</label><input type="number" step="0.5" value={selectedElement.x} onChange={(e) => handlePropertyChange('x', parseFloat(e.target.value))} className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm"/></div>
-                                    <div><label className="text-[10px] font-bold text-slate-400 uppercase">{t.inspector.y}</label><input type="number" step="0.5" value={selectedElement.y} onChange={(e) => handlePropertyChange('y', parseFloat(e.target.value))} className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm"/></div>
+                                    <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.x}</label><input type="number" step="0.5" value={selectedElement.x} onChange={(e) => handlePropertyChange('x', parseFloat(e.target.value))} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
+                                    <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.y}</label><input type="number" step="0.5" value={selectedElement.y} onChange={(e) => handlePropertyChange('y', parseFloat(e.target.value))} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
                                 </div>
                                 {(selectedElement.type === 'text' || selectedElement.type === 'barcode') && (
-                                    <div><label className="text-[10px] font-bold text-slate-400 uppercase">{t.inspector.fontSize}</label><input type="number" value={selectedElement.fontSize} onChange={(e) => handlePropertyChange('fontSize', parseInt(e.target.value))} className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm"/></div>
+                                    <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.fontSize}</label><input type="number" value={selectedElement.fontSize} onChange={(e) => handlePropertyChange('fontSize', parseInt(e.target.value))} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
                                 )}
                                 {(selectedElement.type === 'text') && (
                                     <div>
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">{t.inspector.fontWeight || 'Font Weight'}</label>
-                                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                                            <button onClick={() => handlePropertyChange('fontWeight', 'normal')} className={`flex-1 py-1 rounded text-xs transition-all ${!selectedElement.fontWeight || selectedElement.fontWeight === 'normal' ? 'bg-white shadow-sm font-bold' : 'text-slate-500'}`}>Normal</button>
-                                            <button onClick={() => handlePropertyChange('fontWeight', 'bold')} className={`flex-1 py-1 rounded text-xs transition-all ${selectedElement.fontWeight === 'bold' ? 'bg-white shadow-sm font-bold' : 'text-slate-500'}`}>Bold</button>
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">{t.inspector.fontWeight || 'Font Weight'}</label>
+                                        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                                            <button onClick={() => handlePropertyChange('fontWeight', 'normal')} className={`flex-1 py-1 rounded text-xs transition-all ${!selectedElement.fontWeight || selectedElement.fontWeight === 'normal' ? 'bg-white shadow-sm font-bold' : 'text-gray-500'}`}>Normal</button>
+                                            <button onClick={() => handlePropertyChange('fontWeight', 'bold')} className={`flex-1 py-1 rounded text-xs transition-all ${selectedElement.fontWeight === 'bold' ? 'bg-white shadow-sm font-bold' : 'text-gray-500'}`}>Bold</button>
                                         </div>
                                     </div>
                                 )}
                                 {selectedElement.type === 'text' && !selectedElement.field && (
-                                    <div><label className="text-[10px] font-bold text-slate-400 uppercase">{t.inspector.content}</label><input type="text" value={selectedElement.content || ''} onChange={(e) => handlePropertyChange('content', e.target.value)} className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm"/></div>
+                                    <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.content}</label><input type="text" value={selectedElement.content || ''} onChange={(e) => handlePropertyChange('content', e.target.value)} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
                                 )}
                                 {(selectedElement.type === 'qrcode' || selectedElement.type === 'image') && (
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div><label className="text-[10px] font-bold text-slate-400 uppercase">{t.inspector.width}</label><input type="number" value={selectedElement.width} onChange={(e) => handlePropertyChange('width', parseFloat(e.target.value))} className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm"/></div>
-                                        <div><label className="text-[10px] font-bold text-slate-400 uppercase">{t.inspector.height}</label><input type="number" value={selectedElement.height} onChange={(e) => handlePropertyChange('height', parseFloat(e.target.value))} className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm"/></div>
+                                        <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.width}</label><input type="number" value={selectedElement.width} onChange={(e) => handlePropertyChange('width', parseFloat(e.target.value))} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
+                                        <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.height}</label><input type="number" value={selectedElement.height} onChange={(e) => handlePropertyChange('height', parseFloat(e.target.value))} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
                                     </div>
                                 )}
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t.inspector.align}</label>
-                                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">{t.inspector.align}</label>
+                                    <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
                                         {(['left', 'center', 'right'] as const).map(align => (
-                                            <button key={align} onClick={() => handlePropertyChange('align', align)} className={`flex-1 py-1 rounded text-xs transition-all ${selectedElement.align === align ? 'bg-white shadow-sm font-bold' : 'text-slate-500'}`}>
+                                            <button key={align} onClick={() => handlePropertyChange('align', align)} className={`flex-1 py-1 rounded text-xs transition-all ${selectedElement.align === align ? 'bg-white shadow-sm font-bold' : 'text-gray-500'}`}>
                                                 <span className="material-symbols-rounded text-sm">{align === 'left' ? 'format_align_left' : align === 'center' ? 'format_align_center' : 'format_align_right'}</span>
                                             </button>
                                         ))}
@@ -793,10 +801,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                 </div>
                                 {selectedElement.type === 'barcode' && (
                                     <div>
-                                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t.barcodeSource}</label>
-                                         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                                             <button onClick={() => setBarcodeSource('global')} className={`flex-1 py-1 rounded text-xs transition-all ${barcodeSource === 'global' ? 'bg-white shadow-sm font-bold' : 'text-slate-500'}`}>Global</button>
-                                             <button onClick={() => setBarcodeSource('internal')} className={`flex-1 py-1 rounded text-xs transition-all ${barcodeSource === 'internal' ? 'bg-white shadow-sm font-bold' : 'text-slate-500'}`}>Internal</button>
+                                         <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">{t.barcodeSource}</label>
+                                         <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                                             <button onClick={() => setBarcodeSource('global')} className={`flex-1 py-1 rounded text-xs transition-all ${barcodeSource === 'global' ? 'bg-white shadow-sm font-bold' : 'text-gray-500'}`}>Global</button>
+                                             <button onClick={() => setBarcodeSource('internal')} className={`flex-1 py-1 rounded text-xs transition-all ${barcodeSource === 'internal' ? 'bg-white shadow-sm font-bold' : 'text-gray-500'}`}>Internal</button>
                                          </div>
                                     </div>
                                 )}
@@ -815,19 +823,19 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
         {/* Save Modal */}
         {showSaveModal && (
-             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-                 <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl shadow-2xl p-6">
+             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+                 <div className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-3xl shadow-2xl p-6">
                      <h3 className="font-bold text-lg mb-4">{t.saveAsNew}</h3>
-                     <label className="text-xs font-bold text-slate-500 uppercase block mb-2">{t.templateName}</label>
+                     <label className="text-xs font-bold text-gray-500 uppercase block mb-2">{t.templateName}</label>
                      <input 
                         autoFocus
                         type="text" 
                         value={newTemplateName} 
                         onChange={e => setNewTemplateName(e.target.value)}
-                        className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 mb-4"
+                        className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 mb-4"
                      />
                      <div className="flex gap-3">
-                         <button onClick={() => setShowSaveModal(false)} className="flex-1 py-2 rounded-full font-bold text-slate-500 hover:bg-slate-100">{t.modal.cancel}</button>
+                         <button onClick={() => setShowSaveModal(false)} className="flex-1 py-2 rounded-full font-bold text-gray-500 hover:bg-gray-100">{t.modal.cancel}</button>
                          <button onClick={saveNewTemplate} disabled={!newTemplateName.trim()} className={`flex-1 py-2 rounded-full font-bold text-white bg-${color}-600 hover:bg-${color}-700 disabled:opacity-50`}>{t.modal.save}</button>
                      </div>
                  </div>

@@ -92,7 +92,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
         <input
           ref={inputRef}
           type="text"
-          className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm pr-8"
+          className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm pr-8"
           placeholder={placeholder}
           value={searchTerm}
           onChange={(e) => {
@@ -106,13 +106,13 @@ export const Combobox: React.FC<ComboboxProps> = ({
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
         />
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
           <span className="material-symbols-rounded text-[20px]">unfold_more</span>
         </div>
       </div>
 
       {isOpen && (filteredOptions.length > 0 || allowCustom) && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg max-h-60 overflow-auto">
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option, index) => (
               <div
@@ -120,7 +120,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
                 className={`px-3 py-2 text-sm cursor-pointer transition-colors ${
                   index === highlightedIndex
                     ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
                 onClick={() => selectOption(option)}
                 onMouseEnter={() => setHighlightedIndex(index)}
@@ -129,11 +129,11 @@ export const Combobox: React.FC<ComboboxProps> = ({
               </div>
             ))
           ) : allowCustom ? (
-             <div className="px-3 py-2 text-sm text-slate-500 italic">
+             <div className="px-3 py-2 text-sm text-gray-500 italic">
                 Press Enter to add "{searchTerm}"
              </div>
           ) : (
-            <div className="px-3 py-2 text-sm text-slate-500">No options found</div>
+            <div className="px-3 py-2 text-sm text-gray-500">No options found</div>
           )}
         </div>
       )}

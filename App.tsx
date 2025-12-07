@@ -772,13 +772,12 @@ const App: React.FC = () => {
       {console.log('Current View:', view)}
 
       {/* Main Layout: Sidebar + Content */}
-      <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+      <div className="flex h-[calc(100vh-64px)] overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
         {/* Desktop Sidebar */}
         <aside 
           className={`hidden ${view === 'pos' && !sidebarVisible ? '' : 'md:flex'} flex-col w-72 backdrop-blur-xl transition-all duration-300 ease-in-out`}
           style={{
-            borderRight: '1px solid var(--border-primary)',
-            backgroundColor: 'var(--bg-secondary)'
+            backgroundColor: 'var(--bg-primary)'
           }}
         >
           <SidebarContent 
@@ -803,14 +802,14 @@ const App: React.FC = () => {
               onClick={() => setMobileMenuOpen(false)}
             ></div>
             {/* Panel */}
-            <aside className="relative w-80 max-w-[85vw] flex flex-col bg-white dark:bg-slate-900 h-full shadow-2xl overflow-y-auto">
+            <aside className="relative w-80 max-w-[85vw] flex flex-col bg-white dark:bg-gray-900 h-full shadow-2xl overflow-y-auto">
               {/* Mobile Module Selector */}
-              <div className="p-4 border-b border-slate-200 dark:border-800">
+              <div className="p-4 border-b border-gray-200 dark:border-800">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Modules</h3>
+                  <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300">Modules</h3>
                   <button 
                     onClick={() => setMobileMenuOpen(false)} 
-                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                   >
                     <span className="material-symbols-rounded text-[20px]">close</span>
                   </button>
@@ -825,7 +824,7 @@ const App: React.FC = () => {
                       className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all ${
                         activeModule === module.id
                           ? `bg-${theme.primary}-100 dark:bg-${theme.primary}-900/30 text-${theme.primary}-700 dark:text-${theme.primary}-400`
-                          : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                          : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                       }`}
                     >
                       <span className="material-symbols-rounded text-[20px]">{module.icon}</span>
@@ -851,7 +850,7 @@ const App: React.FC = () => {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 h-full overflow-hidden relative">
+        <main className="flex-1 h-full overflow-hidden relative rounded-tl-3xl rounded-tr-3xl border-t border-l border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 shadow-inner">
         <div className={`h-full overflow-y-auto scrollbar-hide ${view === 'pos' ? 'p-2' : 'max-w-7xl mx-auto p-4 md:p-8'}`}>
           {/* Dynamic Page Rendering - Automatically handles all pages from registry */}
           {(() => {
@@ -861,8 +860,8 @@ const App: React.FC = () => {
               return (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <span className="material-symbols-rounded text-6xl text-slate-300 dark:text-slate-600 mb-4 block">error</span>
-                    <p className="text-lg font-medium text-slate-600 dark:text-slate-400">Page not found</p>
+                    <span className="material-symbols-rounded text-6xl text-gray-300 dark:text-gray-600 mb-4 block">error</span>
+                    <p className="text-lg font-medium text-gray-600 dark:text-gray-400">Page not found</p>
                   </div>
                 </div>
               );
@@ -942,11 +941,11 @@ const App: React.FC = () => {
         </main>
 
        {/* Mobile Bottom Nav */}
-       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-around p-3 z-50 overflow-x-auto">
-          <button onClick={() => setView('dashboard')} className={`p-2 rounded-xl shrink-0 ${view === 'dashboard' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-slate-400'}`}><span className="material-symbols-rounded">dashboard</span></button>
-          <button onClick={() => setView('pos')} className={`p-2 rounded-xl shrink-0 ${view === 'pos' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-slate-400'}`}><span className="material-symbols-rounded">point_of_sale</span></button>
-          <button onClick={() => setView('inventory')} className={`p-2 rounded-xl shrink-0 ${view === 'inventory' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-slate-400'}`}><span className="material-symbols-rounded">inventory_2</span></button>
-          <button onClick={() => setView('purchases')} className={`p-2 rounded-xl shrink-0 ${view === 'purchases' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-slate-400'}`}><span className="material-symbols-rounded">shopping_cart_checkout</span></button>
+       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex justify-around p-3 z-50 overflow-x-auto">
+          <button onClick={() => setView('dashboard')} className={`p-2 rounded-xl shrink-0 ${view === 'dashboard' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}><span className="material-symbols-rounded">dashboard</span></button>
+          <button onClick={() => setView('pos')} className={`p-2 rounded-xl shrink-0 ${view === 'pos' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}><span className="material-symbols-rounded">point_of_sale</span></button>
+          <button onClick={() => setView('inventory')} className={`p-2 rounded-xl shrink-0 ${view === 'inventory' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}><span className="material-symbols-rounded">inventory_2</span></button>
+          <button onClick={() => setView('purchases')} className={`p-2 rounded-xl shrink-0 ${view === 'purchases' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}><span className="material-symbols-rounded">shopping_cart_checkout</span></button>
         </div>
       </div>
     </div>

@@ -4,6 +4,8 @@ import { Combobox } from './Combobox';
 import { useContextMenu } from '../components/ContextMenu';
 import { useColumnReorder } from '../hooks/useColumnReorder';
 import { useLongPress } from '../hooks/useLongPress';
+import { useSmartDirection } from '../hooks/useSmartDirection';
+import { SearchInput } from './SearchInput';
 import { Drug } from '../types';
 import { createSearchRegex, parseSearchTerm } from '../utils/searchUtils';
 
@@ -263,38 +265,38 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       case 'name':
         return (
           <>
-            <div className="font-medium text-slate-900 dark:text-slate-100 text-sm drug-name">
-              {drug.name} {drug.dosageForm ? <span className="text-slate-500 font-normal">({drug.dosageForm})</span> : ''}
+            <div className="font-medium text-gray-900 dark:text-gray-100 text-sm drug-name">
+              {drug.name} {drug.dosageForm ? <span className="text-gray-500 font-normal">({drug.dosageForm})</span> : ''}
             </div>
-            <div className="text-xs text-slate-500">{drug.genericName}</div>
+            <div className="text-xs text-gray-500">{drug.genericName}</div>
           </>
         );
       case 'codes':
         return (
           <>
-            {drug.barcode && <div className="text-slate-600 dark:text-slate-400 text-xs"><span className="opacity-50">BC:</span> {drug.barcode}</div>}
-            {drug.internalCode && <div className="text-slate-600 dark:text-slate-400 text-xs"><span className="opacity-50">INT:</span> {drug.internalCode}</div>}
-            {!drug.barcode && !drug.internalCode && <span className="text-slate-300">-</span>}
+            {drug.barcode && <div className="text-gray-600 dark:text-gray-400 text-xs"><span className="opacity-50">BC:</span> {drug.barcode}</div>}
+            {drug.internalCode && <div className="text-gray-600 dark:text-gray-400 text-xs"><span className="opacity-50">INT:</span> {drug.internalCode}</div>}
+            {!drug.barcode && !drug.internalCode && <span className="text-gray-300">-</span>}
           </>
         );
       case 'category':
         return (
-          <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+          <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
             {drug.category}
           </span>
         );
       case 'stock':
         return (
-          <div className={`font-medium text-sm ${drug.stock < 20 ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
+          <div className={`font-medium text-sm ${drug.stock < 20 ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
             {parseFloat(drug.stock.toFixed(2))}
           </div>
         );
       case 'price':
-        return <span className="text-slate-700 dark:text-slate-300 text-sm font-bold">${drug.price.toFixed(2)}</span>;
+        return <span className="text-gray-700 dark:text-gray-300 text-sm font-bold">${drug.price.toFixed(2)}</span>;
       case 'cost':
-        return <span className="text-slate-500 text-xs hidden lg:table-cell">${drug.costPrice ? drug.costPrice.toFixed(2) : '-'}</span>;
+        return <span className="text-gray-500 text-xs hidden lg:table-cell">${drug.costPrice ? drug.costPrice.toFixed(2) : '-'}</span>;
       case 'expiry':
-        return <span className="text-slate-500 text-sm">{drug.expiryDate}</span>;
+        return <span className="text-gray-500 text-sm">{drug.expiryDate}</span>;
       case 'actions':
         return (
           <div className="relative">
@@ -303,28 +305,28 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                 e.stopPropagation();
                 setActiveMenuId(activeMenuId === drug.id ? null : drug.id);
               }}
-              className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition-colors"
             >
               <span className="material-symbols-rounded text-[20px]">more_vert</span>
             </button>
             {activeMenuId === drug.id && (
               <div 
                 ref={menuRef}
-                className="absolute right-8 top-10 z-20 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-1 rtl:right-auto rtl:left-8 text-start animate-fade-in"
+                className="absolute right-8 top-10 z-20 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 py-1 rtl:right-auto rtl:left-8 text-start animate-fade-in"
               >
-                <button onClick={() => handleOpenEdit(drug)} className="w-full px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors">
-                  <span className="material-symbols-rounded text-lg text-slate-400">edit</span>
+                <button onClick={() => handleOpenEdit(drug)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
+                  <span className="material-symbols-rounded text-lg text-gray-400">edit</span>
                   {t.actionsMenu.edit}
                 </button>
-                <button onClick={() => handleViewDetails(drug.id)} className="w-full px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors">
-                  <span className="material-symbols-rounded text-lg text-slate-400">visibility</span>
+                <button onClick={() => handleViewDetails(drug.id)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
+                  <span className="material-symbols-rounded text-lg text-gray-400">visibility</span>
                   {t.actionsMenu.view}
                 </button>
-                <button onClick={() => handlePrintBarcode(drug)} className="w-full px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors">
-                  <span className="material-symbols-rounded text-lg text-slate-400">qr_code_2</span>
+                <button onClick={() => handlePrintBarcode(drug)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
+                  <span className="material-symbols-rounded text-lg text-gray-400">qr_code_2</span>
                   {t.actionsMenu.printBarcode}
                 </button>
-                <div className="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
+                <div className="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
                 <button onClick={() => handleDelete(drug.id)} className="w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-3 transition-colors">
                   <span className="material-symbols-rounded text-lg">delete</span>
                   {t.actionsMenu.delete}
@@ -398,18 +400,18 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-medium tracking-tight">{mode === 'list' ? t.title : (t.addNewProduct || 'Add New Product')}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{mode === 'list' ? t.subtitle : (t.addProductSubtitle || 'Add a new item to your inventory')}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{mode === 'list' ? t.subtitle : (t.addProductSubtitle || 'Add a new item to your inventory')}</p>
         </div>
-        <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-full flex text-xs font-bold">
+        <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-full flex text-xs font-bold">
           <button 
             onClick={() => setMode('list')}
-            className={`px-4 py-2 rounded-full transition-all ${mode === 'list' ? `bg-${color}-600 text-white shadow-md` : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`px-4 py-2 rounded-full transition-all ${mode === 'list' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
             {t.allProducts || 'All Products'}
           </button>
           <button 
             onClick={() => { setMode('add'); handleOpenAdd(); }}
-            className={`px-4 py-2 rounded-full transition-all ${mode === 'add' ? `bg-${color}-600 text-white shadow-md` : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`px-4 py-2 rounded-full transition-all ${mode === 'add' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
             {t.addNewProduct || 'Add New Product'}
           </button>
@@ -427,23 +429,24 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       {mode === 'list' ? (
         <>
       {/* Search Bar */}
-      <div className="relative">
-        <span className="material-symbols-rounded absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none rtl:left-auto rtl:right-4 ltr:left-4">search</span>
-        <input 
-          type="text" 
-          placeholder={t.searchPlaceholder}
-          className="w-full ps-12 pe-4 py-3 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-950 transition-all text-sm"
-          style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+      <div className="bg-white dark:bg-gray-800 p-2.5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex gap-2 shrink-0 overflow-x-auto">
+        <div className="relative flex-1 min-w-[200px]">
+        <SearchInput
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onSearchChange={setSearchTerm}
+          placeholder={t.searchPlaceholder}
+          className="rounded-full border-gray-200 dark:border-gray-800 ps-12"
+          wrapperClassName="h-full"
+          style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
         />
+        </div>
       </div>
 
       {/* Table Card */}
-      <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col">
+      <div className="flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm flex flex-col">
         <div className="overflow-x-auto flex-1 pb-20 lg:pb-0"> {/* Extra padding for dropdown visibility */}
           <table className="w-full text-start border-collapse">
-            <thead className={`bg-${color}-50 dark:bg-slate-900 sticky top-0 z-10 shadow-sm`}>
+            <thead className={`bg-${color}-50 dark:bg-gray-900 sticky top-0 z-10 shadow-sm`}>
               <tr>
                 {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
                   <th
@@ -495,12 +498,12 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {filteredInventory.slice(0, 100).map((drug, index) => (
                 <tr
                     key={drug.id}
-                    className={`border-b border-slate-100 dark:border-slate-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${
-                        drug.stock <= (drug.minStock || 0) ? 'bg-red-50/50 dark:bg-red-900/10' : (index % 2 === 0 ? 'bg-slate-50/30 dark:bg-slate-800/20' : '')
+                    className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${
+                        drug.stock <= (drug.minStock || 0) ? 'bg-red-50/50 dark:bg-red-900/10' : (index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : '')
                     }`}
                     onClick={(e) => {
                         if (isRowLongPress.current) {
@@ -539,7 +542,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
               ))}
               {filteredInventory.length === 0 && (
                 <tr>
-                  <td colSpan={columnOrder.length - hiddenColumns.size} className="p-12 text-center text-slate-400">
+                  <td colSpan={columnOrder.length - hiddenColumns.size} className="p-12 text-center text-gray-400">
                     {t.noResults}
                   </td>
                 </tr>
@@ -557,28 +560,28 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
             {/* LEFT COLUMN: Main Info */}
             <div className="xl:col-span-2 space-y-6">
               {/* Basic Details Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-4">
+              <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                   <span className="material-symbols-rounded text-blue-500">info</span>
                   {t.basicInfo || 'Basic Information'}
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.brand} *</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.brand} *</label>
                     <input
                       required
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                       placeholder="e.g., Panadol Extra"
                       value={formData.name}
                       onChange={e => setFormData({ ...formData, name: e.target.value })}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.generic} *</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.generic} *</label>
                     <input
                       required
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                       placeholder="e.g., Paracetamol"
                       value={formData.genericName}
                       onChange={e => setFormData({ ...formData, genericName: e.target.value })}
@@ -588,7 +591,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   {/* Category & Dosage Form */}
                   <div className="grid grid-cols-2 gap-4 md:col-span-2">
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.category} *</label>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.category} *</label>
                       <Combobox
                         options={allCategories}
                         value={formData.category}
@@ -598,7 +601,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Dosage Form</label>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Dosage Form</label>
                       <Combobox
                         options={['Tablet', 'Capsule', 'Syrup', 'Suspension', 'Injection', 'Cream', 'Ointment', 'Gel', 'Drops', 'Spray', 'Inhaler', 'Suppository', 'Patch', 'Sachet', 'Other']}
                         value={formData.dosageForm || 'Tablet'}
@@ -611,9 +614,9 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
                   {/* Active Ingredients */}
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Active Ingredients (Comma separated)</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Active Ingredients (Comma separated)</label>
                     <input
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                       placeholder="e.g., Paracetamol, Caffeine"
                       value={formData.activeIngredients?.join(', ') || ''}
                       onChange={e => setFormData({ ...formData, activeIngredients: e.target.value.split(',').map(s => s.trim()) })}
@@ -622,8 +625,8 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
                   {/* Multi-Barcode Input */}
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.barcode}</label>
-                    <div className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]">
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.barcode}</label>
+                    <div className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]">
                       {/* Primary Barcode Chip */}
                       {formData.barcode && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium border border-blue-200 dark:border-blue-800">
@@ -641,7 +644,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       
                       {/* Additional Barcodes Chips */}
                       {formData.additionalBarcodes?.map((code, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium border border-slate-300 dark:border-slate-600">
+                        <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium border border-gray-300 dark:border-gray-600">
                           {code}
                           <button 
                             type="button"
@@ -650,7 +653,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                               newCodes.splice(idx, 1);
                               setFormData({ ...formData, additionalBarcodes: newCodes });
                             }}
-                            className="hover:text-slate-900 dark:hover:text-slate-100"
+                            className="hover:text-gray-900 dark:hover:text-gray-100"
                           >
                             <span className="material-symbols-rounded text-[14px]">close</span>
                           </button>
@@ -679,15 +682,15 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                         }}
                       />
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-1 ml-1">Press Enter to add multiple barcodes</p>
+                    <p className="text-[10px] text-gray-400 mt-1 ml-1">Press Enter to add multiple barcodes</p>
                   </div>
 
                   {/* Internal Code with Icon */}
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.internalCode}</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.internalCode}</label>
                     <div className="relative">
                       <input
-                        className="w-full pl-3 pr-10 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-mono"
+                        className="w-full pl-3 pr-10 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-mono"
                         placeholder="Auto-generated or custom"
                         value={formData.internalCode || ''}
                         onChange={e => setFormData({ ...formData, internalCode: e.target.value })}
@@ -695,7 +698,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       <button
                         type="button"
                         onClick={generateInternalCode}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-blue-500 transition-colors"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-blue-500 transition-colors"
                         title={t.autoGenerate || 'Auto-Generate'}
                       >
                         <span className="material-symbols-rounded text-[20px]">autorenew</span>
@@ -704,9 +707,9 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.desc}</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.desc}</label>
                     <textarea
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm resize-none"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm resize-none"
                       rows={2}
                       placeholder="Description..."
                       value={formData.description}
@@ -720,8 +723,8 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
             {/* RIGHT COLUMN: Details */}
             <div className="xl:col-span-1 space-y-6">
               {/* Stock & Pricing Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm h-full">
-                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-4">
+              <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm h-full">
+                <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                   <span className="material-symbols-rounded text-blue-500">inventory</span>
                   Inventory & Pricing
                 </h3>
@@ -729,22 +732,22 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.stock} *</label>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.stock} *</label>
                       <input
                         type="number"
                         step="0.01"
                         required
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                         value={formData.stock}
                         onChange={e => setFormData({ ...formData, stock: parseFloat(e.target.value) || 0 })}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.unitsPerPack}</label>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.unitsPerPack}</label>
                       <input
                         type="number"
                         min="1"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                         value={formData.unitsPerPack || 1}
                         onChange={e => setFormData({ ...formData, unitsPerPack: parseInt(e.target.value) || 1 })}
                       />
@@ -752,35 +755,35 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.expiry} *</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.expiry} *</label>
                     <SmartDateInput
                       required
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                       value={formData.expiryDate}
                       onChange={val => setFormData({ ...formData, expiryDate: val })}
                     />
                   </div>
 
-                  <div className="border-t border-slate-100 dark:border-slate-800 my-4"></div>
+                  <div className="border-t border-gray-100 dark:border-gray-800 my-4"></div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.price} *</label>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.price} *</label>
                       <input
                         type="number"
                         step="0.01"
                         required
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold text-green-600"
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold text-green-600"
                         value={formData.price}
                         onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.cost}</label>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.cost}</label>
                       <input
                         type="number"
                         step="0.01"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                         value={formData.costPrice || 0}
                         onChange={e => setFormData({ ...formData, costPrice: parseFloat(e.target.value) || 0 })}
                       />
@@ -788,12 +791,12 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Max Discount (%)</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Max Discount (%)</label>
                     <input
                       type="number"
                       min="0"
                       max="100"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm text-red-500"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm text-red-500"
                       value={formData.maxDiscount || ''}
                       onChange={e => setFormData({ ...formData, maxDiscount: parseFloat(e.target.value) })}
                     />
@@ -807,14 +810,14 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
               <button
                 type="button"
                 onClick={handleClear}
-                className="px-6 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors font-medium text-sm"
+                className="px-6 py-2.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors font-medium text-sm"
               >
                 {t.clearForm || 'Clear Form'}
               </button>
               <button
                 type="button"
                 onClick={(e) => handleSubmit(e, true)}
-                className={`px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl transition-all font-medium text-sm`}
+                className={`px-6 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl transition-all font-medium text-sm`}
               >
                 {t.saveAndAddAnother || 'Save & Add Another'}
               </button>
@@ -832,14 +835,14 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
       {/* Details View Modal */}
       {viewingDrug && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
               <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100 flex items-center gap-2`}>
                 <span className="material-symbols-rounded">visibility</span>
                 {t.actionsMenu.view}
               </h3>
-              <button onClick={() => setViewingDrug(null)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setViewingDrug(null)} className="text-gray-400 hover:text-gray-600">
                 <span className="material-symbols-rounded">close</span>
               </button>
             </div>
@@ -847,10 +850,10 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
             <div className="p-6 overflow-y-auto space-y-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                            {viewingDrug.name} {viewingDrug.dosageForm ? <span className="text-lg text-slate-500 font-normal">({viewingDrug.dosageForm})</span> : ''}
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                            {viewingDrug.name} {viewingDrug.dosageForm ? <span className="text-lg text-gray-500 font-normal">({viewingDrug.dosageForm})</span> : ''}
                         </h2>
-                        <p className="text-slate-500 font-medium">{viewingDrug.genericName}</p>
+                        <p className="text-gray-500 font-medium">{viewingDrug.genericName}</p>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase bg-${color}-100 text-${color}-700 dark:bg-${color}-900/50 dark:text-${color}-300`}>
                         {viewingDrug.category}
@@ -858,52 +861,52 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase">Stock Level</label>
-                        <p className={`text-xl font-bold ${viewingDrug.stock < 10 ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
-                            {viewingDrug.stock} <span className="text-xs font-normal text-slate-500">packs</span>
+                    <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Stock Level</label>
+                        <p className={`text-xl font-bold ${viewingDrug.stock < 10 ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
+                            {viewingDrug.stock} <span className="text-xs font-normal text-gray-500">packs</span>
                         </p>
                     </div>
-                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase">Expiry Date</label>
-                        <p className="text-xl font-bold text-slate-700 dark:text-slate-300">
+                    <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Expiry Date</label>
+                        <p className="text-xl font-bold text-gray-700 dark:text-gray-300">
                             {new Date(viewingDrug.expiryDate).toLocaleDateString()}
                         </p>
                     </div>
                 </div>
 
                 <div className="space-y-3">
-                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-                        <span className="text-sm text-slate-500">Selling Price</span>
-                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100">${viewingDrug.price.toFixed(2)}</span>
+                    <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                        <span className="text-sm text-gray-500">Selling Price</span>
+                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">${viewingDrug.price.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-                        <span className="text-sm text-slate-500">Cost Price</span>
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">${viewingDrug.costPrice?.toFixed(2) || '0.00'}</span>
+                    <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                        <span className="text-sm text-gray-500">Cost Price</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">${viewingDrug.costPrice?.toFixed(2) || '0.00'}</span>
                     </div>
-                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-                        <span className="text-sm text-slate-500">Units Per Pack</span>
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{viewingDrug.unitsPerPack || 1}</span>
+                    <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                        <span className="text-sm text-gray-500">Units Per Pack</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{viewingDrug.unitsPerPack || 1}</span>
                     </div>
-                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-                        <span className="text-sm text-slate-500">Barcode</span>
-                        <span className="text-sm font-mono text-slate-700 dark:text-slate-300">{viewingDrug.barcode || 'N/A'}</span>
+                    <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                        <span className="text-sm text-gray-500">Barcode</span>
+                        <span className="text-sm font-mono text-gray-700 dark:text-gray-300">{viewingDrug.barcode || 'N/A'}</span>
                     </div>
-                     <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-                        <span className="text-sm text-slate-500">Internal Code</span>
-                        <span className="text-sm font-mono text-slate-700 dark:text-slate-300">{viewingDrug.internalCode || 'N/A'}</span>
+                     <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                        <span className="text-sm text-gray-500">Internal Code</span>
+                        <span className="text-sm font-mono text-gray-700 dark:text-gray-300">{viewingDrug.internalCode || 'N/A'}</span>
                     </div>
                 </div>
 
                 <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Description</label>
-                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Description</label>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl">
                         {viewingDrug.description || 'No description provided.'}
                     </p>
                 </div>
             </div>
 
-            <div className="p-4 bg-slate-50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800 flex gap-3">
+            <div className="p-4 bg-gray-50 dark:bg-gray-950/50 border-t border-gray-100 dark:border-gray-800 flex gap-3">
                 <button 
                     onClick={() => handlePrintBarcode(viewingDrug)}
                     className={`flex-1 py-2.5 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2`}
@@ -916,7 +919,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                         setViewingDrug(null);
                         handleOpenEdit(viewingDrug);
                     }}
-                    className="flex-1 py-2.5 rounded-full font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                    className="flex-1 py-2.5 rounded-full font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                 >
                     {t.actionsMenu.edit}
                 </button>
@@ -927,13 +930,13 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
       {/* Add/Edit Modal Overlay */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
               <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100`}>
                 {editingDrug ? t.modal.edit : t.modal.add}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <span className="material-symbols-rounded">close</span>
               </button>
             </div>
@@ -945,20 +948,20 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                 <div className="md:col-span-2 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.brand} *</label>
-                      <input required className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.brand} *</label>
+                      <input required className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
                         value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.generic} *</label>
-                      <input required className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.generic} *</label>
+                      <input required className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
                         value={formData.genericName} onChange={e => setFormData({...formData, genericName: e.target.value})} />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.category} *</label>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.category} *</label>
                       <Combobox
                         options={allCategories}
                         value={formData.category}
@@ -968,7 +971,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Dosage Form</label>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Dosage Form</label>
                       <Combobox
                         options={['Tablet', 'Capsule', 'Syrup', 'Suspension', 'Injection', 'Cream', 'Ointment', 'Gel', 'Drops', 'Spray', 'Inhaler', 'Suppository', 'Patch', 'Sachet', 'Other']}
                         value={formData.dosageForm || 'Tablet'}
@@ -980,8 +983,8 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Active Ingredients</label>
-                    <input className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Active Ingredients</label>
+                    <input className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                       placeholder="e.g., Paracetamol, Caffeine"
                       value={formData.activeIngredients?.join(', ') || ''}
                       onChange={e => setFormData({ ...formData, activeIngredients: e.target.value.split(',').map(s => s.trim()) })}
@@ -990,8 +993,8 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
                   {/* Multi-Barcode Input */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.barcode}</label>
-                    <div className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]">
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.barcode}</label>
+                    <div className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]">
                       {formData.barcode && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium border border-blue-200 dark:border-blue-800">
                           <span className="material-symbols-rounded text-[14px]">qr_code_2</span>
@@ -1002,13 +1005,13 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                         </span>
                       )}
                       {formData.additionalBarcodes?.map((code, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium border border-slate-300 dark:border-slate-600">
+                        <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium border border-gray-300 dark:border-gray-600">
                           {code}
                           <button type="button" onClick={() => {
                               const newCodes = [...(formData.additionalBarcodes || [])];
                               newCodes.splice(idx, 1);
                               setFormData({ ...formData, additionalBarcodes: newCodes });
-                            }} className="hover:text-slate-900 dark:hover:text-slate-100">
+                            }} className="hover:text-gray-900 dark:hover:text-gray-100">
                             <span className="material-symbols-rounded text-[14px]">close</span>
                           </button>
                         </span>
@@ -1031,76 +1034,76 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.internalCode}</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.internalCode}</label>
                     <div className="relative">
-                      <input className="w-full pl-3 pr-10 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-mono"
+                      <input className="w-full pl-3 pr-10 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-mono"
                         placeholder="Auto-generated"
                         value={formData.internalCode || ''} onChange={e => setFormData({ ...formData, internalCode: e.target.value })} />
-                      <button type="button" onClick={generateInternalCode} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-blue-500 transition-colors" title="Auto-Generate">
+                      <button type="button" onClick={generateInternalCode} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-blue-500 transition-colors" title="Auto-Generate">
                         <span className="material-symbols-rounded text-[20px]">autorenew</span>
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.desc}</label>
-                    <textarea className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm resize-none" rows={2}
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.desc}</label>
+                    <textarea className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm resize-none" rows={2}
                       value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}></textarea>
                   </div>
                 </div>
 
                 {/* RIGHT COLUMN: Details */}
                 <div className="space-y-4">
-                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 space-y-4">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 space-y-4">
+                    <h4 className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
                       <span className="material-symbols-rounded text-base">inventory</span> Inventory
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.stock}</label>
-                        <input type="number" step="0.01" required className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.stock}</label>
+                        <input type="number" step="0.01" required className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
                           value={formData.stock} onChange={e => setFormData({...formData, stock: parseFloat(e.target.value) || 0})} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.unitsPerPack}</label>
-                        <input type="number" min="1" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.unitsPerPack}</label>
+                        <input type="number" min="1" className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
                           value={formData.unitsPerPack || 1} onChange={e => setFormData({...formData, unitsPerPack: parseInt(e.target.value) || 1})} />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.expiry}</label>
-                      <SmartDateInput required className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.expiry}</label>
+                      <SmartDateInput required className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
                         value={formData.expiryDate} onChange={val => setFormData({ ...formData, expiryDate: val })} />
                     </div>
                   </div>
 
-                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 space-y-4">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 space-y-4">
+                    <h4 className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
                       <span className="material-symbols-rounded text-base">payments</span> Pricing
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.price}</label>
-                        <input type="number" step="0.01" required className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold text-green-600" 
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.price}</label>
+                        <input type="number" step="0.01" required className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold text-green-600" 
                           value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value) || 0})} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{t.modal.cost}</label>
-                        <input type="number" step="0.01" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.cost}</label>
+                        <input type="number" step="0.01" className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" 
                           value={formData.costPrice || 0} onChange={e => setFormData({...formData, costPrice: parseFloat(e.target.value) || 0})} />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Max Discount (%)</label>
-                      <input type="number" min="0" max="100" className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm text-red-500" 
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Max Discount (%)</label>
+                      <input type="number" min="0" max="100" className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm text-red-500" 
                         value={formData.maxDiscount || ''} onChange={e => setFormData({...formData, maxDiscount: parseFloat(e.target.value)})} />
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-6 flex gap-3 border-t border-slate-100 dark:border-slate-800 mt-6">
-                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 rounded-xl font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors">
+              <div className="pt-6 flex gap-3 border-t border-gray-100 dark:border-gray-800 mt-6">
+                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 rounded-xl font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors">
                   {t.modal.cancel}
                 </button>
                 <button type="submit" className={`flex-1 py-3 rounded-xl font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all active:scale-95`}>

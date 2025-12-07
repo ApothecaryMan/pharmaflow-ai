@@ -41,7 +41,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
         language={language}
       />
       <div className="mt-auto space-y-4 pt-4">
-        <div className="px-4 pb-2 text-center text-[10px] text-slate-400">
+        <div className="px-4 pb-2 text-center text-[10px] text-gray-400">
           <p>{tip}</p>
         </div>
       </div>

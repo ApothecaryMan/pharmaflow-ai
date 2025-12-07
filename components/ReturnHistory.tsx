@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Return, Sale } from '../types';
 import { DatePicker } from './DatePicker';
 import { createSearchRegex } from '../utils/searchUtils';
+import { useSmartDirection } from '../hooks/useSmartDirection';
+import { SearchInput } from './SearchInput';
 
 interface ReturnHistoryProps {
   returns: Return[];
@@ -46,27 +48,24 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-medium tracking-tight">{t.title}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t.subtitle}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t.subtitle}</p>
         </div>
       </div>
 
       {/* Filters */}
-       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="flex flex-wrap items-center gap-3 w-full sm:flex-1">
             <div className="relative group flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                    <span className="material-symbols-rounded text-[20px]">search</span>
-                </span>
-                <input
-                    type="text"
-                    placeholder={t.searchPlaceholder || "Search returns..."}
+                <SearchInput
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-full text-sm w-full focus:ring-2 focus:ring-blue-500/20 text-slate-900 dark:text-slate-100 placeholder-slate-400 transition-all"
+                    onSearchChange={setSearchTerm}
+                    placeholder={t.searchPlaceholder || "Search returns..."}
+                    className="bg-gray-50 dark:bg-gray-800 border-none ps-10"
+                    wrapperClassName="w-full"
                 />
             </div>
             
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 p-1 rounded-full border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-1 rounded-full border border-gray-200 dark:border-gray-700">
                 <DatePicker
                     value={startDate}
                     onChange={setStartDate}
@@ -76,7 +75,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
                     locale={locale}
                     translations={datePickerTranslations}
                 />
-                <span className="text-slate-300 dark:text-slate-700 rtl:rotate-180">
+                <span className="text-gray-300 dark:text-gray-700 rtl:rotate-180">
                     <span className="material-symbols-rounded text-[16px]">arrow_forward</span>
                 </span>
                 <DatePicker
@@ -93,7 +92,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
       </div>
 
       {/* Table */}
-      <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col">
+      <div className="flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm flex flex-col">
         <div className="overflow-x-auto flex-1">
           <table className="w-full text-start border-collapse">
             <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>
@@ -107,10 +106,10 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
                 <th className="px-6 py-4 text-end">{t.headers.actions}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {filteredReturns.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     <div className="flex flex-col items-center gap-3">
                       <div className={`w-12 h-12 rounded-full bg-${color}-50 dark:bg-${color}-900/20 flex items-center justify-center`}>
                         <span className={`material-symbols-rounded text-${color}-500 text-2xl`}>assignment_return</span>
@@ -123,27 +122,27 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
                 filteredReturns.map((ret) => {
                     const sale = sales.find(s => s.id === ret.saleId);
                     return (
-                        <tr key={ret.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                            <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-slate-100">#{ret.id}</td>
-                            <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                        <tr key={ret.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+                            <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">#{ret.id}</td>
+                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
                                 {new Date(ret.date).toLocaleDateString(locale)}
                             </td>
-                            <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">#{ret.saleId}</td>
-                            <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100 font-medium">
+                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">#{ret.saleId}</td>
+                            <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 font-medium">
                                 {sale?.customerName || 'Unknown'}
                             </td>
                             <td className="px-6 py-4 text-sm font-bold text-red-600 dark:text-red-400">
                                 -${ret.totalRefund.toFixed(2)}
                             </td>
                             <td className="px-6 py-4 text-sm">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 capitalize`}>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 capitalize`}>
                                     {t.reasons?.[ret.reason] || ret.reason}
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-end">
                                 <button 
                                     onClick={() => setSelectedReturn(ret)}
-                                    className={`p-2 rounded-full hover:bg-${color}-50 dark:hover:bg-${color}-900/20 text-slate-400 hover:text-${color}-600 dark:hover:text-${color}-400 transition-colors`}
+                                    className={`p-2 rounded-full hover:bg-${color}-50 dark:hover:bg-${color}-900/20 text-gray-400 hover:text-${color}-600 dark:hover:text-${color}-400 transition-colors`}
                                     title={t.actions.viewDetails}
                                 >
                                     <span className="material-symbols-rounded">visibility</span>
@@ -161,15 +160,15 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
       {/* Detail Modal */}
       {selectedReturn && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in">
-                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in">
+                <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
                     <div>
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t.modal.title}</h3>
-                        <p className="text-sm text-slate-500">#{selectedReturn.id} • {new Date(selectedReturn.date).toLocaleString(locale)}</p>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t.modal.title}</h3>
+                        <p className="text-sm text-gray-500">#{selectedReturn.id} • {new Date(selectedReturn.date).toLocaleString(locale)}</p>
                     </div>
                     <button 
                         onClick={() => setSelectedReturn(null)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                     >
                         <span className="material-symbols-rounded">close</span>
                     </button>
@@ -177,33 +176,33 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
                 
                 <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">{t.headers.saleId}</p>
+                        <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
+                            <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{t.headers.saleId}</p>
                             <p className="font-medium">#{selectedReturn.saleId}</p>
                         </div>
-                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">{t.headers.reason}</p>
+                        <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
+                            <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{t.headers.reason}</p>
                             <p className="font-medium capitalize">{t.reasons?.[selectedReturn.reason] || selectedReturn.reason}</p>
                         </div>
                     </div>
 
                     <div>
-                        <h4 className="font-medium mb-3 text-sm text-slate-500 uppercase tracking-wider">{t.modal.itemsReturned}</h4>
-                        <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                        <h4 className="font-medium mb-3 text-sm text-gray-500 uppercase tracking-wider">{t.modal.itemsReturned}</h4>
+                        <div className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
                             <table className="w-full text-sm text-start">
-                                <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500">
+                                <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500">
                                     <tr>
                                         <th className="px-4 py-3 text-start">{t.modal.item}</th>
                                         <th className="px-4 py-3 text-center">{t.modal.qty}</th>
                                         <th className="px-4 py-3 text-end">{t.modal.refund}</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                                     {selectedReturn.items.map((item, idx) => (
                                         <tr key={idx}>
                                             <td className="px-4 py-3">
                                                 <div className="font-medium">{item.name} {item.dosageForm ? `(${item.dosageForm})` : ''}</div>
-                                                <div className="text-xs text-slate-500">{item.isUnit ? t.modal.unit : t.modal.pack}</div>
+                                                <div className="text-xs text-gray-500">{item.isUnit ? t.modal.unit : t.modal.pack}</div>
                                             </td>
                                             <td className="px-4 py-3 text-center">{item.quantityReturned}</td>
                                             <td className="px-4 py-3 text-end font-medium">${item.refundAmount.toFixed(2)}</td>
@@ -221,9 +220,9 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
                         </div>
                     )}
 
-                    <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800">
                         <div className="text-end">
-                            <p className="text-sm text-slate-500">{t.headers.totalRefund}</p>
+                            <p className="text-sm text-gray-500">{t.headers.totalRefund}</p>
                             <p className="text-2xl font-bold text-red-600 dark:text-red-400">-${selectedReturn.totalRefund.toFixed(2)}</p>
                         </div>
                     </div>

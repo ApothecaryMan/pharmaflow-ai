@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import { MenuItem } from '../menuData';
 import { getMenuTranslation } from '../menuTranslations';
+import { useSmartDirection } from '../hooks/useSmartDirection';
+import { SearchInput } from './SearchInput';
 
 interface SidebarMenuProps {
   menuItems: MenuItem[];
@@ -114,29 +116,18 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
       {/* Search Bar */}
       <div className="px-3 py-3 sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <div className="relative">
-          <span className="material-symbols-rounded absolute ltr:left-3 rtl:right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">
-            search
-          </span>
-          <input
-            type="text"
-            placeholder={`${language === 'AR' ? 'بحث في' : 'Search in'} ${getMenuTranslation(activeModuleData?.label || '', language)}...`}
+          <SearchInput
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-10 py-2 text-sm rounded-xl border transition-all focus:ring-2 focus:ring-offset-0"
-            style={{
+            onSearchChange={setSearchQuery}
+            onClear={() => setSearchQuery('')}
+            placeholder={`${language === 'AR' ? 'بحث في' : 'Search in'} ${getMenuTranslation(activeModuleData?.label || '', language)}...`}
+            className="rounded-lg border ps-9 pe-9"
+            style={{ 
               backgroundColor: 'var(--bg-secondary)',
               borderColor: 'var(--border-primary)',
               color: 'var(--text-primary)'
             }}
           />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="material-symbols-rounded absolute ltr:right-3 rtl:left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-[18px] transition-colors"
-            >
-              close
-            </button>
-          )}
         </div>
       </div>
 
@@ -147,7 +138,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
         className="flex-1 space-y-1 w-full overflow-y-auto px-3 pb-3"
       >
         {filteredSubmenus.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 text-sm">
+          <div className="text-center py-8 text-gray-400 text-sm">
             <span className="material-symbols-rounded text-[32px] mb-2 block opacity-50">search_off</span>
             No results found
           </div>
@@ -187,14 +178,14 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
                       }}
                       className={`w-full ltr:text-left rtl:text-right px-3 py-2 rounded-lg text-sm transition-all ${
                         !isImplemented
-                          ? 'opacity-40 cursor-not-allowed text-slate-400 dark:text-slate-600'
+                          ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
                           : isActive 
                             ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold` 
-                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                       }`}
                     >
                       {getMenuTranslation(itemLabel, language)}
-                      {!isImplemented && <span className="text-[10px] opacity-60 ltr:ml-2 rtl:mr-2 border border-slate-300 dark:border-slate-700 px-1 rounded">Soon</span>}
+                      {!isImplemented && <span className="text-[10px] opacity-60 ltr:ml-2 rtl:mr-2 border border-gray-300 dark:border-gray-700 px-1 rounded">Soon</span>}
                     </button>
                   );
                 })}

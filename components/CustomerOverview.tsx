@@ -201,7 +201,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
   const ExpandButton = ({ onClick, title }: { onClick: (e: React.MouseEvent) => void, title?: string }) => (
     <button 
       onClick={onClick}
-      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
       title={title || t?.expand || 'Expand'}
     >
       <span className="material-symbols-rounded text-[18px]">open_in_full</span>
@@ -229,7 +229,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
     colorClass?: string;
   }) => (
     <div 
-      className={`p-5 rounded-3xl flex flex-col justify-between min-h-[140px] group relative transition-all hover:shadow-lg cursor-pointer ${colorClass || 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800'}`}
+      className={`p-5 rounded-3xl flex flex-col justify-between min-h-[140px] group relative transition-all hover:shadow-lg cursor-pointer ${colorClass || 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800'}`}
       onClick={onClick}
     >
       <div className="absolute top-3 right-3 rtl:right-auto rtl:left-3">
@@ -239,9 +239,9 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         <span className="material-symbols-rounded text-3xl">{icon}</span>
       </div>
       <div>
-        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{title}</p>
-        <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{value}</p>
-        {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
+        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{title}</p>
+        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+        {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
         {trend && (
           <div className={`flex items-center gap-1 mt-2 text-xs font-medium ${trendUp ? 'text-emerald-600' : 'text-red-500'}`}>
             <span className="material-symbols-rounded text-[14px]">{trendUp ? 'trending_up' : 'trending_down'}</span>
@@ -301,9 +301,9 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
       {/* Row 2: Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Location Distribution */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-80 relative group">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80 relative group">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-blue-500 text-[20px]">location_on</span>
               {t?.locationDistribution || 'Location Distribution'}
             </h3>
@@ -330,14 +330,14 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex items-center justify-center text-slate-400">{t?.noData || 'No location data'}</div>
+            <div className="h-full flex items-center justify-center text-gray-400">{t?.noData || 'No location data'}</div>
           )}
         </div>
 
         {/* Top Customers */}
-        <div className="lg:col-span-2 p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm h-80 flex flex-col group">
+        <div className="lg:col-span-2 p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80 flex flex-col group">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-yellow-500 text-[20px]">workspace_premium</span>
               {t?.topCustomers || 'Top Customers'}
             </h3>
@@ -345,22 +345,22 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pe-1">
             {topCustomers.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-slate-400 text-sm">{t?.noCustomers || 'No customer data'}</div>
+              <div className="h-full flex items-center justify-center text-gray-400 text-sm">{t?.noCustomers || 'No customer data'}</div>
             ) : (
               topCustomers.slice(0, 5).map((customer, index) => (
-                <div key={customer.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <div key={customer.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                   <div className="flex items-center gap-3 overflow-hidden">
                     <div className={`w-8 h-8 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 font-bold text-sm flex items-center justify-center shrink-0`}>
                       {index + 1}
                     </div>
                     <div className="min-w-0">
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate block">{customer.name}</span>
-                      <span className="text-xs text-slate-400">{customer.code}</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate block">{customer.name}</span>
+                      <span className="text-xs text-gray-400">{customer.code}</span>
                     </div>
                   </div>
                   <div className="text-end">
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">${customer.totalPurchases.toFixed(2)}</span>
-                    <span className="text-xs text-slate-400 block">{customer.points} pts</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-gray-100">${customer.totalPurchases.toFixed(2)}</span>
+                    <span className="text-xs text-gray-400 block">{customer.points} pts</span>
                   </div>
                 </div>
               ))
@@ -372,9 +372,9 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
       {/* Row 3: Health & Engagement */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Health Insights */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col group">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col group">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-rose-500 text-[20px]">health_and_safety</span>
               {t?.healthInsights || 'Health Insights'}
             </h3>
@@ -387,18 +387,18 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className="text-xl font-bold text-blue-900 dark:text-blue-100">{healthInsights.withInsurance}</p>
               <p className="text-xs text-blue-600 dark:text-blue-400">{healthInsights.insuranceRate.toFixed(1)}%</p>
             </div>
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <p className="text-xs font-bold text-slate-500 uppercase">{t?.chronicConditions || 'Chronic Conditions'}</p>
-              <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{healthInsights.conditions.length}</p>
-              <p className="text-xs text-slate-400">{t?.tracked || 'Types Tracked'}</p>
+            <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs font-bold text-gray-500 uppercase">{t?.chronicConditions || 'Chronic Conditions'}</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{healthInsights.conditions.length}</p>
+              <p className="text-xs text-gray-400">{t?.tracked || 'Types Tracked'}</p>
             </div>
           </div>
           
           <div className="space-y-2 overflow-y-auto max-h-32">
             {healthInsights.conditions.slice(0, 4).map(condition => (
-              <div key={condition.name} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/30">
-                <span className="text-sm text-slate-700 dark:text-slate-300">{condition.name}</span>
-                <span className="text-xs font-bold text-slate-500 bg-white dark:bg-slate-800 px-2 py-1 rounded-md">
+              <div key={condition.name} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800/30">
+                <span className="text-sm text-gray-700 dark:text-gray-300">{condition.name}</span>
+                <span className="text-xs font-bold text-gray-500 bg-white dark:bg-gray-800 px-2 py-1 rounded-md">
                   {condition.count} {t?.patients || 'patients'}
                 </span>
               </div>
@@ -407,9 +407,9 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         </div>
 
         {/* Customer Engagement */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col group">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col group">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-emerald-500 text-[20px]">trending_up</span>
               {t?.engagement || 'Customer Engagement'}
             </h3>
@@ -419,15 +419,15 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           <div className="grid grid-cols-3 gap-3">
             <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 text-center">
               <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{engagementMetrics.activeRate.toFixed(0)}%</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t?.activeRate || 'Active Rate'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t?.activeRate || 'Active Rate'}</p>
             </div>
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center">
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{engagementMetrics.avgDaysSinceVisit}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t?.avgDays || 'Avg Days'}</p>
+            <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-center">
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{engagementMetrics.avgDaysSinceVisit}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t?.avgDays || 'Avg Days'}</p>
             </div>
             <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-center">
               <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{engagementMetrics.inactiveCustomers}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t?.inactive90 || 'Inactive 90d+'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t?.inactive90 || 'Inactive 90d+'}</p>
             </div>
           </div>
         </div>
@@ -436,9 +436,9 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
       {/* Row 4: Segmentation & Contact Preferences */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Customer Segmentation */}
-        <div className="lg:col-span-2 p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm group">
+        <div className="lg:col-span-2 p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm group">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-purple-500 text-[20px]">category</span>
               {t?.segmentation || 'Customer Segmentation'}
             </h3>
@@ -464,13 +464,13 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className="text-xs text-blue-600 dark:text-blue-400">$100-$1000</p>
             </div>
             
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/40 dark:to-slate-700/20 border border-slate-200 dark:border-slate-700">
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/40 dark:to-gray-700/20 border border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2 mb-2">
-                <span className="material-symbols-rounded text-slate-500">person</span>
-                <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">{t?.basic || 'Basic'}</span>
+                <span className="material-symbols-rounded text-gray-500">person</span>
+                <span className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">{t?.basic || 'Basic'}</span>
               </div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{segmentation.basic.length}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">&lt;$100</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{segmentation.basic.length}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">&lt;$100</p>
             </div>
             
             <div className="p-4 rounded-2xl bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/40 dark:to-red-900/20 border border-red-200 dark:border-red-800/50">
@@ -485,9 +485,9 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         </div>
 
         {/* Contact Preferences */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm group">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm group">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-teal-500 text-[20px]">contact_phone</span>
               {t?.contactPrefs || 'Contact Preferences'}
             </h3>
@@ -508,12 +508,12 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 <div key={pref.name} className="space-y-1">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-rounded text-[16px] text-slate-400">{icons[pref.name] || 'contact_page'}</span>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">{labels[pref.name] || pref.name}</span>
+                      <span className="material-symbols-rounded text-[16px] text-gray-400">{icons[pref.name] || 'contact_page'}</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{labels[pref.name] || pref.name}</span>
                     </div>
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{pref.count}</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{pref.count}</span>
                   </div>
-                  <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div 
                       className={`bg-${color}-500 h-2 rounded-full transition-all`}
                       style={{ width: `${percentage}%` }}
@@ -529,9 +529,9 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
       {/* Row 5: Recent Activity & Satisfaction */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Activity */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col group max-h-80">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col group max-h-80">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-indigo-500 text-[20px]">history</span>
               {t?.recentActivity || 'Recent Customer Activity'}
             </h3>
@@ -539,18 +539,18 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pe-1">
             {recentCustomers.slice(0, 5).map(customer => (
-              <div key={customer.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+              <div key={customer.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-full bg-${color}-100 dark:bg-${color}-900/50 flex items-center justify-center text-${color}-600 dark:text-${color}-400 font-bold text-xs`}>
                     {customer.name.substring(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{customer.name}</p>
-                    <p className="text-xs text-slate-500">{customer.code}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{customer.name}</p>
+                    <p className="text-xs text-gray-500">{customer.code}</p>
                   </div>
                 </div>
                 <div className="text-end">
-                  <p className="text-xs text-slate-400">{new Date(customer.lastVisit).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-400">{new Date(customer.lastVisit).toLocaleDateString()}</p>
                 </div>
               </div>
             ))}
@@ -558,9 +558,9 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         </div>
 
         {/* Satisfaction Metrics */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm group">
+        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm group">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-pink-500 text-[20px]">sentiment_satisfied</span>
               {t?.satisfaction || 'Satisfaction Metrics'}
             </h3>
@@ -572,21 +572,21 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <div className={`w-16 h-16 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-2`}>
                 <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{satisfactionMetrics.repeatRate.toFixed(0)}%</p>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t?.repeatRate || 'Repeat Rate'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t?.repeatRate || 'Repeat Rate'}</p>
             </div>
             
             <div className="text-center">
               <div className={`w-16 h-16 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-2`}>
                 <p className="text-lg font-bold text-blue-600 dark:text-blue-400">${satisfactionMetrics.avgOrderValue.toFixed(0)}</p>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t?.avgOrder || 'Avg Order'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t?.avgOrder || 'Avg Order'}</p>
             </div>
             
             <div className="text-center">
               <div className={`w-16 h-16 mx-auto rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-2`}>
                 <p className="text-xl font-bold text-orange-600 dark:text-orange-400">{satisfactionMetrics.returnRate.toFixed(1)}%</p>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t?.returnRate || 'Return Rate'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t?.returnRate || 'Return Rate'}</p>
             </div>
           </div>
         </div>
@@ -611,7 +611,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               totalPurchases: c.totalPurchases,
               points: c.points
             })), 'all_customers')}
-            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-rounded text-[18px]">download</span>
             {t?.exportCSV || 'Export'}
@@ -628,28 +628,28 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300 uppercase mb-2">{t?.active || 'Active'}</p>
               <p className="text-4xl font-bold text-emerald-900 dark:text-emerald-100">{activeCustomers}</p>
             </div>
-            <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-              <p className="text-sm font-bold text-slate-500 uppercase mb-2">{t?.inactive || 'Inactive'}</p>
-              <p className="text-4xl font-bold text-slate-900 dark:text-slate-100">{inactiveCustomers}</p>
+            <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+              <p className="text-sm font-bold text-gray-500 uppercase mb-2">{t?.inactive || 'Inactive'}</p>
+              <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">{inactiveCustomers}</p>
             </div>
           </div>
           
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {customers.slice(0, 20).map(customer => (
-              <div key={customer.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
+              <div key={customer.id} className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-900/50 flex items-center justify-center text-${color}-600 dark:text-${color}-400 font-bold text-sm`}>
                     {customer.name.substring(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-medium text-slate-900 dark:text-slate-100">{customer.name}</p>
-                    <p className="text-xs text-slate-500">{customer.code} • {customer.phone}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{customer.name}</p>
+                    <p className="text-xs text-gray-500">{customer.code} • {customer.phone}</p>
                   </div>
                 </div>
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   customer.status === 'active' 
                     ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                 }`}>
                   {customer.status === 'active' ? t?.active || 'Active' : t?.inactive || 'Inactive'}
                 </span>
@@ -675,7 +675,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               points: c.points,
               lastVisit: c.lastVisit
             })), 'top_customers')}
-            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-2"
+            className="px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-rounded text-[18px]">download</span>
             {t?.exportCSV || 'Export'}
@@ -684,19 +684,19 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
       >
         <div className="space-y-3">
           {topCustomers.map((customer, index) => (
-            <div key={customer.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors">
+            <div key={customer.id} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
               <div className="flex items-center gap-4 flex-1">
                 <div className={`w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 font-bold flex items-center justify-center shrink-0`}>
                   {index + 1}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900 dark:text-slate-100 truncate">{customer.name}</p>
-                  <p className="text-sm text-slate-500">{customer.code} • {customer.points} pts</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{customer.name}</p>
+                  <p className="text-sm text-gray-500">{customer.code} • {customer.points} pts</p>
                 </div>
               </div>
               <div className="text-end">
-                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">${customer.totalPurchases.toFixed(2)}</p>
-                <p className="text-xs text-slate-400">{t?.lastVisit || 'Last'}: {new Date(customer.lastVisit).toLocaleDateString()}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-gray-100">${customer.totalPurchases.toFixed(2)}</p>
+                <p className="text-xs text-gray-400">{t?.lastVisit || 'Last'}: {new Date(customer.lastVisit).toLocaleDateString()}</p>
               </div>
             </div>
           ))}
@@ -720,7 +720,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {segmentation.vip.slice(0, 10).map(c => (
                 <div key={c.id} className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/20 flex justify-between items-center">
-                  <span className="text-sm text-slate-900 dark:text-slate-100">{c.name}</span>
+                  <span className="text-sm text-gray-900 dark:text-gray-100">{c.name}</span>
                   <span className="text-sm font-bold text-amber-600">${c.totalPurchases.toFixed(2)}</span>
                 </div>
               ))}
@@ -737,10 +737,10 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               {segmentation.atRisk.slice(0, 10).map(c => (
                 <div key={c.id} className="p-2 rounded-lg bg-red-50 dark:bg-red-950/20 flex justify-between items-center">
                   <div>
-                    <span className="text-sm text-slate-900 dark:text-slate-100">{c.name}</span>
+                    <span className="text-sm text-gray-900 dark:text-gray-100">{c.name}</span>
                     <p className="text-xs text-red-500">{t?.lastVisit || 'Last visit'}: {new Date(c.lastVisit).toLocaleDateString()}</p>
                   </div>
-                  <span className="text-sm font-medium text-slate-500">${c.totalPurchases.toFixed(2)}</span>
+                  <span className="text-sm font-medium text-gray-500">${c.totalPurchases.toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -762,28 +762,28 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">{healthInsights.withInsurance}</p>
               <p className="text-sm text-blue-600">{healthInsights.insuranceRate.toFixed(1)}% of customers</p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <p className="text-sm font-bold text-slate-500 uppercase">{t?.withoutInsurance || 'Without Insurance'}</p>
-              <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{healthInsights.withoutInsurance}</p>
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-sm font-bold text-gray-500 uppercase">{t?.withoutInsurance || 'Without Insurance'}</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{healthInsights.withoutInsurance}</p>
             </div>
           </div>
           
           <div>
-            <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">{t?.chronicConditions || 'Chronic Conditions'}</h4>
+            <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">{t?.chronicConditions || 'Chronic Conditions'}</h4>
             <div className="space-y-2">
               {healthInsights.conditions.map(condition => {
                 const percentage = customers.length > 0 ? (condition.count / customers.length) * 100 : 0;
                 return (
-                  <div key={condition.name} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
-                    <span className="text-sm text-slate-700 dark:text-slate-300">{condition.name}</span>
+                  <div key={condition.name} className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{condition.name}</span>
                     <div className="flex items-center gap-3">
-                      <div className="w-24 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                      <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div 
                           className={`bg-${color}-500 h-2 rounded-full`}
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
-                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100 w-16 text-end">{condition.count}</span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-gray-100 w-16 text-end">{condition.count}</span>
                     </div>
                   </div>
                 );

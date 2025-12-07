@@ -70,19 +70,19 @@
 
       /* Dark Mode Variables */
       .dark {
-        --bg-primary: #0f172a;
-        --bg-secondary: #1e293b;
-        --bg-tertiary: #334155;
+        --bg-primary: #111827;
+        --bg-secondary: #1f2937;
+        --bg-tertiary: #374151;
         --bg-accent: #1e3a8a;
-        --bg-hover: #334155;
+        --bg-hover: #374151;
 
-        --text-primary: #f1f5f9;
-        --text-secondary: #cbd5e1;
-        --text-tertiary: #94a3b8;
-        --text-inverse: #0f172a;
+        --text-primary: #f3f4f6;
+        --text-secondary: #d1d5db;
+        --text-tertiary: #9ca3af;
+        --text-inverse: #111827;
 
-        --border-primary: #334155;
-        --border-secondary: #475569;
+        --border-primary: #374151;
+        --border-secondary: #4b5563;
         --border-accent: var(--primary-700);
 
         --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
@@ -153,7 +153,6 @@
       input[type="number"] {
         -moz-appearance: textfield;
       }
-
     </style>
     <script>
       tailwind.config = {
@@ -164,11 +163,11 @@
               // We will rely on dynamic classes for primary colors,
               // but define some surfaces here.
               surface: {
-                50: "#f8fafc",
-                100: "#f1f5f9",
-                200: "#e2e8f0",
-                800: "#1e293b",
-                900: "#0f172a",
+                50: "#f9fafb",
+                100: "#f3f4f6",
+                200: "#e5e7eb",
+                800: "#1f2937",
+                900: "#111827",
               },
             },
           },
@@ -190,7 +189,7 @@
     <link rel="stylesheet" href="/index.css" />
   </head>
   <body
-    class="bg-gray-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 transition-colors duration-300"
+    class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-50 transition-colors duration-300"
   >
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>

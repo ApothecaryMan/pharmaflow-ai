@@ -5,6 +5,8 @@ import { Sale, CartItem, Return } from '../types';
 import { ReturnModal } from './ReturnModal';
 import { DatePicker } from './DatePicker';
 import { createSearchRegex } from '../utils/searchUtils';
+import { useSmartDirection } from '../hooks/useSmartDirection';
+import { SearchInput } from './SearchInput';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -334,7 +336,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-medium tracking-tight">{t.title}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t.subtitle}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t.subtitle}</p>
         </div>
         
         {/* Total Revenue Card */}
@@ -345,22 +347,19 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="flex flex-wrap items-center gap-3 w-full sm:flex-1">
             <div className="relative group flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                    <span className="material-symbols-rounded text-[20px]">search</span>
-                </span>
-                <input
-                    type="text"
-                    placeholder={t.searchPlaceholder || "Search sales..."}
+                <SearchInput
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-full text-sm w-full focus:ring-2 focus:ring-blue-500/20 text-slate-900 dark:text-slate-100 placeholder-slate-400 transition-all"
+                    onSearchChange={setSearchTerm}
+                    placeholder={t.searchPlaceholder || "Search sales..."}
+                    className="ps-10"
+                    wrapperClassName="w-full"
                 />
             </div>
             
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 p-1 rounded-full border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-1 rounded-full border border-gray-200 dark:border-gray-700">
                 <DatePicker
                     value={startDate}
                     onChange={setStartDate}
@@ -370,7 +369,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                     locale={locale}
                     translations={datePickerTranslations}
                 />
-                <span className="text-slate-300 dark:text-slate-700 rtl:rotate-180">
+                <span className="text-gray-300 dark:text-gray-700 rtl:rotate-180">
                     <span className="material-symbols-rounded text-[16px]">arrow_forward</span>
                 </span>
                 <DatePicker
@@ -388,7 +387,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
         <button 
             onClick={exportToCSV}
             disabled={filteredSales.length === 0}
-            className={`px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 text-slate-700 dark:text-slate-200`}
+            className={`px-4 py-2.5 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 text-gray-700 dark:text-gray-200`}
         >
             <span className="material-symbols-rounded text-lg">download</span>
             <span className="hidden md:inline">{t.exportCSV}</span>
@@ -396,7 +395,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
       </div>
 
       {/* Table Card */}
-      <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col">
+      <div className="flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm flex flex-col">
         <div className="overflow-x-auto flex-1">
           <table className="w-full text-start border-collapse">
             <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>
@@ -407,7 +406,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                         draggable={true}
                         onDragStart={(e) => handleDragStart(e, col.key)}
                         onDragOver={(e) => handleDragOver(e, col.key)}
-                        className={`px-3 py-2 text-${col.key === 'actions' ? 'end' : 'start'} ${col.sortable ? 'cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-800' : 'cursor-move'} transition-colors`}
+                        className={`px-3 py-2 text-${col.key === 'actions' ? 'end' : 'start'} ${col.sortable ? 'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-800' : 'cursor-move'} transition-colors`}
                         onDoubleClick={() => col.sortable && handleSort(col.key)}
                     >
                         <div className={`flex items-center gap-1 ${col.key === 'actions' ? 'justify-end' : ''}`}>
@@ -420,16 +419,16 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {filteredSales.map((sale, index) => (
                 <React.Fragment key={sale.id}>
                 <tr 
-                    className={`border-b border-slate-100 dark:border-slate-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 transition-colors ${index % 2 === 0 ? 'bg-slate-50/30 dark:bg-slate-800/20' : ''} ${expandedSaleId === sale.id ? `bg-${color}-50/50 dark:bg-${color}-900/10` : ''}`}
+                    className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 transition-colors ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''} ${expandedSaleId === sale.id ? `bg-${color}-50/50 dark:bg-${color}-900/10` : ''}`}
                 >
                   {columns.map(col => {
                     if (col.key === 'id') {
                         return (
-                            <td key={col.key} className="px-3 py-2 font-mono text-xs text-slate-500">
+                            <td key={col.key} className="px-3 py-2 font-mono text-xs text-gray-500">
                                 #{sale.id}
                             </td>
                         );
@@ -437,10 +436,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                     if (col.key === 'date') {
                         return (
                             <td key={col.key} className="px-3 py-2">
-                                <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">
+                                <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                                     {new Date(sale.date).toLocaleDateString()}
                                 </div>
-                                <div className="text-xs text-slate-500 flex items-center gap-1">
+                                <div className="text-xs text-gray-500 flex items-center gap-1">
                                     {new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                     {sale.saleType === 'delivery' && (
                                         <span className="material-symbols-rounded text-[14px] text-blue-500" title="Delivery Order">local_shipping</span>
@@ -452,11 +451,11 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                     if (col.key === 'customer') {
                         return (
                             <td key={col.key} className="px-3 py-2">
-                                <div className="font-medium text-slate-900 dark:text-slate-100 text-sm">
+                                <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                                     {sale.customerName || "Guest"}
                                 </div>
                                 {sale.customerCode && (
-                                    <div className="text-xs text-slate-500">
+                                    <div className="text-xs text-gray-500">
                                         #{sale.customerCode}
                                     </div>
                                 )}
@@ -475,17 +474,17 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                     }
                     if (col.key === 'items') {
                         return (
-                            <td key={col.key} className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400">
+                            <td key={col.key} className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
                                 {sale.items.length} {t.items || "items"}
                             </td>
                         );
                     }
                     if (col.key === 'total') {
                         return (
-                            <td key={col.key} className="px-3 py-2 font-bold text-slate-900 dark:text-slate-100">
+                            <td key={col.key} className="px-3 py-2 font-bold text-gray-900 dark:text-gray-100">
                                 ${sale.total.toFixed(2)}
                                 {sale.deliveryFee && sale.deliveryFee > 0 && (
-                                    <div className="text-[10px] text-slate-400 font-normal">
+                                    <div className="text-[10px] text-gray-400 font-normal">
                                         +${sale.deliveryFee.toFixed(2)} delivery
                                     </div>
                                 )}
@@ -521,33 +520,33 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                 </tr>
                 {expandedSaleId === sale.id && (
                     <tr className="animate-fade-in">
-                        <td colSpan={columns.length} className="p-0 border-b border-slate-100 dark:border-slate-800">
+                        <td colSpan={columns.length} className="p-0 border-b border-gray-100 dark:border-gray-800">
                             <div className={`bg-${color}-50/30 dark:bg-${color}-900/5 p-3 flex flex-col md:flex-row gap-4 items-start`}>
                                 {/* Items List - Grid Layout for Compactness */}
                                 <div className="flex-1 w-full">
-                                    <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider flex items-center gap-2">
+                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-wider flex items-center gap-2">
                                         <span className="material-symbols-rounded text-[14px]">shopping_bag</span>
-                                        {t.modal.items} <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 rounded text-[9px]">{sale.items.length}</span>
+                                        {t.modal.items} <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 rounded text-[9px]">{sale.items.length}</span>
                                     </h4>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                         {sale.items.map((item, idx) => {
                                             const effectivePrice = (item.isUnit && item.unitsPerPack) ? item.price / item.unitsPerPack : item.price;
                                             return (
-                                                <div key={idx} className="flex items-center gap-2 p-1.5 rounded border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:border-slate-200 dark:hover:border-slate-700 transition-colors">
-                                                    <div className="h-8 w-8 rounded bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400 shrink-0">
+                                                <div key={idx} className="flex items-center gap-2 p-1.5 rounded border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
+                                                    <div className="h-8 w-8 rounded bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-xs font-bold text-gray-400 shrink-0">
                                                         {item.quantity}
                                                     </div>
                                                     <div className="min-w-0 flex-1">
-                                                        <div className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate flex items-center gap-1">
+                                                        <div className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate flex items-center gap-1">
                                                             {item.name} {item.dosageForm ? `(${item.dosageForm})` : ''}
                                                             {item.isUnit && <span className="text-[8px] bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1 rounded font-bold">UNIT</span>}
                                                         </div>
-                                                        <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                                                        <div className="text-[10px] text-gray-500 flex items-center gap-1">
                                                             ${effectivePrice.toFixed(2)}
                                                             {item.discount && item.discount > 0 ? <span className="text-green-600 dark:text-green-400">(-{item.discount}%)</span> : ''}
                                                         </div>
                                                     </div>
-                                                    <div className="text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">
+                                                    <div className="text-xs font-bold text-gray-700 dark:text-gray-300 shrink-0">
                                                         ${((effectivePrice * item.quantity) * (1 - (item.discount || 0)/100)).toFixed(2)}
                                                     </div>
                                                 </div>
@@ -557,9 +556,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                 </div>
 
                                 {/* Summary & Actions - Compact Sidebar */}
-                                <div className="w-full md:w-56 shrink-0 flex flex-col gap-3 md:border-s border-slate-100 dark:border-slate-800 md:ps-4">
+                                <div className="w-full md:w-56 shrink-0 flex flex-col gap-3 md:border-s border-gray-100 dark:border-gray-800 md:ps-4">
                                     <div className="space-y-1.5">
-                                        <div className="flex justify-between text-xs text-slate-500">
+                                        <div className="flex justify-between text-xs text-gray-500">
                                             <span>{t.modal.subtotal}</span>
                                             <span>${(sale.subtotal || 0).toFixed(2)}</span>
                                         </div>
@@ -570,12 +569,12 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                             </div>
                                         )}
                                         {sale.deliveryFee && sale.deliveryFee > 0 && (
-                                            <div className="flex justify-between text-xs text-slate-500">
+                                            <div className="flex justify-between text-xs text-gray-500">
                                                 <span>Delivery</span>
                                                 <span>+${sale.deliveryFee.toFixed(2)}</span>
                                             </div>
                                         )}
-                                        <div className="flex justify-between text-sm font-bold text-slate-900 dark:text-white pt-1.5 border-t border-slate-100 dark:border-slate-800 border-dashed">
+                                        <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white pt-1.5 border-t border-gray-100 dark:border-gray-800 border-dashed">
                                             <span>{t.modal.total}</span>
                                             <span>${sale.total.toFixed(2)}</span>
                                         </div>
@@ -608,7 +607,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
               ))}
               {filteredSales.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-slate-400">
+                  <td colSpan={6} className="p-12 text-center text-gray-400">
                     {t.noResults}
                   </td>
                 </tr>
@@ -620,13 +619,13 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
 
       {/* Detail Modal */}
       {selectedSale && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+           <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
               <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
                   <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100`}>
                     {t.modal.title}
                   </h3>
-                  <button onClick={() => setSelectedSale(null)} className="text-slate-400 hover:text-slate-600">
+                  <button onClick={() => setSelectedSale(null)} className="text-gray-400 hover:text-gray-600">
                     <span className="material-symbols-rounded">close</span>
                   </button>
               </div>
@@ -634,24 +633,24 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
               <div className="p-5 overflow-y-auto space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                          <p className="text-slate-500">{t.modal.id}</p>
-                          <p className="font-mono text-slate-700 dark:text-slate-300 text-xs">{selectedSale.id}</p>
+                          <p className="text-gray-500">{t.modal.id}</p>
+                          <p className="font-mono text-gray-700 dark:text-gray-300 text-xs">{selectedSale.id}</p>
                       </div>
                       <div className="text-end">
-                          <p className="text-slate-500">{t.modal.date}</p>
-                          <p className="font-medium text-slate-700 dark:text-slate-300">{new Date(selectedSale.date).toLocaleString()}</p>
+                          <p className="text-gray-500">{t.modal.date}</p>
+                          <p className="font-medium text-gray-700 dark:text-gray-300">{new Date(selectedSale.date).toLocaleString()}</p>
                       </div>
                       <div className="col-span-2">
-                          <p className="text-slate-500">{t.modal.customer}</p>
+                          <p className="text-gray-500">{t.modal.customer}</p>
                           <div className="flex justify-between items-center">
-                            <p className="font-bold text-base text-slate-800 dark:text-slate-200">{selectedSale.customerName || 'Guest'}</p>
-                            {selectedSale.customerCode && <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-500">#{selectedSale.customerCode}</span>}
+                            <p className="font-bold text-base text-gray-800 dark:text-gray-200">{selectedSale.customerName || 'Guest'}</p>
+                            {selectedSale.customerCode && <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-500">#{selectedSale.customerCode}</span>}
                           </div>
                       </div>
                       <div className="col-span-2">
-                          <p className="text-slate-500">{t.modal.payment}</p>
-                          <p className="font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                            <span className="material-symbols-rounded text-[18px] text-slate-400">
+                          <p className="text-gray-500">{t.modal.payment}</p>
+                          <p className="font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                            <span className="material-symbols-rounded text-[18px] text-gray-400">
                               {selectedSale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
                             </span>
                             {selectedSale.paymentMethod === 'visa' ? t.visa : t.cash}
@@ -659,24 +658,24 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                       </div>
                   </div>
 
-                  <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
-                      <p className="text-xs font-bold text-slate-400 uppercase mb-2">{t.modal.items}</p>
+                  <div className="border-t border-gray-100 dark:border-gray-800 pt-3">
+                      <p className="text-xs font-bold text-gray-400 uppercase mb-2">{t.modal.items}</p>
                       <div className="space-y-2">
                           {selectedSale.items.map((item, idx) => {
                              const effectivePrice = (item.isUnit && item.unitsPerPack) ? item.price / item.unitsPerPack : item.price;
                              return (
-                              <div key={idx} className="flex justify-between items-center text-sm p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                              <div key={idx} className="flex justify-between items-center text-sm p-2 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                                   <div>
-                                      <p className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-1 item-name">
+                                      <p className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1 item-name">
                                         {item.name} {item.dosageForm ? `(${item.dosageForm})` : ''}
                                         {item.isUnit && <span className="text-[9px] bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1 rounded font-bold">UNIT</span>}
                                       </p>
-                                      <p className="text-xs text-slate-500">
+                                      <p className="text-xs text-gray-500">
                                           {t.modal.qty}: {item.quantity} x ${effectivePrice.toFixed(2)}
                                           {item.discount && item.discount > 0 ? ` (-${item.discount}%)` : ''}
                                       </p>
                                   </div>
-                                  <div className="font-medium text-slate-700 dark:text-slate-300">
+                                  <div className="font-medium text-gray-700 dark:text-gray-300">
                                       ${((effectivePrice * item.quantity) * (1 - (item.discount || 0)/100)).toFixed(2)}
                                   </div>
                               </div>
@@ -685,9 +684,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                       </div>
                   </div>
 
-                  <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-2 text-sm">
+                  <div className="border-t border-gray-100 dark:border-gray-800 pt-3 space-y-2 text-sm">
                        {selectedSale.subtotal !== undefined && (
-                           <div className="flex justify-between text-slate-500">
+                           <div className="flex justify-between text-gray-500">
                                <span>{t.modal.subtotal}</span>
                                <span>${selectedSale.subtotal.toFixed(2)}</span>
                            </div>
@@ -699,19 +698,19 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                            </div>
                        )}
                        {selectedSale.deliveryFee && selectedSale.deliveryFee > 0 && (
-                           <div className="flex justify-between text-slate-500">
+                           <div className="flex justify-between text-gray-500">
                                <span>Delivery Fee</span>
                                <span>+${selectedSale.deliveryFee.toFixed(2)}</span>
                            </div>
                        )}
-                       <div className="flex justify-between text-lg font-bold text-slate-900 dark:text-white pt-2 border-t border-slate-100 dark:border-slate-800">
+                       <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-100 dark:border-gray-800">
                            <span>{t.modal.total}</span>
                            <span>${selectedSale.total.toFixed(2)}</span>
                        </div>
                   </div>
               </div>
 
-              <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex gap-3">
+              <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/50 flex gap-3">
                   {!selectedSale.hasReturns && (
                     <button 
                       onClick={() => setReturnModalOpen(true)}

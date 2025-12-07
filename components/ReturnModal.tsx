@@ -157,19 +157,19 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-gray-900/60 dark:bg-gray-950/80 backdrop-blur-sm"
         onClick={handleClose}
       />
       
       {/* Modal */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-in">
+      <div className="relative w-full max-w-2xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-in">
         {/* Header */}
-        <div className={`flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800 bg-${color}-50 dark:bg-${color}-950/20`}>
+        <div className={`flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-${color}-50 dark:bg-${color}-950/20`}>
           <div>
             <h2 className={`text-xl font-bold text-${color}-900 dark:text-${color}-100`}>
               {t.returns.processReturn}
             </h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-gray-500 mt-1">
               {step === 1 && t.returns.step1}
               {step === 2 && t.returns.step2}
               {step === 3 && t.returns.step3}
@@ -178,14 +178,14 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           </div>
           <button
             onClick={handleClose}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
           >
             <span className="material-symbols-rounded">close</span>
           </button>
         </div>
 
         {/* Progress Indicator */}
-        <div className="flex items-center justify-center gap-2 p-4 bg-slate-50 dark:bg-slate-950/50">
+        <div className="flex items-center justify-center gap-2 p-4 bg-gray-50 dark:bg-gray-950/50">
           {[1, 2, 3, 4].map(s => (
             <div key={s} className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
@@ -193,11 +193,11 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                   ? `bg-${color}-600 text-white` 
                   : s < step 
                     ? `bg-${color}-200 dark:bg-${color}-900/50 text-${color}-700 dark:text-${color}-300`
-                    : 'bg-slate-200 dark:bg-slate-800 text-slate-400'
+                    : 'bg-gray-200 dark:bg-gray-800 text-gray-400'
               }`}>
                 {s}
               </div>
-              {s < 4 && <div className={`w-12 h-0.5 ${s < step ? `bg-${color}-600` : 'bg-slate-200 dark:bg-slate-800'}`} />}
+              {s < 4 && <div className={`w-12 h-0.5 ${s < step ? `bg-${color}-600` : 'bg-gray-200 dark:bg-gray-800'}`} />}
             </div>
           ))}
         </div>
@@ -207,7 +207,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           {/* Step 1: Select Return Type */}
           {step === 1 && (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 {t.returns.selectReturnType}
               </p>
               
@@ -216,18 +216,18 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                 className={`w-full p-4 rounded-2xl border-2 transition-all text-left ${
                   returnType === 'full'
                     ? `border-${color}-500 bg-${color}-50 dark:bg-${color}-950/20`
-                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                    : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
-                    returnType === 'full' ? `border-${color}-500` : 'border-slate-300'
+                    returnType === 'full' ? `border-${color}-500` : 'border-gray-300'
                   }`}>
                     {returnType === 'full' && <div className={`w-3 h-3 rounded-full bg-${color}-500`} />}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-slate-900 dark:text-slate-100">{t.returns.fullReturn}</h3>
-                    <p className="text-sm text-slate-500 mt-1">{t.returns.fullReturnDesc}</p>
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100">{t.returns.fullReturn}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{t.returns.fullReturnDesc}</p>
                   </div>
                 </div>
               </button>
@@ -237,18 +237,18 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                 className={`w-full p-4 rounded-2xl border-2 transition-all text-left ${
                   returnType === 'partial'
                     ? `border-${color}-500 bg-${color}-50 dark:bg-${color}-950/20`
-                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                    : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
-                    returnType === 'partial' ? `border-${color}-500` : 'border-slate-300'
+                    returnType === 'partial' ? `border-${color}-500` : 'border-gray-300'
                   }`}>
                     {returnType === 'partial' && <div className={`w-3 h-3 rounded-full bg-${color}-500`} />}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-slate-900 dark:text-slate-100">{t.returns.partialReturn}</h3>
-                    <p className="text-sm text-slate-500 mt-1">{t.returns.partialReturnDesc}</p>
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100">{t.returns.partialReturn}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{t.returns.partialReturnDesc}</p>
                   </div>
                 </div>
               </button>
@@ -258,18 +258,18 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                 className={`w-full p-4 rounded-2xl border-2 transition-all text-left ${
                   returnType === 'unit'
                     ? `border-${color}-500 bg-${color}-50 dark:bg-${color}-950/20`
-                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                    : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
-                    returnType === 'unit' ? `border-${color}-500` : 'border-slate-300'
+                    returnType === 'unit' ? `border-${color}-500` : 'border-gray-300'
                   }`}>
                     {returnType === 'unit' && <div className={`w-3 h-3 rounded-full bg-${color}-500`} />}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-slate-900 dark:text-slate-100">{t.returns.unitReturn}</h3>
-                    <p className="text-sm text-slate-500 mt-1">{t.returns.unitReturnDesc}</p>
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100">{t.returns.unitReturn}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{t.returns.unitReturnDesc}</p>
                   </div>
                 </div>
               </button>
@@ -279,7 +279,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           {/* Step 2: Select Items (for partial/unit returns) */}
           {step === 2 && returnType !== 'full' && (
             <div className="space-y-3">
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 {t.returns.selectItems} ({selectedItems.size} {t.returns.itemsSelected})
               </p>
               
@@ -300,7 +300,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                     className={`p-4 rounded-2xl border-2 transition-all ${
                       isSelected
                         ? `border-${color}-500 bg-${color}-50 dark:bg-${color}-950/20`
-                        : 'border-slate-200 dark:border-slate-800'
+                        : 'border-gray-200 dark:border-gray-800'
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -311,7 +311,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                         className="mt-1"
                       />
                       <div className="flex-1">
-                        <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100">
                           {item.name}
                           {item.isUnit && <span className="ml-2 text-xs bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-2 py-0.5 rounded font-bold">UNIT</span>}
                           {returnedQty > 0 && (
@@ -320,19 +320,19 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             </span>
                           )}
                         </h4>
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-gray-500">
                           ${((item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price).toFixed(2))} × {availableQty} available
                         </p>
                         
                         {isSelected && (
                           <div className="mt-3 flex items-center gap-3">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                               {t.returns.returnQuantity}:
                             </label>
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => updateItemQuantity(item.id, Math.max(1, selectedQty - 1))}
-                                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center"
+                                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center"
                               >
                                 <span className="material-symbols-rounded text-lg">remove</span>
                               </button>
@@ -342,15 +342,15 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                                 max={availableQty}
                                 value={selectedQty}
                                 onChange={(e) => updateItemQuantity(item.id, Math.min(availableQty, Math.max(1, parseInt(e.target.value) || 1)))}
-                                className="w-16 px-2 py-1 text-center rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
+                                className="w-16 px-2 py-1 text-center rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800"
                               />
                               <button
                                 onClick={() => updateItemQuantity(item.id, Math.min(availableQty, selectedQty + 1))}
-                                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center"
+                                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center"
                               >
                                 <span className="material-symbols-rounded text-lg">add</span>
                               </button>
-                              <span className="text-sm text-slate-500">/ {availableQty} {t.returns.maxQuantity}</span>
+                              <span className="text-sm text-gray-500">/ {availableQty} {t.returns.maxQuantity}</span>
                             </div>
                           </div>
                         )}
@@ -365,19 +365,19 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           {/* Step 2 for Full Return - Just show summary */}
           {step === 2 && returnType === 'full' && (
             <div className="space-y-3">
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 {t.returns.totalItems}: {sale.items.length}
               </p>
               {sale.items.map(item => (
-                <div key={item.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                <div key={item.id} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                   <div className="flex justify-between items-center">
                     <div>
-                      <h4 className="font-medium text-slate-900 dark:text-slate-100">{item.name}</h4>
-                      <p className="text-sm text-slate-500">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100">{item.name}</h4>
+                      <p className="text-sm text-gray-500">
                         {item.quantity} × ${((item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price).toFixed(2))}
                       </p>
                     </div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       ${(item.price * item.quantity * (1 - (item.discount || 0) / 100)).toFixed(2)}
                     </span>
                   </div>
@@ -390,13 +390,13 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           {step === 3 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {t.returns.returnReason} *
                 </label>
                 <select
                   value={returnReason}
                   onChange={(e) => setReturnReason(e.target.value as ReturnReason)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 transition-all"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                 >
                   <option value="customer_request">{t.returns.reasons.customer_request}</option>
@@ -409,14 +409,14 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {t.returns.notes}
                 </label>
                 <textarea
                   value={returnNotes}
                   onChange={(e) => setReturnNotes(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 transition-all resize-none"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 transition-all resize-none"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   placeholder={t.returns.notes}
                 />
@@ -428,23 +428,23 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           {step === 4 && (
             <div className="space-y-4">
               <div className={`p-4 rounded-2xl bg-${color}-50 dark:bg-${color}-950/20 border border-${color}-100 dark:border-${color}-900`}>
-                <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-2">{t.returns.reviewReturn}</h3>
+                <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-2">{t.returns.reviewReturn}</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">{t.returns.returnType}:</span>
-                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                    <span className="text-gray-600 dark:text-gray-400">{t.returns.returnType}:</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
                       {returnType === 'full' && t.returns.fullReturn}
                       {returnType === 'partial' && t.returns.partialReturn}
                       {returnType === 'unit' && t.returns.unitReturn}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">{t.returns.returnReason}:</span>
-                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                    <span className="text-gray-600 dark:text-gray-400">{t.returns.returnReason}:</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
                       {t.returns.reasons[returnReason]}
                     </span>
                   </div>
-                  <div className="flex justify-between text-lg font-bold pt-2 border-t border-slate-200 dark:border-slate-700">
+                  <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
                     <span className={`text-${color}-900 dark:text-${color}-100`}>{t.returns.refundAmount}:</span>
                     <span className={`text-${color}-900 dark:text-${color}-100`}>${calculateRefund.toFixed(2)}</span>
                   </div>
@@ -452,15 +452,15 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               </div>
 
               <div className="space-y-2">
-                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">{t.returns.itemsToReturn}:</h4>
+                <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t.returns.itemsToReturn}:</h4>
                 {(returnType === 'full' ? sale.items : Array.from(selectedItems.entries()).map(([id, qty]) => {
                   const item = sale.items.find(i => i.id === id)!;
                   return { ...item, quantity: qty };
                 })).map(item => (
-                  <div key={item.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
+                  <div key={item.id} className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
                     <div>
-                      <p className="font-medium text-sm text-slate-900 dark:text-slate-100">{item.name}</p>
-                      <p className="text-xs text-slate-500">{item.quantity} {item.isUnit ? 'units' : 'packs'} {t.returns.willBeRestored}</p>
+                      <p className="font-medium text-sm text-gray-900 dark:text-gray-100">{item.name}</p>
+                      <p className="text-xs text-gray-500">{item.quantity} {item.isUnit ? 'units' : 'packs'} {t.returns.willBeRestored}</p>
                     </div>
                   </div>
                 ))}
@@ -470,11 +470,11 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex gap-3">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/50 flex gap-3">
           {step > 1 && (
             <button
               onClick={handleBack}
-              className="px-6 py-2.5 rounded-full font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors"
+              className="px-6 py-2.5 rounded-full font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-colors"
             >
               {t.returns.back}
             </button>
@@ -482,7 +482,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           
           <button
             onClick={handleClose}
-            className="px-6 py-2.5 rounded-full font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="px-6 py-2.5 rounded-full font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             {t.returns.cancelReturn}
           </button>
