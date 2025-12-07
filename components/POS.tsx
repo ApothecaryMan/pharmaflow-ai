@@ -31,6 +31,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
     updateTab,
     renameTab,
     togglePin,
+    reorderTabs,
     maxTabs
   } = usePOSTabs();
 
@@ -703,6 +704,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
         onTabAdd={addTab}
         onTabRename={renameTab}
         onTogglePin={togglePin}
+        onTabReorder={reorderTabs}
         maxTabs={maxTabs}
         color={color}
       />

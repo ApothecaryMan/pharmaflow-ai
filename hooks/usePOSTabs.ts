@@ -94,11 +94,38 @@ export const usePOSTabs = () => {
     updateTab(tabId, { name: newName });
   }, [updateTab]);
 
+  // Reorder tabs
+  const reorderTabs = useCallback((newOrder: SaleTab[]) => {
+    setTabs(newOrder);
+  }, []);
+
   // Toggle pin
   const togglePin = useCallback((tabId: string) => {
-    setTabs(prev => prev.map(tab => 
-      tab.id === tabId ? { ...tab, isPinned: !tab.isPinned } : tab
-    ));
+    setTabs(prev => {
+      // 1. Toggle pin state
+      const updated = prev.map(tab => 
+        tab.id === tabId ? { ...tab, isPinned: !tab.isPinned } : tab
+      );
+      
+      // 2. Sort: Pinned first, then Unpinned
+      // Maintaining relative order within groups
+      // Except newly pinned entries should theoretically settle at the end of pinned group
+      // But a simple stable sort based on isPinned is usually sufficient if we want them at the end of the group?
+      // JS sort is stable in modern browsers.
+      // false < true ? No, we want Pinned (true) first.
+      
+      // Separate groups to be explicit
+      const pinned = updated.filter(t => t.isPinned);
+      const unpinned = updated.filter(t => !t.isPinned);
+      
+      // If we want the newly pinned item to be *last* in the pinned list, 
+      // strict separation preserves the original relative order (which puts it at the end of pinned if it was after the others).
+      // Wait, if I pin the *last* tab, it becomes the last pinned tab.
+      // If I pin the *first* unpinned tab, it becomes the last pinned tab.
+      // This is exactly "after other pined".
+      
+      return [...pinned, ...unpinned];
+    });
   }, []);
 
   // Get active tab
@@ -113,6 +140,7 @@ export const usePOSTabs = () => {
     switchTab,
     updateTab,
     renameTab,
+    reorderTabs,
     togglePin,
     maxTabs: MAX_TABS
   };
