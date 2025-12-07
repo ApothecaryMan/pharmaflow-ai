@@ -129,16 +129,16 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
     { id: 'All', label: t.categories.all },
     { id: 'Medicine', label: t.categories.medicine },
     { id: 'Cosmetics', label: t.categories.cosmetics },
-    { id: 'Non-Medicine', label: t.categories.nonMedicine },
+    { id: 'General', label: t.categories.general },
   ];
 
   // Helper to map specific categories to broad groups
   const getBroadCategory = (category: string): string => {
     const cosmetics = ['Skin Care', 'Personal Care'];
-    const nonMedicine = ['Medical Equipment', 'Medical Supplies', 'Baby Care'];
+    const general = ['Medical Equipment', 'Medical Supplies', 'Baby Care'];
     
     if (cosmetics.includes(category)) return 'Cosmetics';
-    if (nonMedicine.includes(category)) return 'Non-Medicine';
+    if (general.includes(category)) return 'General';
     return 'Medicine';
   };
 

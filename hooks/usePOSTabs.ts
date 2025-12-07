@@ -54,34 +54,28 @@ export const usePOSTabs = () => {
   }, [tabs.length]);
 
   // Remove tab
+  // Remove tab
   const removeTab = useCallback((tabId: string) => {
-    setTabs(prev => {
-      const tabToRemove = prev.find(t => t.id === tabId);
-      
-      // Warn if tab has items - REMOVED per user request
-      /* if (tabToRemove && tabToRemove.cart.length > 0) {
-        if (!window.confirm('This tab has items. Are you sure you want to close it?')) {
-          return prev;
-        }
-      } */
+    // We use current tabs state directly to calculate next state
+    // preventing side effects inside the setter
+    const newTabs = tabs.filter(t => t.id !== tabId);
+    
+    // If no tabs left, create a new one
+    if (newTabs.length === 0) {
+      const newTab = createNewTab(1);
+      setTabs([newTab]);
+      setActiveTabId(newTab.id);
+      return;
+    }
 
-      const newTabs = prev.filter(t => t.id !== tabId);
-      
-      // If no tabs left, create a new one
-      if (newTabs.length === 0) {
-        const newTab = createNewTab(1);
-        setActiveTabId(newTab.id);
-        return [newTab];
-      }
+    setTabs(newTabs);
 
-      // If active tab was removed, switch to first tab
-      if (activeTabId === tabId) {
-        setActiveTabId(newTabs[0].id);
-      }
-
-      return newTabs;
-    });
-  }, [activeTabId]);
+    // If active tab was removed, switch to first tab
+    // We check against the current activeTabId
+    if (activeTabId === tabId) {
+      setActiveTabId(newTabs[0].id);
+    }
+  }, [tabs, activeTabId]);
 
   // Switch tab
   const switchTab = useCallback((tabId: string) => {

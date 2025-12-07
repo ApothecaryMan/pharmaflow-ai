@@ -1,20 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, Return, Customer } from './types';
-import { Dashboard } from './components/Dashboard';
-import { Inventory } from './components/Inventory';
-import { POS } from './components/POS';
-import { SalesHistory } from './components/SalesHistory';
-import { ReturnHistory } from './components/ReturnHistory';
-import { Suppliers } from './components/Suppliers';
-import { Purchases } from './components/Purchases';
-import { BarcodeStudio } from './components/BarcodeStudio';
-import { CustomerManagement } from './components/CustomerManagement';
-import { CustomerOverview } from './components/CustomerOverview';
 import { Toast } from './components/Toast';
 import { TRANSLATIONS } from './translations';
 import { PHARMACY_MENU } from './menuData';
 import { SidebarMenu } from './components/SidebarMenu';
+import { SidebarContent } from './components/SidebarContent';
 import { Navbar } from './components/Navbar';
+import { PAGE_REGISTRY } from './pageRegistry';
 import { useTheme } from './hooks/useTheme';
 
 // Inventory Generator
@@ -415,9 +407,31 @@ const App: React.FC = () => {
     setTip(tips[Math.floor(Math.random() * tips.length)]);
   }, []);
 
+  // --- Cross-Tab Synchronization ---
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'pharma_inventory' && e.newValue) {
+            setInventory(JSON.parse(e.newValue));
+        } else if (e.key === 'pharma_sales' && e.newValue) {
+            setSales(JSON.parse(e.newValue));
+        } else if (e.key === 'pharma_customers' && e.newValue) {
+            setCustomers(JSON.parse(e.newValue));
+        } else if (e.key === 'pharma_returns' && e.newValue) {
+            setReturns(JSON.parse(e.newValue));
+        } else if (e.key === 'pharma_purchases' && e.newValue) {
+            setPurchases(JSON.parse(e.newValue));
+        } else if (e.key === 'pharma_suppliers' && e.newValue) {
+            setSuppliers(JSON.parse(e.newValue));
+        }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Drug Management
   const handleAddDrug = (drug: Drug) => {
-    setInventory([...inventory, drug]);
+    setInventory(prev => [...prev, drug]);
   };
 
   const handleUpdateDrug = (drug: Drug) => {
@@ -507,18 +521,81 @@ const App: React.FC = () => {
       return drug;
     }));
 
-    setSales([...sales, newSale]);
+    // Calculate Loyalty Points
+    
+    // 1. Total Purchase Rewards
+    let totalRate = 0;
+    if (saleData.total > 20000) totalRate = 0.05;
+    else if (saleData.total > 10000) totalRate = 0.04;
+    else if (saleData.total > 5000) totalRate = 0.03;
+    else if (saleData.total > 1000) totalRate = 0.02;
+    else if (saleData.total > 100) totalRate = 0.01;
+    
+    // Keep decimal precision for total points
+    const totalPoints = saleData.total * totalRate;
+
+    // 2. Single-Product Rewards
+    let itemPoints = 0;
+    saleData.items.forEach(item => {
+      let itemRate = 0;
+      // Use effective price (considering units)
+      let price = item.price;
+      if (item.isUnit && item.unitsPerPack) {
+         price = item.price / item.unitsPerPack;
+      }
+      
+      // Check thresholds based on Unit Price
+      if (price > 20000) itemRate = 0.15;
+      else if (price > 10000) itemRate = 0.12;
+      else if (price > 5000) itemRate = 0.10;
+      else if (price > 1000) itemRate = 0.05;
+      else if (price > 500) itemRate = 0.03;
+      else if (price > 100) itemRate = 0.02;
+
+      if (itemRate > 0) {
+        // Keep decimal precision for item points
+        itemPoints += price * item.quantity * itemRate;
+      }
+    });
+
+    // Round the final result to 1 decimal place or nearest integer as preferred. 
+    // User example showed 1972.4, so we'll keep 1 decimal place for accuracy in state, 
+    // but maybe display as integer or float. Let's store as float for now.
+    const rawPoints = totalPoints + itemPoints;
+    const pointsEarned = parseFloat(rawPoints.toFixed(1)); 
+
+    console.log('DEBUG: Points Calculation', { 
+      total: saleData.total, 
+      totalRate, 
+      totalPoints, 
+      itemPoints, 
+      final: pointsEarned 
+    });
+
+    // Update customer points if a customer is associated
+    if (saleData.customerCode || saleData.customerName !== 'Guest Customer') {
+      setCustomers(prev => prev.map(c => {
+        if ((saleData.customerCode && (c.code === saleData.customerCode || c.serialId?.toString() === saleData.customerCode)) || 
+            (!saleData.customerCode && c.name === saleData.customerName)) {
+          console.log('DEBUG: Updating Customer Points', { name: c.name, oldPoints: c.points, newPoints: (c.points || 0) + pointsEarned });
+          return { ...c, points: (c.points || 0) + pointsEarned };
+        }
+        return c;
+      }));
+    }
+
+    setSales(prev => [...prev, newSale]);
     
     // Show success notification
     setToast({
-      message: `Order #${serialId} completed successfully!`,
+      message: `Order #${serialId} completed! ${pointsEarned > 0 ? `Earned ${pointsEarned} points.` : ''}`,
       type: 'success'
     });
   };
 
   const handleProcessReturn = (returnData: Return) => {
     // Add return record
-    setReturns([returnData, ...returns]);
+    setReturns(prev => [returnData, ...prev]);
     
     // Update sale record
     setSales(prev => prev.map(sale => {
@@ -572,51 +649,55 @@ const App: React.FC = () => {
     });
   };
 
+  // Enrich customers with sales data (Total Purchases & Last Visit)
+  const enrichedCustomers = useMemo(() => {
+    return customers.map(customer => {
+      const customerSales = sales.filter(s => 
+        (s.customerCode && (s.customerCode === customer.code || s.customerCode === customer.serialId?.toString())) ||
+        (!s.customerCode && s.customerName === customer.name)
+      );
+
+      const totalPurchases = customerSales.reduce((sum, sale) => sum + (sale.netTotal ?? sale.total), 0);
+      
+      // Find latest sale date
+      let lastVisit = customer.lastVisit;
+      if (customerSales.length > 0) {
+        const sortedSales = [...customerSales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        lastVisit = sortedSales[0].date;
+      }
+
+      // console.log('DEBUG: Enriched Customer', { name: customer.name, points: customer.points, totalPurchases });
+
+      return {
+        ...customer,
+        totalPurchases,
+        lastVisit
+      };
+    });
+  }, [customers, sales]);
+
   const [dashboardSubView, setDashboardSubView] = useState<string>('dashboard');
 
-  const SidebarContent = ({ isMobile = false }) => {
-    return (
-    <>
+  const handleViewChange = useCallback((viewId: string) => {
+    if (activeModule === 'dashboard') {
+      // Check if this viewId exists in PAGE_REGISTRY (meaning it's a real page)
+      // If yes, navigate to it. If no, it's a dashboard sub-view.
+      if (PAGE_REGISTRY[viewId]) {
+        setView(viewId as ViewState);
+      } else {
+        setDashboardSubView(viewId);
+        setView('dashboard');
+      }
+    } else {
+      setView(viewId as ViewState);
+    }
+    setMobileMenuOpen(false);
+  }, [activeModule]);
 
-      <SidebarMenu 
-        menuItems={PHARMACY_MENU}
-        activeModule={activeModule}
-        currentView={activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view}
-        onNavigate={(viewId) => {
-          setView(viewId as ViewState);
-          setMobileMenuOpen(false);
-        }}
-        onViewChange={(viewId) => {
-          if (activeModule === 'dashboard') {
-            if (viewId === 'customer-overview') {
-              setView('customer-overview');
-            } else {
-              setDashboardSubView(viewId);
-              setView('dashboard');
-            }
-          } else {
-            setView(viewId as ViewState);
-          }
-          setMobileMenuOpen(false);
-        }}
-        isMobile={isMobile}
-        theme={theme.primary}
-        translations={t}
-        language={language}
-      />
-
-
-      {/* Dynamic Theme & Dark Mode Controls - Unified Block */}
-      <div className="mt-auto space-y-4 pt-4">
-
-        
-        <div className="px-4 pb-2 text-center text-[10px] text-slate-400">
-          <p>{tip}</p>
-        </div>
-      </div>
-    </>
-    );
-  };
+  const handleNavigate = useCallback((viewId: string) => {
+    setView(viewId as ViewState);
+    setMobileMenuOpen(false);
+  }, []);
 
   return (
     <ContextMenuProvider>
@@ -700,7 +781,17 @@ const App: React.FC = () => {
             backgroundColor: 'var(--bg-secondary)'
           }}
         >
-          <SidebarContent />
+          <SidebarContent 
+            activeModule={activeModule}
+            view={view}
+            dashboardSubView={dashboardSubView}
+            onNavigate={handleNavigate}
+            onViewChange={handleViewChange}
+            theme={theme}
+            t={t}
+            language={language}
+            tip={tip}
+          />
         </aside>
 
         {/* Mobile Drawer */}
@@ -714,7 +805,7 @@ const App: React.FC = () => {
             {/* Panel */}
             <aside className="relative w-80 max-w-[85vw] flex flex-col bg-white dark:bg-slate-900 h-full shadow-2xl overflow-y-auto">
               {/* Mobile Module Selector */}
-              <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+              <div className="p-4 border-b border-slate-200 dark:border-800">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Modules</h3>
                   <button 
@@ -743,7 +834,18 @@ const App: React.FC = () => {
                   ))}
                 </div>
               </div>
-              <SidebarContent isMobile={true} />
+              <SidebarContent 
+                activeModule={activeModule}
+                view={view}
+                dashboardSubView={dashboardSubView}
+                onNavigate={handleNavigate}
+                onViewChange={handleViewChange}
+                isMobile={true}
+                theme={theme}
+                t={t}
+                language={language}
+                tip={tip}
+              />
             </aside>
           </div>
         )}
@@ -751,95 +853,91 @@ const App: React.FC = () => {
         {/* Main Content */}
         <main className="flex-1 h-full overflow-hidden relative">
         <div className={`h-full overflow-y-auto scrollbar-hide ${view === 'pos' ? 'p-2' : 'max-w-7xl mx-auto p-4 md:p-8'}`}>
-          {view === 'dashboard' && (
-             <Dashboard 
-                inventory={inventory} 
-                sales={sales}
-                purchases={purchases} 
-                color={theme.primary} 
-                t={t.dashboard} 
-                onRestock={handleRestock}
-             />
-          )}
-          {view === 'inventory' && (
-            <Inventory 
-              inventory={inventory} 
-              onAddDrug={handleAddDrug} 
-              onUpdateDrug={handleUpdateDrug} 
-              onDeleteDrug={handleDeleteDrug} 
-              color={theme.primary}
-              t={t.inventory}
-            />
-          )}
-          {view === 'pos' && <POS inventory={inventory} customers={customers} onCompleteSale={handleCompleteSale} color={theme.primary} t={t.pos} />}
-          {view === 'sales-history' && (
-            <SalesHistory 
-                sales={sales} 
-                returns={returns} 
-                onProcessReturn={handleProcessReturn} 
-                color={theme.primary} 
-                t={t.salesHistory} 
-                language={language}
-                datePickerTranslations={t.global.datePicker}
-            />
-          )}
-          {view === 'return-history' && (
-            <ReturnHistory 
-              returns={returns}
-              sales={sales}
-              color={theme.primary}
-              t={t.returnHistory}
-              language={language}
-              datePickerTranslations={t.global.datePicker}
-            />
-          )}
-          {view === 'suppliers' && (
-             <Suppliers 
-               suppliers={suppliers}
-               onAddSupplier={handleAddSupplier}
-               onUpdateSupplier={handleUpdateSupplier}
-               onDeleteSupplier={handleDeleteSupplier}
-               color={theme.primary}
-               t={t.suppliers}
-             />
-          )}
-          {view === 'purchases' && (
-            <Purchases 
-               inventory={inventory}
-               suppliers={suppliers}
-               purchases={purchases}
-               onPurchaseComplete={handlePurchaseComplete}
-               color={theme.primary}
-               t={t.purchases}
-            />
-          )}
-          {view === 'barcode-studio' && (
-            <BarcodeStudio 
-               inventory={inventory}
-               color={theme.primary}
-               t={t.barcodeStudio}
-            />
-          )}
-          {view === 'customers' && (
-            <CustomerManagement 
-              customers={customers}
-              onAddCustomer={handleAddCustomer}
-              onUpdateCustomer={handleUpdateCustomer}
-              onDeleteCustomer={handleDeleteCustomer}
-              color={theme.primary}
-              t={t.customers}
-              language={language}
-            />
-          )}
-          {view === 'customer-overview' && (
-            <CustomerOverview 
-              customers={customers}
-              sales={sales}
-              color={theme.primary}
-              t={t.customerOverview}
-              language={language}
-            />
-          )}
+          {/* Dynamic Page Rendering - Automatically handles all pages from registry */}
+          {(() => {
+            const pageConfig = PAGE_REGISTRY[view];
+            
+            if (!pageConfig) {
+              return (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <span className="material-symbols-rounded text-6xl text-slate-300 dark:text-slate-600 mb-4 block">error</span>
+                    <p className="text-lg font-medium text-slate-600 dark:text-slate-400">Page not found</p>
+                  </div>
+                </div>
+              );
+            }
+            
+            const PageComponent = pageConfig.component;
+            
+            // Build props object based on required props
+            const props: any = {};
+            
+            // Always include these common props
+            props.color = theme.primary;
+            props.t = t;
+            props.language = language;
+            
+            // Conditionally add props based on page requirements
+            const requiredProps = pageConfig.requiredProps || [];
+            
+            if (requiredProps.includes('sales')) props.sales = sales;
+            if (requiredProps.includes('inventory')) props.inventory = inventory;
+            if (requiredProps.includes('customers')) props.customers = enrichedCustomers;
+            if (requiredProps.includes('products')) props.products = inventory;
+            if (requiredProps.includes('suppliers')) props.suppliers = suppliers;
+            if (requiredProps.includes('purchases')) props.purchases = purchases;
+            if (requiredProps.includes('returns')) props.returns = returns;
+            
+            // Handler functions
+            if (requiredProps.includes('setInventory')) props.setInventory = setInventory;
+            if (requiredProps.includes('onAddDrug')) props.onAddDrug = handleAddDrug;
+            if (requiredProps.includes('onUpdateDrug')) props.onUpdateDrug = handleUpdateDrug;
+            if (requiredProps.includes('onDeleteDrug')) props.onDeleteDrug = handleDeleteDrug;
+            if (requiredProps.includes('onCompleteSale')) props.onCompleteSale = handleCompleteSale;
+            if (requiredProps.includes('onProcessReturn')) props.onProcessReturn = handleProcessReturn;
+            if (requiredProps.includes('onAddCustomer')) props.onAddCustomer = handleAddCustomer;
+            if (requiredProps.includes('onUpdateCustomer')) props.onUpdateCustomer = handleUpdateCustomer;
+            if (requiredProps.includes('onDeleteCustomer')) props.onDeleteCustomer = handleDeleteCustomer;
+            if (requiredProps.includes('setSuppliers')) props.setSuppliers = setSuppliers;
+            if (requiredProps.includes('onAddSupplier')) props.onAddSupplier = handleAddSupplier;
+            if (requiredProps.includes('onUpdateSupplier')) props.onUpdateSupplier = handleUpdateSupplier;
+            if (requiredProps.includes('onDeleteSupplier')) props.onDeleteSupplier = handleDeleteSupplier;
+            if (requiredProps.includes('onCompletePurchase')) props.onPurchaseComplete = handlePurchaseComplete;
+            if (requiredProps.includes('onViewChange')) props.onViewChange = handleViewChange;
+            if (requiredProps.includes('onAddProduct')) props.onAddProduct = () => setView('add-product');
+            if (requiredProps.includes('onRestock')) props.onRestock = handleRestock;
+            
+            // Special handling for specific pages
+            if (view === 'dashboard') {
+              props.t = t.dashboard;
+            } else if (view === 'inventory') {
+              props.t = t.inventory;
+            } else if (view === 'pos') {
+              props.t = t.pos;
+            } else if (view === 'sales-history') {
+              props.t = t.salesHistory;
+              props.datePickerTranslations = t.global.datePicker;
+            } else if (view === 'return-history') {
+              props.t = t.returnHistory;
+              props.datePickerTranslations = t.global.datePicker;
+            } else if (view === 'suppliers') {
+              props.t = t.suppliers;
+            } else if (view === 'purchases') {
+              props.t = t.purchases;
+            } else if (view === 'barcode-studio') {
+              props.t = t.barcodeStudio;
+            } else if (view === 'customers') {
+              props.t = t.customers;
+            } else if (view === 'customer-overview') {
+              props.t = t.customerOverview;
+            } else if (view === 'add-product') {
+              props.t = t.inventory;
+              props.initialMode = 'add';
+            }
+            
+            return <PageComponent {...props} />;
+          })()}
           </div>
         </main>
 

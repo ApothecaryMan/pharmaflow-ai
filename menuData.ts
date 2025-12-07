@@ -36,7 +36,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "sales-dashboard",
         label: "Sales Dashboard",
         items: [
-          "Real-time Sales Monitor",
+          { label: "Real-time Sales Monitor", view: "real-time-sales" },
           "Today's Sales Summary",
           "Sales by Hour",
           "Sales by Counter",
@@ -104,6 +104,8 @@ export const PHARMACY_MENU: MenuItem[] = [
         label: "Customer Dashboard",
         items: [
           { label: "Customer Overview", view: "customer-overview" },
+          { label: "Loyalty Overview", view: "loyalty-overview" },
+          { label: "Customer Loyalty", view: "loyalty-lookup" },
           "New Customers Today",
           "Active Customers",
           "Customer Growth Trend",

@@ -112,6 +112,8 @@ export const MENU_TRANSLATIONS = {
     'Purchase Frequency': 'تكرار الشراء',
     'Average Transaction Value': 'متوسط قيمة المعاملة',
     'Customer Lifetime Value': 'القيمة الدائمة للعميل',
+    'Loyalty Overview': 'نظرة عامة على الولاء',
+    'Customer Loyalty': 'ولاء العملاء',
     
     // Prescription Dashboard Items
     'Prescription Overview': 'نظرة عامة على الوصفات',
@@ -225,7 +227,7 @@ export const MENU_TRANSLATIONS = {
     'Stock Control': 'التحكم بالمخزون',
     'Categories & Classification': 'الفئات والتصنيف',
     'Batch & Expiry': 'الدفعات والصلاحية',
-    'Stock Alerts': 'تنبيهات المخزون',
+    // 'Stock Alerts': 'تنبيهات المخزون', // Duplicate
     'Warehouse Management': 'إدارة المستودعات',
     
     // Product Management Items
@@ -269,7 +271,7 @@ export const MENU_TRANSLATIONS = {
     // Stock Alerts Items (submenu)
     'Low Stock Items': 'منتجات المخزون المنخفض',
     'Out of Stock': 'غير متوفر',
-    'Overstock Items': 'منتجات زائدة',
+    // 'Overstock Items': 'منتجات زائدة', // Duplicate
     'Dead Stock': 'مخزون راكد',
     
     // Warehouse Management Items
@@ -301,7 +303,7 @@ export const MENU_TRANSLATIONS = {
     'Monthly Sales': 'المبيعات الشهرية',
     'Sales by Product': 'المبيعات حسب المنتج',
     'Sales by Customer': 'المبيعات حسب العميل',
-    'Sales by Counter': 'المبيعات حسب الكاونتر',
+    // 'Sales by Counter': 'المبيعات حسب الكاونتر', // Duplicate
     
     // Returns & Refunds Items
     'Process Return': 'معالجة الإرجاع',
@@ -528,7 +530,7 @@ export const MENU_TRANSLATIONS = {
     'Sales Reports': 'تقارير المبيعات',
     'Purchase Reports': 'تقارير المشتريات',
     'Inventory Reports': 'تقارير المخزون',
-    'Customer Reports': 'تقارير العملاء',
+    // 'Customer Reports': 'تقارير العملاء', // Duplicate
     'Compliance Reports': 'تقارير الامتثال',
     'Employee Reports': 'تقارير الموظفين',
     'Custom Reports': 'تقارير مخصصة',
@@ -567,7 +569,7 @@ export const MENU_TRANSLATIONS = {
     'Customer Purchase History': 'سجل شراء العملاء',
     'Customer Loyalty': 'ولاء العملاء',
     'Outstanding Report': 'تقرير المعلقات',
-    'Customer Aging': 'عمر العملاء',
+    // 'Customer Aging': 'عمر العملاء', // Duplicate
     
     // Compliance Reports Items
     'Expiry Report': 'تقرير الصلاحية',
@@ -712,7 +714,7 @@ export const MENU_TRANSLATIONS = {
     
     // Print Settings Items
     'Receipt Templates': 'قوالب الإيصالات',
-    'Invoice Templates': 'قوالب الفواتير',
+    // 'Invoice Templates': 'قوالب الفواتير', // Duplicate
     'Label Settings': 'إعدادات الملصقات',
     'Printer Configuration': 'تكوين الطابعة',
     

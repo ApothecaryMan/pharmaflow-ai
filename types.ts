@@ -151,7 +151,10 @@ export interface ThemeColor {
   hex: string;
 }
 
-export type ViewState = 'dashboard' | 'inventory' | 'pos' | 'sales-history' | 'suppliers' | 'purchases' | 'barcode-studio' | 'return-history' | 'customers' | 'customer-overview' | 'add-product';
+// Auto-generated from pageRegistry.ts - no need to manually update!
+import { PAGE_REGISTRY } from './pageRegistry';
+
+export type ViewState = keyof typeof PAGE_REGISTRY;
 
 export type Language = 'EN' | 'AR';
 
