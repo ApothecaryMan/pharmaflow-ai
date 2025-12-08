@@ -732,6 +732,7 @@ export const TRANSLATIONS = {
       productAddedSuccess: 'تمت إضافة المنتج بنجاح!',
       basicInfo: 'المعلومات الأساسية',
       productCodes: 'أكواد المنتج',
+      stockDetails: 'تفاصيل المخزون',
       // Stock Alerts Items (submenu)
       pricing: 'التسعير',
       additionalInfo: 'معلومات إضافية',
@@ -837,6 +838,7 @@ export const TRANSLATIONS = {
       },
       cartTitle: 'البيع الحالي',
       emptyCart: 'السلة فارغة',
+      customerInfo: 'معلومات العميل',
       customerName: 'اسم العميل',
       customerCode: 'كود العميل',
       paymentMethod: 'طريقة الدفع',

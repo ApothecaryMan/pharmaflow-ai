@@ -2,6 +2,25 @@
 
 ## 🚨 Mandatory Standards
 
+### Mandatory Internationalization (i18n)
+
+**RULE:** All user-facing text MUST be internationalized.
+- ✅ Use `translations.ts` (or `menuTranslations.ts` for menu items) for ALL text.
+- ✅ **AR (Arabic)** translation is **REQUIRED** for every new key.
+- ✅ Use the `t` object (from `TRANSLATIONS[language]`) to access strings.
+
+**FORBIDDEN:**
+- ❌ Hardcoded English strings in components (e.g., `<span>Hello</span>`).
+- ❌ Adding a key to `EN` without adding it to `AR`.
+
+**Exceptions:**
+- IDs, UUIDs, Database Keys
+- URLs / Links
+- Specialized medical codes (if standard is English)
+- Debug logs
+
+---
+
 ### Dropdown/Combobox Components
 
 **RULE:** All dropdown/combobox implementations MUST use:
