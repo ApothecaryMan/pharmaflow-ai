@@ -14,6 +14,7 @@ import { CustomerLoyaltyOverview } from './components/CustomerLoyaltyOverview';
 import { CustomerLoyaltyLookup } from './components/CustomerLoyaltyLookup';
 import { RealTimeSalesMonitor } from './components/RealTimeSalesMonitor';
 import { InventoryManagement } from './components/InventoryManagement';
+import { PendingApproval } from './components/PendingApproval';
 
 export interface PageConfig {
   id: string;
@@ -98,6 +99,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'purchase',
     requiredProps: ['inventory', 'suppliers', 'purchases', 'purchaseReturns', 'onCompletePurchase', 'drugs', 'setDrugs', 'color', 't', 'language']
   },
+  'pending-approval': {
+    id: 'pending-approval',
+    component: PendingApproval,
+    menuLabel: 'Pending Approval',
+    menuLabelAr: 'بانتظار الموافقة',
+    icon: 'pending_actions',
+    category: 'purchase',
+    requiredProps: ['color', 't', 'purchases', 'onApprovePurchase', 'onRejectPurchase']
+  },
   'purchase-returns': {
     id: 'purchase-returns',
     component: PurchaseReturns,
@@ -123,7 +133,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'جميع العملاء',
     icon: 'group',
     category: 'customers',
-    requiredProps: ['customers', 'onAddCustomer', 'onUpdateCustomer', 'color', 't', 'language']
+    requiredProps: ['customers', 'onAddCustomer', 'onUpdateCustomer', 'onDeleteCustomer', 'color', 't', 'language']
   },
   'customer-overview': {
     id: 'customer-overview',

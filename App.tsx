@@ -498,18 +498,52 @@ const App: React.FC = () => {
   const handlePurchaseComplete = (purchase: Purchase) => {
     setPurchases([purchase, ...purchases]);
     
-    // Update inventory stock and cost price
-    setInventory(prev => prev.map(drug => {
-      const purchasedItem = purchase.items.find(i => i.drugId === drug.id);
-      if (purchasedItem) {
-        return {
-          ...drug,
-          stock: drug.stock + purchasedItem.quantity,
-          costPrice: purchasedItem.costPrice // Update latest cost price
-        };
-      }
-      return drug;
-    }));
+    // Only update inventory if purchase is completed immediately
+    if (purchase.status === 'completed') {
+        setInventory(prev => prev.map(drug => {
+          const purchasedItem = purchase.items.find(i => i.drugId === drug.id);
+          if (purchasedItem) {
+            return {
+              ...drug,
+              stock: drug.stock + purchasedItem.quantity,
+              costPrice: purchasedItem.costPrice // Update latest cost price
+            };
+          }
+          return drug;
+        }));
+    } else {
+        setToast({ message: 'Purchase Order Saved as Pending', type: 'info' });
+    }
+  };
+
+  const handleApprovePurchase = (purchaseId: string, approverName: string) => {
+      const purchase = purchases.find(p => p.id === purchaseId);
+      if (!purchase) return;
+
+      // 1. Update Purchase Status
+      setPurchases(prev => prev.map(p => p.id === purchaseId ? { ...p, status: 'completed', approvalDate: new Date().toISOString(), approvedBy: approverName } : p));
+
+      // 2. Update Inventory
+       setInventory(prev => prev.map(drug => {
+          const purchasedItem = purchase.items.find(i => i.drugId === drug.id);
+          if (purchasedItem) {
+            return {
+              ...drug,
+              stock: drug.stock + purchasedItem.quantity,
+              costPrice: purchasedItem.costPrice // Update latest cost price
+            };
+          }
+          return drug;
+        }));
+
+      setToast({ message: `PO #${purchase.invoiceId} Approved Successfully`, type: 'success' });
+  };
+
+  const handleRejectPurchase = (purchaseId: string, reason?: string) => {
+      // For now we just mark as rejected. user might want to delete or keep history.
+      // Given 'rejected' status exists, we keep it.
+      setPurchases(prev => prev.map(p => p.id === purchaseId ? { ...p, status: 'rejected' } : p));
+      setToast({ message: 'Purchase Order Rejected', type: 'info' });
   };
 
   const handleCompleteSale = (saleData: { items: CartItem[], customerName: string, customerCode?: string, paymentMethod: 'cash' | 'visa', saleType?: 'walk-in' | 'delivery', deliveryFee?: number, globalDiscount: number, subtotal: number, total: number }) => {
@@ -922,6 +956,8 @@ const App: React.FC = () => {
             if (requiredProps.includes('onUpdateSupplier')) props.onUpdateSupplier = handleUpdateSupplier;
             if (requiredProps.includes('onDeleteSupplier')) props.onDeleteSupplier = handleDeleteSupplier;
             if (requiredProps.includes('onCompletePurchase')) props.onPurchaseComplete = handlePurchaseComplete;
+            if (requiredProps.includes('onApprovePurchase')) props.onApprovePurchase = handleApprovePurchase;
+            if (requiredProps.includes('onRejectPurchase')) props.onRejectPurchase = handleRejectPurchase;
             if (requiredProps.includes('onViewChange')) props.onViewChange = handleViewChange;
             if (requiredProps.includes('onAddProduct')) props.onAddProduct = () => setView('add-product');
             if (requiredProps.includes('onRestock')) props.onRestock = handleRestock;

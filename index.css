@@ -52,6 +52,13 @@
 }
 
 /* Ensure font-family override works if needed */
+/* Ensure font-family override works if needed */
 body {
   font-family: "Google Sans Flex", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Arabic Font Override */
+html[dir="rtl"] body,
+html[lang="ar"] body {
+  font-family: "Noto Sans Arabic", "Google Sans Flex", -apple-system, BlinkMacSystemFont, sans-serif;
 }

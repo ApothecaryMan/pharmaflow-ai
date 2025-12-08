@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Sale, Return, ReturnType, ReturnReason, ReturnItem, CartItem } from '../types';
+import { useSmartDirection } from '../hooks/useSmartDirection';
 
 interface ReturnModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   const [selectedItems, setSelectedItems] = useState<Map<string, number>>(new Map());
   const [returnReason, setReturnReason] = useState<ReturnReason>('customer_request');
   const [returnNotes, setReturnNotes] = useState('');
+  const returnNotesDir = useSmartDirection(returnNotes, t.returns.notes);
 
   if (!isOpen) return null;
 
@@ -112,7 +114,8 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           isUnit: item.isUnit || false,
           originalPrice: effectivePrice,
           refundAmount: discountedPrice,
-          reason: returnReason
+          reason: returnReason,
+          condition: 'sellable'
         });
       });
     } else {
@@ -132,7 +135,8 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
             isUnit: item.isUnit || false,
             originalPrice: effectivePrice,
             refundAmount: discountedPrice,
-            reason: returnReason
+            reason: returnReason,
+            condition: 'sellable'
           });
         }
       });
@@ -419,6 +423,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                   className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 transition-all resize-none"
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   placeholder={t.returns.notes}
+                  dir={returnNotesDir}
                 />
               </div>
             </div>

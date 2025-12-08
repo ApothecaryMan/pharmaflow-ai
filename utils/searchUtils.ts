@@ -12,9 +12,9 @@ export const createSearchRegex = (term: string): RegExp => {
   const parts = escaped.split(/\s+/);
   
   // Determine anchor for the first word
-  // If leading space exists -> \b (word boundary, anywhere)
+  // If leading space exists -> no anchor (match anywhere)
   // If NO leading space -> ^ (start of string)
-  const firstWordAnchor = hasLeadingSpace ? '\\b' : '^';
+  const firstWordAnchor = hasLeadingSpace ? '' : '^';
 
   let pattern = '';
   if (parts.length === 1) {

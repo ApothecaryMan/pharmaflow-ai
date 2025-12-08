@@ -19,6 +19,10 @@ export const Suppliers: React.FC<SuppliersProps> = ({ suppliers, onAddSupplier, 
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [formData, setFormData] = useState<Partial<Supplier>>({});
 
+  const nameDir = useSmartDirection(formData.name);
+  const contactDir = useSmartDirection(formData.contactPerson);
+  const addressDir = useSmartDirection(formData.address);
+
   const handleOpenAdd = () => {
     setEditingSupplier(null);
     setFormData({ name: '', contactPerson: '', phone: '', email: '', address: '' });
@@ -145,7 +149,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({ suppliers, onAddSupplier, 
                 <label className="text-xs font-bold text-gray-500 uppercase">{t.modal.name}</label>
                 <input required className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all" 
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                  value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                  value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} dir={nameDir} />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -153,7 +157,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({ suppliers, onAddSupplier, 
                     <label className="text-xs font-bold text-gray-500 uppercase">{t.modal.contact}</label>
                     <input required className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all" 
                       style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                      value={formData.contactPerson} onChange={e => setFormData({...formData, contactPerson: e.target.value})} />
+                      value={formData.contactPerson} onChange={e => setFormData({...formData, contactPerson: e.target.value})} dir={contactDir} />
                 </div>
                  <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-500 uppercase">{t.modal.phone}</label>
@@ -174,7 +178,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({ suppliers, onAddSupplier, 
                 <label className="text-xs font-bold text-gray-500 uppercase">{t.modal.address}</label>
                 <textarea className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all" rows={2}
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                  value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})}></textarea>
+                  value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} dir={addressDir}></textarea>
               </div>
 
               <div className="pt-4 flex gap-3">

@@ -410,7 +410,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         items: [
           { label: "Create PO", view: "purchases" },
           "Draft PO",
-          "Pending Approval",
+          { label: "Pending Approval", view: "pending-approval" },
           "Approved PO",
           "PO History",
           "Cancel PO",

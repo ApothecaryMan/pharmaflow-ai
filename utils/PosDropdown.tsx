@@ -15,6 +15,8 @@ export interface PosDropdownProps<T> {
     transparentIfSingle?: boolean;
     color?: string;
     variant?: 'minimal' | 'input'; // 'minimal' for grid pills, 'input' for search filters
+    minHeight?: string | number;
+    style?: React.CSSProperties;
 }
 
 export function PosDropdown<T>({
@@ -30,7 +32,9 @@ export function PosDropdown<T>({
     className = "",
     transparentIfSingle = false,
     color = "blue",
-    variant = 'minimal'
+    variant = 'minimal',
+    minHeight,
+    style
 }: PosDropdownProps<T>) {
     
     const containerRef = useRef<HTMLDivElement>(null);
@@ -64,7 +68,7 @@ export function PosDropdown<T>({
     const isInput = variant === 'input';
 
     return (
-        <div ref={containerRef} className={`relative ${className}`}>
+        <div ref={containerRef} className={`relative ${className}`} style={style}>
              <div 
                 tabIndex={0}
                 onKeyDown={handleKeyDown}
@@ -89,9 +93,9 @@ export function PosDropdown<T>({
                 {/* Trigger Area */}
                 <div 
                     className={`w-full flex items-center 
-                        ${isInput ? 'justify-between px-3 py-2' : 'justify-center items-center'}
+                        ${isInput ? 'justify-between px-3 py-1' : 'justify-center items-center'}
                     `}
-                    style={isInput ? { minHeight: '42px' } : {}}
+                    style={isInput ? { minHeight: minHeight || '42px' } : {}}
                 >
                     {isInput ? (
                         <>

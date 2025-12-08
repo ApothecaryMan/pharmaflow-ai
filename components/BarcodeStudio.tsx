@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useContextMenu } from '../components/ContextMenu';
 import { Drug } from '../types';
@@ -80,6 +79,12 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   // Data State
   const [storeName, setStoreName] = useState('PharmaFlow');
   const [hotline, setHotline] = useState('16999');
+  
+  const storeNameDir = useSmartDirection(storeName, t.elements.storeName);
+  const hotlineDir = useSmartDirection(hotline, t.elements.hotline);
+  // For content input (dynamic selected element)
+  const selectedContentDir = useSmartDirection(selectedElementId && elements.find(e => e.id === selectedElementId)?.content || '', 'Content');
+
   const [uploadedLogo, setUploadedLogo] = useState<string>('');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   
@@ -748,8 +753,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
                             {/* Inputs for Store/Hotline */}
                             <div className="space-y-3">
-                                <div><label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">{t.elements.storeName}</label><input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm" /></div>
-                                <div><label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">{t.elements.hotline}</label><input type="text" value={hotline} onChange={e => setHotline(e.target.value)} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm" /></div>
+                                <div><label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">{t.elements.storeName}</label><input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} dir={storeNameDir} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm" /></div>
+                                <div><label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">{t.elements.hotline}</label><input type="text" value={hotline} onChange={e => setHotline(e.target.value)} dir={hotlineDir} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm" /></div>
                             </div>
 
                              {/* Border */}
@@ -781,7 +786,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                     </div>
                                 )}
                                 {selectedElement.type === 'text' && !selectedElement.field && (
-                                    <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.content}</label><input type="text" value={selectedElement.content || ''} onChange={(e) => handlePropertyChange('content', e.target.value)} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
+                                    <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.content}</label><input type="text" value={selectedElement.content || ''} onChange={(e) => handlePropertyChange('content', e.target.value)} dir={selectedContentDir} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
                                 )}
                                 {(selectedElement.type === 'qrcode' || selectedElement.type === 'image') && (
                                     <div className="grid grid-cols-2 gap-4">

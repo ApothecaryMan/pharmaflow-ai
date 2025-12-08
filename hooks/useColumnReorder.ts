@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 interface UseColumnReorderProps {
   defaultColumns: string[];
   storageKey: string;
+  defaultHidden?: string[];
 }
 
-export const useColumnReorder = ({ defaultColumns, storageKey }: UseColumnReorderProps) => {
+export const useColumnReorder = ({ defaultColumns, storageKey, defaultHidden = [] }: UseColumnReorderProps) => {
   // Column Order State with lazy initialization from localStorage
   const [columnOrder, setColumnOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem(`${storageKey}_order`);
@@ -32,7 +33,7 @@ export const useColumnReorder = ({ defaultColumns, storageKey }: UseColumnReorde
         console.error('Failed to load hidden columns', e);
       }
     }
-    return new Set();
+    return new Set(defaultHidden);
   });
 
   // Save column order to localStorage whenever it changes

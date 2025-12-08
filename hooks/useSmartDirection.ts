@@ -6,9 +6,10 @@ import { useMemo } from 'react';
  * @param text The input text to analyze
  * @returns 'rtl' | 'ltr'
  */
-export const useSmartDirection = (text: string | undefined | null): 'rtl' | 'ltr' => {
+export const useSmartDirection = (text: string | undefined | null, placeholder?: string | undefined | null): 'rtl' | 'ltr' => {
   return useMemo(() => {
-    if (!text) return 'ltr';
-    return /[\u0600-\u06FF]/.test(text) ? 'rtl' : 'ltr';
-  }, [text]);
+    if (text) return /[\u0600-\u06FF]/.test(text) ? 'rtl' : 'ltr';
+    if (placeholder) return /[\u0600-\u06FF]/.test(placeholder) ? 'rtl' : 'ltr';
+    return 'ltr';
+  }, [text, placeholder]);
 };

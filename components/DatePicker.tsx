@@ -14,6 +14,7 @@ interface DatePickerProps {
         hour: string;
         minute: string;
     };
+    className?: string;
 }
 
 export const DatePicker: React.FC<DatePickerProps> = ({ 
@@ -29,7 +30,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         ok: 'OK',
         hour: 'Hour',
         minute: 'Minute'
-    }
+    },
+    className = ''
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [viewDate, setViewDate] = useState(new Date());
@@ -228,7 +230,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 aria-haspopup="dialog"
                 aria-expanded={isOpen}
                 aria-label={label}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all cursor-pointer select-none focus:outline-none focus:ring-2 ring-${color}-500
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all cursor-pointer select-none focus:outline-none focus:ring-2 ring-${color}-500 ${className}
                     ${value 
                         ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-800 text-${color}-700 dark:text-${color}-300` 
                         : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'

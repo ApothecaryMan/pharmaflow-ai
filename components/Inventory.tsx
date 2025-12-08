@@ -35,6 +35,13 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     additionalBarcodes: [], dosageForm: 'Tablet', activeIngredients: []
   });
 
+
+
+  const nameDir = useSmartDirection(formData.name);
+  const genericDir = useSmartDirection(formData.genericName);
+  const ingredientsRef = useSmartDirection(formData.activeIngredients?.join(', '));
+  const descDir = useSmartDirection(formData.description);
+
   // Use column reorder hook
   const {
     columnOrder,
@@ -581,6 +588,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       placeholder="e.g., Panadol Extra"
                       value={formData.name}
                       onChange={e => setFormData({ ...formData, name: e.target.value })}
+                      dir={nameDir}
                     />
                   </div>
                   <div>
@@ -591,6 +599,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       placeholder="e.g., Paracetamol"
                       value={formData.genericName}
                       onChange={e => setFormData({ ...formData, genericName: e.target.value })}
+                      dir={genericDir}
                     />
                   </div>
                   
@@ -638,6 +647,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       placeholder="e.g., Paracetamol, Caffeine"
                       value={formData.activeIngredients?.join(', ') || ''}
                       onChange={e => setFormData({ ...formData, activeIngredients: e.target.value.split(',').map(s => s.trim()) })}
+                      dir={ingredientsRef}
                     />
                   </div>
 
@@ -732,6 +742,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       placeholder="Description..."
                       value={formData.description}
                       onChange={e => setFormData({ ...formData, description: e.target.value })}
+                      dir={descDir}
                     />
                   </div>
                 </div>

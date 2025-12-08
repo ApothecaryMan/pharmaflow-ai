@@ -28,13 +28,13 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
-  const searchDir = useSmartDirection(search);
+  const searchDir = useSmartDirection(search, 'Search returns...');
 
   // Create Return state
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [returnItems, setReturnItems] = useState<PurchaseReturnItem[]>([]);
   const [notes, setNotes] = useState('');
-  const notesDir = useSmartDirection(notes);
+  const notesDir = useSmartDirection(notes, 'Add any additional notes about this return...');
   
   // Track item-specific form data (quantity, reason, condition for each item)
   const [itemFormData, setItemFormData] = useState<Record<string, { quantity: number; reason: PurchaseReturnItem['reason']; condition: PurchaseReturnItem['condition'] }>>({});

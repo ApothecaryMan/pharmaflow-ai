@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSmartDirection } from '../hooks/useSmartDirection';
 import { Drug } from '../types';
 import { PosDropdown } from '../utils/PosDropdown';
 
@@ -25,6 +26,12 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
     unitsPerPack: 1,
     maxDiscount: 10
   });
+
+  const nameDir = useSmartDirection(formData.name || '', t.addProduct.placeholders.brandName);
+  const genericNameDir = useSmartDirection(formData.genericName || '', t.addProduct.placeholders.genericName);
+  const descriptionDir = useSmartDirection(formData.description || '', t.addProduct.placeholders.description);
+  const internalCodeDir = useSmartDirection(formData.internalCode || '', t.addProduct.placeholders.internalCode);
+  const barcodeDir = useSmartDirection(formData.barcode || '', t.addProduct.placeholders.barcode);
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -153,6 +160,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                   placeholder={t.addProduct.placeholders.brandName}
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  dir={nameDir}
                 />
               </div>
               <div className="space-y-2">
@@ -164,6 +172,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                   placeholder={t.addProduct.placeholders.genericName}
                   value={formData.genericName}
                   onChange={e => setFormData({ ...formData, genericName: e.target.value })}
+                  dir={genericNameDir}
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -203,6 +212,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                   placeholder={t.addProduct.placeholders.barcode}
                   value={formData.barcode || ''}
                   onChange={e => setFormData({ ...formData, barcode: e.target.value })}
+                  dir={barcodeDir}
                 />
               </div>
               <div className="space-y-2">
@@ -222,6 +232,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                   placeholder={t.addProduct.placeholders.internalCode}
                   value={formData.internalCode || ''}
                   onChange={e => setFormData({ ...formData, internalCode: e.target.value })}
+                  dir={internalCodeDir}
                 />
               </div>
             </div>
@@ -332,6 +343,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                 placeholder={t.addProduct.placeholders.description}
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
+                dir={descriptionDir}
               />
             </div>
           </div>

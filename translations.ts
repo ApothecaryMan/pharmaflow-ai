@@ -479,9 +479,31 @@ export const TRANSLATIONS = {
         status: 'Status',
         actions: 'Actions'
       },
+      allCustomers: 'All Customers',
+      customerAddedSuccess: 'Customer added successfully!',
+      addCustomerSubtitle: 'Register a new customer',
+      basicInfo: 'Basic Information',
+      status: {
+        active: 'Active',
+        inactive: 'Inactive'
+      },
+      conditions: {
+        diabetes: 'Diabetes',
+        hypertension: 'Hypertension',
+        asthma: 'Asthma',
+        allergies: 'Allergies',
+        heartDisease: 'Heart Disease',
+        arthritis: 'Arthritis'
+      },
+      contactOptions: {
+        phone: 'Phone Call',
+        sms: 'SMS / WhatsApp',
+        email: 'Email'
+      },
       modal: {
         add: 'Add New Customer',
         edit: 'Edit Customer',
+        delete: 'Delete',
         code: 'Customer Code',
         name: 'Full Name',
         phone: 'Phone Number',
@@ -499,11 +521,27 @@ export const TRANSLATIONS = {
         selectGovernorate: 'Select Governorate',
         selectCity: 'Select City',
         selectArea: 'Select Area',
+        selectArea: 'Select Area',
         notes: 'Notes',
+        placeholders: {
+          downtownBranch: 'e.g. Downtown Branch',
+          streetAddress: '123 Main St, Building 4, Apt 5...',
+          johnDoe: 'John Doe',
+          phone: '+1 234 567 890',
+          email: 'john@example.com'
+        },
         cancel: 'Cancel',
         save: 'Save Customer',
         kioskMode: 'Patient Entry Mode',
-        generateCode: 'Generate Code'
+        generateCode: 'Generate Code',
+        preferences: 'Preferences & Insurance',
+        insuranceDetails: 'Insurance Details',
+        medicalInfo: 'Medical Information (Optional)',
+        register: 'Register',
+        editProfile: 'Edit Profile',
+        close: 'Close',
+        copied: 'Code copied to clipboard',
+        kioskDesc: 'Please fill in your details to register with us.'
       },
       noResults: 'No customers found.'
     },
@@ -972,9 +1010,31 @@ export const TRANSLATIONS = {
         status: 'الحالة',
         actions: 'إجراءات'
       },
+      allCustomers: 'جميع العملاء',
+      customerAddedSuccess: 'تم إضافة العميل بنجاح!',
+      addCustomerSubtitle: 'تسجيل عميل جديد',
+      basicInfo: 'المعلومات الأساسية',
+      status: {
+        active: 'نشط',
+        inactive: 'غير نشط'
+      },
+      conditions: {
+        diabetes: 'السكري',
+        hypertension: 'ارتفاع ضغط الدم',
+        asthma: 'الربو',
+        allergies: 'الحساسية',
+        heartDisease: 'أمراض القلب',
+        arthritis: 'التهاب المفاصل'
+      },
+      contactOptions: {
+        phone: 'اتصال هاتفي',
+        sms: 'رسالة نصية / واتساب',
+        email: 'بريد إلكتروني'
+      },
       modal: {
         add: 'إضافة عميل جديد',
         edit: 'تعديل بيانات العميل',
+        delete: 'حذف',
         code: 'كود العميل',
         name: 'الاسم الكامل',
         phone: 'رقم الهاتف',
@@ -993,10 +1053,25 @@ export const TRANSLATIONS = {
         selectCity: 'اختر المدينة',
         selectArea: 'اختر المنطقة',
         notes: 'ملاحظات',
+        placeholders: {
+          downtownBranch: 'مثال: فرع وسط البلد',
+          streetAddress: '١٢٣ شارع الرئيسي، مبنى ٤، شقة ٥...',
+          johnDoe: 'أحمد محمد',
+          phone: '+966 50 123 4567',
+          email: 'ahmed@example.com'
+        },
         cancel: 'إلغاء',
         save: 'حفظ العميل',
         kioskMode: 'وضع إدخال المريض',
-        generateCode: 'توليد كود'
+        generateCode: 'توليد كود',
+        preferences: 'التفضيلات والتأمين',
+        insuranceDetails: 'تفاصيل التأمين',
+        medicalInfo: 'المعلومات الطبية (اختياري)',
+        register: 'تسجيل',
+        editProfile: 'تعديل الملف الشخصي',
+        close: 'إغلاق',
+        copied: 'تم نسخ الكود للحافظة',
+        kioskDesc: 'يرجى ملء بياناتك للتسجيل معنا.'
       },
       noResults: 'لم يتم العثور على عملاء.'
     },

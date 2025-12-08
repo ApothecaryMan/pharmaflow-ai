@@ -3,6 +3,7 @@ import { useContextMenu } from '../components/ContextMenu';
 import { Supplier } from '../types';
 import { useColumnReorder } from '../hooks/useColumnReorder';
 import { useSmartDirection } from '../hooks/useSmartDirection';
+import { SearchInput } from '../utils/SearchInput';
 
 interface SuppliersListProps {
   suppliers: Supplier[];
@@ -15,7 +16,8 @@ interface SuppliersListProps {
 export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSuppliers, color, t, language }) => {
   const { showMenu } = useContextMenu();
   const [search, setSearch] = useState('');
-  const searchDir = useSmartDirection(search);
+  // SearchInput handles its own direction, so removing manual hook for search input
+
   
   // Mode and state
   const [mode, setMode] = useState<'list' | 'add'>('list');
@@ -31,9 +33,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
     address: ''
   });
 
-  const nameDir = useSmartDirection(editForm.name);
-  const addressDir = useSmartDirection(editForm.address);
-  const contactPersonDir = useSmartDirection(editForm.contactPerson);
+  const nameDir = useSmartDirection(editForm.name, 'Enter company name');
+  const addressDir = useSmartDirection(editForm.address, 'Enter company address');
+  const contactPersonDir = useSmartDirection(editForm.contactPerson, 'Enter contact person name');
 
   // Column management
   const {
@@ -342,15 +344,12 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
         <>
           {/* Search */}
           <div className="flex-shrink-0">
-            <input 
-              type="text" 
-              placeholder="Search suppliers..."
-              className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all text-sm"
-              style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+            <SearchInput
               value={search}
-              onChange={e => setSearch(e.target.value)}
-              dir={searchDir}
-              autoComplete="off"
+              onSearchChange={setSearch}
+              placeholder="Search suppliers..."
+              className="w-full p-3 rounded-xl border-gray-200 dark:border-gray-700"
+              style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
             />
           </div>
 

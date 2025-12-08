@@ -21,7 +21,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   icon = 'search',
   ...props
 }) => {
-  const dir = useSmartDirection(value);
+  const dir = useSmartDirection(value, placeholder);
 
   return (
     <div className={`relative ${wrapperClassName}`} dir={dir}>

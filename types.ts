@@ -52,6 +52,7 @@ export interface Customer {
   lastVisit: string;
   notes?: string;
   status: 'active' | 'inactive';
+  vip?: boolean;
 }
 
 export interface CartItem extends Drug {
@@ -144,11 +145,13 @@ export interface Purchase {
   supplierName: string;
   items: PurchaseItem[];
   totalCost: number;
-  status: 'completed' | 'pending';
+  status: 'completed' | 'pending' | 'rejected';
   paymentType?: 'cash' | 'credit';
   invoiceId?: string;
   externalInvoiceId?: string;
   returnedQuantities?: Record<string, number>; // Track returned quantities per drugId
+  approvalDate?: string;
+  approvedBy?: string;
 }
 
 export interface PurchaseReturnItem {
