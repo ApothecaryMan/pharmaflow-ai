@@ -321,7 +321,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
       {/* Header */}
       <div className="flex justify-between items-center flex-shrink-0">
         <div>
-          <h2 className="text-2xl font-medium tracking-tight">{mode === 'list' ? 'Suppliers List' : 'Add New Supplier'}</h2>
+          <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'list' ? 'Suppliers List' : 'Add New Supplier'}</h2>
           <p className="text-sm text-gray-500">{mode === 'list' ? 'Manage your suppliers' : 'Create a new supplier record'}</p>
         </div>
         <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-full flex text-xs font-bold">
@@ -592,7 +592,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                   <span className="material-symbols-rounded">edit</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Edit Supplier</h3>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">Edit Supplier</h3>
                   <p className="text-xs text-gray-500">Update supplier information</p>
                 </div>
               </div>
@@ -730,7 +730,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                   <span className="material-symbols-rounded text-[32px]">warning</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete Supplier</h3>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">Delete Supplier</h3>
                   <p className="text-sm text-gray-500">This action cannot be undone</p>
                 </div>
               </div>
@@ -767,7 +767,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                   <span className="material-symbols-rounded">visibility</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Supplier Details</h3>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">Supplier Details</h3>
                   <p className="text-xs text-gray-500">View supplier information</p>
                 </div>
               </div>

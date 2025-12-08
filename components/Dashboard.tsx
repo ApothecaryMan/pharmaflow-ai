@@ -241,7 +241,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
 
   return (
     <div ref={scrollContainerRef} className="h-full overflow-y-auto pe-2 space-y-4 animate-fade-in pb-10">
-      <h2 className="text-2xl font-medium tracking-tight mb-4">{t.title}</h2>
+      <h2 className="text-2xl font-bold tracking-tight mb-4 type-expressive">{t.title}</h2>
       
       {/* Stats Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
@@ -255,7 +255,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
           </div>
           <div>
             <p className={`text-xs font-bold text-${color}-800 dark:text-${color}-300 uppercase opacity-70`}>{t.revenue}</p>
-            <p className={`text-2xl font-bold text-${color}-900 dark:text-${color}-100`}>${totalRevenue.toFixed(2)}</p>
+            <p className={`text-2xl font-bold text-${color}-900 dark:text-${color}-100 type-expressive`}>${totalRevenue.toFixed(2)}</p>
           </div>
         </div>
 
@@ -277,7 +277,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
           </div>
            <div>
             <p className="text-xs font-bold text-gray-500 uppercase">{t.expenses}</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${totalExpenses.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 type-expressive">${totalExpenses.toFixed(2)}</p>
           </div>
         </div>
 
@@ -299,7 +299,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
           </div>
            <div>
             <p className="text-xs font-bold text-gray-500 uppercase">{t.profit}</p>
-            <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>${netProfit.toFixed(2)}</p>
+            <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-500'} type-expressive`}>${netProfit.toFixed(2)}</p>
           </div>
         </div>
 
@@ -321,7 +321,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
           </div>
            <div>
             <p className="text-xs font-bold text-gray-500 uppercase">{t.lowStock}</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{lowStockItems.length}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 type-expressive">{lowStockItems.length}</p>
           </div>
         </div>
       </div>
@@ -331,7 +331,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         {/* Sales Chart (2 Cols) */}
         <div className="lg:col-span-2 p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80 relative group">
           <div className="flex justify-between items-center mb-2">
-              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">{t.trend}</h3>
+              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 type-expressive">{t.trend}</h3>
               <ExpandButton onClick={() => setExpandedView('salesChart')} />
           </div>
           <ResponsiveContainer width="100%" height="90%">
@@ -361,7 +361,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         {/* Top Selling Products (1 Col) */}
         <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80 flex flex-col group">
             <div className="flex justify-between items-center mb-3">
-                <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2 type-expressive">
                     <span className="material-symbols-rounded text-yellow-500 text-[20px]">hotel_class</span>
                     {t.topSelling}
                 </h3>
@@ -398,7 +398,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             {/* Low Stock List */}
             <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-64 flex flex-col group">
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2 type-expressive">
                       <span className="material-symbols-rounded text-orange-500 text-[20px]">priority_high</span>
                       {t.attention}
                   </h3>

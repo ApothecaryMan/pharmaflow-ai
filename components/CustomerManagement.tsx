@@ -563,7 +563,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     </div>
                     <div className="relative z-10">
                         <div className="flex justify-between items-start mb-4">
-                            <h3 className="text-3xl font-bold tracking-wide">{c.name}</h3>
+                            <h3 className="text-3xl font-bold tracking-wide type-expressive">{c.name}</h3>
                             {/* REMOVED CLOSE BUTTON AS REQUESTED */}
                         </div>
                         <div className="flex gap-2 flex-wrap">
@@ -691,7 +691,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-medium tracking-tight">{mode === 'list' ? t.title : (t.addCustomer || 'Add New Customer')}</h2>
+          <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'list' ? t.title : (t.addCustomer || 'Add New Customer')}</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">{mode === 'list' ? t.subtitle : (t.addCustomerSubtitle || 'Register a new customer')}</p>
         </div>
         

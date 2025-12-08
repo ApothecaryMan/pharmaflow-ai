@@ -51,14 +51,117 @@
   z-index: 10;
 }
 
-/* Ensure font-family override works if needed */
-/* Ensure font-family override works if needed */
-body {
-  font-family: "Google Sans Flex", -apple-system, BlinkMacSystemFont, sans-serif;
+/* --- Google Sans Flex Variable Typography System --- */
+:root {
+  /* Core Axes Defaults */
+  --font-weight: 400; /* wght: 100-1000 */
+  --font-width: 100;  /* wdth: 50-150 (approx, standard is 100) */
+  --font-grade: 0;    /* GRAD: -200 to 150 */
+  --font-opsz: 14;    /* opsz: 8-144 */
+
+  /* Semantic Weight Tokens */
+  --weight-calm: 350;       /* Lighter, airy */
+  --weight-functional: 400; /* Standard, readable */
+  --weight-medium: 500;     /* Structured */
+  --weight-bold: 650;       /* Emphatic but not heavy */
+  
+  /* Semantic Width Tokens */
+  --width-compact: 95;      /* Efficient for data */
+  --width-standard: 100;    /* Normal reading */
+  --width-expressive: 110;  /* Wider for headlines/hero */
+
+  /* Semantic Grade Tokens */
+  --grade-soft: -25;
+  --grade-neutral: 0;
+  --grade-strong: 20;       /* Subtle emphasis without layout shift */
 }
 
-/* Arabic Font Override */
+/* Global Typography Reset */
+body {
+  font-family: "Google Sans Flex", -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Bind Axes to Variables */
+  font-variation-settings: 
+    'wght' var(--font-weight), 
+    'wdth' var(--font-width), 
+    'GRAD' var(--font-grade), 
+    'opsz' var(--font-opsz);
+    
+  /* Smooth "Breathe" Transitions */
+  transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
+  
+  /* Rendering optimizations */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Arabic Font Override - Maintains variable settings where possible, 
+   but falls back to Noto Sans Arabic for the family */
 html[dir="rtl"] body,
 html[lang="ar"] body {
-  font-family: "Noto Sans Arabic", "Google Sans Flex", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Noto Sans Arabic", "Google Sans Flex", sans-serif;
 }
+
+/* --- Contextual Typography Classes --- */
+
+/* 1. Calm: For backgrounds, secondary text, relaxed reading */
+.type-calm {
+  --font-weight: var(--weight-calm);
+  --font-width: var(--width-standard);
+  --font-grade: var(--grade-soft);
+  --font-opsz: 16;
+}
+
+/* 2. Functional: For data tables, inputs, dense UI */
+.type-functional {
+  --font-weight: var(--weight-functional);
+  --font-width: var(--width-compact);
+  --font-grade: var(--grade-neutral);
+  --font-opsz: 14;
+}
+
+/* 3. Interactive: For buttons, tabs, links */
+.type-interactive {
+  --font-weight: var(--weight-medium);
+  --font-width: var(--width-standard);
+  --font-grade: var(--grade-neutral);
+  --font-opsz: 15;
+  cursor: pointer;
+}
+/* Micro-interaction: Grade shift on hover for "tactile" feel */
+.type-interactive:hover {
+  --font-grade: 50; 
+}
+
+/* 4. Expressive: For headlines, hero sections, modal titles */
+.type-expressive {
+  --font-weight: var(--weight-bold);
+  --font-width: var(--width-expressive);
+  --font-grade: var(--grade-neutral);
+  --font-opsz: 32; /* Larger optical size for detail */
+}
+
+/* --- Automatic Heading Hierarchy --- */
+h1, .h1 {
+  --font-weight: 600;
+  --font-width: 110;
+  --font-opsz: 48;
+}
+h2, .h2 {
+  --font-weight: 550;
+  --font-width: 105;
+  --font-opsz: 36;
+}
+h3, .h3 {
+  --font-weight: 500;
+  --font-width: 100;
+  --font-opsz: 24;
+}
+
+/* Ensure standard bold utilities still work by mapping them if needed, 
+   though font-variation-settings usually overrides font-weight.
+   We force the variable update for these utility classes. */
+.font-bold { --font-weight: 700; }
+.font-medium { --font-weight: 500; }
+.font-semibold { --font-weight: 600; }
+.font-light { --font-weight: 300; }

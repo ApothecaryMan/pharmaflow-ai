@@ -886,7 +886,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
        <div className="flex justify-between items-center flex-shrink-0">
           <div>
               <div className="flex items-center gap-3">
-                  <h2 className="text-2xl font-medium tracking-tight">{mode === 'create' ? t.title : t.historyTitle}</h2>
+                  <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'create' ? t.title : t.historyTitle}</h2>
                   {mode === 'history' && (
                       <>
                           <span className="text-gray-300 text-2xl font-light">|</span>
@@ -991,13 +991,13 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
              <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-full flex text-xs font-bold">
                 <button 
                     onClick={() => setMode('create')}
-                    className={`px-4 py-2 rounded-full transition-all ${mode === 'create' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`px-4 py-2 rounded-full transition-all type-interactive ${mode === 'create' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     {t.newPurchase}
                 </button>
                 <button 
                     onClick={() => setMode('history')}
-                    className={`px-4 py-2 rounded-full transition-all ${mode === 'history' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`px-4 py-2 rounded-full transition-all type-interactive ${mode === 'history' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     {t.viewHistory}
                 </button>
@@ -1238,7 +1238,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                <div 
                                    key={item.drugId} 
                                    dir="ltr"
-                                   className="p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl relative group pr-2"
+                                   className="p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl relative group pr-2 type-functional"
                                    onContextMenu={(e) => {
                                        e.preventDefault();
                                        e.stopPropagation();
@@ -1439,7 +1439,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                             <button 
                                 onClick={handleConfirm}
                                 disabled={cart.length === 0 || !selectedSupplierId}
-                                className={`flex-1 py-3 rounded-xl ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white font-bold transition-all active:scale-95`}
+                                className={`flex-1 py-3 rounded-xl type-interactive ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white font-bold transition-all active:scale-95`}
                                 style={{ boxShadow: 'rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px' }}
                             >
                                 {t.summary.confirm} ({paymentMethod === 'cash' ? 'Cash' : 'Credit'})
@@ -1448,7 +1448,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                 onClick={handlePendingPO}
                                 disabled={cart.length === 0 || !selectedSupplierId}
                                 title={t.pending || 'Save as Pending'} 
-                                className="w-12 py-3 flex items-center justify-center rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-600 disabled:bg-orange-50 disabled:text-orange-300 transition-all active:scale-95"
+                                className="w-12 py-3 flex items-center justify-center rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-600 disabled:bg-orange-50 disabled:text-orange-300 transition-all active:scale-95 type-interactive"
                                 style={{ boxShadow: 'rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px' }}
                             >
                                 <span className="material-symbols-rounded">pending_actions</span>
@@ -1461,7 +1461,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
            /* HISTORY VIEW */
            <div className="flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
            <div className="flex-1 overflow-auto bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-               <table className="w-full min-w-full table-fixed border-collapse">
+               <table className="w-full min-w-full table-fixed border-collapse type-functional">
                 <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>
                     <tr>
                         {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (

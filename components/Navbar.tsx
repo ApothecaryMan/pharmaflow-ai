@@ -93,7 +93,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
         <div className={`w-10 h-10 rounded-xl bg-${theme}-600 flex items-center justify-center shadow-lg shadow-${theme}-500/30`}>
           <span className="material-symbols-rounded text-white text-[24px]">local_pharmacy</span>
         </div>
-        <h1 className="hidden md:block text-lg font-bold tracking-tight text-gray-800 dark:text-gray-100 whitespace-nowrap">
+        <h1 className="hidden md:block text-lg font-bold tracking-tight text-gray-800 dark:text-gray-100 whitespace-nowrap type-expressive">
           {appTitle}
         </h1>
       </div>
@@ -109,7 +109,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
               key={module.id}
               onClick={() => hasPage && onModuleChange(module.id)}
               disabled={!hasPage}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap group relative
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap group relative type-interactive
                 ${!hasPage 
                   ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
                   : isActive

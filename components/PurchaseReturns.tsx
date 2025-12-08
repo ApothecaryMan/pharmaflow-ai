@@ -341,7 +341,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       {/* Header */}
       <div className="flex justify-between items-center flex-shrink-0">
         <div>
-          <h2 className="text-2xl font-medium tracking-tight">{mode === 'create' ? 'Create Return' : 'Return History'}</h2>
+          <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'create' ? 'Create Return' : 'Return History'}</h2>
           <p className="text-sm text-gray-500">{mode === 'create' ? 'Return items to supplier' : 'View all purchase returns'}</p>
         </div>
         <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-full flex text-xs font-bold">
@@ -711,7 +711,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                   <span className="material-symbols-rounded">assignment_return</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Return Details</h3>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">Return Details</h3>
                   <p className="text-xs text-gray-500">Return #{viewingReturn.id}</p>
                 </div>
               </div>

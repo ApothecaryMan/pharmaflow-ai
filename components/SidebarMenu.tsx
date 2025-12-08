@@ -166,6 +166,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
                   const isActive = itemView === currentView;
                   
                   return (
+
                     <button
                       key={idx}
                       disabled={!isImplemented}
@@ -176,7 +177,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
                           handleItemClick(submenu.label, itemLabel);
                         }
                       }}
-                      className={`w-full ltr:text-left rtl:text-right px-3 py-2 rounded-lg text-sm transition-all ${
+                      className={`w-full ltr:text-left rtl:text-right px-3 py-2 rounded-lg transition-all type-interactive ${
                         !isImplemented
                           ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
                           : isActive 
@@ -188,6 +189,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
                       {!isImplemented && <span className="text-[10px] opacity-60 ltr:ml-2 rtl:mr-2 border border-gray-300 dark:border-gray-700 px-1 rounded">Soon</span>}
                     </button>
                   );
+
                 })}
               </div>
             </div>

@@ -335,7 +335,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-medium tracking-tight">{t.title}</h2>
+          <h2 className="text-2xl font-bold tracking-tight type-expressive">{t.title}</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">{t.subtitle}</p>
         </div>
         
@@ -622,7 +622,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
            <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
               <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
-                  <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100`}>
+                  <h3 className={`text-lg font-bold type-expressive text-${color}-900 dark:text-${color}-100`}>
                     {t.modal.title}
                   </h3>
                   <button onClick={() => setSelectedSale(null)} className="text-gray-400 hover:text-gray-600">

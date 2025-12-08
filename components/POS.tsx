@@ -1148,7 +1148,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
             {search.trim() === '' ? (
               <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-3 p-8">
                 <span className="material-symbols-rounded text-6xl opacity-20">search</span>
-                <p className="text-sm font-medium">{t.searchPlaceholder}</p>
+                <h2 className="text-2xl font-bold tracking-tight type-expressive">{t.searchPlaceholder}</h2>
                 <p className="text-xs text-center max-w-xs opacity-70">
                   {t.startSearching || 'Start searching for products to add them to cart'}
                 </p>
@@ -1568,7 +1568,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in" onClick={() => setViewingDrug(null)}>
           <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
             <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
-              <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100 flex items-center gap-2`}>
+              <h3 className={`text-lg font-bold type-expressive text-${color}-900 dark:text-${color}-100 flex items-center gap-2`}>
                 <span className="material-symbols-rounded">info</span>
                 Product Details
               </h3>

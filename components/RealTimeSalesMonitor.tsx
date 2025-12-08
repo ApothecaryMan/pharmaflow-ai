@@ -336,7 +336,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     <div className="h-full overflow-y-auto pe-2 space-y-4 animate-fade-in pb-10" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header with Live Indicator */}
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-2xl font-medium tracking-tight flex items-center gap-3">
+        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-3 type-expressive">
           <span className="material-symbols-rounded text-emerald-500">monitoring</span>
           {t.realTimeSales?.title || 'Real-time Sales Monitor'}
         </h2>
@@ -456,7 +456,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             {/* Recent Transactions Feed */}
             <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col h-[400px] overflow-hidden">
            <div className="flex items-center justify-between mb-4">
-               <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+               <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2 type-expressive">
                  <span className="material-symbols-rounded text-gray-400 text-xl">history</span>
                  {t.realTimeSales?.recentTransactions || 'Recent Transactions'}
                </h3>
@@ -624,7 +624,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         <div className="lg:col-span-2 space-y-4">
              {/* Hourly Chart (Compact) */}
              <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm min-h-[220px]">
-                <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase mb-4">Hourly Trend</h3>
+                <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase mb-4 type-expressive">Hourly Trend</h3>
                 <div className="h-[180px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                          <AreaChart data={hourlyData}>
@@ -661,7 +661,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
              {/* Top Products List */}
              <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex-1">
                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Top Products</h3>
+                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 type-expressive">Top Products</h3>
                     <span className="text-xs text-gray-400">by Qty</span>
                  </div>
                  <div className="space-y-3">
@@ -696,7 +696,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           
           {/* Payment Methods Chart */}
           <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm min-h-[300px] flex flex-col">
-              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4">Payment Methods</h3>
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 type-expressive">Payment Methods</h3>
               <div className="flex-1 w-full relative">
                   <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -743,7 +743,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
           {/* Category Distribution */}
           <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm min-h-[300px] flex flex-col">
-              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4">Sales by Category</h3>
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 type-expressive">Sales by Category</h3>
               <div className="w-full h-[250px] relative">
                   {(() => {
                       // Group data into the 3 specific categories
