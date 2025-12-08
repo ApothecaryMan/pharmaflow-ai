@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Supplier } from '../types';
 import { useSmartDirection } from '../hooks/useSmartDirection';
-import { SearchInput } from './SearchInput';
+import { SearchInput } from '../utils/SearchInput';
 
 interface SuppliersProps {
   suppliers: Supplier[];

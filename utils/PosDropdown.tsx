@@ -1,0 +1,127 @@
+import React, { useEffect, useRef } from 'react';
+import { useExpandingDropdown } from '../hooks/useExpandingDropdown';
+
+export interface PosDropdownProps<T> {
+    items: T[];
+    selectedItem: T | undefined;
+    isOpen: boolean;
+    onToggle: () => void;
+    onSelect: (item: T) => void;
+    renderItem: (item: T, isSelected: boolean) => React.ReactNode;
+    renderSelected: (item: T | undefined) => React.ReactNode;
+    keyExtractor: (item: T) => string;
+    onEnter?: () => void;
+    className?: string;
+    transparentIfSingle?: boolean;
+    color?: string;
+    variant?: 'minimal' | 'input'; // 'minimal' for grid pills, 'input' for search filters
+}
+
+export function PosDropdown<T>({
+    items,
+    selectedItem,
+    isOpen,
+    onToggle,
+    onSelect,
+    renderItem,
+    renderSelected,
+    keyExtractor,
+    onEnter,
+    className = "",
+    transparentIfSingle = false,
+    color = "blue",
+    variant = 'minimal'
+}: PosDropdownProps<T>) {
+    
+    const containerRef = useRef<HTMLDivElement>(null);
+    
+    const { handleKeyDown, handleBlur, handleClick, handleOptionClick } = useExpandingDropdown({
+        items,
+        selectedItem,
+        isOpen,
+        onToggle,
+        onSelect,
+        keyExtractor,
+        onEnter
+    });
+
+    // Click outside to close
+    useEffect(() => {
+        if (!isOpen) return;
+        
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                onToggle();
+            }
+        };
+        
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen, onToggle]);
+
+    const isSingle = items.length <= 1;
+    const isTransparent = transparentIfSingle && isSingle;
+    const isInput = variant === 'input';
+
+    return (
+        <div ref={containerRef} className={`relative ${className}`}>
+             <div 
+                tabIndex={0}
+                onKeyDown={handleKeyDown}
+                onBlur={handleBlur}
+                className={`absolute top-0 left-0 w-full flex flex-col overflow-hidden rounded-xl border transition-all cursor-pointer outline-none
+                    ${/* Base Style & Z-Index */ ''}
+                    ${isOpen 
+                        ? (isInput ? 'z-50 shadow-xl' : 'z-[5] shadow-xl') 
+                        : 'z-0'}
+                    ${/* Background & Border */ ''}
+                    ${isOpen 
+                        ? 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700' 
+                        : (isInput 
+                            ? 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600' // Input Closed
+                            : (isTransparent ? 'bg-transparent border-transparent' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700') // Minimal Closed
+                          )
+                    }
+                `}
+                style={isOpen ? { borderColor: `var(--color-${color}-500)` } : {}}
+                onClick={handleClick}
+            >
+                {/* Trigger Area */}
+                <div 
+                    className={`w-full flex items-center 
+                        ${isInput ? 'justify-between px-3 py-2' : 'justify-center items-center'}
+                    `}
+                    style={isInput ? { minHeight: '42px' } : {}}
+                >
+                    {isInput ? (
+                        <>
+                            <div className="flex-1 truncate text-sm font-medium text-gray-700 dark:text-gray-200">
+                                {renderSelected(selectedItem)}
+                            </div>
+                            <span className="material-symbols-rounded text-gray-400 text-[20px] ml-2">expand_more</span>
+                        </>
+                    ) : (
+                        renderSelected(selectedItem)
+                    )}
+                </div>
+
+                {/* Dropdown Menu */}
+                {isOpen && (
+                    <div className="w-full border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto bg-white dark:bg-gray-900">
+                        {items
+                            .filter(item => keyExtractor(item) !== (selectedItem ? keyExtractor(selectedItem) : ''))
+                            .map(item => (
+                                <div 
+                                    key={keyExtractor(item)}
+                                    className={`w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1`}
+                                    onClick={(e) => handleOptionClick(e, item)}
+                                >
+                                    {renderItem(item, false)}
+                                </div>
+                        ))}
+                    </div>
+                )}
+             </div>
+        </div>
+    );
+}

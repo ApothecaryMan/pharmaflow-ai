@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { SmartDateInput } from './SmartDateInput';
-import { Combobox } from './Combobox';
+import { SmartDateInput } from '../utils/SmartDateInput';
+import { PosDropdown } from '../utils/PosDropdown';
 import { useContextMenu } from '../components/ContextMenu';
 import { useColumnReorder } from '../hooks/useColumnReorder';
 import { useLongPress } from '../hooks/useLongPress';
 import { useSmartDirection } from '../hooks/useSmartDirection';
-import { SearchInput } from './SearchInput';
+import { SearchInput } from '../utils/SearchInput';
 import { Drug } from '../types';
 import { createSearchRegex, parseSearchTerm } from '../utils/searchUtils';
 
@@ -216,6 +216,12 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       name: '', genericName: '', category: 'General', price: 0, costPrice: 0, stock: 0, expiryDate: '', description: '', barcode: '', internalCode: '', unitsPerPack: 1, maxDiscount: 10
     });
   };
+  
+  // Dropdown States
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+  const [isAddDosageOpen, setIsAddDosageOpen] = useState(false);
+  const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
+  const [isEditDosageOpen, setIsEditDosageOpen] = useState(false);
 
   const generateInternalCode = () => {
     const prefix = formData.category?.substring(0, 2).toUpperCase() || 'GN';
@@ -592,22 +598,34 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   <div className="grid grid-cols-2 gap-4 md:col-span-2">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.category} *</label>
-                      <Combobox
-                        options={allCategories}
-                        value={formData.category}
-                        onChange={(val) => setFormData({ ...formData, category: val })}
-                        placeholder="Select or type category..."
-                        allowCustom={true}
+                      <PosDropdown
+                        variant="input"
+                        items={allCategories}
+                        selectedItem={formData.category}
+                        isOpen={isAddCategoryOpen}
+                        onToggle={() => setIsAddCategoryOpen(!isAddCategoryOpen)}
+                        onSelect={(val) => { setFormData({ ...formData, category: val }); setIsAddCategoryOpen(false); }}
+                        keyExtractor={(c) => c}
+                        renderSelected={(c) => c || 'Select category'}
+                        renderItem={(c) => c}
+                        className="w-full h-[50px]"
+                        color={color}
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Dosage Form</label>
-                      <Combobox
-                        options={['Tablet', 'Capsule', 'Syrup', 'Suspension', 'Injection', 'Cream', 'Ointment', 'Gel', 'Drops', 'Spray', 'Inhaler', 'Suppository', 'Patch', 'Sachet', 'Other']}
-                        value={formData.dosageForm || 'Tablet'}
-                        onChange={(val) => setFormData({ ...formData, dosageForm: val })}
-                        placeholder="Select dosage form..."
-                        allowCustom={true}
+                      <PosDropdown
+                        variant="input"
+                        items={['Tablet', 'Capsule', 'Syrup', 'Suspension', 'Injection', 'Cream', 'Ointment', 'Gel', 'Drops', 'Spray', 'Inhaler', 'Suppository', 'Patch', 'Sachet', 'Other']}
+                        selectedItem={formData.dosageForm || 'Tablet'}
+                        isOpen={isAddDosageOpen}
+                        onToggle={() => setIsAddDosageOpen(!isAddDosageOpen)}
+                        onSelect={(val) => { setFormData({ ...formData, dosageForm: val }); setIsAddDosageOpen(false); }}
+                        keyExtractor={(c) => c}
+                        renderSelected={(c) => c || 'Select dosage form'}
+                        renderItem={(c) => c}
+                        className="w-full h-[50px]"
+                        color={color}
                       />
                     </div>
                   </div>
@@ -962,22 +980,34 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.category} *</label>
-                      <Combobox
-                        options={allCategories}
-                        value={formData.category}
-                        onChange={(val) => setFormData({ ...formData, category: val })}
-                        placeholder="Select or type category..."
-                        allowCustom={true}
+                      <PosDropdown
+                        variant="input"
+                        items={allCategories}
+                        selectedItem={formData.category}
+                        isOpen={isEditCategoryOpen}
+                        onToggle={() => setIsEditCategoryOpen(!isEditCategoryOpen)}
+                        onSelect={(val) => { setFormData({ ...formData, category: val }); setIsEditCategoryOpen(false); }}
+                        keyExtractor={(c) => c}
+                        renderSelected={(c) => c || 'Select category'}
+                        renderItem={(c) => c}
+                        className="w-full h-[50px]"
+                        color={color}
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Dosage Form</label>
-                      <Combobox
-                        options={['Tablet', 'Capsule', 'Syrup', 'Suspension', 'Injection', 'Cream', 'Ointment', 'Gel', 'Drops', 'Spray', 'Inhaler', 'Suppository', 'Patch', 'Sachet', 'Other']}
-                        value={formData.dosageForm || 'Tablet'}
-                        onChange={(val) => setFormData({ ...formData, dosageForm: val })}
-                        placeholder="Select dosage form..."
-                        allowCustom={true}
+                      <PosDropdown
+                        variant="input"
+                        items={['Tablet', 'Capsule', 'Syrup', 'Suspension', 'Injection', 'Cream', 'Ointment', 'Gel', 'Drops', 'Spray', 'Inhaler', 'Suppository', 'Patch', 'Sachet', 'Other']}
+                        selectedItem={formData.dosageForm || 'Tablet'}
+                        isOpen={isEditDosageOpen}
+                        onToggle={() => setIsEditDosageOpen(!isEditDosageOpen)}
+                        onSelect={(val) => { setFormData({ ...formData, dosageForm: val }); setIsEditDosageOpen(false); }}
+                        keyExtractor={(c) => c}
+                        renderSelected={(c) => c || 'Select dosage form'}
+                        renderItem={(c) => c}
+                        className="w-full h-[50px]"
+                         color={color}
                       />
                     </div>
                   </div>

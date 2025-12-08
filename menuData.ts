@@ -408,7 +408,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "purchase-orders",
         label: "Purchase Orders",
         items: [
-          "Create PO",
+          { label: "Create PO", view: "purchases" },
           "Draft PO",
           "Pending Approval",
           "Approved PO",
@@ -433,8 +433,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "supplier-management",
         label: "Supplier Management",
         items: [
-          "Supplier List",
-          "Add Supplier",
+          { label: "Supplier List", view: "suppliers" },
           "Supplier Profile",
           "Supplier Ratings",
           "Payment Terms",
@@ -446,11 +445,10 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "purchase-returns",
         label: "Purchase Returns",
         items: [
-          "Create Return",
+          { label: "Create Return", view: "purchase-returns" },
           "Return History",
-          "Debit Notes",
-          "Damage Returns",
-          "Expiry Returns"
+          "Return Approval",
+          "Supplier Credits"
         ]
       },
       {

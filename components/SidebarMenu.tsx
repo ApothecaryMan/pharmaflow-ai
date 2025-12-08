@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffe
 import { MenuItem } from '../menuData';
 import { getMenuTranslation } from '../menuTranslations';
 import { useSmartDirection } from '../hooks/useSmartDirection';
-import { SearchInput } from './SearchInput';
+import { SearchInput } from '../utils/SearchInput';
 
 interface SidebarMenuProps {
   menuItems: MenuItem[];

@@ -1,0 +1,37 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "plugins": ["@typescript-eslint", "react", "react-hooks"],
+  "rules": {
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "JSXOpeningElement[name.name='select']",
+        "message": "❌ FORBIDDEN: Do not use <select> elements. Use PosDropdown component with useExpandingDropdown hook instead. See docs/dropdown-usage.md for examples."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='option']",
+        "message": "❌ FORBIDDEN: Do not use <option> elements. Use PosDropdown component with useExpandingDropdown hook instead. See docs/dropdown-usage.md for examples."
+      }
+    ],
+    "react/react-in-jsx-scope": "off",
+    "@typescript-eslint/no-explicit-any": "warn"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
+}

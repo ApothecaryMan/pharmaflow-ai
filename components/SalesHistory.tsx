@@ -6,7 +6,7 @@ import { ReturnModal } from './ReturnModal';
 import { DatePicker } from './DatePicker';
 import { createSearchRegex } from '../utils/searchUtils';
 import { useSmartDirection } from '../hooks/useSmartDirection';
-import { SearchInput } from './SearchInput';
+import { SearchInput } from '../utils/SearchInput';
 
 interface SalesHistoryProps {
   sales: Sale[];

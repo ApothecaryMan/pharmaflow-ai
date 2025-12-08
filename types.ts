@@ -79,6 +79,8 @@ export interface PurchaseItem {
   costPrice: number; // Cost per pack at time of purchase
   expiryDate?: string;
   dosageForm?: string;
+  discount?: number; // Discount percentage
+  salePrice?: number; // Selling price (defaults to existing price)
 }
 
 export interface Sale {
@@ -143,6 +145,32 @@ export interface Purchase {
   items: PurchaseItem[];
   totalCost: number;
   status: 'completed' | 'pending';
+  paymentType?: 'cash' | 'credit';
+  invoiceId?: string;
+  externalInvoiceId?: string;
+  returnedQuantities?: Record<string, number>; // Track returned quantities per drugId
+}
+
+export interface PurchaseReturnItem {
+  drugId: string;
+  name: string;
+  quantityReturned: number;
+  costPrice: number;
+  refundAmount: number;
+  reason: 'damaged' | 'expired' | 'wrong_item' | 'defective' | 'overage' | 'other';
+  condition: 'damaged' | 'expired' | 'other';
+}
+
+export interface PurchaseReturn {
+  id: string;
+  purchaseId: string;
+  supplierId: string;
+  supplierName: string;
+  date: string;
+  items: PurchaseReturnItem[];
+  totalRefund: number;
+  status: 'pending' | 'approved' | 'completed';
+  notes?: string;
 }
 
 export interface ThemeColor {

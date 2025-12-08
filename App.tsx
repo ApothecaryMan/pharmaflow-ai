@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, Return, Customer } from './types';
+import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, PurchaseReturn, Return, Customer } from './types';
 import { Toast } from './components/Toast';
 import { TRANSLATIONS } from './translations';
 import { PHARMACY_MENU } from './menuData';
@@ -296,6 +296,14 @@ const App: React.FC = () => {
     return [];
   });
 
+  const [purchaseReturns, setPurchaseReturns] = useState<PurchaseReturn[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pharma_purchase_returns');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
   const [returns, setReturns] = useState<Return[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pharma_returns');
@@ -385,6 +393,10 @@ const App: React.FC = () => {
   }, [purchases]);
 
   useEffect(() => {
+    localStorage.setItem('pharma_purchase_returns', JSON.stringify(purchaseReturns));
+  }, [purchaseReturns]);
+
+  useEffect(() => {
     localStorage.setItem('pharma_returns', JSON.stringify(returns));
   }, [returns]);
 
@@ -420,6 +432,8 @@ const App: React.FC = () => {
             setReturns(JSON.parse(e.newValue));
         } else if (e.key === 'pharma_purchases' && e.newValue) {
             setPurchases(JSON.parse(e.newValue));
+        } else if (e.key === 'pharma_purchase_returns' && e.newValue) {
+            setPurchaseReturns(JSON.parse(e.newValue));
         } else if (e.key === 'pharma_suppliers' && e.newValue) {
             setSuppliers(JSON.parse(e.newValue));
         }
@@ -775,7 +789,7 @@ const App: React.FC = () => {
       <div className="flex h-[calc(100vh-64px)] overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
         {/* Desktop Sidebar */}
         <aside 
-          className={`hidden ${view === 'pos' && !sidebarVisible ? '' : 'md:flex'} flex-col w-72 backdrop-blur-xl transition-all duration-300 ease-in-out`}
+          className={`hidden ${!sidebarVisible ? '' : 'md:flex'} flex-col w-72 backdrop-blur-xl transition-all duration-300 ease-in-out`}
           style={{
             backgroundColor: 'var(--bg-primary)'
           }}
@@ -851,7 +865,7 @@ const App: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 h-full overflow-hidden relative rounded-tl-3xl rounded-tr-3xl border-t border-l border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 shadow-inner">
-        <div className={`h-full overflow-y-auto scrollbar-hide ${view === 'pos' ? 'p-2' : 'max-w-7xl mx-auto p-4 md:p-8'}`}>
+        <div className={`h-full overflow-y-auto scrollbar-hide ${view === 'pos' || view === 'purchases' ? 'p-2' : 'max-w-7xl mx-auto p-4 md:p-8'}`}>
           {/* Dynamic Page Rendering - Automatically handles all pages from registry */}
           {(() => {
             const pageConfig = PAGE_REGISTRY[view];
@@ -886,10 +900,15 @@ const App: React.FC = () => {
             if (requiredProps.includes('products')) props.products = inventory;
             if (requiredProps.includes('suppliers')) props.suppliers = suppliers;
             if (requiredProps.includes('purchases')) props.purchases = purchases;
+            if (requiredProps.includes('purchaseReturns')) props.purchaseReturns = purchaseReturns;
             if (requiredProps.includes('returns')) props.returns = returns;
+            if (requiredProps.includes('drugs')) props.drugs = inventory;
             
             // Handler functions
             if (requiredProps.includes('setInventory')) props.setInventory = setInventory;
+            if (requiredProps.includes('setDrugs')) props.setDrugs = setInventory;
+            if (requiredProps.includes('setPurchases')) props.setPurchases = setPurchases;
+            if (requiredProps.includes('setPurchaseReturns')) props.setPurchaseReturns = setPurchaseReturns;
             if (requiredProps.includes('onAddDrug')) props.onAddDrug = handleAddDrug;
             if (requiredProps.includes('onUpdateDrug')) props.onUpdateDrug = handleUpdateDrug;
             if (requiredProps.includes('onDeleteDrug')) props.onDeleteDrug = handleDeleteDrug;

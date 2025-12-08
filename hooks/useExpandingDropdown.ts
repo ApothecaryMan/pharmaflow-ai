@@ -8,6 +8,9 @@ export interface UseExpandingDropdownProps<T> {
   onSelect: (item: T) => void;
   keyExtractor: (item: T) => string;
   onEnter?: () => void;
+  // Configuration
+  preventDefaultOnSpace?: boolean;
+  onEscape?: () => void;
 }
 
 export function useExpandingDropdown<T>({
@@ -18,25 +21,39 @@ export function useExpandingDropdown<T>({
   onSelect,
   keyExtractor,
   onEnter,
+  preventDefaultOnSpace = true,
+  onEscape,
 }: UseExpandingDropdownProps<T>) {
   
   const handleKeyDown = (e: KeyboardEvent) => {
+    // Escape
+    if (e.key === 'Escape') {
+        if (onEscape) onEscape();
+        else if (isOpen) onToggle();
+        return;
+    }
+
     // Space to Toggle
     if (e.key === 'Space') {
-      e.preventDefault();
-      onToggle();
+      if (preventDefaultOnSpace) {
+        e.preventDefault();
+        onToggle();
+      }
       return;
     }
 
     // Enter Actions
     if (e.key === 'Enter') {
-      e.preventDefault();
+      // Don't prevent default if we want to submit a form, but usually we do for dropdowns
+      // If onEnter is provided, we assume we're handling it.
+      if (isOpen || onEnter) e.preventDefault();
+      
       if (onEnter) {
         onEnter();
       } else if (isOpen && items.length > 0) {
-        // Optional: If open and enter pressed without custom onEnter, maybe select first? 
-        // Current implementation in component didn't select on Enter by default if closed,
-        // but let's stick to the extracted logic.
+        // Default: toggle closed if just selecting? 
+        // Or do nothing? Existing logic was minimal.
+        // For Combobox, Enter usually performs the selection.
       }
       return;
     }
@@ -77,7 +94,7 @@ export function useExpandingDropdown<T>({
   };
 
   const handleClick = (e: MouseEvent) => {
-    e.stopPropagation();
+    // e.stopPropagation(); // Removed strict propagation to allow flexibility
     onToggle();
   };
 

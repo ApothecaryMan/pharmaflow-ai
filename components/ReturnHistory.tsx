@@ -3,7 +3,7 @@ import { Return, Sale } from '../types';
 import { DatePicker } from './DatePicker';
 import { createSearchRegex } from '../utils/searchUtils';
 import { useSmartDirection } from '../hooks/useSmartDirection';
-import { SearchInput } from './SearchInput';
+import { SearchInput } from '../utils/SearchInput';
 
 interface ReturnHistoryProps {
   returns: Return[];

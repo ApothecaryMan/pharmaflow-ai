@@ -4,7 +4,7 @@ import { useContextMenu } from '../components/ContextMenu';
 import { Drug } from '../types';
 import * as QRCode from 'qrcode';
 import { useSmartDirection } from '../hooks/useSmartDirection';
-import { SearchInput } from './SearchInput';
+import { SearchInput } from '../utils/SearchInput';
 
 interface BarcodeStudioProps {
   inventory: Drug[];

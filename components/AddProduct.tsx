@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Drug } from '../types';
+import { PosDropdown } from '../utils/PosDropdown';
 
 interface AddProductProps {
   inventory: Drug[];
@@ -26,6 +27,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
   // Extract unique categories from existing inventory
   const categories = Array.from(new Set(inventory.map(drug => drug.category))).sort();
@@ -166,16 +168,22 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
               </div>
               <div className="space-y-2 md:col-span-2">
                 <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.category} *</label>
-                <select
-                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all"
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                  value={formData.category}
-                  onChange={e => setFormData({ ...formData, category: e.target.value })}
-                >
-                  {allCategories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
+                <PosDropdown
+                  variant="input"
+                  items={allCategories}
+                  selectedItem={formData.category}
+                  isOpen={isCategoryOpen}
+                  onToggle={() => setIsCategoryOpen(!isCategoryOpen)}
+                  onSelect={(cat) => {
+                      setFormData({ ...formData, category: cat });
+                      setIsCategoryOpen(false);
+                  }}
+                  keyExtractor={(cat) => cat}
+                  renderItem={(cat, isSelected) => cat}
+                  renderSelected={(cat) => cat || t.addProduct.fields.category}
+                  className="w-full h-[50px]"
+                  color={color}
+                />
               </div>
             </div>
           </div>

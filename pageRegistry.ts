@@ -4,8 +4,9 @@ import { Inventory } from './components/Inventory';
 import { POS } from './components/POS';
 import { SalesHistory } from './components/SalesHistory';
 import { ReturnHistory } from './components/ReturnHistory';
-import { Suppliers } from './components/Suppliers';
+import { SuppliersList } from './components/SuppliersList';
 import { Purchases } from './components/Purchases';
+import { PurchaseReturns } from './components/PurchaseReturns';
 import { BarcodeStudio } from './components/BarcodeStudio';
 import { CustomerManagement } from './components/CustomerManagement';
 import { CustomerOverview } from './components/CustomerOverview';
@@ -81,21 +82,30 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'suppliers': {
     id: 'suppliers',
-    component: Suppliers,
-    menuLabel: 'Suppliers',
-    menuLabelAr: 'الموردين',
+    component: SuppliersList,
+    menuLabel: 'Supplier List',
+    menuLabelAr: 'قائمة الموردين',
     icon: 'local_shipping',
-    category: 'suppliers',
+    category: 'purchase',
     requiredProps: ['suppliers', 'setSuppliers', 'color', 't', 'language']
   },
   'purchases': {
     id: 'purchases',
     component: Purchases,
-    menuLabel: 'Purchases / Stock In',
-    menuLabelAr: 'المشتريات / إدخال المخزون',
+    menuLabel: 'Purchases',
+    menuLabelAr: 'المشتريات',
     icon: 'shopping_cart',
-    category: 'purchases',
-    requiredProps: ['purchases', 'suppliers', 'inventory', 'onCompletePurchase', 'color', 't', 'language']
+    category: 'purchase',
+    requiredProps: ['inventory', 'suppliers', 'purchases', 'purchaseReturns', 'onCompletePurchase', 'drugs', 'setDrugs', 'color', 't', 'language']
+  },
+  'purchase-returns': {
+    id: 'purchase-returns',
+    component: PurchaseReturns,
+    menuLabel: 'Purchase Returns',
+    menuLabelAr: 'مرتجعات المشتريات',
+    icon: 'assignment_return',
+    category: 'purchase',
+    requiredProps: ['purchases', 'purchaseReturns', 'setPurchaseReturns', 'drugs', 'setDrugs', 'color', 't', 'language']
   },
   'barcode-studio': {
     id: 'barcode-studio',

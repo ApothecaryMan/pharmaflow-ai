@@ -4,7 +4,8 @@ import { useContextMenu } from './ContextMenu';
 import { DataTable, Column } from './DataTable';
 import { GOVERNORATES, CITIES, AREAS, getLocationName } from '../data/locations';
 import { useSmartDirection } from '../hooks/useSmartDirection';
-import { SearchInput } from './SearchInput';
+import { SearchInput } from '../utils/SearchInput';
+import { PosDropdown } from '../utils/PosDropdown';
 
 interface CustomerManagementProps {
   customers: Customer[];
@@ -40,6 +41,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   // Location State
   const [availableCities, setAvailableCities] = useState<typeof CITIES>([]);
   const [availableAreas, setAvailableAreas] = useState<typeof AREAS>([]);
+  
+  // Dropdown States for Address
+  const [isGovernorateOpen, setIsGovernorateOpen] = useState(false);
+  const [isCityOpen, setIsCityOpen] = useState(false);
+  const [isAreaOpen, setIsAreaOpen] = useState(false);
 
   // Update available cities when governorate changes
   useEffect(() => {
@@ -342,67 +348,75 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             {/* Governorate */}
             <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">{t.modal.governorate}</label>
-                <select
-                    value={formData.governorate || ''}
-                    onChange={e => {
+                <PosDropdown
+                    variant="input"
+                    items={GOVERNORATES}
+                    selectedItem={GOVERNORATES.find(g => g.id === formData.governorate)}
+                    isOpen={isGovernorateOpen}
+                    onToggle={() => setIsGovernorateOpen(!isGovernorateOpen)}
+                    onSelect={(gov) => {
                         setFormData({
-                            ...formData, 
-                            governorate: e.target.value,
-                            city: '', // Reset city and area
+                            ...formData,
+                            governorate: gov.id,
+                            city: '',
                             area: ''
                         });
+                        setIsGovernorateOpen(false);
                     }}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
-                >
-                    <option value="">{t.modal.selectGovernorate}</option>
-                    {GOVERNORATES.map(gov => (
-                        <option key={gov.id} value={gov.id}>
-                            {language === 'AR' ? gov.name_ar : gov.name_en}
-                        </option>
-                    ))}
-                </select>
+                    keyExtractor={(gov) => gov.id}
+                    renderSelected={(gov) => gov ? (language === 'AR' ? gov.name_ar : gov.name_en) : t.modal.selectGovernorate}
+                    renderItem={(gov) => language === 'AR' ? gov.name_ar : gov.name_en}
+                    className="w-full h-[42px]"
+                    color={color}
+                />
             </div>
 
             {/* City */}
             <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">{t.modal.city}</label>
-                <select
-                    value={formData.city || ''}
-                    onChange={e => {
+                <PosDropdown
+                    variant="input"
+                    items={availableCities}
+                    selectedItem={availableCities.find(c => c.id === formData.city)}
+                    isOpen={isCityOpen && !!formData.governorate}
+                    onToggle={() => formData.governorate && setIsCityOpen(!isCityOpen)}
+                    onSelect={(city) => {
                         setFormData({
-                            ...formData, 
-                            city: e.target.value,
-                            area: '' // Reset area
+                            ...formData,
+                            city: city.id,
+                            area: ''
                         });
+                        setIsCityOpen(false);
                     }}
-                    disabled={!formData.governorate}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm disabled:opacity-50"
-                >
-                    <option value="">{t.modal.selectCity}</option>
-                    {availableCities.map(city => (
-                        <option key={city.id} value={city.id}>
-                            {language === 'AR' ? city.name_ar : city.name_en}
-                        </option>
-                    ))}
-                </select>
+                    keyExtractor={(city) => city.id}
+                    renderSelected={(city) => city ? (language === 'AR' ? city.name_ar : city.name_en) : t.modal.selectCity}
+                    renderItem={(city) => language === 'AR' ? city.name_ar : city.name_en}
+                    className="w-full h-[42px]"
+                    color={color}
+                    transparentIfSingle={false}
+                />
             </div>
 
             {/* Area */}
             <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">{t.modal.area}</label>
-                <select
-                    value={formData.area || ''}
-                    onChange={e => setFormData({...formData, area: e.target.value})}
-                    disabled={!formData.city}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm disabled:opacity-50"
-                >
-                    <option value="">{t.modal.selectArea}</option>
-                    {availableAreas.map(area => (
-                        <option key={area.id} value={area.id}>
-                            {language === 'AR' ? area.name_ar : area.name_en}
-                        </option>
-                    ))}
-                </select>
+                <PosDropdown
+                    variant="input"
+                    items={availableAreas}
+                    selectedItem={availableAreas.find(a => a.id === formData.area)}
+                    isOpen={isAreaOpen && !!formData.city}
+                    onToggle={() => formData.city && setIsAreaOpen(!isAreaOpen)}
+                    onSelect={(area) => {
+                        setFormData({...formData, area: area.id});
+                        setIsAreaOpen(false);
+                    }}
+                    keyExtractor={(area) => area.id}
+                    renderSelected={(area) => area ? (language === 'AR' ? area.name_ar : area.name_en) : t.modal.selectArea}
+                    renderItem={(area) => language === 'AR' ? area.name_ar : area.name_en}
+                    className="w-full h-[42px]"
+                    color={color}
+                    transparentIfSingle={false}
+                />
             </div>
         </div>
 

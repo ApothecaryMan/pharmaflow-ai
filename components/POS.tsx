@@ -9,9 +9,10 @@ import { usePOSTabs } from '../hooks/usePOSTabs';
 import { useColumnReorder } from '../hooks/useColumnReorder';
 import { useLongPress } from '../hooks/useLongPress';
 import { useSmartDirection } from '../hooks/useSmartDirection';
-import { SearchInput } from './SearchInput';
+import { SearchInput } from '../utils/SearchInput';
 import { TabBar } from './TabBar';
 import { createSearchRegex, parseSearchTerm } from '../utils/searchUtils';
+import { PosDropdown, PosDropdownProps } from '../utils/PosDropdown';
 
 interface POSProps {
   inventory: Drug[];
@@ -66,6 +67,27 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
   // Customer Search State
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
+  const [highlightedCustomerIndex, setHighlightedCustomerIndex] = useState(0);
+
+  // Hook for Customer Search Navigation
+  const customerDropdownHook = useExpandingDropdown<Customer>({
+      items: filteredCustomers,
+      selectedItem: filteredCustomers[highlightedCustomerIndex],
+      isOpen: showCustomerDropdown,
+      onToggle: () => setShowCustomerDropdown(prev => !prev),
+      onSelect: (customer) => {
+          const idx = filteredCustomers.indexOf(customer);
+          if (idx !== -1) setHighlightedCustomerIndex(idx);
+      },
+      keyExtractor: (c) => c.id,
+      onEnter: () => {
+          if (showCustomerDropdown && filteredCustomers.length > 0) {
+              handleCustomerSelect(filteredCustomers[highlightedCustomerIndex]);
+          }
+      },
+      preventDefaultOnSpace: false,
+      onEscape: () => setShowCustomerDropdown(false)
+  });
   
   // Enhanced Customer UX State
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -111,6 +133,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
 
   
   const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'out_of_stock'>('in_stock');
+  const [activeFilterDropdown, setActiveFilterDropdown] = useState<'category' | 'stock' | null>(null);
   
   // Sidebar Resize Logic
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -923,16 +946,20 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
             ) : (
               // Search Inputs
               <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1 relative">
+                <div 
+                    className="flex-1 relative"
+                    onBlur={customerDropdownHook.handleBlur} 
+                >
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{t.customerInfo || 'Customer Information'}</label>
                 <SearchInput
                   value={customerName}
                   onSearchChange={(val) => {
                     setCustomerName(val);
                     setShowCustomerDropdown(true);
+                    setHighlightedCustomerIndex(0);
                   }}
                   onFocus={() => setShowCustomerDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
+                  onKeyDown={customerDropdownHook.handleKeyDown}
                   placeholder={t.customers?.searchPlaceholder || 'Search by name, phone, code...'}
                   icon="person"
                   className="border-gray-200 dark:border-gray-700"
@@ -943,10 +970,17 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                         {filteredCustomers.map((customer, index) => (
                         <div
                             key={customer.id}
-                            className="px-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 flex flex-col border-b border-gray-50 dark:border-gray-700 last:border-0"
+                            className={`px-3 py-2 cursor-pointer border-b border-gray-50 dark:border-gray-700 last:border-0 flex flex-col ${
+                                index === highlightedCustomerIndex 
+                                ? 'bg-blue-50 dark:bg-blue-900/30' 
+                                : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                            }`}
                             onClick={() => handleCustomerSelect(customer)}
+                            onMouseEnter={() => setHighlightedCustomerIndex(index)}
                         >
-                            <span className="text-sm font-bold text-gray-800 dark:text-gray-200">{customer.name}</span>
+                            <span className={`text-sm font-bold ${index === highlightedCustomerIndex ? 'text-blue-700 dark:text-blue-300' : 'text-gray-800 dark:text-gray-200'}`}>
+                                {customer.name}
+                            </span>
                             <div className="flex gap-2 text-xs text-gray-500">
                             <span>{customer.phone}</span>
                             {customer.code && <span>• {customer.code}</span>}
@@ -1069,31 +1103,43 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                     }}
                 />
             </div>
-            <div className="relative min-w-[150px]">
-                <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full appearance-none ps-3 pe-8 py-2 rounded-xl bg-gray-50 dark:bg-gray-950 border-none focus:ring-2 transition-all text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer outline-none"
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                >
-                    {categories.map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.label}</option>
-                    ))}
-                </select>
-                <span className="material-symbols-rounded absolute end-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[20px]">expand_more</span>
+            <div className="relative min-w-[150px] h-[42px]">
+                <PosDropdown 
+                    variant="input"
+                    items={categories}
+                    selectedItem={categories.find(c => c.id === selectedCategory)}
+                    isOpen={activeFilterDropdown === 'category'}
+                    onToggle={() => setActiveFilterDropdown(activeFilterDropdown === 'category' ? null : 'category')}
+                    onSelect={(item) => setSelectedCategory(item.id)}
+                    keyExtractor={(item) => item.id}
+                    renderSelected={(item) => item?.label || selectedCategory}
+                    renderItem={(item) => item.label}
+                    color={color}
+                />
             </div>
-            <div className="relative min-w-[150px]">
-                <select
-                    value={stockFilter}
-                    onChange={(e) => setStockFilter(e.target.value as 'all' | 'in_stock' | 'out_of_stock')}
-                    className="w-full appearance-none ps-3 pe-8 py-2 rounded-xl bg-gray-50 dark:bg-gray-950 border-none focus:ring-2 transition-all text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer outline-none"
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                >
-                    <option value="all">{t.allStock || 'All Stock'}</option>
-                    <option value="in_stock">{t.inStock || 'In Stock'}</option>
-                    <option value="out_of_stock">{t.outOfStock || 'Out of Stock'}</option>
-                </select>
-                <span className="material-symbols-rounded absolute end-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[20px]">expand_more</span>
+            <div className="relative min-w-[150px] h-[42px]">
+                <PosDropdown 
+                    variant="input"
+                    items={['all', 'in_stock', 'out_of_stock']}
+                    selectedItem={stockFilter}
+                    isOpen={activeFilterDropdown === 'stock'}
+                    onToggle={() => setActiveFilterDropdown(activeFilterDropdown === 'stock' ? null : 'stock')}
+                    onSelect={(item) => setStockFilter(item as any)}
+                    keyExtractor={(item) => item as string}
+                    renderSelected={(item) => {
+                        if (item === 'all') return t.allStock || 'All Stock';
+                        if (item === 'in_stock') return t.inStock || 'In Stock';
+                        if (item === 'out_of_stock') return t.outOfStock || 'Out of Stock';
+                        return item as string;
+                    }}
+                    renderItem={(item) => {
+                         if (item === 'all') return t.allStock || 'All Stock';
+                        if (item === 'in_stock') return t.inStock || 'In Stock';
+                        if (item === 'out_of_stock') return t.outOfStock || 'Out of Stock';
+                        return item as string;
+                    }}
+                    color={color}
+                />
             </div>
         </div>
 
@@ -1597,77 +1643,4 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
 
 // --- Local Component for Dropdown ---
 // Inlined to avoid extra files, reusing the generic hook efficiently.
-interface PosDropdownProps<T> {
-    items: T[];
-    selectedItem: T | undefined;
-    isOpen: boolean;
-    onToggle: () => void;
-    onSelect: (item: T) => void;
-    renderItem: (item: T, isSelected: boolean) => React.ReactNode;
-    renderSelected: (item: T | undefined) => React.ReactNode;
-    keyExtractor: (item: T) => string;
-    onEnter?: () => void;
-    className?: string;
-    transparentIfSingle?: boolean;
-    color?: string;
-}
 
-function PosDropdown<T>({
-    items,
-    selectedItem,
-    isOpen,
-    onToggle,
-    onSelect,
-    renderItem,
-    renderSelected,
-    keyExtractor,
-    onEnter,
-    className = "",
-    transparentIfSingle = false
-}: PosDropdownProps<T>) {
-    
-    const { handleKeyDown, handleBlur, handleClick, handleOptionClick } = useExpandingDropdown({
-        items,
-        selectedItem,
-        isOpen,
-        onToggle,
-        onSelect,
-        keyExtractor,
-        onEnter
-    });
-
-    const isSingle = items.length <= 1;
-    const isTransparent = transparentIfSingle && isSingle;
-
-    return (
-        <div className={`relative ${className}`}>
-             <div 
-                tabIndex={0}
-                onKeyDown={handleKeyDown}
-                onBlur={handleBlur}
-                className={`absolute top-0 left-0 w-full flex flex-col items-center justify-center rounded-lg border transition-all cursor-pointer overflow-hidden focus:outline-none 
-                    ${isTransparent ? 'bg-transparent border-transparent' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'} 
-                    ${isOpen ? `z-[5] border-gray-200 dark:border-gray-700 shadow-xl bg-white dark:bg-gray-900` : 'z-0'}
-                `}
-                onClick={handleClick}
-            >
-                {renderSelected(selectedItem)}
-                {isOpen && (
-                    <div className="w-full border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto">
-                        {items
-                            .filter(item => keyExtractor(item) !== (selectedItem ? keyExtractor(selectedItem) : ''))
-                            .map(item => (
-                                <div 
-                                    key={keyExtractor(item)}
-                                    className={`w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800`}
-                                    onClick={(e) => handleOptionClick(e, item)}
-                                >
-                                    {renderItem(item, false)}
-                                </div>
-                        ))}
-                    </div>
-                )}
-             </div>
-        </div>
-    );
-}
