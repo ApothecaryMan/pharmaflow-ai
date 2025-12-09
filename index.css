@@ -106,7 +106,25 @@ body {
    but falls back to Noto Sans Arabic for the family */
 html[dir="rtl"] body,
 html[lang="ar"] body {
-  font-family: "Noto Sans Arabic", "Google Sans Flex", sans-serif;
+  font-family: "Google Sans Flex", "Noto Sans Arabic", sans-serif;
+}
+
+/* Arabic Headings & Active UI - IBM Plex Sans Arabic */
+html[dir="rtl"] h1, html[dir="rtl"] .h1,
+html[dir="rtl"] h2, html[dir="rtl"] .h2,
+html[dir="rtl"] h3, html[dir="rtl"] .h3,
+html[dir="rtl"] h4, html[dir="rtl"] .h4,
+html[dir="rtl"] h5, html[dir="rtl"] .h5,
+html[dir="rtl"] h6, html[dir="rtl"] .h6,
+html[dir="rtl"] nav button.font-semibold,
+html[lang="ar"] h1, html[lang="ar"] .h1,
+html[lang="ar"] h2, html[lang="ar"] .h2,
+html[lang="ar"] h3, html[lang="ar"] .h3,
+html[lang="ar"] h4, html[lang="ar"] .h4,
+html[lang="ar"] h5, html[lang="ar"] .h5,
+html[lang="ar"] h6, html[lang="ar"] .h6,
+html[lang="ar"] nav button.font-semibold {
+  font-family: "IBM Plex Sans Arabic", "Google Sans Flex", sans-serif;
 }
 
 /* --- Contextual Typography Classes --- */

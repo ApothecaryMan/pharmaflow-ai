@@ -4,6 +4,7 @@ import { Drug } from '../types';
 import * as QRCode from 'qrcode';
 import { useSmartDirection } from '../hooks/useSmartDirection';
 import { SearchInput } from '../utils/SearchInput';
+import { encodeCode128 } from '../utils/barcodeEncoders';
 
 interface BarcodeStudioProps {
   inventory: Drug[];
@@ -43,6 +44,11 @@ interface LabelElement {
     color?: string;
     field?: keyof Drug | 'unit' | 'store' | 'hotline';
     locked?: boolean;
+    isVisible: boolean;
+    color?: string;
+    field?: keyof Drug | 'unit' | 'store' | 'hotline';
+    locked?: boolean;
+    barcodeFormat?: 'code39' | 'code39-text' | 'code128' | 'code128-text';
 }
 
 interface SavedTemplate {
@@ -176,7 +182,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       const newElements: LabelElement[] = [
           { id: 'store', type: 'text', label: 'Store Name', x: w/2, y: 1, fontSize: 6, align: 'center', isVisible: true, field: 'store', color: '#64748b' },
           { id: 'name', type: 'text', label: 'Drug Name', x: w/2, y: 3.5, fontSize: 8, fontWeight: 'bold', align: 'center', isVisible: true, field: 'name' },
-          { id: 'barcode', type: 'barcode', label: 'Barcode', x: w/2, y: 6.5, fontSize: 19, align: 'center', isVisible: true, width: w * 0.9 },
+          { id: 'barcode', type: 'barcode', label: 'Barcode', x: w/2, y: 6.5, fontSize: 19, align: 'center', isVisible: true, width: w * 0.9, barcodeFormat: 'code39-text' },
           { id: 'price', type: 'text', label: 'Price', x: 1, y: h - 2.5, fontSize: 6, align: 'left', isVisible: true, field: 'price' },
           // Removed 'internal' text element from default layout
           { id: 'expiry', type: 'text', label: 'Expiry', x: w - 1, y: h - 2.5, fontSize: 6, align: 'right', isVisible: true, field: 'expiryDate' },
@@ -505,7 +511,19 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
               return `<div style="${commonStyle} font-size: ${el.fontSize}px; font-weight: ${el.fontWeight || 'normal'}; color: ${el.color || 'black'}; white-space: nowrap;">${content}</div>`;
           }
           if (el.type === 'barcode') {
-              return `<div style="${commonStyle} font-family: 'Libre Barcode 39 Text'; font-size: ${el.fontSize}px; line-height: 0.8; padding-top: 1px;">${barcodeText}</div>`;
+              const format = el.barcodeFormat || 'code39-text';
+              let encoded = barcodeText;
+              let fontFamily = 'Libre Barcode 39 Text';
+              
+              if (format === 'code39') { encoded = barcodeText; fontFamily = 'Libre Barcode 39'; }
+              else if (format === 'code39-text') { encoded = barcodeText; fontFamily = 'Libre Barcode 39 Text'; }
+              else if (format.startsWith('code128')) {
+                  const rawVal = barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id);
+                  encoded = encodeCode128(rawVal);
+                  fontFamily = format === 'code128-text' ? 'Libre Barcode 128 Text' : 'Libre Barcode 128';
+              }
+              
+              return `<div style="${commonStyle} font-family: '${fontFamily}'; font-size: ${el.fontSize}px; line-height: 0.8; padding-top: 1px; white-space: nowrap;">${encoded}</div>`;
           }
           if (el.type === 'qrcode') {
               return `<img src="${qrCodeDataUrl}" style="${commonStyle} width: ${el.width}mm; height: ${el.height}mm;" />`;
@@ -539,7 +557,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
       printWindow.document.write(`
         <html><head><title>Print</title>
-        <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+        <html><head><title>Print</title>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
         <style>${css}</style></head><body>
         ${printMode === 'single' ? labelHTML : `<div class="sheet">${Array(30).fill(labelHTML).join('')}</div>`}
         <script>document.fonts.ready.then(() => window.print());</script></body></html>
@@ -680,7 +699,22 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                     }}
                                 >
                                     {el.type === 'text' && getElementContent(el)}
-                                    {el.type === 'barcode' && <div style={{ fontFamily: '"Libre Barcode 39 Text", cursive', lineHeight: 0.8, paddingTop: '1px' }}>{`*${(barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id)).replace(/\s/g, '').toUpperCase()}*`}</div>}
+                                    {el.type === 'text' && getElementContent(el)}
+                                    {el.type === 'barcode' && (() => {
+                                        const format = el.barcodeFormat || 'code39-text';
+                                        let encoded = `*${(barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id)).replace(/\s/g, '').toUpperCase()}*`;
+                                        let fontFamily = '"Libre Barcode 39 Text", cursive';
+                                        
+                                        if (format === 'code39') { fontFamily = '"Libre Barcode 39", cursive'; }
+                                        else if (format === 'code39-text') { fontFamily = '"Libre Barcode 39 Text", cursive'; }
+                                        else if (format.startsWith('code128')) {
+                                            const rawVal = barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id);
+                                            encoded = encodeCode128(rawVal);
+                                            fontFamily = format === 'code128-text' ? '"Libre Barcode 128 Text", cursive' : '"Libre Barcode 128", cursive';
+                                        }
+
+                                        return <div style={{ fontFamily, lineHeight: 0.8, paddingTop: '1px', whiteSpace: 'nowrap' }}>{encoded}</div>;
+                                    })()}
                                     {el.type === 'qrcode' && qrCodeDataUrl && <img src={qrCodeDataUrl} style={{ width: `${(el.width || 10) * MM_TO_PX}px`, height: `${(el.height || 10) * MM_TO_PX}px` }} draggable={false} />}
                                     {el.type === 'image' && (el.id === 'logo' ? uploadedLogo : el.content) && <img src={el.id === 'logo' ? uploadedLogo : el.content} style={{ width: `${(el.width || 10) * MM_TO_PX}px`, height: `${(el.height || 10) * MM_TO_PX}px`, objectFit: 'contain' }} draggable={false} />}
                                 </div>
@@ -775,6 +809,21 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                 </div>
                                 {(selectedElement.type === 'text' || selectedElement.type === 'barcode') && (
                                     <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.fontSize}</label><input type="number" value={selectedElement.fontSize} onChange={(e) => handlePropertyChange('fontSize', parseInt(e.target.value))} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
+                                )}
+                                {selectedElement.type === 'barcode' && (
+                                    <div className="mt-2">
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Barcode Style</label>
+                                        <select 
+                                            value={selectedElement.barcodeFormat || 'code39-text'} 
+                                            onChange={(e) => handlePropertyChange('barcodeFormat', e.target.value)}
+                                            className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"
+                                        >
+                                            <option value="code39-text">Code 39 (Standard Text)</option>
+                                            <option value="code39">Code 39 (Lines Only)</option>
+                                            <option value="code128-text">Code 128 (Text)</option>
+                                            <option value="code128">Code 128 (Lines Only)</option>
+                                        </select>
+                                    </div>
                                 )}
                                 {(selectedElement.type === 'text') && (
                                     <div>
