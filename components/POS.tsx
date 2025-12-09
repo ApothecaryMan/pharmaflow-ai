@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { useContextMenu } from '../components/ContextMenu';
+import { useContextMenu } from '../utils/ContextMenu';
 import { Drug, CartItem, Customer } from '../types';
 
 import { useExpandingDropdown } from '../hooks/useExpandingDropdown';
@@ -13,6 +13,7 @@ import { SearchInput } from '../utils/SearchInput';
 import { TabBar } from './TabBar';
 import { createSearchRegex, parseSearchTerm } from '../utils/searchUtils';
 import { PosDropdown, PosDropdownProps } from '../utils/PosDropdown';
+import { CARD_MD, CARD_LG } from '../utils/themeStyles';
 
 interface POSProps {
   inventory: Drug[];
@@ -855,19 +856,26 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
 
   return (
     <div className="h-full flex flex-col gap-2">
-      {/* Tab Bar */}
-      <TabBar
-        tabs={tabs}
-        activeTabId={activeTabId}
-        onTabClick={switchTab}
-        onTabClose={removeTab}
-        onTabAdd={addTab}
-        onTabRename={renameTab}
-        onTogglePin={togglePin}
-        onTabReorder={reorderTabs}
-        maxTabs={maxTabs}
-        color={color}
-      />
+      <div className="flex items-center gap-4 px-2">
+        {/* Header - Compact */}
+        <h2 className="text-xl font-bold tracking-tight type-expressive shrink-0">{t.posTitle || 'Point of Sale'}</h2>
+
+        {/* Tab Bar - Takes remaining space */}
+        <div className="flex-1 min-w-0">
+          <TabBar
+            tabs={tabs}
+            activeTabId={activeTabId}
+            onTabClick={switchTab}
+            onTabClose={removeTab}
+            onTabAdd={addTab}
+            onTabRename={renameTab}
+            onTogglePin={togglePin}
+            onTabReorder={reorderTabs}
+            maxTabs={maxTabs}
+            color={color}
+          />
+        </div>
+      </div>
       
       {/* Main POS Content */}
       <div className="flex-1 flex flex-col lg:flex-row gap-3 animate-fade-in relative overflow-hidden">
@@ -875,7 +883,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
       <div className={`flex-1 flex flex-col gap-3 h-full overflow-hidden ${mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'}`}>
         
         {/* Customer Details */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border border-gray-200 dark:border-gray-800">
+          <div className={`${CARD_MD} p-3 border border-gray-200 dark:border-gray-800`}>
             {selectedCustomer ? (
               // Locked Customer Card
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in">
@@ -1022,7 +1030,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
             )}
           </div>
         {/* Search & Filter */}
-        <div className="bg-white dark:bg-gray-900 p-2.5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row gap-2 shrink-0">
+        <div className={`${CARD_MD} p-2.5 border border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row gap-2 shrink-0`}>
              <div className="relative flex-1">
                 <SearchInput
                     ref={searchInputRef}
@@ -1164,7 +1172,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                 </p>
               </div>
             ) : (
-            <div className="flex-1 overflow-auto bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+            <div className={`${CARD_MD} flex-1 overflow-auto border border-gray-200 dark:border-gray-800`}>
               <table className="w-full min-w-full table-fixed border-collapse">
                 <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>
                   <tr>
@@ -1320,8 +1328,8 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
       <div 
         ref={sidebarRef}
         style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}
-        className={`w-full lg:w-[var(--sidebar-width)] bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden h-full ${mobileTab === 'products' ? 'hidden lg:flex' : 'flex'}`}>
-        <div className={`p-3 bg-${color}-50 dark:bg-${color}-950/30 space-y-2 shrink-0`}>
+        className={`w-full lg:w-[var(--sidebar-width)] ${CARD_MD} border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden h-full ${mobileTab === 'products' ? 'hidden lg:flex' : 'flex'}`}>
+        <div className="p-3 space-y-2 shrink-0">
             <div className="flex items-center justify-between">
                 <h2 className={`text-sm font-bold text-${color}-900 dark:text-${color}-100 flex items-center gap-2`}>
                     <span className="material-symbols-rounded text-[18px]">shopping_cart</span>
@@ -1356,7 +1364,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                 cart.map(item => (
                     <div
                         key={`${item.id}-${item.isUnit ? 'unit' : 'pack'}`}
-                        className="flex flex-col p-2 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 relative group transition-all hover:shadow-sm"
+                        className="flex flex-col p-2 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 relative group transition-all"
                         onContextMenu={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1504,7 +1512,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
             )}
         </div>
 
-        <div className="p-3 bg-gray-50 dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 space-y-2 shrink-0">
+        <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-2 shrink-0">
             
             {/* Totals Section */}
             <div className="space-y-1">
@@ -1566,7 +1574,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
       {/* Product Details Modal */}
       {viewingDrug && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in" onClick={() => setViewingDrug(null)}>
-          <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+          <div className={`${CARD_LG} w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]`} onClick={e => e.stopPropagation()}>
             <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
               <h3 className={`text-lg font-bold type-expressive text-${color}-900 dark:text-${color}-100 flex items-center gap-2`}>
                 <span className="material-symbols-rounded">info</span>

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Sale, CartItem, Return } from '../types';
+import { CARD_BASE } from '../utils/themeStyles';
 import { ReturnModal } from './ReturnModal';
 import { DatePicker } from './DatePicker';
 import { createSearchRegex } from '../utils/searchUtils';
@@ -340,14 +341,14 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
         </div>
         
         {/* Total Revenue Card */}
-        <div className={`px-4 py-2 rounded-2xl bg-${color}-50 dark:bg-${color}-900/20 border border-${color}-100 dark:border-${color}-900/50 flex flex-col items-end min-w-[140px]`}>
+        <div className={`px-4 py-2 rounded-2xl bg-${color}-50 dark:bg-${color}-900/20 ${CARD_BASE} flex flex-col items-end min-w-[140px]`}>
             <span className={`text-[10px] font-bold uppercase text-${color}-600 dark:text-${color}-400`}>{t.totalRevenue}</span>
             <span className={`text-xl font-bold text-${color}-900 dark:text-${color}-100`}>${sales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}</span>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+      <div className={`flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center ${CARD_BASE} p-4 rounded-2xl`}>
         <div className="flex flex-wrap items-center gap-3 w-full sm:flex-1">
             <div className="relative group flex-1">
                 <SearchInput
@@ -395,7 +396,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
       </div>
 
       {/* Table Card */}
-      <div className="flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm flex flex-col">
+      <div className={`flex-1 ${CARD_BASE} rounded-3xl overflow-hidden flex flex-col`}>
         <div className="overflow-x-auto flex-1">
           <table className="w-full text-start border-collapse">
             <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>

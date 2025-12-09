@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useContextMenu } from '../components/ContextMenu';
+import { useContextMenu } from '../utils/ContextMenu';
 import { PurchaseReturn, PurchaseReturnItem, Purchase, Drug } from '../types';
 import { useColumnReorder } from '../hooks/useColumnReorder';
 import { useSmartDirection } from '../hooks/useSmartDirection';

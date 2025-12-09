@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Customer, Sale } from '../types';
+import { CARD_BASE } from '../utils/themeStyles';
 import { useSmartDirection } from '../hooks/useSmartDirection';
 import { SearchInput } from '../utils/SearchInput';
 
@@ -183,7 +184,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       </h2>
 
       {/* Search Section */}
-      <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm relative z-20">
+      <div className={`p-5 rounded-3xl ${CARD_BASE} relative z-20`}>
         <div className="relative" ref={dropdownRef}>
           <SearchInput
             value={searchTerm}
@@ -199,7 +200,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
             
             {/* Autocomplete Dropdown */}
             {showDropdown && searchTerm && filteredCustomers.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto z-50">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl card-shadow max-h-60 overflow-y-auto z-50">
                 {filteredCustomers.map(customer => (
                   <button
                     key={customer.id}
@@ -239,7 +240,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
 
       {/* Results */}
       {selectedCustomer === null && searchTerm && !showDropdown && (
-        <div className="p-8 rounded-3xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 text-center">
+        <div className={`p-8 rounded-3xl bg-gray-50 dark:bg-gray-900/50 ${CARD_BASE} text-center`}>
           <span className="material-symbols-rounded text-5xl text-gray-300 dark:text-gray-600 mb-2">person_search</span>
           <p className="text-lg font-medium text-gray-600 dark:text-gray-400">
             {t.loyalty?.startSearch || 'Search for a customer to view loyalty details'}
@@ -250,7 +251,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       {selectedCustomer && (
         <>
           {/* Customer Profile Card */}
-          <div className={`p-6 rounded-3xl border ${tierInfo?.bg} ${tierInfo?.border} bg-white dark:bg-gray-900`}>
+          <div className={`p-6 rounded-3xl ${tierInfo?.bg} ${CARD_BASE}`}>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
               <div className="flex items-center gap-4">
                 <div className={`w-16 h-16 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 flex items-center justify-center font-bold text-2xl`}>
@@ -278,19 +279,19 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
 
             {/* Points Summary */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className={`p-4 rounded-xl ${CARD_BASE}`}>
                 <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{t.loyalty?.currentPoints || 'Current Points'}</p>
                 <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{(selectedCustomer.points || 0).toFixed(1)}</p>
               </div>
-              <div className="p-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className={`p-4 rounded-xl ${CARD_BASE}`}>
                 <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{t.loyalty?.totalPurchases || 'Total Purchases'}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${selectedCustomer.totalPurchases.toFixed(2)}</p>
               </div>
-              <div className="p-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className={`p-4 rounded-xl ${CARD_BASE}`}>
                 <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{t.loyalty?.totalOrders || 'Total Orders'}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{customerSales.length}</p>
               </div>
-              <div className="p-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className={`p-4 rounded-xl ${CARD_BASE}`}>
                 <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{t.loyalty?.avgOrder || 'Avg Order'}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   ${customerSales.length > 0 ? (selectedCustomer.totalPurchases / customerSales.length).toFixed(2) : '0.00'}
@@ -299,8 +300,8 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
             </div>
           </div>
 
-          {/* Points History */}
-          <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
+            {/* Points History */}
+          <div className={`p-5 rounded-3xl ${CARD_BASE}`}>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
               <span className="material-symbols-rounded text-blue-500">receipt_long</span>
               {t.loyalty?.pointsHistory || 'Points History'}

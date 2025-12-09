@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Customer } from '../types';
-import { useContextMenu } from './ContextMenu';
+import { useContextMenu } from '../utils/ContextMenu';
 import { DataTable, Column } from './DataTable';
 import { GOVERNORATES, CITIES, AREAS, getLocationName } from '../data/locations';
 import { useSmartDirection } from '../hooks/useSmartDirection';
@@ -733,7 +733,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       {mode === 'list' ? (
         <>
           {/* Search & Content */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white dark:bg-gray-900 p-4 rounded-2xl card-shadow">
               <div className="relative group flex-1 w-full">
                 <SearchInput
                     value={searchQuery}
@@ -765,7 +765,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               {/* LEFT COLUMN: Main Info */}
               <div className="xl:col-span-2 space-y-6">
                  {/* Basic Details Card */}
-                 <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+                 <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm card-shadow">
                     <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                       <span className="material-symbols-rounded text-blue-500">person</span>
                       {t.basicInfo || 'Basic Information'}
@@ -844,7 +844,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                  </div>
 
                  {/* Medical Info Card */}
-                  <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+                  <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 card-shadow">
                     <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                       <span className="material-symbols-rounded text-blue-500">medical_services</span>
                       {t.modal.conditions}
@@ -882,7 +882,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
               {/* RIGHT COLUMN: Additional Info */}
               <div className="xl:col-span-1 space-y-6">
-                  <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm h-full">
+                  <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 card-shadow h-full">
                       <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                         <span className="material-symbols-rounded text-blue-500">settings</span>
                         {t.modal.preferences}

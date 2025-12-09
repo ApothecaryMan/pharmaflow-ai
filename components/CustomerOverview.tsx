@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Customer, Sale } from '../types';
+import { CARD_BASE } from '../utils/themeStyles';
 import { ExpandedModal } from './ExpandedModal';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { getLocationName } from '../data/locations';
@@ -229,7 +230,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
     colorClass?: string;
   }) => (
     <div 
-      className={`p-5 rounded-3xl flex flex-col justify-between min-h-[140px] group relative transition-all hover:shadow-lg cursor-pointer ${colorClass || 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800'}`}
+      className={`p-5 rounded-3xl flex flex-col justify-between min-h-[140px] group relative cursor-pointer ${colorClass || CARD_BASE}`}
       onClick={onClick}
     >
       <div className="absolute top-3 right-3 rtl:right-auto rtl:left-3">
@@ -301,7 +302,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
       {/* Row 2: Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Location Distribution */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80 relative group">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} h-80 relative group`}>
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-blue-500 text-[20px]">location_on</span>
@@ -335,7 +336,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         </div>
 
         {/* Top Customers */}
-        <div className="lg:col-span-2 p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80 flex flex-col group">
+        <div className={`lg:col-span-2 p-5 rounded-3xl ${CARD_BASE} h-80 flex flex-col group`}>
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-yellow-500 text-[20px]">workspace_premium</span>
@@ -372,7 +373,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
       {/* Row 3: Health & Engagement */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Health Insights */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col group">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col group`}>
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-rose-500 text-[20px]">health_and_safety</span>
@@ -407,7 +408,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         </div>
 
         {/* Customer Engagement */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col group">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col group`}>
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-emerald-500 text-[20px]">trending_up</span>
@@ -436,7 +437,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
       {/* Row 4: Segmentation & Contact Preferences */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Customer Segmentation */}
-        <div className="lg:col-span-2 p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm group">
+        <div className={`lg:col-span-2 p-5 rounded-3xl ${CARD_BASE} group`}>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-purple-500 text-[20px]">category</span>
@@ -485,7 +486,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         </div>
 
         {/* Contact Preferences */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm group">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} group`}>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-teal-500 text-[20px]">contact_phone</span>
@@ -529,7 +530,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
       {/* Row 5: Recent Activity & Satisfaction */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Activity */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col group max-h-80">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col group max-h-80`}>
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-indigo-500 text-[20px]">history</span>
@@ -558,7 +559,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         </div>
 
         {/* Satisfaction Metrics */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm group">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} group`}>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <span className="material-symbols-rounded text-pink-500 text-[20px]">sentiment_satisfied</span>

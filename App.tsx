@@ -163,7 +163,7 @@ const LANGUAGES: { code: Language; label: string }[] = [
   { code: 'AR', label: 'Arabic' },
 ];
 
-import { ContextMenuProvider, useContextMenu } from './components/ContextMenu';
+import { ContextMenuProvider, useContextMenu } from './utils/ContextMenu';
 
 const GlobalContextMenuWrapper: React.FC<{ children: React.ReactNode, t: any, toggleTheme: () => void, toggleFullscreen: () => void }> = ({ children, t, toggleTheme, toggleFullscreen }) => {
     const { showMenu } = useContextMenu();

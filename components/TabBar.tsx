@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { SaleTab } from '../types';
-import { useContextMenu } from './ContextMenu';
+import { useContextMenu } from '../utils/ContextMenu';
 import { useLongPress } from '../hooks/useLongPress';
 import {
   DndContext,
@@ -121,11 +121,11 @@ const SortableTab = ({
       {...attributes}
       {...listeners}
       className={`
-        group relative flex items-center gap-2 pl-3 pr-8 py-2 rounded-xl transition-all duration-200 ease-out cursor-pointer border
+        group relative flex items-center gap-2 pl-3 pr-8 py-2 rounded-xl transition-all duration-200 ease-out cursor-pointer
         min-w-[100px] max-w-[180px] touch-manipulation
         ${isActive 
-          ? `bg-white dark:bg-gray-800 border-${color}-200 dark:border-${color}-800 shadow-sm ring-1 ring-${color}-100 dark:ring-${color}-900` 
-          : 'bg-transparent border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 text-gray-600 dark:text-gray-400'
+          ? `bg-gray-100 dark:bg-gray-800 shadow-sm border-2 border-gray-400` 
+          : 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 text-gray-600 dark:text-gray-400'
         }
         ${isDragging ? 'shadow-xl scale-105 ring-2 ring-blue-500 z-50 bg-white dark:bg-gray-800' : ''}
       `}
@@ -140,10 +140,18 @@ const SortableTab = ({
         ]);
       }}
       onTouchStart={(e) => {
+          listeners?.onTouchStart?.(e);
           onTabTouchStart(e);
       }}
-      onTouchEnd={onTabTouchEnd}
-      onTouchMove={onTabTouchMove}
+      onTouchEnd={(e) => {
+          listeners?.onTouchEnd?.(e);
+          onTabTouchEnd();
+      }}
+      onTouchMove={(e) => {
+          // listeners might not have onTouchMove if it relies on pointer events, but safe to check
+          // listeners?.onTouchMove?.(e); 
+          onTabTouchMove(e);
+      }}
       onClick={(e) => {
           if (isTabLongPress.current) {
               isTabLongPress.current = false;

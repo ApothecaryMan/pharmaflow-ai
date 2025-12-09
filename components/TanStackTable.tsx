@@ -59,7 +59,7 @@ export function TanStackTable<T>({
 
       {/* Table Container */}
       <div className="flex-1 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
+        <div className="overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead className={`bg-${color}-50 dark:bg-${color}-900/20 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider`}>
               {table.getHeaderGroups().map(headerGroup => (

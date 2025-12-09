@@ -528,7 +528,7 @@ export const MENU_TRANSLATIONS = {
     
     // Reports & Analytics Submenus
     'Sales Reports': 'تقارير المبيعات',
-    'Purchase Reports': 'تقارير المشتريات',
+    // 'Purchase Reports': 'تقارير المشتريات', // Duplicate
     'Inventory Reports': 'تقارير المخزون',
     // 'Customer Reports': 'تقارير العملاء', // Duplicate
     'Compliance Reports': 'تقارير الامتثال',
@@ -567,7 +567,7 @@ export const MENU_TRANSLATIONS = {
     // Customer Reports Items
     'Customer Analysis': 'تحليل العملاء',
     'Customer Purchase History': 'سجل شراء العملاء',
-    'Customer Loyalty': 'ولاء العملاء',
+    // 'Customer Loyalty': 'ولاء العملاء', // Duplicate
     'Outstanding Report': 'تقرير المعلقات',
     // 'Customer Aging': 'عمر العملاء', // Duplicate
     

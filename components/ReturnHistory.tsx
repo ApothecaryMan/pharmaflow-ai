@@ -1,5 +1,7 @@
+
 import React, { useState } from 'react';
-import { Return, Sale } from '../types';
+import { Return, Sale, CartItem } from '../types';
+import { CARD_BASE } from '../utils/themeStyles';
 import { DatePicker } from './DatePicker';
 import { createSearchRegex } from '../utils/searchUtils';
 import { useSmartDirection } from '../hooks/useSmartDirection';
@@ -53,7 +55,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
       </div>
 
       {/* Filters */}
-       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+       <div className={`flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center ${CARD_BASE} p-4 rounded-2xl`}>
         <div className="flex flex-wrap items-center gap-3 w-full sm:flex-1">
             <div className="relative group flex-1">
                 <SearchInput
@@ -92,7 +94,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
       </div>
 
       {/* Table */}
-      <div className="flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm flex flex-col">
+      <div className={`flex-1 ${CARD_BASE} rounded-3xl overflow-hidden flex flex-col`}>
         <div className="overflow-x-auto flex-1">
           <table className="w-full text-start border-collapse">
             <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>

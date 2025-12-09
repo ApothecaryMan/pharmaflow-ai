@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useContextMenu } from '../components/ContextMenu';
+import { useContextMenu } from '../utils/ContextMenu';
 import { useColumnReorder } from '../hooks/useColumnReorder';
 import { useLongPress } from '../hooks/useLongPress';
 
@@ -167,6 +167,41 @@ export const DataTable = <T extends { id: string }>({
         ]);
     };
 
+    // Body Long Press (Delegated)
+    const {
+        onTouchStart: onBodyTouchStart,
+        onTouchEnd: onBodyTouchEnd,
+        onTouchMove: onBodyTouchMove
+    } = useLongPress({
+        onLongPress: (e) => {
+             const target = e.target as HTMLElement;
+             const row = target.closest('[data-row-index]');
+             if (row && onRowContextMenu) {
+                 const indexStr = row.getAttribute('data-row-index');
+                 if (indexStr !== null) {
+                     const index = parseInt(indexStr);
+                     const item = data[index];
+                     if (item) {
+                         // Create a synthetic event or just call with minimal needed info?
+                         // onRowContextMenu expects React.MouseEvent usually, but we have TouchEvent.
+                         // We can mock it or cast it, as most handlers just use clientX/Y and preventDefault.
+                         const touch = e.touches[0];
+                         const mockEvent = {
+                             ...e,
+                             clientX: touch.clientX,
+                             clientY: touch.clientY,
+                             preventDefault: () => {},
+                             stopPropagation: () => {},
+                             target: row
+                         } as unknown as React.MouseEvent;
+                         
+                         onRowContextMenu(mockEvent, item);
+                     }
+                 }
+             }
+        }
+    });
+
   const handleSort = (key: string) => {
     if (!onSort) return;
     
@@ -241,7 +276,11 @@ export const DataTable = <T extends { id: string }>({
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto overflow-x-auto relative">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden relative"
+          onTouchStart={onBodyTouchStart}
+          onTouchEnd={onBodyTouchEnd}
+          onTouchMove={onBodyTouchMove}
+      >
          {/* Loading State */}
         {isLoading && (
             <div className="absolute inset-0 z-20 bg-white/50 dark:bg-gray-900/50 flex items-center justify-center">
@@ -266,11 +305,12 @@ export const DataTable = <T extends { id: string }>({
                  {data.map((item, index) => (
                     <div 
                         key={item.id}
+                        data-row-index={index}
                         className={`
                             flex items-center border-b border-gray-100 dark:border-gray-800 
                             hover:bg-${color}-50 dark:hover:bg-${color}-950/20 transition-colors 
                             ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''}
-                            cursor-pointer
+                            cursor-pointer user-select-none touch-manipulation
                         `}
                         onClick={() => onRowClick && onRowClick(item)}
                         onContextMenu={(e) => onRowContextMenu && onRowContextMenu(e, item)}

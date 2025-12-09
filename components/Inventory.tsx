@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SmartDateInput } from '../utils/SmartDateInput';
 import { PosDropdown } from '../utils/PosDropdown';
-import { useContextMenu } from '../components/ContextMenu';
+import { useContextMenu } from '../utils/ContextMenu';
 import { useColumnReorder } from '../hooks/useColumnReorder';
 import { useLongPress } from '../hooks/useLongPress';
 import { useSmartDirection } from '../hooks/useSmartDirection';
 import { SearchInput } from '../utils/SearchInput';
 import { Drug } from '../types';
 import { createSearchRegex, parseSearchTerm } from '../utils/searchUtils';
+import { CARD_BASE } from '../utils/themeStyles';
 
 interface InventoryProps {
   inventory: Drug[];
@@ -442,7 +443,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       {mode === 'list' ? (
         <>
       {/* Search Bar */}
-      <div className="bg-white dark:bg-gray-800 p-2.5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex gap-2 shrink-0 overflow-x-auto">
+      <div className={`${CARD_BASE} p-2.5 rounded-2xl flex gap-2 shrink-0 overflow-x-auto`}>
         <div className="relative flex-1 min-w-[200px]">
         <SearchInput
           value={searchTerm}
@@ -456,7 +457,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       </div>
 
       {/* Table Card */}
-      <div className="flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm flex flex-col">
+      <div className={`flex-1 ${CARD_BASE} rounded-3xl overflow-hidden flex flex-col`}>
         <div className="overflow-x-auto flex-1 pb-20 lg:pb-0"> {/* Extra padding for dropdown visibility */}
           <table className="w-full text-start border-collapse type-functional">
             <thead className={`bg-${color}-50 dark:bg-gray-900 sticky top-0 z-10 shadow-sm`}>
@@ -573,7 +574,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
             {/* LEFT COLUMN: Main Info */}
             <div className="xl:col-span-2 space-y-6">
               {/* Basic Details Card */}
-              <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+              <div className={`${CARD_BASE} rounded-3xl p-6`}>
                 <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                   <span className="material-symbols-rounded text-blue-500">info</span>
                   {t.basicInfo || 'Basic Information'}
@@ -752,7 +753,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
             {/* RIGHT COLUMN: Details */}
             <div className="xl:col-span-1 space-y-6">
               {/* Stock & Pricing Card */}
-              <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm h-full">
+              <div className={`${CARD_BASE} rounded-3xl p-6 h-full`}>
                 <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                   <span className="material-symbols-rounded text-blue-500">inventory</span>
                   Inventory & Pricing

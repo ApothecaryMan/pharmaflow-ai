@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Customer, Sale } from '../types';
+import { CARD_BASE } from '../utils/themeStyles';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LineChart, Line } from 'recharts';
 
 interface CustomerLoyaltyOverviewProps {
@@ -157,7 +158,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 text-left rtl:text-right">
+        <div className={`bg-white dark:bg-gray-800 p-3 rounded-xl ${CARD_BASE} text-left rtl:text-right`}>
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{payload[0].payload.name}</p>
           <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
             {payload[0].value.toFixed(1)} {t.loyalty?.pts || 'pts'}
@@ -178,7 +179,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         {/* Total Active Customers */}
-        <div className={`p-5 rounded-3xl bg-${color}-50 dark:bg-${color}-900/20 border border-${color}-100 dark:border-${color}-900 flex flex-col justify-between min-h-[120px]`}>
+        <div className={`p-5 rounded-3xl bg-${color}-50 dark:bg-${color}-900/20 ${CARD_BASE} flex flex-col justify-between min-h-[120px]`}>
           <div className={`text-${color}-600 dark:text-${color}-400 mb-1`}>
             <span className="material-symbols-rounded text-3xl">group</span>
           </div>
@@ -191,7 +192,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
         </div>
 
         {/* Total Points Issued */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex flex-col justify-between min-h-[120px]">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col justify-between min-h-[120px]`}>
           <div className="text-amber-500 mb-1">
             <span className="material-symbols-rounded text-3xl">stars</span>
           </div>
@@ -202,7 +203,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
         </div>
 
         {/* Average Points */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex flex-col justify-between min-h-[120px]">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col justify-between min-h-[120px]`}>
           <div className="text-emerald-500 mb-1">
             <span className="material-symbols-rounded text-3xl">trending_up</span>
           </div>
@@ -213,7 +214,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
         </div>
 
         {/* Top Tier Customers */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex flex-col justify-between min-h-[120px]">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col justify-between min-h-[120px]`}>
           <div className="text-purple-500 mb-1">
             <span className="material-symbols-rounded text-3xl">workspace_premium</span>
           </div>
@@ -227,7 +228,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Points Distribution */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} h-80`}>
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">
             {t.loyalty?.distribution || 'Points Distribution'}
           </h3>
@@ -243,7 +244,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
         </div>
 
         {/* Points Trend */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} h-80`}>
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">
             {t.loyalty?.trend || 'Points Issued (30 Days)'}
           </h3>
@@ -262,7 +263,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Points Activity */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-96 flex flex-col">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} h-96 flex flex-col`}>
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
             <span className="material-symbols-rounded text-blue-500 text-[20px]">history</span>
             {t.loyalty?.recentActivity || 'Recent Points Activity'}
@@ -296,7 +297,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
         </div>
 
         {/* Top Loyalty Customers */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-96 flex flex-col">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} h-96 flex flex-col`}>
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
             <span className="material-symbols-rounded text-yellow-500 text-[20px]">hotel_class</span>
             {t.loyalty?.topCustomers || 'Top Loyalty Customers'}

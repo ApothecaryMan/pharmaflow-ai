@@ -1,7 +1,7 @@
-
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { useContextMenu } from '../components/ContextMenu';
+import { useContextMenu } from '../utils/ContextMenu';
 import { Drug, Supplier, Purchase, PurchaseItem, PurchaseReturn } from '../types';
+import { CARD_BASE } from '../utils/themeStyles';
 import { createSearchRegex, parseSearchTerm } from '../utils/searchUtils';
 import { PosDropdown } from '../utils/PosDropdown';
 import { DatePicker } from './DatePicker';
@@ -1011,7 +1011,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                {/* LEFT: Selection Area */}
                <div className="flex-1 flex flex-col gap-4 overflow-hidden">
                    {/* Supplier Select with Autocomplete */}
-                   <div className="bg-white dark:bg-gray-900 p-4 rounded-3xl border border-gray-200 dark:border-gray-800">
+                   <div className={`${CARD_BASE} p-4 rounded-3xl`}>
                         <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">{t.selectSupplier}</label>
                         
                         <div ref={supplierDropdownRef} className="relative">
@@ -1054,7 +1054,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                    </div>
 
                    {/* Drug Search & Grid */}
-                   <div className="flex-1 bg-white dark:bg-gray-900 p-4 rounded-3xl border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden">
+                   <div className={`flex-1 ${CARD_BASE} p-4 rounded-3xl flex flex-col overflow-hidden`}>
                         <div className="flex gap-2 mb-4">
                             {/* Filter Dropdown */}
                             <PosDropdown
@@ -1178,7 +1178,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                <div 
                  ref={sidebarRef}
                  style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}
-                 className="w-full lg:w-[var(--sidebar-width)] bg-white dark:bg-gray-900 p-5 rounded-3xl border border-gray-200 dark:border-gray-800 flex flex-col"
+                 className={`w-full lg:w-[var(--sidebar-width)] ${CARD_BASE} p-5 rounded-3xl flex flex-col`}
                >
                    <div className="flex justify-between items-start mb-4">
                        <h3 className="font-bold text-lg flex items-center gap-2 mt-1">
@@ -1459,7 +1459,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
            </div>
        ) : (
            /* HISTORY VIEW */
-           <div className="flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
+           <div className={`flex-1 ${CARD_BASE} rounded-3xl overflow-hidden flex flex-col`}>
            <div className="flex-1 overflow-auto bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
                <table className="w-full min-w-full table-fixed border-collapse type-functional">
                 <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>

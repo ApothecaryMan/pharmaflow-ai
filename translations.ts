@@ -521,7 +521,7 @@ export const TRANSLATIONS = {
         selectGovernorate: 'Select Governorate',
         selectCity: 'Select City',
         selectArea: 'Select Area',
-        selectArea: 'Select Area',
+
         notes: 'Notes',
         placeholders: {
           downtownBranch: 'e.g. Downtown Branch',

@@ -51,6 +51,13 @@
   z-index: 10;
 }
 
+/* Custom Card Shadow (User Request 2025-12-09) */
+/* Light Mode Only Override */
+html:not(.dark) .card-shadow {
+  box-shadow: none !important;
+  border: 2px solid #e5e7eb !important;
+}
+
 /* --- Google Sans Flex Variable Typography System --- */
 :root {
   /* Core Axes Defaults */

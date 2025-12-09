@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useContextMenu } from '../components/ContextMenu';
+import { useContextMenu } from '../utils/ContextMenu';
 import { Supplier } from '../types';
+import { CARD_BASE } from '../utils/themeStyles';
 import { useColumnReorder } from '../hooks/useColumnReorder';
 import { useSmartDirection } from '../hooks/useSmartDirection';
 import { SearchInput } from '../utils/SearchInput';
@@ -354,7 +355,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
           </div>
 
           {/* Table */}
-          <div className="flex-1 overflow-auto bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+          <div className={`flex-1 overflow-auto ${CARD_BASE} rounded-3xl`}>
         <table className="w-full min-w-full table-fixed border-collapse">
           <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>
             <tr>
@@ -465,7 +466,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
         <div className="flex-1 overflow-y-auto">
           <form onSubmit={handleSaveNew} className="max-w-4xl mx-auto space-y-6 pb-20">
             {/* Company Information Card */}
-            <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+            <div className={`${CARD_BASE} rounded-3xl p-6`}>
               <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                 <span className="material-symbols-rounded text-[18px]">business</span>
                 Company Information
@@ -508,7 +509,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
             </div>
 
             {/* Contact Information Card */}
-            <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+            <div className={`${CARD_BASE} rounded-3xl p-6`}>
               <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                 <span className="material-symbols-rounded text-[18px]">person</span>
                 Contact Information

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Drug, Sale, Purchase, ExpandedView } from '../types';
+import { CARD_BASE } from '../utils/themeStyles';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 import { ExpandedModal } from './ExpandedModal';
 
@@ -246,7 +247,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       {/* Stats Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         {/* Revenue */}
-        <div className={`p-5 rounded-3xl bg-${color}-50 dark:bg-${color}-950/20 border border-${color}-100 dark:border-${color}-900 flex flex-col justify-between min-h-[120px] group relative`}>
+        <div className={`p-5 rounded-3xl bg-${color}-50 dark:bg-${color}-950/20 ${CARD_BASE} flex flex-col justify-between min-h-[120px] group relative`}>
           <div className="absolute top-3 right-3">
             <ExpandButton onClick={() => setExpandedView('revenue')} />
           </div>
@@ -260,15 +261,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         </div>
 
         {/* Expenses */}
-        <div 
-          className="p-5 rounded-3xl flex flex-col justify-between min-h-[120px] group relative"
-          style={{
-            backgroundColor: 'var(--bg-primary)',
-            borderWidth: '1px',
-            borderStyle: 'solid',
-            borderColor: 'var(--border-primary)'
-          }}
-        >
+        <div className={`p-5 rounded-3xl flex flex-col justify-between min-h-[120px] group relative ${CARD_BASE}`}>
           <div className="absolute top-3 right-3">
             <ExpandButton onClick={() => setExpandedView('expenses')} />
           </div>
@@ -283,13 +276,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
 
         {/* Net Profit */}
          <div 
-          className="p-5 rounded-3xl flex flex-col justify-between min-h-[120px] group relative"
-          style={{
-            backgroundColor: 'var(--bg-primary)',
-            borderWidth: '1px',
-            borderStyle: 'solid',
-            borderColor: 'var(--border-primary)'
-          }}
+          className={`p-5 rounded-3xl flex flex-col justify-between min-h-[120px] group relative ${CARD_BASE}`}
         >
           <div className="absolute top-3 right-3">
             <ExpandButton onClick={() => setExpandedView('profit')} />
@@ -304,15 +291,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         </div>
 
         {/* Low Stock */}
-        <div 
-          className="p-5 rounded-3xl flex flex-col justify-between min-h-[120px] group relative"
-          style={{
-            backgroundColor: 'var(--bg-primary)',
-            borderWidth: '1px',
-            borderStyle: 'solid',
-            borderColor: 'var(--border-primary)'
-          }}
-        >
+        <div className={`p-5 rounded-3xl flex flex-col justify-between min-h-[120px] group relative ${CARD_BASE}`}>
           <div className="absolute top-3 right-3">
             <ExpandButton onClick={() => setExpandedView('lowStock')} />
           </div>
@@ -329,7 +308,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       {/* Row 2: Chart & Top Selling */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Sales Chart (2 Cols) */}
-        <div className="lg:col-span-2 p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80 relative group">
+        <div className={`lg:col-span-2 p-5 rounded-3xl ${CARD_BASE} h-80 relative group`}>
           <div className="flex justify-between items-center mb-2">
               <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 type-expressive">{t.trend}</h3>
               <ExpandButton onClick={() => setExpandedView('salesChart')} />
@@ -359,7 +338,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         </div>
 
         {/* Top Selling Products (1 Col) */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-80 flex flex-col group">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} h-80 flex flex-col group`}>
             <div className="flex justify-between items-center mb-3">
                 <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2 type-expressive">
                     <span className="material-symbols-rounded text-yellow-500 text-[20px]">hotel_class</span>
@@ -396,7 +375,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         <div className="flex flex-col gap-4">
             
             {/* Low Stock List */}
-            <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-64 flex flex-col group">
+            <div className={`p-5 rounded-3xl ${CARD_BASE} h-64 flex flex-col group`}>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2 type-expressive">
                       <span className="material-symbols-rounded text-orange-500 text-[20px]">priority_high</span>
@@ -427,7 +406,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             </div>
 
             {/* Expiring Soon List */}
-            <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-64 flex flex-col group">
+            <div className={`p-5 rounded-3xl ${CARD_BASE} h-64 flex flex-col group`}>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                       <span className="material-symbols-rounded text-red-500 text-[20px]">event_busy</span>
@@ -463,7 +442,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         </div>
 
         {/* Recent Transactions */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm h-auto max-h-[530px] flex flex-col group">
+        <div className={`p-5 rounded-3xl ${CARD_BASE} h-auto max-h-[530px] flex flex-col group`}>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                   <span className="material-symbols-rounded text-blue-500 text-[20px]">receipt_long</span>

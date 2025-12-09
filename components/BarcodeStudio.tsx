@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useContextMenu } from '../components/ContextMenu';
+import { useContextMenu } from '../utils/ContextMenu';
 import { Drug } from '../types';
 import * as QRCode from 'qrcode';
 import { useSmartDirection } from '../hooks/useSmartDirection';
