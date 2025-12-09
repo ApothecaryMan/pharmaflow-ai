@@ -116,15 +116,23 @@ html[dir="rtl"] h3, html[dir="rtl"] .h3,
 html[dir="rtl"] h4, html[dir="rtl"] .h4,
 html[dir="rtl"] h5, html[dir="rtl"] .h5,
 html[dir="rtl"] h6, html[dir="rtl"] .h6,
-html[dir="rtl"] nav button.font-semibold,
+html[dir="rtl"] nav,
 html[lang="ar"] h1, html[lang="ar"] .h1,
 html[lang="ar"] h2, html[lang="ar"] .h2,
 html[lang="ar"] h3, html[lang="ar"] .h3,
 html[lang="ar"] h4, html[lang="ar"] .h4,
 html[lang="ar"] h5, html[lang="ar"] .h5,
 html[lang="ar"] h6, html[lang="ar"] .h6,
-html[lang="ar"] nav button.font-semibold {
+html[lang="ar"] nav {
   font-family: "IBM Plex Sans Arabic", "Google Sans Flex", sans-serif;
+}
+
+/* Adjust padding/height for Arabic Navigation to accommodate font weight/size */
+html[dir="rtl"] nav button,
+html[lang="ar"] nav button {
+  padding-top: 0.4rem !important;
+  padding-bottom: 0.4rem !important;
+  line-height: 1.5 !important;
 }
 
 /* --- Contextual Typography Classes --- */

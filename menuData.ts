@@ -279,7 +279,6 @@ export const PHARMACY_MENU: MenuItem[] = [
         label: "Product Management",
         items: [
           { label: "Inventory", view: "inventory" },
-          { label: "Inventory (Beta)", view: "inventory-beta" },
           "Bulk Import",
           "Bulk Update",
           "Product Categories",
