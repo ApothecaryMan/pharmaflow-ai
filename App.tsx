@@ -844,6 +844,8 @@ const App: React.FC = () => {
         setHideInactiveModules={setHideInactiveModules}
         navStyle={navStyle}
         setNavStyle={setNavStyle}
+        currentView={activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view}
+        onNavigate={handleViewChange}
       />
       {console.log('Current View:', view)}
 
@@ -851,7 +853,7 @@ const App: React.FC = () => {
       <div className="flex h-[calc(100vh-64px)] overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
         {/* Desktop Sidebar */}
         <aside 
-          className={`hidden ${!sidebarVisible ? '' : 'md:flex'} flex-col w-72 backdrop-blur-xl transition-all duration-300 ease-in-out`}
+          className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col w-72 backdrop-blur-xl transition-all duration-300 ease-in-out`}
           style={{
             backgroundColor: 'var(--bg-primary)'
           }}

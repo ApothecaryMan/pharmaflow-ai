@@ -3,6 +3,7 @@ import { MenuItem } from '../menuData';
 import { getMenuTranslation } from '../menuTranslations';
 import { ThemeColor, Language } from '../types';
 import { TRANSLATIONS } from '../translations';
+import { SidebarDropdown } from './SidebarDropdown';
 
 interface NavbarProps {
   menuItems: MenuItem[];
@@ -29,6 +30,8 @@ interface NavbarProps {
   setHideInactiveModules?: (hide: boolean) => void;
   navStyle?: 1 | 2 | 3;
   setNavStyle?: (style: 1 | 2 | 3) => void;
+  currentView?: string;
+  onNavigate?: (view: string) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = React.memo(({
@@ -55,7 +58,9 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
   hideInactiveModules,
   setHideInactiveModules,
   navStyle = 1,
-  setNavStyle
+  setNavStyle,
+  currentView,
+  onNavigate
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -86,6 +91,55 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
     };
   }, []);
 
+
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [activeAnchor, setActiveAnchor] = useState<HTMLElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // If click is outside dropdown AND outside the button that triggered it (activeAnchor), close it.
+      // But actually, just checking if it is outside dropdownRef (the whole navbar bar) or the dropdown menu itself is tricky because dropdown is fixed now.
+      // With fixed dropdown, it is outside navbar DOM hierarchy (visually).
+      // But we can check if target is inside navbar OR inside activeAnchor.
+      
+      // Let's refine: Close if click is outside the dropdown menu. 
+      // SidebarDropdown handles its own close? No, currently Navbar handles it via activeDropdown state.
+      // Since SidebarDropdown is now fixed, clicks outside it should close.
+      // The SidebarDropdown is rendered IN the specific button's conditional, so technically in React tree it is here.
+      // BUT event.target might not be contained in dropdownRef if Fixed.
+      // Actually, since it is in React tree, event bubbling works. But `contains` check might fail if it is physically elsewhere? 
+      // No, `contains` works on DOM nodes. Fixed element IS in DOM under the button.
+      
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setActiveDropdown(null);
+        setActiveAnchor(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleModuleClick = (moduleId: string, hasPage: boolean, event: React.MouseEvent<HTMLButtonElement>) => {
+    if (navStyle === 2) {
+       // Toggle dropdown
+       if (activeDropdown === moduleId) {
+         setActiveDropdown(null);
+         setActiveAnchor(null);
+       } else {
+         setActiveDropdown(moduleId);
+         setActiveAnchor(event.currentTarget);
+       }
+    } else {
+       if (hasPage) {
+           onModuleChange(moduleId);
+       }
+    }
+  };
+
   return (
     <nav 
       className="h-16 flex items-center px-4 sticky top-0 z-50"
@@ -106,35 +160,82 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
       </div>
 
       {/* Desktop: Horizontal Module Tabs */}
-      <div className="hidden md:flex items-center gap-1 flex-1 overflow-x-auto scrollbar-hide">
-        {menuItems.map((module) => {
+      <div className={`hidden md:flex items-center gap-1 flex-1 scrollbar-hide ${activeDropdown && navStyle === 2 ? 'overflow-hidden' : 'overflow-x-auto'}`} ref={dropdownRef}>
+        {menuItems.filter(m => m.id !== 'settings').map((module) => {
           const isActive = activeModule === module.id;
+          const isDropdownOpen = activeDropdown === module.id;
           const hasPage = module.hasPage !== false; // Default to true if not specified
+          const hasImplementedSubItems = module.submenus?.some(submenu => 
+              submenu.items.some(item => typeof item === 'object' && !!item.view)
+          ) ?? false;
           
+          const isEffectivelyDisabled = navStyle === 2 
+                ? !hasPage && !hasImplementedSubItems 
+                : !hasPage;
+
           return (
-            <button
-              key={module.id}
-              onClick={() => hasPage && onModuleChange(module.id)}
-              disabled={!hasPage}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap group relative type-interactive
-                ${!hasPage 
-                  ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
-                  : isActive
-                    ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold shadow-sm`
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-800 dark:hover:text-gray-200'}
-              `}
-              title={!hasPage ? 'قريباً / Coming Soon' : ''}
-            >
-              <span className={`material-symbols-rounded text-[20px] transition-transform ${isActive && hasPage ? 'icon-filled scale-110' : hasPage ? 'group-hover:scale-105' : ''}`}>
-                {module.icon}
-              </span>
-              <span className="text-sm font-medium">
-                {getMenuTranslation(module.label, language)}
-              </span>
-              {isActive && hasPage && (
-                <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-${theme}-600 rounded-full`}></div>
-              )}
-            </button>
+            <div key={module.id} className="relative group/item">
+                <button
+                onClick={(e) => handleModuleClick(module.id, hasPage, e)}
+                disabled={isEffectivelyDisabled}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap relative type-interactive
+                    ${isEffectivelyDisabled
+                            ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
+                            : isActive 
+                                ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold shadow-sm`
+                                : isDropdownOpen
+                                    ? `bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 font-medium`
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-800 dark:hover:text-gray-200'
+                    }
+                `}
+                title={!hasPage && navStyle !== 2 ? 'قريباً / Coming Soon' : ''}
+                >
+                <span className={`material-symbols-rounded text-[20px] transition-transform ${(isActive || isDropdownOpen) && hasPage ? 'icon-filled scale-110' : hasPage ? 'group-hover/item:scale-105' : ''}`}>
+                    {module.icon}
+                </span>
+                <span className="text-sm font-medium">
+                    {getMenuTranslation(module.label, language)}
+                </span>
+                
+                {/* Chevron for Dropdown Style */}
+                {navStyle === 2 && module.submenus && module.submenus.length > 0 && (
+                     <span className={`material-symbols-rounded text-[16px] transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}>
+                        expand_more
+                     </span>
+                )}
+
+                {isActive && hasPage && navStyle !== 2 && (
+                    <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-${theme}-600 rounded-full`}></div>
+                )}
+                </button>
+
+                {/* Dropdown Menu */}
+                {isDropdownOpen && navStyle === 2 && (
+                    <SidebarDropdown 
+                        module={module}
+                        currentView={activeModule === module.id ? currentView || '' : ''}
+                        onNavigate={(viewId) => {
+                             // Update active module to ensure highlighting works
+                             onModuleChange(module.id);
+                             
+                             if (onNavigate) {
+                                onNavigate(viewId);
+                             }
+                             
+                             setActiveDropdown(null);
+                             setActiveAnchor(null);
+                        }}
+                        onClose={() => {
+                            setActiveDropdown(null);
+                            setActiveAnchor(null);
+                        }}
+                        theme={theme}
+                        language={language}
+                        hideInactiveModules={hideInactiveModules}
+                        anchorEl={activeAnchor}
+                    />
+                )}
+            </div>
           );
         })}
       </div>
@@ -150,10 +251,69 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
       {/* Right Side Actions (Desktop) */}
       <div className="hidden md:flex items-center gap-2 ltr:ml-4 rtl:mr-4">
         {/* Notifications */}
-        <button className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors relative">
+        <button className="w-10 h-10 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors relative">
           <span className="material-symbols-rounded text-[22px]">notifications</span>
-          <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+          <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-gray-900"></div>
         </button>
+
+        {/* Settings Module (Relocated) */}
+        {menuItems.find(m => m.id === 'settings') && (() => {
+            const settingsModule = menuItems.find(m => m.id === 'settings')!;
+            const isActive = activeModule === settingsModule.id;
+            const isDropdownOpen = activeDropdown === settingsModule.id;
+            const hasPage = settingsModule.hasPage !== false;
+            const hasImplementedSubItems = settingsModule.submenus?.some(submenu => 
+              submenu.items.some(item => typeof item === 'object' && !!item.view)
+            ) ?? false;
+            
+            const isEffectivelyDisabled = navStyle === 2 
+                ? !hasPage && !hasImplementedSubItems 
+                : !hasPage;
+
+            return (
+                <div className="relative group/settings">
+                    <button
+                        onClick={(e) => handleModuleClick(settingsModule.id, hasPage, e)}
+                        disabled={isEffectivelyDisabled}
+                        className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors relative
+                            ${isActive 
+                                ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-600 dark:text-${theme}-400`
+                                : isDropdownOpen
+                                    ? `bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200`
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                            }
+                        `}
+                        title={getMenuTranslation(settingsModule.label, language)}
+                    >
+                        <span className={`material-symbols-rounded text-[22px] ${isActive || isDropdownOpen ? 'icon-filled' : ''}`}>
+                            {settingsModule.icon}
+                        </span>
+                    </button>
+
+                     {/* Dropdown Menu for Settings */}
+                    {isDropdownOpen && navStyle === 2 && (
+                        <SidebarDropdown 
+                            module={settingsModule}
+                            currentView={activeModule === settingsModule.id ? currentView || '' : ''}
+                            onNavigate={(viewId) => {
+                                onModuleChange(settingsModule.id);
+                                if (onNavigate) onNavigate(viewId);
+                                setActiveDropdown(null);
+                                setActiveAnchor(null);
+                            }}
+                            onClose={() => {
+                                setActiveDropdown(null);
+                                setActiveAnchor(null);
+                            }}
+                            theme={theme}
+                            language={language}
+                            hideInactiveModules={hideInactiveModules}
+                            anchorEl={activeAnchor}
+                        />
+                    )}
+                </div>
+            );
+        })()}
         
         {/* User Profile & Settings */}
         <div className="relative" ref={profileRef}>

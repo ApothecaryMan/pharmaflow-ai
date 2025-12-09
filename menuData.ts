@@ -269,7 +269,7 @@ export const PHARMACY_MENU: MenuItem[] = [
   },
   {
     id: "inventory",
-    label: "Inventory Management",
+    label: "Inventory",
     icon: "inventory_2",
     order: 2,
     hasPage: true,
@@ -365,7 +365,7 @@ export const PHARMACY_MENU: MenuItem[] = [
   },
   {
     id: "sales",
-    label: "Sales & Billing",
+    label: "Sales",
     icon: "point_of_sale",
     order: 3,
     hasPage: true,
@@ -398,7 +398,7 @@ export const PHARMACY_MENU: MenuItem[] = [
   },
   {
     id: "purchase",
-    label: "Purchase & Procurement",
+    label: "Purchase",
     icon: "shopping_cart_checkout",
     order: 4,
     hasPage: true,
@@ -464,7 +464,7 @@ export const PHARMACY_MENU: MenuItem[] = [
   },
   {
     id: "customers",
-    label: "Customer Management",
+    label: "Customers",
     icon: "group",
     order: 5,
     hasPage: true,
@@ -535,7 +535,7 @@ export const PHARMACY_MENU: MenuItem[] = [
   },
   {
     id: "prescriptions",
-    label: "Prescription Management",
+    label: "Prescriptions",
     icon: "description",
     order: 6,
     hasPage: false,
@@ -601,7 +601,7 @@ export const PHARMACY_MENU: MenuItem[] = [
   },
   {
     id: "finance",
-    label: "Finance & Accounting",
+    label: "Finance",
     icon: "payments",
     order: 7,
     hasPage: false,
@@ -691,7 +691,7 @@ export const PHARMACY_MENU: MenuItem[] = [
   },
   {
     id: "reports",
-    label: "Reports & Analytics",
+    label: "Reports",
     icon: "bar_chart",
     order: 8,
     hasPage: false,
@@ -799,7 +799,7 @@ export const PHARMACY_MENU: MenuItem[] = [
   },
   {
     id: "hr",
-    label: "HR & Payroll",
+    label: "HR",
     icon: "badge",
     order: 9,
     hasPage: false,
@@ -871,7 +871,7 @@ export const PHARMACY_MENU: MenuItem[] = [
   },
   {
     id: "compliance",
-    label: "Compliance & Regulatory",
+    label: "Compliance",
     icon: "verified",
     order: 10,
     hasPage: false,
@@ -938,7 +938,7 @@ export const PHARMACY_MENU: MenuItem[] = [
   },
   {
     id: "settings",
-    label: "Settings & Configuration",
+    label: "Settings",
     icon: "settings",
     order: 11,
     hasPage: false,

@@ -6,16 +6,16 @@ export const MENU_TRANSLATIONS = {
   AR: {
     // Main Modules
     'Dashboard': 'لوحة التحكم',
-    'Inventory Management': 'إدارة المخزون',
-    'Sales & Billing': 'المبيعات والفواتير',
-    'Purchase & Procurement': 'المشتريات والتوريد',
-    'Customer Management': 'إدارة العملاء',
-    'Prescription Management': 'إدارة الوصفات',
-    'Finance & Accounting': 'المالية والمحاسبة',
-    'Reports & Analytics': 'التقارير والتحليلات',
-    'HR & Payroll': 'الموارد البشرية والرواتب',
-    'Compliance & Regulatory': 'الامتثال والتنظيم',
-    'Settings & Configuration': 'الإعدادات والتكوين',
+    'Inventory': 'المخزون',
+    'Sales': 'المبيعات',
+    'Purchase': 'المشتريات',
+    'Customers': 'العملاء',
+    'Prescriptions': 'الوصفات',
+    'Finance': 'المالية',
+    'Reports': 'التقارير',
+    'HR': 'الموارد البشرية',
+    'Compliance': 'الامتثال',
+    'Settings': 'الإعدادات',
     
     // Dashboard Submenus
     'Main Dashboard': 'اللوحة الرئيسية',
