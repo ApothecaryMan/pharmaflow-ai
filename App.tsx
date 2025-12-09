@@ -253,6 +253,14 @@ const App: React.FC = () => {
     return false;
   });
 
+  const [navStyle, setNavStyle] = useState<1 | 2 | 3>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pharma_navStyle');
+      return (Number(saved) as 1 | 2 | 3) || 1;
+    }
+    return 1;
+  });
+
   // Apply theme system - updates CSS variables
   useTheme(theme.primary, darkMode);
 
@@ -270,6 +278,10 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('pharma_hideInactiveModules', JSON.stringify(hideInactiveModules));
   }, [hideInactiveModules]);
+
+  useEffect(() => {
+    localStorage.setItem('pharma_navStyle', navStyle.toString());
+  }, [navStyle]);
 
   const [inventory, setInventory] = useState<Drug[]>(() => {
     if (typeof window !== 'undefined') {
@@ -830,6 +842,8 @@ const App: React.FC = () => {
         onLogoClick={() => setSidebarVisible(!sidebarVisible)}
         hideInactiveModules={hideInactiveModules}
         setHideInactiveModules={setHideInactiveModules}
+        navStyle={navStyle}
+        setNavStyle={setNavStyle}
       />
       {console.log('Current View:', view)}
 

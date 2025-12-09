@@ -27,6 +27,8 @@ interface NavbarProps {
   onLogoClick?: () => void;
   hideInactiveModules?: boolean;
   setHideInactiveModules?: (hide: boolean) => void;
+  navStyle?: 1 | 2 | 3;
+  setNavStyle?: (style: 1 | 2 | 3) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = React.memo(({
@@ -51,7 +53,9 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
   setTextTransform,
   onLogoClick,
   hideInactiveModules,
-  setHideInactiveModules
+  setHideInactiveModules,
+  navStyle = 1,
+  setNavStyle
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -94,12 +98,11 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
         className="flex items-center gap-3 ltr:mr-6 rtl:ml-6 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
         onClick={onLogoClick}
       >
-        <div className={`w-10 h-10 rounded-xl bg-${theme}-600 flex items-center justify-center`}>
-          <span className="material-symbols-rounded text-white text-[24px]">local_pharmacy</span>
-        </div>
-        <h1 className="hidden md:block text-lg font-bold tracking-tight text-gray-800 dark:text-gray-100 whitespace-nowrap type-expressive">
-          {appTitle}
-        </h1>
+        <img 
+          src={darkMode ? "/logo_full_dark.svg" : "/logo_full.svg"} 
+          alt={appTitle} 
+          className="h-10 w-auto" 
+        />
       </div>
 
       {/* Desktop: Horizontal Module Tabs */}
@@ -156,7 +159,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
         <div className="relative" ref={profileRef}>
           <button 
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className={`p-1 rounded-full transition-all ring-2 ring-transparent hover:ring-gray-200 dark:hover:ring-gray-700 ${showProfileMenu ? 'ring-gray-200 dark:ring-gray-700' : ''}`}
+            className={`flex items-center gap-3 p-1 ltr:pr-3 rtl:pl-3 rounded-full transition-all ring-1 ring-transparent hover:ring-gray-200 dark:hover:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 ${showProfileMenu ? 'ring-gray-200 dark:ring-gray-700 bg-gray-50 dark:bg-gray-800' : ''}`}
           >
             {profileImage ? (
               <img src={profileImage} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
@@ -165,6 +168,11 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
                 JD
               </div>
             )}
+            <div className="hidden md:flex flex-col items-start">
+                <span className="text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5">{t.profile.name}</span>
+                <span className="text-[10px] text-gray-400 leading-none">{t.profile.role}</span>
+            </div>
+            <span className="hidden md:block material-symbols-rounded text-gray-400 text-[16px]">expand_more</span>
           </button>
 
           {/* Profile Dropdown */}
@@ -294,6 +302,37 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
                     <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${hideInactiveModules ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}></div>
                   </button>
                 </div>
+                )}
+
+                {/* Navbar/Sidebar Style Switch */}
+                {setNavStyle && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-400 uppercase">
+                      {language === 'EN' ? 'Design Style (Navbar & Sidebar)' : 'نمط التصميم (الشريط العلوي والجانبي)'}
+                    </label>
+                    <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+                      {[1, 2, 3].map((style) => {
+                        let label = '';
+                        if (style === 1) label = language === 'EN' ? 'Full' : 'كامل';
+                        if (style === 2) label = language === 'EN' ? 'Navbar' : 'علوي';
+                        if (style === 3) label = language === 'EN' ? 'Sidebar' : 'جانبي';
+                        
+                        return (
+                          <button
+                            key={style}
+                            onClick={() => setNavStyle && setNavStyle(style as 1 | 2 | 3)}
+                            className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                              navStyle === style
+                                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
               </div>
 
