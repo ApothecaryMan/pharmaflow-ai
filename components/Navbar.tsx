@@ -25,6 +25,8 @@ interface NavbarProps {
   textTransform: 'normal' | 'uppercase';
   setTextTransform: (transform: 'normal' | 'uppercase') => void;
   onLogoClick?: () => void;
+  hideInactiveModules?: boolean;
+  setHideInactiveModules?: (hide: boolean) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = React.memo(({
@@ -47,7 +49,9 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
   setProfileImage,
   textTransform,
   setTextTransform,
-  onLogoClick
+  onLogoClick,
+  hideInactiveModules,
+  setHideInactiveModules
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -90,7 +94,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
         className="flex items-center gap-3 ltr:mr-6 rtl:ml-6 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
         onClick={onLogoClick}
       >
-        <div className={`w-10 h-10 rounded-xl bg-${theme}-600 flex items-center justify-center shadow-lg shadow-${theme}-500/30`}>
+        <div className={`w-10 h-10 rounded-xl bg-${theme}-600 flex items-center justify-center`}>
           <span className="material-symbols-rounded text-white text-[24px]">local_pharmacy</span>
         </div>
         <h1 className="hidden md:block text-lg font-bold tracking-tight text-gray-800 dark:text-gray-100 whitespace-nowrap type-expressive">
@@ -275,6 +279,22 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
                     <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${textTransform === 'uppercase' ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}></div>
                   </button>
                 </div>
+
+                {/* Hide Inactive Tabs Toggle */}
+                {setHideInactiveModules && (
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <span className="material-symbols-rounded text-gray-400">tab_unselected</span>
+                    {language === 'EN' ? 'Hide Inactive Tabs' : 'إخفاء علامات التبويب غير النشطة'}
+                  </label>
+                  <button
+                    onClick={() => setHideInactiveModules && setHideInactiveModules(!hideInactiveModules)}
+                    className={`w-12 h-6 rounded-full transition-colors relative ${hideInactiveModules ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
+                  >
+                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${hideInactiveModules ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}></div>
+                  </button>
+                </div>
+                )}
               </div>
 
               {/* Sign Out */}

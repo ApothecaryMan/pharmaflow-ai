@@ -14,6 +14,7 @@ interface SidebarMenuProps {
   theme: string;
   translations: any;
   language: 'EN' | 'AR';
+  hideInactiveModules?: boolean;
 }
 
 export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
@@ -25,7 +26,8 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
   isMobile = false,
   theme,
   translations,
-  language
+  language,
+  hideInactiveModules = false
 }) => {
   const [expandedSubmenus, setExpandedSubmenus] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -56,24 +58,40 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
     return menuItems.find(m => m.id === activeModule);
   }, [menuItems, activeModule]);
 
-  // Memoized filtered submenus based on search
+  // Memoized filtered submenus based on search and visibility
   const filteredSubmenus = useMemo(() => {
     if (!activeModuleData?.submenus) return [];
-    if (!searchQuery.trim()) return activeModuleData.submenus;
+    
+    // First filtered by hideInactiveModules if needed
+    let submenus = activeModuleData.submenus;
+
+    if (hideInactiveModules) {
+       submenus = submenus.map(submenu => {
+           // Filter items within submenu
+           const visibleItems = submenu.items.filter(item => {
+               return typeof item === 'object' && !!item.view; // Only keep implemented items
+           });
+           
+           if (visibleItems.length === 0) return null; // Drop empty submenus
+           return { ...submenu, items: visibleItems };
+       }).filter(Boolean) as any[];
+    }
+
+    if (!searchQuery.trim()) return submenus;
 
     const query = searchQuery.toLowerCase();
-    return activeModuleData.submenus.map(submenu => {
+    return submenus.map(submenu => {
       const matchesSubmenu = submenu.label.toLowerCase().includes(query);
       const filteredItems = submenu.items.filter(item => {
-      const label = typeof item === 'string' ? item : item.label;
-      return label.toLowerCase().includes(query);
-    });
+        const label = typeof item === 'string' ? item : item.label;
+        return label.toLowerCase().includes(query);
+      });
       if (matchesSubmenu || filteredItems.length > 0) {
         return { ...submenu, items: matchesSubmenu ? submenu.items : filteredItems };
       }
       return null;
     }).filter(Boolean) as any[];
-  }, [activeModuleData, searchQuery]);
+  }, [activeModuleData, searchQuery, hideInactiveModules]);
 
   // Auto-expand submenus when searching
   React.useEffect(() => {

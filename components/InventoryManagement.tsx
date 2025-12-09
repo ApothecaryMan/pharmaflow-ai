@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { Drug } from '../types';
-import { TanStackTable } from './TanStackTable';
+import { DataTable } from './DataTable';
 
 interface InventoryManagementProps {
   inventory: Drug[];
@@ -81,7 +81,8 @@ export const InventoryManagement: React.FC<InventoryManagementProps> = ({
          </div>
       </div>
       
-      <TanStackTable 
+      <DataTable 
+        storageKey="inventory_management_table"
         data={inventory} 
         columns={columns} 
         color={color} 

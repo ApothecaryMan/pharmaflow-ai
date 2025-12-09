@@ -245,6 +245,14 @@ const App: React.FC = () => {
     return true;
   });
 
+  const [hideInactiveModules, setHideInactiveModules] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pharma_hideInactiveModules');
+      return saved ? JSON.parse(saved) : false;
+    }
+    return false;
+  });
+
   // Apply theme system - updates CSS variables
   useTheme(theme.primary, darkMode);
 
@@ -258,6 +266,10 @@ const App: React.FC = () => {
     }
     localStorage.setItem('pharma_textTransform', textTransform);
   }, [textTransform]);
+
+  useEffect(() => {
+    localStorage.setItem('pharma_hideInactiveModules', JSON.stringify(hideInactiveModules));
+  }, [hideInactiveModules]);
 
   const [inventory, setInventory] = useState<Drug[]>(() => {
     if (typeof window !== 'undefined') {
@@ -777,7 +789,7 @@ const App: React.FC = () => {
       
       {/* Navbar */}
       <Navbar 
-        menuItems={PHARMACY_MENU}
+        menuItems={useMemo(() => !hideInactiveModules ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false), [hideInactiveModules])}
         activeModule={activeModule}
         onModuleChange={React.useCallback((moduleId: string) => {
           setActiveModule(moduleId);
@@ -816,6 +828,8 @@ const App: React.FC = () => {
         textTransform={textTransform}
         setTextTransform={setTextTransform}
         onLogoClick={() => setSidebarVisible(!sidebarVisible)}
+        hideInactiveModules={hideInactiveModules}
+        setHideInactiveModules={setHideInactiveModules}
       />
       {console.log('Current View:', view)}
 
@@ -829,6 +843,7 @@ const App: React.FC = () => {
           }}
         >
           <SidebarContent 
+            menuItems={useMemo(() => !hideInactiveModules ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false), [hideInactiveModules])}
             activeModule={activeModule}
             view={view}
             dashboardSubView={dashboardSubView}
@@ -838,6 +853,7 @@ const App: React.FC = () => {
             t={t}
             language={language}
             tip={tip}
+            hideInactiveModules={hideInactiveModules}
           />
         </aside>
 
@@ -862,8 +878,8 @@ const App: React.FC = () => {
                     <span className="material-symbols-rounded text-[20px]">close</span>
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {PHARMACY_MENU.map(module => (
+                 <div className="grid grid-cols-2 gap-2">
+                  {(hideInactiveModules ? PHARMACY_MENU.filter(m => m.hasPage !== false) : PHARMACY_MENU).map(module => (
                     <button
                       key={module.id}
                       onClick={() => {
@@ -882,6 +898,7 @@ const App: React.FC = () => {
                 </div>
               </div>
               <SidebarContent 
+                menuItems={!hideInactiveModules ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false)}
                 activeModule={activeModule}
                 view={view}
                 dashboardSubView={dashboardSubView}
@@ -892,6 +909,7 @@ const App: React.FC = () => {
                 t={t}
                 language={language}
                 tip={tip}
+                hideInactiveModules={hideInactiveModules}
               />
             </aside>
           </div>
