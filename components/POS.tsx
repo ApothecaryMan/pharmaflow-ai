@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useContextMenu } from '../utils/ContextMenu';
-import { Drug, CartItem, Customer } from '../types';
+import { Drug, CartItem, Customer, Language } from '../types';
 
 import { useExpandingDropdown } from '../hooks/useExpandingDropdown';
 import { getLocationName } from '../data/locations';
@@ -21,9 +21,10 @@ interface POSProps {
   color: string;
   t: any;
   customers: Customer[];
+  language?: Language;
 }
 
-export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, customers }) => {
+export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, customers, language = 'EN' }) => {
   const { showMenu } = useContextMenu();
   
   // Multi-tab system
@@ -891,16 +892,17 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                     <div className={`w-12 h-12 rounded-full bg-${color}-100 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-600 dark:text-${color}-400`}>
                       <span className="material-symbols-rounded text-[24px]">person</span>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 text-lg">
+                    <div className="flex flex-col gap-0">
+                      <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg leading-none mb-0.5">
                         {selectedCustomer.name}
-                        <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-xs text-gray-500 font-mono border border-gray-200 dark:border-gray-600">
+                      </h3>
+                      <div className="leading-none">
+                        <span className="text-xs font-bold font-mono text-gray-500 dark:text-gray-400">
                           {selectedCustomer.code || `#${selectedCustomer.serialId}`}
                         </span>
-                      </h3>
-                      <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
-                        <span className="material-symbols-rounded text-[16px]">call</span>
-                        {selectedCustomer.phone}
+                      </div>
+                      <p className="text-sm text-gray-500 leading-tight mt-0.5">
+                        <span dir="ltr">{selectedCustomer.phone}</span>
                       </p>
                     </div>
                  </div>
@@ -910,11 +912,18 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                       <span className="material-symbols-rounded text-[14px]">location_on</span>
                       Address
                     </p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                      {selectedCustomer.streetAddress ? selectedCustomer.streetAddress + ' - ' : ''}
-                      {selectedCustomer.area ? getLocationName(selectedCustomer.area, 'area', 'AR') + ' - ' : ''}
-                      {selectedCustomer.city ? getLocationName(selectedCustomer.city, 'city', 'AR') : ''}
-                    </p>
+                    <div className="flex flex-col leading-snug">
+                       {selectedCustomer.streetAddress && (
+                           <span className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-0.5">
+                               {selectedCustomer.streetAddress}
+                           </span>
+                       )}
+                       <span className="text-xs text-gray-500 dark:text-gray-400">
+                           {selectedCustomer.area ? getLocationName(selectedCustomer.area, 'area', language as Language) : ''}
+                           {selectedCustomer.area && selectedCustomer.city ? ' - ' : ''}
+                           {selectedCustomer.city ? getLocationName(selectedCustomer.city, 'city', language as Language) : ''}
+                       </span>
+                    </div>
                  </div>
 
                  <div className="flex flex-col gap-2 min-w-[140px]">
@@ -983,13 +992,16 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                                 ? 'bg-blue-50 dark:bg-blue-900/30' 
                                 : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                             }`}
-                            onClick={() => handleCustomerSelect(customer)}
+                            onMouseDown={(e) => {
+                                e.preventDefault(); // Prevent input blur which would close dropdown
+                                handleCustomerSelect(customer);
+                            }}
                             onMouseEnter={() => setHighlightedCustomerIndex(index)}
                         >
                             <span className={`text-sm font-bold ${index === highlightedCustomerIndex ? 'text-blue-700 dark:text-blue-300' : 'text-gray-800 dark:text-gray-200'}`}>
                                 {customer.name}
                             </span>
-                            <div className="flex gap-2 text-xs text-gray-500">
+                            <div className="flex gap-2 text-xs text-gray-500" dir="ltr">
                             <span>{customer.phone}</span>
                             {customer.code && <span>• {customer.code}</span>}
                             </div>

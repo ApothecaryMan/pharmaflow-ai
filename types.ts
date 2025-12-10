@@ -183,9 +183,10 @@ export interface ThemeColor {
 }
 
 // Auto-generated from pageRegistry.ts - no need to manually update!
-import { PAGE_REGISTRY } from './pageRegistry';
+// Broken circular dependency
+// import { PAGE_REGISTRY } from './pageRegistry';
 
-export type ViewState = keyof typeof PAGE_REGISTRY;
+export type ViewState = string;
 
 export type Language = 'EN' | 'AR';
 
@@ -211,4 +212,35 @@ export interface ReturnPolicy {
   restockingFeePercent: number; // Default: 0
   requireManagerApproval: boolean; // Default: false
   managerApprovalThreshold: number; // Default: 1000
+}
+
+// Cash Register Types
+export type CashTransactionType = 'opening' | 'sale' | 'in' | 'out' | 'closing';
+
+export interface CashTransaction {
+  id: string;
+  shiftId: string;
+  time: string;
+  type: CashTransactionType;
+  amount: number;
+  reason?: string;
+  userId: string;
+  relatedSaleId?: string; // If 'sale' type
+}
+
+export interface Shift {
+  id: string;
+  status: 'open' | 'closed';
+  openTime: string;
+  closeTime?: string;
+  openedBy: string;
+  closedBy?: string;
+  openingBalance: number;
+  closingBalance?: number;
+  expectedBalance?: number;
+  cashIn: number;
+  cashOut: number;
+  cashSales: number;
+  transactions: CashTransaction[];
+  notes?: string;
 }

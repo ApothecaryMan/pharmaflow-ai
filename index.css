@@ -198,3 +198,11 @@ h3, .h3 {
 .font-medium { --font-weight: 500; }
 .font-semibold { --font-weight: 600; }
 .font-light { --font-weight: 300; }
+
+/* Force Arabic Bold Buttons - IBM Plex Sans Arabic has proper bold weights */
+html[dir="rtl"] .font-bold,
+html[lang="ar"] .font-bold {
+  font-weight: 700 !important;
+  font-family: "IBM Plex Sans Arabic", "Google Sans Flex", sans-serif;
+}
+

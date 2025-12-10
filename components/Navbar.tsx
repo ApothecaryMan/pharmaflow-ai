@@ -448,12 +448,12 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
                   </button>
                 </div>
 
-                {/* Hide Inactive Tabs Toggle */}
+                {/* Hide Inactive Tabs Toggle (Renamed to Focus Mode) */}
                 {setHideInactiveModules && (
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <span className="material-symbols-rounded text-gray-400">tab_unselected</span>
-                    {language === 'EN' ? 'Hide Inactive Tabs' : 'إخفاء علامات التبويب غير النشطة'}
+                    <span className="material-symbols-rounded text-gray-400">filter_center_focus</span>
+                    {language === 'EN' ? 'Focus Mode' : 'وضع التركيز'}
                   </label>
                   <button
                     onClick={() => setHideInactiveModules && setHideInactiveModules(!hideInactiveModules)}
@@ -471,11 +471,10 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
                       {language === 'EN' ? 'Design Style (Navbar & Sidebar)' : 'نمط التصميم (الشريط العلوي والجانبي)'}
                     </label>
                     <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-                      {[1, 2, 3].map((style) => {
+                      {[1, 2].map((style) => {
                         let label = '';
                         if (style === 1) label = language === 'EN' ? 'Full' : 'كامل';
                         if (style === 2) label = language === 'EN' ? 'Navbar' : 'علوي';
-                        if (style === 3) label = language === 'EN' ? 'Sidebar' : 'جانبي';
                         
                         return (
                           <button

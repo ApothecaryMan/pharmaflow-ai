@@ -17,6 +17,7 @@ export interface PosDropdownProps<T> {
     variant?: 'minimal' | 'input'; // 'minimal' for grid pills, 'input' for search filters
     minHeight?: string | number;
     style?: React.CSSProperties;
+    disabled?: boolean;
 }
 
 export function PosDropdown<T>({
@@ -34,7 +35,8 @@ export function PosDropdown<T>({
     color = "blue",
     variant = 'minimal',
     minHeight,
-    style
+    style,
+    disabled = false
 }: PosDropdownProps<T>) {
     
     const containerRef = useRef<HTMLDivElement>(null);
@@ -68,12 +70,13 @@ export function PosDropdown<T>({
     const isInput = variant === 'input';
 
     return (
-        <div ref={containerRef} className={`relative ${className}`} style={style}>
+        <div ref={containerRef} className={`relative ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} style={style}>
              <div 
-                tabIndex={0}
-                onKeyDown={handleKeyDown}
+                tabIndex={disabled ? -1 : 0}
+                onKeyDown={disabled ? undefined : handleKeyDown}
                 onBlur={handleBlur}
-                className={`absolute top-0 left-0 w-full flex flex-col overflow-hidden rounded-xl border transition-all cursor-pointer outline-none
+                className={`absolute top-0 left-0 w-full flex flex-col overflow-hidden rounded-xl border transition-all outline-none
+                    ${disabled ? 'cursor-not-allowed bg-gray-100 dark:bg-gray-800' : 'cursor-pointer'}
                     ${/* Base Style & Z-Index */ ''}
                     ${isOpen 
                         ? (isInput ? 'z-50 shadow-xl' : 'z-[5] shadow-xl') 
@@ -82,13 +85,13 @@ export function PosDropdown<T>({
                     ${isOpen 
                         ? 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700' 
                         : (isInput 
-                            ? 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600' // Input Closed
+                            ? (disabled ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600') // Input Closed
                             : (isTransparent ? 'bg-transparent border-transparent' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700') // Minimal Closed
                           )
                     }
                 `}
                 style={isOpen ? { borderColor: `var(--color-${color}-500)` } : {}}
-                onClick={handleClick}
+                onClick={disabled ? undefined : handleClick}
             >
                 {/* Trigger Area */}
                 <div 

@@ -375,7 +375,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         label: "Point of Sale",
         items: [
           { label: "New Sale", view: "pos" },
-          "Cash Register"
+          { label: "Cash Register", view: "cash-register" }
         ]
       },
       {

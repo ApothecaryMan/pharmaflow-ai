@@ -15,6 +15,7 @@ import { CustomerLoyaltyLookup } from './components/CustomerLoyaltyLookup';
 import { RealTimeSalesMonitor } from './components/RealTimeSalesMonitor';
 import { InventoryManagement } from './components/InventoryManagement';
 import { PendingApproval } from './components/PendingApproval';
+import { CashRegister } from './components/CashRegister';
 
 export interface PageConfig {
   id: string;
@@ -179,6 +180,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'add_box',
     category: 'inventory',
     requiredProps: ['inventory', 'setInventory', 'color', 't', 'language', 'onAddProduct', 'initialMode']
+  },
+  'cash-register': {
+    id: 'cash-register',
+    component: CashRegister,
+    menuLabel: 'Cash Register',
+    menuLabelAr: 'سجل النقدية',
+    icon: 'point_of_sale',
+    category: 'sales',
+    requiredProps: ['color', 't', 'language']
   }
 };
 

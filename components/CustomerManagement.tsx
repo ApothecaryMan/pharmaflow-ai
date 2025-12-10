@@ -275,8 +275,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    // Regex: Optional + at start, then digits only
-    if (/^[+]?[0-9]*$/.test(val)) {
+    // Regex: Optional + at start, then digits, spaces, or dashes
+    if (/^[+]?[0-9\s-]*$/.test(val)) {
         setFormData({...formData, phone: val});
     }
   };
@@ -384,7 +384,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       headerDir: 'ltr',
       render: (c) => (
         <div className="flex flex-col" dir="ltr">
-            <span className="flex items-center gap-1"><span className="material-symbols-rounded text-[14px]">call</span> {c.phone}</span>
+            <span className="flex items-center gap-1"><span className="material-symbols-rounded text-[14px]">call</span> <span dir="ltr">{c.phone}</span></span>
             {c.email && <span className="flex items-center gap-1 text-xs text-gray-400"><span className="material-symbols-rounded text-[14px]">mail</span> {c.email}</span>}
         </div>
       ),
@@ -505,6 +505,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     className="w-full h-[42px]"
                     color={color}
                     transparentIfSingle={false}
+                    disabled={!formData.governorate}
                 />
             </div>
 
@@ -527,6 +528,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     className="w-full h-[42px]"
                     color={color}
                     transparentIfSingle={false}
+                    disabled={!formData.city}
                 />
             </div>
         </div>
@@ -645,17 +647,20 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     </div>
 
                     {/* Address Info */}
-                    {(c.governorate || c.city || c.streetAddress) && (
+                    {(c.governorate || c.city || c.area || c.streetAddress) && (
                         <div>
                              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                                 <span className="material-symbols-rounded text-[16px]">home_pin</span>
                                 Address
                             </h4>
                             <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl text-sm text-gray-700 dark:text-gray-300">
-                                {c.streetAddress && <div className="mb-1">{c.streetAddress}</div>}
-                                <div className="text-gray-500 flex items-center gap-1 text-xs">
-                                     {getLocationName(c.governorate || '', 'gov', language)}
-                                     {c.city && ` • ${getLocationName(c.city, 'city', language)}`}
+                                {c.streetAddress && <div className="mb-1 font-bold text-gray-900 dark:text-gray-100">{c.streetAddress}</div>}
+                                <div className="text-gray-500 flex flex-wrap items-center gap-1 text-xs">
+                                     {c.area ? getLocationName(c.area, 'area', language) : ''}
+                                     {c.area && (c.city || c.governorate) ? ' - ' : ''}
+                                     {c.city ? getLocationName(c.city, 'city', language) : ''}
+                                     {c.city && c.governorate ? ' - ' : ''}
+                                     {c.governorate ? getLocationName(c.governorate, 'gov', language) : ''}
                                 </div>
                             </div>
                         </div>
@@ -816,6 +821,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                                 value={formData.phone || ''}
                                 onChange={handlePhoneChange}
                                 placeholder={t.modal.placeholders.phone}
+                                className="w-full px-3 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                                 dir="ltr"
                             />
                             {getDetectedCountry(formData.phone) && (
@@ -1026,7 +1032,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                         required
                         value={formData.phone || ''}
                         onChange={handlePhoneChange}
-                        className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        className="w-full px-4 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                         dir="ltr"
                     />
                     {getDetectedCountry(formData.phone) && (
@@ -1212,7 +1218,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                                         required
                                         value={formData.phone || ''}
                                         onChange={handlePhoneChange}
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                        className="w-full px-4 py-3 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                         placeholder={t.modal.placeholders.phone}
                                         dir="ltr"
                                     />

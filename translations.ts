@@ -189,6 +189,66 @@ export const TRANSLATIONS = {
       inStock: 'In Stock',
       outOfStock: 'Out of Stock'
     },
+    cashRegister: {
+      title: 'Cash Register',
+      subtitle: 'Manage daily cash shifts and transactions',
+      status: {
+        open: 'Shift Open',
+        closed: 'Shift Closed',
+        details: 'Shift Details'
+      },
+      actions: {
+        openShift: 'Open Shift',
+        closeShift: 'Close Shift',
+        addCash: 'Add Cash (In)',
+        removeCash: 'Remove Cash (Out)',
+        printReport: 'Print Report'
+      },
+      summary: {
+        openingBalance: 'Opening Balance',
+        cashSales: 'Cash Sales',
+        cashIn: 'Cash In',
+        cashOut: 'Cash Out',
+        closingBalance: 'Closing Balance',
+        expectedBalance: 'Expected Balance',
+        variance: 'Variance'
+      },
+      transactions: {
+        title: 'Shift Transactions',
+        time: 'Time',
+        type: 'Type',
+        amount: 'Amount',
+        reason: 'Reason/Notes',
+        user: 'User'
+      },
+      modal: {
+        openTitle: 'Open New Shift',
+        closeTitle: 'Close Shift',
+        amount: 'Amount',
+        notes: 'Notes',
+        cancel: 'Cancel',
+        confirm: 'Confirm'
+      },
+      types: {
+        opening: 'Opening Balance',
+        sale: 'Cash Sale',
+        in: 'Cash In',
+        out: 'Cash Out',
+        closing: 'Closing Balance'
+      },
+      messages: {
+        loading: 'Loading...',
+        noShift: 'Open a shift to see live balance details',
+        noTransactions: 'No transactions yet',
+        started: 'Started',
+        by: 'By',
+        id: 'ID',
+        expected: 'Expected',
+        countedCash: 'Counted Cash Amount',
+        optionalNotes: 'Optional notes...'
+      },
+      help: '@@import(./cashRegisterHelp.json)'
+    },
     salesHistory: {
       title: 'Sales History',
       subtitle: 'View and manage past transactions',
@@ -712,6 +772,7 @@ export const TRANSLATIONS = {
       suppliers: 'الموردين',
       purchases: 'المشتريات / المخزون',
       barcodeStudio: 'ستوديو الباركود',
+      cashRegister: 'سجل النقدية',
     },
     menu: {
       modules: 'الوحدات',
@@ -1412,6 +1473,65 @@ export const TRANSLATIONS = {
         success: 'تمت إضافة المنتج بنجاح!',
         error: 'فشل في إضافة المنتج. يرجى التحقق من جميع الحقول.',
         cleared: 'تم مسح النموذج'
+      }
+    },
+    cashRegister: {
+      title: 'سجل النقدية',
+      subtitle: 'إدارة الورديات النقدية والمعاملات',
+      status: {
+        open: 'الوردية مفتوحة',
+        closed: 'الوردية مغلقة',
+        details: 'تفاصيل الوردية'
+      },
+      actions: {
+        openShift: 'فتح وردية',
+        closeShift: 'إغلاق وردية',
+        addCash: 'إضافة نقد (إيداع)',
+        removeCash: 'سحب نقد (صرف)',
+        printReport: 'طباعة التقرير'
+      },
+      summary: {
+        openingBalance: 'الرصيد الافتتاحي',
+        cashSales: 'مبيعات نقدية',
+        cashIn: 'وارد نقدي',
+        cashOut: 'صادر نقدي',
+        closingBalance: 'الرصيد الختامي',
+        expectedBalance: 'الرصيد المتوقع',
+        variance: 'الفروقات'
+      },
+      transactions: {
+        title: 'معاملات الوردية',
+        time: 'الوقت',
+        type: 'النوع',
+        amount: 'المبلغ',
+        reason: 'السبب/ملاحظات',
+        user: 'المستخدم'
+      },
+      modal: {
+        openTitle: 'فتح وردية جديدة',
+        closeTitle: 'إغلاق الوردية',
+        amount: 'المبلغ',
+        notes: 'ملاحظات',
+        cancel: 'إلغاء',
+        confirm: 'تأكيد'
+      },
+      types: {
+        opening: 'الرصيد الافتتاحي',
+        sale: 'بيع نقدي',
+        in: 'إيداع نقدي',
+        out: 'سحب نقدي',
+        closing: 'الرصيد الختامي'
+      },
+      messages: {
+        loading: 'جاري التحميل...',
+        noShift: 'افتح وردية لرؤية تفاصيل الرصيد المباشرة',
+        noTransactions: 'لا توجد معاملات بعد',
+        started: 'البداية',
+        by: 'بواسطة',
+        id: 'م',
+        expected: 'المتوقع',
+        countedCash: 'المبلغ المحصل',
+        optionalNotes: 'ملاحظات اختيارية...'
       }
     }
   }
