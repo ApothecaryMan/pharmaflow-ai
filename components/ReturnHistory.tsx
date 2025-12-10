@@ -6,6 +6,8 @@ import { DatePicker } from './DatePicker';
 import { createSearchRegex } from '../utils/searchUtils';
 import { useSmartDirection } from '../hooks/useSmartDirection';
 import { SearchInput } from '../utils/SearchInput';
+import { RETURN_HISTORY_HELP } from '../helpInstructions';
+import { HelpModal, HelpButton } from './HelpModal';
 
 interface ReturnHistoryProps {
   returns: Return[];
@@ -21,6 +23,10 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedReturn, setSelectedReturn] = useState<Return | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+
+  // Get help content based on language
+  const helpContent = RETURN_HISTORY_HELP[language as 'EN' | 'AR'] || RETURN_HISTORY_HELP.EN;
 
   // Locale for dates
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
@@ -232,6 +238,10 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
             </div>
         </div>
       )}
+
+      {/* Help */}
+      <HelpButton onClick={() => setShowHelp(true)} title={helpContent.title} color={color} isRTL={language === 'AR'} />
+      <HelpModal show={showHelp} onClose={() => setShowHelp(false)} helpContent={helpContent as any} color={color} language={language} />
     </div>
   );
 };

@@ -3,7 +3,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Shift, CashTransaction, CashTransactionType, Language } from '../types';
 import { CARD_BASE, TABLE_HEADER_BASE, TABLE_ROW_BASE, BUTTON_BASE, INPUT_BASE, THEME_COLORS } from '../utils/themeStyles';
 import { useSmartDirection } from '../hooks/useSmartDirection';
-import { CASH_REGISTER_HELP } from '../cashRegisterHelp';
+import { CASH_REGISTER_HELP } from '../helpInstructions';
+import { HelpModal, HelpButton } from './HelpModal';
 
 interface CashRegisterProps {
   color: string;
@@ -407,94 +408,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
          </div>
       )}
 
-      {/* Help Button - Bottom Corner */}
-      <button
-        onClick={() => setShowHelp(true)}
-        className={`fixed ${language === 'AR' ? 'left-6' : 'right-6'} bottom-6 w-10 h-10 rounded-full bg-${color}-600 text-white shadow-md transition-colors flex items-center justify-center z-40`}
-        title={helpContent.title}
-      >
-        <span className="material-symbols-rounded text-lg">help</span>
-      </button>
-
-      {/* Help Modal */}
-      {showHelp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowHelp(false)}>
-          <div className="bg-white dark:bg-gray-900 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-            <div className={`p-6 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
-              <h2 className={`text-2xl font-bold text-${color}-900 dark:text-${color}-100 flex items-center gap-3`}>
-                <span className="material-symbols-rounded text-3xl">help</span>
-                {helpContent.title}
-              </h2>
-              <button onClick={() => setShowHelp(false)} className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-                <span className="material-symbols-rounded text-gray-500 text-xl">close</span>
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              <div className={`p-5 rounded-2xl ${CARD_BASE}`}>
-                <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
-                  <span className={`material-symbols-rounded text-${color}-600`}>lock_open</span>
-                  {helpContent.openShift.title}
-                </h3>
-                <ol className="space-y-2 list-decimal list-inside text-gray-700 dark:text-gray-300">
-                  {helpContent.openShift.steps.map((step: string, i: number) => (
-                    <li key={i} className="leading-relaxed">{step}</li>
-                  ))}
-                </ol>
-              </div>
-
-              <div className={`p-5 rounded-2xl ${CARD_BASE}`}>
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <span className={`material-symbols-rounded text-${color}-600`}>swap_horiz</span>
-                  {helpContent.transactions.title}
-                </h3>
-                
-                <div className="mb-4">
-                  <h4 className="font-semibold text-blue-700 dark:text-blue-400 mb-2">{helpContent.transactions.addCash.title}</h4>
-                  <ol className="space-y-1 list-decimal list-inside text-sm text-gray-700 dark:text-gray-300 ml-4">
-                    {helpContent.transactions.addCash.steps.map((step: string, i: number) => (
-                      <li key={i}>{step}</li>
-                    ))}
-                  </ol>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-orange-700 dark:text-orange-400 mb-2">{helpContent.transactions.removeCash.title}</h4>
-                  <ol className="space-y-1 list-decimal list-inside text-sm text-gray-700 dark:text-gray-300 ml-4">
-                    {helpContent.transactions.removeCash.steps.map((step: string, i: number) => (
-                      <li key={i}>{step}</li>
-                    ))}
-                  </ol>
-                </div>
-              </div>
-
-              <div className={`p-5 rounded-2xl ${CARD_BASE}`}>
-                <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
-                  <span className="material-symbols-rounded text-red-600">lock</span>
-                  {helpContent.closeShift.title}
-                </h3>
-                <ol className="space-y-2 list-decimal list-inside text-gray-700 dark:text-gray-300">
-                  {helpContent.closeShift.steps.map((step: string, i: number) => (
-                    <li key={i} className="leading-relaxed">{step}</li>
-                  ))}
-                </ol>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900">
-                <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-yellow-900 dark:text-yellow-100">
-                  <span className="material-symbols-rounded text-yellow-600">lightbulb</span>
-                  {helpContent.tips.title}
-                </h3>
-                <ul className="space-y-2 list-disc list-inside text-gray-700 dark:text-gray-300">
-                  {helpContent.tips.items.map((tip: string, i: number) => (
-                    <li key={i} className="leading-relaxed">{tip}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Help */}
+      <HelpButton onClick={() => setShowHelp(true)} title={helpContent.title} color={color} isRTL={language === 'AR'} />
+      <HelpModal show={showHelp} onClose={() => setShowHelp(false)} helpContent={helpContent as any} color={color} language={language} />
     </div>
   );
 };

@@ -2,6 +2,8 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Sale, Drug, Customer, ThemeColor, Return } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, RadialBarChart, RadialBar, Legend } from 'recharts';
 import { ExpandedModal } from './ExpandedModal';
+import { REALTIME_SALES_MONITOR_HELP } from '../helpInstructions';
+import { HelpModal, HelpButton } from './HelpModal';
 
 interface RealTimeSalesMonitorProps {
   sales: Sale[];
@@ -62,6 +64,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 }) => {
   const isRTL = language === 'AR';
   const [expandedView, setExpandedView] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+
+  const helpContent = REALTIME_SALES_MONITOR_HELP[language] || REALTIME_SALES_MONITOR_HELP.EN;
   
   // --- Live Pulse Effect ---
   // Simple state to force re-render every minute if needed, but sales prop updates drive Reactivity
@@ -1108,6 +1113,10 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             ))}
         </div>
       </ExpandedModal>
+
+      {/* Help */}
+      <HelpButton onClick={() => setShowHelp(true)} title={helpContent.title} color={color} isRTL={isRTL} />
+      <HelpModal show={showHelp} onClose={() => setShowHelp(false)} helpContent={helpContent as any} color={color} language={language} />
     </div>
   );
 };

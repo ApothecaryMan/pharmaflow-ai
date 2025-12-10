@@ -8,6 +8,8 @@ import { DatePicker } from './DatePicker';
 import { createSearchRegex } from '../utils/searchUtils';
 import { useSmartDirection } from '../hooks/useSmartDirection';
 import { SearchInput } from '../utils/SearchInput';
+import { SALES_HISTORY_HELP } from '../helpInstructions';
+import { HelpModal, HelpButton } from './HelpModal';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -29,6 +31,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [expandedSaleId, setExpandedSaleId] = useState<string | null>(null);
   const [returnModalOpen, setReturnModalOpen] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+
+  // Get help content
+  const helpContent = SALES_HISTORY_HELP[language as 'EN' | 'AR'] || SALES_HISTORY_HELP.EN;
 
   // Column definitions
   const initialColumns = [
@@ -749,8 +755,12 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
            }}
            color={color}
            t={t}
-         />
-       )}
-    </div>
-  );
-};
+          />
+        )}
+
+      {/* Help */}
+      <HelpButton onClick={() => setShowHelp(true)} title={helpContent.title} color={color} isRTL={language === 'AR'} />
+      <HelpModal show={showHelp} onClose={() => setShowHelp(false)} helpContent={helpContent as any} color={color} language={language} />
+     </div>
+   );
+ };

@@ -107,7 +107,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'بانتظار الموافقة',
     icon: 'pending_actions',
     category: 'purchase',
-    requiredProps: ['color', 't', 'purchases', 'onApprovePurchase', 'onRejectPurchase']
+    requiredProps: ['color', 't', 'purchases', 'onApprovePurchase', 'onRejectPurchase', 'language']
   },
   'purchase-returns': {
     id: 'purchase-returns',

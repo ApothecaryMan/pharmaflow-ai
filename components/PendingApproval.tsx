@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Purchase, PurchaseItem } from '../types';
-
 import { useSmartDirection } from '../hooks/useSmartDirection';
+import { PENDING_APPROVAL_HELP } from '../helpInstructions';
+import { CARD_BASE } from '../utils/themeStyles';
+import { HelpModal, HelpButton } from './HelpModal';
 
 interface PendingApprovalProps {
   color: string;
@@ -9,6 +11,7 @@ interface PendingApprovalProps {
   purchases: Purchase[];
   onApprovePurchase: (id: string, approverName: string) => void;
   onRejectPurchase: (id: string, reason?: string) => void;
+  language: string;
 }
 
 export const PendingApproval: React.FC<PendingApprovalProps> = ({ 
@@ -16,7 +19,8 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   t, 
   purchases, 
   onApprovePurchase, 
-  onRejectPurchase 
+  onRejectPurchase,
+  language 
 }) => {
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   
@@ -32,6 +36,9 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   const direction = useSmartDirection(approverName, 'Enter Name'); // Call useSmartDirection
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [purchaseToApprove, setPurchaseToApprove] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+
+  const helpContent = PENDING_APPROVAL_HELP[language as 'EN' | 'AR'] || PENDING_APPROVAL_HELP.EN;
 
   const pendingPurchases = purchases.filter(p => p.status === 'pending');
 
@@ -340,6 +347,10 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                 </div>
             </div>
         )}
+
+      {/* Help */}
+      <HelpButton onClick={() => setShowHelp(true)} title={helpContent.title} color={color} isRTL={language === 'AR'} />
+      <HelpModal show={showHelp} onClose={() => setShowHelp(false)} helpContent={helpContent as any} color={color} language={language} />
     </div>
   );
 };

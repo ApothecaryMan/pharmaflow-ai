@@ -5,6 +5,8 @@ import { Drug, Sale, Purchase, ExpandedView } from '../types';
 import { CARD_BASE } from '../utils/themeStyles';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 import { ExpandedModal } from './ExpandedModal';
+import { DASHBOARD_HELP } from '../helpInstructions';
+import { HelpModal, HelpButton } from './HelpModal';
 
 interface DashboardProps {
   inventory: Drug[];
@@ -14,12 +16,16 @@ interface DashboardProps {
   t: any;
   onRestock: (id: string, qty: number) => void;
   subView?: string;
+  language: string;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchases, color, t, onRestock, subView }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchases, color, t, onRestock, subView, language }) => {
   const [restockDrug, setRestockDrug] = useState<Drug | null>(null);
   const [restockQty, setRestockQty] = useState(10);
   const [expandedView, setExpandedView] = useState<ExpandedView>(null);
+  const [showHelp, setShowHelp] = useState(false);
+
+  const helpContent = DASHBOARD_HELP[language as 'EN' | 'AR'] || DASHBOARD_HELP.EN;
 
   // Map subView to expandedView
   useEffect(() => {
@@ -1005,6 +1011,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
           </div>
         </div>
       </ExpandedModal>
+
+      {/* Help */}
+      <HelpButton onClick={() => setShowHelp(true)} title={helpContent.title} color={color} isRTL={language === 'AR'} />
+      <HelpModal show={showHelp} onClose={() => setShowHelp(false)} helpContent={helpContent as any} color={color} language={language} />
     </div>
   );
 };
