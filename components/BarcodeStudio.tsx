@@ -44,10 +44,6 @@ interface LabelElement {
     color?: string;
     field?: keyof Drug | 'unit' | 'store' | 'hotline';
     locked?: boolean;
-    isVisible: boolean;
-    color?: string;
-    field?: keyof Drug | 'unit' | 'store' | 'hotline';
-    locked?: boolean;
     barcodeFormat?: 'code39' | 'code39-text' | 'code128' | 'code128-text';
 }
 

@@ -36,6 +36,7 @@ interface TabBarProps {
 }
 
 interface SortableTabProps {
+  key?: string;
   tab: SaleTab;
   isActive: boolean;
   color: string;
