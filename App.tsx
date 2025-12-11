@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, PurchaseReturn, Return, Customer } from './types';
-import { Toast } from './components/Toast';
-import { TRANSLATIONS } from './translations';
-import { PHARMACY_MENU } from './menuData';
-import { SidebarMenu } from './components/SidebarMenu';
-import { SidebarContent } from './components/SidebarContent';
-import { Navbar } from './components/Navbar';
-import { PAGE_REGISTRY } from './pageRegistry';
+import { Toast } from './components/common/Toast';
+import { TRANSLATIONS } from './i18n/translations';
+import { PHARMACY_MENU } from './config/menuData';
+import { SidebarMenu } from './components/layout/SidebarMenu';
+import { SidebarContent } from './components/layout/SidebarContent';
+import { Navbar } from './components/layout/Navbar';
+import { PAGE_REGISTRY } from './config/pageRegistry';
 import { useTheme } from './hooks/useTheme';
 
 // Inventory Generator
@@ -163,7 +163,7 @@ const LANGUAGES: { code: Language; label: string }[] = [
   { code: 'AR', label: 'Arabic' },
 ];
 
-import { ContextMenuProvider, useContextMenu } from './utils/ContextMenu';
+import { ContextMenuProvider, useContextMenu } from './components/common/ContextMenu';
 
 const GlobalContextMenuWrapper: React.FC<{ children: React.ReactNode, t: any, toggleTheme: () => void, toggleFullscreen: () => void }> = ({ children, t, toggleTheme, toggleFullscreen }) => {
     const { showMenu } = useContextMenu();
