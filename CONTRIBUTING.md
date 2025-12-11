@@ -1,76 +1,121 @@
 # Contributing to PharmaFlow AI
 
+## � Project Structure
+
+```
+pharmaflow-ai/
+├── components/
+│   ├── common/         # Shared UI (Toast, DatePicker, HelpModal, etc.)
+│   ├── layout/         # Navigation (Navbar, Sidebar, TabBar)
+│   ├── dashboard/      # Dashboard pages
+│   ├── sales/          # POS, SalesHistory, CashRegister
+│   ├── inventory/      # Inventory, BarcodeStudio
+│   ├── purchases/      # Purchases, Suppliers
+│   ├── customers/      # CustomerManagement
+│   └── ai/             # AI Assistant
+├── services/           # Backend service layer
+│   ├── api/            # API client (mock/real)
+│   ├── inventory/      # Inventory CRUD
+│   ├── sales/          # Sales transactions
+│   ├── customers/      # Customer management
+│   ├── purchases/      # Purchase orders
+│   └── ...
+├── config/             # menuData.ts, pageRegistry.ts
+├── i18n/               # translations.ts, menuTranslations.ts, helpInstructions.ts
+├── hooks/              # Custom React hooks
+├── utils/              # Utility functions
+└── types/              # TypeScript types
+```
+
+---
+
 ## 🚨 Mandatory Standards
 
 ### Mandatory Internationalization (i18n)
 
 **RULE:** All user-facing text MUST be internationalized.
-- ✅ Use `translations.ts` (or `menuTranslations.ts` for menu items) for ALL text.
-- ✅ **AR (Arabic)** translation is **REQUIRED** for every new key.
-- ✅ Use the `t` object (from `TRANSLATIONS[language]`) to access strings.
+**AR (Arabic) translation is MANDATORY for every new key.**
 
-**FORBIDDEN:**
-- ❌ Hardcoded English strings in components (e.g., `<span>Hello</span>`).
-- ❌ Adding a key to `EN` without adding it to `AR`.
+#### Translation Files Location
+```
+i18n/
+├── translations.ts       # Main UI text (buttons, labels, messages)
+├── menuTranslations.ts   # Sidebar/navigation menu items
+└── helpInstructions.ts   # Help modal content
+```
 
-**Exceptions:**
+#### How to Add Translations
+
+```typescript
+// ✅ CORRECT - In i18n/translations.ts
+export const TRANSLATIONS = {
+  EN: {
+    myNewFeature: {
+      title: "New Feature",
+      description: "This is a new feature"
+    }
+  },
+  AR: {
+    myNewFeature: {
+      title: "ميزة جديدة",
+      description: "هذه ميزة جديدة"
+    }
+  }
+};
+
+// ✅ Usage in component
+const t = TRANSLATIONS[language];
+<h1>{t.myNewFeature.title}</h1>
+```
+
+#### FORBIDDEN
+- ❌ Hardcoded English: `<span>Hello</span>`
+- ❌ Adding EN key without AR: `EN: { key: "..." }` without `AR: { key: "..." }`
+- ❌ Using template literals for user text: `` `Hello ${name}` ``
+
+#### Exceptions (NO translation needed)
 - IDs, UUIDs, Database Keys
 - URLs / Links
-- Specialized medical codes (if standard is English)
-- Debug logs
+- Medical codes (e.g., NDC, ICD-10)
+- Console.log / Debug messages
+- Email addresses, Phone numbers
 
 ---
 
 ### Dropdown/Combobox Components
 
 **RULE:** All dropdown/combobox implementations MUST use:
-- ✅ `PosDropdown` component from `utils/PosDropdown.tsx`
-- ✅ `useExpandingDropdown` hook from `hooks/useExpandingDropdown.ts`
+- ✅ `PosDropdown` from `components/common/PosDropdown.tsx`
+- ✅ `useExpandingDropdown` from `hooks/useExpandingDropdown.ts`
 
 **FORBIDDEN:**
-- ❌ Native HTML `<select>` elements
-- ❌ Native HTML `<option>` elements
+- ❌ Native HTML `<select>` or `<option>` elements
 - ❌ Custom dropdown implementations
-
-**Enforcement:**
-- ESLint will **block** commits with native select elements
-- Pull requests will be **rejected** if they violate this rule
-
-**Documentation:**
-See [`docs/dropdown-usage.md`](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/docs/dropdown-usage.md) for complete usage guide and examples.
 
 ---
 
 ### Input Fields
 
-**RULE:** For **free-text** input fields (e.g., Names, Addresses, Notes, Descriptions):
-- ✅ Use the `SmartInput` component from `utils/SmartInput.tsx`
-- OR ✅ explicitly use the `useSmartDirection` hook if you must use a native input or textarea.
+**RULE:** For free-text input fields:
+- ✅ Use `SmartInput` from `components/common/SmartInput.tsx`
+- OR ✅ Use `useSmartDirection` hook
 
-**EXCEPTIONS (Force LTR):**
-- ❌ Email addresses
-- ❌ Phone numbers
-- ❌ IDs / Codes / SKUs
-- ❌ URL / Links
-- ❌ Passwords
+**EXCEPTIONS (Force LTR):** Email, Phone, IDs, URLs, Passwords
 
-**Example:**
-```tsx
-import { SmartInput } from '../utils/SmartInput';
+---
+
+### Service Layer
+
+**RULE:** Data operations should use the service layer.
+- ✅ Import from `services/index.ts`
+- ✅ Use async/await patterns
+
+```typescript
+import { salesService, inventoryService } from './services';
 
 // ✅ CORRECT
-<SmartInput 
-  value={name} 
-  onChange={e => setName(e.target.value)} 
-  placeholder="Enter name (detects Arabic/English automatically)" 
-/>
-
-// ❌ INCORRECT (for text that might be Arabic)
-<input
-  type="text"
-  value={name}
-  // Missing dir={...} or not using SmartInput
-/>
+const sales = await salesService.getToday();
+await inventoryService.updateStock(id, -5);
 ```
 
 ---
@@ -78,55 +123,40 @@ import { SmartInput } from '../utils/SmartInput';
 ## 📝 Code Review Checklist
 
 Before submitting a PR, ensure:
-- [ ] No native `<select>` or `<option>` elements used
-- [ ] All dropdowns use `PosDropdown` component
-- [ ] ESLint passes with no errors
-- [ ] TypeScript compiles without errors
-- [ ] Components follow existing patterns in codebase
+- [ ] No native `<select>` or `<option>` elements
+- [ ] All dropdowns use `PosDropdown`
+- [ ] All translations have EN + AR
+- [ ] TypeScript compiles: `npx tsc --noEmit`
+- [ ] Components are in correct directory
 
 ---
 
 ## 🔍 Pre-commit Checks
 
-Run these commands before committing:
-
 ```bash
-# Check for ESLint errors
-npm run lint
-
-# Type check
-npm run type-check
-
-# Build to verify no errors
-npm run build
+npm run lint          # ESLint
+npx tsc --noEmit      # TypeScript
+npm run build         # Build verification
 ```
 
 ---
 
 ## 🎯 Best Practices
 
-1. **Consistency:** Follow existing component patterns
-2. **Accessibility:** Use provided components that include keyboard navigation
-3. **Styling:** Use Tailwind classes and design system colors
-4. **TypeScript:** Always provide proper types for generic components
-5. **Documentation:** Update docs when adding new features
+1. **File Location:** Place components in appropriate module folder
+2. **Services:** Use service layer for data operations
+3. **Imports:** Use barrel exports (`index.ts`)
+4. **Consistency:** Follow existing patterns
+5. **Types:** Always provide proper TypeScript types
 
 ---
 
 ## 📚 Resources
 
-- [Dropdown Usage Guide](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/docs/dropdown-usage.md)
-- [Component Examples](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/components/)
-- [Type Definitions](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/types.ts)
-
----
-
-## ❓ Questions?
-
-If you're unsure about any standard or need clarification:
-1. Check existing implementations in the codebase
-2. Review the documentation
-3. Ask the development team
+- [Dropdown Guide](docs/dropdown-usage.md)
+- [Components](components/)
+- [Services](services/)
+- [Types](types/index.ts)
 
 ---
 
