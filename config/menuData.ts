@@ -1052,5 +1052,32 @@ export const PHARMACY_MENU: MenuItem[] = [
         ]
       }
     ]
+  },
+  {
+    id: "test",
+    label: "Test",
+    icon: "science",
+    order: 12,
+    hasPage: true,
+    submenus: [
+      {
+        id: "feature-testing",
+        label: "Feature Testing",
+        items: [
+          { label: "POS v2", view: "test-pos-v2" },
+          { label: "New Components", view: "test-components" },
+          { label: "UI Experiments", view: "test-ui" }
+        ]
+      },
+      {
+        id: "development",
+        label: "Development",
+        items: [
+          { label: "Data Context Test", view: "test-data-context" },
+          { label: "Service Layer Test", view: "test-services" },
+          { label: "Theme Preview", view: "test-theme" }
+        ]
+      }
+    ]
   }
 ];

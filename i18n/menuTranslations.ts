@@ -734,6 +734,17 @@ export const MENU_TRANSLATIONS = {
     'Update System': 'تحديث النظام',
     'License Information': 'معلومات الترخيص',
     'Support & Help': 'الدعم والمساعدة',
+    
+    // Test Module
+    'Test': 'اختبار',
+    'Feature Testing': 'اختبار الميزات',
+    'Development': 'التطوير',
+    'POS v2': 'نقطة البيع v2',
+    'New Components': 'مكونات جديدة',
+    'UI Experiments': 'تجارب الواجهة',
+    'Data Context Test': 'اختبار سياق البيانات',
+    'Service Layer Test': 'اختبار طبقة الخدمات',
+    'Theme Preview': 'معاينة السمة',
   }
 };
 

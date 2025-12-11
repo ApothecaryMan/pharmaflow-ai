@@ -253,6 +253,14 @@ const App: React.FC = () => {
     return false;
   });
 
+  const [developerMode, setDeveloperMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pharma_developerMode');
+      return saved ? JSON.parse(saved) : false;
+    }
+    return false;
+  });
+
   const [navStyle, setNavStyle] = useState<1 | 2 | 3>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pharma_navStyle');
@@ -278,6 +286,10 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('pharma_hideInactiveModules', JSON.stringify(hideInactiveModules));
   }, [hideInactiveModules]);
+
+  useEffect(() => {
+    localStorage.setItem('pharma_developerMode', JSON.stringify(developerMode));
+  }, [developerMode]);
 
   useEffect(() => {
     localStorage.setItem('pharma_navStyle', navStyle.toString());
@@ -844,6 +856,8 @@ const App: React.FC = () => {
         setHideInactiveModules={setHideInactiveModules}
         navStyle={navStyle}
         setNavStyle={setNavStyle}
+        developerMode={developerMode}
+        setDeveloperMode={setDeveloperMode}
         currentView={activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view}
         onNavigate={handleViewChange}
       />

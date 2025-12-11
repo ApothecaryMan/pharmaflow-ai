@@ -32,6 +32,8 @@ interface NavbarProps {
   setNavStyle?: (style: 1 | 2 | 3) => void;
   currentView?: string;
   onNavigate?: (view: string) => void;
+  developerMode?: boolean;
+  setDeveloperMode?: (mode: boolean) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = React.memo(({
@@ -60,7 +62,9 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
   navStyle = 1,
   setNavStyle,
   currentView,
-  onNavigate
+  onNavigate,
+  developerMode = false,
+  setDeveloperMode
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -161,7 +165,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
 
       {/* Desktop: Horizontal Module Tabs */}
       <div className={`hidden md:flex items-center gap-1 flex-1 scrollbar-hide ${activeDropdown && navStyle === 2 ? 'overflow-hidden' : 'overflow-x-auto'}`} ref={dropdownRef}>
-        {menuItems.filter(m => m.id !== 'settings').map((module) => {
+        {menuItems.filter(m => m.id !== 'settings' && (m.id !== 'test' || developerMode)).map((module) => {
           const isActive = activeModule === module.id;
           const isDropdownOpen = activeDropdown === module.id;
           const hasPage = module.hasPage !== false; // Default to true if not specified
@@ -492,6 +496,29 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
                       })}
                     </div>
                   </div>
+                )}
+
+                {/* Developer Mode Toggle */}
+                {setDeveloperMode && (
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <span className="material-symbols-rounded text-gray-400">science</span>
+                    {language === 'EN' ? 'Developer Mode' : 'وضع المطور'}
+                  </label>
+                  <button
+                    onClick={() => {
+                      const newMode = !developerMode;
+                      setDeveloperMode(newMode);
+                      // If turning off and on test module, navigate to dashboard
+                      if (!newMode && activeModule === 'test') {
+                        onModuleChange('dashboard');
+                      }
+                    }}
+                    className={`w-12 h-6 rounded-full transition-colors relative ${developerMode ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
+                  >
+                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${developerMode ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}></div>
+                  </button>
+                </div>
                 )}
               </div>
 
