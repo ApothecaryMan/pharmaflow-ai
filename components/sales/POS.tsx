@@ -574,8 +574,8 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
             const { drug, group } = currentTouchItem.current;
             const touch = e.touches[0];
             showMenu(touch.clientX, touch.clientY, [
-                { label: 'Add to Cart', icon: 'add_shopping_cart', action: () => addGroupToCart(group) },
-                { label: 'View Details', icon: 'info', action: () => setViewingDrug(drug) },
+                { label: t.addToCart, icon: 'add_shopping_cart', action: () => addGroupToCart(group) },
+                { label: t.viewDetails, icon: 'info', action: () => setViewingDrug(drug) },
                 { separator: true },
                 { label: t.actions.showSimilar, icon: 'category', action: () => setSelectedCategory(drug.category) }
             ]);
@@ -706,14 +706,14 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
 
   const columns = {
     icon: { label: '', className: 'px-3 py-2 text-start' },
-    name: { label: t.name || 'Name', className: 'px-3 py-2 text-start' },
-    barcode: { label: t.code || 'Code', className: 'px-3 py-2 text-start' },
-    category: { label: t.category || 'Category', className: 'px-3 py-2 text-start' },
-    price: { label: t.price || 'Price', className: 'px-3 py-2 text-start' },
-    stock: { label: t.stock || 'Stock', className: 'px-3 py-2 text-start' },
-    unit: { label: t.unit || 'Unit', className: 'px-3 py-2 text-center' },
-    batches: { label: t.batches || 'Batches', className: 'px-3 py-2 text-start' },
-    inCart: { label: t.inCart || 'In Cart', className: 'px-3 py-2 text-center' }
+    name: { label: t.name, className: 'px-3 py-2 text-start' },
+    barcode: { label: t.code, className: 'px-3 py-2 text-start' },
+    category: { label: t.category, className: 'px-3 py-2 text-start' },
+    price: { label: t.price, className: 'px-3 py-2 text-start' },
+    stock: { label: t.stock, className: 'px-3 py-2 text-start' },
+    unit: { label: t.unit, className: 'px-3 py-2 text-center' },
+    batches: { label: t.batches, className: 'px-3 py-2 text-start' },
+    inCart: { label: t.inCart, className: 'px-3 py-2 text-center' }
   };
 
 
@@ -746,7 +746,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
         return <span className="font-bold text-sm text-gray-700 dark:text-gray-300">${drug.price.toFixed(2)}</span>;
       case 'stock':
         return totalStock === 0 ? (
-          <span className="text-xs font-bold text-red-500">Out of Stock</span>
+          <span className="text-xs font-bold text-red-500">{t.outOfStock}</span>
         ) : (
           <span className="text-sm text-gray-700 dark:text-gray-300">{parseFloat(totalStock.toFixed(2))}</span>
         );
@@ -816,7 +816,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                 const i = item as Drug | undefined;
                 return (
                 <div className="w-full px-2 py-1 text-[11px] text-center truncate text-gray-600 dark:text-gray-400">
-                    {i ? `${formatDate(i.expiryDate)} • ${i.stock}` : 'No Stock'}
+                    {i ? `${formatDate(i.expiryDate)} • ${i.stock}` : t.noStock}
                 </div>
             )}}
             renderItem={(item) => {
@@ -859,7 +859,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
     <div className="h-full flex flex-col gap-2">
       <div className="flex items-center gap-4 px-2">
         {/* Header - Compact */}
-        <h2 className="text-xl font-bold tracking-tight type-expressive shrink-0">{t.posTitle || 'Point of Sale'}</h2>
+        <h2 className="text-xl font-bold tracking-tight type-expressive shrink-0">{t.posTitle}</h2>
 
         {/* Tab Bar - Takes remaining space */}
         <div className="flex-1 min-w-0">
@@ -910,7 +910,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                  <div className="flex-1 border-s-2 border-gray-100 dark:border-gray-700 ps-6 ms-2 hidden sm:block">
                     <p className="text-xs font-bold text-gray-400 uppercase mb-1 flex items-center gap-1">
                       <span className="material-symbols-rounded text-[14px]">location_on</span>
-                      Address
+                      {t.address}
                     </p>
                     <div className="flex flex-col leading-snug">
                        {selectedCustomer.streetAddress && (
@@ -956,7 +956,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                         className="w-full py-1.5 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center justify-center gap-1"
                     >
                         <span className="material-symbols-rounded text-[16px]">close</span>
-                        Change Customer
+                        {t.changeCustomer}
                     </button>
                  </div>
               </div>
@@ -967,7 +967,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                     className="flex-1 relative"
                     onBlur={customerDropdownHook.handleBlur} 
                 >
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{t.customerInfo || 'Customer Information'}</label>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{t.customerInfo}</label>
                 <SearchInput
                   value={customerName}
                   onSearchChange={(val) => {
@@ -977,7 +977,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                   }}
                   onFocus={() => setShowCustomerDropdown(true)}
                   onKeyDown={customerDropdownHook.handleKeyDown}
-                  placeholder={t.customers?.searchPlaceholder || 'Search by name, phone, code...'}
+                  placeholder={t.customerSearchPlaceholder}
                   icon="person"
                   className="border-gray-200 dark:border-gray-700"
                 />    
@@ -1108,8 +1108,8 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                         e.stopPropagation();
                         const selection = window.getSelection()?.toString();
                         showMenu(e.clientX, e.clientY, [
-                            ...(selection ? [{ label: 'Copy', icon: 'content_copy', action: () => navigator.clipboard.writeText(selection) }] : []),
-                            { label: 'Paste', icon: 'content_paste', action: async () => {
+                            ...(selection ? [{ label: t.copy, icon: 'content_copy', action: () => navigator.clipboard.writeText(selection) }] : []),
+                            { label: t.paste, icon: 'content_paste', action: async () => {
                                 try {
                                     const text = await navigator.clipboard.readText();
                                     setSearch(prev => prev + text);
@@ -1118,7 +1118,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                                 }
                             }},
                             { separator: true },
-                            { label: 'Clear', icon: 'backspace', action: () => setSearch('') }
+                            { label: t.clear, icon: 'backspace', action: () => setSearch('') }
                         ]);
                     }}
                 />
@@ -1285,10 +1285,10 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                           e.preventDefault();
                           e.stopPropagation();
                           showMenu(e.clientX, e.clientY, [
-                            { label: 'Add to Cart', icon: 'add_shopping_cart', action: () => addGroupToCart(group) },
-                            { label: 'View Details', icon: 'info', action: () => setViewingDrug(drug) },
+                            { label: t.addToCart, icon: 'add_shopping_cart', action: () => addGroupToCart(group) },
+                            { label: t.viewDetails, icon: 'info', action: () => setViewingDrug(drug) },
                             { separator: true },
-                            { label: 'Copy Name', icon: 'content_copy', action: () => navigator.clipboard.writeText(drug.name) },
+                            { label: t.copyName, icon: 'content_copy', action: () => navigator.clipboard.writeText(drug.name) },
                             { label: t.actions.showSimilar, icon: 'category', action: () => setSelectedCategory(drug.category) }
                           ]);
                         }}
@@ -1381,10 +1381,10 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                             e.preventDefault();
                             e.stopPropagation();
                             showMenu(e.clientX, e.clientY, [
-                                { label: 'Remove Item', icon: 'delete', action: () => removeFromCart(item.id, !!item.isUnit), danger: true },
+                                { label: t.removeItem, icon: 'delete', action: () => removeFromCart(item.id, !!item.isUnit), danger: true },
                                 { separator: true },
                                 {
-                                    label: item.isUnit ? `Switch to ${t.pack}` : `Switch to ${t.unit}`,
+                                    label: item.isUnit ? t.switchToPack : t.switchToUnit,
                                     icon: 'swap_horiz',
                                     action: () => toggleUnitMode(item.id, !!item.isUnit),
                                     disabled: !item.unitsPerPack || item.unitsPerPack <= 1
@@ -1450,7 +1450,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                                     <button
                                         onClick={() => toggleUnitMode(item.id, !!item.isUnit)}
                                         className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 transition-colors"
-                                        title={item.isUnit ? "Switch to Pack" : "Switch to Unit"}
+                                        title={item.isUnit ? t.switchToPack : t.switchToUnit}
                                     >
                                         <span className="material-symbols-rounded text-[14px]">swap_horiz</span>
                                     </button>
@@ -1575,7 +1575,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                     onClick={() => handleCheckout('delivery')}
                     disabled={cart.length === 0}
                     className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 transition-all active:scale-95 flex justify-center items-center`}
-                    title="Delivery Order"
+                    title={t.deliveryOrder}
                 >
                     <span className="material-symbols-rounded text-[20px]">local_shipping</span>
                 </button>
@@ -1593,12 +1593,13 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                   <span className="material-symbols-rounded">info</span>
                 </div>
                 <h3 className={`text-lg font-bold type-expressive text-${color}-900 dark:text-${color}-100`}>
-                  Product Details
+                  {t.productDetails}
                 </h3>
               </div>
               <button 
-                onClick={() => setViewingDrug(null)} 
-                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+                onClick={() => setViewingDrug(null)}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                title={t.close}
               >
                 <span className="material-symbols-rounded">close</span>
               </button>
