@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Sale, Return, ReturnType, ReturnReason, ReturnItem, CartItem, Shift } from '../../types';
 import { useSmartDirection } from '../common/SmartInputs';
+import { Modal } from '../common/Modal';
 
 interface ReturnModalProps {
   isOpen: boolean;
@@ -186,15 +187,12 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-gray-900/60 dark:bg-gray-950/80 backdrop-blur-sm"
-        onClick={handleClose}
-      />
-      
-      {/* Modal */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-in">
+    <Modal
+        isOpen={isOpen}
+        onClose={handleClose}
+        size="2xl"
+        zIndex={100}
+    >
         {/* Header */}
         <div className={`flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-${color}-50 dark:bg-${color}-950/20`}>
           <div>
@@ -551,7 +549,6 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
             </button>
           )}
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };

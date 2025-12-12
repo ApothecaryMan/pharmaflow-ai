@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Supplier } from '../../types';
 import { useSmartDirection, SmartEmailInput } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
+import { Modal } from '../common/Modal';
 
 interface SuppliersProps {
   suppliers: Supplier[];
@@ -133,8 +134,12 @@ export const Suppliers: React.FC<SuppliersProps> = ({ suppliers, onAddSupplier, 
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+        <Modal
+            isOpen={true}
+            onClose={() => setIsModalOpen(false)}
+            size="lg"
+            zIndex={50}
+        >
             <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
               <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100`}>
                 {editingSupplier ? t.modal.edit : t.modal.add}
@@ -190,8 +195,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({ suppliers, onAddSupplier, 
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

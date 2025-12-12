@@ -5,6 +5,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { SearchInput } from '../common/SearchInput';
 import { useSmartDirection, isValidEmail, isValidPhone, SmartPhoneInput, SmartEmailInput } from '../common/SmartInputs';
+import { Modal } from '../common/Modal';
 
 interface SuppliersListProps {
   suppliers: Supplier[];
@@ -601,8 +602,12 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
 
       {/* Edit Modal */}
       {editingSupplier && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+        <Modal
+            isOpen={true}
+            onClose={() => setEditingSupplier(null)}
+            size="2xl"
+            zIndex={50}
+        >
             {/* Header */}
             <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
               <div className="flex items-center gap-4">
@@ -732,14 +737,17 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                 {t.modal?.saveChanges || 'Save Changes'}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Delete Confirmation */}
       {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <Modal
+            isOpen={true}
+            onClose={() => setDeleteConfirm(null)}
+            size="md"
+            zIndex={50}
+        >
             <div className="p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="p-3 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600">
@@ -768,14 +776,17 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                 </button>
               </div>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Details View Modal */}
       {viewingSupplier && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+        <Modal
+            isOpen={true}
+            onClose={() => setViewingSupplier(null)}
+            size="2xl"
+            zIndex={50}
+        >
             {/* Header */}
             <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
               <div className="flex items-center gap-4">
@@ -860,8 +871,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                 {t.modal?.edit || 'Edit Supplier'}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

@@ -14,6 +14,7 @@ import { TabBar } from '../layout/TabBar';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { PosDropdown, PosDropdownProps } from '../common/PosDropdown';
 import { CARD_MD, CARD_LG } from '../../utils/themeStyles';
+import { Modal } from '../common/Modal';
 
 interface POSProps {
   inventory: Drug[];
@@ -1585,8 +1586,12 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
       
       {/* Product Details Modal */}
       {viewingDrug && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in" onClick={() => setViewingDrug(null)}>
-          <div className={`${CARD_LG} w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]`} onClick={e => e.stopPropagation()}>
+        <Modal
+            isOpen={true}
+            onClose={() => setViewingDrug(null)}
+            size="md"
+            zIndex={50}
+        >
             <div className={`p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50`}>
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
@@ -1659,8 +1664,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                     Close
                 </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
       
       {/* Close Main POS Content div */}

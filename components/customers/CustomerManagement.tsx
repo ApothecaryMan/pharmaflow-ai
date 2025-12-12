@@ -7,6 +7,7 @@ import { useSmartDirection, SmartPhoneInput, SmartEmailInput } from '../common/S
 import { SearchInput } from '../common/SearchInput';
 import { PosDropdown } from '../common/PosDropdown';
 import { COUNTRY_CODES } from '../../data/countryCodes';
+import { Modal } from '../common/Modal';
 
 interface CustomerManagementProps {
   customers: Customer[];
@@ -539,9 +540,14 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       const c = viewingCustomer;
       
       return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={handleCloseProfile}>
+        <Modal
+            isOpen={!!viewingCustomer}
+            onClose={handleCloseProfile}
+            size="lg"
+            zIndex={60}
+        >
             <div 
-                className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 dark:border-gray-800"
+                className="w-full"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -673,7 +679,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     </button>
                 </div>
             </div>
-        </div>
+        </Modal>
       );
   };
 
@@ -964,9 +970,14 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       )}
 
       {/* Admin Modal - ONLY FOR EDITING NOW */}
-      {isModalOpen && !isKioskMode && editingCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-scale-in max-h-[90vh] flex flex-col">
+      <Modal 
+        isOpen={isModalOpen && !isKioskMode && !!editingCustomer} 
+        onClose={handleCloseModal}
+        size="2xl"
+        zIndex={50}
+      >
+        {isModalOpen && !isKioskMode && editingCustomer && (
+            <>
             <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center shrink-0">
               <h3 className="text-lg font-bold text-gray-800 dark:text-white">
                 {t.modal.edit}
@@ -1156,118 +1167,121 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+            </>
+        )}
+      </Modal>
 
       {/* Kiosk Mode - Updated with Address Form */}
-      {isKioskMode && (
-        <div className="fixed inset-0 z-[100] bg-white dark:bg-gray-900 flex flex-col items-center justify-center p-4 animate-fade-in">
-            <div className="w-full max-w-2xl bg-gray-50 dark:bg-gray-800 p-8 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-y-auto max-h-[90vh]">
-                <div className="text-center mb-8">
+      <Modal 
+        isOpen={isKioskMode}
+        onClose={() => setIsKioskMode(false)}
+        size="2xl"
+        zIndex={100}
+      >
+        <div className="w-full h-full bg-gray-50 dark:bg-gray-800 p-8 overflow-y-auto">
+             <div className="text-center mb-8">
                     <div className={`w-16 h-16 mx-auto bg-${color}-100 text-${color}-600 rounded-full flex items-center justify-center mb-4`}>
                         <span className="material-symbols-rounded text-4xl">person_add</span>
                     </div>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t.modal.kioskMode}</h1>
                     <p className="text-gray-500 dark:text-gray-400">{t.modal.kioskDesc}</p>
-                </div>
+            </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.name} *</label>
+                        <input
+                            type="text"
+                            required
+                            value={formData.name || ''}
+                            onChange={e => setFormData({...formData, name: e.target.value})}
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            placeholder={t.modal.placeholders.johnDoe}
+                            dir={nameDir}
+                        />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.name} *</label>
-                            <input
-                                type="text"
-                                required
-                                value={formData.name || ''}
-                                onChange={e => setFormData({...formData, name: e.target.value})}
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.phone} *</label>
+                            <div className="relative">
+                                <SmartPhoneInput
+                                    required
+                                    value={formData.phone || ''}
+                                    onChange={(val) => setFormData({...formData, phone: val})}
+                                    className="w-full px-4 py-3 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                    placeholder={t.modal.placeholders.phone}
+                                />
+                                {getDetectedCountry(formData.phone) && (
+                                    <div className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300 rounded text-[10px] font-bold`}>
+                                        {language === 'AR' ? getDetectedCountry(formData.phone)?.country_ar : getDetectedCountry(formData.phone)?.country_en}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.email}</label>
+                            <SmartEmailInput
+                                value={formData.email || ''}
+                                onChange={(val) => setFormData({...formData, email: val})}
                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                placeholder={t.modal.placeholders.johnDoe}
-                                dir={nameDir}
+                                placeholder={t.modal.placeholders.email}
                             />
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.phone} *</label>
-                                <div className="relative">
-                                    <SmartPhoneInput
-                                        required
-                                        value={formData.phone || ''}
-                                        onChange={(val) => setFormData({...formData, phone: val})}
-                                        className="w-full px-4 py-3 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                        placeholder={t.modal.placeholders.phone}
-                                    />
-                                    {getDetectedCountry(formData.phone) && (
-                                        <div className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300 rounded text-[10px] font-bold`}>
-                                            {language === 'AR' ? getDetectedCountry(formData.phone)?.country_ar : getDetectedCountry(formData.phone)?.country_en}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.email}</label>
-                                <SmartEmailInput
-                                    value={formData.email || ''}
-                                    onChange={(val) => setFormData({...formData, email: val})}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                    placeholder={t.modal.placeholders.email}
-                                />
-                            </div>
-                        </div>
+                    </div>
 
-                        {/* Address Form in Kiosk */}
-                        {renderAddressForm()}
+                    {/* Address Form in Kiosk */}
+                    {renderAddressForm()}
 
-                        {/* Medical Info */}
-                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30">
-                            <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-3 flex items-center gap-2">
-                                <span className="material-symbols-rounded">medical_information</span>
-                                {t.modal.medicalInfo}
-                            </h3>
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">{t.modal.conditions}</label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {['Diabetes', 'Hypertension', 'Asthma', 'Allergies', 'Heart Disease'].map(condition => (
-                                            <button
-                                                key={condition}
-                                                type="button"
-                                                onClick={() => toggleCondition(condition)}
-                                                className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
-                                                    (formData.chronicConditions || []).includes(condition)
-                                                        ? `bg-${color}-500 text-white shadow-md`
-                                                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:border-blue-400'
-                                                }`}
-                                            >
-                                                {condition}
-                                            </button>
-                                        ))}
-                                    </div>
+                    {/* Medical Info */}
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                        <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-3 flex items-center gap-2">
+                            <span className="material-symbols-rounded">medical_information</span>
+                            {t.modal.medicalInfo}
+                        </h3>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">{t.modal.conditions}</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {['Diabetes', 'Hypertension', 'Asthma', 'Allergies', 'Heart Disease'].map(condition => (
+                                        <button
+                                            key={condition}
+                                            type="button"
+                                            onClick={() => toggleCondition(condition)}
+                                            className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                                                (formData.chronicConditions || []).includes(condition)
+                                                    ? `bg-${color}-500 text-white shadow-md`
+                                                    : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:border-blue-400'
+                                            }`}
+                                        >
+                                            {condition}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div className="flex gap-4 pt-4">
-                        <button
-                            type="button"
-                            onClick={() => setIsKioskMode(false)}
-                            className="flex-1 px-6 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors font-medium"
-                        >
-                            {t.modal.cancel}
-                        </button>
-                        <button
-                            type="submit"
-                            className={`flex-[2] px-6 py-3 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all font-bold text-lg`}
-                        >
-                            {t.modal.register}
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <div className="flex gap-4 pt-4">
+                    <button
+                        type="button"
+                        onClick={() => setIsKioskMode(false)}
+                        className="flex-1 px-6 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors font-medium"
+                    >
+                        {t.modal.cancel}
+                    </button>
+                    <button
+                        type="submit"
+                        className={`flex-[2] px-6 py-3 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all font-bold text-lg`}
+                    >
+                        {t.modal.register}
+                    </button>
+                </div>
+            </form>
         </div>
-      )}
+      </Modal>
       {renderProfileModal()}
 
       {/* Copy Feedback Toast */}

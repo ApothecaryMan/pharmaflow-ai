@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { Modal } from './Modal';
 
 interface ExpandedModalProps {
   isOpen: boolean;
@@ -19,42 +20,13 @@ export const ExpandedModal: React.FC<ExpandedModalProps> = ({
   color,
   t
 }) => {
-  // Handle ESC key
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-    
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [isOpen, onClose]);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-4 animate-fade-in">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-gray-900/60 dark:bg-gray-950/80 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <div className="relative w-full max-w-6xl max-h-[95vh] bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-in">
+    <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        size="6xl"
+        zIndex={100}
+    >
         {/* Header */}
         <div className={`flex items-center justify-between p-4 md:p-6 border-b border-gray-200 dark:border-gray-800 bg-${color}-50 dark:bg-${color}-950/20`}>
           <h2 className={`text-xl md:text-2xl font-bold text-${color}-900 dark:text-${color}-100`}>
@@ -76,7 +48,6 @@ export const ExpandedModal: React.FC<ExpandedModalProps> = ({
         <div className="flex-1 overflow-y-auto p-4 md:p-6">
           {children}
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };

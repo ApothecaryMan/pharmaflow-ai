@@ -1,0 +1,101 @@
+import React, { useEffect } from 'react';
+
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  /**
+   * Tailwind max-width class to control width.
+   * Standard sizes: max-w-sm, max-w-md, max-w-lg, max-w-xl, max-w-2xl, etc.
+   * Default: max-w-lg
+   */
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | 'full'; 
+  width?: string; // explicit override
+  className?: string; // extra classes for the container
+  closeOnBackdropClick?: boolean;
+  zIndex?: number;
+}
+
+const SIZE_MAP = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+  '2xl': 'max-w-2xl',
+  '3xl': 'max-w-3xl',
+  '4xl': 'max-w-4xl',
+  '5xl': 'max-w-5xl',
+  '6xl': 'max-w-6xl',
+  full: 'max-w-full m-4',
+};
+
+import ReactDOM from 'react-dom';
+
+// ... (imports)
+
+export const Modal: React.FC<ModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  children, 
+  size = 'lg',
+  width,
+  className = '',
+  closeOnBackdropClick = true,
+  zIndex = 100
+}) => {
+  
+  // Handle ESC key and Body Scroll Lock
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      // Only close if it's the top-most modal? 
+      // For now simple check.
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    
+    if (isOpen) {
+      window.addEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = '';
+    }
+    
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+      // We only restore body scroll if we are unmounting or closing
+      // Caveat: nested modals might fight over this.
+      // But simple refactor should be fine for now.
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const maxWidthClass = width || SIZE_MAP[size] || SIZE_MAP.lg;
+  
+  // Construct z-index class if standard, or style if custom
+  const zClass = `z-[${zIndex}]`;
+
+  return ReactDOM.createPortal(
+    <div 
+        className={`fixed inset-0 ${zClass} flex items-center justify-center p-4 animate-fade-in`}
+        style={{ zIndex }}
+    >
+       {/* Backdrop */}
+       <div 
+         className="absolute inset-0 bg-white/30 dark:bg-black/40 backdrop-blur-sm transition-opacity"
+         onClick={closeOnBackdropClick ? onClose : undefined}
+       />
+       
+       {/* Modal Content Wrapper */}
+       <div 
+         className={`relative w-full ${maxWidthClass} bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-in max-h-[95vh] ${className}`}
+         onClick={e => e.stopPropagation()}
+       >
+         {children}
+       </div>
+    </div>,
+    document.body
+  );
+};

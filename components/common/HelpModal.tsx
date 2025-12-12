@@ -1,5 +1,6 @@
 import React from 'react';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { Modal } from './Modal';
 
 export interface HelpSection {
   title: string;
@@ -51,20 +52,16 @@ const usageColors = [
 ];
 
 export const HelpModal: React.FC<HelpModalProps> = ({ show, onClose, helpContent, color, language }) => {
-  if (!show) return null;
-
   // Get usage sections (excluding 'title')
   const usageSections = Object.entries(helpContent.usage).filter(([key]) => key !== 'title');
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fade-in" 
-      onClick={onClose}
+    <Modal
+        isOpen={show}
+        onClose={onClose}
+        size="4xl"
+        zIndex={50}
     >
-      <div 
-        className="bg-white dark:bg-gray-900 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" 
-        onClick={e => e.stopPropagation()}
-      >
         {/* Header */}
         <div className={`p-6 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
           <h2 className={`text-2xl font-bold text-${color}-900 dark:text-${color}-100 flex items-center gap-3`}>
@@ -162,8 +159,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ show, onClose, helpContent
             </ul>
           </div>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

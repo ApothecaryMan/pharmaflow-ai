@@ -12,6 +12,7 @@ import { CustomerManagement } from '../components/customers/CustomerManagement';
 import { CustomerOverview } from '../components/customers/CustomerOverview';
 import { CustomerLoyaltyOverview } from '../components/customers/CustomerLoyaltyOverview';
 import { CustomerLoyaltyLookup } from '../components/customers/CustomerLoyaltyLookup';
+import { StockAdjustment } from '../components/inventory/StockAdjustment';
 import { RealTimeSalesMonitor } from '../components/dashboard/RealTimeSalesMonitor';
 import { InventoryManagement } from '../components/inventory/InventoryManagement';
 import { PendingApproval } from '../components/purchases/PendingApproval';
@@ -199,6 +200,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'history',
     category: 'sales',
     requiredProps: ['color', 't', 'language']
+  },
+  'stock-adjustment': {
+    id: 'stock-adjustment',
+    component: StockAdjustment,
+    menuLabel: 'Stock Adjustment',
+    menuLabelAr: 'جرد المخزون',
+    icon: 'inventory',
+    category: 'inventory',
+    requiredProps: ['inventory', 'onUpdateInventory', 'color', 't']
   }
 };
 

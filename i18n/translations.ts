@@ -12,6 +12,7 @@ export const TRANSLATIONS = {
       suppliers: 'Suppliers',
       purchases: 'Purchases / Stock In',
       barcodeStudio: 'Barcode Studio',
+      stockAdjustment: 'Stock Adjustment',
     },
     menu: {
       modules: 'Modules',
@@ -98,10 +99,42 @@ export const TRANSLATIONS = {
         desc: 'Description',
         barcode: 'Barcode (Global)',
         internalCode: 'Internal Code',
-        unitsPerPack: 'Units per Pack',
+        unitsPerPack: 'Units Per Pack',
         cancel: 'Cancel',
         save: 'Save Drug',
       }
+    },
+    stockAdjustment: {
+      title: 'Stock Adjustment',
+      subtitle: 'Correct inventory levels',
+      searchPlaceholder: 'Search product to adjust...',
+      add: 'Add to Adjustment',
+      newStock: 'New Stock',
+      difference: 'Difference',
+      reason: 'Reason',
+      notes: 'Notes',
+      save: 'Save Adjustment',
+      clear: 'Clear',
+      history: 'Adjustment History',
+      table: {
+        product: 'Product',
+        current: 'Current Stock',
+        new: 'New Stock',
+        diff: 'Difference',
+        reason: 'Reason',
+        notes: 'Notes',
+        action: 'Action'
+      },
+      reasons: {
+        damaged: 'Damaged',
+        expired: 'Expired',
+        theft: 'Theft / Loss',
+        inventory_count: 'Inventory Count',
+        correction: 'Data Correction',
+        other: 'Other'
+      },
+      success: 'Stock adjustment saved successfully!',
+      empty: 'No items to adjust. Search and add products.'
     },
     suppliers: {
       title: 'Suppliers',
@@ -1120,9 +1153,10 @@ export const TRANSLATIONS = {
       suppliers: 'الموردين',
       purchases: 'المشتريات / المخزون',
       barcodeStudio: 'ستوديو الباركود',
-      cashRegister: 'سجل النقدية',
+      stockAdjustment: 'جرد المخزون',
     },
     menu: {
+      cashRegister: 'سجل النقدية',
       modules: 'الوحدات',
       sections: 'أقسام',
       totalItems: 'إجمالي العناصر',
@@ -1226,6 +1260,38 @@ export const TRANSLATIONS = {
         cancel: 'إلغاء',
         save: 'حفظ الدواء',
       }
+    },
+    stockAdjustment: {
+      title: 'جرد المخزون',
+      subtitle: 'تصحح مستويات المخزون',
+      searchPlaceholder: 'بحث عن منتج للتعديل...',
+      add: 'إضافة للتعديل',
+      newStock: 'المخزون الجديد',
+      difference: 'الفارق',
+      reason: 'السبب',
+      notes: 'ملاحظات',
+      save: 'حفظ التعديل',
+      clear: 'مسح',
+      history: 'سجل التعديلات',
+      table: {
+        product: 'المنتج',
+        current: 'المخزون الحالي',
+        new: 'المخزون الجديد',
+        diff: 'الفارق',
+        reason: 'السبب',
+        notes: 'ملاحظات',
+        action: 'إجراء'
+      },
+      reasons: {
+        damaged: 'تالف',
+        expired: 'منتهي الصلاحية',
+        theft: 'سرقة / فقدان',
+        inventory_count: 'جرد دوري',
+        correction: 'تصحيح بيانات',
+        other: 'أخرى'
+      },
+      success: 'تم حفظ تعديل المخزون بنجاح!',
+      empty: 'لا توجد عناصر للتعديل. ابحث وأضف منتجات.'
     },
     suppliers: {
       title: 'الموردين',

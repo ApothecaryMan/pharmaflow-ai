@@ -4,6 +4,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { PENDING_APPROVAL_HELP } from '../../i18n/helpInstructions';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { HelpModal, HelpButton } from '../common/HelpModal';
+import { Modal } from '../common/Modal';
 
 interface PendingApprovalProps {
   color: string;
@@ -185,9 +186,14 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
         )}
 
         {/* Purchase Details Modal - Redesigned to match History */}
-        {selectedPurchase && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        <Modal
+            isOpen={!!selectedPurchase}
+            onClose={() => setSelectedPurchase(null)}
+            size="4xl"
+            zIndex={50}
+        >
+            {selectedPurchase && (
+                <>
                     {/* Header */}
                     <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
                         <div className="flex items-center gap-4">
@@ -314,52 +320,52 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                             {t.approveOrder || 'Approve Order'}
                         </button>
                     </div>
-                </div>
-            </div>
-        )}
+                </>
+            )}
+        </Modal>
 
         {/* Reject Confirmation Modal */}
-         {isRejectModalOpen && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsRejectModalOpen(false)}></div>
-                <div className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-3xl shadow-2xl relative overflow-hidden flex flex-col animate-bounce-in">
-                    <div className="p-6 text-center">
-                        <div className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
-                            <span className="material-symbols-rounded text-3xl">warning</span>
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{t.rejectOrder?.title || 'Reject Purchase Order?'}</h3>
-                        <p className="text-sm text-gray-500 mb-6">{t.rejectOrder?.confirm || 'Are you sure you want to reject this order? This action cannot be undone.'}</p>
-                        
-                        <div className="text-left mb-4">
-                            <label className="text-xs font-bold text-gray-400 uppercase ml-1 mb-1 block">{t.rejectOrder?.reason || 'Reason (Optional)'}</label>
-                            <input 
-                                type="text" 
-                                value={rejectReason}
-                                onChange={(e) => setRejectReason(e.target.value)}
-                                placeholder={t.rejectOrder?.reasonPlaceholder || 'E.g., Incorrect pricing, wrong items...'}
-                                className="w-full px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-red-500/50"
-                                dir={rejectReasonDir}
-                            />
-                        </div>
+         <Modal
+            isOpen={isRejectModalOpen}
+            onClose={() => setIsRejectModalOpen(false)}
+            size="sm"
+            zIndex={60}
+         >
+                <div className="p-6 text-center">
+                    <div className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
+                        <span className="material-symbols-rounded text-3xl">warning</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{t.rejectOrder?.title || 'Reject Purchase Order?'}</h3>
+                    <p className="text-sm text-gray-500 mb-6">{t.rejectOrder?.confirm || 'Are you sure you want to reject this order? This action cannot be undone.'}</p>
+                    
+                    <div className="text-left mb-4">
+                        <label className="text-xs font-bold text-gray-400 uppercase ml-1 mb-1 block">{t.rejectOrder?.reason || 'Reason (Optional)'}</label>
+                        <input 
+                            type="text" 
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                            placeholder={t.rejectOrder?.reasonPlaceholder || 'E.g., Incorrect pricing, wrong items...'}
+                            className="w-full px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-red-500/50"
+                            dir={rejectReasonDir}
+                        />
+                    </div>
 
-                        <div className="flex gap-3">
-                            <button 
-                                onClick={() => setIsRejectModalOpen(false)}
-                                className="flex-1 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                            >
-                                {t.rejectOrder?.cancel || 'Cancel'}
-                            </button>
-                            <button 
-                                onClick={confirmReject}
-                                className="flex-1 py-3 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200 dark:shadow-none transition-all"
-                            >
-                                {t.rejectOrder?.reject || t.reject || 'Reject'}
-                            </button>
-                        </div>
+                    <div className="flex gap-3">
+                        <button 
+                            onClick={() => setIsRejectModalOpen(false)}
+                            className="flex-1 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                            {t.rejectOrder?.cancel || 'Cancel'}
+                        </button>
+                        <button 
+                            onClick={confirmReject}
+                            className="flex-1 py-3 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200 dark:shadow-none transition-all"
+                        >
+                            {t.rejectOrder?.reject || t.reject || 'Reject'}
+                        </button>
                     </div>
                 </div>
-            </div>
-        )}
+         </Modal>
 
       {/* Help */}
       <HelpButton onClick={() => setShowHelp(true)} title={helpContent.title} color={color} isRTL={language === 'AR'} />

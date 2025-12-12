@@ -4,6 +4,7 @@ import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { ThemeColor, Language } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { SidebarDropdown } from './SidebarDropdown';
+import { DashboardIcon } from './DashboardIcon';
 
 interface NavbarProps {
   menuItems: MenuItem[];
@@ -194,9 +195,16 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
                 `}
                 title={!hasPage && navStyle !== 2 ? 'قريباً / Coming Soon' : ''}
                 >
-                <span className={`material-symbols-rounded text-[20px] transition-transform ${(isActive || isDropdownOpen) && hasPage ? 'icon-filled scale-110' : hasPage ? 'group-hover/item:scale-105' : ''}`}>
+            <span className={`transition-transform flex items-center justify-center ${(isActive || isDropdownOpen) && hasPage ? 'icon-filled scale-110' : hasPage ? 'group-hover/item:scale-105' : ''}`}>
+                {module.id === 'dashboard' ? (
+                  <DashboardIcon className="w-5 h-5" />
+                ) : (
+                  <span className="material-symbols-rounded text-[20px]">
                     {module.icon}
-                </span>
+                  </span>
+                )}
+            </span>
+
                 <span className="text-sm font-medium">
                     {getMenuTranslation(module.label, language)}
                 </span>

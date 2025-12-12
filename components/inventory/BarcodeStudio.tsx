@@ -6,6 +6,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { Modal } from '../common/Modal';
 
 interface BarcodeStudioProps {
   inventory: Drug[];
@@ -914,25 +915,28 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
         </div>
 
         {/* Save Modal */}
-        {showSaveModal && (
-             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
-                 <div className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-3xl shadow-2xl p-6">
-                     <h3 className="font-bold text-lg mb-4">{t.saveAsNew}</h3>
-                     <label className="text-xs font-bold text-gray-500 uppercase block mb-2">{t.templateName}</label>
-                     <input 
-                        autoFocus
-                        type="text" 
-                        value={newTemplateName} 
-                        onChange={e => setNewTemplateName(e.target.value)}
-                        className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 mb-4"
-                     />
-                     <div className="flex gap-3">
-                         <button onClick={() => setShowSaveModal(false)} className="flex-1 py-2 rounded-full font-bold text-gray-500 hover:bg-gray-100">{t.modal.cancel}</button>
-                         <button onClick={saveNewTemplate} disabled={!newTemplateName.trim()} className={`flex-1 py-2 rounded-full font-bold text-white bg-${color}-600 hover:bg-${color}-700 disabled:opacity-50`}>{t.modal.save}</button>
-                     </div>
+        <Modal
+            isOpen={showSaveModal}
+            onClose={() => setShowSaveModal(false)}
+            size="sm"
+            zIndex={50}
+        >
+             <div className="w-full">
+                 <h3 className="font-bold text-lg mb-4">{t.saveAsNew}</h3>
+                 <label className="text-xs font-bold text-gray-500 uppercase block mb-2">{t.templateName}</label>
+                 <input 
+                    autoFocus
+                    type="text" 
+                    value={newTemplateName} 
+                    onChange={e => setNewTemplateName(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 mb-4"
+                 />
+                 <div className="flex gap-3">
+                     <button onClick={() => setShowSaveModal(false)} className="flex-1 py-2 rounded-full font-bold text-gray-500 hover:bg-gray-100">{t.modal.cancel}</button>
+                     <button onClick={saveNewTemplate} disabled={!newTemplateName.trim()} className={`flex-1 py-2 rounded-full font-bold text-white bg-${color}-600 hover:bg-${color}-700 disabled:opacity-50`}>{t.modal.save}</button>
                  </div>
              </div>
-        )}
+        </Modal>
     </div>
   );
 };

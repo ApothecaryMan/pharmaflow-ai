@@ -5,6 +5,7 @@ import { CARD_BASE, TABLE_HEADER_BASE, TABLE_ROW_BASE, BUTTON_BASE, INPUT_BASE, 
 import { useSmartDirection } from '../common/SmartInputs';
 import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
+import { Modal } from '../common/Modal';
 
 interface CashRegisterProps {
   color: string;
@@ -395,8 +396,12 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
 
       {/* Logic Modal */}
       {modalMode && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col scale-in">
+        <Modal
+            isOpen={true}
+            onClose={closeModal}
+            size="md"
+            zIndex={50}
+        >
                <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900`}>
                   <h3 className={`text-lg font-bold text-${color}-900 dark:text-${color}-100`}>
                      {modalMode === 'open' && t.cashRegister.modal.openTitle}
@@ -494,8 +499,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                      </button>
                   </div>
                </div>
-            </div>
-         </div>
+        </Modal>
       )}
 
       {/* Help */}

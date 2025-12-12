@@ -8,6 +8,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { RETURN_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
+import { Modal } from '../common/Modal';
 
 interface ReturnHistoryProps {
   returns: Return[];
@@ -167,8 +168,12 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
 
       {/* Detail Modal */}
       {selectedReturn && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in">
+        <Modal
+            isOpen={true}
+            onClose={() => setSelectedReturn(null)}
+            size="2xl"
+            zIndex={50}
+        >
                 <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
                     <div>
                         <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t.modal.title}</h3>
@@ -235,8 +240,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+        </Modal>
       )}
 
       {/* Help */}

@@ -8,6 +8,7 @@ import { SearchInput } from '../common/SearchInput';
 import { Drug } from '../../types';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { Modal } from '../common/Modal';
 
 interface InventoryProps {
   inventory: Drug[];
@@ -971,8 +972,12 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
       {/* Details View Modal */}
       {viewingDrug && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <Modal
+            isOpen={true}
+            onClose={() => setViewingDrug(null)}
+            size="lg"
+            zIndex={50}
+        >
             <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
               <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100 flex items-center gap-2`}>
                 <span className="material-symbols-rounded">visibility</span>
@@ -1060,14 +1065,17 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                     {t.actionsMenu.edit}
                 </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Add/Edit Modal Overlay */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <Modal
+            isOpen={true}
+            onClose={() => setIsModalOpen(false)}
+            size="4xl"
+            zIndex={50}
+        >
             <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
               <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100`}>
                 {editingDrug ? t.modal.edit : t.modal.add}
@@ -1259,8 +1267,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

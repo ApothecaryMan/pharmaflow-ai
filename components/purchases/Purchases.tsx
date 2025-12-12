@@ -11,6 +11,7 @@ import { useLongPress } from '../../hooks/useLongPress';
 import { settingsService } from '../../services';
 import { FloatingInput } from '../common/FloatingInput';
 import { checkExpiryStatus, sanitizeExpiryInput, formatExpiryDisplay, parseExpiryDisplay, getExpiryStatusStyle } from '../../utils/expiryUtils';
+import { Modal } from '../common/Modal';
 
 
 interface PurchasesProps {
@@ -1636,8 +1637,12 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
        
        {/* Purchase Details Modal */}
        {selectedPurchase && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <Modal
+                isOpen={true}
+                onClose={() => setSelectedPurchase(null)}
+                size="4xl"
+                zIndex={50}
+            >
                     {/* Header */}
                     <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
                         <div className="flex items-center gap-4">
@@ -1785,8 +1790,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                             </tbody>
                         </table>
                     </div>
-                </div>
-            </div>
+            </Modal>
        )}
     </div>
   );

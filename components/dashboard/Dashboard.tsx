@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { ExpandedModal } from '../common/ExpandedModal';
 import { DASHBOARD_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
+import { Modal } from '../common/Modal';
 
 interface DashboardProps {
   inventory: Drug[];
@@ -497,8 +498,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
 
        {/* Restock Modal */}
        {restockDrug && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+        <Modal
+            isOpen={true}
+            onClose={() => setRestockDrug(null)}
+            size="sm"
+            zIndex={50}
+        >
              <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900`}>
                  <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100`}>
                     {t.modal.title}
@@ -552,8 +557,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                    </button>
                 </div>
              </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Expanded Modals */}

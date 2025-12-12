@@ -10,6 +10,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
+import { Modal } from '../common/Modal';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -646,8 +647,12 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
 
       {/* Detail Modal */}
       {selectedSale && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
-           <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <Modal
+            isOpen={true}
+            onClose={() => setSelectedSale(null)}
+            size="lg"
+            zIndex={50}
+        >
               <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50`}>
                   <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
@@ -771,8 +776,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                       {t.modal.print}
                   </button>
               </div>
-           </div>
-        </div>
+        </Modal>
       )}
 
        {/* Return Modal */}

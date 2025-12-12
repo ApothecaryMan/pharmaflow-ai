@@ -285,6 +285,7 @@ export const PHARMACY_MENU: MenuItem[] = [
           "Product Attributes",
           "Barcodes/SKU",
           { label: "Barcode Studio", view: "barcode-studio" },
+          { label: "Stock Adjustment", view: "stock-adjustment" },
           "Product Images",
           "Product Bundles",
           "Product Kits",
