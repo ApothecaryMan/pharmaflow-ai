@@ -95,7 +95,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
         {/* Header */}
         <div className="flex flex-col space-y-1">
             <h2 className="text-3xl font-bold tracking-tight text-gray-800 dark:text-gray-100 flex items-center gap-3">
-                <span className="p-2 rounded-xl bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
+                <span className="w-10 h-10 flex items-center justify-center rounded-xl bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
                     <span className="material-symbols-rounded text-2xl">pending_actions</span>
                 </span>
                 {t.title || 'Pending Approvals'}
@@ -191,7 +191,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     {/* Header */}
                     <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
                         <div className="flex items-center gap-4">
-                            <div className={`p-2 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
+                            <div className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
                                 <span className="material-symbols-rounded">receipt_long</span>
                             </div>
                             <div>
@@ -205,7 +205,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                         </div>
                         <button 
                             onClick={() => setSelectedPurchase(null)}
-                            className="p-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+                            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
                         >
                             <span className="material-symbols-rounded">close</span>
                         </button>

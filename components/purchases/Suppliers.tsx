@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Supplier } from '../../types';
-import { useSmartDirection } from '../common/SmartInputs';
+import { useSmartDirection, SmartEmailInput } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 
 interface SuppliersProps {
@@ -169,9 +169,9 @@ export const Suppliers: React.FC<SuppliersProps> = ({ suppliers, onAddSupplier, 
 
               <div className="space-y-1">
                 <label className="text-xs font-bold text-gray-500 uppercase">{t.modal.email}</label>
-                <input type="email" className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all" 
+                <SmartEmailInput className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all" 
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                  value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                  value={formData.email || ''} onChange={(val) => setFormData({...formData, email: val})} />
               </div>
 
               <div className="space-y-1">

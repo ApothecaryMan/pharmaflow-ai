@@ -853,7 +853,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
     }
   };
 
-  const searchDirection = useSmartDirection(search);
+
 
   return (
     <div className="h-full flex flex-col gap-2">
@@ -1587,12 +1587,19 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
       {viewingDrug && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in" onClick={() => setViewingDrug(null)}>
           <div className={`${CARD_LG} w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]`} onClick={e => e.stopPropagation()}>
-            <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
-              <h3 className={`text-lg font-bold type-expressive text-${color}-900 dark:text-${color}-100 flex items-center gap-2`}>
-                <span className="material-symbols-rounded">info</span>
-                Product Details
-              </h3>
-              <button onClick={() => setViewingDrug(null)} className="text-gray-400 hover:text-gray-600">
+            <div className={`p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
+                  <span className="material-symbols-rounded">info</span>
+                </div>
+                <h3 className={`text-lg font-bold type-expressive text-${color}-900 dark:text-${color}-100`}>
+                  Product Details
+                </h3>
+              </div>
+              <button 
+                onClick={() => setViewingDrug(null)} 
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+              >
                 <span className="material-symbols-rounded">close</span>
               </button>
             </div>

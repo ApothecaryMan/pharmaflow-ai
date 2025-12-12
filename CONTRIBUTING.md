@@ -79,11 +79,12 @@ const t = TRANSLATIONS[language];
 - ✅ **Page titles and subtitles**
 - ✅ **Button labels** (Save, Cancel, Delete, Confirm, etc.)
 - ✅ **Form labels** (Name, Email, Phone, Address, etc.)
-- ✅ **Input placeholders** (Search..., Enter name..., etc.)
+- ✅ **Input placeholders** (Search..., Enter name..., etc.) - **CRITICAL**
 - ✅ **Modal/Dialog titles and content** (Confirm Delete?, Are you sure?, etc.)
 - ✅ **Window titles** (Edit Supplier, Purchase Order Details, etc.)
 - ✅ **Table headers** (ID, Name, Date, Total, Action, etc.)
 - ✅ **Status labels** (Pending, Completed, Rejected, Active, etc.)
+- ✅ **Badges & Tags** (New, VIP, Urgent, etc.)
 - ✅ **Empty states** (No results found, All caught up!, etc.)
 - ✅ **Error/Success messages** (Saved successfully, Please fill required fields, etc.)
 - ✅ **Tooltips and help text**

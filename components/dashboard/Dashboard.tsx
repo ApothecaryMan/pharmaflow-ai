@@ -463,7 +463,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                     recentSales.map(sale => (
                         <div key={sale.id} className="py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/30 px-2 rounded-lg transition-colors">
                             <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full bg-${color}-50 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-600 dark:text-${color}-400`}>
+                                <div className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-50 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400`}>
                                     <span className="material-symbols-rounded">shopping_bag</span>
                                 </div>
                                 <div>
@@ -561,8 +561,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       <ExpandedModal
         isOpen={expandedView === 'revenue'}
         onClose={() => setExpandedView(null)}
-        title={t.revenue}
+        title={t.dashboard?.revenue || 'Total Revenue'}
         color={color}
+        t={t}
         actions={
           <button
             onClick={() => exportToCSV([{ metric: 'Total Revenue', value: totalRevenue }], 'revenue')}
@@ -621,8 +622,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       <ExpandedModal
         isOpen={expandedView === 'expenses'}
         onClose={() => setExpandedView(null)}
-        title={t.expenses}
+        title={t.dashboard?.expenses || 'Expenses'}
         color={color}
+        t={t}
         actions={
           <button
             onClick={() => exportToCSV([{ metric: 'Total Expenses', value: totalExpenses }], 'expenses')}
@@ -672,8 +674,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       <ExpandedModal
         isOpen={expandedView === 'profit'}
         onClose={() => setExpandedView(null)}
-        title={t.profit}
+        title={t.dashboard?.netProfit || 'Net Profit'}
         color={color}
+        t={t}
         actions={
           <button
             onClick={() => exportToCSV([
@@ -718,8 +721,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       <ExpandedModal
         isOpen={expandedView === 'lowStock'}
         onClose={() => setExpandedView(null)}
-        title={`${t.lowStock} (${lowStockItems.length})`}
+        title={t.dashboard?.lowStockItems || 'Low Stock Items'}
         color={color}
+        t={t}
         actions={
           <button
             onClick={() => exportToCSV(
@@ -772,8 +776,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       <ExpandedModal
         isOpen={expandedView === 'topSelling'}
         onClose={() => setExpandedView(null)}
-        title={t.expand?.top20 || 'Top 20 Products'}
+        title={t.dashboard?.topSelling || 'Top Selling Products'}
         color={color}
+        t={t}
         actions={
           <button
             onClick={() => exportToCSV(

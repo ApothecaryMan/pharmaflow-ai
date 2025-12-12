@@ -7,6 +7,7 @@ interface ExpandedModalProps {
   children: React.ReactNode;
   actions?: React.ReactNode;
   color: string;
+  t?: any;
 }
 
 export const ExpandedModal: React.FC<ExpandedModalProps> = ({ 
@@ -15,7 +16,8 @@ export const ExpandedModal: React.FC<ExpandedModalProps> = ({
   title, 
   children, 
   actions,
-  color 
+  color,
+  t
 }) => {
   // Handle ESC key
   useEffect(() => {
@@ -62,8 +64,8 @@ export const ExpandedModal: React.FC<ExpandedModalProps> = ({
             {actions}
             <button
               onClick={onClose}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-              title="Close"
+              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+              title={t?.global?.actions?.close || 'Close'}
             >
               <span className="material-symbols-rounded">close</span>
             </button>

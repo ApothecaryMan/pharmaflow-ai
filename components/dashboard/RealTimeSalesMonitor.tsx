@@ -927,8 +927,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       <ExpandedModal
         isOpen={expandedView === 'revenue'}
         onClose={() => setExpandedView(null)}
-        title="Revenue Analysis"
+        title={t.realTimeSales?.revenueBreakdown || "Revenue Analysis"}
         color={color}
+        t={t}
       >
         <div className="space-y-6">
             <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl card-shadow">
@@ -1003,8 +1004,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       <ExpandedModal
         isOpen={expandedView === 'transactions'}
         onClose={() => setExpandedView(null)}
-        title="Today's Transactions"
+        title={t.realTimeSales?.transactionDetails || "Today's Transactions"}
         color="blue"
+        t={t}
       >
           <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden">
                <table className="w-full text-left rtl:text-right">
@@ -1038,8 +1040,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       <ExpandedModal
         isOpen={expandedView === 'items'}
         onClose={() => setExpandedView(null)}
-        title="Inventory Analysis"
+        title={t.realTimeSales?.itemAnalysis || "Inventory Analysis"}
         color="purple"
+        t={t}
       >
         <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden">
              <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
@@ -1078,8 +1081,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       <ExpandedModal
         isOpen={expandedView === 'counters'}
         onClose={() => setExpandedView(null)}
-        title="Counter Status"
+        title={t.realTimeSales?.counterPerformance || "Counter Status"}
         color="amber"
+        t={t}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3, 4, 5].map(id => (

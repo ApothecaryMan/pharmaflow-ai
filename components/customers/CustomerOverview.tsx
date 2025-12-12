@@ -618,6 +618,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
             {t?.exportCSV || 'Export'}
           </button>
         }
+        t={t}
       >
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -682,6 +683,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
             {t?.exportCSV || 'Export'}
           </button>
         }
+        t={t}
       >
         <div className="space-y-3">
           {topCustomers.map((customer, index) => (
@@ -710,6 +712,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         onClose={() => setExpandedView(null)}
         title={t?.segmentation || 'Customer Segmentation'}
         color={color}
+        t={t}
       >
         <div className="space-y-6">
           {/* VIP Customers */}
@@ -755,6 +758,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         onClose={() => setExpandedView(null)}
         title={t?.healthInsights || 'Health Insights'}
         color={color}
+        t={t}
       >
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">

@@ -3,7 +3,7 @@ import { Customer } from '../../types';
 import { useContextMenu } from '../common/ContextMenu';
 import { DataTable, Column } from '../common/DataTable';
 import { GOVERNORATES, CITIES, AREAS, getLocationName } from '../../data/locations';
-import { useSmartDirection } from '../common/SmartInputs';
+import { useSmartDirection, SmartPhoneInput, SmartEmailInput } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { PosDropdown } from '../common/PosDropdown';
 import { COUNTRY_CODES } from '../../data/countryCodes';
@@ -273,13 +273,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     ]);
   };
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    // Regex: Optional + at start, then digits, spaces, or dashes
-    if (/^[+]?[0-9\s-]*$/.test(val)) {
-        setFormData({...formData, phone: val});
-    }
-  };
 
   const getDetectedCountry = (phone: string | undefined) => {
     if (!phone) return null;
@@ -300,13 +293,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     return null;
   };
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    // Regex: English letters, numbers, @, ., _, -, +
-    if (/^[a-zA-Z0-9@._\-+]*$/.test(val)) {
-        setFormData({...formData, email: val});
-    }
-  };
 
   // Define Columns for DataTable
   const columns: Column<Customer>[] = [
@@ -815,14 +801,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                         <div>
                           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.phone} *</label>
                           <div className="relative">
-                            <input
-                                type="tel"
+                            <SmartPhoneInput
                                 required
                                 value={formData.phone || ''}
-                                onChange={handlePhoneChange}
+                                onChange={(val) => setFormData({...formData, phone: val})}
                                 placeholder={t.modal.placeholders.phone}
                                 className="w-full px-3 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
-                                dir="ltr"
                             />
                             {getDetectedCountry(formData.phone) && (
                                 <div className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300 rounded text-[10px] font-bold`}>
@@ -833,13 +817,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.email}</label>
-                          <input
-                            type="email"
+                          <SmartEmailInput
                             value={formData.email || ''}
-                            onChange={handleEmailChange}
+                            onChange={(val) => setFormData({...formData, email: val})}
                             className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                             placeholder={t.modal.placeholders.email}
-                            dir="ltr"
                           />
                         </div>
                     </div>
@@ -1027,13 +1009,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.phone} *</label>
                   <div className="relative">
-                    <input
-                        type="tel"
+                    <SmartPhoneInput
                         required
                         value={formData.phone || ''}
-                        onChange={handlePhoneChange}
+                        onChange={(val) => setFormData({...formData, phone: val})}
                         className="w-full px-4 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                        dir="ltr"
                     />
                     {getDetectedCountry(formData.phone) && (
                         <div className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded text-[10px] font-bold">
@@ -1044,12 +1024,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.email}</label>
-                  <input
-                    type="email"
+                  <SmartEmailInput
                     value={formData.email || ''}
-                    onChange={e => setFormData({...formData, email: e.target.value})}
+                    onChange={(val) => setFormData({...formData, email: val})}
                     className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    dir="ltr"
                   />
                 </div>
               </div>
@@ -1213,14 +1191,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.phone} *</label>
                                 <div className="relative">
-                                    <input
-                                        type="tel"
+                                    <SmartPhoneInput
                                         required
                                         value={formData.phone || ''}
-                                        onChange={handlePhoneChange}
+                                        onChange={(val) => setFormData({...formData, phone: val})}
                                         className="w-full px-4 py-3 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                         placeholder={t.modal.placeholders.phone}
-                                        dir="ltr"
                                     />
                                     {getDetectedCountry(formData.phone) && (
                                         <div className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300 rounded text-[10px] font-bold`}>
@@ -1231,13 +1207,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.email}</label>
-                                <input
-                                    type="email"
+                                <SmartEmailInput
                                     value={formData.email || ''}
-                                    onChange={e => setFormData({...formData, email: e.target.value})}
+                                    onChange={(val) => setFormData({...formData, email: val})}
                                     className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                     placeholder={t.modal.placeholders.email}
-                                    dir="ltr"
                                 />
                             </div>
                         </div>

@@ -39,7 +39,8 @@ export const TRANSLATIONS = {
         theme: 'Switch Theme',
         fullscreen: 'Fullscreen',
         reload: 'Reload',
-        help: 'Help & Support'
+        help: 'Help & Support',
+        close: 'Close'
       },
       datePicker: {
         cancel: 'Cancel',
@@ -160,7 +161,8 @@ export const TRANSLATIONS = {
         save: 'Save Supplier',
         saveChanges: 'Save Changes',
         deleteBtn: 'Delete',
-        addSupplier: 'Add Supplier'
+        addSupplier: 'Add Supplier',
+        close: 'Close'
       },
       contextMenu: {
         viewDetails: 'View Details',
@@ -171,6 +173,10 @@ export const TRANSLATIONS = {
         copyEmail: 'Copy Email',
         showHideColumns: 'Show/Hide Columns'
       },
+      errors: {
+        invalidPhone: 'Invalid phone number',
+        invalidEmail: 'Invalid email address'
+      },
       required: 'required',
       fillRequired: 'Please fill in all required fields'
     },
@@ -180,7 +186,7 @@ export const TRANSLATIONS = {
       allCaughtUp: 'All caught up!',
       noPendingOrders: 'No pending purchase orders requiring approval.',
       pendingReview: 'Pending Review',
-      invCode: 'INV',
+      invCode: 'Invoice',
       supplier: 'Supplier',
       date: 'Date',
       totalCost: 'Total Cost',
@@ -212,7 +218,7 @@ export const TRANSLATIONS = {
       },
       info: {
         supplier: 'Supplier',
-        invId: 'Inv #',
+        invId: 'Invoice #',
         payment: 'Payment',
         totalCost: 'Total Cost',
         cash: 'Cash',
@@ -249,7 +255,7 @@ export const TRANSLATIONS = {
       // Table headers
       tableHeaders: {
         orderId: 'Order #',
-        invId: 'Inv #',
+        invId: 'Invoice #',
         date: 'Date',
         supplier: 'Supplier',
         payment: 'Payment',
@@ -359,6 +365,69 @@ export const TRANSLATIONS = {
       },
       // Empty states
       noHistory: 'No purchase history found'
+    },
+    purchaseReturns: {
+      createReturn: 'Create Return',
+      returnHistory: 'Return History',
+      createSubtitle: 'Return items to supplier',
+      historySubtitle: 'View all purchase returns',
+      selectPurchase: 'Select Purchase Order',
+      selectPlaceholder: 'Select a purchase order...',
+      returnAll: 'Return All Items from This Purchase',
+      itemsToReturn: 'Items to Return',
+      availableItems: 'Available Items from Purchase Order',
+      additionalNotes: 'Additional Notes',
+      notesPlaceholder: 'Add any additional notes about this return...',
+      clear: 'Clear',
+      submit: 'Submit Return',
+      totalRefund: 'Total Refund',
+      quantity: 'Quantity',
+      reason: 'Reason',
+      condition: 'Condition',
+      addToReturn: 'Add to Return',
+      returnDetails: 'Return Details',
+      returnInfo: 'Return Information',
+      returnedItems: 'Returned Items',
+      notes: 'Notes',
+      close: 'Close',
+      tableHeaders: {
+        id: 'Return ID',
+        date: 'Date',
+        purchaseId: 'Purchase ID',
+        supplier: 'Supplier',
+        refund: 'Total Refund',
+        status: 'Status',
+        action: 'Action'
+      },
+      searchPlaceholder: 'Search returns...',
+      reasons: {
+        damaged: 'Damaged',
+        expired: 'Expired',
+        wrong_item: 'Wrong Item',
+        defective: 'Defective',
+        overage: 'Overage - Entered by Mistake',
+        other: 'Other'
+      },
+      conditions: {
+        damaged: 'Damaged',
+        expired: 'Expired',
+        other: 'Other'
+      },
+      status: {
+        pending: 'Pending',
+        approved: 'Approved',
+        completed: 'Completed',
+        rejected: 'Rejected'
+      },
+      messages: {
+        selectPurchaseAlert: 'Please select a purchase and add items to return',
+        noReturnsFound: 'No returns found matching your search',
+        noReturnsYet: 'No purchase returns yet'
+      },
+      packs: 'packs',
+      pack: 'pack',
+      inReturnList: 'In Return List',
+      available: 'Available'
     },
     pos: {
       searchPlaceholder: 'Scan barcode, name, desc...',
@@ -1010,6 +1079,7 @@ export const TRANSLATIONS = {
         fullscreen: 'ملء الشاشة',
         reload: 'إعادة تحميل',
         help: 'المساعدة والدعم',
+        close: 'إغلاق',
         cancel: 'إلغاء',
         save: 'حفظ',
         delete: 'حذف',
@@ -1145,7 +1215,8 @@ export const TRANSLATIONS = {
         save: 'حفظ المورد',
         saveChanges: 'حفظ التغييرات',
         deleteBtn: 'حذف',
-        addSupplier: 'إضافة المورد'
+        addSupplier: 'إضافة المورد',
+        close: 'إغلاق'
       },
       contextMenu: {
         viewDetails: 'عرض التفاصيل',
@@ -1155,6 +1226,10 @@ export const TRANSLATIONS = {
         copyPhone: 'نسخ الهاتف',
         copyEmail: 'نسخ البريد',
         showHideColumns: 'إظهار/إخفاء الأعمدة'
+      },
+      errors: {
+        invalidPhone: 'رقم الهاتف غير صالح',
+        invalidEmail: 'البريد الإلكتروني غير صالح'
       },
       required: 'مطلوب',
       fillRequired: 'الرجاء ملء جميع الحقول المطلوبة'
@@ -1344,6 +1419,69 @@ export const TRANSLATIONS = {
       },
       // Empty states
       noHistory: 'لا يوجد سجل مشتريات'
+    },
+    purchaseReturns: {
+      createReturn: 'إنشاء إرجاع',
+      returnHistory: 'سجل الإرجاع',
+      createSubtitle: 'إرجاع الأصناف للمورد',
+      historySubtitle: 'عرض جميع مردودات المشتريات',
+      selectPurchase: 'اختر طلب الشراء',
+      selectPlaceholder: 'اختر طلب شراء...',
+      returnAll: 'إرجاع جميع عناصر هذا الشراء',
+      itemsToReturn: 'العناصر المراد إرجاعها',
+      availableItems: 'العناصر المتاحة من طلب الشراء',
+      additionalNotes: 'ملاحظات إضافية',
+      notesPlaceholder: 'أضف أي ملاحظات إضافية حول هذا الإرجاع...',
+      clear: 'مسح',
+      submit: 'إرسال الإرجاع',
+      totalRefund: 'إجمالي الاسترداد',
+      quantity: 'الكمية',
+      reason: 'السبب',
+      condition: 'الحالة',
+      addToReturn: 'إضافة للإرجاع',
+      returnDetails: 'تفاصيل الإرجاع',
+      returnInfo: 'معلومات الإرجاع',
+      returnedItems: 'العناصر المرجعة',
+      notes: 'الملاحظات',
+      close: 'إغلاق',
+      tableHeaders: {
+        id: 'رقم الإرجاع',
+        date: 'التاريخ',
+        purchaseId: 'رقم الشراء',
+        supplier: 'المورد',
+        refund: 'إجمالي الاسترداد',
+        status: 'الحالة',
+        action: 'إجراء'
+      },
+      searchPlaceholder: 'بحث في المردودات...',
+      reasons: {
+        damaged: 'تالف',
+        expired: 'منتهي الصلاحية',
+        wrong_item: 'صنف خاطئ',
+        defective: 'معيب',
+        overage: 'فائض - أدخل بالخطأ',
+        other: 'أخرى'
+      },
+      conditions: {
+        damaged: 'تالف',
+        expired: 'منتهي الصلاحية',
+        other: 'أخرى'
+      },
+      status: {
+        pending: 'قيد الانتظار',
+        approved: 'تمت الموافقة',
+        completed: 'مكتمل',
+        rejected: 'مرفوض'
+      },
+      messages: {
+        selectPurchaseAlert: 'يرجى اختيار طلب شراء وإضافة عناصر للإرجاع',
+        noReturnsFound: 'لم يتم العثور على مردودات تطابق بحثك',
+        noReturnsYet: 'لا توجد مردودات مشتريات حتى الآن'
+      },
+      packs: 'عبوات',
+      pack: 'عبوة',
+      inReturnList: 'في قائمة الإرجاع',
+      available: 'متاح'
     },
     pos: {
       searchPlaceholder: 'امسح الباركود، الاسم، الوصف...',
@@ -1950,7 +2088,8 @@ export const TRANSLATIONS = {
         expected: 'المتوقع',
         countedCash: 'المبلغ المحصل',
         optionalNotes: 'ملاحظات اختيارية...'
-      }
+      },
+      help: '@@import(./cashRegisterHelp.json)'
     }
   }
 };

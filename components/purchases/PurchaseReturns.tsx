@@ -28,13 +28,13 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
-  const searchDir = useSmartDirection(search, 'Search returns...');
+  const searchDir = useSmartDirection(search, t.purchaseReturns?.searchPlaceholder || 'Search returns...');
 
   // Create Return state
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [returnItems, setReturnItems] = useState<PurchaseReturnItem[]>([]);
   const [notes, setNotes] = useState('');
-  const notesDir = useSmartDirection(notes, 'Add any additional notes about this return...');
+  const notesDir = useSmartDirection(notes, t.purchaseReturns?.notesPlaceholder || 'Add any additional notes about this return...');
   
   // Track item-specific form data (quantity, reason, condition for each item)
   const [itemFormData, setItemFormData] = useState<Record<string, { quantity: number; reason: PurchaseReturnItem['reason']; condition: PurchaseReturnItem['condition'] }>>({});
@@ -137,13 +137,13 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   };
 
   const columnsDef = {
-    id: { label: 'Return ID', className: 'px-3 py-2 text-start' },
-    date: { label: 'Date', className: 'px-3 py-2 text-start' },
-    purchaseId: { label: 'Purchase ID', className: 'px-3 py-2 text-start' },
-    supplier: { label: 'Supplier', className: 'px-3 py-2 text-start' },
-    totalRefund: { label: 'Total Refund', className: 'px-3 py-2 text-end' },
-    status: { label: 'Status', className: 'px-3 py-2 text-center' },
-    action: { label: 'Action', className: 'px-3 py-2 text-center' }
+    id: { label: t.purchaseReturns?.tableHeaders?.id || 'Return ID', className: 'px-3 py-2 text-start' },
+    date: { label: t.purchaseReturns?.tableHeaders?.date || 'Date', className: 'px-3 py-2 text-start' },
+    purchaseId: { label: t.purchaseReturns?.tableHeaders?.purchaseId || 'Purchase ID', className: 'px-3 py-2 text-start' },
+    supplier: { label: t.purchaseReturns?.tableHeaders?.supplier || 'Supplier', className: 'px-3 py-2 text-start' },
+    totalRefund: { label: t.purchaseReturns?.tableHeaders?.refund || 'Total Refund', className: 'px-3 py-2 text-end' },
+    status: { label: t.purchaseReturns?.tableHeaders?.status || 'Status', className: 'px-3 py-2 text-center' },
+    action: { label: t.purchaseReturns?.tableHeaders?.action || 'Action', className: 'px-3 py-2 text-center' }
   };
 
   // Add item to return
@@ -200,7 +200,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   const handleSubmitReturn = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPurchase || returnItems.length === 0) {
-      alert('Please select a purchase and add items to return');
+      alert(t.purchaseReturns?.messages?.selectPurchaseAlert || 'Please select a purchase and add items to return');
       return;
     }
 
@@ -313,7 +313,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
             returnRecord.status === 'approved' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
             'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
           }`}>
-            {returnRecord.status}
+            {t.purchaseReturns?.status?.[returnRecord.status] || returnRecord.status}
           </span>
         );
       case 'action':
@@ -341,21 +341,21 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       {/* Header */}
       <div className="flex justify-between items-center flex-shrink-0">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'create' ? 'Create Return' : 'Return History'}</h2>
-          <p className="text-sm text-gray-500">{mode === 'create' ? 'Return items to supplier' : 'View all purchase returns'}</p>
+          <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'create' ? (t.purchaseReturns?.createReturn || 'Create Return') : (t.purchaseReturns?.returnHistory || 'Return History')}</h2>
+          <p className="text-sm text-gray-500">{mode === 'create' ? (t.purchaseReturns?.createSubtitle || 'Return items to supplier') : (t.purchaseReturns?.historySubtitle || 'View all purchase returns')}</p>
         </div>
         <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-full flex text-xs font-bold">
           <button 
             onClick={() => setMode('create')}
             className={`px-4 py-2 rounded-full transition-all ${mode === 'create' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
-            Create Return
+            {t.purchaseReturns?.createReturn || 'Create Return'}
           </button>
           <button 
             onClick={() => setMode('history')}
             className={`px-4 py-2 rounded-full transition-all ${mode === 'history' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
-            Return History
+            {t.purchaseReturns?.returnHistory || 'Return History'}
           </button>
         </div>
       </div>
@@ -368,7 +368,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
             <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
               <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                 <span className="material-symbols-rounded text-[18px]">receipt_long</span>
-                Select Purchase Order
+                {t.purchaseReturns?.selectPurchase || 'Select Purchase Order'}
               </h3>
               <select
                 value={selectedPurchase?.id || ''}
@@ -382,7 +382,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                 style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                 required
               >
-                <option value="">Select a purchase order...</option>
+                <option value="">{t.purchaseReturns?.selectPlaceholder || 'Select a purchase order...'}</option>
                 {availablePurchases.map(purchase => (
                   <option key={purchase.id} value={purchase.id}>
                     PO #{purchase.id} - {purchase.supplierName} - ${purchase.totalCost.toFixed(2)} ({new Date(purchase.date).toLocaleDateString()})
@@ -397,7 +397,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                   className="mt-3 w-full px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-rounded text-[18px]">assignment_return</span>
-                  Return All Items from This Purchase
+                  {t.purchaseReturns?.returnAll || 'Return All Items from This Purchase'}
                 </button>
               )}
             </div>
@@ -407,7 +407,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
               <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
                 <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                   <span className="material-symbols-rounded text-[18px]">inventory_2</span>
-                  Items to Return
+                  {t.purchaseReturns?.itemsToReturn || 'Items to Return'}
                 </h3>
                 
                 {returnItems.length > 0 && (
@@ -417,7 +417,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                         <div className="flex-1">
                           <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
                           <p className="text-xs text-gray-500">
-                            Qty: {item.quantityReturned} | Reason: {item.reason} | Condition: {item.condition}
+                            <span className="font-bold">{t.purchaseReturns?.quantity || 'Qty'}:</span> {item.quantityReturned} | <span className="font-bold">{t.purchaseReturns?.reason || 'Reason'}:</span> {t.purchaseReturns?.reasons?.[item.reason] || item.reason} | <span className="font-bold">{t.purchaseReturns?.condition || 'Condition'}:</span> {t.purchaseReturns?.conditions?.[item.condition] || item.condition}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
@@ -434,7 +434,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                     ))}
                     <div className="flex justify-end pt-3 border-t border-gray-200 dark:border-gray-700">
                       <div className="text-right">
-                        <p className="text-sm text-gray-500">Total Refund</p>
+                        <p className="text-sm text-gray-500">{t.purchaseReturns?.totalRefund || 'Total Refund'}</p>
                         <p className="text-2xl font-bold text-red-600">
                           ${returnItems.reduce((sum, item) => sum + item.refundAmount, 0).toFixed(2)}
                         </p>
@@ -443,9 +443,10 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                   </div>
                 )}
 
+
                 {/* Available Items from Purchase */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">Available Items from Purchase Order</h4>
+                  <h4 className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">{t.purchaseReturns?.availableItems || 'Available Items from Purchase Order'}</h4>
                   {selectedPurchase.items
                     .filter(item => {
                       const returned = getReturnedQuantity(selectedPurchase.id, item.drugId);
@@ -479,14 +480,14 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                           <div className="flex-1">
                             <p className="font-bold text-gray-900 dark:text-white">{purchaseItem.name}</p>
                             <p className="text-xs text-gray-500 mt-1">
-                              Available: {availableQty} packs (Total: {purchaseItem.quantity}, Returned: {returnedQty}, In Return List: {alreadyInReturn}) | Cost: ${purchaseItem.costPrice.toFixed(2)}/pack
+                              <span className="font-bold">{t.purchaseReturns?.available || 'Available'}:</span> {availableQty} {t.purchaseReturns?.packs || 'packs'} (<span className="font-bold">{t.menu?.totalItems || 'Total'}:</span> {purchaseItem.quantity}, <span className="font-bold">{t.purchaseReturns?.returnedItems || 'Returned'}:</span> {returnedQty}, <span className="font-bold">{t.purchaseReturns?.inReturnList || 'In Return List'}:</span> {alreadyInReturn}) | <span className="font-bold">{t.purchases?.detailsModal?.cost || 'Cost'}:</span> ${purchaseItem.costPrice.toFixed(2)}/{t.purchaseReturns?.pack || 'pack'}
                             </p>
                           </div>
                         </div>
                         
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Quantity</label>
+                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t.purchaseReturns?.quantity || 'Quantity'}</label>
                             <input
                               type="number"
                               min="1"
@@ -498,31 +499,31 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                           </div>
                           
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Reason</label>
+                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t.purchaseReturns?.reason || 'Reason'}</label>
                             <select
                               value={formData.reason}
                               onChange={(e) => updateItemFormData({ reason: e.target.value as PurchaseReturnItem['reason'] })}
                               className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm"
                             >
-                              <option value="damaged">Damaged</option>
-                              <option value="expired">Expired</option>
-                              <option value="wrong_item">Wrong Item</option>
-                              <option value="defective">Defective</option>
-                              <option value="overage">Overage - Entered by Mistake</option>
-                              <option value="other">Other</option>
+                              <option value="damaged">{t.purchaseReturns?.reasons?.damaged || 'Damaged'}</option>
+                              <option value="expired">{t.purchaseReturns?.reasons?.expired || 'Expired'}</option>
+                              <option value="wrong_item">{t.purchaseReturns?.reasons?.wrong_item || 'Wrong Item'}</option>
+                              <option value="defective">{t.purchaseReturns?.reasons?.defective || 'Defective'}</option>
+                              <option value="overage">{t.purchaseReturns?.reasons?.overage || 'Overage - Entered by Mistake'}</option>
+                              <option value="other">{t.purchaseReturns?.reasons?.other || 'Other'}</option>
                             </select>
                           </div>
                           
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Condition</label>
+                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t.purchaseReturns?.condition || 'Condition'}</label>
                             <select
                               value={formData.condition}
                               onChange={(e) => updateItemFormData({ condition: e.target.value as PurchaseReturnItem['condition'] })}
                               className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm"
                             >
-                              <option value="damaged">Damaged</option>
-                              <option value="expired">Expired</option>
-                              <option value="other">Other</option>
+                              <option value="damaged">{t.purchaseReturns?.conditions?.damaged || 'Damaged'}</option>
+                              <option value="expired">{t.purchaseReturns?.conditions?.expired || 'Expired'}</option>
+                              <option value="other">{t.purchaseReturns?.conditions?.other || 'Other'}</option>
                             </select>
                           </div>
                           
@@ -535,7 +536,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                               }}
                               className={`w-full px-3 py-2 rounded-lg bg-${color}-600 hover:bg-${color}-700 text-white text-sm font-medium transition-colors`}
                             >
-                              Add to Return
+                              {t.purchaseReturns?.addToReturn || 'Add to Return'}
                             </button>
                           </div>
                         </div>
@@ -550,7 +551,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
             <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
               <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                 <span className="material-symbols-rounded text-[18px]">notes</span>
-                Additional Notes
+                {t.purchaseReturns?.additionalNotes || 'Additional Notes'}
               </h3>
               <textarea
                 value={notes}
@@ -559,7 +560,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                 dir={notesDir}
                 className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all resize-none"
                 style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                placeholder="Add any additional notes about this return..."
+                placeholder={t.purchaseReturns?.notesPlaceholder || 'Add any additional notes about this return...'}
               />
 
               {/* Action Buttons */}
@@ -573,7 +574,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                   }}
                   className="px-6 py-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-sm font-medium"
                 >
-                  Clear
+                  {t.purchaseReturns?.clear || 'Clear'}
                 </button>
                 <button
                   type="submit"
@@ -584,7 +585,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                       : `bg-${color}-600 hover:bg-${color}-700 text-white`
                   }`}
                 >
-                  Submit Return
+                  {t.purchaseReturns?.submit || 'Submit Return'}
                 </button>
               </div>
             </div>
@@ -597,7 +598,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           <div className="flex-shrink-0">
             <input 
               type="text" 
-              placeholder="Search returns..."
+              placeholder={t.purchaseReturns?.searchPlaceholder || 'Search returns...'}
               className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all text-sm"
               style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
               value={search}
@@ -690,7 +691,10 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                 {filteredReturns.length === 0 && (
                   <tr>
                     <td colSpan={10} className="p-12 text-center text-gray-400">
-                      {search.trim() ? 'No returns found matching your search' : 'No purchase returns yet'}
+                      {search.trim() 
+                        ? (t.purchaseReturns?.messages?.noReturnsFound || 'No returns found matching your search')
+                        : (t.purchaseReturns?.messages?.noReturnsYet || 'No purchase returns yet')
+                      }
                     </td>
                   </tr>
                 )}
@@ -707,17 +711,17 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
             {/* Header */}
             <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
               <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
+                <div className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
                   <span className="material-symbols-rounded">assignment_return</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">Return Details</h3>
-                  <p className="text-xs text-gray-500">Return #{viewingReturn.id}</p>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">{t.purchaseReturns?.returnDetails || 'Return Details'}</h3>
+                  <p className="text-xs text-gray-500">{t.purchaseReturns?.tableHeaders?.id || 'Return ID'} #{viewingReturn.id}</p>
                 </div>
               </div>
               <button 
                 onClick={() => setViewingReturn(null)}
-                className="p-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
               >
                 <span className="material-symbols-rounded">close</span>
               </button>
@@ -729,37 +733,37 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
               <div>
                 <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
                   <span className="material-symbols-rounded text-[18px]">info</span>
-                  Return Information
+                  {t.purchaseReturns?.returnInfo || 'Return Information'}
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Return ID</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.id || 'Return ID'}</label>
                     <p className="text-sm text-gray-900 dark:text-white font-mono">{viewingReturn.id}</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.date || 'Date'}</label>
                     <p className="text-sm text-gray-900 dark:text-white">{new Date(viewingReturn.date).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Purchase ID</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.purchaseId || 'Purchase ID'}</label>
                     <p className="text-sm text-gray-900 dark:text-white font-mono">{viewingReturn.purchaseId}</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Supplier</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.supplier || 'Supplier'}</label>
                     <p className="text-sm text-gray-900 dark:text-white font-bold">{viewingReturn.supplierName}</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.status || 'Status'}</label>
                     <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       viewingReturn.status === 'completed' ? 'bg-green-100 text-green-700' :
                       viewingReturn.status === 'approved' ? 'bg-blue-100 text-blue-700' :
                       'bg-yellow-100 text-yellow-700'
                     }`}>
-                      {viewingReturn.status}
+                      {t.purchaseReturns?.status?.[viewingReturn.status] || viewingReturn.status}
                     </span>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Total Refund</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.totalRefund || 'Total Refund'}</label>
                     <p className="text-lg font-bold text-red-600">${viewingReturn.totalRefund.toFixed(2)}</p>
                   </div>
                 </div>
@@ -769,7 +773,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
               <div>
                 <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
                   <span className="material-symbols-rounded text-[18px]">inventory_2</span>
-                  Returned Items
+                  {t.purchaseReturns?.returnedItems || 'Returned Items'}
                 </h4>
                 <div className="space-y-2">
                   {viewingReturn.items.map((item, index) => (
@@ -778,8 +782,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
                           <p className="text-xs text-gray-500 mt-1">
-                            Quantity: {item.quantityReturned} | Cost: ${item.costPrice.toFixed(2)} | 
-                            Reason: {item.reason} | Condition: {item.condition}
+                            <span className="font-bold">{t.purchaseReturns?.quantity || 'Qty'}:</span> {item.quantityReturned} | <span className="font-bold">{t.purchases?.detailsModal?.cost || 'Cost'}:</span> ${item.costPrice.toFixed(2)} | <span className="font-bold">{t.purchaseReturns?.reason || 'Reason'}:</span> {t.purchaseReturns?.reasons?.[item.reason] || item.reason} | <span className="font-bold">{t.purchaseReturns?.condition || 'Condition'}:</span> {t.purchaseReturns?.conditions?.[item.condition] || item.condition}
                           </p>
                         </div>
                         <p className="font-bold text-red-600">${item.refundAmount.toFixed(2)}</p>
@@ -794,7 +797,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                 <div>
                   <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                     <span className="material-symbols-rounded text-[18px]">notes</span>
-                    Notes
+                    {t.purchaseReturns?.notes || 'Notes'}
                   </h4>
                   <p className="text-sm text-gray-700 dark:text-gray-300 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
                     {viewingReturn.notes}

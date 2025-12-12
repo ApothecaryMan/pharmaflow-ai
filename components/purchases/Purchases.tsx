@@ -1210,13 +1210,13 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
 
                        <div className="flex items-center gap-4">
                            {/* System Order ID (Read Only) */}
-                           <div className="group relative overflow-hidden">
+                           <div className="group relative">
                                 <label className="text-[10px] uppercase font-bold text-gray-400 absolute -top-3 left-1">{t.tableHeaders?.orderId || 'Order #'}</label>
-                                <div className="relative h-8 w-36 overflow-hidden">
+                                <div className="relative overflow-hidden h-8 flex items-center">
                                     <input 
                                         type="text"
-                                        value={invoiceId}
                                         readOnly
+                                        value={invoiceId}
                                         dir="ltr"
                                         className={`text-lg font-mono font-bold bg-transparent border border-transparent rounded-lg px-2 py-0.5 outline-none cursor-default w-36 text-left select-all transition-all duration-500 ease-out ${
                                             isOrderIdAnimating 

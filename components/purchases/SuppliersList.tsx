@@ -4,7 +4,7 @@ import { Supplier } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { SearchInput } from '../common/SearchInput';
-import { useSmartDirection, isValidEmail, isValidPhone } from '../common/SmartInputs';
+import { useSmartDirection, isValidEmail, isValidPhone, SmartPhoneInput, SmartEmailInput } from '../common/SmartInputs';
 
 interface SuppliersListProps {
   suppliers: Supplier[];
@@ -34,9 +34,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
     address: ''
   });
 
-  const nameDir = useSmartDirection(editForm.name, 'Enter company name');
-  const addressDir = useSmartDirection(editForm.address, 'Enter company address');
-  const contactPersonDir = useSmartDirection(editForm.contactPerson, 'Enter contact person name');
+  const nameDir = useSmartDirection(editForm.name, t.form?.enterCompanyName || 'Enter company name');
+  const addressDir = useSmartDirection(editForm.address, t.form?.enterAddress || 'Enter company address');
+  const contactPersonDir = useSmartDirection(editForm.contactPerson, t.form?.enterContactPerson || 'Enter contact person name');
 
   // Column management
   const {
@@ -180,17 +180,17 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
 
   const handleSaveEdit = () => {
     if (!editForm.name || !editForm.contactPerson || !editForm.phone || !editForm.email) {
-      alert(t.required?.fillRequired || 'Please fill in all required fields');
+      alert(t.fillRequired || 'Please fill in all required fields');
       return;
     }
 
     if (!isValidPhone(editForm.phone)) {
-      alert(language === 'AR' ? 'رقم الهاتف غير صالح' : 'Invalid phone number');
+      alert(t.errors?.invalidPhone || 'Invalid phone number');
       return;
     }
 
     if (!isValidEmail(editForm.email)) {
-      alert(language === 'AR' ? 'البريد الإلكتروني غير صالح' : 'Invalid email address');
+      alert(t.errors?.invalidEmail || 'Invalid email address');
       return;
     }
     setSuppliers(suppliers.map(s => s.id === editForm.id ? editForm : s));
@@ -225,17 +225,17 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
   const handleSaveNew = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editForm.name || !editForm.contactPerson || !editForm.phone || !editForm.email) {
-      alert(t.required?.fillRequired || 'Please fill in all required fields');
+      alert(t.fillRequired || 'Please fill in all required fields');
       return;
     }
 
     if (!isValidPhone(editForm.phone)) {
-      alert(language === 'AR' ? 'رقم الهاتف غير صالح' : 'Invalid phone number');
+      alert(t.errors?.invalidPhone || 'Invalid phone number');
       return;
     }
 
     if (!isValidEmail(editForm.email)) {
-      alert(language === 'AR' ? 'البريد الإلكتروني غير صالح' : 'Invalid email address');
+      alert(t.errors?.invalidEmail || 'Invalid email address');
       return;
     }
     setSuppliers([...suppliers, editForm]);
@@ -305,17 +305,17 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
             onClick={(e) => {
               e.stopPropagation();
               showMenu(e.clientX, e.clientY, [
-                { label: 'View Details', icon: 'visibility', action: () => handleViewDetails(supplier) },
-                { label: 'Edit', icon: 'edit', action: () => handleEdit(supplier) },
-                { label: 'Delete', icon: 'delete', action: () => handleDelete(supplier) },
+                { label: t.contextMenu?.viewDetails || 'View Details', icon: 'visibility', action: () => handleViewDetails(supplier) },
+                { label: t.contextMenu?.edit || 'Edit', icon: 'edit', action: () => handleEdit(supplier) },
+                { label: t.contextMenu?.delete || 'Delete', icon: 'delete', action: () => handleDelete(supplier) },
                 { separator: true },
-                { label: 'Copy Name', icon: 'content_copy', action: () => copyToClipboard(supplier.name) },
-                { label: 'Copy Phone', icon: 'phone', action: () => copyToClipboard(supplier.phone) },
-                { label: 'Copy Email', icon: 'email', action: () => copyToClipboard(supplier.email) }
+                { label: t.contextMenu?.copyName || 'Copy Name', icon: 'content_copy', action: () => copyToClipboard(supplier.name) },
+                { label: t.contextMenu?.copyPhone || 'Copy Phone', icon: 'phone', action: () => copyToClipboard(supplier.phone) },
+                { label: t.contextMenu?.copyEmail || 'Copy Email', icon: 'email', action: () => copyToClipboard(supplier.email) }
               ]);
             }}
             className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors outline-none"
-            title="Actions"
+            title={t.headers?.actions || 'Actions'}
           >
             <span className="material-symbols-rounded text-[20px]">more_vert</span>
           </button>
@@ -409,7 +409,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                     e.preventDefault();
                     e.stopPropagation();
                     showMenu(e.clientX, e.clientY, [
-                      { label: 'Show/Hide Columns', icon: 'visibility', action: () => {} },
+                      { label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', icon: 'visibility', action: () => {} },
                       { separator: true },
                       ...Object.keys(columnsDef).map(colId => ({
                         label: columnsDef[colId as keyof typeof columnsDef].label,
@@ -448,13 +448,13 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                   e.preventDefault();
                   e.stopPropagation();
                   showMenu(e.clientX, e.clientY, [
-                    { label: 'View Details', icon: 'visibility', action: () => handleViewDetails(supplier) },
-                    { label: 'Edit', icon: 'edit', action: () => handleEdit(supplier) },
-                    { label: 'Delete', icon: 'delete', action: () => handleDelete(supplier) },
+                    { label: t.contextMenu?.viewDetails || 'View Details', icon: 'visibility', action: () => handleViewDetails(supplier) },
+                    { label: t.contextMenu?.edit || 'Edit', icon: 'edit', action: () => handleEdit(supplier) },
+                    { label: t.contextMenu?.delete || 'Delete', icon: 'delete', action: () => handleDelete(supplier) },
                     { separator: true },
-                    { label: 'Copy Name', icon: 'content_copy', action: () => copyToClipboard(supplier.name) },
-                    { label: 'Copy Phone', icon: 'phone', action: () => copyToClipboard(supplier.phone) },
-                    { label: 'Copy Email', icon: 'email', action: () => copyToClipboard(supplier.email) }
+                    { label: t.contextMenu?.copyName || 'Copy Name', icon: 'content_copy', action: () => copyToClipboard(supplier.name) },
+                    { label: t.contextMenu?.copyPhone || 'Copy Phone', icon: 'phone', action: () => copyToClipboard(supplier.phone) },
+                    { label: t.contextMenu?.copyEmail || 'Copy Email', icon: 'email', action: () => copyToClipboard(supplier.email) }
                   ]);
                 }}
                 className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''}`}
@@ -554,30 +554,26 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {t.form?.phone || 'Phone'} <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="tel"
+                  <SmartPhoneInput
                     required
                     value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    onChange={(val) => setEditForm({ ...editForm, phone: val })}
                     className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                     placeholder={t.form?.phonePlaceholder || '+1234567890'}
-                    dir="ltr"
                   />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {t.form?.email || 'Email'} <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="email"
+                  <SmartEmailInput
                     required
                     value={editForm.email}
-                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    onChange={(val) => setEditForm({ ...editForm, email: val })}
                     className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                     placeholder={t.form?.emailPlaceholder || 'email@example.com'}
-                    dir="ltr"
                   />
                 </div>
               </div>
@@ -676,7 +672,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
               <div>
                 <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
                   <span className="material-symbols-rounded text-[18px]">person</span>
-                  Contact Information
+                  {t.form?.contactInfo || 'Contact Information'}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -697,28 +693,24 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       {t.form?.phone || 'Phone'} <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="tel"
+                    <SmartPhoneInput
                       value={editForm.phone}
-                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                      onChange={(val) => setEditForm({ ...editForm, phone: val })}
                       className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
                       style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                       placeholder={t.form?.phonePlaceholder || '+1234567890'}
-                      dir="ltr"
                     />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       {t.form?.email || 'Email'} <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="email"
+                    <SmartEmailInput
                       value={editForm.email}
-                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      onChange={(val) => setEditForm({ ...editForm, email: val })}
                       className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
                       style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                       placeholder={t.form?.emailPlaceholder || 'email@example.com'}
-                      dir="ltr"
                     />
                   </div>
                 </div>
@@ -787,7 +779,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
             {/* Header */}
             <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
               <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
+                <div className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
                   <span className="material-symbols-rounded">visibility</span>
                 </div>
                 <div>
@@ -797,7 +789,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
               </div>
               <button 
                 onClick={() => setViewingSupplier(null)}
-                className="p-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
               >
                 <span className="material-symbols-rounded">close</span>
               </button>
@@ -809,7 +801,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
               <div>
                 <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
                   <span className="material-symbols-rounded text-[18px]">business</span>
-                  Company Information
+                  {t.form?.companyInfo || 'Company Information'}
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -831,7 +823,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
               <div>
                 <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
                   <span className="material-symbols-rounded text-[18px]">person</span>
-                  Contact Information
+                  {t.form?.contactInfo || 'Contact Information'}
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -856,7 +848,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                 onClick={() => setViewingSupplier(null)}
                 className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
-                Close
+                {t.modal?.close || 'Close'}
               </button>
               <button
                 onClick={() => {
@@ -865,7 +857,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                 }}
                 className={`px-4 py-2 rounded-xl bg-${color}-600 text-white hover:bg-${color}-700 transition-colors`}
               >
-                Edit Supplier
+                {t.modal?.edit || 'Edit Supplier'}
               </button>
             </div>
           </div>
