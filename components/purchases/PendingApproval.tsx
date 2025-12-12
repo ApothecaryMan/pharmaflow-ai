@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Purchase, PurchaseItem } from '../../types';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
+import { useSmartDirection } from '../common/SmartInputs';
 import { PENDING_APPROVAL_HELP } from '../../i18n/helpInstructions';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { HelpModal, HelpButton } from '../common/HelpModal';
@@ -37,6 +37,19 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [purchaseToApprove, setPurchaseToApprove] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+
+  // Helper: Format time with Arabic AM/PM
+  const formatTime = (date: Date): string => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const hour12 = hours % 12 || 12;
+    const minuteStr = minutes.toString().padStart(2, '0');
+    // Use language prop for direct translation
+    const am = language === 'AR' ? 'صباحاً' : 'AM';
+    const pm = language === 'AR' ? 'مساءً' : 'PM';
+    const period = hours >= 12 ? pm : am;
+    return `${hour12}:${minuteStr} ${period}`;
+  };
 
   const helpContent = PENDING_APPROVAL_HELP[language as 'EN' | 'AR'] || PENDING_APPROVAL_HELP.EN;
 
@@ -85,10 +98,10 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                 <span className="p-2 rounded-xl bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
                     <span className="material-symbols-rounded text-2xl">pending_actions</span>
                 </span>
-                {t.menuLabel || 'Pending Approvals'}
+                {t.title || 'Pending Approvals'}
             </h2>
             <p className="text-gray-500 dark:text-gray-400 text-sm max-w-2xl">
-                Review and approve incoming purchase orders. Orders must be approved before inventory is updated.
+                {t.subtitle || 'Review and approve incoming purchase orders. Orders must be approved before inventory is updated.'}
             </p>
         </div>
 
@@ -99,8 +112,8 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     <span className="material-symbols-rounded text-5xl opacity-20">assignment_turned_in</span>
                 </div>
                 <div className="text-center">
-                    <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">All caught up!</h3>
-                    <p className="text-sm opacity-60">No pending purchase orders requiring approval.</p>
+                    <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">{t.allCaughtUp || 'All caught up!'}</h3>
+                    <p className="text-sm opacity-60">{t.noPendingOrders || 'No pending purchase orders requiring approval.'}</p>
                 </div>
             </div>
         ) : (
@@ -114,29 +127,29 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                         {/* Status Badge */}
                         <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
-                            Pending Review
+                            {t.pendingReview || 'Pending Review'}
                         </div>
 
                         {/* Top Section */}
                         <div className="mb-6">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Supplier</p>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{t.supplier || 'Supplier'}</p>
                             <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-1">{purchase.supplierName}</h3>
-                            <p className="text-xs text-gray-500 font-mono">INV: {purchase.externalInvoiceId || purchase.invoiceId}</p>
+                            <p className="text-xs text-gray-500 font-mono">{t.invCode || 'INV'}: {purchase.externalInvoiceId || purchase.invoiceId}</p>
                         </div>
 
                         {/* Grid Stats */}
                         <div className="grid grid-cols-2 gap-4 mb-6 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl">
                             <div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">Date</p>
+                                <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">{t.date || 'Date'}</p>
                                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                     {new Date(purchase.date).toLocaleDateString()}
                                 </p>
                                 <p className="text-[10px] text-gray-400">
-                                    {new Date(purchase.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})}
+                                    {formatTime(new Date(purchase.date))}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">Total Cost</p>
+                                <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">{t.totalCost || 'Total Cost'}</p>
                                 <p className={`text-lg font-bold text-${color}-600 dark:text-${color}-400`}>
                                     ${purchase.totalCost.toFixed(2)}
                                 </p>
@@ -144,7 +157,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                             <div className="col-span-2 flex items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                                 <span className="material-symbols-rounded text-gray-400 text-sm">shopping_basket</span>
                                 <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                                    {purchase.items.reduce((acc, item) => acc + item.quantity, 0)} Items
+                                    {purchase.items.reduce((acc, item) => acc + item.quantity, 0)} {t.items || 'Items'}
                                 </span>
                             </div>
                         </div>
@@ -156,14 +169,14 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                                 className="py-2.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-bold text-sm transition-colors flex items-center justify-center gap-2"
                              >
                                 <span className="material-symbols-rounded text-lg">close</span>
-                                Reject
+                                {t.reject || 'Reject'}
                              </button>
                              <button 
                                 onClick={(e) => handleOpenApprove(purchase.id, e)}
                                 className="py-2.5 rounded-xl bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
                              >
                                 <span className="material-symbols-rounded text-lg">check</span>
-                                Approve
+                                {t.approve || 'Approve'}
                              </button>
                         </div>
                     </div>
@@ -182,11 +195,11 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                                 <span className="material-symbols-rounded">receipt_long</span>
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Purchase Order Details</h3>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t.orderDetails || 'Purchase Order Details'}</h3>
                                 <p className="text-xs text-gray-500 flex items-center gap-2">
                                     <span className="font-mono">{selectedPurchase.invoiceId}</span>
                                     <span>•</span>
-                                    <span>{new Date(selectedPurchase.date).toLocaleDateString()} {new Date(selectedPurchase.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})}</span>
+                                    <span>{new Date(selectedPurchase.date).toLocaleDateString()} {formatTime(new Date(selectedPurchase.date))}</span>
                                 </p>
                             </div>
                         </div>
@@ -201,21 +214,21 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     {/* Info Bar */}
                     <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 bg-white dark:bg-gray-900 text-sm border-b border-gray-100 dark:border-gray-800">
                         <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Supplier</p>
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.info?.supplier || 'Supplier'}</p>
                             <p className="font-bold text-gray-800 dark:text-gray-100">{selectedPurchase.supplierName}</p>
                         </div>
                          <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Inv #</p>
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.info?.invId || 'Inv #'}</p>
                             <p className="font-mono text-gray-800 dark:text-gray-100">{selectedPurchase.externalInvoiceId || '-'}</p>
                         </div>
                          <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Payment</p>
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.info?.payment || 'Payment'}</p>
                                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase text-white ${selectedPurchase.paymentType === 'cash' ? 'bg-green-600' : 'bg-blue-600'}`}>
-                                {selectedPurchase.paymentType || 'credit'}
+                                    {selectedPurchase.paymentType === 'cash' ? (t.info?.cash || 'Cash') : (t.info?.credit || 'Credit')}
                             </span>
                         </div>
                          <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Total Cost</p>
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.info?.totalCost || 'Total Cost'}</p>
                             <p className={`font-bold text-lg text-${color}-600`}>${selectedPurchase.totalCost.toFixed(2)}</p>
                         </div>
                     </div>
@@ -224,17 +237,17 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
                         <h4 className="font-bold text-gray-700 dark:text-gray-300 text-sm flex items-center gap-2">
                             <span className="material-symbols-rounded text-gray-400 text-sm">list_alt</span>
-                            Items List
+                            {t.itemsList || 'Items List'}
                         </h4>
                         <div className="flex items-center gap-2">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase">Approved By:</label>
+                            <label className="text-[10px] font-bold text-gray-500 uppercase">{t.approvedBy || 'Approved By:'}</label>
                             <div className="relative group">
                                 <input 
                                     type="text" 
                                     value={approverName}
                                     dir={direction}
                                     onChange={(e) => setApproverName(e.target.value)}
-                                    placeholder="Enter Name"
+                                    placeholder={t.enterName || 'Enter Name'}
                                     className="w-64 px-3 py-1 rounded-md bg-transparent border border-transparent hover:border-gray-300 outline-none text-sm font-medium transition-all"
                                 />
                             </div>
@@ -246,13 +259,13 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                         <table className="w-full text-left border-collapse">
                             <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900 shadow-sm">
                                 <tr className="border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500 uppercase">
-                                    <th className="p-3 font-bold bg-gray-50 dark:bg-gray-900">Item</th>
-                                    <th className="p-3 font-bold text-center bg-gray-50 dark:bg-gray-900">Expiry</th>
-                                    <th className="p-3 font-bold text-center bg-gray-50 dark:bg-gray-900">Qty</th>
-                                    <th className="p-3 font-bold text-right bg-gray-50 dark:bg-gray-900">Cost</th>
-                                    <th className="p-3 font-bold text-center bg-gray-50 dark:bg-gray-900">Disc %</th>
-                                    <th className="p-3 font-bold text-right bg-gray-50 dark:bg-gray-900">Sale Price</th>
-                                    <th className="p-3 font-bold text-right bg-gray-50 dark:bg-gray-900">Total</th>
+                                    <th className="p-3 font-bold bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.item || 'Item'}</th>
+                                    <th className="p-3 font-bold text-center bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.expiry || 'Expiry'}</th>
+                                    <th className="p-3 font-bold text-center bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.qty || 'Qty'}</th>
+                                    <th className="p-3 font-bold text-right bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.cost || 'Cost'}</th>
+                                    <th className="p-3 font-bold text-center bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.discount || 'Disc %'}</th>
+                                    <th className="p-3 font-bold text-right bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.salePrice || 'Sale Price'}</th>
+                                    <th className="p-3 font-bold text-right bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.total || 'Total'}</th>
                                 </tr>
                             </thead>
                             <tbody className="text-sm bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300">
@@ -287,7 +300,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                                     setSelectedPurchase(null);
                                     setApproverName('');
                                 } else {
-                                    alert("Please enter the approver's name.");
+                                    alert(t.enterApproverName || "Please enter the approver's name.");
                                 }
                             }}
                             disabled={!approverName.trim()}
@@ -298,7 +311,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                             }`}
                         >
                             <span className="material-symbols-rounded">check_circle</span>
-                            Approve Order
+                            {t.approveOrder || 'Approve Order'}
                         </button>
                     </div>
                 </div>
@@ -314,16 +327,16 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                         <div className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
                             <span className="material-symbols-rounded text-3xl">warning</span>
                         </div>
-                        <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Reject Purchase Order?</h3>
-                        <p className="text-sm text-gray-500 mb-6">Are you sure you want to reject this order? This action cannot be undone.</p>
+                        <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{t.rejectOrder?.title || 'Reject Purchase Order?'}</h3>
+                        <p className="text-sm text-gray-500 mb-6">{t.rejectOrder?.confirm || 'Are you sure you want to reject this order? This action cannot be undone.'}</p>
                         
                         <div className="text-left mb-4">
-                            <label className="text-xs font-bold text-gray-400 uppercase ml-1 mb-1 block">Reason (Optional)</label>
+                            <label className="text-xs font-bold text-gray-400 uppercase ml-1 mb-1 block">{t.rejectOrder?.reason || 'Reason (Optional)'}</label>
                             <input 
                                 type="text" 
                                 value={rejectReason}
                                 onChange={(e) => setRejectReason(e.target.value)}
-                                placeholder="E.g., Incorrect pricing, wrong items..."
+                                placeholder={t.rejectOrder?.reasonPlaceholder || 'E.g., Incorrect pricing, wrong items...'}
                                 className="w-full px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-red-500/50"
                                 dir={rejectReasonDir}
                             />
@@ -334,13 +347,13 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                                 onClick={() => setIsRejectModalOpen(false)}
                                 className="flex-1 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
-                                Cancel
+                                {t.rejectOrder?.cancel || 'Cancel'}
                             </button>
                             <button 
                                 onClick={confirmReject}
                                 className="flex-1 py-3 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200 dark:shadow-none transition-all"
                             >
-                                Reject
+                                {t.rejectOrder?.reject || t.reject || 'Reject'}
                             </button>
                         </div>
                     </div>

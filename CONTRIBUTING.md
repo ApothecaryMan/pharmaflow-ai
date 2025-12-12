@@ -73,6 +73,30 @@ const t = TRANSLATIONS[language];
 - ❌ Adding EN key without AR: `EN: { key: "..." }` without `AR: { key: "..." }`
 - ❌ Using template literals for user text: `` `Hello ${name}` ``
 
+#### What MUST Be Translated
+
+**ALL user-facing text including:**
+- ✅ **Page titles and subtitles**
+- ✅ **Button labels** (Save, Cancel, Delete, Confirm, etc.)
+- ✅ **Form labels** (Name, Email, Phone, Address, etc.)
+- ✅ **Input placeholders** (Search..., Enter name..., etc.)
+- ✅ **Modal/Dialog titles and content** (Confirm Delete?, Are you sure?, etc.)
+- ✅ **Window titles** (Edit Supplier, Purchase Order Details, etc.)
+- ✅ **Table headers** (ID, Name, Date, Total, Action, etc.)
+- ✅ **Status labels** (Pending, Completed, Rejected, Active, etc.)
+- ✅ **Empty states** (No results found, All caught up!, etc.)
+- ✅ **Error/Success messages** (Saved successfully, Please fill required fields, etc.)
+- ✅ **Tooltips and help text**
+- ✅ **Context menu items** (View Details, Edit, Delete, Copy, etc.)
+- ✅ **Subpage content** (History views, Details panels, Settings pages, etc.)
+- ✅ **Filter/Sort options** (All, In Stock, Out of Stock, etc.)
+- ✅ **Date/Time labels** (From, To, Date, Time, etc.)
+- ✅ **Navigation breadcrumbs**
+- ✅ **Tab labels**
+- ✅ **Alert/Notification text**
+
+**In summary: If a user can see it, it MUST be translated.**
+
 #### Exceptions (NO translation needed)
 - IDs, UUIDs, Database Keys
 - URLs / Links

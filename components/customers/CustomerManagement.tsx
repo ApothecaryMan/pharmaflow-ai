@@ -3,7 +3,7 @@ import { Customer } from '../../types';
 import { useContextMenu } from '../common/ContextMenu';
 import { DataTable, Column } from '../common/DataTable';
 import { GOVERNORATES, CITIES, AREAS, getLocationName } from '../../data/locations';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
+import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { PosDropdown } from '../common/PosDropdown';
 import { COUNTRY_CODES } from '../../data/countryCodes';

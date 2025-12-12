@@ -8,7 +8,7 @@ import { getLocationName } from '../../data/locations';
 import { usePOSTabs } from '../../hooks/usePOSTabs';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useLongPress } from '../../hooks/useLongPress';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
+import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { TabBar } from '../layout/TabBar';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';

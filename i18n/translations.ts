@@ -107,22 +107,116 @@ export const TRANSLATIONS = {
       subtitle: 'Manage distributors and pharmaceutical companies',
       addSupplier: 'Add Supplier',
       searchPlaceholder: 'Search supplier name, contact...',
+      suppliersList: 'Suppliers List',
+      addNewSupplier: 'Add New Supplier',
+      allSuppliers: 'All Suppliers',
+      manageSuppliers: 'Manage your suppliers',
+      createNewRecord: 'Create a new supplier record',
+      noSuppliersFound: 'No suppliers found matching your search',
+      noSuppliersAvailable: 'No suppliers available',
       headers: {
-        name: 'Company Name',
+        id: 'ID',
+        name: 'Name',
+        contactPerson: 'Contact Person',
+        phone: 'Phone',
+        email: 'Email',
+        address: 'Address',
+        action: 'Action',
+        companyName: 'Company Name',
         contact: 'Contact Person',
         details: 'Contact Details',
         actions: 'Actions'
       },
+      form: {
+        companyInfo: 'Company Information',
+        contactInfo: 'Contact Information',
+        id: 'ID',
+        companyName: 'Company Name',
+        enterCompanyName: 'Enter company name',
+        address: 'Address',
+        enterAddress: 'Enter company address',
+        contactPerson: 'Contact Person',
+        enterContactPerson: 'Enter contact person name',
+        phone: 'Phone',
+        phonePlaceholder: '+1234567890',
+        email: 'Email',
+        emailPlaceholder: 'email@example.com'
+      },
       modal: {
         add: 'Add New Supplier',
         edit: 'Edit Supplier',
+        editSubtitle: 'Update supplier information',
+        details: 'Supplier Details',
+        detailsSubtitle: 'View supplier information',
+        delete: 'Delete Supplier',
+        deleteSubtitle: 'This action cannot be undone',
+        confirmDelete: 'Are you sure you want to delete',
         name: 'Company Name',
         contact: 'Contact Person',
         phone: 'Phone Number',
         email: 'Email Address',
         address: 'Physical Address',
         cancel: 'Cancel',
-        save: 'Save Supplier'
+        save: 'Save Supplier',
+        saveChanges: 'Save Changes',
+        deleteBtn: 'Delete',
+        addSupplier: 'Add Supplier'
+      },
+      contextMenu: {
+        viewDetails: 'View Details',
+        edit: 'Edit',
+        delete: 'Delete',
+        copyName: 'Copy Name',
+        copyPhone: 'Copy Phone',
+        copyEmail: 'Copy Email',
+        showHideColumns: 'Show/Hide Columns'
+      },
+      required: 'required',
+      fillRequired: 'Please fill in all required fields'
+    },
+    pendingApproval: {
+      title: 'Pending Approvals',
+      subtitle: 'Review and approve incoming purchase orders. Orders must be approved before inventory is updated.',
+      allCaughtUp: 'All caught up!',
+      noPendingOrders: 'No pending purchase orders requiring approval.',
+      pendingReview: 'Pending Review',
+      invCode: 'INV',
+      supplier: 'Supplier',
+      date: 'Date',
+      totalCost: 'Total Cost',
+      items: 'Items',
+      reject: 'Reject',
+      approve: 'Approve',
+      approveOrder: 'Approve Order',
+      orderDetails: 'Purchase Order Details',
+      itemsList: 'Items List',
+      approvedBy: 'Approved By:',
+      enterName: 'Enter Name',
+      enterApproverName: "Please enter the approver's name.",
+      rejectOrder: {
+        title: 'Reject Purchase Order?',
+        confirm: 'Are you sure you want to reject this order? This action cannot be undone.',
+        reason: 'Reason (Optional)',
+        reasonPlaceholder: 'E.g., Incorrect pricing, wrong items...',
+        cancel: 'Cancel',
+        reject: 'Reject'
+      },
+      tableHeaders: {
+        item: 'Item',
+        expiry: 'Expiry',
+        qty: 'Qty',
+        cost: 'Cost',
+        discount: 'Disc %',
+        salePrice: 'Sale Price',
+        total: 'Total'
+      },
+      info: {
+        supplier: 'Supplier',
+        invId: 'Inv #',
+        payment: 'Payment',
+        totalCost: 'Total Cost',
+        cash: 'Cash',
+        credit: 'Credit'
       }
     },
     purchases: {
@@ -132,16 +226,106 @@ export const TRANSLATIONS = {
       searchDrug: 'Search drug to buy...',
       cartTitle: 'Purchase Order',
       emptyCart: 'No items in order',
+      // Stock filter options
+      filters: {
+        all: 'All',
+        inStock: 'In Stock',
+        outOfStock: 'Out Stock'
+      },
+      // Status filter options
+      status: {
+        all: 'All Status',
+        pending: 'Pending',
+        completed: 'Completed',
+        returned: 'Returned',
+        rejected: 'Rejected'
+      },
+      // Placeholders
+      placeholders: {
+        searchHistory: 'Search ID, Supplier...',
+        searchSupplier: 'Search and select supplier...',
+        enterId: 'Enter ID'
+      },
+      // Table headers
+      tableHeaders: {
+        orderId: 'Order #',
+        invId: 'Inv #',
+        date: 'Date',
+        supplier: 'Supplier',
+        payment: 'Payment',
+        items: 'Items',
+        discount: 'Discount',
+        total: 'Total',
+        action: 'Action'
+      },
+      // Status tooltips
+      tooltips: {
+        pending: 'Pending Approval',
+        rejected: 'Rejected',
+        returned: 'Returned',
+        completed: 'Completed'
+      },
+      // Context menu actions
+      contextMenu: {
+        viewDetails: 'View Details',
+        copyInvoice: 'Copy Invoice',
+        copySupplier: 'Copy Supplier',
+        addToOrder: 'Add to Order',
+        copyName: 'Copy Name',
+        editQuantity: 'Edit Quantity',
+        removeItem: 'Remove Item',
+        copy: 'Copy',
+        paste: 'Paste',
+        clear: 'Clear',
+        showHideColumns: 'Show/Hide Columns'
+      },
+      // Alert messages
+      alerts: {
+        enterInvoice: 'Please enter the Invoice Number (Inv #) from the supplier.',
+        duplicateInvoice: 'This Invoice ID already exists. Please enter a unique Invoice ID.',
+        enterQuantity: 'Please enter a valid quantity for',
+        enterCost: 'Please enter a valid Cost Price for',
+        enterSale: 'Please enter a valid Sale Price for',
+        enterExpiry: 'Please enter an Expiry Date for',
+        incompleteExpiry: 'Please enter a complete expiry date (4 digits: MMYY)',
+        promptQuantity: 'Enter quantity:'
+      },
+      // Other labels
+      unknown: 'Unknown',
+      cash: 'Cash',
+      credit: 'Credit',
+      pending: 'Save as Pending',
+      startSearching: 'Start searching for products to add to purchase order',
+      noResults: 'No results found',
+      tryDifferentKeywords: 'Try searching with different keywords',
+      fromDate: 'From',
+      toDate: 'To',
+      time: {
+        am: 'AM',
+        pm: 'PM'
+      },
       headers: {
         item: 'Item',
         cost: 'Cost',
         qty: 'Qty',
         total: 'Total'
       },
+      cartFields: {
+        qty: 'Qty',
+        expiry: 'Expiry',
+        cost: 'Cost',
+        discount: 'Disc %',
+        sale: 'Sale',
+        tax: 'Tax %',
+        subtotal: 'Subtotal',
+        totalWithTax: 'Total+Tax'
+      },
       summary: {
         totalItems: 'Total Items',
         totalCost: 'Total Cost',
-        confirm: 'Confirm & Receive Stock'
+        confirm: 'Confirm & Receive Stock',
+        discount: 'Discount',
+        tax: 'Tax'
       },
       historyTitle: 'Purchase History',
       viewHistory: 'View History',
@@ -149,7 +333,32 @@ export const TRANSLATIONS = {
       actions: {
         viewDetails: 'View Drug Details',
         editQty: 'Edit Quantity'
-      }
+      },
+      // Purchase Details Modal
+      detailsModal: {
+        title: 'Purchase Order Details',
+        supplier: 'Supplier',
+        invNumber: 'Inv #',
+        payment: 'Payment',
+        totalCost: 'Total Cost',
+        approvedOn: 'Approved On',
+        approvedBy: 'Approved By',
+        status: 'Status',
+        pendingApproval: 'Pending Approval',
+        // Table headers
+        item: 'Item',
+        expiry: 'Expiry',
+        qty: 'Qty',
+        returned: 'Returned',
+        cost: 'Cost',
+        total: 'Total',
+        // Return labels
+        fullReturn: 'Full',
+        partialReturn: 'Partial',
+        returnedLabel: 'returned'
+      },
+      // Empty states
+      noHistory: 'No purchase history found'
     },
     pos: {
       searchPlaceholder: 'Scan barcode, name, desc...',
@@ -883,22 +1092,116 @@ export const TRANSLATIONS = {
       subtitle: 'إدارة الموزعين وشركات الأدوية',
       addSupplier: 'إضافة مورد',
       searchPlaceholder: 'بحث باسم المورد، جهة الاتصال...',
+      suppliersList: 'قائمة الموردين',
+      addNewSupplier: 'إضافة مورد جديد',
+      allSuppliers: 'جميع الموردين',
+      manageSuppliers: 'إدارة الموردين',
+      createNewRecord: 'إنشاء سجل مورد جديد',
+      noSuppliersFound: 'لا يوجد موردين مطابقين للبحث',
+      noSuppliersAvailable: 'لا يوجد موردين',
       headers: {
-        name: 'اسم الشركة',
+        id: 'الرقم',
+        name: 'الاسم',
+        contactPerson: 'الشخص المسؤول',
+        phone: 'الهاتف',
+        email: 'البريد',
+        address: 'العنوان',
+        action: 'إجراء',
+        companyName: 'اسم الشركة',
         contact: 'الشخص المسؤول',
         details: 'بيانات الاتصال',
         actions: 'إجراءات'
       },
+      form: {
+        companyInfo: 'معلومات الشركة',
+        contactInfo: 'معلومات الاتصال',
+        id: 'الرقم',
+        companyName: 'اسم الشركة',
+        enterCompanyName: 'أدخل اسم الشركة',
+        address: 'العنوان',
+        enterAddress: 'أدخل عنوان الشركة',
+        contactPerson: 'الشخص المسؤول',
+        enterContactPerson: 'أدخل اسم الشخص المسؤول',
+        phone: 'الهاتف',
+        phonePlaceholder: '+966500000000',
+        email: 'البريد الإلكتروني',
+        emailPlaceholder: 'email@example.com'
+      },
       modal: {
         add: 'إضافة مورد جديد',
         edit: 'تعديل بيانات المورد',
+        editSubtitle: 'تحديث بيانات المورد',
+        details: 'تفاصيل المورد',
+        detailsSubtitle: 'عرض بيانات المورد',
+        delete: 'حذف المورد',
+        deleteSubtitle: 'لا يمكن التراجع عن هذا الإجراء',
+        confirmDelete: 'هل أنت متأكد من حذف',
         name: 'اسم الشركة',
         contact: 'الشخص المسؤول',
         phone: 'رقم الهاتف',
         email: 'البريد الإلكتروني',
         address: 'العنوان',
         cancel: 'إلغاء',
-        save: 'حفظ المورد'
+        save: 'حفظ المورد',
+        saveChanges: 'حفظ التغييرات',
+        deleteBtn: 'حذف',
+        addSupplier: 'إضافة المورد'
+      },
+      contextMenu: {
+        viewDetails: 'عرض التفاصيل',
+        edit: 'تعديل',
+        delete: 'حذف',
+        copyName: 'نسخ الاسم',
+        copyPhone: 'نسخ الهاتف',
+        copyEmail: 'نسخ البريد',
+        showHideColumns: 'إظهار/إخفاء الأعمدة'
+      },
+      required: 'مطلوب',
+      fillRequired: 'الرجاء ملء جميع الحقول المطلوبة'
+    },
+    pendingApproval: {
+      title: 'الموافقات المعلقة',
+      subtitle: 'مراجعة واعتماد أوامر الشراء. يجب الموافقة على الطلبات قبل تحديث المخزون.',
+      allCaughtUp: 'لا يوجد طلبات!',
+      noPendingOrders: 'لا توجد أوامر شراء معلقة تتطلب الموافقة.',
+      pendingReview: 'في الانتظار',
+      invCode: 'فاتورة',
+      supplier: 'المورد',
+      date: 'التاريخ',
+      totalCost: 'إجمالي التكلفة',
+      items: 'العناصر',
+      reject: 'رفض',
+      approve: 'موافقة',
+      approveOrder: 'اعتماد الطلب',
+      orderDetails: 'تفاصيل أمر الشراء',
+      itemsList: 'قائمة العناصر',
+      approvedBy: 'المعتمد:',
+      enterName: 'أدخل الاسم',
+      enterApproverName: 'الرجاء إدخال اسم المعتمد.',
+      rejectOrder: {
+        title: 'رفض أمر الشراء؟',
+        confirm: 'هل أنت متأكد من رفض هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.',
+        reason: 'السبب (اختياري)',
+        reasonPlaceholder: 'مثال: تسعير خاطئ، عناصر غير صحيحة...',
+        cancel: 'إلغاء',
+        reject: 'رفض'
+      },
+      tableHeaders: {
+        item: 'الصنف',
+        expiry: 'الصلاحية',
+        qty: 'الكمية',
+        cost: 'التكلفة',
+        discount: 'الخصم %',
+        salePrice: 'سعر البيع',
+        total: 'الإجمالي'
+      },
+      info: {
+        supplier: 'المورد',
+        invId: 'رقم الفاتورة',
+        payment: 'الدفع',
+        totalCost: 'إجمالي التكلفة',
+        cash: 'نقدي',
+        credit: 'آجل'
       }
     },
     purchases: {
@@ -908,16 +1211,106 @@ export const TRANSLATIONS = {
       searchDrug: 'بحث عن دواء للشراء...',
       cartTitle: 'أمر الشراء',
       emptyCart: 'لا توجد عناصر',
+      // Stock filter options
+      filters: {
+        all: 'الكل',
+        inStock: 'متوفر',
+        outOfStock: 'غير متوفر'
+      },
+      // Status filter options
+      status: {
+        all: 'كل الحالات',
+        pending: 'معلق',
+        completed: 'مكتمل',
+        returned: 'مرتجع',
+        rejected: 'مرفوض'
+      },
+      // Placeholders
+      placeholders: {
+        searchHistory: 'بحث برقم، مورد...',
+        searchSupplier: 'بحث واختيار المورد...',
+        enterId: 'أدخل الرقم'
+      },
+      // Table headers
+      tableHeaders: {
+        orderId: 'رقم الطلب',
+        invId: 'رقم الفاتورة',
+        date: 'التاريخ',
+        supplier: 'المورد',
+        payment: 'الدفع',
+        items: 'العناصر',
+        discount: 'الخصم',
+        total: 'الإجمالي',
+        action: 'إجراء'
+      },
+      // Status tooltips
+      tooltips: {
+        pending: 'في انتظار الموافقة',
+        rejected: 'مرفوض',
+        returned: 'مرتجع',
+        completed: 'مكتمل'
+      },
+      // Context menu actions
+      contextMenu: {
+        viewDetails: 'عرض التفاصيل',
+        copyInvoice: 'نسخ الفاتورة',
+        copySupplier: 'نسخ المورد',
+        addToOrder: 'إضافة للطلب',
+        copyName: 'نسخ الاسم',
+        editQuantity: 'تعديل الكمية',
+        removeItem: 'حذف الصنف',
+        copy: 'نسخ',
+        paste: 'لصق',
+        clear: 'مسح',
+        showHideColumns: 'إظهار/إخفاء الأعمدة'
+      },
+      // Alert messages
+      alerts: {
+        enterInvoice: 'الرجاء إدخال رقم الفاتورة من المورد.',
+        duplicateInvoice: 'رقم الفاتورة موجود بالفعل. الرجاء إدخال رقم فاتورة فريد.',
+        enterQuantity: 'الرجاء إدخال كمية صالحة لـ',
+        enterCost: 'الرجاء إدخال سعر تكلفة صالح لـ',
+        enterSale: 'الرجاء إدخال سعر بيع صالح لـ',
+        enterExpiry: 'الرجاء إدخال تاريخ صلاحية لـ',
+        incompleteExpiry: 'الرجاء إدخال تاريخ صلاحية كامل (4 أرقام: شهر سنة)',
+        promptQuantity: 'أدخل الكمية:'
+      },
+      // Other labels
+      unknown: 'غير معروف',
+      cash: 'نقدي',
+      credit: 'آجل',
+      pending: 'حفظ كمعلق',
+      startSearching: 'ابدأ البحث عن منتجات لإضافتها لأمر الشراء',
+      noResults: 'لا توجد نتائج',
+      tryDifferentKeywords: 'جرب البحث بكلمات مختلفة',
+      fromDate: 'من',
+      toDate: 'إلى',
+      time: {
+        am: 'صباحاً',
+        pm: 'مساءً'
+      },
       headers: {
         item: 'الصنف',
         cost: 'التكلفة',
         qty: 'الكمية',
         total: 'الإجمالي'
       },
+      cartFields: {
+        qty: 'الكمية',
+        expiry: 'الصلاحية',
+        cost: 'التكلفة',
+        discount: 'الخصم %',
+        sale: 'البيع',
+        tax: 'الضريبة %',
+        subtotal: 'المجموع',
+        totalWithTax: 'الإجمالي+ض'
+      },
       summary: {
         totalItems: 'إجمالي العناصر',
         totalCost: 'إجمالي التكلفة',
-        confirm: 'تأكيد واستلام المخزون'
+        confirm: 'تأكيد واستلام المخزون',
+        discount: 'الخصم',
+        tax: 'الضريبة'
       },
       historyTitle: 'سجل المشتريات',
       viewHistory: 'عرض السجل',
@@ -925,7 +1318,32 @@ export const TRANSLATIONS = {
       actions: {
         viewDetails: 'عرض تفاصيل الدواء',
         editQty: 'تعديل الكمية'
-      }
+      },
+      // Purchase Details Modal
+      detailsModal: {
+        title: 'تفاصيل طلب الشراء',
+        supplier: 'المورد',
+        invNumber: 'فاتورة #',
+        payment: 'الدفع',
+        totalCost: 'إجمالي التكلفة',
+        approvedOn: 'تاريخ الموافقة',
+        approvedBy: 'تمت الموافقة بواسطة',
+        status: 'الحالة',
+        pendingApproval: 'قيد الموافقة',
+        // Table headers
+        item: 'الصنف',
+        expiry: 'الصلاحية',
+        qty: 'الكمية',
+        returned: 'المرتجع',
+        cost: 'التكلفة',
+        total: 'الإجمالي',
+        // Return labels
+        fullReturn: 'كلي',
+        partialReturn: 'جزئي',
+        returnedLabel: 'مرتجع'
+      },
+      // Empty states
+      noHistory: 'لا يوجد سجل مشتريات'
     },
     pos: {
       searchPlaceholder: 'امسح الباركود، الاسم، الوصف...',

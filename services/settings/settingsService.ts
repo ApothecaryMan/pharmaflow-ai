@@ -14,7 +14,8 @@ const STORAGE_KEYS = {
   hideInactiveModules: 'pharma_hideInactiveModules',
   navStyle: 'pharma_navStyle',
   profileImage: 'pharma_profileImage',
-  activeModule: 'pharma_activeModule'
+  activeModule: 'pharma_activeModule',
+  purchaseTaxRate: 'pharma_purchaseTaxRate'
 } as const;
 
 const DEFAULT_THEME: ThemeColor = { name: 'Blue', primary: 'blue', hex: '#3b82f6' };
@@ -28,7 +29,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   hideInactiveModules: false,
   navStyle: 1,
   profileImage: null,
-  activeModule: 'dashboard'
+  activeModule: 'dashboard',
+  purchaseTaxRate: 14 // Default 14% tax rate
 };
 
 // Mock implementation using localStorage
@@ -43,7 +45,8 @@ export const createSettingsService = (): SettingsService => ({
       hideInactiveModules: JSON.parse(localStorage.getItem(STORAGE_KEYS.hideInactiveModules) || 'false'),
       navStyle: (Number(localStorage.getItem(STORAGE_KEYS.navStyle)) as AppSettings['navStyle']) || DEFAULT_SETTINGS.navStyle,
       profileImage: localStorage.getItem(STORAGE_KEYS.profileImage),
-      activeModule: localStorage.getItem(STORAGE_KEYS.activeModule) || DEFAULT_SETTINGS.activeModule
+      activeModule: localStorage.getItem(STORAGE_KEYS.activeModule) || DEFAULT_SETTINGS.activeModule,
+      purchaseTaxRate: Number(localStorage.getItem(STORAGE_KEYS.purchaseTaxRate)) || DEFAULT_SETTINGS.purchaseTaxRate
     };
   },
 
@@ -58,7 +61,7 @@ export const createSettingsService = (): SettingsService => ({
     if (key === 'darkMode' || key === 'sidebarVisible' || key === 'hideInactiveModules') {
       return JSON.parse(value);
     }
-    if (key === 'navStyle') return Number(value) as AppSettings[K];
+    if (key === 'navStyle' || key === 'purchaseTaxRate') return Number(value) as AppSettings[K];
     return value as AppSettings[K];
   },
 

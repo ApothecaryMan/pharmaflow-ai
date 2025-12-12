@@ -6,7 +6,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { ReturnModal } from '../sales/ReturnModal';
 import { DatePicker } from '../common/DatePicker';
 import { createSearchRegex } from '../../utils/searchUtils';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
+import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';

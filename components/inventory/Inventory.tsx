@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { SmartDateInput } from '../common/SmartDateInput';
+import { SmartDateInput, useSmartDirection } from '../common/SmartInputs';
 import { PosDropdown } from '../common/PosDropdown';
 import { useContextMenu } from '../common/ContextMenu';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useLongPress } from '../../hooks/useLongPress';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
 import { SearchInput } from '../common/SearchInput';
 import { Drug } from '../../types';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';

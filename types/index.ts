@@ -82,6 +82,7 @@ export interface PurchaseItem {
   dosageForm?: string;
   discount?: number; // Discount percentage
   salePrice?: number; // Selling price (defaults to existing price)
+  tax?: number; // Tax amount for this item
 }
 
 export interface Sale {
@@ -145,6 +146,7 @@ export interface Purchase {
   supplierName: string;
   items: PurchaseItem[];
   totalCost: number;
+  totalTax?: number; // Total tax amount for the purchase
   status: 'completed' | 'pending' | 'rejected';
   paymentType?: 'cash' | 'credit';
   invoiceId?: string;

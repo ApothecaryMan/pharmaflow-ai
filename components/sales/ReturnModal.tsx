@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Sale, Return, ReturnType, ReturnReason, ReturnItem, CartItem } from '../../types';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
+import { useSmartDirection } from '../common/SmartInputs';
 
 interface ReturnModalProps {
   isOpen: boolean;

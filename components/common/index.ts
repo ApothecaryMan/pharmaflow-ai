@@ -5,7 +5,6 @@ export { Toast } from './Toast';
 export { DataTable } from './DataTable';
 export { DatePicker } from './DatePicker';
 export { SearchInput } from './SearchInput';
-export { SmartInput } from './SmartInput';
-export { SmartDateInput } from './SmartDateInput';
+export { SmartInput, SmartDateInput, useSmartDirection, isValidEmail, isValidPhone, cleanPhone } from './SmartInputs';
 export { PosDropdown } from './PosDropdown';
 export { ContextMenuProvider, useContextMenu } from './ContextMenu';

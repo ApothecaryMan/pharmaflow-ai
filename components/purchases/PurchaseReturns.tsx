@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useContextMenu } from '../common/ContextMenu';
 import { PurchaseReturn, PurchaseReturnItem, Purchase, Drug } from '../../types';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
+import { useSmartDirection } from '../common/SmartInputs';
 
 interface PurchaseReturnsProps {
   purchases: Purchase[];

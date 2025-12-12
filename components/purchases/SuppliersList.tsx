@@ -3,8 +3,8 @@ import { useContextMenu } from '../common/ContextMenu';
 import { Supplier } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
 import { SearchInput } from '../common/SearchInput';
+import { useSmartDirection, isValidEmail, isValidPhone } from '../common/SmartInputs';
 
 interface SuppliersListProps {
   suppliers: Supplier[];
@@ -133,13 +133,13 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
   };
 
   const columnsDef = {
-    id: { label: 'ID', className: 'px-3 py-2 text-start' },
-    name: { label: 'Name', className: 'px-3 py-2 text-start' },
-    contactPerson: { label: 'Contact Person', className: 'px-3 py-2 text-start' },
-    phone: { label: 'Phone', className: 'px-3 py-2 text-start' },
-    email: { label: 'Email', className: 'px-3 py-2 text-start' },
-    address: { label: 'Address', className: 'px-3 py-2 text-start' },
-    action: { label: 'Action', className: 'px-3 py-2 text-center' }
+    id: { label: t.headers?.id || 'ID', className: 'px-3 py-2 text-start' },
+    name: { label: t.headers?.name || 'Name', className: 'px-3 py-2 text-start' },
+    contactPerson: { label: t.headers?.contactPerson || 'Contact Person', className: 'px-3 py-2 text-start' },
+    phone: { label: t.headers?.phone || 'Phone', className: 'px-3 py-2 text-start' },
+    email: { label: t.headers?.email || 'Email', className: 'px-3 py-2 text-start' },
+    address: { label: t.headers?.address || 'Address', className: 'px-3 py-2 text-start' },
+    action: { label: t.headers?.action || 'Action', className: 'px-3 py-2 text-center' }
   };
 
   // Copy helper
@@ -180,7 +180,17 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
 
   const handleSaveEdit = () => {
     if (!editForm.name || !editForm.contactPerson || !editForm.phone || !editForm.email) {
-      alert('Please fill in all required fields');
+      alert(t.required?.fillRequired || 'Please fill in all required fields');
+      return;
+    }
+
+    if (!isValidPhone(editForm.phone)) {
+      alert(language === 'AR' ? 'رقم الهاتف غير صالح' : 'Invalid phone number');
+      return;
+    }
+
+    if (!isValidEmail(editForm.email)) {
+      alert(language === 'AR' ? 'البريد الإلكتروني غير صالح' : 'Invalid email address');
       return;
     }
     setSuppliers(suppliers.map(s => s.id === editForm.id ? editForm : s));
@@ -215,7 +225,17 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
   const handleSaveNew = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editForm.name || !editForm.contactPerson || !editForm.phone || !editForm.email) {
-      alert('Please fill in all required fields');
+      alert(t.required?.fillRequired || 'Please fill in all required fields');
+      return;
+    }
+
+    if (!isValidPhone(editForm.phone)) {
+      alert(language === 'AR' ? 'رقم الهاتف غير صالح' : 'Invalid phone number');
+      return;
+    }
+
+    if (!isValidEmail(editForm.email)) {
+      alert(language === 'AR' ? 'البريد الإلكتروني غير صالح' : 'Invalid email address');
       return;
     }
     setSuppliers([...suppliers, editForm]);
@@ -232,13 +252,13 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
     
     touchTimer.current = setTimeout(() => {
       showMenu(touch.clientX, touch.clientY, [
-        { label: 'View Details', icon: 'visibility', action: () => handleViewDetails(supplier) },
-        { label: 'Edit', icon: 'edit', action: () => handleEdit(supplier) },
-        { label: 'Delete', icon: 'delete', action: () => handleDelete(supplier) },
+        { label: t.contextMenu?.viewDetails || 'View Details', icon: 'visibility', action: () => handleViewDetails(supplier) },
+        { label: t.contextMenu?.edit || 'Edit', icon: 'edit', action: () => handleEdit(supplier) },
+        { label: t.contextMenu?.delete || 'Delete', icon: 'delete', action: () => handleDelete(supplier) },
         { separator: true },
-        { label: 'Copy Name', icon: 'content_copy', action: () => copyToClipboard(supplier.name) },
-        { label: 'Copy Phone', icon: 'phone', action: () => copyToClipboard(supplier.phone) },
-        { label: 'Copy Email', icon: 'email', action: () => copyToClipboard(supplier.email) }
+        { label: t.contextMenu?.copyName || 'Copy Name', icon: 'content_copy', action: () => copyToClipboard(supplier.name) },
+        { label: t.contextMenu?.copyPhone || 'Copy Phone', icon: 'phone', action: () => copyToClipboard(supplier.phone) },
+        { label: t.contextMenu?.copyEmail || 'Copy Email', icon: 'email', action: () => copyToClipboard(supplier.email) }
       ]);
     }, 500);
   };
@@ -322,21 +342,21 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
       {/* Header */}
       <div className="flex justify-between items-center flex-shrink-0">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'list' ? 'Suppliers List' : 'Add New Supplier'}</h2>
-          <p className="text-sm text-gray-500">{mode === 'list' ? 'Manage your suppliers' : 'Create a new supplier record'}</p>
+          <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'list' ? (t.suppliersList || 'Suppliers List') : (t.addNewSupplier || 'Add New Supplier')}</h2>
+          <p className="text-sm text-gray-500">{mode === 'list' ? (t.manageSuppliers || 'Manage your suppliers') : (t.createNewRecord || 'Create a new supplier record')}</p>
         </div>
         <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-full flex text-xs font-bold">
           <button 
             onClick={() => setMode('list')}
             className={`px-4 py-2 rounded-full transition-all ${mode === 'list' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
-            All Suppliers
+            {t.allSuppliers || 'All Suppliers'}
           </button>
           <button 
             onClick={handleAddNew}
             className={`px-4 py-2 rounded-full transition-all ${mode === 'add' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
-            Add New Supplier
+            {t.addNewSupplier || 'Add New Supplier'}
           </button>
         </div>
       </div>
@@ -348,7 +368,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
             <SearchInput
               value={search}
               onSearchChange={setSearch}
-              placeholder="Search suppliers..."
+              placeholder={t.searchPlaceholder || 'Search supplier name, contact...'}
               className="w-full p-3 rounded-xl border-gray-200 dark:border-gray-700"
               style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
             />
@@ -453,7 +473,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
             {filteredSuppliers.length === 0 && (
               <tr>
                 <td colSpan={10} className="p-12 text-center text-gray-400">
-                  {search.trim() ? 'No suppliers found matching your search' : 'No suppliers available'}
+                  {search.trim() ? (t.noSuppliersFound || 'No suppliers found matching your search') : (t.noSuppliersAvailable || 'No suppliers available')}
                 </td>
               </tr>
             )}
@@ -469,18 +489,18 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
             <div className={`${CARD_BASE} rounded-3xl p-6`}>
               <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                 <span className="material-symbols-rounded text-[18px]">business</span>
-                Company Information
+                {t.form?.companyInfo || 'Company Information'}
               </h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ID</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.form?.id || 'ID'}</label>
                   <div className="w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 font-mono text-sm">
                     {editForm.id}
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Company Name <span className="text-red-500">*</span>
+                    {t.form?.companyName || 'Company Name'} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -489,19 +509,19 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                     onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                     className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    placeholder="Enter company name"
+                    placeholder={t.form?.enterCompanyName || 'Enter company name'}
                     dir={nameDir}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Address</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.form?.address || 'Address'}</label>
                   <textarea
                     value={editForm.address}
                     onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                     rows={3}
                     className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all resize-none"
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    placeholder="Enter company address"
+                    placeholder={t.form?.enterAddress || 'Enter company address'}
                     dir={addressDir}
                   />
                 </div>
@@ -512,12 +532,12 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
             <div className={`${CARD_BASE} rounded-3xl p-6`}>
               <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                 <span className="material-symbols-rounded text-[18px]">person</span>
-                Contact Information
+                {t.form?.contactInfo || 'Contact Information'}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Contact Person <span className="text-red-500">*</span>
+                    {t.form?.contactPerson || 'Contact Person'} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -526,13 +546,13 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                     onChange={(e) => setEditForm({ ...editForm, contactPerson: e.target.value })}
                     className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    placeholder="Enter contact person name"
+                    placeholder={t.form?.enterContactPerson || 'Enter contact person name'}
                     dir={contactPersonDir}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Phone <span className="text-red-500">*</span>
+                    {t.form?.phone || 'Phone'} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
@@ -541,13 +561,13 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                     onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                     className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    placeholder="+1234567890"
+                    placeholder={t.form?.phonePlaceholder || '+1234567890'}
                     dir="ltr"
                   />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email <span className="text-red-500">*</span>
+                    {t.form?.email || 'Email'} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -556,7 +576,8 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                     onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                     className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    placeholder="email@example.com"
+                    placeholder={t.form?.emailPlaceholder || 'email@example.com'}
+                    dir="ltr"
                   />
                 </div>
               </div>
@@ -568,13 +589,13 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                   onClick={() => setMode('list')}
                   className="px-6 py-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-sm font-medium"
                 >
-                  Cancel
+                  {t.modal?.cancel || 'Cancel'}
                 </button>
                 <button
                   type="submit"
                   className={`px-6 py-3 bg-${color}-600 hover:bg-${color}-700 text-white rounded-xl shadow-lg transition-all font-bold`}
                 >
-                  Add Supplier
+                  {t.modal?.addSupplier || 'Add Supplier'}
                 </button>
               </div>
             </div>
@@ -593,8 +614,8 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                   <span className="material-symbols-rounded">edit</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">Edit Supplier</h3>
-                  <p className="text-xs text-gray-500">Update supplier information</p>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">{t.modal?.edit || 'Edit Supplier'}</h3>
+                  <p className="text-xs text-gray-500">{t.modal?.editSubtitle || 'Update supplier information'}</p>
                 </div>
               </div>
               <button 
@@ -609,7 +630,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
             <div className="flex-1 overflow-y-auto p-6">
               {/* ID Field */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ID</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.form?.id || 'ID'}</label>
                 <div className="w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 font-mono text-sm">
                   {editForm.id}
                 </div>
@@ -619,12 +640,12 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
               <div className="mb-6">
                 <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
                   <span className="material-symbols-rounded text-[18px]">business</span>
-                  Company Information
+                  {t.form?.companyInfo || 'Company Information'}
                 </h4>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Company Name <span className="text-red-500">*</span>
+                      {t.form?.companyName || 'Company Name'} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -632,19 +653,19 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                       className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
                       style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                      placeholder="Enter company name"
+                      placeholder={t.form?.enterCompanyName || 'Enter company name'}
                       dir={nameDir}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Address</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.form?.address || 'Address'}</label>
                     <textarea
                       value={editForm.address}
                       onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                       rows={3}
                       className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all resize-none"
                       style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                      placeholder="Enter company address"
+                      placeholder={t.form?.enterAddress || 'Enter company address'}
                       dir={addressDir}
                     />
                   </div>
@@ -660,7 +681,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Contact Person <span className="text-red-500">*</span>
+                      {t.form?.contactPerson || 'Contact Person'} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -668,13 +689,13 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                       onChange={(e) => setEditForm({ ...editForm, contactPerson: e.target.value })}
                       className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
                       style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                      placeholder="Enter contact person name"
+                      placeholder={t.form?.enterContactPerson || 'Enter contact person name'}
                       dir={contactPersonDir}
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Phone <span className="text-red-500">*</span>
+                      {t.form?.phone || 'Phone'} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
@@ -682,12 +703,13 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                       onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                       className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
                       style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                      placeholder="+1234567890"
+                      placeholder={t.form?.phonePlaceholder || '+1234567890'}
+                      dir="ltr"
                     />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Email <span className="text-red-500">*</span>
+                      {t.form?.email || 'Email'} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="email"
@@ -695,7 +717,8 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                       onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                       className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
                       style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                      placeholder="email@example.com"
+                      placeholder={t.form?.emailPlaceholder || 'email@example.com'}
+                      dir="ltr"
                     />
                   </div>
                 </div>
@@ -708,13 +731,13 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                 onClick={() => setEditingSupplier(null)}
                 className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
-                Cancel
+                {t.modal?.cancel || 'Cancel'}
               </button>
               <button
                 onClick={handleSaveEdit}
                 className={`px-4 py-2 rounded-xl bg-${color}-600 text-white hover:bg-${color}-700 transition-colors`}
               >
-                Save Changes
+                {t.modal?.saveChanges || 'Save Changes'}
               </button>
             </div>
           </div>
@@ -731,25 +754,25 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                   <span className="material-symbols-rounded text-[32px]">warning</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">Delete Supplier</h3>
-                  <p className="text-sm text-gray-500">This action cannot be undone</p>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">{t.modal?.delete || 'Delete Supplier'}</h3>
+                  <p className="text-sm text-gray-500">{t.modal?.deleteSubtitle || 'This action cannot be undone'}</p>
                 </div>
               </div>
               <p className="text-gray-700 dark:text-gray-300 mb-6">
-                Are you sure you want to delete <strong>{deleteConfirm.name}</strong>?
+                {t.modal?.confirmDelete || 'Are you sure you want to delete'} <strong>{deleteConfirm.name}</strong>?
               </p>
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => setDeleteConfirm(null)}
                   className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
-                  Cancel
+                  {t.modal?.cancel || 'Cancel'}
                 </button>
                 <button
                   onClick={confirmDelete}
                   className="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors"
                 >
-                  Delete
+                  {t.modal?.deleteBtn || 'Delete'}
                 </button>
               </div>
             </div>
@@ -768,8 +791,8 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                   <span className="material-symbols-rounded">visibility</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">Supplier Details</h3>
-                  <p className="text-xs text-gray-500">View supplier information</p>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">{t.modal?.details || 'Supplier Details'}</h3>
+                  <p className="text-xs text-gray-500">{t.modal?.detailsSubtitle || 'View supplier information'}</p>
                 </div>
               </div>
               <button 
@@ -790,15 +813,15 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">ID</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.form?.id || 'ID'}</label>
                     <p className="text-sm text-gray-900 dark:text-white font-mono">{viewingSupplier.id}</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Company Name</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.form?.companyName || 'Company Name'}</label>
                     <p className="text-sm text-gray-900 dark:text-white font-bold">{viewingSupplier.name}</p>
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Address</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.form?.address || 'Address'}</label>
                     <p className="text-sm text-gray-900 dark:text-white">{viewingSupplier.address || 'N/A'}</p>
                   </div>
                 </div>
@@ -812,15 +835,15 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Contact Person</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.form?.contactPerson || 'Contact Person'}</label>
                     <p className="text-sm text-gray-900 dark:text-white">{viewingSupplier.contactPerson}</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Phone</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.form?.phone || 'Phone'}</label>
                     <p className="text-sm text-gray-900 dark:text-white font-mono" dir="ltr">{viewingSupplier.phone}</p>
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.form?.email || 'Email'}</label>
                     <p className="text-sm text-gray-900 dark:text-white">{viewingSupplier.email}</p>
                   </div>
                 </div>

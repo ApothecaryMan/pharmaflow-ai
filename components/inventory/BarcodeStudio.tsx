@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useContextMenu } from '../common/ContextMenu';
 import { Drug } from '../../types';
 import * as QRCode from 'qrcode';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
+import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
 

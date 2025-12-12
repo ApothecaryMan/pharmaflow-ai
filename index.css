@@ -51,6 +51,31 @@
   z-index: 10;
 }
 
+/* YouTube-style Roll Up Animation for Order ID */
+@keyframes rollUp {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-green {
+  0%,
+  100% {
+    color: inherit;
+  }
+  50% {
+    color: #22c55e;
+  }
+}
+
 /* Custom Card Shadow (User Request 2025-12-09) */
 /* Light Mode Only Override */
 html:not(.dark) .card-shadow {
@@ -62,41 +87,38 @@ html:not(.dark) .card-shadow {
 :root {
   /* Core Axes Defaults */
   --font-weight: 400; /* wght: 100-1000 */
-  --font-width: 100;  /* wdth: 50-150 (approx, standard is 100) */
-  --font-grade: 0;    /* GRAD: -200 to 150 */
-  --font-opsz: 14;    /* opsz: 8-144 */
+  --font-width: 100; /* wdth: 50-150 (approx, standard is 100) */
+  --font-grade: 0; /* GRAD: -200 to 150 */
+  --font-opsz: 14; /* opsz: 8-144 */
 
   /* Semantic Weight Tokens */
-  --weight-calm: 350;       /* Lighter, airy */
+  --weight-calm: 350; /* Lighter, airy */
   --weight-functional: 400; /* Standard, readable */
-  --weight-medium: 500;     /* Structured */
-  --weight-bold: 650;       /* Emphatic but not heavy */
-  
+  --weight-medium: 500; /* Structured */
+  --weight-bold: 650; /* Emphatic but not heavy */
+
   /* Semantic Width Tokens */
-  --width-compact: 95;      /* Efficient for data */
-  --width-standard: 100;    /* Normal reading */
-  --width-expressive: 110;  /* Wider for headlines/hero */
+  --width-compact: 95; /* Efficient for data */
+  --width-standard: 100; /* Normal reading */
+  --width-expressive: 110; /* Wider for headlines/hero */
 
   /* Semantic Grade Tokens */
   --grade-soft: -25;
   --grade-neutral: 0;
-  --grade-strong: 20;       /* Subtle emphasis without layout shift */
+  --grade-strong: 20; /* Subtle emphasis without layout shift */
 }
 
 /* Global Typography Reset */
 body {
   font-family: "Google Sans Flex", -apple-system, BlinkMacSystemFont, sans-serif;
-  
+
   /* Bind Axes to Variables */
-  font-variation-settings: 
-    'wght' var(--font-weight), 
-    'wdth' var(--font-width), 
-    'GRAD' var(--font-grade), 
-    'opsz' var(--font-opsz);
-    
+  font-variation-settings: "wght" var(--font-weight), "wdth" var(--font-width),
+    "GRAD" var(--font-grade), "opsz" var(--font-opsz);
+
   /* Smooth "Breathe" Transitions */
   transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
-  
+
   /* Rendering optimizations */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -110,19 +132,31 @@ html[lang="ar"] body {
 }
 
 /* Arabic Headings & Active UI - IBM Plex Sans Arabic */
-html[dir="rtl"] h1, html[dir="rtl"] .h1,
-html[dir="rtl"] h2, html[dir="rtl"] .h2,
-html[dir="rtl"] h3, html[dir="rtl"] .h3,
-html[dir="rtl"] h4, html[dir="rtl"] .h4,
-html[dir="rtl"] h5, html[dir="rtl"] .h5,
-html[dir="rtl"] h6, html[dir="rtl"] .h6,
+html[dir="rtl"] h1,
+html[dir="rtl"] .h1,
+html[dir="rtl"] h2,
+html[dir="rtl"] .h2,
+html[dir="rtl"] h3,
+html[dir="rtl"] .h3,
+html[dir="rtl"] h4,
+html[dir="rtl"] .h4,
+html[dir="rtl"] h5,
+html[dir="rtl"] .h5,
+html[dir="rtl"] h6,
+html[dir="rtl"] .h6,
 html[dir="rtl"] nav,
-html[lang="ar"] h1, html[lang="ar"] .h1,
-html[lang="ar"] h2, html[lang="ar"] .h2,
-html[lang="ar"] h3, html[lang="ar"] .h3,
-html[lang="ar"] h4, html[lang="ar"] .h4,
-html[lang="ar"] h5, html[lang="ar"] .h5,
-html[lang="ar"] h6, html[lang="ar"] .h6,
+html[lang="ar"] h1,
+html[lang="ar"] .h1,
+html[lang="ar"] h2,
+html[lang="ar"] .h2,
+html[lang="ar"] h3,
+html[lang="ar"] .h3,
+html[lang="ar"] h4,
+html[lang="ar"] .h4,
+html[lang="ar"] h5,
+html[lang="ar"] .h5,
+html[lang="ar"] h6,
+html[lang="ar"] .h6,
 html[lang="ar"] nav {
   font-family: "IBM Plex Sans Arabic", "Google Sans Flex", sans-serif;
 }
@@ -163,7 +197,7 @@ html[lang="ar"] nav button {
 }
 /* Micro-interaction: Grade shift on hover for "tactile" feel */
 .type-interactive:hover {
-  --font-grade: 50; 
+  --font-grade: 50;
 }
 
 /* 4. Expressive: For headlines, hero sections, modal titles */
@@ -175,17 +209,20 @@ html[lang="ar"] nav button {
 }
 
 /* --- Automatic Heading Hierarchy --- */
-h1, .h1 {
+h1,
+.h1 {
   --font-weight: 600;
   --font-width: 110;
   --font-opsz: 48;
 }
-h2, .h2 {
+h2,
+.h2 {
   --font-weight: 550;
   --font-width: 105;
   --font-opsz: 36;
 }
-h3, .h3 {
+h3,
+.h3 {
   --font-weight: 500;
   --font-width: 100;
   --font-opsz: 24;
@@ -194,10 +231,18 @@ h3, .h3 {
 /* Ensure standard bold utilities still work by mapping them if needed, 
    though font-variation-settings usually overrides font-weight.
    We force the variable update for these utility classes. */
-.font-bold { --font-weight: 700; }
-.font-medium { --font-weight: 500; }
-.font-semibold { --font-weight: 600; }
-.font-light { --font-weight: 300; }
+.font-bold {
+  --font-weight: 700;
+}
+.font-medium {
+  --font-weight: 500;
+}
+.font-semibold {
+  --font-weight: 600;
+}
+.font-light {
+  --font-weight: 300;
+}
 
 /* Force Arabic Bold Buttons - IBM Plex Sans Arabic has proper bold weights */
 html[dir="rtl"] .font-bold,
@@ -205,4 +250,3 @@ html[lang="ar"] .font-bold {
   font-weight: 700 !important;
   font-family: "IBM Plex Sans Arabic", "Google Sans Flex", sans-serif;
 }
-

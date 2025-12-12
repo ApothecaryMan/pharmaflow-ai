@@ -4,7 +4,7 @@ import { Return, Sale, CartItem } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { DatePicker } from '../common/DatePicker';
 import { createSearchRegex } from '../../utils/searchUtils';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
+import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { RETURN_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';

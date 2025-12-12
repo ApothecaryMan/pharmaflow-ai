@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Customer, Sale } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
+import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 
 interface CustomerLoyaltyLookupProps {

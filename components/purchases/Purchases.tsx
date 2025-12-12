@@ -5,9 +5,12 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { PosDropdown } from '../common/PosDropdown';
 import { DatePicker } from '../common/DatePicker';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
+import { useSmartDirection } from '../common/SmartInputs';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useLongPress } from '../../hooks/useLongPress';
+import { settingsService } from '../../services';
+import { FloatingInput } from '../common/FloatingInput';
+import { checkExpiryStatus, sanitizeExpiryInput, formatExpiryDisplay, parseExpiryDisplay, getExpiryStatusStyle } from '../../utils/expiryUtils';
 
 
 interface PurchasesProps {
@@ -20,108 +23,21 @@ interface PurchasesProps {
   t: any;
 }
 
-// Floating Label Input Component
-interface FloatingInputProps {
-  label: string;
-  value: string | number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  type?: string;
-  className?: string;
-  inputClassName?: string;
-  min?: string | number;
-  max?: string | number;
-  title?: string;
-  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
-  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
-  maxLength?: number;
-  placeholder?: string;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  inputRef?: React.Ref<HTMLInputElement>;
-}
-
-const FloatingInput = ({ 
-  label, 
-  value, 
-  onChange, 
-  type = "text", 
-  className = "", 
-  inputClassName = "",
-  min, 
-  max, 
-  title,
-  onFocus,
-  onBlur,
-  maxLength,
-  placeholder = " ",
-  onKeyDown,
-  inputRef
-}: FloatingInputProps) => {
-  return (
-    <div className={`relative ${className}`}>
-      <input
-        ref={inputRef}
-        type={type}
-        onKeyDown={onKeyDown}
-        className={`block px-2 pb-1 pt-2 w-full text-xs font-medium text-gray-900 bg-transparent rounded-lg border border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer ${inputClassName}`}
-        placeholder={placeholder}
-        value={value === 0 ? '' : value}
-        onChange={onChange}
-        min={min}
-        max={max}
-        title={title}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        maxLength={maxLength}
-      />
-      <label className="absolute text-[8px] text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-2.5 scale-75 top-1 z-10 origin-[0] bg-gray-50 dark:bg-gray-800 px-1 peer-focus:px-1 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-2.5 left-1 pointer-events-none font-bold tracking-wide">
-        {label}
-      </label>
-    </div>
-  );
-};
-
-// Helper to validate expiry date (MMYY or MM/YYYY)
-// Returns: 'valid' | 'invalid' | 'near-expiry'
-const checkExpiryStatus = (date: string): 'valid' | 'invalid' | 'near-expiry' => {
-  if (!date) return 'valid';
-  
-  let month = 0;
-  let year = 0;
-
-  if (date.length === 4) {
-      // MMYY
-      month = parseInt(date.slice(0, 2));
-      year = parseInt(date.slice(2)); 
-  } else if (date.length === 7 && date.includes('/')) {
-      // MM/YYYY
-      month = parseInt(date.split('/')[0]);
-      year = parseInt(date.split('/')[1]) % 100; // Convert 2025 -> 25 for comparison
-  } else {
-      return 'valid'; // Validation pending or format unknown
-  }
-  
-  if (isNaN(month) || isNaN(year) || month < 1 || month > 12) return 'invalid';
-  
-  const now = new Date();
-  const currentYear = now.getFullYear() % 100;
-  const currentMonth = now.getMonth() + 1;
-  const currentTotalMonths = currentYear * 12 + currentMonth;
-  const expiryTotalMonths = year * 12 + month;
-  
-  // Past date
-  if (expiryTotalMonths < currentTotalMonths) return 'invalid';
-  
-  // Near expiry (within 3 months)
-  if (expiryTotalMonths - currentTotalMonths <= 3) return 'near-expiry';
-  
-  return 'valid';
-};
-
 export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purchases, purchaseReturns, onPurchaseComplete, color, t }) => {
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
   const [supplierSearch, setSupplierSearch] = useState('');
+  
+  // Helper: Format time with Arabic AM/PM
+  const formatTime = (date: Date): string => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const hour12 = hours % 12 || 12;
+    const minuteStr = minutes.toString().padStart(2, '0');
+    const period = hours >= 12 ? (t.time?.pm || 'PM') : (t.time?.am || 'AM');
+    return `${hour12}:${minuteStr} ${period}`;
+  };
 
   
   // Initialize from localStorage
@@ -144,11 +60,12 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
   const [focusedInput, setFocusedInput] = useState<{id: string, field: string} | null>(null);
   const [filter, setFilter] = useState<'all' | 'in-stock' | 'out-stock'>('all');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
 
   const filterOptions = [
-    { id: 'all', label: 'All' },
-    { id: 'in-stock', label: 'In Stock' },
-    { id: 'out-stock', label: 'Out Stock' }
+    { id: 'all', label: t.filters?.all || 'All' },
+    { id: 'in-stock', label: t.filters?.inStock || 'In Stock' },
+    { id: 'out-stock', label: t.filters?.outOfStock || 'Out Stock' }
   ];
 
 
@@ -174,7 +91,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
 
   
   // Smart direction for inputs
-  const supplierSearchDir = useSmartDirection(supplierSearch, 'Search and select supplier...');
+  const supplierSearchDir = useSmartDirection(supplierSearch, t.placeholders?.searchSupplier || 'Search and select supplier...');
   const drugSearchDir = useSmartDirection(search, t.searchDrug);
   
   // Invoice ID State
@@ -195,16 +112,29 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     return `INV-${String(maxId + 1).padStart(6, '0')}`;
   });
   const [externalInvoiceId, setExternalInvoiceId] = useState('');
-  const externalInvoiceIdDir = useSmartDirection(externalInvoiceId, 'Enter ID');
+  const externalInvoiceIdDir = useSmartDirection(externalInvoiceId, t.placeholders?.enterId || 'Enter ID');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit'>('credit');
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed' | 'returned' | 'rejected'>('all');
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' });
   const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
   const [historySearch, setHistorySearch] = useState('');
-  const historySearchDir = useSmartDirection(historySearch, 'Search ID, Supplier...');
+  const historySearchDir = useSmartDirection(historySearch, t.placeholders?.searchHistory || 'Search ID, Supplier...');
   const [isSearchSuggestionsOpen, setIsSearchSuggestionsOpen] = useState(false);
   const searchSuggestionsRef = useRef<HTMLDivElement>(null);
+  
+  // Animation state for order ID (YouTube-style)
+  const [isOrderIdAnimating, setIsOrderIdAnimating] = useState(false);
+  const prevInvoiceId = useRef(invoiceId);
+  
+  useEffect(() => {
+    if (invoiceId !== prevInvoiceId.current) {
+      setIsOrderIdAnimating(true);
+      prevInvoiceId.current = invoiceId;
+      const timer = setTimeout(() => setIsOrderIdAnimating(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [invoiceId]);
 
   // Filter Logic
   const sortedHistory = useMemo(() => {
@@ -365,15 +295,15 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
   };
 
   const historyColumnsDef = {
-    orderId: { label: 'Order #', className: 'px-3 py-2 text-start' },
-    invId: { label: 'Inv #', className: 'px-3 py-2 text-start' },
-    date: { label: 'Date', className: 'px-3 py-2 text-start' },
-    supplier: { label: 'Supplier', className: 'px-3 py-2 text-start' },
-    payment: { label: 'Payment', className: 'px-3 py-2 text-center' },
-    items: { label: 'Items', className: 'px-3 py-2 text-center' },
-    discount: { label: 'Discount', className: 'px-3 py-2 text-end' },
-    total: { label: 'Total', className: 'px-3 py-2 text-end' },
-    action: { label: 'Action', className: 'px-3 py-2 text-center' }
+    orderId: { label: t.tableHeaders?.orderId || 'Order #', className: 'px-3 py-2 text-start' },
+    invId: { label: t.tableHeaders?.invId || 'Inv #', className: 'px-3 py-2 text-start' },
+    date: { label: t.tableHeaders?.date || 'Date', className: 'px-3 py-2 text-start' },
+    supplier: { label: t.tableHeaders?.supplier || 'Supplier', className: 'px-3 py-2 text-start' },
+    payment: { label: t.tableHeaders?.payment || 'Payment', className: 'px-3 py-2 text-center' },
+    items: { label: t.tableHeaders?.items || 'Items', className: 'px-3 py-2 text-center' },
+    discount: { label: t.tableHeaders?.discount || 'Discount', className: 'px-3 py-2 text-end' },
+    total: { label: t.tableHeaders?.total || 'Total', className: 'px-3 py-2 text-end' },
+    action: { label: t.tableHeaders?.action || 'Action', className: 'px-3 py-2 text-center' }
   };
     
   // Long Press for Header (Show/Hide)
@@ -387,7 +317,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
           const touch = e.touches[0];
           showMenu(touch.clientX, touch.clientY, [
               { 
-                label: 'Show/Hide Columns', 
+                label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', 
                 icon: 'visibility', 
                 action: () => {} 
               },
@@ -424,7 +354,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                 return (
                     <div className="flex flex-col">
                         <span className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate">{new Date(p.date).toLocaleDateString()}</span>
-                        <span className="text-[10px] text-gray-400">{new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                        <span className="text-[10px] text-gray-400">{formatTime(new Date(p.date))}</span>
                     </div>
                 );
             case 'supplier':
@@ -432,7 +362,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
             case 'payment':
                 return (
                     <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide text-white shadow-sm ${p.paymentType === 'cash' ? 'bg-green-600' : 'bg-blue-600'}`}>
-                        {p.paymentType || 'credit'}
+                        {p.paymentType === 'cash' ? (t.cash || 'Cash') : (t.credit || 'Credit')}
                     </span>
                 );
             case 'items':
@@ -445,7 +375,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                         <span className="text-sm font-bold text-gray-900 dark:text-white">${p.totalCost.toFixed(2)}</span>
                         {hasReturns && (
                             <span className="text-[10px] text-orange-600 dark:text-orange-400 font-medium">
-                                -${totalReturned.toFixed(2)} returned
+                                -${totalReturned.toFixed(2)} {t.detailsModal?.returnedLabel || 'returned'}
                             </span>
                         )}
                     </div>
@@ -456,7 +386,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                         <div className="flex justify-center">
                             <span 
                                 className="material-symbols-rounded text-orange-500 text-[20px]" 
-                                title="Pending Approval"
+                                title={t.tooltips?.pending || 'Pending Approval'}
                             >
                                 pending
                             </span>
@@ -468,7 +398,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                         <div className="flex justify-center">
                             <span 
                                 className="material-symbols-rounded text-red-500 text-[20px]" 
-                                title="Rejected"
+                                title={t.tooltips?.rejected || 'Rejected'}
                             >
                                 cancel
                             </span>
@@ -480,7 +410,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                         <div className="flex justify-center">
                             <span 
                                 className="material-symbols-rounded text-purple-500 text-[20px]" 
-                                title="Returned"
+                                title={t.tooltips?.returned || 'Returned'}
                             >
                                 assignment_return
                             </span>
@@ -491,7 +421,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                     <div className="flex justify-center">
                         <span 
                             className="material-symbols-rounded text-green-500 text-[20px]" 
-                            title="Completed"
+                            title={t.tooltips?.completed || 'Completed'}
                         >
                             check_circle
                         </span>
@@ -534,17 +464,20 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     const touchTimer = useRef<NodeJS.Timeout | null>(null);
     const touchStartPos = useRef<{ x: number; y: number } | null>(null);
 
+    // Helper: Get context menu actions for a purchase row (avoids duplication)
+    const getRowContextActions = (purchase: Purchase) => [
+        { label: t.contextMenu?.viewDetails || 'View Details', icon: 'visibility', action: () => setSelectedPurchase(purchase) },
+        { separator: true },
+        { label: t.contextMenu?.copyInvoice || 'Copy Invoice', icon: 'content_copy', action: () => copyToClipboard(purchase.invoiceId || '') },
+        { label: t.contextMenu?.copySupplier || 'Copy Supplier', icon: 'person', action: () => copyToClipboard(purchase.supplierName || '') }
+    ];
+
     const handleRowTouchStart = (e: React.TouchEvent, purchase: Purchase) => {
         const touch = e.touches[0];
         touchStartPos.current = { x: touch.clientX, y: touch.clientY };
         
         touchTimer.current = setTimeout(() => {
-            showMenu(touch.clientX, touch.clientY, [
-                { label: 'View Details', icon: 'visibility', action: () => setSelectedPurchase(purchase) },
-                { separator: true },
-                { label: 'Copy Invoice', icon: 'content_copy', action: () => copyToClipboard(purchase.invoiceId || '') },
-                { label: 'Copy Supplier', icon: 'person', action: () => copyToClipboard(purchase.supplierName || '') }
-            ]);
+            showMenu(touch.clientX, touch.clientY, getRowContextActions(purchase));
         }, 500);
     };
 
@@ -591,6 +524,13 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
       localStorage.setItem('purchases_cart_items', JSON.stringify(cart));
       localStorage.setItem('purchases_cart_supplier', selectedSupplierId);
   }, [cart, selectedSupplierId]);
+
+  // Load tax rate from settings
+  useEffect(() => {
+    settingsService.get('purchaseTaxRate').then(rate => {
+      if (rate) setTaxRate(rate);
+    });
+  }, []);
 
   const startResizing = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     isResizing.current = true;
@@ -663,7 +603,15 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     setCart(prev => {
       const existing = prev.find(i => i.drugId === drug.id);
       if (existing) {
-        return prev.map(i => i.drugId === drug.id ? { ...i, quantity: i.quantity + 1 } : i);
+        // Update quantity and recalculate tax
+        return prev.map(i => {
+          if (i.drugId === drug.id) {
+            const newQty = i.quantity + 1;
+            const newTax = Number(((i.costPrice * newQty) * (taxRate / 100)).toFixed(2));
+            return { ...i, quantity: newQty, tax: newTax };
+          }
+          return i;
+        });
       }
       
       const cost = drug.costPrice || 0;
@@ -673,12 +621,10 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
       // Auto-calculate discount if Sale > Cost
       if (sale > 0 && cost >= 0) {
         initialDiscount = ((sale - cost) / sale) * 100;
-        // initialDiscount = Math.max(0, initialDiscount); // Should we clear negative discount (loss)? Let's keep it raw or 0.
-        // Usually margin is positive. If cost > sale, discount is negative? 
-        // Formula: Discount from Sale Price. If Cost=80, Sale=100 -> Disc=20%.
-        // If Cost=120, Sale=100 -> Disc=-20%.
-        // Let's keep the formula consistent.
       }
+
+      // Initial tax percentage from settings
+      const initialTaxPercent = taxRate;
 
       return [...prev, { 
         drugId: drug.id, 
@@ -688,7 +634,8 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
         dosageForm: drug.dosageForm,
         salePrice: sale, 
         discount: parseFloat(initialDiscount.toFixed(2)), 
-        expiryDate: ''
+        expiryDate: '',
+        tax: initialTaxPercent // Tax as percentage
       }];
     });
     setSearch(''); // Clear search on add
@@ -709,26 +656,17 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
 
       // Interdependent Calculation Logic
       if (field === 'discount') {
-        // Change Discount -> Update Cost based on Sale calculated from Cost & Discount (Assuming Sale is fixed or derived?)
-        // Actually, user said "depend on salea price". 
-        // Typically: Sale Price is the base.
-        // Cost = Sale * (1 - Discount/100)
         const disc = typeof value === 'number' ? value : 0;
         updatedItem.costPrice = Number((i.salePrice * (1 - disc / 100)).toFixed(2));
+        // Tax percentage stays the same, just the calculated amount changes
       } else if (field === 'costPrice') {
-        // Change Cost -> Update Discount based on Sale
-        // Discount % = ((Sale - Cost) / Sale) * 100
         const cost = typeof value === 'number' ? value : 0;
         if (i.salePrice > 0) {
            const disc = ((i.salePrice - cost) / i.salePrice) * 100;
            updatedItem.discount = Number(disc.toFixed(2));
         }
+        // Tax percentage stays the same
       } else if (field === 'salePrice') {
-         // Change Sale -> Keep Cost constant, Update Discount to reflect the new margin/discount?
-         // User: "fix sale don't change it it fixed until i change and when change just adjust discount to fit"
-         // This implies Cost stays the same (what we pay supplier is fixed). 
-         // New Sale Price implies a different markup/margin/discount structure.
-         // Formula: Discount % = ((NewSale - Cost) / NewSale) * 100
          const sale = typeof value === 'number' ? value : 0;
          if (sale > 0 && i.costPrice >= 0) {
              const disc = ((sale - i.costPrice) / sale) * 100;
@@ -736,6 +674,11 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
          } else {
              updatedItem.discount = 0;
          }
+      } else if (field === 'quantity') {
+        // Tax percentage stays the same, calculated amount updates automatically
+      } else if (field === 'tax') {
+        // Manual tax percentage edit
+        updatedItem.tax = typeof value === 'number' ? value : 0;
       }
 
       return updatedItem;
@@ -746,12 +689,33 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     setCart(prev => prev.filter(i => i.drugId !== drugId));
   };
 
+  // Helper: Generate unique order ID (auto-increment if duplicate)
+  const getUniqueOrderId = (): string => {
+    let currentId = invoiceId;
+    let currentNum = parseInt(currentId.replace('INV-', ''), 10) || 0;
+    
+    // Check if current ID exists in purchases
+    while (purchases.some(p => p.invoiceId === currentId)) {
+      currentNum++;
+      currentId = `INV-${String(currentNum).padStart(6, '0')}`;
+    }
+    
+    return currentId;
+  };
+
   const handleConfirm = () => {
     if (!selectedSupplierId || cart.length === 0) return;
     
     // 1. Validate Invoice ID
     if (!externalInvoiceId || externalInvoiceId.trim() === '') {
-        alert("Please enter the Invoice Number (Inv #) from the supplier.");
+        alert(t.alerts?.enterInvoice || "Please enter the Invoice Number (Inv #) from the supplier.");
+        return;
+    }
+    
+    // 2. Check for duplicate Invoice ID
+    const isDuplicate = purchases.some(p => p.externalInvoiceId === externalInvoiceId.trim());
+    if (isDuplicate) {
+        alert(t.alerts?.duplicateInvoice || "This Invoice ID already exists. Please enter a unique Invoice ID.");
         return;
     }
 
@@ -777,6 +741,9 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
 
     const supplier = suppliers.find(s => s.id === selectedSupplierId);
     
+    // Get unique order ID (auto-increment if duplicate)
+    const uniqueOrderId = getUniqueOrderId();
+    
     const purchase: Purchase = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
@@ -784,8 +751,9 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
       supplierName: supplier?.name || 'Unknown',
       items: cart,
       totalCost: cart.reduce((sum, i) => sum + (i.costPrice * i.quantity), 0),
+      totalTax: cart.reduce((sum, i) => sum + ((i.costPrice * i.quantity) * ((i.tax || 0) / 100)), 0),
       status: 'completed',
-      invoiceId,
+      invoiceId: uniqueOrderId,
       externalInvoiceId,
       paymentType: paymentMethod
     };
@@ -795,8 +763,8 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     setSelectedSupplierId('');
     
     // Generate Next ID
-    const currentNum = parseInt(invoiceId.replace('INV-', ''), 10) || 0;
-    setInvoiceId(`INV-${String(currentNum + 1).padStart(6, '0')}`); 
+    const nextNum = parseInt(uniqueOrderId.replace('INV-', ''), 10) + 1;
+    setInvoiceId(`INV-${String(nextNum).padStart(6, '0')}`); 
     setExternalInvoiceId('');
   };
 
@@ -805,7 +773,14 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     
     // 1. Validate Invoice ID
     if (!externalInvoiceId || externalInvoiceId.trim() === '') {
-        alert("Please enter the Invoice Number (Inv #) from the supplier.");
+        alert(t.alerts?.enterInvoice || "Please enter the Invoice Number (Inv #) from the supplier.");
+        return;
+    }
+    
+    // 2. Check for duplicate Invoice ID
+    const isDuplicate = purchases.some(p => p.externalInvoiceId === externalInvoiceId.trim());
+    if (isDuplicate) {
+        alert(t.alerts?.duplicateInvoice || "This Invoice ID already exists. Please enter a unique Invoice ID.");
         return;
     }
 
@@ -831,6 +806,9 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
 
     const supplier = suppliers.find(s => s.id === selectedSupplierId);
     
+    // Get unique order ID (auto-increment if duplicate)
+    const uniqueOrderId = getUniqueOrderId();
+    
     const purchase: Purchase = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
@@ -838,8 +816,9 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
       supplierName: supplier?.name || 'Unknown',
       items: cart,
       totalCost: cart.reduce((sum, i) => sum + (i.costPrice * i.quantity), 0),
+      totalTax: cart.reduce((sum, i) => sum + ((i.costPrice * i.quantity) * ((i.tax || 0) / 100)), 0),
       status: 'pending',
-      invoiceId,
+      invoiceId: uniqueOrderId,
       externalInvoiceId,
       paymentType: paymentMethod
     };
@@ -849,8 +828,8 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     setSelectedSupplierId('');
     
     // Generate Next ID
-    const currentNum = parseInt(invoiceId.replace('INV-', ''), 10) || 0;
-    setInvoiceId(`INV-${String(currentNum + 1).padStart(6, '0')}`); 
+    const nextNum = parseInt(uniqueOrderId.replace('INV-', ''), 10) + 1;
+    setInvoiceId(`INV-${String(nextNum).padStart(6, '0')}`); 
     setExternalInvoiceId('');
   };
 
@@ -892,13 +871,13 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                           <span className="text-gray-300 text-2xl font-light">|</span>
                           <PosDropdown
                               items={[
-                                  { id: 'all', label: 'All Status' },
-                                  { id: 'pending', label: 'Pending' },
-                                  { id: 'completed', label: 'Completed' },
-                                  { id: 'returned', label: 'Returned' },
-                                  { id: 'rejected', label: 'Rejected' }
+                                  { id: 'all', label: t.status?.all || 'All Status' },
+                                  { id: 'pending', label: t.status?.pending || 'Pending' },
+                                  { id: 'completed', label: t.status?.completed || 'Completed' },
+                                  { id: 'returned', label: t.status?.returned || 'Returned' },
+                                  { id: 'rejected', label: t.status?.rejected || 'Rejected' }
                               ]}
-                              selectedItem={{ id: statusFilter, label: statusFilter === 'all' ? 'All Status' : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1) }}
+                              selectedItem={{ id: statusFilter, label: statusFilter === 'all' ? (t.status?.all || 'All Status') : (t.status?.[statusFilter] || statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)) }}
                               isOpen={isStatusFilterOpen}
                               onToggle={() => setIsStatusFilterOpen(!isStatusFilterOpen)}
                               onSelect={(item) => {
@@ -937,12 +916,12 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                               setIsSearchSuggestionsOpen(true);
                           }}
                           onFocus={() => setIsSearchSuggestionsOpen(true)}
-                          dir={historySearchDir}
-                          placeholder="Search ID, Supplier..."
-                          className="ps-10 pe-4 py-1 h-[32px] bg-gray-100 dark:bg-gray-800 rounded-full text-xs font-medium focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 w-48 placeholder-gray-400"
+                          dir={historySearch.startsWith('@') ? 'ltr' : historySearchDir}
+                          placeholder={t.placeholders?.searchHistory || 'Search ID, Supplier...'}
+                          className={`ps-10 pe-4 py-1 h-[32px] bg-gray-100 dark:bg-gray-800 rounded-full text-xs font-medium focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 w-48 placeholder-gray-400 ${historySearch.startsWith('@') ? 'text-left' : ''}`}
                       />
                       {isSearchSuggestionsOpen && filteredSearchSuggestions.length > 0 && (
-                          <div className="absolute top-full mt-2 start-0 w-60 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden max-h-60 overflow-y-auto">
+                          <div dir="ltr" className="absolute top-full mt-2 start-0 w-60 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden max-h-60 overflow-y-auto">
                               {filteredSearchSuggestions.map((drug) => (
                                   <div 
                                       key={drug.id}
@@ -1017,7 +996,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                         <div ref={supplierDropdownRef} className="relative">
                             <input
                                 type="text"
-                                placeholder="Search and select supplier..."
+                                placeholder={t.placeholders?.searchSupplier || 'Search and select supplier...'}
                                 value={supplierSearch || (selectedSupplierId ? suppliers.find(s => s.id === selectedSupplierId)?.name : '')}
                                 onChange={(e) => {
                                     setSupplierSearch(e.target.value);
@@ -1025,10 +1004,42 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                     if (!isSupplierOpen) setIsSupplierOpen(true);
                                 }}
                                 onFocus={() => setIsSupplierOpen(true)}
+                                onBlur={() => {
+                                    // Delay to allow click on dropdown item
+                                    setTimeout(() => {
+                                        // If no supplier selected and search text doesn't match any supplier, clear it
+                                        if (!selectedSupplierId && supplierSearch) {
+                                            const match = suppliers.find(s => 
+                                                s.name.toLowerCase() === supplierSearch.toLowerCase()
+                                            );
+                                            if (match) {
+                                                setSelectedSupplierId(match.id);
+                                                setSupplierSearch('');
+                                            } else {
+                                                setSupplierSearch('');
+                                            }
+                                        }
+                                        setIsSupplierOpen(false);
+                                    }, 200);
+                                }}
                                 dir={supplierSearchDir}
                                 autoComplete="off"
                                 className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                             />
+                            
+                            {/* Clear button when supplier selected */}
+                            {selectedSupplierId && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedSupplierId('');
+                                        setSupplierSearch('');
+                                    }}
+                                    className="absolute end-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                >
+                                    <span className="material-symbols-rounded text-lg">close</span>
+                                </button>
+                            )}
                             
                             {/* Dropdown Results */}
                             {isSupplierOpen && filteredSuppliers.length > 0 && (
@@ -1036,6 +1047,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                     {filteredSuppliers.map(supplier => (
                                         <div
                                             key={supplier.id}
+                                            onMouseDown={(e) => e.preventDefault()} // Prevent blur before click
                                             onClick={() => {
                                                 setSelectedSupplierId(supplier.id);
                                                 setSupplierSearch('');
@@ -1045,9 +1057,19 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                                 selectedSupplierId === supplier.id ? `bg-${color}-50 dark:bg-${color}-900/20` : ''
                                             }`}
                                         >
-                                            <div className="font-medium text-sm">{supplier.name}</div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-medium text-sm">{supplier.name}</span>
+                                                <span className="text-xs text-gray-400 font-mono">{supplier.id}</span>
+                                            </div>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+                            
+                            {/* No results message */}
+                            {isSupplierOpen && supplierSearch && filteredSuppliers.length === 0 && (
+                                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 text-center text-sm text-gray-500">
+                                    {t.noResults || 'No suppliers found'}
                                 </div>
                             )}
                         </div>
@@ -1098,8 +1120,8 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                     e.stopPropagation();
                                     const selection = window.getSelection()?.toString();
                                     showMenu(e.clientX, e.clientY, [
-                                        ...(selection ? [{ label: 'Copy', icon: 'content_copy', action: () => copyToClipboard(selection) }] : []),
-                                        { label: 'Paste', icon: 'content_paste', action: async () => {
+                                        ...(selection ? [{ label: t.contextMenu?.copy || 'Copy', icon: 'content_copy', action: () => copyToClipboard(selection) }] : []),
+                                        { label: t.contextMenu?.paste || 'Paste', icon: 'content_paste', action: async () => {
                                             try {
                                                 const text = await navigator.clipboard.readText();
                                                 setSearch(prev => prev + text);
@@ -1108,27 +1130,27 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                             }
                                         }},
                                         { separator: true },
-                                        { label: 'Clear', icon: 'backspace', action: () => setSearch('') }
+                                        { label: t.contextMenu?.clear || 'Clear', icon: 'backspace', action: () => setSearch('') }
                                     ]);
                                 }}
                             />
                         </div>
                         <div className="flex-1 overflow-y-auto">
                             {search.trim() === '' ? (
-                              <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-3 p-8">
-                                <span className="material-symbols-rounded text-6xl opacity-20">search</span>
-                                <p className="text-sm font-medium">{t.searchDrug}</p>
-                                <p className="text-xs text-center max-w-xs opacity-70">
+                              <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-4 p-8">
+                                <span className="material-symbols-rounded text-8xl opacity-30">search</span>
+                                <p className="text-lg font-bold">{t.searchDrug}</p>
+                                <p className="text-sm text-center max-w-xs opacity-70">
                                   {t.startSearching || 'Start searching for products to add to purchase order'}
                                 </p>
                               </div>
                             ) : filteredDrugs.length === 0 ? (
-                              <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-3 p-8">
-                                <span className="material-symbols-rounded text-6xl opacity-20">search_off</span>
-                                <p className="text-sm font-medium">
+                              <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-4 p-8">
+                                <span className="material-symbols-rounded text-8xl opacity-30">search_off</span>
+                                <p className="text-lg font-bold">
                                   {t.noResults || 'No results found'}
                                 </p>
-                                <p className="text-xs text-center max-w-xs opacity-70">
+                                <p className="text-sm text-center max-w-xs opacity-70">
                                   {t.tryDifferentKeywords || 'Try searching with different keywords'}
                                 </p>
                               </div>
@@ -1142,9 +1164,9 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                             e.preventDefault();
                                             e.stopPropagation();
                                             showMenu(e.clientX, e.clientY, [
-                                                { label: 'Add to Order', icon: 'add_shopping_cart', action: () => handleAddItem(drug) },
+                                                { label: t.contextMenu?.addToOrder || 'Add to Order', icon: 'add_shopping_cart', action: () => handleAddItem(drug) },
                                                 { separator: true },
-                                                { label: 'Copy Name', icon: 'content_copy', action: () => copyToClipboard(drug.name) }
+                                                { label: t.contextMenu?.copyName || 'Copy Name', icon: 'content_copy', action: () => copyToClipboard(drug.name) }
                                             ]);
                                          }}
                                          className={`p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-900/20 cursor-pointer transition-colors group`}
@@ -1188,23 +1210,32 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
 
                        <div className="flex items-center gap-4">
                            {/* System Order ID (Read Only) */}
-                           <div className="group relative">
-                                <label className="text-[10px] uppercase font-bold text-gray-400 absolute -top-3 left-1">Order #</label>
-                                <input 
-                                    type="text"
-                                    value={invoiceId}
-                                    readOnly
-                                    dir="ltr"
-                                    className="text-lg font-mono font-bold bg-transparent border border-transparent rounded-lg px-2 py-0.5 outline-none cursor-default w-36 text-left text-gray-500 dark:text-gray-400 select-all"
-                                />
+                           <div className="group relative overflow-hidden">
+                                <label className="text-[10px] uppercase font-bold text-gray-400 absolute -top-3 left-1">{t.tableHeaders?.orderId || 'Order #'}</label>
+                                <div className="relative h-8 w-36 overflow-hidden">
+                                    <input 
+                                        type="text"
+                                        value={invoiceId}
+                                        readOnly
+                                        dir="ltr"
+                                        className={`text-lg font-mono font-bold bg-transparent border border-transparent rounded-lg px-2 py-0.5 outline-none cursor-default w-36 text-left select-all transition-all duration-500 ease-out ${
+                                            isOrderIdAnimating 
+                                                ? 'text-green-500 dark:text-green-400 animate-[rollUp_0.5s_ease-out]' 
+                                                : 'text-gray-500 dark:text-gray-400'
+                                        }`}
+                                        style={{
+                                            animation: isOrderIdAnimating ? 'rollUp 0.5s ease-out' : 'none'
+                                        }}
+                                    />
+                                </div>
                            </div>
 
                            {/* Manual Invoice ID */}
                            <div className="group relative">
-                                <label className="text-[10px] uppercase font-bold text-gray-400 absolute -top-3 left-1">Invoice #</label>
+                                <label className="text-[10px] uppercase font-bold text-gray-400 absolute -top-3 left-1">{t.tableHeaders?.invId || 'Invoice #'}</label>
                                 <input 
                                     type="text"
-                                    placeholder="Enter ID"
+                                    placeholder={t.placeholders?.enterId || 'Enter ID'}
                                     value={externalInvoiceId}
                                     onChange={(e) => setExternalInvoiceId(e.target.value)}
                                     dir={externalInvoiceIdDir}
@@ -1218,13 +1249,13 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                    onClick={() => setPaymentMethod('cash')}
                                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${paymentMethod === 'cash' ? `bg-green-600 text-white shadow-sm` : 'text-gray-500 hover:text-gray-700'}`}
                                >
-                                   Cash
+                                   {t.cash || 'Cash'}
                                </button>
                                <button
                                    onClick={() => setPaymentMethod('credit')}
                                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${paymentMethod === 'credit' ? `bg-blue-600 text-white shadow-sm` : 'text-gray-500 hover:text-gray-700'}`}
                                >
-                                   Credit
+                                   {t.credit || 'Credit'}
                                </button>
                            </div>
                        </div>
@@ -1253,7 +1284,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                                } 
                                            },
                                            { separator: true },
-                                           { label: 'Remove Item', icon: 'delete', action: () => removeItem(item.drugId), danger: true }
+                                           { label: t.contextMenu?.removeItem || 'Remove Item', icon: 'delete', action: () => removeItem(item.drugId), danger: true }
                                        ]);
                                    }}
                                 >
@@ -1278,7 +1309,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                             <FloatingInput
                                                 inputRef={(el) => (inputRefs.current[`${index}-quantity`] = el)}
                                                 onKeyDown={(e) => handleInputKeyDown(e, index, 'quantity')}
-                                                label="Qty"
+                                                label={t.cartFields?.qty || 'Qty'}
                                                 type="number"
                                                 maxLength={4}
                                                 value={item.quantity}
@@ -1295,52 +1326,35 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                             <FloatingInput
                                                 inputRef={(el) => (inputRefs.current[`${index}-expiryDate`] = el)}
                                                 onKeyDown={(e) => handleInputKeyDown(e, index, 'expiryDate')}
-                                                label="Expiry"
+                                                label={t.cartFields?.expiry || 'Expiry'}
                                                 type="text"
-                                                maxLength={7}
+                                                maxLength={4}
                                                 inputClassName={(() => {
-                                                    const status = checkExpiryStatus(item.expiryDate || '');
-                                                    if (status === 'invalid') return 'text-red-500 dark:text-red-400 border-red-300 focus:border-red-500';
-                                                    if (status === 'near-expiry') return 'text-yellow-600 dark:text-yellow-400 border-yellow-300 focus:border-yellow-500';
-                                                    return '';
+                                                    const isFocused = focusedInput?.id === item.drugId && focusedInput?.field === 'expiryDate';
+                                                    const status = checkExpiryStatus(item.expiryDate || '', { checkIncomplete: !isFocused });
+                                                    return getExpiryStatusStyle(status, 'input');
                                                 })()}
                                                 value={
-                                                    (() => {
-                                                        const val = item.expiryDate || '';
-                                                        
-                                                        // When editing (Focused): Show raw MMYY (e.g. 1125)
-                                                        if (focusedInput?.id === item.drugId && focusedInput?.field === 'expiryDate') {
-                                                            // Revert MM/20YY -> MMYY
-                                                            if (/^\d{2}\/20\d{2}$/.test(val)) {
-                                                                return val.substring(0, 2) + val.substring(5, 7);
-                                                            }
-                                                            return val;
-                                                        }
-                                                        
-                                                        // When viewing (Blurred): Show formatted (e.g. 11/2025)
-                                                        if (val.length === 4 && !val.includes('/')) {
-                                                            return `${val.slice(0, 2)}/20${val.slice(2)}`;
-                                                        }
-                                                        return val;
-                                                    })()
+                                                    focusedInput?.id === item.drugId && focusedInput?.field === 'expiryDate'
+                                                        ? parseExpiryDisplay(item.expiryDate || '')
+                                                        : formatExpiryDisplay(item.expiryDate || '')
                                                 }
                                                 onFocus={(e) => {
                                                     setFocusedInput({ id: item.drugId, field: 'expiryDate' });
                                                     setTimeout(() => e.target.select(), 10);
                                                 }}
-                                                onBlur={() => setFocusedInput(null)}
-                                                onChange={e => {
-                                                    const val = e.target.value;
-                                                    // Check if clearing
-                                                    if (!val) {
-                                                        updateItem(item.drugId, 'expiryDate', '');
-                                                        return;
+                                                onBlur={() => {
+                                                    setFocusedInput(null);
+                                                    // Alert if expiry date is incomplete (1-3 digits)
+                                                    const status = checkExpiryStatus(item.expiryDate || '');
+                                                    if (status === 'incomplete') {
+                                                        alert(t.alerts?.incompleteExpiry || 'Please enter a complete expiry date (4 digits: MMYY)');
                                                     }
-                                                    
-                                                    // Logic: Allow user to type raw digits '1125'
-                                                    // Only allow numbers and slash
-                                                    if (/^[\d/]*$/.test(val)) {
-                                                        updateItem(item.drugId, 'expiryDate', val);
+                                                }}
+                                                onChange={e => {
+                                                    const sanitized = sanitizeExpiryInput(e.target.value, item.expiryDate || '');
+                                                    if (sanitized !== null) {
+                                                        updateItem(item.drugId, 'expiryDate', sanitized);
                                                     }
                                                 }}
                                             />
@@ -1351,7 +1365,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                             <FloatingInput
                                                 inputRef={(el) => (inputRefs.current[`${index}-costPrice`] = el)}
                                                 onKeyDown={(e) => handleInputKeyDown(e, index, 'costPrice')}
-                                                label="Cost"
+                                                label={t.cartFields?.cost || 'Cost'}
                                                 type="number"
                                                 value={item.costPrice}
                                                 onFocus={(e) => e.target.select()}
@@ -1364,7 +1378,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                             <FloatingInput
                                                 inputRef={(el) => (inputRefs.current[`${index}-discount`] = el)}
                                                 onKeyDown={(e) => handleInputKeyDown(e, index, 'discount')}
-                                                label="Disc %"
+                                                label={t.cartFields?.discount || 'Disc %'}
                                                 type="number"
                                                 min={0}
                                                 max={100}
@@ -1379,7 +1393,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                             <FloatingInput
                                                 inputRef={(el) => (inputRefs.current[`${index}-salePrice`] = el)}
                                                 onKeyDown={(e) => handleInputKeyDown(e, index, 'salePrice')}
-                                                label="Sale"
+                                                label={t.cartFields?.sale || 'Sale'}
                                                 type="number"
                                                 value={item.salePrice || 0}
                                                 onFocus={(e) => e.target.select()}
@@ -1387,12 +1401,38 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                             />
                                         </div>
 
-                                        {/* 6. Total Cost (Read Only) */}
+                                        {/* 6. Tax % */}
+                                        <div className="w-14">
+                                            <FloatingInput
+                                                inputRef={(el) => (inputRefs.current[`${index}-tax`] = el)}
+                                                onKeyDown={(e) => handleInputKeyDown(e, index, 'tax')}
+                                                label={t.cartFields?.tax || 'Tax %'}
+                                                type="number"
+                                                min={0}
+                                                max={100}
+                                                value={item.tax || 0}
+                                                onFocus={(e) => e.target.select()}
+                                                onChange={e => updateItem(item.drugId, 'tax', parseFloat(e.target.value) || 0)}
+                                            />
+                                        </div>
+
+                                        {/* 7. Subtotal (Cost × Qty) - Read Only */}
                                         <div className="w-16">
                                             <FloatingInput
-                                                label="Total"
+                                                label={t.cartFields?.subtotal || 'Subtotal'}
                                                 type="number"
                                                 value={Number((item.costPrice * item.quantity).toFixed(2))}
+                                                onChange={() => {}} // Read only
+                                                className="opacity-75 pointer-events-none" // Visual cue
+                                            />
+                                        </div>
+
+                                        {/* 8. Grand Total (Subtotal + Tax) - Read Only */}
+                                        <div className="w-[70px]">
+                                            <FloatingInput
+                                                label={t.cartFields?.totalWithTax || 'Total+Tax'}
+                                                type="number"
+                                                value={Number(((item.costPrice * item.quantity) + ((item.costPrice * item.quantity) * ((item.tax || 0) / 100))).toFixed(2))}
                                                 onChange={() => {}} // Read only
                                                 className="opacity-75 pointer-events-none" // Visual cue
                                             />
@@ -1414,7 +1454,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                             
                             {/* Discount */}
                             <div className="flex flex-col border-s border-gray-200 dark:border-gray-700 ps-4">
-                                <span className="text-[10px] text-gray-500 font-medium uppercase">Discount</span>
+                                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.summary.discount || 'Discount'}</span>
                                 {(() => {
                                     const totalCost = cart.reduce((sum, i) => sum + (i.costPrice * i.quantity), 0);
                                     const totalSale = cart.reduce((sum, i) => sum + (i.salePrice * i.quantity), 0);
@@ -1429,10 +1469,37 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                 })()}
                             </div>
 
+                            {/* Tax */}
+                            <div className="flex flex-col border-s border-gray-200 dark:border-gray-700 ps-4">
+                                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.summary.tax || 'Tax'}</span>
+                                {(() => {
+                                    const totalTaxAmount = cart.reduce((sum, i) => {
+                                        const subtotal = i.costPrice * i.quantity;
+                                        return sum + (subtotal * ((i.tax || 0) / 100));
+                                    }, 0);
+                                    return (
+                                        <span className="font-medium text-sm text-orange-600">
+                                            ${totalTaxAmount.toFixed(2)}
+                                        </span>
+                                    );
+                                })()}
+                            </div>
+
                             {/* Total Cost */}
                             <div className="flex items-center gap-2 text-right border-s border-gray-200 dark:border-gray-700 ps-4">
                                 <span className="text-xs text-gray-500 font-bold uppercase whitespace-nowrap">{t.summary.totalCost}:</span>
-                                <span className={`text-2xl font-bold ${paymentMethod === 'cash' ? 'text-green-600' : 'text-blue-600'}`}>${cart.reduce((sum, i) => sum + (i.costPrice * i.quantity), 0).toFixed(2)}</span>
+                                {(() => {
+                                    const subtotal = cart.reduce((sum, i) => sum + (i.costPrice * i.quantity), 0);
+                                    const totalTax = cart.reduce((sum, i) => {
+                                        const itemSubtotal = i.costPrice * i.quantity;
+                                        return sum + (itemSubtotal * ((i.tax || 0) / 100));
+                                    }, 0);
+                                    return (
+                                        <span className={`text-2xl font-bold ${paymentMethod === 'cash' ? 'text-green-600' : 'text-blue-600'}`}>
+                                            ${(subtotal + totalTax).toFixed(2)}
+                                        </span>
+                                    );
+                                })()}
                             </div>
                         </div>
                        <div className="flex items-center gap-2">
@@ -1442,7 +1509,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                 className={`flex-1 py-3 rounded-xl type-interactive ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white font-bold transition-all active:scale-95`}
                                 style={{ boxShadow: 'rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px' }}
                             >
-                                {t.summary.confirm} ({paymentMethod === 'cash' ? 'Cash' : 'Credit'})
+                                {t.summary.confirm} ({paymentMethod === 'cash' ? (t.cash || 'Cash') : (t.credit || 'Credit')})
                             </button>
                             <button 
                                 onClick={handlePendingPO}
@@ -1502,7 +1569,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                               e.stopPropagation();
                               showMenu(e.clientX, e.clientY, [
                                 { 
-                                  label: 'Show/Hide Columns', 
+                                  label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', 
                                   icon: 'visibility', 
                                   action: () => {} 
                                 },
@@ -1545,12 +1612,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                             onContextMenu={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                showMenu(e.clientX, e.clientY, [
-                                    { label: 'View Details', icon: 'visibility', action: () => setSelectedPurchase(p) },
-                                    { separator: true },
-                                    { label: 'Copy Invoice', icon: 'content_copy', action: () => copyToClipboard(p.invoiceId || '') },
-                                    { label: 'Copy Supplier', icon: 'person', action: () => copyToClipboard(p.supplierName || '') }
-                                ]);
+                                showMenu(e.clientX, e.clientY, getRowContextActions(p));
                             }}
                             className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''}`}
                         >
@@ -1565,7 +1627,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                             ))}
                         </tr>
                      ))}
-                    {purchases.length === 0 && <tr><td colSpan={10} className="p-12 text-center text-gray-400">No purchase history found</td></tr>}
+                    {purchases.length === 0 && <tr><td colSpan={10} className="p-12 text-center text-gray-400">{t.noHistory || 'No purchase history found'}</td></tr>}
                 </tbody>
                </table>
            </div>
@@ -1583,11 +1645,11 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                 <span className="material-symbols-rounded">receipt_long</span>
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Purchase Order Details</h3>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t.detailsModal?.title || 'Purchase Order Details'}</h3>
                                 <p className="text-xs text-gray-500 flex items-center gap-2">
                                     <span className="font-mono">{selectedPurchase.invoiceId}</span>
                                     <span>•</span>
-                                    <span>{new Date(selectedPurchase.date).toLocaleDateString()} {new Date(selectedPurchase.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})}</span>
+                                    <span>{new Date(selectedPurchase.date).toLocaleDateString()} {formatTime(new Date(selectedPurchase.date))}</span>
                                 </p>
                             </div>
                         </div>
@@ -1602,41 +1664,41 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                     {/* Info Bar */}
                     <div className="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-2 bg-white dark:bg-gray-900 text-sm">
                         <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Supplier</p>
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.detailsModal?.supplier || 'Supplier'}</p>
                             <p className="font-bold">{selectedPurchase.supplierName}</p>
                         </div>
                          <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Inv #</p>
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.detailsModal?.invNumber || 'Inv #'}</p>
                             <p className="font-mono">{selectedPurchase.externalInvoiceId || '-'}</p>
                         </div>
                          <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Payment</p>
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.detailsModal?.payment || 'Payment'}</p>
                                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase text-white ${selectedPurchase.paymentType === 'cash' ? 'bg-green-600' : 'bg-blue-600'}`}>
-                                {selectedPurchase.paymentType || 'credit'}
+                                {selectedPurchase.paymentType === 'cash' ? (t.cash || 'Cash') : (t.credit || 'Credit')}
                             </span>
                         </div>
                          <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Total Cost</p>
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.detailsModal?.totalCost || 'Total Cost'}</p>
                             <p className={`font-bold text-lg text-${color}-600`}>${selectedPurchase.totalCost.toFixed(2)}</p>
                         </div>
                         {selectedPurchase.approvalDate ? (
                             <div>
-                                <p className="text-xs text-gray-500 uppercase font-bold mb-1">Approved On</p>
-                                <p className="font-bold">{new Date(selectedPurchase.approvalDate).toLocaleDateString()} {new Date(selectedPurchase.approvalDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})}</p>
+                                <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.detailsModal?.approvedOn || 'Approved On'}</p>
+                                <p className="font-bold">{new Date(selectedPurchase.approvalDate).toLocaleDateString()} {formatTime(new Date(selectedPurchase.approvalDate))}</p>
                             </div>
                         ) : selectedPurchase.status === 'pending' ? (
                             <div>
-                                <p className="text-xs text-gray-500 uppercase font-bold mb-1">Status</p>
+                                <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.detailsModal?.status || 'Status'}</p>
                                 <p className="font-bold text-orange-500 flex items-center gap-1">
                                     <span className="material-symbols-rounded text-sm">pending</span>
-                                    Pending Approval
+                                    {t.detailsModal?.pendingApproval || 'Pending Approval'}
                                 </p>
                             </div>
                         ) : null}
 
                         {selectedPurchase.approvedBy && (
                             <div>
-                                <p className="text-xs text-gray-500 uppercase font-bold mb-1">Approved By</p>
+                                <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.detailsModal?.approvedBy || 'Approved By'}</p>
                                 <p className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-1">
                                     <span className="material-symbols-rounded text-sm text-green-600">verified_user</span>
                                     {selectedPurchase.approvedBy}
@@ -1650,12 +1712,12 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                         <table className="w-full text-left border-collapse">
                             <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900 shadow-sm">
                                 <tr className="border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500 uppercase">
-                                    <th className="p-2 font-bold bg-gray-50 dark:bg-gray-900">Item</th>
-                                    <th className="p-2 font-bold text-center bg-gray-50 dark:bg-gray-900">Expiry</th>
-                                    <th className="p-2 font-bold text-center bg-gray-50 dark:bg-gray-900">Qty</th>
-                                    <th className="p-2 font-bold text-center bg-gray-50 dark:bg-gray-900">Returned</th>
-                                    <th className="p-2 font-bold text-right bg-gray-50 dark:bg-gray-900">Cost</th>
-                                    <th className="p-2 font-bold text-right bg-gray-50 dark:bg-gray-900">Total</th>
+                                    <th className="p-2 font-bold bg-gray-50 dark:bg-gray-900">{t.detailsModal?.item || 'Item'}</th>
+                                    <th className="p-2 font-bold text-center bg-gray-50 dark:bg-gray-900">{t.detailsModal?.expiry || 'Expiry'}</th>
+                                    <th className="p-2 font-bold text-center bg-gray-50 dark:bg-gray-900">{t.detailsModal?.qty || 'Qty'}</th>
+                                    <th className="p-2 font-bold text-center bg-gray-50 dark:bg-gray-900">{t.detailsModal?.returned || 'Returned'}</th>
+                                    <th className="p-2 font-bold text-right bg-gray-50 dark:bg-gray-900">{t.detailsModal?.cost || 'Cost'}</th>
+                                    <th className="p-2 font-bold text-right bg-gray-50 dark:bg-gray-900">{t.detailsModal?.total || 'Total'}</th>
                                 </tr>
                             </thead>
                             <tbody className="text-sm">
@@ -1681,7 +1743,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                                             return (
                                                                 <p key={ridx} className="text-[10px] text-orange-600 dark:text-orange-400 flex items-center gap-1">
                                                                     <span className="material-symbols-rounded text-[12px]">assignment_return</span>
-                                                                    {ret.quantityReturned} returned - {ret.reason} ({ret.condition})
+                                                                    {ret.quantityReturned} {t.detailsModal?.returnedLabel || 'returned'} - {ret.reason} ({ret.condition})
                                                                     {returnRecord && <span className="text-gray-500">• {new Date(returnRecord.date).toLocaleDateString()}</span>}
                                                                 </p>
                                                             );
@@ -1691,10 +1753,8 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                             </td>
                                             <td className="p-2 text-center">
                                                 {item.expiryDate ? (
-                                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${checkExpiryStatus(item.expiryDate) === 'valid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                        {item.expiryDate.length === 4 && !item.expiryDate.includes('/') 
-                                                            ? `${item.expiryDate.slice(0, 2)}/20${item.expiryDate.slice(2)}` 
-                                                            : item.expiryDate}
+                                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${getExpiryStatusStyle(checkExpiryStatus(item.expiryDate), 'badge')}`}>
+                                                        {formatExpiryDisplay(item.expiryDate)}
                                                     </span>
                                                 ) : '-'}
                                             </td>
@@ -1710,7 +1770,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                                                 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
                                                                 : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
                                                         }`}>
-                                                            {isFullReturn ? 'Full' : 'Partial'}
+                                                            {isFullReturn ? (t.detailsModal?.fullReturn || 'Full') : (t.detailsModal?.partialReturn || 'Partial')}
                                                         </span>
                                                     </div>
                                                 ) : (

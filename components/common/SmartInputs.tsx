@@ -1,4 +1,69 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { InputHTMLAttributes, useState, useEffect, useRef, useMemo } from 'react';
+
+// --- Hooks ---
+
+/**
+ * Returns 'rtl' if the text contains Arabic characters, otherwise 'ltr'.
+ * @param text The input text to analyze
+ * @returns 'rtl' | 'ltr'
+ */
+export const useSmartDirection = (text: string | undefined | null, placeholder?: string | undefined | null): 'rtl' | 'ltr' => {
+  return useMemo(() => {
+    if (text) return /[\u0600-\u06FF]/.test(text) ? 'rtl' : 'ltr';
+    if (placeholder) return /[\u0600-\u06FF]/.test(placeholder) ? 'rtl' : 'ltr';
+    return 'ltr';
+  }, [text, placeholder]);
+};
+
+// --- Utils ---
+
+export const isValidEmail = (email: string): boolean => {
+  // RFC 5322 official standard regex for email validation
+  // Allows alphanumeric, dots, underscores, hyphens, and standard domains
+  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+  return emailRegex.test(email);
+};
+
+export const isValidPhone = (phone: string): boolean => {
+  // Allows numbers, spaces, +, -, (, )
+  // Must contain at least 5 digits
+  const phoneRegex = /^[\d\s+\-()]{5,20}$/;
+  return phoneRegex.test(phone);
+};
+
+export const cleanPhone = (phone: string): string => {
+  // Removes all non-digit characters except +
+  return phone.replace(/[^\d+]/g, '');
+};
+
+// --- Components ---
+
+interface SmartInputProps extends InputHTMLAttributes<HTMLInputElement> {
+  value?: string | number | readonly string[] | undefined;
+}
+
+/**
+ * A wrapper around the native input element that automatically adjusts
+ * the text direction (LTR/RTL) based on the content.
+ * 
+ * Use this for all free-text input fields (names, addresses, comments, etc.).
+ * Do NOT use this for emails, phone numbers, codes, or other strictly LTR fields.
+ */
+export const SmartInput: React.FC<SmartInputProps> = ({ value, className, ...props }) => {
+  // We cast value to string to keep useSmartDirection happy, 
+  // though it handles non-string types gracefully if they are falsy.
+  // If value is undefined, it defaults to LTR.
+  const dir = useSmartDirection(typeof value === 'string' ? value : String(value || ''));
+
+  return (
+    <input
+      {...props}
+      value={value}
+      dir={dir} // Calculated direction takes precedence, but props.dir would be overridden here.
+      className={className}
+    />
+  );
+};
 
 interface SmartDateInputProps {
   value: string; // YYYY-MM-DD

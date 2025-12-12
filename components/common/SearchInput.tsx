@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
+import { useSmartDirection } from './SmartInputs';
 
 interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   value: string;

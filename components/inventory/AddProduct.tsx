@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
+import { useSmartDirection } from '../common/SmartInputs';
 import { Drug } from '../../types';
 import { PosDropdown } from '../common/PosDropdown';
 

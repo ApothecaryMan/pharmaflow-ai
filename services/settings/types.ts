@@ -14,6 +14,7 @@ export interface AppSettings {
   navStyle: 1 | 2 | 3;
   profileImage: string | null;
   activeModule: string;
+  purchaseTaxRate: number; // Tax rate percentage for purchases (e.g., 14 for 14%)
 }
 
 export interface SettingsService {

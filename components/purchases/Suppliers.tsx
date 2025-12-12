@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Supplier } from '../../types';
-import { useSmartDirection } from '../../hooks/useSmartDirection';
+import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 
 interface SuppliersProps {
