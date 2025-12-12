@@ -5,6 +5,7 @@ import * as QRCode from 'qrcode';
 import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
+import { CARD_BASE } from '../../utils/themeStyles';
 
 interface BarcodeStudioProps {
   inventory: Drug[];
@@ -93,6 +94,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   // Template System
   const [templates, setTemplates] = useState<SavedTemplate[]>([]);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  const [defaultTemplateId, setDefaultTemplateId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
@@ -110,24 +112,48 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   useEffect(() => {
     // Load Templates
     const savedTemplates = localStorage.getItem('pharma_label_templates');
+    let loadedTemplates: SavedTemplate[] = [];
     if (savedTemplates) {
         try {
-            setTemplates(JSON.parse(savedTemplates));
+            loadedTemplates = JSON.parse(savedTemplates);
+            setTemplates(loadedTemplates);
         } catch (e) { console.error("Error loading templates", e); }
     }
 
-    // Load Last Session (Autosave)
+    // Load Default Template ID
+    const savedDefaultId = localStorage.getItem('pharma_label_default_template');
+    if (savedDefaultId) {
+        setDefaultTemplateId(savedDefaultId);
+    }
+
+    // Load Last Session (Autosave) or Default Template
     const savedDesign = localStorage.getItem('pharma_label_design');
     if (savedDesign) {
         try {
             const parsed = JSON.parse(savedDesign);
             if (parsed.elements && parsed.elements.length > 0) {
                 applyDesignState(parsed);
+            } else if (savedDefaultId && loadedTemplates.length > 0) {
+                const defaultTemplate = loadedTemplates.find(t => t.id === savedDefaultId);
+                if (defaultTemplate) {
+                    applyDesignState(defaultTemplate.design);
+                    setActiveTemplateId(savedDefaultId);
+                } else {
+                    initializeLayout('38x12');
+                }
             } else {
                 initializeLayout('38x12');
             }
         } catch (e) {
             console.error("Failed to load design", e);
+            initializeLayout('38x12');
+        }
+    } else if (savedDefaultId && loadedTemplates.length > 0) {
+        const defaultTemplate = loadedTemplates.find(t => t.id === savedDefaultId);
+        if (defaultTemplate) {
+            applyDesignState(defaultTemplate.design);
+            setActiveTemplateId(savedDefaultId);
+        } else {
             initializeLayout('38x12');
         }
     } else {
@@ -567,41 +593,41 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
          onMouseMove={handleMouseMove} onMouseUp={handleEnd} onTouchMove={handleTouchMove} onTouchEnd={handleEnd}>
         
         {/* Header */}
-        <div className="flex justify-between items-end">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h2 className="text-2xl font-medium tracking-tight">{t.title}</h2>
+                <h2 className="text-2xl font-bold tracking-tight type-expressive">{t.title}</h2>
                 <div className="flex items-center gap-2">
                     <p className="text-sm text-gray-500 dark:text-gray-400">{t.subtitle}</p>
                     {activeTemplateId && (
-                         <span className={`px-2 py-0.5 rounded text-[10px] bg-${color}-100 text-${color}-700 font-bold uppercase`}>
+                         <span className={`px-2 py-0.5 rounded-full text-[10px] bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 font-bold uppercase`}>
                              {templates.find(t => t.id === activeTemplateId)?.name}
                          </span>
                     )}
                 </div>
             </div>
-             <div className="flex items-center gap-2 bg-white dark:bg-gray-900 p-1.5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+             <div className="flex items-center gap-2">
                 {/* History Group */}
-                <div className="flex items-center gap-1 pr-2 border-e border-gray-200 dark:border-gray-800">
-                    <button onClick={handleUndo} disabled={history.length === 0} className="p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-30 text-gray-500 transition-colors" title={t.undo}>
-                        <span className="material-symbols-rounded text-[20px]">undo</span>
+                <div className="flex items-center gap-1 p-1 bg-white dark:bg-gray-900 rounded-full border border-gray-200 dark:border-gray-800">
+                    <button onClick={handleUndo} disabled={history.length === 0} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-30 text-gray-500 transition-colors" title={t.undo}>
+                        <span className="material-symbols-rounded text-[18px]">undo</span>
                     </button>
-                    <button onClick={handleRedo} disabled={redoStack.length === 0} className="p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-30 text-gray-500 transition-colors" title={t.redo}>
-                        <span className="material-symbols-rounded text-[20px]">redo</span>
+                    <button onClick={handleRedo} disabled={redoStack.length === 0} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-30 text-gray-500 transition-colors" title={t.redo}>
+                        <span className="material-symbols-rounded text-[18px]">redo</span>
                     </button>
-                    <button onClick={() => initializeLayout(selectedPreset)} className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-500 transition-colors" title="Reset Layout">
-                        <span className="material-symbols-rounded text-[20px]">restart_alt</span>
+                    <button onClick={() => initializeLayout(selectedPreset)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-500 transition-colors" title="Reset Layout">
+                        <span className="material-symbols-rounded text-[18px]">restart_alt</span>
                     </button>
                 </div>
                 
                 {/* Actions Group */}
-                <div className="flex items-center gap-1 pl-1">
-                    <button onClick={handleSaveClick} className={`p-2 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 text-${color}-600 font-medium text-xs flex items-center gap-2 transition-colors`}>
-                         <span className="material-symbols-rounded text-[20px]">save</span>
+                <div className="flex items-center gap-2">
+                    <button onClick={handleSaveClick} className={`px-3 py-2 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-${color}-600 dark:text-${color}-400 font-medium text-sm flex items-center gap-2 transition-colors`}>
+                         <span className="material-symbols-rounded text-[18px]">save</span>
                          <span className="hidden sm:inline">{saveStatus || t.saveTemplate}</span>
                     </button>
                     
-                     <button onClick={handlePrint} disabled={!selectedDrug} className={`py-2 px-4 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 text-white font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center gap-2`}>
-                         <span className="material-symbols-rounded text-[20px]">print</span>
+                     <button onClick={handlePrint} disabled={!selectedDrug} className={`px-4 py-2 rounded-full bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 text-white font-bold text-sm shadow-sm transition-all flex items-center gap-2`}>
+                         <span className="material-symbols-rounded text-[18px]">print</span>
                          <span>{t.print}</span>
                     </button>
                 </div>
@@ -612,26 +638,26 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
             {/* LEFT: Canvas */}
             <div className="flex-1 flex flex-col gap-4">
                  {/* Top Toolbar */}
-                 <div className="bg-white dark:bg-gray-900 p-2 rounded-xl border border-gray-200 dark:border-gray-800 flex items-center gap-3 shadow-sm">
+                 <div className={`${CARD_BASE} p-3 rounded-2xl flex items-center gap-3`}>
                     <div className="flex items-center gap-2 px-2 border-e border-gray-200 dark:border-gray-800">
-                        <button onClick={() => setZoom(Math.max(1, zoom - 0.5))} className="p-1 hover:bg-gray-100 rounded text-gray-500"><span className="material-symbols-rounded">remove</span></button>
-                        <span className="text-xs font-bold w-8 text-center">{Math.round(zoom * 100)}%</span>
-                        <button onClick={() => setZoom(Math.min(5, zoom + 0.5))} className="p-1 hover:bg-gray-100 rounded text-gray-500"><span className="material-symbols-rounded">add</span></button>
+                        <button onClick={() => setZoom(Math.max(1, zoom - 0.5))} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors"><span className="material-symbols-rounded text-[18px]">remove</span></button>
+                        <span className="text-xs font-bold w-10 text-center text-gray-700 dark:text-gray-300">{Math.round(zoom * 100)}%</span>
+                        <button onClick={() => setZoom(Math.min(5, zoom + 0.5))} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors"><span className="material-symbols-rounded text-[18px]">add</span></button>
                     </div>
                     
                     <div className="flex items-center gap-1 px-2 border-e border-gray-200 dark:border-gray-800">
-                        <button onClick={() => addElement('text')} className="p-1 hover:bg-gray-100 rounded text-gray-500" title="Add Text">
-                            <span className="material-symbols-rounded">title</span>
+                        <button onClick={() => addElement('text')} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors" title="Add Text">
+                            <span className="material-symbols-rounded text-[18px]">title</span>
                         </button>
-                        <button onClick={() => document.getElementById('img-upload-hidden')?.click()} className="p-1 hover:bg-gray-100 rounded text-gray-500" title="Add Image">
-                            <span className="material-symbols-rounded">image</span>
+                        <button onClick={() => document.getElementById('img-upload-hidden')?.click()} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors" title="Add Image">
+                            <span className="material-symbols-rounded text-[18px]">image</span>
                         </button>
                         <input type="file" id="img-upload-hidden" className="hidden" accept="image/*" onChange={handleAddImageElement} />
                     </div>
 
                     <div className="flex gap-1 overflow-x-auto scrollbar-hide">
                         {elements.map(el => (
-                            <button key={el.id} onClick={() => toggleVisibility(el.id)} className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase border ${el.isVisible ? `bg-${color}-50 border-${color}-200 text-${color}-700` : 'bg-gray-50 border-transparent text-gray-400'}`}>
+                            <button key={el.id} onClick={() => toggleVisibility(el.id)} className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors ${el.isVisible ? `bg-${color}-50 dark:bg-${color}-900/20 text-${color}-700 dark:text-${color}-300` : 'bg-gray-50 dark:bg-gray-800 text-gray-400'}`}>
                                 {el.label}
                             </button>
                         ))}
@@ -645,11 +671,11 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                     onDrop={handleDrop}
                  >
                     {!selectedDrug ? (
-                        <div className="text-center text-gray-400"><span className="material-symbols-rounded text-6xl opacity-20 mb-2">touch_app</span><p>{t.noProductSelected}</p></div>
+                        <div className="text-center text-gray-400 dark:text-gray-500"><span className="material-symbols-rounded text-6xl opacity-20 mb-2">touch_app</span><p>{t.noProductSelected}</p></div>
                     ) : (
                         <div 
                             ref={canvasRef} onMouseDown={() => setSelectedElementId(null)} onTouchStart={() => setSelectedElementId(null)}
-                            className="bg-white shadow-2xl relative transition-transform duration-75 ease-linear"
+                            className="bg-white shadow-2xl relative transition-transform duration-75 ease-linear rounded-lg overflow-hidden"
                             style={{
                                 width: `${dims.w * MM_TO_PX}px`, height: `${dims.h * MM_TO_PX}px`, transform: `scale(${zoom})`, transformOrigin: 'center',
                                 border: borderStyle === 'none' ? '1px dashed #e2e8f0' : `1px ${borderStyle} #000`
@@ -657,7 +683,6 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                         >
                             {/* Guidelines */}
                             {showVGuide && <div className="absolute top-0 bottom-0 left-1/2 w-px bg-red-500 border-l border-dashed border-red-500 z-50 pointer-events-none" style={{ transform: 'translateX(-0.5px)' }}></div>}
-                            {showHGuide && <div className="absolute left-0 right-0 top-1/2 h-px bg-red-500 border-t border-dashed border-red-500 z-50 pointer-events-none" style={{ transform: 'translateY(-0.5px)' }}></div>}
 
                             {elements.filter(el => el.isVisible).map(el => (
                                 <div key={el.id} onMouseDown={(e) => handleMouseDown(e, el.id)} onTouchStart={(e) => handleTouchStart(e, el.id)}
@@ -695,7 +720,6 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                     }}
                                 >
                                     {el.type === 'text' && getElementContent(el)}
-                                    {el.type === 'text' && getElementContent(el)}
                                     {el.type === 'barcode' && (() => {
                                         const format = el.barcodeFormat || 'code39-text';
                                         let encoded = `*${(barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id)).replace(/\s/g, '').toUpperCase()}*`;
@@ -721,7 +745,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
             </div>
 
             {/* RIGHT: Inspector */}
-            <div className="w-full lg:w-80 bg-white dark:bg-gray-900 border-s border-gray-200 dark:border-gray-800 flex flex-col">
+            <div className={`w-full lg:w-80 ${CARD_BASE} rounded-3xl flex flex-col overflow-hidden`}>
                 <div className={`p-4 border-b border-gray-100 dark:border-gray-800 bg-${color}-50 dark:bg-${color}-900/10`}>
                     <h3 className={`font-bold text-sm uppercase text-${color}-700 dark:text-${color}-300`}>
                         {selectedElementId ? t.inspector.properties : t.inspector.noSelection}
@@ -733,17 +757,35 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                         <>
                              {/* Templates Section */}
                              <div className="bg-gray-50 dark:bg-gray-950 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
-                                <label className="text-xs font-bold text-gray-500 uppercase block mb-2">{t.templates}</label>
+                                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase block mb-2">{t.templates}</label>
                                 <select 
-                                    className="w-full p-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm mb-2"
+                                    className="w-full p-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm text-gray-900 dark:text-gray-100 mb-2"
                                     value={activeTemplateId || ''}
                                     onChange={(e) => loadTemplate(e.target.value)}
                                 >
                                     <option value="">{t.createNew}</option>
-                                    {templates.map(tmp => <option key={tmp.id} value={tmp.id}>{tmp.name}</option>)}
+                                    {templates.map(tmp => (
+                                        <option key={tmp.id} value={tmp.id}>
+                                            {tmp.name}{tmp.id === defaultTemplateId ? ' ★' : ''}
+                                        </option>
+                                    ))}
                                 </select>
                                 {activeTemplateId && (
-                                     <button onClick={() => deleteTemplate(activeTemplateId)} className="text-xs text-red-500 hover:text-red-600 font-bold">{t.deleteTemplate}</button>
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={() => {
+                                                setDefaultTemplateId(activeTemplateId);
+                                                localStorage.setItem('pharma_label_default_template', activeTemplateId);
+                                                setSaveStatus(t.defaultSet || 'Set as default');
+                                                setTimeout(() => setSaveStatus(''), 2000);
+                                            }} 
+                                            className={`text-xs font-bold ${defaultTemplateId === activeTemplateId ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-500 hover:text-yellow-600'}`}
+                                        >
+                                            {defaultTemplateId === activeTemplateId ? '★ Default' : '☆ Set Default'}
+                                        </button>
+                                        <span className="text-gray-300 dark:text-gray-700">|</span>
+                                        <button onClick={() => deleteTemplate(activeTemplateId)} className="text-xs text-red-500 hover:text-red-600 font-bold">{t.deleteTemplate}</button>
+                                    </div>
                                 )}
                              </div>
 
@@ -769,7 +811,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                 {selectedDrug && (
                                     <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex justify-between items-center">
                                         <span className="text-sm font-bold text-blue-700 dark:text-blue-300">{selectedDrug.name}</span>
-                                        <button onClick={() => setSelectedDrug(null)}><span className="material-symbols-rounded text-sm">close</span></button>
+                                        <button onClick={() => setSelectedDrug(null)} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"><span className="material-symbols-rounded text-sm">close</span></button>
                                     </div>
                                 )}
                             </div>
@@ -789,9 +831,9 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
                              {/* Border */}
                              <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase block mb-2">{t.borderStyle}</label>
+                                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase block mb-2">{t.borderStyle}</label>
                                 <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-                                    {(['none', 'solid', 'dashed'] as const).map(style => <button key={style} onClick={() => setBorderStyle(style)} className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${borderStyle === style ? 'bg-white shadow-sm' : 'text-gray-500'}`}>{style}</button>)}
+                                    {(['none', 'solid', 'dashed'] as const).map(style => <button key={style} onClick={() => setBorderStyle(style)} className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${borderStyle === style ? 'bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>{style}</button>)}
                                 </div>
                             </div>
                         </>
@@ -825,8 +867,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                     <div>
                                         <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">{t.inspector.fontWeight || 'Font Weight'}</label>
                                         <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                                            <button onClick={() => handlePropertyChange('fontWeight', 'normal')} className={`flex-1 py-1 rounded text-xs transition-all ${!selectedElement.fontWeight || selectedElement.fontWeight === 'normal' ? 'bg-white shadow-sm font-bold' : 'text-gray-500'}`}>Normal</button>
-                                            <button onClick={() => handlePropertyChange('fontWeight', 'bold')} className={`flex-1 py-1 rounded text-xs transition-all ${selectedElement.fontWeight === 'bold' ? 'bg-white shadow-sm font-bold' : 'text-gray-500'}`}>Bold</button>
+                                            <button onClick={() => handlePropertyChange('fontWeight', 'normal')} className={`flex-1 py-1 rounded text-xs transition-all ${!selectedElement.fontWeight || selectedElement.fontWeight === 'normal' ? 'bg-white dark:bg-gray-900 shadow-sm font-bold text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>Normal</button>
+                                            <button onClick={() => handlePropertyChange('fontWeight', 'bold')} className={`flex-1 py-1 rounded text-xs transition-all ${selectedElement.fontWeight === 'bold' ? 'bg-white dark:bg-gray-900 shadow-sm font-bold text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>Bold</button>
                                         </div>
                                     </div>
                                 )}
@@ -843,7 +885,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                     <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">{t.inspector.align}</label>
                                     <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
                                         {(['left', 'center', 'right'] as const).map(align => (
-                                            <button key={align} onClick={() => handlePropertyChange('align', align)} className={`flex-1 py-1 rounded text-xs transition-all ${selectedElement.align === align ? 'bg-white shadow-sm font-bold' : 'text-gray-500'}`}>
+                                            <button key={align} onClick={() => handlePropertyChange('align', align)} className={`flex-1 py-1 rounded text-xs transition-all ${selectedElement.align === align ? 'bg-white dark:bg-gray-900 shadow-sm font-bold text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
                                                 <span className="material-symbols-rounded text-sm">{align === 'left' ? 'format_align_left' : align === 'center' ? 'format_align_center' : 'format_align_right'}</span>
                                             </button>
                                         ))}
@@ -853,8 +895,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                     <div>
                                          <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">{t.barcodeSource}</label>
                                          <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                                             <button onClick={() => setBarcodeSource('global')} className={`flex-1 py-1 rounded text-xs transition-all ${barcodeSource === 'global' ? 'bg-white shadow-sm font-bold' : 'text-gray-500'}`}>Global</button>
-                                             <button onClick={() => setBarcodeSource('internal')} className={`flex-1 py-1 rounded text-xs transition-all ${barcodeSource === 'internal' ? 'bg-white shadow-sm font-bold' : 'text-gray-500'}`}>Internal</button>
+                                             <button onClick={() => setBarcodeSource('global')} className={`flex-1 py-1 rounded text-xs transition-all ${barcodeSource === 'global' ? 'bg-white dark:bg-gray-900 shadow-sm font-bold text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>Global</button>
+                                             <button onClick={() => setBarcodeSource('internal')} className={`flex-1 py-1 rounded text-xs transition-all ${barcodeSource === 'internal' ? 'bg-white dark:bg-gray-900 shadow-sm font-bold text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>Internal</button>
                                          </div>
                                     </div>
                                 )}

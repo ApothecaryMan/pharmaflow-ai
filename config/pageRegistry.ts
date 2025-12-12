@@ -16,6 +16,7 @@ import { RealTimeSalesMonitor } from '../components/dashboard/RealTimeSalesMonit
 import { InventoryManagement } from '../components/inventory/InventoryManagement';
 import { PendingApproval } from '../components/purchases/PendingApproval';
 import { CashRegister } from '../components/sales/CashRegister';
+import { ShiftHistory } from '../components/sales/ShiftHistory';
 
 export interface PageConfig {
   id: string;
@@ -187,6 +188,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabel: 'Cash Register',
     menuLabelAr: 'سجل النقدية',
     icon: 'point_of_sale',
+    category: 'sales',
+    requiredProps: ['color', 't', 'language']
+  },
+  'shift-history': {
+    id: 'shift-history',
+    component: ShiftHistory,
+    menuLabel: 'Shift History',
+    menuLabelAr: 'سجل الورديات',
+    icon: 'history',
     category: 'sales',
     requiredProps: ['color', 't', 'language']
   }

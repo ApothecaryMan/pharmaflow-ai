@@ -217,7 +217,7 @@ export interface ReturnPolicy {
 }
 
 // Cash Register Types
-export type CashTransactionType = 'opening' | 'sale' | 'in' | 'out' | 'closing';
+export type CashTransactionType = 'opening' | 'sale' | 'card_sale' | 'in' | 'out' | 'closing' | 'return';
 
 export interface CashTransaction {
   id: string;
@@ -243,6 +243,7 @@ export interface Shift {
   cashIn: number;
   cashOut: number;
   cashSales: number;
+  cardSales: number;
   transactions: CashTransaction[];
   notes?: string;
 }

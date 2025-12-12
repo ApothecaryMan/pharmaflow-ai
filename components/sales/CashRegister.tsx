@@ -23,18 +23,38 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
   const [reasonInput, setReasonInput] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [showHelp, setShowHelp] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Load from localStorage on mount
   useEffect(() => {
     const savedShifts = localStorage.getItem('pharma_shifts');
     if (savedShifts) {
-      const parsedShifts: Shift[] = JSON.parse(savedShifts);
+      // Migrate old shifts: ensure cardSales exists
+      const parsedShifts: Shift[] = JSON.parse(savedShifts).map((s: any) => ({
+        ...s,
+        cardSales: s.cardSales ?? 0
+      }));
       setShifts(parsedShifts);
       // Find active open shift
       const active = parsedShifts.find(s => s.status === 'open');
       if (active) setCurrentShift(active);
     }
     setIsLoading(false);
+  }, []);
+
+  // Listen for external localStorage changes (from App.tsx sales/returns)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'pharma_shifts' && e.newValue) {
+        const parsedShifts: Shift[] = JSON.parse(e.newValue);
+        setShifts(parsedShifts);
+        const active = parsedShifts.find(s => s.status === 'open');
+        setCurrentShift(active || null);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Save to localStorage on change
@@ -53,7 +73,16 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
   // Actions
   const handleOpenShift = () => {
     const amount = parseFloat(amountInput);
-    if (isNaN(amount)) return;
+    
+    // Validation
+    if (amountInput === '' || isNaN(amount)) {
+      setValidationError(t.cashRegister.validation.amountRequired);
+      return;
+    }
+    if (amount < 0) {
+      setValidationError(t.cashRegister.validation.negativeAmount);
+      return;
+    }
 
     const newShift: Shift = {
       id: Date.now().toString(),
@@ -64,6 +93,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       cashIn: 0,
       cashOut: 0,
       cashSales: 0,
+      cardSales: 0,
       transactions: [{
         id: Date.now().toString() + '-init',
         shiftId: Date.now().toString(),
@@ -82,8 +112,17 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
 
   const handleCloseShift = () => {
     if (!currentShift) return;
-    const amount = parseFloat(amountInput); // Actual counted cash
-    if (isNaN(amount)) return;
+    const amount = parseFloat(amountInput);
+    
+    // Validation
+    if (amountInput === '' || isNaN(amount)) {
+      setValidationError(t.cashRegister.validation.amountRequired);
+      return;
+    }
+    if (amount < 0) {
+      setValidationError(t.cashRegister.validation.negativeAmount);
+      return;
+    }
 
     const closedShift: Shift = {
       ...currentShift,
@@ -112,7 +151,28 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
   const handleCashTransaction = () => {
     if (!currentShift || !modalMode) return;
     const amount = parseFloat(amountInput);
-    if (isNaN(amount) || amount <= 0) return;
+    
+    // Validation
+    if (amountInput === '' || isNaN(amount)) {
+      setValidationError(t.cashRegister.validation.amountRequired);
+      return;
+    }
+    if (amount <= 0) {
+      setValidationError(t.cashRegister.validation.positiveAmount);
+      return;
+    }
+    if (modalMode === 'out') {
+      // Protect opening balance - can only withdraw from sales + deposits
+      const withdrawableBalance = currentShift.cashSales + currentShift.cashIn - currentShift.cashOut;
+      if (amount > withdrawableBalance) {
+        setValidationError(t.cashRegister.validation.protectedBalance);
+        return;
+      }
+      if (!reasonInput.trim()) {
+        setValidationError(t.cashRegister.validation.reasonRequired);
+        return;
+      }
+    }
 
     const type: CashTransactionType = modalMode === 'in' ? 'in' : 'out';
     const transaction: CashTransaction = {
@@ -141,6 +201,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
     setModalMode(null);
     setAmountInput('');
     setReasonInput('');
+    setValidationError(null);
   };
 
   if (isLoading) return <div className="p-10 text-center">{t.cashRegister.messages.loading}</div>;
@@ -240,12 +301,26 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                       <p className="text-lg font-bold text-green-600">+${currentShift.cashSales.toFixed(2)}</p>
                    </div>
                    <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
+                      <p className="text-xs font-bold uppercase text-gray-500 mb-1">{t.cashRegister.summary.cardSales}</p>
+                      <p className="text-lg font-bold text-violet-600">+${(currentShift.cardSales || 0).toFixed(2)}</p>
+                   </div>
+                   <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                       <p className="text-xs font-bold uppercase text-gray-500 mb-1">{t.cashRegister.summary.cashIn}</p>
                       <p className="text-lg font-bold text-orange-600">+${currentShift.cashIn.toFixed(2)}</p>
                    </div>
                    <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                       <p className="text-xs font-bold uppercase text-gray-500 mb-1">{t.cashRegister.summary.cashOut}</p>
                       <p className="text-lg font-bold text-orange-600">-${currentShift.cashOut.toFixed(2)}</p>
+                   </div>
+                   <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
+                      <p className="text-xs font-bold uppercase text-gray-500 mb-1">{t.cashRegister.summary.returns || 'Returns'}</p>
+                      <p className="text-lg font-bold text-red-600">
+                        -{(() => {
+                          // Calculate total returns from transactions
+                          const returnTransactions = currentShift.transactions.filter(tx => tx.type === 'return');
+                          return returnTransactions.reduce((sum, tx) => sum + tx.amount, 0).toFixed(2);
+                        })()}$
+                      </p>
                    </div>
                 </div>
              </div>
@@ -289,6 +364,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                                         ${tx.type === 'in' || tx.type === 'opening' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : ''}
                                         ${tx.type === 'out' || tx.type === 'closing' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : ''}
                                         ${tx.type === 'sale' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : ''}
+                                        ${tx.type === 'card_sale' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300' : ''}
+                                        ${tx.type === 'return' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' : ''}
                                      `}>
                                         {t.cashRegister.types[tx.type]}
                                      </span>
@@ -297,9 +374,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                                      {tx.reason || '-'}
                                   </td>
                                   <td className={`py-3 px-4 text-sm font-bold text-end font-mono
-                                     ${(['in', 'opening', 'sale'].includes(tx.type)) ? 'text-green-600' : 'text-red-600'}
+                                     ${(['in', 'opening', 'sale', 'card_sale'].includes(tx.type)) ? 'text-green-600' : 'text-red-600'}
                                   `}>
-                                     {(['in', 'opening', 'sale'].includes(tx.type)) ? '+' : '-'}${tx.amount.toFixed(2)}
+                                     {(['in', 'opening', 'sale', 'card_sale'].includes(tx.type)) ? '+' : '-'}${tx.amount.toFixed(2)}
                                   </td>
                                </tr>
                             ))}
@@ -342,7 +419,10 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                            className={`${INPUT_BASE} pl-7 text-lg font-bold`}
                            placeholder="0.00"
                            value={amountInput}
-                           onChange={e => setAmountInput(e.target.value)}
+                           onChange={e => {
+                              setAmountInput(e.target.value);
+                              setValidationError(null); // Clear error on change
+                           }}
                            onKeyDown={e => {
                               if (e.key === 'Enter') {
                                  if (modalMode === 'open') handleOpenShift();
@@ -352,6 +432,13 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                            }}
                         />
                      </div>
+                     {/* Validation Error */}
+                     {validationError && (
+                        <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                           <span className="material-symbols-rounded text-[16px]">error</span>
+                           {validationError}
+                        </p>
+                     )}
                   </div>
 
                   <div>
@@ -363,7 +450,10 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                         rows={3}
                         placeholder={t.cashRegister.messages.optionalNotes}
                         value={reasonInput}
-                        onChange={e => setReasonInput(e.target.value)}
+                        onChange={e => {
+                           setReasonInput(e.target.value);
+                           setValidationError(null); // Clear error on change
+                        }}
                      />
                   </div>
 

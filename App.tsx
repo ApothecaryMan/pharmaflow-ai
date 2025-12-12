@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, PurchaseReturn, Return, Customer } from './types';
+import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, PurchaseReturn, Return, Customer, Shift, CashTransaction, CashTransactionType } from './types';
 import { Toast } from './components/common/Toast';
 import { TRANSLATIONS } from './i18n/translations';
 import { PHARMACY_MENU } from './config/menuData';
@@ -669,6 +669,43 @@ const App: React.FC = () => {
     }
 
     setSales(prev => [...prev, newSale]);
+
+    // INTEGRATION: Update Cash Register (Shift) for all sales
+    try {
+      const savedShifts = localStorage.getItem('pharma_shifts');
+      if (savedShifts) {
+        const allShifts: Shift[] = JSON.parse(savedShifts);
+        const openShiftIndex = allShifts.findIndex(s => s.status === 'open');
+        
+        if (openShiftIndex !== -1) {
+           const openShift = allShifts[openShiftIndex];
+           const isCash = saleData.paymentMethod === 'cash';
+           
+           const newTransaction: CashTransaction = {
+              id: Date.now().toString(),
+              shiftId: openShift.id,
+              time: new Date().toISOString(),
+              type: isCash ? 'sale' : 'card_sale',
+              amount: saleData.total,
+              reason: `Sale #${serialId}`,
+              userId: 'Pharmacist',
+              relatedSaleId: serialId
+           };
+
+           const updatedShift: Shift = {
+              ...openShift,
+              cashSales: isCash ? openShift.cashSales + saleData.total : openShift.cashSales,
+              cardSales: !isCash ? (openShift.cardSales || 0) + saleData.total : (openShift.cardSales || 0),
+              transactions: [newTransaction, ...openShift.transactions]
+           };
+
+           allShifts[openShiftIndex] = updatedShift;
+           localStorage.setItem('pharma_shifts', JSON.stringify(allShifts));
+        }
+      }
+    } catch (e) {
+      console.error("Failed to update cash register:", e);
+    }
     
     // Show success notification
     setToast({
@@ -725,6 +762,45 @@ const App: React.FC = () => {
       }
       return drug;
     }));
+
+    // INTEGRATION: Update Cash Register (Shift) with return record
+    try {
+      const savedShifts = localStorage.getItem('pharma_shifts');
+      if (savedShifts) {
+        const allShifts: Shift[] = JSON.parse(savedShifts);
+        const openShiftIndex = allShifts.findIndex(s => s.status === 'open');
+        
+        if (openShiftIndex !== -1) {
+          const openShift = allShifts[openShiftIndex];
+          
+          // Find the original sale to determine payment method
+          const originalSale = sales.find(s => s.id === returnData.saleId);
+          const isCashReturn = originalSale?.paymentMethod === 'cash';
+          
+          const newTransaction: CashTransaction = {
+            id: Date.now().toString(),
+            shiftId: openShift.id,
+            time: new Date().toISOString(),
+            type: 'return',
+            amount: returnData.totalRefund,
+            reason: `Return for Sale #${returnData.saleId}`,
+            userId: 'Pharmacist',
+            relatedSaleId: returnData.saleId
+          };
+
+          const updatedShift: Shift = {
+            ...openShift,
+            // Don't deduct from cashSales or cardSales - returns are tracked separately in transactions
+            transactions: [newTransaction, ...openShift.transactions]
+          };
+
+          allShifts[openShiftIndex] = updatedShift;
+          localStorage.setItem('pharma_shifts', JSON.stringify(allShifts));
+        }
+      }
+    } catch (e) {
+      console.error("Failed to update cash register for return:", e);
+    }
     
     // Show success notification
     setToast({

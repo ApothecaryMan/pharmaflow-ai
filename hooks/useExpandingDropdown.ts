@@ -26,6 +26,8 @@ export function useExpandingDropdown<T>({
 }: UseExpandingDropdownProps<T>) {
   
   const handleKeyDown = (e: KeyboardEvent) => {
+    e.stopPropagation(); // Prevent row actions (like add to cart) from triggering on keydown
+    
     // Escape
     if (e.key === 'Escape') {
         if (onEscape) onEscape();
@@ -44,16 +46,14 @@ export function useExpandingDropdown<T>({
 
     // Enter Actions
     if (e.key === 'Enter') {
-      // Don't prevent default if we want to submit a form, but usually we do for dropdowns
-      // If onEnter is provided, we assume we're handling it.
-      if (isOpen || onEnter) e.preventDefault();
+      e.preventDefault();
       
-      if (onEnter) {
+      if (isOpen) {
+        // Confirm selection and close
+        onToggle();
+      } else if (onEnter) {
+        // Execute main action (e.g. Add to Cart)
         onEnter();
-      } else if (isOpen && items.length > 0) {
-        // Default: toggle closed if just selecting? 
-        // Or do nothing? Existing logic was minimal.
-        // For Combobox, Enter usually performs the selection.
       }
       return;
     }
@@ -94,7 +94,7 @@ export function useExpandingDropdown<T>({
   };
 
   const handleClick = (e: MouseEvent) => {
-    // e.stopPropagation(); // Removed strict propagation to allow flexibility
+    e.stopPropagation(); // Prevent click from bubbling to parent (e.g. table row)
     onToggle();
   };
 

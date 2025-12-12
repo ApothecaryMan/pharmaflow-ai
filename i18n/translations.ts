@@ -512,7 +512,9 @@ export const TRANSLATIONS = {
         cashOut: 'Cash Out',
         closingBalance: 'Closing Balance',
         expectedBalance: 'Expected Balance',
-        variance: 'Variance'
+        variance: 'Variance',
+        cardSales: 'Card Sales',
+        returns: 'Returns'
       },
       transactions: {
         title: 'Shift Transactions',
@@ -533,9 +535,11 @@ export const TRANSLATIONS = {
       types: {
         opening: 'Opening Balance',
         sale: 'Cash Sale',
+        card_sale: 'Card Sale',
         in: 'Cash In',
         out: 'Cash Out',
-        closing: 'Closing Balance'
+        closing: 'Closing Balance',
+        return: 'Return'
       },
       messages: {
         loading: 'Loading...',
@@ -548,7 +552,46 @@ export const TRANSLATIONS = {
         countedCash: 'Counted Cash Amount',
         optionalNotes: 'Optional notes...'
       },
+      validation: {
+        amountRequired: 'Please enter an amount',
+        negativeAmount: 'Amount cannot be negative',
+        positiveAmount: 'Amount must be greater than zero',
+        insufficientBalance: 'Cannot withdraw more than current balance',
+        reasonRequired: 'Reason is required for cash withdrawal',
+        protectedBalance: 'Cannot withdraw from opening balance. Only sales and deposits can be withdrawn.'
+      },
       help: '@@import(./cashRegisterHelp.json)'
+    },
+    shiftHistory: {
+      title: 'Shift History',
+      subtitle: 'View past cash register shifts',
+      searchPlaceholder: 'Search by shift ID or user...',
+      dateFrom: 'From',
+      dateTo: 'To',
+      exportCSV: 'Export CSV',
+      noResults: 'No shifts found',
+      headers: {
+        shiftId: 'Shift ID',
+        openTime: 'Opened',
+        closeTime: 'Closed',
+        duration: 'Duration',
+        openingBalance: 'Opening',
+        closingBalance: 'Closing',
+        variance: 'Variance'
+      },
+      summary: {
+        totalShifts: 'Total Shifts',
+        totalRevenue: 'Total Revenue',
+        avgPerShift: 'Avg/Shift'
+      },
+      details: {
+        openedBy: 'Opened By',
+        cashSales: 'Cash Sales',
+        cardSales: 'Card Sales',
+        transactions: 'Transactions',
+        transactionLog: 'Transaction Log',
+        moreTransactions: 'more transactions'
+      }
     },
     salesHistory: {
       title: 'Sales History',
@@ -639,7 +682,11 @@ export const TRANSLATIONS = {
         enterReason: 'Please select a return reason',
         processing: 'Processing return...',
         totalItems: 'Total Items',
-        itemsSelected: 'items selected'
+        itemsSelected: 'items selected',
+        validation: {
+          noOpenShift: 'Cannot process return - no open shift',
+          insufficientBalance: 'Return amount exceeds available sales balance'
+        }
       }
     },
     dashboard: {
@@ -1656,7 +1703,11 @@ export const TRANSLATIONS = {
         enterReason: 'الرجاء اختيار سبب الإرجاع',
         processing: 'جاري معالجة الإرجاع...',
         totalItems: 'إجمالي العناصر',
-        itemsSelected: 'عناصر محددة'
+        itemsSelected: 'عناصر محددة',
+        validation: {
+          noOpenShift: 'لا يمكن معالجة المرتجع - لا توجد وردية مفتوحة',
+          insufficientBalance: 'مبلغ المرتجع يتجاوز رصيد المبيعات المتاح'
+        }
       }
     },
     customers: {
@@ -2018,7 +2069,7 @@ export const TRANSLATIONS = {
       walkIn: 'عابر',
       guest: 'ضيف',
       cash: 'نقدي',
-      card: 'بطاقة',
+      card: 'كرت',
       insurance: 'تأمين',
       credit: 'ائتمان',
       items: 'أصناف',
@@ -2099,7 +2150,9 @@ export const TRANSLATIONS = {
         cashOut: 'صادر نقدي',
         closingBalance: 'الرصيد الختامي',
         expectedBalance: 'الرصيد المتوقع',
-        variance: 'الفروقات'
+        variance: 'الفروقات',
+        cardSales: 'مبيعات الكرت',
+        returns: 'المرتجعات'
       },
       transactions: {
         title: 'معاملات الوردية',
@@ -2120,9 +2173,11 @@ export const TRANSLATIONS = {
       types: {
         opening: 'الرصيد الافتتاحي',
         sale: 'بيع نقدي',
+        card_sale: 'بيع كرت',
         in: 'إيداع نقدي',
         out: 'سحب نقدي',
-        closing: 'الرصيد الختامي'
+        closing: 'الرصيد الختامي',
+        return: 'مرتجع'
       },
       messages: {
         loading: 'جاري التحميل...',
@@ -2135,7 +2190,46 @@ export const TRANSLATIONS = {
         countedCash: 'المبلغ المحصل',
         optionalNotes: 'ملاحظات اختيارية...'
       },
+      validation: {
+        amountRequired: 'يرجى إدخال المبلغ',
+        negativeAmount: 'لا يمكن أن يكون المبلغ سالباً',
+        positiveAmount: 'يجب أن يكون المبلغ أكبر من صفر',
+        insufficientBalance: 'لا يمكن سحب أكثر من الرصيد الحالي',
+        reasonRequired: 'السبب مطلوب لعمليات السحب',
+        protectedBalance: 'لا يمكن السحب من الرصيد الافتتاحي. يمكن سحب المبيعات والإيداعات فقط.'
+      },
       help: '@@import(./cashRegisterHelp.json)'
+    },
+    shiftHistory: {
+      title: 'سجل الورديات',
+      subtitle: 'عرض ورديات سجل النقدية السابقة',
+      searchPlaceholder: 'بحث برقم الوردية أو المستخدم...',
+      dateFrom: 'من',
+      dateTo: 'إلى',
+      exportCSV: 'تصدير CSV',
+      noResults: 'لا توجد ورديات',
+      headers: {
+        shiftId: 'رقم الوردية',
+        openTime: 'وقت الفتح',
+        closeTime: 'وقت الإغلاق',
+        duration: 'المدة',
+        openingBalance: 'الافتتاحي',
+        closingBalance: 'الختامي',
+        variance: 'الفروقات'
+      },
+      summary: {
+        totalShifts: 'إجمالي الورديات',
+        totalRevenue: 'إجمالي الإيرادات',
+        avgPerShift: 'متوسط/وردية'
+      },
+      details: {
+        openedBy: 'فتحت بواسطة',
+        cashSales: 'مبيعات نقدية',
+        cardSales: 'مبيعات الكرت',
+        transactions: 'المعاملات',
+        transactionLog: 'سجل المعاملات',
+        moreTransactions: 'معاملة إضافية'
+      }
     }
   }
 };

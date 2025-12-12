@@ -83,13 +83,120 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
   const handlePrintBarcode = (drug: Drug) => {
     setActiveMenuId(null);
+    
+    // Check for default template from BarcodeStudio
+    const defaultTemplateId = localStorage.getItem('pharma_label_default_template');
+    const savedTemplates = localStorage.getItem('pharma_label_templates');
+    
+    if (defaultTemplateId && savedTemplates) {
+      try {
+        const templates = JSON.parse(savedTemplates);
+        const defaultTemplate = templates.find((t: any) => t.id === defaultTemplateId);
+        
+        if (defaultTemplate && defaultTemplate.design) {
+          // Use the default template design
+          printWithTemplate(drug, defaultTemplate.design);
+          return;
+        }
+      } catch (e) {
+        console.error('Error loading template', e);
+      }
+    }
+    
+    // Fallback to basic print if no template
+    printBasicBarcode(drug);
+  };
+
+  const printWithTemplate = (drug: Drug, design: any) => {
+    const printWindow = window.open('', '', 'width=400,height=600');
+    if (!printWindow) return;
+
+    const MM_TO_PX = 3.78;
+    const dims = design.selectedPreset === 'custom' 
+      ? design.customDims 
+      : { '38x12': { w: 38, h: 12 }, '25x15': { w: 25, h: 15 }, '30x20': { w: 30, h: 20 }, '40x20': { w: 40, h: 20 }, '50x25': { w: 50, h: 25 } }[design.selectedPreset] || { w: 38, h: 12 };
+    
+    const barcodeSource = design.barcodeSource || 'global';
+    const barcodeValue = barcodeSource === 'internal' ? (drug.internalCode || drug.id) : (drug.barcode || drug.id);
+    const barcodeText = `*${barcodeValue.replace(/\\s/g, '').toUpperCase()}*`;
+    const storeName = design.storeName || 'PharmaFlow';
+    const hotline = design.hotline || '';
+
+    const getContent = (el: any): string => {
+      if (el.content && el.type === 'text' && !el.field) return el.content;
+      switch (el.field) {
+        case 'name': return drug.name;
+        case 'price': return `$${drug.price.toFixed(2)}`;
+        case 'store': return storeName;
+        case 'hotline': return hotline ? `Tel: ${hotline}` : '';
+        case 'internalCode': return drug.internalCode || '';
+        case 'expiryDate': return new Date(drug.expiryDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        case 'genericName': return drug.genericName || '';
+        default: return el.content || el.label || '';
+      }
+    };
+
+    const generateElementHTML = (el: any) => {
+      if (!el.isVisible) return '';
+      const content = getContent(el);
+      const alignTransform = el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0';
+      const commonStyle = `position: absolute; left: ${el.x}mm; top: ${el.y}mm; transform: translate(${alignTransform}, 0);`;
+      
+      if (el.type === 'text') {
+        return `<div style="${commonStyle} font-size: ${el.fontSize}px; font-weight: ${el.fontWeight || 'normal'}; color: ${el.color || 'black'}; white-space: nowrap;">${content}</div>`;
+      }
+      if (el.type === 'barcode') {
+        const format = el.barcodeFormat || 'code39-text';
+        let fontFamily = 'Libre Barcode 39 Text';
+        if (format === 'code39') fontFamily = 'Libre Barcode 39';
+        else if (format === 'code128-text') fontFamily = 'Libre Barcode 128 Text';
+        else if (format === 'code128') fontFamily = 'Libre Barcode 128';
+        return `<div style="${commonStyle} font-family: '${fontFamily}'; font-size: ${el.fontSize}px; line-height: 0.8; white-space: nowrap;">${barcodeText}</div>`;
+      }
+      return '';
+    };
+
+    const labelHTML = `<div class="label-container">${(design.elements || []).map(generateElementHTML).join('')}</div>`;
+    const borderStyle = design.borderStyle || 'none';
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Barcode: ${drug.name}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+        <style>
+          @page { size: ${dims.w}mm ${dims.h}mm; margin: 0; }
+          body { margin: 0; padding: 0; font-family: 'Roboto', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+          .label-container {
+            width: ${dims.w}mm; height: ${dims.h}mm;
+            position: relative; overflow: hidden;
+            background: white;
+            border: ${borderStyle === 'none' ? 'none' : `1px ${borderStyle} #000`};
+            border-radius: 4px;
+            box-sizing: border-box;
+          }
+        </style>
+      </head>
+      <body>
+        ${labelHTML}
+        <script>document.fonts.ready.then(() => window.print());</script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
+  const printBasicBarcode = (drug: Drug) => {
     const printWindow = window.open('', '', 'width=400,height=600');
     if (!printWindow) return;
 
     // Use barcode or internal code or ID, defaulting to fallback
     const barcodeValue = drug.barcode || drug.internalCode || drug.id;
     // Note: Code 39 fonts usually require * wrapping the content
-    const barcodeText = `*${barcodeValue.replace(/\s/g, '').toUpperCase()}*`;
+    const barcodeText = `*${barcodeValue.replace(/\\s/g, '').toUpperCase()}*`;
 
     const htmlContent = `
       <!DOCTYPE html>

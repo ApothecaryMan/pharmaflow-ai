@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Sale, Return, ReturnType, ReturnReason, ReturnItem, CartItem } from '../../types';
+import { Sale, Return, ReturnType, ReturnReason, ReturnItem, CartItem, Shift } from '../../types';
 import { useSmartDirection } from '../common/SmartInputs';
 
 interface ReturnModalProps {
@@ -24,6 +24,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   const [selectedItems, setSelectedItems] = useState<Map<string, number>>(new Map());
   const [returnReason, setReturnReason] = useState<ReturnReason>('customer_request');
   const [returnNotes, setReturnNotes] = useState('');
+  const [validationError, setValidationError] = useState<string | null>(null);
   const returnNotesDir = useSmartDirection(returnNotes, t.returns.notes);
 
   if (!isOpen) return null;
@@ -34,6 +35,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
     setSelectedItems(new Map());
     setReturnReason('customer_request');
     setReturnNotes('');
+    setValidationError(null);
     onClose();
   };
 
@@ -97,6 +99,32 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   }, [returnType, selectedItems, sale]);
 
   const handleConfirm = () => {
+    // VALIDATION: Check shift status and balance
+    try {
+      const savedShifts = localStorage.getItem('pharma_shifts');
+      if (!savedShifts) {
+        setValidationError(t.returns.validation?.noOpenShift || 'Cannot process return - no open shift');
+        return;
+      }
+      
+      const allShifts: Shift[] = JSON.parse(savedShifts);
+      const openShift = allShifts.find(s => s.status === 'open');
+      
+      if (!openShift) {
+        setValidationError(t.returns.validation?.noOpenShift || 'Cannot process return - no open shift');
+        return;
+      }
+      
+      // Check if refund exceeds available sales balance
+      const availableBalance = openShift.cashSales + (openShift.cardSales || 0);
+      if (calculateRefund > availableBalance) {
+        setValidationError(t.returns.validation?.insufficientBalance || 'Return amount exceeds available sales balance');
+        return;
+      }
+    } catch (e) {
+      console.error('Failed to validate shift:', e);
+    }
+
     const returnItems: ReturnItem[] = [];
 
     if (returnType === 'full') {
@@ -470,6 +498,14 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                   </div>
                 ))}
               </div>
+
+              {/* Validation Error */}
+              {validationError && (
+                <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 flex items-center gap-3">
+                  <span className="material-symbols-rounded text-red-500">error</span>
+                  <p className="text-sm text-red-700 dark:text-red-300 font-medium">{validationError}</p>
+                </div>
+              )}
             </div>
           )}
         </div>

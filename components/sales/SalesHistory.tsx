@@ -427,10 +427,15 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {filteredSales.map((sale, index) => (
+              {filteredSales.map((sale, index) => {
+                // Calculate total returned amount for this sale
+                const totalReturned = sale.netTotal !== undefined ? sale.total - sale.netTotal : 0;
+                
+                return (
                 <React.Fragment key={sale.id}>
                 <tr 
-                    className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 transition-colors ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''} ${expandedSaleId === sale.id ? `bg-${color}-50/50 dark:bg-${color}-900/10` : ''}`}
+                    onClick={() => setExpandedSaleId(expandedSaleId === sale.id ? null : sale.id)}
+                    className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 transition-colors cursor-pointer ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''} ${expandedSaleId === sale.id ? `bg-${color}-50/50 dark:bg-${color}-900/10` : ''}`}
                 >
                   {columns.map(col => {
                     if (col.key === 'id') {
@@ -500,25 +505,22 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                     }
                     if (col.key === 'actions') {
                         return (
-                            <td key={col.key} className="px-3 py-2 text-end">
-                                <div className="flex items-center justify-end gap-1">
-                                    <button 
-                                        onClick={() => setExpandedSaleId(expandedSaleId === sale.id ? null : sale.id)}
-                                        className={`p-1.5 rounded-lg hover:bg-${color}-100 dark:hover:bg-${color}-900/50 text-${color}-600 dark:text-${color}-400 transition-colors`}
-                                        title={expandedSaleId === sale.id ? "Collapse" : "Expand"}
-                                    >
-                                        <span className="material-symbols-rounded text-[20px]">
-                                            {expandedSaleId === sale.id ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
-                                        </span>
-                                    </button>
-                                    <button 
-                                        onClick={() => setSelectedSale(sale)}
-                                        className={`p-1.5 rounded-lg hover:bg-${color}-100 dark:hover:bg-${color}-900/50 text-${color}-600 dark:text-${color}-400 transition-colors`}
-                                        title={t.viewDetails}
-                                    >
-                                        <span className="material-symbols-rounded text-[20px]">visibility</span>
-                                    </button>
-                                </div>
+                            <td key={col.key} className="px-3 py-2 text-end" onClick={(e) => e.stopPropagation()}>
+                                {/* Status Icons */}
+                                {sale.hasReturns ? (
+                                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">
+                                        <span className="material-symbols-rounded text-[16px]">keyboard_return</span>
+                                        <span className="text-xs font-bold">-${totalReturned.toFixed(2)}</span>
+                                    </div>
+                                ) : sale.status === 'cancelled' ? (
+                                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
+                                        <span className="material-symbols-rounded text-[16px]">cancel</span>
+                                    </div>
+                                ) : (
+                                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                                        <span className="material-symbols-rounded text-[16px]">check_circle</span>
+                                    </div>
+                                )}
                             </td>
                         );
                     }
@@ -538,15 +540,21 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                         {sale.items.map((item, idx) => {
                                             const effectivePrice = (item.isUnit && item.unitsPerPack) ? item.price / item.unitsPerPack : item.price;
+                                            const returnedQty = sale.itemReturnedQuantities?.[item.id] || 0;
                                             return (
-                                                <div key={idx} className="flex items-center gap-2 p-1.5 rounded border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
-                                                    <div className="h-8 w-8 rounded bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-xs font-bold text-gray-400 shrink-0">
+                                                <div key={idx} className={`flex items-center gap-2 p-1.5 rounded border ${returnedQty > 0 ? 'border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/20' : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50'} hover:border-gray-200 dark:hover:border-gray-700 transition-colors`}>
+                                                    <div className={`h-8 w-8 rounded ${returnedQty > 0 ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-600' : 'bg-gray-50 dark:bg-gray-800 text-gray-400'} flex items-center justify-center text-xs font-bold shrink-0`}>
                                                         {item.quantity}
                                                     </div>
                                                     <div className="min-w-0 flex-1">
                                                         <div className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate flex items-center gap-1">
                                                             {item.name} {item.dosageForm ? `(${item.dosageForm})` : ''}
                                                             {item.isUnit && <span className="text-[8px] bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1 rounded font-bold">UNIT</span>}
+                                                            {returnedQty > 0 && (
+                                                                <span className="text-[8px] bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300 px-1 rounded font-bold">
+                                                                    -{returnedQty} {t.returns?.returned || 'returned'}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         <div className="text-[10px] text-gray-500 flex items-center gap-1">
                                                             ${effectivePrice.toFixed(2)}
@@ -588,15 +596,26 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                     </div>
                                     
                                     <div className="grid grid-cols-2 gap-2">
-                                        {!sale.hasReturns && (
-                                            <button 
-                                                onClick={() => setReturnModalOpen(true)}
-                                                className="py-1.5 px-2 rounded-md text-[10px] font-bold uppercase tracking-wide text-white bg-orange-500 hover:bg-orange-600 transition-colors flex items-center justify-center gap-1 shadow-sm shadow-orange-200 dark:shadow-none"
-                                            >
-                                                <span className="material-symbols-rounded text-[14px]">keyboard_return</span>
-                                                Return
-                                            </button>
-                                        )}
+                                        {(() => {
+                                            // Check if there are any items that can still be returned
+                                            const hasItemsToReturn = sale.items.some(item => {
+                                                const returnedQty = sale.itemReturnedQuantities?.[item.id] || 0;
+                                                return returnedQty < item.quantity;
+                                            });
+                                            
+                                            return hasItemsToReturn && (
+                                                <button 
+                                                    onClick={() => {
+                                                        setSelectedSale(sale);
+                                                        setReturnModalOpen(true);
+                                                    }}
+                                                    className="py-1.5 px-2 rounded-md text-[10px] font-bold uppercase tracking-wide text-white bg-orange-500 hover:bg-orange-600 transition-colors flex items-center justify-center gap-1 shadow-sm shadow-orange-200 dark:shadow-none"
+                                                >
+                                                    <span className="material-symbols-rounded text-[14px]">keyboard_return</span>
+                                                    {t.returns?.return || 'Return'}
+                                                </button>
+                                            );
+                                        })()}
                                         <button 
                                             onClick={() => handlePrint(sale)}
                                             className={`py-1.5 px-2 rounded-md text-[10px] font-bold uppercase tracking-wide text-white bg-${color}-600 hover:bg-${color}-700 transition-colors flex items-center justify-center gap-1 shadow-sm shadow-${color}-200 dark:shadow-none ${sale.hasReturns ? 'col-span-2' : ''}`}
@@ -611,7 +630,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                     </tr>
                 )}
                 </React.Fragment>
-              ))}
+              );
+              })}
               {filteredSales.length === 0 && (
                 <tr>
                   <td colSpan={6} className="p-12 text-center text-gray-400">
@@ -726,15 +746,23 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
               </div>
 
               <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/50 flex gap-3">
-                  {!selectedSale.hasReturns && (
-                    <button 
-                      onClick={() => setReturnModalOpen(true)}
-                      className={`flex-1 py-2.5 rounded-full font-medium text-white bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center gap-2`}
-                    >
-                        <span className="material-symbols-rounded">keyboard_return</span>
-                        {t.returns?.processReturn || 'Process Return'}
-                    </button>
-                  )}
+                  {(() => {
+                      // Check if there are any items that can still be returned
+                      const hasItemsToReturn = selectedSale.items.some(item => {
+                          const returnedQty = selectedSale.itemReturnedQuantities?.[item.id] || 0;
+                          return returnedQty < item.quantity;
+                      });
+                      
+                      return hasItemsToReturn && (
+                        <button 
+                          onClick={() => setReturnModalOpen(true)}
+                          className={`flex-1 py-2.5 rounded-full font-medium text-white bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center gap-2`}
+                        >
+                            <span className="material-symbols-rounded">keyboard_return</span>
+                            {t.returns?.processReturn || 'Process Return'}
+                        </button>
+                      );
+                  })()}
                   <button 
                     onClick={() => handlePrint(selectedSale)}
                     className={`flex-1 py-2.5 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 transition-colors flex items-center justify-center gap-2`}
