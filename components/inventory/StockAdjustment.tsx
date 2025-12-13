@@ -27,10 +27,12 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
   const [searchTerm, setSearchTerm] = useState('');
   const [adjustments, setAdjustments] = useState<AdjustmentItem[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
+
 
   // Filter inventory for search
   const searchResults = useMemo(() => {
-    if (!searchTerm || searchTerm.length < 2) return [];
+    if (!searchTerm || searchTerm.length < 1) return [];
     const { regex } = parseSearchTerm(searchTerm);
     return inventory.filter(d => 
       regex.test(d.name) || 
@@ -275,7 +277,9 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
                                             <PosDropdown
                                                 items={reasons}
                                                 selectedItem={item.reason}
-                                                onSelect={(val) => updateAdjustment(idx, 'reason', val)}
+                                                isOpen={openDropdownIndex === idx}
+                                                onToggle={() => setOpenDropdownIndex(openDropdownIndex === idx ? null : idx)}
+                                                onSelect={(val) => { updateAdjustment(idx, 'reason', val); setOpenDropdownIndex(null); }}
                                                 renderSelected={(val) => t.stockAdjustment.reasons[val as keyof typeof t.stockAdjustment.reasons]}
                                                 renderItem={(val) => t.stockAdjustment.reasons[val as keyof typeof t.stockAdjustment.reasons]}
                                                 className="w-full text-xs"

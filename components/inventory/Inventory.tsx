@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { SmartDateInput, useSmartDirection } from '../common/SmartInputs';
+import { SmartDateInput, SmartInput } from '../common/SmartInputs';
 import { PosDropdown } from '../common/PosDropdown';
 import { useContextMenu } from '../common/ContextMenu';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
@@ -37,11 +37,6 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
   });
 
 
-
-  const nameDir = useSmartDirection(formData.name);
-  const genericDir = useSmartDirection(formData.genericName);
-  const ingredientsRef = useSmartDirection(formData.activeIngredients?.join(', '));
-  const descDir = useSmartDirection(formData.description);
 
   // Use column reorder hook
   const {
@@ -690,24 +685,22 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.brand} *</label>
-                    <input
+                    <SmartInput
                       required
                       className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                       placeholder="e.g., Panadol Extra"
                       value={formData.name}
                       onChange={e => setFormData({ ...formData, name: e.target.value })}
-                      dir={nameDir}
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.generic} *</label>
-                    <input
+                    <SmartInput
                       required
                       className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                       placeholder="e.g., Paracetamol"
                       value={formData.genericName}
                       onChange={e => setFormData({ ...formData, genericName: e.target.value })}
-                      dir={genericDir}
                     />
                   </div>
                   
@@ -750,12 +743,11 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   {/* Active Ingredients */}
                   <div className="md:col-span-2">
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Active Ingredients (Comma separated)</label>
-                    <input
+                    <SmartInput
                       className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                       placeholder="e.g., Paracetamol, Caffeine"
                       value={formData.activeIngredients?.join(', ') || ''}
                       onChange={e => setFormData({ ...formData, activeIngredients: e.target.value.split(',').map(s => s.trim()) })}
-                      dir={ingredientsRef}
                     />
                   </div>
 
@@ -844,13 +836,11 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
                   <div className="md:col-span-2">
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.desc}</label>
-                    <textarea
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm resize-none"
-                      rows={2}
+                    <SmartInput
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
                       placeholder="Description..."
                       value={formData.description}
                       onChange={e => setFormData({ ...formData, description: e.target.value })}
-                      dir={descDir}
                     />
                   </div>
                 </div>

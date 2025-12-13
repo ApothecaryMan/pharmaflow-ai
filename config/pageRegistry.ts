@@ -46,7 +46,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'المخزون',
     icon: 'inventory_2',
     category: 'inventory',
-    requiredProps: ['inventory', 'setInventory', 'color', 't', 'language', 'onAddProduct']
+    requiredProps: ['inventory', 'onAddDrug', 'onUpdateDrug', 'onDeleteDrug', 'color', 't', 'language']
   },
   'inventory-beta': {
     id: 'inventory-beta',
@@ -181,7 +181,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'إضافة منتج جديد',
     icon: 'add_box',
     category: 'inventory',
-    requiredProps: ['inventory', 'setInventory', 'color', 't', 'language', 'onAddProduct', 'initialMode']
+    requiredProps: ['inventory', 'onAddDrug', 'onUpdateDrug', 'onDeleteDrug', 'color', 't', 'language', 'initialMode']
   },
   'cash-register': {
     id: 'cash-register',

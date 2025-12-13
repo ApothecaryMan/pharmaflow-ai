@@ -1070,6 +1070,7 @@ const App: React.FC = () => {
             if (requiredProps.includes('onAddDrug')) props.onAddDrug = handleAddDrug;
             if (requiredProps.includes('onUpdateDrug')) props.onUpdateDrug = handleUpdateDrug;
             if (requiredProps.includes('onDeleteDrug')) props.onDeleteDrug = handleDeleteDrug;
+            if (requiredProps.includes('onUpdateInventory')) props.onUpdateInventory = setInventory;
             if (requiredProps.includes('onCompleteSale')) props.onCompleteSale = handleCompleteSale;
             if (requiredProps.includes('onProcessReturn')) props.onProcessReturn = handleProcessReturn;
             if (requiredProps.includes('onAddCustomer')) props.onAddCustomer = handleAddCustomer;
