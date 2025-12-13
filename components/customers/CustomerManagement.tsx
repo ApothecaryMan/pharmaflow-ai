@@ -1,12 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Customer } from '../../types';
 import { useContextMenu } from '../common/ContextMenu';
+import { Avatar } from '@mui/material'; // Added Import
 import { DataTable, Column } from '../common/DataTable';
 import { GOVERNORATES, CITIES, AREAS, getLocationName } from '../../data/locations';
 import { useSmartDirection, SmartPhoneInput, SmartEmailInput } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { PosDropdown } from '../common/PosDropdown';
 import { COUNTRY_CODES } from '../../data/countryCodes';
+import { useLongPress } from '../../hooks/useLongPress';
 import { Modal } from '../common/Modal';
 
 interface CustomerManagementProps {
@@ -17,6 +19,7 @@ interface CustomerManagementProps {
   color: string;
   t: any;
   language: 'EN' | 'AR';
+  darkMode?: boolean;
 }
 
 export const CustomerManagement: React.FC<CustomerManagementProps> = ({
@@ -26,7 +29,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   onDeleteCustomer,
   color,
   t,
-  language
+  language,
+  darkMode
 }) => {
   const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchQuery, setSearchQuery] = useState('');
@@ -274,6 +278,32 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     ]);
   };
 
+  // Long Press Handler for Touch Screens
+  const handleLongPress = (e: React.TouchEvent, customer: Customer) => {
+    e.preventDefault();
+    const touch = e.touches[0] || e.changedTouches[0];
+    showMenu(touch.clientX, touch.clientY, [
+        { 
+            label: 'Show Profile Info', 
+            icon: 'account_circle', 
+            action: () => handleOpenProfile(customer)
+        },
+        { separator: true },
+        { 
+            label: t.modal.edit, 
+            icon: 'edit', 
+            action: () => handleOpenEdit(customer) 
+        },
+        { 
+            label: t.modal.delete || 'Delete', 
+            icon: 'delete', 
+            action: () => onDeleteCustomer(customer.id),
+            danger: true
+        }
+    ]);
+  };
+
+
 
   const getDetectedCountry = (phone: string | undefined) => {
     if (!phone) return null;
@@ -301,16 +331,17 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       key: 'serialId', 
       label: '#', 
       sortable: true,
-      render: (c) => <span className="font-mono text-gray-500">{c.serialId || '-'}</span>,
+      render: (c) => <span className="font-mono">{c.serialId || '-'}</span>,
       defaultWidth: 60
     },
     { 
       key: 'code', 
       label: 'modal.code', 
       sortable: true,
+      cellDir: language === 'AR' ? 'rtl' : 'ltr',
       render: (c) => (
         <span 
-            className="font-mono text-xs text-gray-500 cursor-pointer hover:text-blue-500 transition-colors relative group"
+            className="font-mono text-xs cursor-pointer hover:text-blue-500 transition-colors relative group"
             title="Click to copy code"
             onClick={(e) => {
                 e.stopPropagation();
@@ -346,17 +377,28 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       label: 'headers.name', 
       sortable: true,
       render: (c) => (
-        <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-full bg-${color}-100 text-${color}-600 flex items-center justify-center font-bold text-xs`}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', height: '100%' }}>
+            <Avatar 
+                sx={{ 
+                    bgcolor: 'primary.main',
+                    width: 32, 
+                    height: 32,
+                    fontSize: '0.8rem',
+                    fontWeight: 'bold',
+                    color: '#fff'
+                }}
+            >
                 {c.name.substring(0, 2).toUpperCase()}
-            </div>
-            <div>
-                <div>{c.name}</div>
+            </Avatar>
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+                <div className="font-medium truncate" style={{ lineHeight: 1.2 }}>{c.name}</div>
                 {(c.governorate || c.city) && (
-                    <div className="text-[10px] text-gray-400 flex items-center gap-1">
+                    <div className="text-[10px] text-gray-400 flex items-center gap-1 truncate" style={{ lineHeight: 1.2 }}>
                         <span className="material-symbols-rounded text-[10px]">location_on</span>
-                        {getLocationName(c.governorate || '', 'gov', language)}
-                        {c.city && `, ${getLocationName(c.city, 'city', language)}`}
+                        <span className="truncate">
+                            {getLocationName(c.governorate || '', 'gov', language)}
+                            {c.city && `, ${getLocationName(c.city, 'city', language)}`}
+                        </span>
                     </div>
                 )}
             </div>
@@ -368,11 +410,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       key: 'contact', 
       label: 'headers.contact', 
       sortable: true,
-      headerDir: 'ltr',
+
       render: (c) => (
-        <div className="flex flex-col" dir="ltr">
-            <span className="flex items-center gap-1"><span className="material-symbols-rounded text-[14px]">call</span> <span dir="ltr">{c.phone}</span></span>
-            {c.email && <span className="flex items-center gap-1 text-xs text-gray-400"><span className="material-symbols-rounded text-[14px]">mail</span> {c.email}</span>}
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span className="material-symbols-rounded text-[14px]">call</span> <span dir="ltr">{c.phone}</span></span>
+            {c.email && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#9ca3af' }}><span className="material-symbols-rounded text-[14px]">mail</span> {c.email}</span>}
         </div>
       ),
       defaultWidth: 200
@@ -381,7 +423,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       key: 'purchases', 
       label: 'headers.purchases', 
       sortable: true,
-      headerDir: 'ltr',
+      cellDir: 'ltr',
       render: (c) => <span className="font-medium text-gray-900 dark:text-white" dir="ltr">${c.totalPurchases.toFixed(2)}</span>,
       defaultWidth: 120
     },
@@ -401,7 +443,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       key: 'lastVisit', 
       label: 'headers.lastVisit', 
       sortable: true,
-      render: (c) => <span className="text-gray-500">{new Date(c.lastVisit).toLocaleDateString()}</span>,
+      render: (c) => <span>{new Date(c.lastVisit).toLocaleDateString()}</span>,
       defaultWidth: 120
     },
     { 
@@ -748,10 +790,13 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             columns={columns}
             onSort={handleSort}
             onRowContextMenu={handleContextMenu}
+            onRowLongPress={handleLongPress}
             color={color}
             t={t}
             storageKey="customers_table"
             defaultHiddenColumns={['serialId']}
+            darkMode={darkMode}
+            language={language}
           />
         </>
       ) : (
@@ -1016,7 +1061,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                  </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.phone} *</label>
                   <div className="relative">

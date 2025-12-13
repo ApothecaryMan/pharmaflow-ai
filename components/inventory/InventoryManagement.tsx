@@ -1,64 +1,62 @@
 import React, { useMemo } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
 import { Drug } from '../../types';
-import { DataTable } from '../common/DataTable';
+import { DataTable, Column } from '../common/DataTable';
 
 interface InventoryManagementProps {
   inventory: Drug[];
   color: string;
   t: any;
+  darkMode?: boolean;
 }
 
 export const InventoryManagement: React.FC<InventoryManagementProps> = ({
   inventory,
   color,
-  t
+  t,
+  darkMode
 }) => {
   // Define columns
-  const columns = useMemo<ColumnDef<Drug>[]>(
+  const columns = useMemo<any[]>(
     () => [
       {
-        accessorKey: 'barcode',
-        header: t.barcode || 'Barcode', // Add translation fallback
-        size: 250, // Much wider
-        cell: info => <span className="font-mono text-gray-600 dark:text-gray-400">{info.getValue() as string}</span>
+        key: 'barcode',
+        label: t.barcode || 'Barcode',
+        defaultWidth: 250,
+        render: (item: Drug) => <span className="font-mono text-gray-600 dark:text-gray-400">{item.barcode}</span>
       },
       {
-        accessorKey: 'name',
-        header: t.productName || 'Product Name',
-        cell: info => (
+        key: 'name',
+        label: t.productName || 'Product Name',
+        render: (item: Drug) => (
           <div className="flex flex-col">
-            <span className="font-bold">{info.getValue() as string}</span>
-            <span className="text-xs text-gray-500">{info.row.original.genericName}</span>
+            <span className="font-bold">{item.name}</span>
+            <span className="text-xs text-gray-500">{item.genericName}</span>
           </div>
         )
       },
       {
-        accessorKey: 'category',
-        header: t.category || 'Category',
+        key: 'category',
+        label: t.category || 'Category',
       },
       {
-        accessorKey: 'stock',
-        header: t.stock || 'Stock',
-        cell: info => {
-          const val = info.getValue() as number;
-          return (
-            <span className={`font-bold ${val < 10 ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
-              {val}
+        key: 'stock',
+        label: t.stock || 'Stock',
+        render: (item: Drug) => (
+            <span className={`font-bold ${item.stock < 10 ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
+              {item.stock}
             </span>
           )
-        }
       },
       {
-        accessorKey: 'price',
-        header: t.price || 'Price',
-        cell: info => `$${(info.getValue() as number).toFixed(2)}`
+        key: 'price',
+        label: t.price || 'Price',
+        render: (item: Drug) => `$${item.price.toFixed(2)}`
       },
       {
-        accessorKey: 'status',
-        header: 'Status', // Add translation later
-        cell: info => {
-            const stock = info.row.original.stock;
+        key: 'status',
+        label: 'Status',
+        render: (item: Drug) => {
+            const stock = item.stock;
             if (stock === 0) return <span className="px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-bold">Out of Stock</span>;
             if (stock < 10) return <span className="px-2 py-1 rounded bg-amber-100 text-amber-700 text-xs font-bold">Low Stock</span>;
             return <span className="px-2 py-1 rounded bg-green-100 text-green-700 text-xs font-bold">Instock</span>;
@@ -87,6 +85,7 @@ export const InventoryManagement: React.FC<InventoryManagementProps> = ({
         columns={columns} 
         color={color} 
         t={t} 
+        darkMode={darkMode}
       />
     </div>
   );

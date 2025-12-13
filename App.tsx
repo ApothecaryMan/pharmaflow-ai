@@ -1087,6 +1087,10 @@ const App: React.FC = () => {
             if (requiredProps.includes('onAddProduct')) props.onAddProduct = () => setView('add-product');
             if (requiredProps.includes('onRestock')) props.onRestock = handleRestock;
             
+            // Allow all components to receive theme props by default
+            props.darkMode = darkMode;
+            props.color = theme.primary;
+            
             // Special handling for specific pages
             if (view === 'dashboard') {
               props.t = t.dashboard;
@@ -1116,6 +1120,10 @@ const App: React.FC = () => {
               props.t = t.inventory;
               props.initialMode = 'add';
             }
+            
+            // Pass generic props including theme
+            props.darkMode = darkMode;
+            props.color = theme.primary;
             
             return <PageComponent {...props} />;
           })()}

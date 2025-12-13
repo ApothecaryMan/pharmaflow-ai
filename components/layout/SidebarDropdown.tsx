@@ -10,6 +10,7 @@ interface SidebarDropdownProps {
   theme: string;
   hideInactiveModules?: boolean;
   anchorEl: HTMLElement | null;
+  language: 'EN' | 'AR';
 }
 
 export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({

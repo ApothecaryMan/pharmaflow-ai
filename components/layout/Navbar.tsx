@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MenuItem } from '../../config/menuData';
+import { Avatar } from '@mui/material'; // Added Import
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { ThemeColor, Language } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
@@ -336,9 +337,19 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
             {profileImage ? (
               <img src={profileImage} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
             ) : (
-              <div className={`w-8 h-8 rounded-full bg-${theme}-100 dark:bg-${theme}-900/30 flex items-center justify-center text-${theme}-600 dark:text-${theme}-400 font-bold text-xs border border-${theme}-200 dark:border-${theme}-800`}>
-                JD
-              </div>
+                <Avatar 
+                    sx={{ 
+                        bgcolor: currentTheme.hex,
+                        width: 32, 
+                        height: 32,
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        color: 'white',
+                        border: '1px solid rgba(255,255,255,0.2)'
+                    }}
+                >
+                    JD
+                </Avatar>
             )}
             <div className="hidden md:flex flex-col items-start">
                 <span className="text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5">{t.profile.name}</span>
@@ -357,9 +368,19 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
                     {profileImage ? (
                        <img src={profileImage} alt="Profile" className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
                     ) : (
-                       <div className={`w-12 h-12 rounded-full bg-${theme}-100 dark:bg-${theme}-900/30 flex items-center justify-center text-${theme}-600 dark:text-${theme}-400 font-bold text-lg`}>
-                         JD
-                       </div>
+                       <Avatar 
+                            sx={{ 
+                                bgcolor: currentTheme.hex,
+                                width: 48, 
+                                height: 48,
+                                fontSize: '1.25rem',
+                                fontWeight: 'bold',
+                                color: 'white',
+                                border: '1px solid rgba(255,255,255,0.2)'
+                            }}
+                        >
+                            JD
+                        </Avatar>
                     )}
                     <button 
                       onClick={() => fileInputRef.current?.click()}
