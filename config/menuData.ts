@@ -1075,7 +1075,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         items: [
           { label: "POS v2", view: "test-pos-v2" },
           { label: "New Components", view: "test-components" },
-          { label: "UI Experiments", view: "test-ui" }
+          { label: "Dashboard Experiments", view: "dashboard-experiments" }
         ]
       },
       {

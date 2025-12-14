@@ -19,6 +19,7 @@ import { PendingApproval } from '../components/purchases/PendingApproval';
 import { CashRegister } from '../components/sales/CashRegister';
 import { ShiftHistory } from '../components/sales/ShiftHistory';
 import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
+import { DashboardExperiments } from '../components/experiments/DashboardExperiments';
 
 export interface PageConfig {
   id: string;
@@ -218,6 +219,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'تصميم الفاتورة',
     icon: 'brush', 
     category: 'sales',
+    requiredProps: ['color', 't', 'language']
+  },
+  'dashboard-experiments': {
+    id: 'dashboard-experiments',
+    component: DashboardExperiments,
+    menuLabel: 'Dashboard Experiments',
+    menuLabelAr: 'تجارب لوحة التحكم',
+    icon: 'science',
+    category: 'test',
     requiredProps: ['color', 't', 'language']
   }
 };

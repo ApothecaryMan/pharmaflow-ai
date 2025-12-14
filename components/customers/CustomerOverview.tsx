@@ -311,7 +311,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
             <ExpandButton onClick={() => setExpandedView('location')} />
           </div>
           {locationDistribution.length > 0 ? (
-            <ResponsiveContainer width="100%" height="85%">
+            <ResponsiveContainer width="100%" height="85%" className="mx-auto" style={{ direction: 'ltr' }}>
               <PieChart>
                 <Pie
                   data={locationDistribution.slice(0, 6)}
@@ -327,7 +327,24 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{payload[0].name}</p>
+                          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                            {payload[0].value}
+                            <span className="text-xs font-normal text-gray-500 ms-1">
+                              ({((payload[0].value as number / customers.length) * 100).toFixed(0)}%)
+                            </span>
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           ) : (

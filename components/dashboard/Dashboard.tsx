@@ -406,28 +406,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
               <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 type-expressive">{t.trend}</h3>
               <ExpandButton onClick={() => setExpandedView('salesChart')} />
           </div>
-          <ResponsiveContainer width="100%" height="90%">
-            <AreaChart data={salesData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={chartColors.main} stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor={chartColors.main} stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="strokeSales" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor={chartColors.start} stopOpacity={1}/>
-                  <stop offset="100%" stopColor={chartColors.end} stopOpacity={1}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} />
-              <Tooltip 
-                content={<CustomTooltip />}
-                cursor={{ stroke: chartColors.start, strokeWidth: 2 }}
-              />
-              <Area type="monotone" dataKey="sales" stroke="url(#strokeSales)" fillOpacity={1} fill="url(#colorSales)" strokeWidth={3} />
-            </AreaChart>
-          </ResponsiveContainer>
+          <div className="w-full h-[90%]" dir="ltr">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={salesData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={chartColors.main} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={chartColors.main} stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="strokeSales" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor={chartColors.start} stopOpacity={1}/>
+                    <stop offset="100%" stopColor={chartColors.end} stopOpacity={1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} />
+                <Tooltip 
+                  content={<CustomTooltip />}
+                  cursor={{ stroke: chartColors.start, strokeWidth: 2 }}
+                />
+                <Area type="monotone" dataKey="sales" stroke="url(#strokeSales)" fillOpacity={1} fill="url(#colorSales)" strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Top Selling Products (1 Col) */}
@@ -703,7 +705,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             </div>
           </div>
 
-          <div className="h-80">
+          <div className="h-80" dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={salesData}>
                 <defs>
@@ -1110,7 +1112,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         }
       >
         <div className="space-y-6">
-          <div className="h-96">
+          <div className="h-96" dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={salesData}>
                 <defs>
