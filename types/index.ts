@@ -19,6 +19,7 @@ export interface Drug {
   additionalBarcodes?: string[]; // Multiple barcodes support
   dosageForm?: string; // Tablet, Capsule, Syrup, etc.
   activeIngredients?: string[]; // For formula/composition
+  minStock?: number;
 }
 
 export interface Supplier {

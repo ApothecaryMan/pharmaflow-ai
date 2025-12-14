@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useExpandingDropdown } from '../../hooks/useExpandingDropdown';
 
 export interface PosDropdownProps<T> {
@@ -18,6 +18,7 @@ export interface PosDropdownProps<T> {
     minHeight?: string | number;
     style?: React.CSSProperties;
     disabled?: boolean;
+    centered?: boolean;
 }
 
 export function PosDropdown<T>({
@@ -36,7 +37,8 @@ export function PosDropdown<T>({
     variant = 'minimal',
     minHeight,
     style,
-    disabled = false
+    disabled = false,
+    centered = false
 }: PosDropdownProps<T>) {
     
     const containerRef = useRef<HTMLDivElement>(null);
@@ -75,7 +77,7 @@ export function PosDropdown<T>({
                 tabIndex={disabled ? -1 : 0}
                 onKeyDown={disabled ? undefined : handleKeyDown}
                 onBlur={handleBlur}
-                className={`absolute top-0 left-0 w-full flex flex-col overflow-hidden rounded-xl border transition-all outline-none
+                className={`absolute ${centered ? 'top-1/2 -translate-y-1/2' : 'top-0'} left-0 w-full flex flex-col overflow-hidden rounded-xl border transition-all outline-none
                     ${disabled ? 'cursor-not-allowed bg-gray-100 dark:bg-gray-800' : 'cursor-pointer'}
                     ${/* Base Style & Z-Index */ ''}
                     ${isOpen 

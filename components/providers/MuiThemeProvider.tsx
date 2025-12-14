@@ -72,6 +72,16 @@ export const MuiThemeProvider: React.FC<MuiThemeProviderProps> = ({
                         color: darkMode ? '#f3f4f6' : '#374151',
                         '& .MuiDataGrid-cell': {
                             borderBottom: darkMode ? '1px solid #374151' : '1px solid #f3f4f6', // gray-700 vs gray-100
+                            '&:focus': {
+                                outline: 'none !important',
+                            },
+                            '&:focus-within': {
+                                outline: 'none !important',
+                            },
+                            overflow: 'visible !important',
+                        },
+                        '& .MuiDataGrid-row': {
+                             overflow: 'visible !important',
                         },
                         '& .MuiDataGrid-columnHeaders': {
                             borderBottom: darkMode ? '1px solid #4b5563' : '1px solid #e5e7eb', // gray-600 vs gray-200

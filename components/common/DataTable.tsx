@@ -10,6 +10,7 @@ export interface Column<T> {
   align?: 'left' | 'center' | 'right';
   defaultWidth?: number;
   cellDir?: 'ltr' | 'rtl' | 'auto';
+  headerDir?: 'ltr' | 'rtl';
 }
 
 interface DataTableProps<T> {
@@ -79,13 +80,18 @@ export const DataTable = <T extends { id: string }>({
       const isLtrField = ['phone', 'contact', 'email', 'barcode', 'code', 'sku'].some(key => col.key.toLowerCase().includes(key));
       const direction = col.cellDir || (isLtrField ? 'ltr' : undefined);
 
+      const headerText = t.headers?.[col.key] || t.modal?.[col.key] || col.label;
+
       return {
         field: col.key,
-        headerName: t.headers?.[col.key] || t.modal?.[col.key] || col.label,
+        headerName: headerText,
         width: savedState?.width?.[col.key] || col.defaultWidth || 150,
         align: col.align || 'left',
         headerAlign: col.align || 'left',
         sortable: col.sortable ?? true,
+        renderHeader: col.headerDir ? (params) => (
+          <div style={{ direction: col.headerDir, textAlign: 'left', width: '100%', display: 'flex', alignItems: 'center' }}>{headerText}</div>
+        ) : undefined,
         renderCell: (params: GridRenderCellParams) => {
             const content = col.render ? col.render(params.row) : params.value;
             if (direction) {
@@ -194,7 +200,7 @@ export const DataTable = <T extends { id: string }>({
 
 
             // Persistence & Footer
-            hideFooter={hideFooter}
+            hideFooter={true}
             
             // State Persistence Handlers
             onColumnWidthChange={(params) => saveState({ width: { ...savedState?.width, [params.colDef.field]: params.colDef.width } })}
@@ -202,6 +208,9 @@ export const DataTable = <T extends { id: string }>({
             onSortModelChange={(model) => saveState({ sort: model })}
             
             initialState={{
+                pagination: {
+                    paginationModel: { pageSize: 100, page: 0 },
+                },
                 columns: {
                     columnVisibilityModel: savedState?.visibility || (defaultHiddenColumns ? 
                         defaultHiddenColumns.reduce((acc, col) => ({ ...acc, [col]: false }), {}) 

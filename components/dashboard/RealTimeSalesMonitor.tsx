@@ -359,10 +359,10 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* 1. Revenue Card */}
         <div 
             onClick={() => setExpandedView('revenue')}
-            className={`p-4 rounded-2xl bg-white dark:bg-gray-900 card-shadow flex items-center gap-4 cursor-pointer hover:border-${color}-300 transition-colors group relative`}
+            className={`p-4 rounded-2xl bg-white dark:bg-gray-900 card-shadow flex items-center gap-4 cursor-pointer hover:border-${color.name}-300 transition-colors group relative`}
         >
              <span className="material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2">open_in_full</span>
-          <div className={`text-${color}-600 dark:text-${color}-400`}>
+          <div className={`text-${color.name}-600 dark:text-${color.name}-400`}>
             <span className="material-symbols-rounded text-4xl">payments</span>
           </div>
           <div className="flex-1">
@@ -673,7 +673,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                      {topProducts.map((p, idx) => (
                          <div key={idx} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors group">
                              <div className="flex items-center gap-3 overflow-hidden">
-                                 <div className={`w-8 h-8 rounded-lg bg-${color}-50 dark:bg-${color}-900/20 text-${color}-600 dark:text-${color}-400 flex items-center justify-center font-bold text-xs shrink-0`}>
+                                 <div className={`w-8 h-8 rounded-lg bg-${color.name}-50 dark:bg-${color.name}-900/20 text-${color.name}-600 dark:text-${color.name}-400 flex items-center justify-center font-bold text-xs shrink-0`}>
                                      {idx + 1}
                                  </div>
                                  <div className="truncate">
@@ -927,8 +927,8 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       <ExpandedModal
         isOpen={expandedView === 'revenue'}
         onClose={() => setExpandedView(null)}
-        title={t.realTimeSales?.revenueBreakdown || "Revenue Analysis"}
-        color={color}
+        title={(t.realTimeSales?.revenueBreakdown || "Revenue Analysis") as string}
+        color={color.name}
         t={t}
       >
         <div className="space-y-6">
@@ -967,7 +967,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                                 content={({ active, payload, label }) => {
                                     if (active && payload && payload.length) {
                                         // Parse label "14:00" -> "2 PM"
-                                        const h = parseInt(label.split(':')[0]);
+                                        const h = parseInt(String(label).split(':')[0]);
                                         const ampm = h >= 12 ? 'PM' : 'AM';
                                         const hour12 = h % 12 || 12;
                                         const timeLabel = `${hour12} ${ampm}`;
@@ -1119,8 +1119,8 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       </ExpandedModal>
 
       {/* Help */}
-      <HelpButton onClick={() => setShowHelp(true)} title={helpContent.title} color={color} isRTL={isRTL} />
-      <HelpModal show={showHelp} onClose={() => setShowHelp(false)} helpContent={helpContent as any} color={color} language={language} />
+      <HelpButton onClick={() => setShowHelp(true)} title={helpContent.title} color={color.name} isRTL={isRTL} />
+      <HelpModal show={showHelp} onClose={() => setShowHelp(false)} helpContent={helpContent as any} color={color.name} language={language} />
     </div>
   );
 };

@@ -1558,7 +1558,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                               handleColumnDragStart(e, columnId);
                             }}
                             onTouchMove={(e) => {
-                                onHeaderTouchMoveHook();
+                                onHeaderTouchMoveHook(e);
                                 handleColumnTouchMove(e);
                             }}
                             onTouchEnd={(e) => {

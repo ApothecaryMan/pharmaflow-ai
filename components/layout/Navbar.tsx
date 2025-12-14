@@ -38,7 +38,7 @@ interface NavbarProps {
   setDeveloperMode?: (mode: boolean) => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = React.memo(({
+const NavbarComponent: React.FC<NavbarProps> = ({
   menuItems,
   activeModule,
   onModuleChange,
@@ -114,7 +114,6 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
       // Since SidebarDropdown is now fixed, clicks outside it should close.
       // The SidebarDropdown is rendered IN the specific button's conditional, so technically in React tree it is here.
       // BUT event.target might not be contained in dropdownRef if Fixed.
-      // Actually, since it is in React tree, event bubbling works. But `contains` check might fail if it is physically elsewhere? 
       // No, `contains` works on DOM nodes. Fixed element IS in DOM under the button.
       
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -564,4 +563,6 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
       </div>
     </nav>
   );
-});
+};
+
+export const Navbar = React.memo(NavbarComponent) as any;

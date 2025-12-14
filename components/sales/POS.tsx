@@ -24,9 +24,10 @@ interface POSProps {
   t: any;
   customers: Customer[];
   language?: Language;
+  darkMode: boolean; // Added
 }
 
-export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, customers, language = 'EN' }) => {
+export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, customers, language = 'EN', darkMode }) => {
   const { showMenu } = useContextMenu();
   
   // Multi-tab system
@@ -576,26 +577,37 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
     });
   }, [groupedDrugs, cart]);
 
-  const tableColumns = useMemo<Column<typeof tableData[0]>[]>(() => [
-    {
+  const tableColumns = useMemo<Column<typeof tableData[0]>[]>(() => {
+    const iconCol = {
       key: 'icon',
       label: '',
       sortable: false,
       defaultWidth: 60,
-      align: 'center',
-      render: (row) => (
+      align: 'center' as const,
+      render: (row: any) => (
          <div className={`w-8 h-8 rounded-lg bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 flex items-center justify-center`}>
             <span className="material-symbols-rounded text-[18px]">{getDrugIcon(row as unknown as Drug)}</span>
           </div>
       )
-    },
-    {
+    };
+
+    const barcodeCol = {
+      key: 'barcode',
+      label: t.code,
+      sortable: true,
+      defaultWidth: 140,
+      cellDir: language === 'AR' ? 'rtl' : 'ltr',
+      render: (row: any) => <span className="text-xs font-mono text-gray-600 dark:text-gray-400">{row.internalCode || row.barcode}</span>
+    };
+
+    const nameCol = {
       key: 'name',
       label: t.name,
       sortable: true,
       defaultWidth: 250,
-      cellDir: 'ltr',
-      render: (row) => (
+      headerDir: 'ltr' as const,
+      cellDir: language === 'AR' ? 'rtl' : 'ltr',
+      render: (row: any) => (
           <div className="flex flex-col w-full">
             <span className="font-bold text-sm text-gray-900 dark:text-gray-100 drug-name text-left truncate">
               {row.name} {row.dosageForm ? <span className="text-gray-500 font-normal">({row.dosageForm})</span> : ''}
@@ -603,50 +615,61 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
             <span className="text-xs text-gray-500 text-left truncate">{row.genericName}</span>
           </div>
       )
-    },
-    {
-      key: 'barcode',
-      label: t.code,
-      sortable: true,
-      defaultWidth: 140,
-      cellDir: 'ltr',
-      render: (row) => <span className="text-xs font-mono text-gray-600 dark:text-gray-400">{row.internalCode || row.barcode}</span>
-    },
-    {
+    };
+
+    const categoryCol = {
       key: 'category',
       label: t.category,
       sortable: true,
       defaultWidth: 120,
-      render: (row) => <span className="text-xs text-gray-600 dark:text-gray-400">{row.category}</span>
-    },
-    {
+      render: (row: any) => <span className="text-xs text-gray-600 dark:text-gray-400">{row.category}</span>
+    };
+
+    const priceCol = {
       key: 'price',
-      label: t.price,
+      label: t.price, // Header direction will be handled by custom renderHeader if possible, but here we can return a ReactNode for label? No, DataTable props might restrict. Let's try wrapping label if DataTable supports ReactNode for label or use cellDir for alignment.
+      // Actually, user wants HEADER LTR. DataTable maps label to headerName (string) usually. 
+      // If DataTable prop `columns` type is Column<T> where label is string, we might need to modify DataTable or just use English text which forces LTR visually? No, Arabic text needs LTR direction.
+      // Let's assume t.price returns string. If we want forced LTR alignment for header, we can use headerAlign: 'left'.
+      // If user means DIRECTION (dir=ltr), we might need a custom header renderer. 
+      // Current DataTable implementation uses `headerName: t.headers?.[...] || col.label`. DataGrid `headerName` is string.
+      // To force LTR direction on header text in DataGrid, we can use `renderHeader`. But DataTable doesn't start exposing that easily. 
+      // Let's try sticking LTR chars or just rely on `align: left`. 
+      // User said "Head of price and stock always LTR".
+      // Let's try to pass a ReactNode to label if `Column` type allowed it. 
+      // Looking at `DataTable.tsx`, `label` is `string`. 
+      // Use `align: 'left'` and `headerAlign: 'left'` for now.
       sortable: true,
       defaultWidth: 100,
-      cellDir: 'ltr',
-      render: (row) => <span className="font-bold text-sm text-gray-700 dark:text-gray-300 w-full text-start">${row.price.toFixed(2)}</span>
-    },
-    {
+      cellDir: 'ltr' as const,
+      align: 'left' as const, // Force left align for Price
+      render: (row: any) => <span className="font-bold text-sm text-gray-700 dark:text-gray-300 w-full text-start">${row.price.toFixed(2)}</span>
+    };
+
+    const stockCol = {
       key: 'stock',
       label: t.stock,
       sortable: true,
       defaultWidth: 100,
-      cellDir: 'ltr',
-      render: (row) => row.totalStock === 0 ? (
+      headerDir: 'ltr' as const,
+      cellDir: 'ltr' as const,
+      align: 'left' as const, // Force left align for Stock
+      render: (row: any) => row.totalStock === 0 ? (
           <span className="text-xs font-bold text-red-500 w-full text-start">{t.outOfStock}</span>
         ) : (
-          <span className="text-sm text-gray-700 dark:text-gray-300 w-full text-start">{parseFloat(row.totalStock.toFixed(2))}</span>
+          <span className="text-sm font-bold text-gray-700 dark:text-gray-300 w-full text-start">{parseFloat(row.totalStock.toFixed(2))}</span>
         )
-    },
-    {
+    };
+
+    const unitCol = {
         key: 'unit',
         label: t.unit,
         sortable: false,
         defaultWidth: 120,
-        align: 'center',
-        render: (row) => (
-            <div className="w-full flex justify-center overflow-visible">
+        headerDir: 'ltr' as const,
+        align: 'center' as const,
+        render: (row: any) => (
+            <div className="w-full h-full flex justify-center items-center overflow-visible">
             {row.unitsPerPack && row.unitsPerPack > 1 ? (
                 <PosDropdown 
                     items={['pack', 'unit']}
@@ -658,52 +681,54 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                     }}
                     onSelect={(item) => setSelectedUnits(prev => ({ ...prev, [row.id]: item as 'pack' | 'unit' }))}
                     keyExtractor={(item) => item as string}
-                    renderSelected={(item) => (
-                        <div className="w-full px-2 py-1 text-[11px] font-medium text-center text-gray-600 dark:text-gray-400">
-                             {(item as string) === 'pack' ? (t.pack || 'Pack') : (t.unit || 'Unit')}
-                        </div>
-                    )}
-                    renderItem={(item) => (
-                        <div className="w-full px-2 py-1 text-[11px] text-center text-gray-600 dark:text-gray-400">
-                            <span className="font-medium capitalize">{(item as string) === 'pack' ? (t.pack || 'Pack') : (t.unit || 'Unit')}</span>
-                        </div>
-                    )}
-                    onEnter={() => {
-                        addGroupToCart(row.group);
-                        setSearch('');
-                        setActiveIndex(0);
-                        searchInputRef.current?.focus();
-                    }}
-                    className="h-7 w-24 mx-auto"
+                    renderItem={(item) => item === 'pack' ? (t.pack || 'Pack') : (t.singleUnit || 'Unit')}
+                    renderSelected={(item) => item === 'pack' ? (t.pack || 'Pack') : (t.singleUnit || 'Unit')}
                     color={color}
+                    className="w-24 text-center"
+                    centered
                 />
-            ) : (
-              <span className="text-xs text-gray-400">-</span>
-            )}
+             ) : (
+                <span className="text-xs text-gray-400">
+                    {t.singleUnit || 'Unit'}
+                </span>
+             )}
             </div>
         )
-    },
-    {
+    };
+
+    const batchesCol = {
         key: 'batches',
         label: t.batches,
         sortable: false,
         defaultWidth: 150,
-        align: 'center',
-         render: (row) => {
+        align: 'center' as const,
+         render: (row: any) => {
+            if (!row.group || row.group.length === 0) return <span className="text-xs text-gray-400">-</span>;
+            
             const selectedBatchId = selectedBatches[row.id];
-            const defaultBatch = row.group.find(d => d.stock > 0) || row.group[0];
-            const currentBatch = selectedBatchId ? row.group.find(d => d.id === selectedBatchId) : defaultBatch;
-            const isOpen = openBatchDropdown === row.id;
-            const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-US', {month: '2-digit', year: '2-digit'});
+            const defaultBatch = row.group.find((d: Drug) => d.stock > 0) || row.group[0];
+            const displayBatch = selectedBatchId ? row.group.find((d: Drug) => d.id === selectedBatchId) : defaultBatch;
+
+            // If only one batch, show as text like Unit
+            if (row.group.length === 1) {
+                 const i = displayBatch;
+                 return (
+                    <div className="w-full flex justify-center items-center h-full">
+                        <div className="text-[11px] text-center text-gray-600 dark:text-gray-400">
+                            {i ? (i.expiryDate ? new Date(i.expiryDate).toLocaleDateString('en-US', {month: '2-digit', year: '2-digit'}) : '-') + ` • ${i.stock}` : t.noStock}
+                        </div>
+                    </div>
+                 );
+            }
 
             return (
-              <div className="w-full flex justify-center overflow-visible">
+              <div className="w-full h-full flex justify-center items-center overflow-visible">
               <PosDropdown 
                 items={row.group}
-                selectedItem={currentBatch}
-                isOpen={isOpen}
+                selectedItem={displayBatch}
+                isOpen={openBatchDropdown === row.id}
                 onToggle={() => {
-                    setOpenBatchDropdown(isOpen ? null : row.id);
+                    setOpenBatchDropdown(openBatchDropdown === row.id ? null : row.id);
                     setOpenUnitDropdown(null);
                 }}
                 onSelect={(item) => setSelectedBatches(prev => ({ ...prev, [row.id]: (item as Drug).id }))}
@@ -712,14 +737,14 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                     const i = item as Drug | undefined;
                     return (
                     <div className="w-full px-2 py-1 text-[11px] text-center truncate text-gray-600 dark:text-gray-400">
-                        {i ? `${formatDate(i.expiryDate)} • ${i.stock}` : t.noStock}
+                        {i ? (i.expiryDate ? new Date(i.expiryDate).toLocaleDateString('en-US', {month: '2-digit', year: '2-digit'}) : '-') + ` • ${i.stock}` : t.noStock}
                     </div>
                 )}}
                 renderItem={(item) => {
                     const i = item as Drug;
                     return (
                     <div className="w-full px-2 py-1 text-[11px] text-center text-gray-600 dark:text-gray-400">
-                        <span className="font-medium mr-1">{formatDate(i.expiryDate)}</span>
+                        <span className="font-medium mr-1">{i.expiryDate ? new Date(i.expiryDate).toLocaleDateString('en-US', {month: '2-digit', year: '2-digit'}) : '-'}</span>
                         <span className="opacity-70 text-[10px]">({i.stock})</span>
                     </div>
                 )}}
@@ -731,19 +756,19 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                 }}
                 className="h-7 w-32"
                 color={color}
-                transparentIfSingle={true}
               />
               </div>
             );
         }
-    },
-    {
+    };
+    
+    const cartCol = {
         key: 'inCart',
         label: t.inCart,
         sortable: false,
         defaultWidth: 80,
-        align: 'center',
-        render: (row) => (
+        align: 'center' as const,
+        render: (row: any) => (
           <div className="text-center w-full flex justify-center">
             {row.inCartCount > 0 && (
               <div className={`inline-block bg-${color}-600 text-white text-xs font-bold px-2 py-1 rounded-md`}>
@@ -752,8 +777,19 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
             )}
           </div>
         )
+    };
+
+    const commonCols = [categoryCol, priceCol, stockCol, unitCol, batchesCol, cartCol];
+
+    // RTL: Code -> Icon -> Name
+    // LTR: Icon -> Code -> Name
+    if (language === 'AR') {
+        return [barcodeCol, iconCol, nameCol, ...commonCols];
+    } else {
+        return [iconCol, barcodeCol, nameCol, ...commonCols];
     }
-  ], [t, color, openUnitDropdown, selectedUnits, openBatchDropdown, selectedBatches, cart, addGroupToCart, setSearch]);
+  }, [t, color, openUnitDropdown, selectedUnits, openBatchDropdown, selectedBatches, cart, addGroupToCart, setSearch, language]);
+
 
 
 
@@ -1086,7 +1122,6 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                 </p>
               </div>
             ) : (
-            <div className={`${CARD_MD} flex-1 overflow-hidden border border-gray-200 dark:border-gray-800`}>
               <DataTable
                   data={tableData}
                   columns={tableColumns}
@@ -1103,8 +1138,9 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                   hideFooter
                   t={t}
                   language={language as 'EN' | 'AR'}
+                  darkMode={darkMode}
+                  color={color}
               />
-            </div>
             )}
         </div>
       </div>
