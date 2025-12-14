@@ -1308,7 +1308,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                         {/* 1. Qty */}
                                         <div className="w-12">
                                             <FloatingInput
-                                                inputRef={(el) => (inputRefs.current[`${index}-quantity`] = el)}
+                                                inputRef={(el) => { inputRefs.current[`${index}-quantity`] = el; }}
                                                 onKeyDown={(e) => handleInputKeyDown(e, index, 'quantity')}
                                                 label={t.cartFields?.qty || 'Qty'}
                                                 type="number"
@@ -1325,7 +1325,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                         {/* 2. Expiry */}
                                         <div className="w-[74px]">
                                             <FloatingInput
-                                                inputRef={(el) => (inputRefs.current[`${index}-expiryDate`] = el)}
+                                                inputRef={(el) => { inputRefs.current[`${index}-expiryDate`] = el; }}
                                                 onKeyDown={(e) => handleInputKeyDown(e, index, 'expiryDate')}
                                                 label={t.cartFields?.expiry || 'Expiry'}
                                                 type="text"
@@ -1364,7 +1364,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                         {/* 3. Cost */}
                                         <div className="w-14">
                                             <FloatingInput
-                                                inputRef={(el) => (inputRefs.current[`${index}-costPrice`] = el)}
+                                                inputRef={(el) => { inputRefs.current[`${index}-costPrice`] = el; }}
                                                 onKeyDown={(e) => handleInputKeyDown(e, index, 'costPrice')}
                                                 label={t.cartFields?.cost || 'Cost'}
                                                 type="number"
@@ -1377,7 +1377,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                         {/* 4. Discount */}
                                         <div className="w-14">
                                             <FloatingInput
-                                                inputRef={(el) => (inputRefs.current[`${index}-discount`] = el)}
+                                                inputRef={(el) => { inputRefs.current[`${index}-discount`] = el; }}
                                                 onKeyDown={(e) => handleInputKeyDown(e, index, 'discount')}
                                                 label={t.cartFields?.discount || 'Disc %'}
                                                 type="number"
@@ -1392,7 +1392,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                         {/* 5. Sale Price */}
                                         <div className="w-14">
                                             <FloatingInput
-                                                inputRef={(el) => (inputRefs.current[`${index}-salePrice`] = el)}
+                                                inputRef={(el) => { inputRefs.current[`${index}-salePrice`] = el; }}
                                                 onKeyDown={(e) => handleInputKeyDown(e, index, 'salePrice')}
                                                 label={t.cartFields?.sale || 'Sale'}
                                                 type="number"
@@ -1405,7 +1405,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                         {/* 6. Tax % */}
                                         <div className="w-14">
                                             <FloatingInput
-                                                inputRef={(el) => (inputRefs.current[`${index}-tax`] = el)}
+                                                inputRef={(el) => { inputRefs.current[`${index}-tax`] = el; }}
                                                 onKeyDown={(e) => handleInputKeyDown(e, index, 'tax')}
                                                 label={t.cartFields?.tax || 'Tax %'}
                                                 type="number"

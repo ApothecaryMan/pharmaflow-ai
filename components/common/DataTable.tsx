@@ -27,6 +27,7 @@ interface DataTableProps<T> {
   darkMode?: boolean;
   defaultHiddenColumns?: string[];
   language?: 'EN' | 'AR';
+  hideFooter?: boolean;
 }
 
 export const DataTable = <T extends { id: string }>({
@@ -42,6 +43,7 @@ export const DataTable = <T extends { id: string }>({
   defaultHiddenColumns,
   storageKey,
   language = 'EN',
+  hideFooter = false,
   // New Props
   darkMode,
   color = 'blue'
@@ -192,7 +194,7 @@ export const DataTable = <T extends { id: string }>({
 
 
             // Persistence & Footer
-            hideFooter
+            hideFooter={hideFooter}
             
             // State Persistence Handlers
             onColumnWidthChange={(params) => saveState({ width: { ...savedState?.width, [params.colDef.field]: params.colDef.width } })}

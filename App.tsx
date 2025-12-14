@@ -589,6 +589,7 @@ const App: React.FC = () => {
     const newSale: Sale = {
       id: serialId,
       date: new Date().toISOString(),
+      status: 'completed',
       ...saleData
     };
     

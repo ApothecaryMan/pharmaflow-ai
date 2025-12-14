@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { useSmartDirection } from './SmartInputs';
 
 interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -11,7 +11,7 @@ interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: string; // Custom icon name (default: 'search')
 }
 
-export const SearchInput: React.FC<SearchInputProps> = ({
+export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
   value,
   onSearchChange,
   onClear,
@@ -20,7 +20,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   wrapperClassName = '',
   icon = 'search',
   ...props
-}) => {
+}, ref) => {
   const dir = useSmartDirection(value, placeholder);
 
   return (
@@ -29,6 +29,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         {icon}
       </span>
       <input
+        ref={ref}
         type="text"
         value={value}
         onChange={(e) => onSearchChange(e.target.value)}
@@ -46,4 +47,6 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       )}
     </div>
   );
-};
+});
+
+SearchInput.displayName = 'SearchInput';

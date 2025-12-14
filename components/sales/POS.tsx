@@ -6,13 +6,14 @@ import { Drug, CartItem, Customer, Language } from '../../types';
 import { useExpandingDropdown } from '../../hooks/useExpandingDropdown';
 import { getLocationName } from '../../data/locations';
 import { usePOSTabs } from '../../hooks/usePOSTabs';
-import { useColumnReorder } from '../../hooks/useColumnReorder';
+
 import { useLongPress } from '../../hooks/useLongPress';
 import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { TabBar } from '../layout/TabBar';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { PosDropdown, PosDropdownProps } from '../common/PosDropdown';
+import { DataTable, Column } from '../common/DataTable';
 import { CARD_MD, CARD_LG } from '../../utils/themeStyles';
 import { Modal } from '../common/Modal';
 
@@ -560,210 +561,102 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
 
   // Long Press Logic for Touch Devices
 
-  
-  const currentTouchItem = useRef<{drug: Drug, group: Drug[]} | null>(null);
-  const currentTouchHeader = useRef<React.TouchEvent | null>(null);
 
-  const { 
-    onTouchStart: onRowTouchStart, 
-    onTouchEnd: onRowTouchEnd, 
-    onTouchMove: onRowTouchMove, 
-    isLongPress: isRowLongPress 
-  } = useLongPress({
-    onLongPress: (e) => {
-        if (currentTouchItem.current) {
-            const { drug, group } = currentTouchItem.current;
-            const touch = e.touches[0];
-            showMenu(touch.clientX, touch.clientY, [
-                { label: t.addToCart, icon: 'add_shopping_cart', action: () => addGroupToCart(group) },
-                { label: t.viewDetails, icon: 'info', action: () => setViewingDrug(drug) },
-                { separator: true },
-                { label: t.actions.showSimilar, icon: 'category', action: () => setSelectedCategory(drug.category) }
-            ]);
-        }
-    }
-  });
-
-  const {
-    onTouchStart: onHeaderTouchStart,
-    onTouchEnd: onHeaderTouchEnd,
-    onTouchMove: onHeaderTouchMove,
-    isLongPress: isHeaderLongPress
-  } = useLongPress({
-      onLongPress: (e) => {
-        const touch = e.touches[0];
-        showMenu(touch.clientX, touch.clientY, [
-            { 
-              label: 'Show/Hide Columns', 
-              icon: 'visibility', 
-              action: () => {} 
-            },
-            { separator: true },
-            ...Object.keys(columns).map(colId => ({
-              label: columns[colId as keyof typeof columns].label || 'Icon',
-              icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
-              action: () => toggleColumnVisibility(colId)
-            }))
-        ]);
-      }
-  });
-
-  // Column Reorder Logic
-  const {
-    columnOrder,
-    hiddenColumns,
-    draggedColumn,
-    dragOverColumn,
-    toggleColumnVisibility,
-    handleColumnDragStart,
-    handleColumnDragOver,
-    handleColumnTouchMove,
-    handleColumnDrop,
-    handleColumnTouchEnd,
-    handleColumnDragEnd,
-  } = useColumnReorder({
-    defaultColumns: ['icon', 'name', 'barcode', 'category', 'price', 'stock', 'unit', 'batches', 'inCart'],
-    storageKey: 'pos_columns'
-  });
-
-  // --- Column Resize Logic ---
-  const [columnWidths, setColumnWidths] = useState<Record<string, number | undefined>>(() => {
-    if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('pos_column_widths');
-        if (saved) {
-            try { return JSON.parse(saved); } catch (e) { console.error('Failed to parse column widths', e); }
-        }
-    }
-    return {
-        icon: 48,
-        name: 220,
-        barcode: 140,
-        category: 120,
-        price: 80,
-        stock: 80,
-        unit: 110,
-        batches: 140,
-        inCart: 80
-    };
-  });
-
-  useEffect(() => {
-    localStorage.setItem('pos_column_widths', JSON.stringify(columnWidths));
-  }, [columnWidths]);
-
-  const [isColumnResizing, setIsColumnResizing] = useState(false); // Track if resizing is active
-  
-  const resizingColumn = useRef<string | null>(null);
-  const startX = useRef<number>(0);
-  const startWidth = useRef<number>(0);
-
-  const startColumnResize = (e: React.MouseEvent, columnId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsColumnResizing(true); // Disable D&D
-    resizingColumn.current = columnId;
-    startX.current = e.pageX;
-    startWidth.current = columnWidths[columnId] || 100;
-    
-    document.addEventListener('mousemove', handleColumnResizeMove);
-    document.addEventListener('mouseup', endColumnResize);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  };
-
-  const handleColumnResizeMove = useCallback((e: MouseEvent) => {
-    if (!resizingColumn.current) return;
-    // Use requestAnimationFrame for smoother updates if needed, but direct state update is usually fine for this React version
-    const diff = e.pageX - startX.current;
-    const newWidth = Math.max(50, startWidth.current + diff);
-    setColumnWidths(prev => ({ ...prev, [resizingColumn.current!]: newWidth }));
-  }, []);
-
-  const endColumnResize = useCallback(() => {
-    setIsColumnResizing(false); // Re-enable D&D
-    resizingColumn.current = null;
-    document.removeEventListener('mousemove', handleColumnResizeMove);
-    document.removeEventListener('mouseup', endColumnResize);
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-  }, [handleColumnResizeMove]);
-  
-  // Clean up listener on unmount
-  useEffect(() => {
-      return () => {
-        document.removeEventListener('mousemove', handleColumnResizeMove);
-        document.removeEventListener('mouseup', endColumnResize);
+  // --- DataTable Configuration ---
+  const tableData = useMemo(() => {
+    return groupedDrugs.map(group => {
+      const first = group[0];
+      return {
+        id: first.id, 
+        ...first, 
+        group: group,
+        totalStock: group.reduce((sum, d) => sum + d.stock, 0),
+        inCartCount: group.reduce((sum, d) => sum + (cart.find(c => c.id === d.id)?.quantity || 0), 0)
       };
-  }, [endColumnResize, handleColumnResizeMove]);
+    });
+  }, [groupedDrugs, cart]);
 
-  const handleAutoFit = (e: React.MouseEvent, columnId: string) => {
-      e.stopPropagation();
-      setColumnWidths(prev => {
-          const next = { ...prev };
-          delete next[columnId];
-          return next;
-      });
-  };
-
-  const columns = {
-    icon: { label: '', className: 'px-3 py-2 text-start' },
-    name: { label: t.name, className: 'px-3 py-2 text-start' },
-    barcode: { label: t.code, className: 'px-3 py-2 text-start' },
-    category: { label: t.category, className: 'px-3 py-2 text-start' },
-    price: { label: t.price, className: 'px-3 py-2 text-start' },
-    stock: { label: t.stock, className: 'px-3 py-2 text-start' },
-    unit: { label: t.unit, className: 'px-3 py-2 text-center' },
-    batches: { label: t.batches, className: 'px-3 py-2 text-start' },
-    inCart: { label: t.inCart, className: 'px-3 py-2 text-center' }
-  };
-
-
-
-  const renderCellContent = (drug: Drug, group: Drug[], columnId: string) => {
-    const totalStock = group.reduce((sum, d) => sum + d.stock, 0);
-    const inCartTotal = group.reduce((sum, d) => sum + (cart.find(c => c.id === d.id)?.quantity || 0), 0);
-
-    switch (columnId) {
-      case 'icon':
-        return (
-          <div className={`w-8 h-8 rounded-lg bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 flex items-center justify-center`}>
-            <span className="material-symbols-rounded text-[18px]">{getDrugIcon(drug)}</span>
+  const tableColumns = useMemo<Column<typeof tableData[0]>[]>(() => [
+    {
+      key: 'icon',
+      label: '',
+      sortable: false,
+      defaultWidth: 60,
+      align: 'center',
+      render: (row) => (
+         <div className={`w-8 h-8 rounded-lg bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 flex items-center justify-center`}>
+            <span className="material-symbols-rounded text-[18px]">{getDrugIcon(row as unknown as Drug)}</span>
           </div>
-        );
-      case 'name':
-        return (
-          <div className="flex flex-col" dir="ltr">
-            <span className="font-bold text-sm text-gray-900 dark:text-gray-100 drug-name text-left">
-              {drug.name} {drug.dosageForm ? <span className="text-gray-500 font-normal">({drug.dosageForm})</span> : ''}
+      )
+    },
+    {
+      key: 'name',
+      label: t.name,
+      sortable: true,
+      defaultWidth: 250,
+      cellDir: 'ltr',
+      render: (row) => (
+          <div className="flex flex-col w-full">
+            <span className="font-bold text-sm text-gray-900 dark:text-gray-100 drug-name text-left truncate">
+              {row.name} {row.dosageForm ? <span className="text-gray-500 font-normal">({row.dosageForm})</span> : ''}
             </span>
-            <span className="text-xs text-gray-500 text-left">{drug.genericName}</span>
+            <span className="text-xs text-gray-500 text-left truncate">{row.genericName}</span>
           </div>
-        );
-      case 'barcode':
-        return <span className="text-xs font-mono text-gray-600 dark:text-gray-400">{drug.internalCode || drug.barcode}</span>;
-      case 'category':
-        return <span className="text-xs text-gray-600 dark:text-gray-400">{drug.category}</span>;
-      case 'price':
-        return <span className="font-bold text-sm text-gray-700 dark:text-gray-300">${drug.price.toFixed(2)}</span>;
-      case 'stock':
-        return totalStock === 0 ? (
-          <span className="text-xs font-bold text-red-500">{t.outOfStock}</span>
+      )
+    },
+    {
+      key: 'barcode',
+      label: t.code,
+      sortable: true,
+      defaultWidth: 140,
+      cellDir: 'ltr',
+      render: (row) => <span className="text-xs font-mono text-gray-600 dark:text-gray-400">{row.internalCode || row.barcode}</span>
+    },
+    {
+      key: 'category',
+      label: t.category,
+      sortable: true,
+      defaultWidth: 120,
+      render: (row) => <span className="text-xs text-gray-600 dark:text-gray-400">{row.category}</span>
+    },
+    {
+      key: 'price',
+      label: t.price,
+      sortable: true,
+      defaultWidth: 100,
+      cellDir: 'ltr',
+      render: (row) => <span className="font-bold text-sm text-gray-700 dark:text-gray-300 w-full text-start">${row.price.toFixed(2)}</span>
+    },
+    {
+      key: 'stock',
+      label: t.stock,
+      sortable: true,
+      defaultWidth: 100,
+      cellDir: 'ltr',
+      render: (row) => row.totalStock === 0 ? (
+          <span className="text-xs font-bold text-red-500 w-full text-start">{t.outOfStock}</span>
         ) : (
-          <span className="text-sm text-gray-700 dark:text-gray-300">{parseFloat(totalStock.toFixed(2))}</span>
-        );
-      case 'unit':
-        return (
-          <div className="text-center">
-            {drug.unitsPerPack && drug.unitsPerPack > 1 ? (
+          <span className="text-sm text-gray-700 dark:text-gray-300 w-full text-start">{parseFloat(row.totalStock.toFixed(2))}</span>
+        )
+    },
+    {
+        key: 'unit',
+        label: t.unit,
+        sortable: false,
+        defaultWidth: 120,
+        align: 'center',
+        render: (row) => (
+            <div className="w-full flex justify-center overflow-visible">
+            {row.unitsPerPack && row.unitsPerPack > 1 ? (
                 <PosDropdown 
                     items={['pack', 'unit']}
-                    selectedItem={(selectedUnits[drug.id] || 'pack')}
-                    isOpen={openUnitDropdown === drug.id}
+                    selectedItem={(selectedUnits[row.id] || 'pack')}
+                    isOpen={openUnitDropdown === row.id}
                     onToggle={() => {
-                        setOpenUnitDropdown(openUnitDropdown === drug.id ? null : drug.id);
+                        setOpenUnitDropdown(openUnitDropdown === row.id ? null : row.id);
                         setOpenBatchDropdown(null);
                     }}
-                    onSelect={(item) => setSelectedUnits(prev => ({ ...prev, [drug.id]: item as 'pack' | 'unit' }))}
+                    onSelect={(item) => setSelectedUnits(prev => ({ ...prev, [row.id]: item as 'pack' | 'unit' }))}
                     keyExtractor={(item) => item as string}
                     renderSelected={(item) => (
                         <div className="w-full px-2 py-1 text-[11px] font-medium text-center text-gray-600 dark:text-gray-400">
@@ -776,7 +669,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                         </div>
                     )}
                     onEnter={() => {
-                        addGroupToCart(group);
+                        addGroupToCart(row.group);
                         setSearch('');
                         setActiveIndex(0);
                         searchInputRef.current?.focus();
@@ -787,72 +680,80 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
             ) : (
               <span className="text-xs text-gray-400">-</span>
             )}
-          </div>
-        );
-      case 'batches':
-        // Find currently selected batch or default (FEFO)
-        const selectedBatchId = selectedBatches[drug.id];
-        const defaultBatch = group.find(d => d.stock > 0) || group[0];
-        const currentBatch = selectedBatchId ? group.find(d => d.id === selectedBatchId) : defaultBatch;
-        
-        const isOpen = openBatchDropdown === drug.id;
-        
-        // Format date helper
-        const formatDate = (dateStr: string) => {
-            return new Date(dateStr).toLocaleDateString('en-US', {month: '2-digit', year: '2-digit'});
-        };
+            </div>
+        )
+    },
+    {
+        key: 'batches',
+        label: t.batches,
+        sortable: false,
+        defaultWidth: 150,
+        align: 'center',
+         render: (row) => {
+            const selectedBatchId = selectedBatches[row.id];
+            const defaultBatch = row.group.find(d => d.stock > 0) || row.group[0];
+            const currentBatch = selectedBatchId ? row.group.find(d => d.id === selectedBatchId) : defaultBatch;
+            const isOpen = openBatchDropdown === row.id;
+            const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-US', {month: '2-digit', year: '2-digit'});
 
-        return (
-          <PosDropdown 
-            items={group}
-            selectedItem={currentBatch}
-            isOpen={isOpen}
-            onToggle={() => {
-                setOpenBatchDropdown(isOpen ? null : drug.id);
-                setOpenUnitDropdown(null);
-            }}
-            onSelect={(item) => setSelectedBatches(prev => ({ ...prev, [drug.id]: (item as Drug).id }))}
-            keyExtractor={(item) => (item as Drug).id}
-            renderSelected={(item) => {
-                const i = item as Drug | undefined;
-                return (
-                <div className="w-full px-2 py-1 text-[11px] text-center truncate text-gray-600 dark:text-gray-400">
-                    {i ? `${formatDate(i.expiryDate)} • ${i.stock}` : t.noStock}
-                </div>
-            )}}
-            renderItem={(item) => {
-                const i = item as Drug;
-                return (
-                <div className="w-full px-2 py-1 text-[11px] text-center text-gray-600 dark:text-gray-400">
-                    <span className="font-medium mr-1">{formatDate(i.expiryDate)}</span>
-                    <span className="opacity-70 text-[10px]">({i.stock})</span>
-                </div>
-            )}}
-            onEnter={() => {
-                addGroupToCart(group);
-                setSearch('');
-                setActiveIndex(0);
-                searchInputRef.current?.focus();
-            }}
-            className="h-7 w-32"
-            color={color}
-            transparentIfSingle={true}
-          />
-        );
-      case 'inCart':
-        return (
-          <div className="text-center">
-            {inCartTotal > 0 && (
+            return (
+              <div className="w-full flex justify-center overflow-visible">
+              <PosDropdown 
+                items={row.group}
+                selectedItem={currentBatch}
+                isOpen={isOpen}
+                onToggle={() => {
+                    setOpenBatchDropdown(isOpen ? null : row.id);
+                    setOpenUnitDropdown(null);
+                }}
+                onSelect={(item) => setSelectedBatches(prev => ({ ...prev, [row.id]: (item as Drug).id }))}
+                keyExtractor={(item) => (item as Drug).id}
+                renderSelected={(item) => {
+                    const i = item as Drug | undefined;
+                    return (
+                    <div className="w-full px-2 py-1 text-[11px] text-center truncate text-gray-600 dark:text-gray-400">
+                        {i ? `${formatDate(i.expiryDate)} • ${i.stock}` : t.noStock}
+                    </div>
+                )}}
+                renderItem={(item) => {
+                    const i = item as Drug;
+                    return (
+                    <div className="w-full px-2 py-1 text-[11px] text-center text-gray-600 dark:text-gray-400">
+                        <span className="font-medium mr-1">{formatDate(i.expiryDate)}</span>
+                        <span className="opacity-70 text-[10px]">({i.stock})</span>
+                    </div>
+                )}}
+                onEnter={() => {
+                    addGroupToCart(row.group);
+                    setSearch('');
+                    setActiveIndex(0);
+                    searchInputRef.current?.focus();
+                }}
+                className="h-7 w-32"
+                color={color}
+                transparentIfSingle={true}
+              />
+              </div>
+            );
+        }
+    },
+    {
+        key: 'inCart',
+        label: t.inCart,
+        sortable: false,
+        defaultWidth: 80,
+        align: 'center',
+        render: (row) => (
+          <div className="text-center w-full flex justify-center">
+            {row.inCartCount > 0 && (
               <div className={`inline-block bg-${color}-600 text-white text-xs font-bold px-2 py-1 rounded-md`}>
-                {inCartTotal}
+                {row.inCartCount}
               </div>
             )}
           </div>
-        );
-      default:
-        return null;
+        )
     }
-  };
+  ], [t, color, openUnitDropdown, selectedUnits, openBatchDropdown, selectedBatches, cart, addGroupToCart, setSearch]);
 
 
 
@@ -1185,130 +1086,24 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                 </p>
               </div>
             ) : (
-            <div className={`${CARD_MD} flex-1 overflow-auto border border-gray-200 dark:border-gray-800`}>
-              <table className="w-full min-w-full table-fixed border-collapse">
-                <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>
-                  <tr>
-                    {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
-                      <th
-                        key={columnId}
-                        data-column-id={columnId}
-                        className={`${columns[columnId as keyof typeof columns].className} ${!isColumnResizing ? 'cursor-grab active:cursor-grabbing' : ''} select-none transition-colors relative group/header hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                          draggedColumn === columnId ? 'opacity-50' : ''
-                        } ${dragOverColumn === columnId ? `bg-${color}-100 dark:bg-${color}-900/50` : ''}`}
-                        title={columns[columnId as keyof typeof columns].label}
-                        dir={columnId === 'name' ? 'ltr' : undefined}
-                        draggable={!isColumnResizing}
-                        onDragStart={(e) => {
-                          // Only allow dragging if NOT resizing
-                          if ((e.target as HTMLElement).closest('.resize-handle')) {
-                              e.preventDefault();
-                              return;
-                          }
-                          handleColumnDragStart(e, columnId);
-                        }}
-                        onDragOver={(e) => handleColumnDragOver(e, columnId)}
-                        onDrop={(e) => handleColumnDrop(e, columnId)}
-                        onDragEnd={handleColumnDragEnd}
-                        onTouchStart={(e) => {
-                          if ((e.target as HTMLElement).closest('.resize-handle')) return;
-                          e.stopPropagation();
-                          onHeaderTouchStart(e);
-                          handleColumnDragStart(e, columnId);
-                        }}
-                        onTouchMove={(e) => {
-                            onHeaderTouchMove();
-                            handleColumnTouchMove(e);
-                        }}
-                        onTouchEnd={(e) => {
-                            onHeaderTouchEnd();
-                            handleColumnTouchEnd(e);
-                        }}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          showMenu(e.clientX, e.clientY, [
-                            { 
-                              label: 'Show/Hide Columns', 
-                              icon: 'visibility', 
-                              action: () => {} 
-                            },
-                            { separator: true },
-                            ...Object.keys(columns).map(colId => ({
-                              label: columns[colId as keyof typeof columns].label || 'Icon',
-                              icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
-                              action: () => toggleColumnVisibility(colId)
-                            }))
-                          ]);
-                        }}
-                        style={{ width: columnWidths[columnId] ? `${columnWidths[columnId]}px` : 'auto' }}
-                      >
-                       <div className="flex items-center justify-between h-full w-full">
-                        <span className="truncate flex-1">{columns[columnId as keyof typeof columns].label}</span>
-                        
-                        {/* Resize Handle / Separator */}
-                        <div 
-                            className="resize-handle absolute right-0 top-1/2 -translate-y-1/2 h-4 w-4 cursor-col-resize z-20 flex items-center justify-center opacity-0 group-hover/header:opacity-100 transition-opacity"
-                            style={{ right: '-8px' }}
-                            onMouseDown={(e) => startColumnResize(e, columnId)}
-                            onClick={(e) => e.stopPropagation()}
-                            onDoubleClick={(e) => handleAutoFit(e, columnId)}
-                        >
-                             {/* Hit area only, no visual line */}
-                        </div>
-                       </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {groupedDrugs.slice(0, 100).map((group, index) => {
-                    const drug = group[0];
-                    const totalStock = group.reduce((sum, d) => sum + d.stock, 0);
-                    
-                    return (
-                      <tr 
-                        key={drug.id}
-                        onClick={(e) => {
-                            if (isRowLongPress.current) {
-                                isRowLongPress.current = false;
-                                return;
-                            }
-                            addGroupToCart(group);
-                        }}
-                        onTouchStart={(e) => {
-                            currentTouchItem.current = { drug, group };
-                            onRowTouchStart(e);
-                        }}
-                        onTouchEnd={onRowTouchEnd}
-                        onTouchMove={onRowTouchMove}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          showMenu(e.clientX, e.clientY, [
-                            { label: t.addToCart, icon: 'add_shopping_cart', action: () => addGroupToCart(group) },
-                            { label: t.viewDetails, icon: 'info', action: () => setViewingDrug(drug) },
-                            { separator: true },
-                            { label: t.copyName, icon: 'content_copy', action: () => navigator.clipboard.writeText(drug.name) },
-                            { label: t.actions.showSimilar, icon: 'category', action: () => setSelectedCategory(drug.category) }
-                          ]);
-                        }}
-                        className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${totalStock === 0 ? 'opacity-50' : ''} ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''}`}
-                      >
-                        {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
-                          <td 
-                            key={columnId} 
-                            className="px-3 py-2"
-                            style={{ width: columnWidths[columnId] ? `${columnWidths[columnId]}px` : 'auto' }}
-                          >
-                            {renderCellContent(drug, group, columnId)}
-                          </td>
-                        ))}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className={`${CARD_MD} flex-1 overflow-hidden border border-gray-200 dark:border-gray-800`}>
+              <DataTable
+                  data={tableData}
+                  columns={tableColumns}
+                  onRowClick={(item: typeof tableData[0]) => addGroupToCart(item.group)}
+                  onRowLongPress={(e, item: typeof tableData[0]) => {
+                      showMenu(e.touches[0].clientX, e.touches[0].clientY, [
+                        { label: t.addToCart, icon: 'add_shopping_cart', action: () => addGroupToCart(item.group) },
+                        { label: t.viewDetails, icon: 'info', action: () => setViewingDrug(item.group[0]) }, // item is the row object, contains group[0] props and group array
+                        { separator: true },
+                        { label: t.actions.showSimilar, icon: 'category', action: () => setSelectedCategory(item.category) }
+                      ]);
+                  }}
+                  storageKey="pos_products_table"
+                  hideFooter
+                  t={t}
+                  language={language as 'EN' | 'AR'}
+              />
             </div>
             )}
         </div>

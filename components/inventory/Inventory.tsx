@@ -587,7 +587,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                         handleColumnTouchMove(e);
                     }}
                     onTouchEnd={(e) => {
-                        onHeaderTouchEnd(e);
+                        onHeaderTouchEnd();
                         handleColumnTouchEnd(e);
                     }}
                     onContextMenu={(e) => {

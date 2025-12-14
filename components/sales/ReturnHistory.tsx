@@ -76,8 +76,8 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
             
             <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-1 rounded-full border border-gray-200 dark:border-gray-700">
                 <DatePicker
-                    value={startDate}
-                    onChange={setStartDate}
+                    value={startDate ? startDate.toISOString().split('T')[0] : ''}
+                    onChange={(val) => setStartDate(val ? new Date(val) : null)}
                     label={t.dateFrom || "From"}
                     color={color}
                     icon="calendar_today"
@@ -88,8 +88,8 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
                     <span className="material-symbols-rounded text-[16px]">arrow_forward</span>
                 </span>
                 <DatePicker
-                    value={endDate}
-                    onChange={setEndDate}
+                    value={endDate ? endDate.toISOString().split('T')[0] : ''}
+                    onChange={(val) => setEndDate(val ? new Date(val) : null)}
                     label={t.dateTo || "To"}
                     color={color}
                     icon="event"

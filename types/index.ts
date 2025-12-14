@@ -102,6 +102,7 @@ export interface Sale {
   returnIds?: string[];
   netTotal?: number; // Total after returns
   itemReturnedQuantities?: Record<string, number>; // drugId -> quantity returned
+  status: 'completed' | 'cancelled' | 'pending';
 }
 
 // Return/Refund System Types
@@ -124,6 +125,7 @@ export interface ReturnItem {
   refundAmount: number;
   reason?: ReturnReason;
   condition: 'sellable' | 'damaged' | 'expired'; // Item condition
+  dosageForm?: string;
 }
 
 export interface Return {
