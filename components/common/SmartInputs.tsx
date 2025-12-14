@@ -116,16 +116,18 @@ interface SmartInputProps extends InputHTMLAttributes<HTMLInputElement> {
  * - Phone Numbers (Use `SmartPhoneInput`)
  * - Numeric Codes/Barcodes (Use standard `<input dir="ltr" />`)
  */
-export const SmartInput: React.FC<SmartInputProps> = ({ value, className, ...props }) => {
+export const SmartInput: React.FC<SmartInputProps> = ({ value, className, placeholder, ...props }) => {
   // We cast value to string to keep useSmartDirection happy, 
   // though it handles non-string types gracefully if they are falsy.
   // If value is undefined, it defaults to LTR.
-  const dir = useSmartDirection(typeof value === 'string' ? value : String(value || ''));
+  // Now also passes placeholder so empty inputs with Arabic placeholders show RTL
+  const dir = useSmartDirection(typeof value === 'string' ? value : String(value || ''), placeholder);
 
   return (
     <input
       {...props}
       value={value}
+      placeholder={placeholder}
       dir={dir} // Calculated direction takes precedence, but props.dir would be overridden here.
       className={className}
     />

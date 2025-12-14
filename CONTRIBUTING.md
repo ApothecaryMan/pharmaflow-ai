@@ -1,188 +1,127 @@
 # Contributing to PharmaFlow AI
 
-## � Project Structure
+## 📂 Project Structure
 
 ```
 pharmaflow-ai/
 ├── components/
-│   ├── common/         # Shared UI (Toast, DatePicker, HelpModal, etc.)
+│   ├── common/         # Shared UI (SmartInputs, PosDropdown, Modal, etc.)
 │   ├── layout/         # Navigation (Navbar, Sidebar, TabBar)
-│   ├── dashboard/      # Dashboard pages
-│   ├── sales/          # POS, SalesHistory, CashRegister
-│   ├── inventory/      # Inventory, BarcodeStudio
-│   ├── purchases/      # Purchases, Suppliers
-│   ├── customers/      # CustomerManagement
-│   └── ai/             # AI Assistant
-├── services/           # Backend service layer
-│   ├── api/            # API client (mock/real)
-│   ├── inventory/      # Inventory CRUD
-│   ├── sales/          # Sales transactions
-│   ├── customers/      # Customer management
-│   ├── purchases/      # Purchase orders
-│   └── ...
-├── config/             # menuData.ts, pageRegistry.ts
-├── i18n/               # translations.ts, menuTranslations.ts, helpInstructions.ts
+│   ├── dashboard/      # Dashboard widgets and views
+│   ├── sales/          # POS, SalesHistory, InvoiceDesigner
+│   ├── inventory/      # Inventory management, BarcodeStudio
+│   ├── purchases/      # Purchase orders, suppliers
+│   ├── customers/      # Customer directory
+│   └── ai/             # AI Assistant features
+├── services/           # Backend Service Layer (Business Logic)
+│   ├── api/            # API simulation
+│   ├── inventory/      # Inventory CRUD logic
+│   ├── sales/          # Sales calculation logic
+│   └── DataContext.tsx # (Beta) Future State Provider
+├── config/             # Configuration (menuData.ts, pageRegistry.ts)
+├── i18n/               # Internationalization (translations.ts, menuTranslations.ts)
 ├── hooks/              # Custom React hooks
-├── utils/              # Utility functions
-└── types/              # TypeScript types
+└── types/              # TypeScript definitions
 ```
+
+---
+
+## 🏗️ Architecture & Data Flow
+
+### 1. State Management (Current)
+Currently, **`App.tsx`** acts as the central store for the application.
+*   **State**: Held in `App.tsx` (`inventory`, `sales`, `customers`, etc.).
+*   **Access**: Data is passed down to pages via **Props** defined in `config/pageRegistry.ts`.
+*   **Updates**: Handler functions (e.g., `onAddDrug`, `onCompleteSale`) are passed down as props.
+
+### 2. Service Layer
+While state is in `App.tsx`, complex business logic and data persistence should be handled by **Services** (`services/*`).
+*   **Do not** write complex calculations inside UI components. Move them to services.
+*   **Do not** access `localStorage` directly in components.
 
 ---
 
 ## 🚨 Mandatory Standards
 
-### Mandatory Internationalization (i18n)
+### 1. Internationalization (i18n)
 
 **RULE:** All user-facing text MUST be internationalized.
 **AR (Arabic) translation is MANDATORY for every new key.**
 
-#### Translation Files Location
-```
-i18n/
-├── translations.ts       # Main UI text (buttons, labels, messages)
-├── menuTranslations.ts   # Sidebar/navigation menu items
-└── helpInstructions.ts   # Help modal content
-```
+#### Files
+*   `i18n/translations.ts`: General UI text.
+*   `i18n/menuTranslations.ts`: Sidebar & Menu items.
 
-#### How to Add Translations
+#### Forbidden ❌
+*   Hardcoded English string: `<div>Total</div>`
+*   String concatenation: `"Hello " + name`
 
-```typescript
-// ✅ CORRECT - In i18n/translations.ts
-export const TRANSLATIONS = {
-  EN: {
-    myNewFeature: {
-      title: "New Feature",
-      description: "This is a new feature"
-    }
-  },
-  AR: {
-    myNewFeature: {
-      title: "ميزة جديدة",
-      description: "هذه ميزة جديدة"
-    }
-  }
-};
-
-// ✅ Usage in component
-const t = TRANSLATIONS[language];
-<h1>{t.myNewFeature.title}</h1>
-```
-
-#### FORBIDDEN
-- ❌ Hardcoded English: `<span>Hello</span>`
-- ❌ Adding EN key without AR: `EN: { key: "..." }` without `AR: { key: "..." }`
-- ❌ Using template literals for user text: `` `Hello ${name}` ``
-
-#### What MUST Be Translated
-
-**ALL user-facing text including:**
-- ✅ **Page titles and subtitles**
-- ✅ **Button labels** (Save, Cancel, Delete, Confirm, etc.)
-- ✅ **Form labels** (Name, Email, Phone, Address, etc.)
-- ✅ **Input placeholders** (Search..., Enter name..., etc.) - **CRITICAL**
-- ✅ **Modal/Dialog titles and content** (Confirm Delete?, Are you sure?, etc.)
-- ✅ **Window titles** (Edit Supplier, Purchase Order Details, etc.)
-- ✅ **Table headers** (ID, Name, Date, Total, Action, etc.)
-- ✅ **Status labels** (Pending, Completed, Rejected, Active, etc.)
-- ✅ **Badges & Tags** (New, VIP, Urgent, etc.)
-- ✅ **Empty states** (No results found, All caught up!, etc.)
-- ✅ **Error/Success messages** (Saved successfully, Please fill required fields, etc.)
-- ✅ **Tooltips and help text**
-- ✅ **Context menu items** (View Details, Edit, Delete, Copy, etc.)
-- ✅ **Subpage content** (History views, Details panels, Settings pages, etc.)
-- ✅ **Filter/Sort options** (All, In Stock, Out of Stock, etc.)
-- ✅ **Date/Time labels** (From, To, Date, Time, etc.)
-- ✅ **Navigation breadcrumbs**
-- ✅ **Tab labels**
-- ✅ **Alert/Notification text**
-
-**In summary: If a user can see it, it MUST be translated.**
-
-#### Exceptions (NO translation needed)
-- IDs, UUIDs, Database Keys
-- URLs / Links
-- Medical codes (e.g., NDC, ICD-10)
-- Console.log / Debug messages
-- Email addresses, Phone numbers
+#### Required ✅
+*   Use `props.t` (translation object) passed from parent.
+*   All Input placeholders, Table headers, Button labels.
 
 ---
 
-### Dropdown/Combobox Components
+### 2. UI/UX & Design
 
-**RULE:** All dropdown/combobox implementations MUST use:
-- ✅ `PosDropdown` from `components/common/PosDropdown.tsx`
-- ✅ `useExpandingDropdown` from `hooks/useExpandingDropdown.ts`
+**Goal:** "Premium, Modern, & Dynamic."
+All UI elements must look professional. Avoid basic browser defaults.
 
-**FORBIDDEN:**
-- ❌ Native HTML `<select>` or `<option>` elements
-- ❌ Custom dropdown implementations
+#### Standard Components
+*   **Input Fields**: MUST use `SmartInputs` family to handle LTR/RTL automatically.
+    *   `SmartInput`: Standard text.
+    *   `SmartPhoneInput`: Formatting & validation for phones.
+    *   `SmartEmailInput`: Email validation.
+    *   `SmartDateInput`: Date picker.
+*   **Dropdowns**: MUST use `PosDropdown` (or `useExpandingDropdown` hook). Never use HTML `<select>`.
+*   **Search**: Use `SearchInput` component.
+*   **Modals**: Use `Modal` component (handles z-index & backdrop correctly).
+
+#### Styling Rules
+*   **Close Buttons**: Standardize style → `p-2 hover:bg-black/5 rounded-full transition-colors`.
+*   **Icon Boxes**: Use consistent padding/rounded corners.
+*   **Colors**: Use semantic colors from `index.css` or Tailwind classes.
 
 ---
 
-### Input Fields
+## 🛠️ Workflow: Adding a New Page
 
-**RULE:** For free-text input fields:
-- ✅ Use `SmartInput` from `components/common/SmartInput.tsx`
-- OR ✅ Use `useSmartDirection` hook
-
-**EXCEPTIONS (Force LTR):** Email, Phone, IDs, URLs, Passwords
-
----
-
-### Service Layer
-
-**RULE:** Data operations should use the service layer.
-- ✅ Import from `services/index.ts`
-- ✅ Use async/await patterns
-
-```typescript
-import { salesService, inventoryService } from './services';
-
-// ✅ CORRECT
-const sales = await salesService.getToday();
-await inventoryService.updateStock(id, -5);
-```
+1.  **Create Component**: Build your page in `components/[module]/MyPage.tsx`.
+    *   Ensure it accepts `color`, `t`, `language`, and data props (e.g., `inventory`).
+2.  **Register Page**: Add it to `config/pageRegistry.ts`.
+    ```typescript
+    export const PAGE_REGISTRY = {
+      'my-new-page': {
+         id: 'my-new-page',
+         component: MyPage,
+         requiredProps: ['inventory', 'onAddDrug'], // Define data needs here
+         // ...
+      }
+    };
+    ```
+    *   *Note: `App.tsx` will automatically inject the props listed in `requiredProps`.*
+3.  **Update Menu**: Add entry to `config/menuData.ts`.
+4.  **Add Translations**: Update `i18n/menuTranslations.ts` and `i18n/translations.ts`.
 
 ---
 
 ## 📝 Code Review Checklist
 
-Before submitting a PR, ensure:
-- [ ] No native `<select>` or `<option>` elements
-- [ ] All dropdowns use `PosDropdown`
-- [ ] All translations have EN + AR
-- [ ] TypeScript compiles: `npx tsc --noEmit`
-- [ ] Components are in correct directory
+Before submitting:
+- [ ] **Inputs**: Using `SmartInputs`? (No raw `<input>`)
+- [ ] **Dropdowns**: Using `PosDropdown`?
+- [ ] **Translations**: 100% covered (EN + AR)?
+- [ ] **RTL Support**: Tested in Arabic mode?
+- [ ] **Props**: Component receives data via props (not importing globals)?
+- [ ] **Type Safety**: No `any` types?
 
 ---
 
-## 🔍 Pre-commit Checks
+## 📚 Reference
 
-```bash
-npm run lint          # ESLint
-npx tsc --noEmit      # TypeScript
-npm run build         # Build verification
-```
+*   **SmartInputs**: See `components/common/SmartInputs.tsx` for docs.
+*   **Services**: See `services/` for business logic.
+*   **Page Registry**: See `config/pageRegistry.ts` for props injection configuration.
 
 ---
-
-## 🎯 Best Practices
-
-1. **File Location:** Place components in appropriate module folder
-2. **Services:** Use service layer for data operations
-3. **Imports:** Use barrel exports (`index.ts`)
-4. **Consistency:** Follow existing patterns
-5. **Types:** Always provide proper TypeScript types
-
----
-
-## 📚 Resources
-
-- [Dropdown Guide](docs/dropdown-usage.md)
-- [Components](components/)
-- [Services](services/)
-- [Types](types/index.ts)
-
----
-
-**Thank you for contributing to PharmaFlow AI!** 🎉
+**Build something amazing!** 🚀

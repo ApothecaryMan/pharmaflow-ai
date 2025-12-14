@@ -185,7 +185,19 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
   };
 
   const handlePrint = (sale: Sale) => {
-    printInvoice(sale, { language: language as 'EN' | 'AR' });
+    // Load saved template options from localStorage
+    let savedOptions = {};
+    try {
+      const saved = localStorage.getItem('invoice_template_options');
+      if (saved) {
+        savedOptions = JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to load saved receipt options', e);
+    }
+    
+    // Merge saved options with current language
+    printInvoice(sale, { ...savedOptions, language: language as 'EN' | 'AR' });
   };
 
   // Direct thermal print (ESC/POS)

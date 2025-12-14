@@ -742,9 +742,14 @@ export const MENU_TRANSLATIONS = {
     'POS v2': 'نقطة البيع v2',
     'New Components': 'مكونات جديدة',
     'UI Experiments': 'تجارب الواجهة',
+    "Receipt Designer": "مصمم الفاتورة",
     'Data Context Test': 'اختبار سياق البيانات',
     'Service Layer Test': 'اختبار طبقة الخدمات',
     'Theme Preview': 'معاينة السمة',
+
+    // New Items
+    'Design': 'تصميم',
+    'Receipt Design': 'تصميم الفاتورة',
 
     // Missing Items Added from menuData.ts
     // Dashboard & General

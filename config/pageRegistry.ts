@@ -18,6 +18,7 @@ import { InventoryManagement } from '../components/inventory/InventoryManagement
 import { PendingApproval } from '../components/purchases/PendingApproval';
 import { CashRegister } from '../components/sales/CashRegister';
 import { ShiftHistory } from '../components/sales/ShiftHistory';
+import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
 
 export interface PageConfig {
   id: string;
@@ -209,6 +210,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'inventory',
     category: 'inventory',
     requiredProps: ['inventory', 'onUpdateInventory', 'color', 't']
+  },
+  'receipt-designer': {
+    id: 'receipt-designer',
+    component: ReceiptDesigner,
+    menuLabel: 'Receipt Design',
+    menuLabelAr: 'تصميم الفاتورة',
+    icon: 'brush', 
+    category: 'sales',
+    requiredProps: ['color', 't', 'language']
   }
 };
 

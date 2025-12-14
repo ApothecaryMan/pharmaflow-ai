@@ -16,8 +16,24 @@ export interface InvoiceTemplateOptions {
   footerMessage?: string;
   /** Footer inquiry message */
   footerInquiry?: string;
+  /** Address Line 1 */
+  headerAddress?: string;
+  /** Address Line 2 (Area/City) */
+  headerArea?: string;
+  /** Hotline Number */
+  headerHotline?: string;
+  /** Terms & Conditions Text */
+  termsCondition?: string;
   /** Language for the receipt */
   language?: 'EN' | 'AR';
+  /** Base64-encoded logo image (PNG/SVG) */
+  logoBase64?: string;
+  /** Raw SVG markup for inline logo */
+  logoSvgCode?: string;
+  /** Font family for receipt text */
+  receiptFont?: 'courier' | 'receipt-basic';
+  /** Show border box around delivery address */
+  showAddressBox?: boolean;
 }
 
 const defaultOptions: InvoiceTemplateOptions = {
@@ -39,31 +55,50 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
   const lang = opts.language || 'EN';
   const isRTL = lang === 'AR';
   
-  const headerDetails = {
+  // Default fallbacks if keys are missing but allow empty string if explicitly set?
+  // We use || which means empty string falls back to default. 
+  // If user wants completely empty, they might need a way, but simple || is safer for now.
+  const defaults = {
     EN: {
-      name: 'PharmaFlow Pharmacy',
       address: '123 Rasena',
       area: 'Nasr City',
-      hotline: '19099'
+      hotline: '19099',
+      terms: `Refrigerated medicines, cosmetics & strips are non-refundable<br>Medicines & devices refundable within 14 days<br>30-day warranty on devices`
     },
     AR: {
-      name: 'صيدلية فارما فلو',
       address: '١٢٣ رسينا',
       area: 'مدينة نصر',
-      hotline: '19099'
+      hotline: '19099',
+      terms: `ادوية التلاجة ومستحضرات التجميل وشرايط الدواء لا ترجع<br>استرجاع الادوية والاجهزة السليمة خلال 14 يوم<br>ضمان 30 يوم على الاجهزة`
     }
   };
 
-  const currentHeader = headerDetails[lang];
+  const currentDefaults = defaults[lang];
 
   return `
     <!DOCTYPE html>
     <html dir="ltr">
     <head>
       <title>Receipt #${sale.id}</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Handjet:wght@700&display=swap" rel="stylesheet">
       <style>
-        /* Import Fake Receipt font */
-        @import url('https://fonts.cdnfonts.com/css/fake-receipt');
+        /* Local Font Declarations */
+        @font-face {
+          font-family: 'Fake Receipt';
+          src: url('/fonts/fake-receipt.woff') format('woff');
+          font-weight: normal;
+          font-style: normal;
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'Receiptional Receipt';
+          src: url('/fonts/receiptional-receipt.ttf') format('truetype');
+          font-weight: normal;
+          font-style: normal;
+          font-display: swap;
+        }
         
         /* 79mm Thermal Receipt - ~280px at 72dpi */
         @page { 
@@ -72,10 +107,10 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-          font-family: 'Fake Receipt', 'Courier New', Courier, monospace; 
-          font-size: 11px;
+          font-family: ${opts.receiptFont === 'receipt-basic' ? "'Receiptional Receipt', 'Handjet', Arial, sans-serif" : "'Fake Receipt', 'Handjet', Arial, sans-serif"}; 
+          font-size: ${opts.receiptFont === 'receipt-basic' ? '10px' : '11px'};
           font-weight: normal;
-          line-height: 1.3;
+          line-height: ${opts.receiptFont === 'receipt-basic' ? '1.5' : '1.3'};
           padding: 8px; 
           color: #000; 
           width: 79mm;
@@ -84,16 +119,21 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
           background: white; 
         }
         
+        /* Arabic text specific styling */
+        [dir="rtl"], *[dir="rtl"] {
+          font-size: 1.1em; /* Make Arabic slightly larger */
+        }
+        
         .header { text-align: center; margin-bottom: 10px; }
         .store-logo { width: 80px; height: auto; margin: 0 auto 5px auto; display: block; }
-        .store-name { margin-bottom: 2px; }
-        .store-info { margin-bottom: 2px; }
+        .store-name { margin-bottom: 2px; font-weight: bold; font-size: 14px; }
+        .store-info { margin-bottom: 2px; font-size: 10px; }
         .hotline { margin-top: 2px; }
         
         .divider { border-top: 1px dashed #000; margin: 5px 0; border-bottom: none; }
         .info-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
         
-        .customer-section { border: 1px dashed #000; padding: 4px; border-radius: 4px; margin: 5px 0; }
+        .customer-section { ${opts.showAddressBox !== false ? 'border: 1px dashed #000; padding: 4px; border-radius: 4px;' : ''} margin: 5px 0; }
         .customer-detail { margin-bottom: 2px; }
         
         table { width: 100%; border-collapse: collapse; margin: 5px 0; }
@@ -120,11 +160,17 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
     </head>
     <body>
       <div class="header">
-        <img src="/logo_outline.svg" alt="Logo" class="store-logo" />
-        <div class="store-name">${currentHeader.name}</div>
-        <div class="store-info" dir="auto">${currentHeader.address}</div>
-        <div class="store-info" dir="auto">${currentHeader.area}</div>
-        <div class="hotline" dir="ltr">${currentHeader.hotline}</div>
+        ${opts.logoSvgCode 
+          ? `<div class="store-logo" style="width: 40mm; max-height: 15mm; overflow: hidden; margin: 0 auto 5px auto;">${opts.logoSvgCode}</div>` 
+          : opts.logoBase64 
+            ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" style="width: 40mm; max-height: 15mm; object-fit: contain;" />`
+            : `<img src="/logo_outline.svg" alt="Logo" class="store-logo" />`
+        }
+        <div class="store-name">${opts.storeName || (lang === 'AR' ? 'صيدلية فارما فلو' : 'PharmaFlow Pharmacy')}</div>
+        <div class="store-info">${opts.storeSubtitle || (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>
+        <div class="store-info" dir="auto">${opts.headerAddress ?? currentDefaults.address}</div>
+        <div class="store-info" dir="auto">${opts.headerArea ?? currentDefaults.area}</div>
+        <div class="hotline" dir="ltr">${opts.headerHotline ?? currentDefaults.hotline}</div>
       </div>
       
       <hr class="divider">
@@ -146,8 +192,8 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
       ${sale.saleType === 'delivery' && (sale.customerPhone || sale.customerAddress || sale.customerStreetAddress) ? `
       <div class="customer-section" style="text-align: center; margin: 4px 0;">
         ${sale.customerPhone ? `<div class="customer-detail" dir="ltr" style="unicode-bidi: embed;">Tel: ${sale.customerPhone}</div>` : ''}
-        ${sale.customerAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerAddress}</div>` : ''}
-        ${sale.customerStreetAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerStreetAddress}</div>` : ''}
+        ${sale.customerAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerAddress.replace(/\n/g, '<br>')}</div>` : ''}
+        ${sale.customerStreetAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerStreetAddress.replace(/\n/g, '<br>')}</div>` : ''}
       </div>
       ` : ''}
       <hr class="divider">
@@ -201,48 +247,35 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
           <span>PAYMENT (${(sale.paymentMethod || 'CASH').toUpperCase()})</span>
           <span>${sale.total.toFixed(2)}</span>
         </div>
-        <div class="total-row final" style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 4px 0; margin: 4px 0;">
+        <div class="total-row" style="border-top: 1px dashed #000; padding-top: 5px; margin-top: 2px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
           <span>TOTAL</span>
           <span>${sale.total.toFixed(2)}</span>
         </div>
         ${(sale.hasReturns || (sale.netTotal !== undefined && sale.netTotal < sale.total)) ? `
         <div style="margin-top: 8px; padding-top: 4px;">
-          ${sale.returnDetails && sale.returnDetails.length > 0 ? 
-            sale.returnDetails.map((returnOp, index) => {
-              const dateObj = new Date(returnOp.date);
-              const formattedDate = dateObj.toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit', year: 'numeric'});
-              const formattedTime = dateObj.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: true}).toLowerCase();
-              const showDateHeader = sale.returnDetails!.length > 1;
-              return `
-              ${showDateHeader ? `<div style="text-align: center; margin: 8px 0 4px 0;">↩ RETURNS ${formattedTime} - ${formattedDate}</div>` : `<div style="text-align: center; margin-bottom: 4px;">↩ RETURNS</div>`}
-              ${returnOp.items.map(item => `
-              <div class="total-row" style="color: #c00;">
-                <span>↩ ${item.name} (${item.quantity})</span>
-                <span>-${item.refundAmount.toFixed(2)}</span>
-              </div>
-              `).join('')}
-              `;
-            }).join('')
-            : `
-            <div style="text-align: center; margin-bottom: 4px;">↩ RETURNS</div>
-            ${sale.items.filter(item => sale.itemReturnedQuantities && sale.itemReturnedQuantities[item.id] > 0).map(item => {
-              const returnedQty = sale.itemReturnedQuantities![item.id] || 0;
+          <div style="text-align: center; margin-bottom: 4px;">↩ RETURNS</div>
+          ${sale.itemReturnedQuantities ? Object.entries(sale.itemReturnedQuantities)
+            .filter(([_, qty]) => qty > 0)
+            .map(([lineKey, qty]) => {
+              // lineKey can be "drugId_index" or just "drugId"
+              const parts = lineKey.split('_');
+              const drugId = parts[0];
+              const index = parts.length > 1 ? parseInt(parts[1]) : 0;
+              const item = sale.items.find((it, idx) => it.id === drugId && (parts.length > 1 ? idx === index : true));
+              if (!item) return '';
               const effectivePrice = (item.isUnit && item.unitsPerPack) ? item.price / item.unitsPerPack : item.price;
-              const discountedPrice = effectivePrice * (1 - (item.discount || 0) / 100);
-              const returnAmount = returnedQty * discountedPrice;
+              const returnedAmount = effectivePrice * qty * (1 - (item.discount || 0) / 100);
               return `
-              <div class="total-row" style="color: #c00;">
-                <span>↩ ${item.name} (${returnedQty})</span>
-                <span>-${returnAmount.toFixed(2)}</span>
-              </div>`;
-            }).join('')}
-            `
-          }
-          <div class="total-row" style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #000;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: #666; margin: 2px 0;">
+            <span>${item.name} x${qty}</span>
+            <span>-${returnedAmount.toFixed(2)}</span>
+          </div>`;
+            }).join('') : ''}
+          <div class="total-row" style="border-top: 1px dashed #000; padding-top: 5px; margin-top: 4px;">
             <span>RETURNED TOTAL</span>
             <span>-${(sale.total - (sale.netTotal ?? sale.total)).toFixed(2)}</span>
           </div>
-          <div class="total-row final" style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 4px 0; margin: 4px 0;">
+          <div class="total-row" style="border-top: 1px dashed #000; padding-top: 5px; margin-top: 2px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
             <span>NET TOTAL</span>
             <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
           </div>
@@ -251,24 +284,22 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
       </div>
       
       <div style="text-align: center; margin: 10px 0 8px 0; line-height: 1.5;">
-        ${lang === 'AR' ? `
-        <p style="margin: 2px 0;" dir="rtl">ادوية التلاجة ومستحضرات التجميل وشرايط الدواء لا ترجع</p>
-        <p style="margin: 2px 0;" dir="rtl">استرجاع الادوية والاجهزة السليمة خلال 14 يوم</p>
-        <p style="margin: 2px 0;" dir="rtl">ضمان 30 يوم على الاجهزة</p>
-        ` : `
-        <p style="margin: 2px 0;">Refrigerated medicines, cosmetics & strips are non-refundable</p>
-        <p style="margin: 2px 0;">Medicines & devices refundable within 14 days</p>
-        <p style="margin: 2px 0;">30-day warranty on devices</p>
-        `}
+         ${opts.footerInquiry 
+           ? `<p style="margin: 2px 0;">${opts.footerInquiry}</p>`
+           : ''}
+         <div style="margin-top: 4px;">
+           ${opts.termsCondition ?? currentDefaults.terms}
+         </div>
       </div>
       
-      <div class="footer" style="margin-top: 6px; margin-bottom: 6px; line-height: 1.2;">
-        <p style="margin: 2px 0;">THANKS FOR CHOOSING ${opts.storeName?.toUpperCase()}</p>
-        <p style="margin: 2px 0;">WE HOPE TO SEE YOU AGAIN SOON!!!</p>
-        <p style="margin: 2px 0;">TRN ${sale.id.slice(-5).toUpperCase()}</p>
+      <div class="footer">
+        ${opts.footerMessage 
+          ? `<p style="margin: 2px 0;">${opts.footerMessage}</p>`
+          : `<p style="margin: 2px 0;">THANKS FOR CHOOSING ${opts.storeName || 'US'}</p>`
+        }
       </div>
       
-      <div class="barcode-section" style="margin-top: 4px;">
+      <div class="barcode-section">
         <svg id="barcode"></svg>
       </div>
 
@@ -284,7 +315,8 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
             fontSize: 12,
             margin: 5
           });
-          setTimeout(() => window.print(), 500);
+          const isPrint = window.location.search.includes('print=true');
+          if (isPrint) setTimeout(() => window.print(), 500);
         }
       </script>
     </body>

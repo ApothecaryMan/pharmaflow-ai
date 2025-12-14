@@ -395,6 +395,13 @@ export const PHARMACY_MENU: MenuItem[] = [
           "Process Return",
           { label: "Return History", view: "return-history" }
         ]
+      },
+      {
+        id: "sales-design",
+        label: "Design",
+        items: [
+          { label: "Receipt Design", view: "receipt-designer" }
+        ]
       }
     ]
   },
