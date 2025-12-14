@@ -517,6 +517,7 @@ export const TRANSLATIONS = {
       paste: 'Paste',
       clear: 'Clear',
       deliveryOrder: 'Delivery Order',
+      noOpenShift: 'Open a shift before completing sales',
       switchToPack: 'Switch to Pack',
       switchToUnit: 'Switch to Unit',
       removeItem: 'Remove Item',
@@ -716,6 +717,9 @@ export const TRANSLATIONS = {
         processing: 'Processing return...',
         totalItems: 'Total Items',
         itemsSelected: 'items selected',
+        selectAll: 'Select All',
+        deselectAll: 'Deselect All',
+        noItemsAvailable: 'All items have been returned',
         validation: {
           noOpenShift: 'Cannot process return - no open shift',
           insufficientBalance: 'Return amount exceeds available sales balance'
@@ -1674,6 +1678,7 @@ export const TRANSLATIONS = {
       paste: 'لصق',
       clear: 'مسح',
       deliveryOrder: 'طلب توصيل',
+      noOpenShift: 'افتح وردية قبل إتمام البيع',
       switchToPack: 'تبديل إلى عبوة',
       switchToUnit: 'تبديل إلى وحدة',
       removeItem: 'إزالة الصنف',
@@ -1770,6 +1775,9 @@ export const TRANSLATIONS = {
         processing: 'جاري معالجة الإرجاع...',
         totalItems: 'إجمالي العناصر',
         itemsSelected: 'عناصر محددة',
+        selectAll: 'تحديد الكل',
+        deselectAll: 'إلغاء التحديد',
+        noItemsAvailable: 'تم إرجاع جميع العناصر',
         validation: {
           noOpenShift: 'لا يمكن معالجة المرتجع - لا توجد وردية مفتوحة',
           insufficientBalance: 'مبلغ المرتجع يتجاوز رصيد المبيعات المتاح'

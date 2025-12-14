@@ -30,10 +30,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
   useEffect(() => {
     const savedShifts = localStorage.getItem('pharma_shifts');
     if (savedShifts) {
-      // Migrate old shifts: ensure cardSales exists
+      // Migrate old shifts: ensure cardSales and returns exist
       const parsedShifts: Shift[] = JSON.parse(savedShifts).map((s: any) => ({
         ...s,
-        cardSales: s.cardSales ?? 0
+        cardSales: s.cardSales ?? 0,
+        returns: s.returns ?? 0
       }));
       setShifts(parsedShifts);
       // Find active open shift
@@ -66,9 +67,10 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
   }, [shifts, isLoading]);
 
   // Current balance calculation
+  // Expected balance = opening + sales + deposits - withdrawals - returns
   const currentBalance = useMemo(() => {
     if (!currentShift) return 0;
-    return currentShift.openingBalance + currentShift.cashSales + currentShift.cashIn - currentShift.cashOut;
+    return currentShift.openingBalance + currentShift.cashSales + currentShift.cashIn - currentShift.cashOut - (currentShift.returns || 0);
   }, [currentShift]);
 
   // Actions
@@ -95,6 +97,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       cashOut: 0,
       cashSales: 0,
       cardSales: 0,
+      returns: 0,  // Initialize returns counter
       transactions: [{
         id: Date.now().toString() + '-init',
         shiftId: Date.now().toString(),

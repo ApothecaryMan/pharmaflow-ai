@@ -80,9 +80,49 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
 
   // --- STATS ---
   const lowStockItems = useMemo(() => inventory.filter(d => d.stock <= 10), [inventory]);
-  const totalRevenue = useMemo(() => sales.reduce((sum, sale) => sum + sale.total, 0), [sales]);
+  
+  // Use netTotal for sales with returns, fallback to total
+  const totalRevenue = useMemo(() => sales.reduce((sum, sale) => sum + (sale.netTotal ?? sale.total), 0), [sales]);
+  
+  // Calculate total returns amount
+  const totalReturns = useMemo(() => sales.reduce((sum, sale) => {
+    if (sale.hasReturns && sale.netTotal !== undefined) {
+      return sum + (sale.total - sale.netTotal);
+    }
+    return sum;
+  }, 0), [sales]);
+  
   const totalExpenses = useMemo(() => purchases.reduce((sum, p) => sum + p.totalCost, 0), [purchases]);
-  const netProfit = totalRevenue - totalExpenses;
+  
+  // Calculate actual gross profit (revenue - cost of goods sold)
+  const grossProfit = useMemo(() => {
+    let totalCost = 0;
+    sales.forEach(sale => {
+      sale.items.forEach((item, idx) => {
+        // Find the drug in inventory to get cost price
+        const drug = inventory.find(d => d.id === item.id);
+        const costPrice = drug?.costPrice || 0;
+        
+        // Get returned quantity using lineKey pattern
+        const lineKey = `${item.id}_${idx}`;
+        const returnedQty = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
+        const actualQty = item.quantity - returnedQty;
+        
+        if (actualQty > 0) {
+          // Handle unit pricing
+          let effectiveCost = costPrice;
+          if (item.isUnit && item.unitsPerPack) {
+            effectiveCost = costPrice / item.unitsPerPack;
+          }
+          totalCost += effectiveCost * actualQty;
+        }
+      });
+    });
+    return totalRevenue - totalCost;
+  }, [sales, inventory, totalRevenue]);
+  
+  // Net profit = Gross profit - Operating expenses (purchases)
+  const netProfit = grossProfit - totalExpenses;
 
   // --- CHART DATA (Sales by Date) ---
   const salesData = useMemo(() => {
@@ -98,12 +138,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
     }, []).slice(-7);
   }, [sales]);
 
-  // --- TOP SELLING PRODUCTS ---
+  // --- TOP SELLING PRODUCTS (accounting for returns) ---
   const topSelling = useMemo(() => {
     const productSales: Record<string, number> = {};
     sales.forEach(sale => {
-      sale.items.forEach(item => {
-        productSales[item.name] = (productSales[item.name] || 0) + item.quantity;
+      sale.items.forEach((item, idx) => {
+        // Subtract returned quantities
+        const lineKey = `${item.id}_${idx}`;
+        const returnedQty = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
+        const actualQty = item.quantity - returnedQty;
+        
+        if (actualQty > 0) {
+          productSales[item.name] = (productSales[item.name] || 0) + actualQty;
+        }
       });
     });
     return Object.entries(productSales)
@@ -115,12 +162,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
   const topSelling20 = useMemo(() => {
     const productSales: Record<string, { qty: number, revenue: number }> = {};
     sales.forEach(sale => {
-      sale.items.forEach(item => {
-        if (!productSales[item.name]) {
-          productSales[item.name] = { qty: 0, revenue: 0 };
+      sale.items.forEach((item, idx) => {
+        // Subtract returned quantities
+        const lineKey = `${item.id}_${idx}`;
+        const returnedQty = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
+        const actualQty = item.quantity - returnedQty;
+        
+        if (actualQty > 0) {
+          if (!productSales[item.name]) {
+            productSales[item.name] = { qty: 0, revenue: 0 };
+          }
+          productSales[item.name].qty += actualQty;
+          
+          // Calculate effective price for units
+          let effectivePrice = item.price;
+          if (item.isUnit && item.unitsPerPack) {
+            effectivePrice = item.price / item.unitsPerPack;
+          }
+          productSales[item.name].revenue += effectivePrice * actualQty;
         }
-        productSales[item.name].qty += item.quantity;
-        productSales[item.name].revenue += item.price * item.quantity;
       });
     });
     return Object.entries(productSales)
@@ -143,15 +203,41 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
   }, [inventory]);
 
-  // --- RECENT TRANSACTIONS ---
+  // --- RECENT TRANSACTIONS (exclude fully returned orders) ---
   const recentSales = useMemo(() => {
     return [...sales]
+      .filter(sale => {
+        // If netTotal is 0, it's definitely fully returned
+        if ((sale.netTotal ?? sale.total) === 0) return false;
+        
+        // If it has returns, check if ALL items were returned (even if delivery fee remains)
+        if (sale.hasReturns && sale.itemReturnedQuantities) {
+           const totalItemsQty = sale.items.reduce((sum, item) => sum + item.quantity, 0);
+           const totalReturnedQty = Object.values(sale.itemReturnedQuantities).reduce((sum, qty) => sum + qty, 0);
+           
+           // If all items returned, exclude from list (even if delivery fee exists)
+           if (totalReturnedQty >= totalItemsQty) return false;
+        }
+        
+        return true;
+      })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5);
   }, [sales]);
 
   const recentSales20 = useMemo(() => {
     return [...sales]
+      .filter(sale => {
+        if ((sale.netTotal ?? sale.total) === 0) return false;
+        
+        if (sale.hasReturns && sale.itemReturnedQuantities) {
+           const totalItemsQty = sale.items.reduce((sum, item) => sum + item.quantity, 0);
+           const totalReturnedQty = Object.values(sale.itemReturnedQuantities).reduce((sum, qty) => sum + qty, 0);
+           if (totalReturnedQty >= totalItemsQty) return false;
+        }
+        
+        return true;
+      })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 20);
   }, [sales]);
@@ -485,8 +571,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                                 </div>
                             </div>
                             <div className="text-end">
-                                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">${sale.total.toFixed(2)}</p>
-                                <p className="text-xs text-gray-500">{sale.items.length} {t.items || "items"}</p>
+                                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                                  ${(sale.netTotal ?? sale.total).toFixed(2)}
+                                </p>
+                                <p className="text-xs text-gray-500 flex items-center justify-end gap-1">
+                                  {sale.hasReturns && (() => {
+                                    // Calculate total returned items
+                                    let totalReturned = 0;
+                                    sale.items.forEach((item, idx) => {
+                                      const lineKey = `${item.id}_${idx}`;
+                                      totalReturned += sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
+                                    });
+                                    const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
+                                    return (
+                                      <span className="text-orange-500 flex items-center gap-0.5">
+                                        <span className="material-symbols-rounded text-[12px]">keyboard_return</span>
+                                        <span className="text-[10px]">({totalReturned}/{totalItems})</span>
+                                      </span>
+                                    );
+                                  })()}
+                                  {sale.items.length} {t.items || "items"}
+                                </p>
                             </div>
                         </div>
                     ))
@@ -939,19 +1044,47 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                     </div>
                   </div>
                   <div className="text-end">
-                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">${sale.total.toFixed(2)}</p>
-                    <p className="text-xs text-gray-500">{sale.items.length} {t.items || "items"}</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                      ${(sale.netTotal ?? sale.total).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-gray-500 flex items-center justify-end gap-1">
+                      {sale.hasReturns && (() => {
+                        let totalReturned = 0;
+                        sale.items.forEach((item, idx) => {
+                          const lineKey = `${item.id}_${idx}`;
+                          totalReturned += sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
+                        });
+                        const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
+                        return (
+                          <span className="text-orange-500 flex items-center gap-0.5">
+                            <span className="material-symbols-rounded text-[12px]">keyboard_return</span>
+                            <span className="text-[10px]">({totalReturned}/{totalItems})</span>
+                          </span>
+                        );
+                      })()}
+                      {sale.items.length} {t.items || "items"}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                   <p className="text-xs font-bold text-gray-500 uppercase mb-2">{t.expand?.transactionDetails || 'Items'}</p>
                   <div className="space-y-1">
-                    {sale.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400 item-name">{item.name} x{item.quantity}</span>
-                        <span className="text-gray-900 dark:text-gray-100 font-medium">${(item.price * item.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
+                    {sale.items.map((item, idx) => {
+                      const lineKey = `${item.id}_${idx}`;
+                      const returnedQty = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
+                      const hasReturn = returnedQty > 0;
+                      
+                      return (
+                        <div key={idx} className={`flex justify-between text-sm ${hasReturn ? 'bg-orange-50 dark:bg-orange-950/20 rounded px-1' : ''}`}>
+                          <span className={`${hasReturn ? 'text-orange-700 dark:text-orange-300' : 'text-gray-600 dark:text-gray-400'} item-name flex items-center gap-1`}>
+                            {hasReturn && <span className="material-symbols-rounded text-[12px] text-orange-500">keyboard_return</span>}
+                            {item.name} x{item.quantity}
+                            {hasReturn && <span className="text-[10px] text-orange-600 dark:text-orange-400">({returnedQty}/{item.quantity})</span>}
+                          </span>
+                          <span className="text-gray-900 dark:text-gray-100 font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

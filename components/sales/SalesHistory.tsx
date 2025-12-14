@@ -11,6 +11,8 @@ import { SearchInput } from '../common/SearchInput';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
+import { printInvoice } from './InvoiceTemplate';
+import { ThermalPrinterService, isSerialAvailable, isUSBAvailable } from '../../utils/printing';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -183,159 +185,26 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
   };
 
   const handlePrint = (sale: Sale) => {
-    const printWindow = window.open('', '', 'width=600,height=800');
-    if (!printWindow) return;
+    printInvoice(sale, { language: language as 'EN' | 'AR' });
+  };
 
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html dir="${document.documentElement.dir || 'ltr'}">
-      <head>
-        <title>Receipt #${sale.id}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-        <style>
-          body { font-family: 'Roboto', sans-serif; padding: 40px; color: #1e293b; max-width: 480px; margin: 0 auto; background: white; }
-          .header { text-align: center; margin-bottom: 30px; }
-          .store-name { font-size: 26px; font-weight: 900; color: #0f172a; letter-spacing: 0.5px; margin: 0; text-transform: uppercase; }
-          .store-sub { font-size: 11px; color: #64748b; letter-spacing: 3px; text-transform: uppercase; margin-top: 5px; }
-          
-          .divider { border-bottom: 2px dashed #e2e8f0; margin: 20px 0; }
-          
-          .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 12px; color: #64748b; margin-bottom: 25px; }
-          .meta-item { display: flex; flex-direction: column; }
-          .meta-label { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-          .meta-value { color: #0f172a; font-weight: 500; }
-          .text-right { text-align: right; }
-
-          table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 25px; }
-          th { text-align: left; border-bottom: 2px solid #e2e8f0; padding: 8px 4px; color: #64748b; text-transform: uppercase; font-size: 10px; font-weight: 700; }
-          td { padding: 12px 4px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
-          tr:last-child td { border-bottom: none; }
-          
-          .item-name { font-weight: 500; color: #0f172a; margin-bottom: 2px; }
-          .item-meta { font-size: 10px; color: #94a3b8; }
-          .discount-badge { display: inline-block; font-size: 9px; background: #fef2f2; color: #ef4444; padding: 1px 4px; border-radius: 4px; font-weight: bold; margin-top: 2px; }
-          .unit-badge { display: inline-block; font-size: 9px; background: #f0f9ff; color: #0ea5e9; padding: 1px 4px; border-radius: 4px; font-weight: bold; margin-top: 2px; margin-right: 4px; }
-
-          .total-section { background: #f8fafc; padding: 15px; border-radius: 12px; }
-          .total-row { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 6px; }
-          .total-row.final { font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1; align-items: center; }
-          
-          .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #94a3b8; line-height: 1.6; }
-          
-          @media print {
-            body { padding: 0; }
-            .no-print { display: none; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1 class="store-name">PharmaFlow</h1>
-          <div class="store-sub">Pharmacy Management System</div>
-        </div>
-        
-        <div class="divider"></div>
-
-        <div class="meta-grid">
-          <div class="meta-item">
-            <span class="meta-label">Receipt No</span>
-            <span class="meta-value">#${sale.id.slice(-6).toUpperCase()}</span>
-          </div>
-           <div class="meta-item text-right">
-            <span class="meta-label">Date Issued</span>
-            <span class="meta-value">${new Date(sale.date).toLocaleDateString()} ${new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Customer</span>
-            <span class="meta-value">${sale.customerName || 'Walk-in Guest'}</span>
-            ${sale.customerCode ? `<span class="meta-value" style="font-size: 10px; color: #64748b;">Code: ${sale.customerCode}</span>` : ''}
-          </div>
-          <div class="meta-item text-right">
-            <span class="meta-label">Payment Method</span>
-            <span class="meta-value" style="text-transform: uppercase;">${sale.paymentMethod || 'Cash'}</span>
-          </div>
-        </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 50%">Description</th>
-              <th class="text-right" style="width: 15%">Qty</th>
-              <th class="text-right" style="width: 15%">Price</th>
-              <th class="text-right" style="width: 20%">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${sale.items.map(item => {
-              // Calculate effective price for display if unit sale
-              const effectivePrice = (item.isUnit && item.unitsPerPack) 
-                ? item.price / item.unitsPerPack 
-                : item.price;
-                
-              return `
-              <tr>
-                <td>
-                  <div class="item-name">${item.name} ${item.dosageForm ? `(${item.dosageForm})` : ''}</div>
-                  ${item.isUnit ? `<span class="unit-badge">UNIT</span>` : ''}
-                  ${item.discount && item.discount > 0 
-                    ? `<span class="discount-badge">-${item.discount}% OFF</span>` 
-                    : `<div class="item-meta">${item.genericName || ''}</div>`
-                  }
-                </td>
-                <td class="text-right">${item.quantity}</td>
-                <td class="text-right">$${effectivePrice.toFixed(2)}</td>
-                <td class="text-right" style="font-weight: 600">$${((effectivePrice * item.quantity) * (1 - (item.discount || 0)/100)).toFixed(2)}</td>
-              </tr>
-            `}).join('')}
-          </tbody>
-        </table>
-
-        <div class="total-section">
-          <div class="total-row">
-            <span>Subtotal</span>
-            <span>$${(sale.subtotal || 0).toFixed(2)}</span>
-          </div>
-          ${sale.globalDiscount ? `
-          <div class="total-row" style="color: #ef4444;">
-            <span>Order Discount (${sale.globalDiscount}%)</span>
-            <span>-$${((sale.subtotal || 0) * sale.globalDiscount / 100).toFixed(2)}</span>
-          </div>` : ''}
-          ${sale.deliveryFee && sale.deliveryFee > 0 ? `
-          <div class="total-row">
-            <span>Delivery Fee</span>
-            <span>+$${sale.deliveryFee.toFixed(2)}</span>
-          </div>` : ''}
-          <div class="total-row final">
-            <span>Total Amount</span>
-            <span>$${sale.total.toFixed(2)}</span>
-          </div>
-        </div>
-
-        <div class="footer">
-          <svg id="barcode"></svg>
-          <p>Thank you for choosing PharmaFlow.<br>We wish you good health!</p>
-          <p>For inquiries, please keep this receipt.</p>
-        </div>
-
-        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
-        <script>
-          window.onload = function() { 
-            JsBarcode("#barcode", "${sale.id}", {
-              format: "CODE128",
-              lineColor: "#0f172a",
-              width: 2,
-              height: 40,
-              displayValue: true
-            });
-            setTimeout(() => window.print(), 500);
-          }
-        </script>
-      </body>
-      </html>
-    `;
-
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+  // Direct thermal print (ESC/POS)
+  const handleThermalPrint = async (sale: Sale, connectionType: 'serial' | 'usb') => {
+    const printer = new ThermalPrinterService({ 
+      connectionType,
+      paperSize: '79mm' 
+    });
+    
+    const result = await printer.printReceipt(sale, {
+      printBarcode: true,
+      cutPaper: true,
+    });
+    
+    if (!result.success) {
+      console.error('Thermal print failed:', result.message);
+      // Fallback to browser print
+      printInvoice(sale);
+    }
   };
 
   return (
@@ -541,7 +410,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                         {sale.items.map((item, idx) => {
                                             const effectivePrice = (item.isUnit && item.unitsPerPack) ? item.price / item.unitsPerPack : item.price;
-                                            const returnedQty = sale.itemReturnedQuantities?.[item.id] || 0;
+                                            const lineKey = `${item.id}_${idx}`;
+                                            const returnedQty = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
                                             return (
                                                 <div key={idx} className={`flex items-center gap-2 p-1.5 rounded border ${returnedQty > 0 ? 'border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/20' : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50'} hover:border-gray-200 dark:hover:border-gray-700 transition-colors`}>
                                                     <div className={`h-8 w-8 rounded ${returnedQty > 0 ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-600' : 'bg-gray-50 dark:bg-gray-800 text-gray-400'} flex items-center justify-center text-xs font-bold shrink-0`}>
@@ -598,32 +468,37 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                     
                                     <div className="grid grid-cols-2 gap-2">
                                         {(() => {
-                                            // Check if there are any items that can still be returned
-                                            const hasItemsToReturn = sale.items.some(item => {
-                                                const returnedQty = sale.itemReturnedQuantities?.[item.id] || 0;
+                                            // Check if there are any items that can still be returned (using lineKey pattern)
+                                            const hasItemsToReturn = sale.items.some((item, index) => {
+                                                const lineKey = `${item.id}_${index}`;
+                                                const returnedQty = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
                                                 return returnedQty < item.quantity;
                                             });
                                             
-                                            return hasItemsToReturn && (
-                                                <button 
-                                                    onClick={() => {
-                                                        setSelectedSale(sale);
-                                                        setReturnModalOpen(true);
-                                                    }}
-                                                    className="py-1.5 px-2 rounded-md text-[10px] font-bold uppercase tracking-wide text-white bg-orange-500 hover:bg-orange-600 transition-colors flex items-center justify-center gap-1 shadow-sm shadow-orange-200 dark:shadow-none"
-                                                >
-                                                    <span className="material-symbols-rounded text-[14px]">keyboard_return</span>
-                                                    {t.returns?.return || 'Return'}
-                                                </button>
+                                            return (
+                                                <>
+                                                    {hasItemsToReturn && (
+                                                        <button 
+                                                            onClick={() => {
+                                                                setSelectedSale(sale);
+                                                                setReturnModalOpen(true);
+                                                            }}
+                                                            className="py-1.5 px-2 rounded-md text-[10px] font-bold uppercase tracking-wide text-white bg-orange-500 hover:bg-orange-600 transition-colors flex items-center justify-center gap-1 shadow-sm shadow-orange-200 dark:shadow-none"
+                                                        >
+                                                            <span className="material-symbols-rounded text-[14px]">keyboard_return</span>
+                                                            {t.returns?.return || 'Return'}
+                                                        </button>
+                                                    )}
+                                                    <button 
+                                                        onClick={() => handlePrint(sale)}
+                                                        className={`py-1.5 px-2 rounded-md text-[10px] font-bold uppercase tracking-wide text-white bg-${color}-600 hover:bg-${color}-700 transition-colors flex items-center justify-center gap-1 shadow-sm shadow-${color}-200 dark:shadow-none ${!hasItemsToReturn ? 'col-span-2' : ''}`}
+                                                    >
+                                                        <span className="material-symbols-rounded text-[14px]">print</span>
+                                                        Receipt
+                                                    </button>
+                                                </>
                                             );
                                         })()}
-                                        <button 
-                                            onClick={() => handlePrint(sale)}
-                                            className={`py-1.5 px-2 rounded-md text-[10px] font-bold uppercase tracking-wide text-white bg-${color}-600 hover:bg-${color}-700 transition-colors flex items-center justify-center gap-1 shadow-sm shadow-${color}-200 dark:shadow-none ${sale.hasReturns ? 'col-span-2' : ''}`}
-                                        >
-                                            <span className="material-symbols-rounded text-[14px]">print</span>
-                                            Receipt
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -645,13 +520,12 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
         </div>
       </div>
 
-      {/* Detail Modal */}
-      {selectedSale && (
+      {/* Detail Modal - hide when return modal is open */}
+      {selectedSale && !returnModalOpen && (
         <Modal
             isOpen={true}
             onClose={() => setSelectedSale(null)}
             size="lg"
-            zIndex={50}
         >
               <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50`}>
                   <div className="flex items-center gap-3">
@@ -752,29 +626,34 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
 
               <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/50 flex gap-3">
                   {(() => {
-                      // Check if there are any items that can still be returned
-                      const hasItemsToReturn = selectedSale.items.some(item => {
-                          const returnedQty = selectedSale.itemReturnedQuantities?.[item.id] || 0;
+                      // Check if there are any items that can still be returned (using lineKey pattern)
+                      const hasItemsToReturn = selectedSale.items.some((item, index) => {
+                          const lineKey = `${item.id}_${index}`;
+                          const returnedQty = selectedSale.itemReturnedQuantities?.[lineKey] || selectedSale.itemReturnedQuantities?.[item.id] || 0;
                           return returnedQty < item.quantity;
                       });
                       
-                      return hasItemsToReturn && (
-                        <button 
-                          onClick={() => setReturnModalOpen(true)}
-                          className={`flex-1 py-2.5 rounded-full font-medium text-white bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center gap-2`}
-                        >
-                            <span className="material-symbols-rounded">keyboard_return</span>
-                            {t.returns?.processReturn || 'Process Return'}
-                        </button>
+                      return (
+                        <>
+                          {hasItemsToReturn && (
+                            <button 
+                              onClick={() => setReturnModalOpen(true)}
+                              className={`flex-1 py-2.5 rounded-full font-medium text-white bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center gap-2`}
+                            >
+                                <span className="material-symbols-rounded">keyboard_return</span>
+                                {t.returns?.processReturn || 'Process Return'}
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => handlePrint(selectedSale)}
+                            className={`flex-1 py-2.5 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 transition-colors flex items-center justify-center gap-2`}
+                          >
+                              <span className="material-symbols-rounded">print</span>
+                              {t.modal.print}
+                          </button>
+                        </>
                       );
                   })()}
-                  <button 
-                    onClick={() => handlePrint(selectedSale)}
-                    className={`flex-1 py-2.5 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 transition-colors flex items-center justify-center gap-2`}
-                  >
-                      <span className="material-symbols-rounded">print</span>
-                      {t.modal.print}
-                  </button>
               </div>
         </Modal>
       )}

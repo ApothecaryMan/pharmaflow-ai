@@ -89,11 +89,15 @@ export interface PurchaseItem {
 export interface Sale {
   id: string;
   date: string;
+  dailyOrderNumber?: number;  // Order number for the day (1, 2, 3...)
   items: CartItem[];
   total: number;
   subtotal?: number;
   customerName: string;
   customerCode?: string;
+  customerPhone?: string;
+  customerAddress?: string;      // System locations (area, city, governorate)
+  customerStreetAddress?: string; // Hand-written street address
   paymentMethod: 'cash' | 'visa';
   saleType?: 'walk-in' | 'delivery';
   deliveryFee?: number;
@@ -101,6 +105,16 @@ export interface Sale {
   // Return tracking
   hasReturns?: boolean;
   returnIds?: string[];
+  returnDates?: string[];  // Dates of each return operation
+  returnDetails?: Array<{  // Details of each return operation
+    date: string;
+    items: Array<{
+      drugId: string;
+      name: string;
+      quantity: number;
+      refundAmount: number;
+    }>;
+  }>;
   netTotal?: number; // Total after returns
   itemReturnedQuantities?: Record<string, number>; // drugId -> quantity returned
   status: 'completed' | 'cancelled' | 'pending';
@@ -247,6 +261,7 @@ export interface Shift {
   cashOut: number;
   cashSales: number;
   cardSales: number;
+  returns: number;  // Cumulative returns amount for this shift
   transactions: CashTransaction[];
   notes?: string;
 }

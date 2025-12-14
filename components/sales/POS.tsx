@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useContextMenu } from '../common/ContextMenu';
-import { Drug, CartItem, Customer, Language } from '../../types';
+import { Drug, CartItem, Customer, Language, Shift } from '../../types';
 
 import { useExpandingDropdown } from '../../hooks/useExpandingDropdown';
 import { getLocationName } from '../../data/locations';
@@ -19,7 +19,7 @@ import { Modal } from '../common/Modal';
 
 interface POSProps {
   inventory: Drug[];
-  onCompleteSale: (saleData: { items: CartItem[], customerName: string, customerCode?: string, paymentMethod: 'cash' | 'visa', saleType?: 'walk-in' | 'delivery', deliveryFee?: number, globalDiscount: number, subtotal: number, total: number }) => void;
+  onCompleteSale: (saleData: { items: CartItem[], customerName: string, customerCode?: string, customerPhone?: string, customerAddress?: string, customerStreetAddress?: string, paymentMethod: 'cash' | 'visa', saleType?: 'walk-in' | 'delivery', deliveryFee?: number, globalDiscount: number, subtotal: number, total: number }) => void;
   color: string;
   t: any;
   customers: Customer[];
@@ -138,6 +138,39 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
 
   
   const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'out_of_stock'>('in_stock');
+  
+  // Shift validation - check if there's an open shift
+  const [hasOpenShift, setHasOpenShift] = useState<boolean>(true);
+  
+  useEffect(() => {
+    const checkShiftStatus = () => {
+      try {
+        const savedShifts = localStorage.getItem('pharma_shifts');
+        if (!savedShifts) {
+          setHasOpenShift(false);
+          return;
+        }
+        const allShifts: Shift[] = JSON.parse(savedShifts);
+        const openShift = allShifts.find(s => s.status === 'open');
+        setHasOpenShift(!!openShift);
+      } catch {
+        setHasOpenShift(false);
+      }
+    };
+    
+    // Check on mount
+    checkShiftStatus();
+    
+    // Listen for storage changes (when shift is opened/closed from CashRegister)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'pharma_shifts') {
+        checkShiftStatus();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
   const [activeFilterDropdown, setActiveFilterDropdown] = useState<'category' | 'stock' | null>(null);
   
   // Sidebar Resize Logic
@@ -453,6 +486,13 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
         items: cart,
         customerName: customerName || 'Guest Customer',
         customerCode,
+        customerPhone: selectedCustomer?.phone,
+        customerAddress: selectedCustomer ? [
+          selectedCustomer.area ? getLocationName(selectedCustomer.area, 'area', language as 'EN' | 'AR') : '',
+          selectedCustomer.city ? getLocationName(selectedCustomer.city, 'city', language as 'EN' | 'AR') : '',
+          selectedCustomer.governorate ? getLocationName(selectedCustomer.governorate, 'gov', language as 'EN' | 'AR') : ''
+        ].filter(Boolean).join(', ') : undefined,
+        customerStreetAddress: selectedCustomer?.streetAddress,
         paymentMethod,
         saleType,
         deliveryFee,
@@ -1394,19 +1434,29 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
                 </div>
             </div>
 
+            {/* No Shift Warning */}
+            {!hasOpenShift && (
+                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 mb-3">
+                    <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+                        <span className="material-symbols-rounded text-[18px]">warning</span>
+                        <p className="text-xs font-medium">{t.noOpenShift || 'Open a shift before completing sales'}</p>
+                    </div>
+                </div>
+            )}
+
             <div className="flex gap-2">
                 <button 
                     onClick={() => handleCheckout('walk-in')}
-                    disabled={cart.length === 0}
-                    className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white font-bold text-sm shadow-md shadow-${color}-200 dark:shadow-none transition-all active:scale-95 flex justify-center items-center gap-2`}
+                    disabled={cart.length === 0 || !hasOpenShift}
+                    className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-${color}-200 dark:shadow-none transition-all active:scale-95 flex justify-center items-center gap-2`}
                 >
                     <span className="material-symbols-rounded text-[18px]">payments</span>
                     {t.completeOrder}
                 </button>
                 <button
                     onClick={() => handleCheckout('delivery')}
-                    disabled={cart.length === 0}
-                    className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 transition-all active:scale-95 flex justify-center items-center`}
+                    disabled={cart.length === 0 || !hasOpenShift}
+                    className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex justify-center items-center`}
                     title={t.deliveryOrder}
                 >
                     <span className="material-symbols-rounded text-[20px]">local_shipping</span>

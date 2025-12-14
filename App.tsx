@@ -582,13 +582,19 @@ const App: React.FC = () => {
       setToast({ message: 'Purchase Order Rejected', type: 'info' });
   };
 
-  const handleCompleteSale = (saleData: { items: CartItem[], customerName: string, customerCode?: string, paymentMethod: 'cash' | 'visa', saleType?: 'walk-in' | 'delivery', deliveryFee?: number, globalDiscount: number, subtotal: number, total: number }) => {
+  const handleCompleteSale = (saleData: { items: CartItem[], customerName: string, customerCode?: string, customerPhone?: string, customerAddress?: string, customerStreetAddress?: string, paymentMethod: 'cash' | 'visa', saleType?: 'walk-in' | 'delivery', deliveryFee?: number, globalDiscount: number, subtotal: number, total: number }) => {
     // Generate Serial ID (simple increment based on count)
     const serialId = (100001 + sales.length).toString();
+    
+    // Calculate daily order number
+    const today = new Date().toDateString();
+    const todaysSales = sales.filter(s => new Date(s.date).toDateString() === today);
+    const dailyOrderNumber = todaysSales.length + 1;
 
     const newSale: Sale = {
       id: serialId,
       date: new Date().toISOString(),
+      dailyOrderNumber,
       status: 'completed',
       ...saleData
     };
@@ -734,10 +740,23 @@ const App: React.FC = () => {
             (itemReturnedQuantities[item.drugId] || 0) + item.quantityReturned;
         });
         
+        // Build return details for this operation
+        const newReturnDetail = {
+          date: returnData.date,
+          items: returnData.items.map(item => ({
+            drugId: item.drugId,
+            name: item.name,
+            quantity: item.quantityReturned,
+            refundAmount: item.refundAmount
+          }))
+        };
+        
         return {
           ...sale,
           hasReturns: true,
           returnIds: [...existingReturns, returnData.id],
+          returnDates: [...(sale.returnDates || []), returnData.date],
+          returnDetails: [...(sale.returnDetails || []), newReturnDetail],
           netTotal: sale.total - totalReturned,
           itemReturnedQuantities
         };
@@ -791,7 +810,8 @@ const App: React.FC = () => {
 
           const updatedShift: Shift = {
             ...openShift,
-            // Don't deduct from cashSales or cardSales - returns are tracked separately in transactions
+            // Track returns separately for validation
+            returns: (openShift.returns || 0) + returnData.totalRefund,
             transactions: [newTransaction, ...openShift.transactions]
           };
 
@@ -938,7 +958,6 @@ const App: React.FC = () => {
         currentView={activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view}
         onNavigate={handleViewChange}
       />
-      {console.log('Current View:', view)}
 
       {/* Main Layout: Sidebar + Content */}
       <div className="flex h-[calc(100vh-64px)] overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
