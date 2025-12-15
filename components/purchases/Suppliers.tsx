@@ -144,7 +144,10 @@ export const Suppliers: React.FC<SuppliersProps> = ({ suppliers, onAddSupplier, 
               <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100`}>
                 {editingSupplier ? t.modal.edit : t.modal.add}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <button 
+                  onClick={() => setIsModalOpen(false)} 
+                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+              >
                 <span className="material-symbols-rounded">close</span>
               </button>
             </div>

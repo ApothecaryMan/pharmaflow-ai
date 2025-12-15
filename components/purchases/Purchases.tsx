@@ -1660,7 +1660,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                         </div>
                         <button 
                             onClick={() => setSelectedPurchase(null)}
-                            className="p-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+                            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
                         >
                             <span className="material-symbols-rounded">close</span>
                         </button>

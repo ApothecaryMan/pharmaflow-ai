@@ -78,7 +78,7 @@ All UI elements must look professional. Avoid basic browser defaults.
 *   **Modals**: Use `Modal` component (handles z-index & backdrop correctly).
 
 #### Styling Rules
-*   **Close Buttons**: Standardize style → `p-2 hover:bg-black/5 rounded-full transition-colors`.
+*   **Close Buttons**: Standardize style → `w-8 h-8 (or w-10 h-10) flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors`. Do NOT use `p-2` without fixed width/height.
 *   **Icon Boxes**: Use consistent padding/rounded corners.
 *   **Colors**: Use semantic colors from `index.css` or Tailwind classes.
 

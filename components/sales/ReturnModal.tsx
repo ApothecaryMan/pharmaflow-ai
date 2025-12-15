@@ -212,7 +212,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           </div>
           <button
             onClick={handleClose}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
           >
             <span className="material-symbols-rounded">close</span>
           </button>

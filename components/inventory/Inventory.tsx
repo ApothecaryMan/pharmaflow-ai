@@ -973,8 +973,11 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                 <span className="material-symbols-rounded">visibility</span>
                 {t.actionsMenu.view}
               </h3>
-              <button onClick={() => setViewingDrug(null)} className="text-gray-400 hover:text-gray-600">
-                <span className="material-symbols-rounded">close</span>
+              <button 
+                  onClick={() => setViewingDrug(null)} 
+                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+              >
+                  <span className="material-symbols-rounded">close</span>
               </button>
             </div>
             
@@ -1070,8 +1073,11 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
               <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100`}>
                 {editingDrug ? t.modal.edit : t.modal.add}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                <span className="material-symbols-rounded">close</span>
+              <button 
+                  onClick={() => setIsModalOpen(false)} 
+                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+              >
+                  <span className="material-symbols-rounded">close</span>
               </button>
             </div>
             

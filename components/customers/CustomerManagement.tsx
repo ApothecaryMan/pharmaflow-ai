@@ -1027,7 +1027,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               <h3 className="text-lg font-bold text-gray-800 dark:text-white">
                 {t.modal.edit}
               </h3>
-              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <button 
+                  onClick={handleCloseModal} 
+                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+              >
                 <span className="material-symbols-rounded">close</span>
               </button>
             </div>

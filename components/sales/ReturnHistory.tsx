@@ -181,7 +181,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
                     </div>
                     <button 
                         onClick={() => setSelectedReturn(null)}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
                     >
                         <span className="material-symbols-rounded">close</span>
                     </button>
