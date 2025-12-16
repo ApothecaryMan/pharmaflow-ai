@@ -19,6 +19,7 @@ export interface PosDropdownProps<T> {
     style?: React.CSSProperties;
     disabled?: boolean;
     centered?: boolean;
+    rounded?: 'xl' | 'full';
 }
 
 export function PosDropdown<T>({
@@ -38,7 +39,8 @@ export function PosDropdown<T>({
     minHeight,
     style,
     disabled = false,
-    centered = false
+    centered = false,
+    rounded = 'xl'
 }: PosDropdownProps<T>) {
     
     const containerRef = useRef<HTMLDivElement>(null);
@@ -77,7 +79,8 @@ export function PosDropdown<T>({
                 tabIndex={disabled ? -1 : 0}
                 onKeyDown={disabled ? undefined : handleKeyDown}
                 onBlur={handleBlur}
-                className={`relative w-full flex flex-col overflow-hidden rounded-xl border transition-all outline-none
+                className={`relative w-full flex flex-col overflow-hidden border transition-all outline-none
+                    ${rounded === 'full' ? (isOpen ? 'rounded-2xl' : 'rounded-full') : 'rounded-xl'}
                     ${disabled ? 'cursor-not-allowed bg-gray-100 dark:bg-gray-800' : 'cursor-pointer'}
                     ${/* Base Style & Z-Index */ ''}
                     ${isOpen 

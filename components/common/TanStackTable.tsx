@@ -60,8 +60,9 @@ export function TanStackTable<TData, TValue>({
   isLoading = false,
   emptyMessage = 'No results found.',
   color = 'blue',
-  defaultHiddenColumns = []
-}: TanStackTableProps<TData, TValue>) {
+  defaultHiddenColumns = [],
+  enableTopToolbar = true
+}: TanStackTableProps<TData, TValue> & { enableTopToolbar?: boolean }) {
   
   // Long-press support for rows
   const currentTouchRow = useRef<TData | null>(null);
@@ -288,6 +289,7 @@ export function TanStackTable<TData, TValue>({
   return (
     <div className="flex flex-col h-full w-full">
       {/* Header Controls */}
+      {enableTopToolbar && (
       <div className="flex items-center justify-between mb-4">
         <div className="w-full max-w-sm">
            <SearchInput
@@ -303,6 +305,7 @@ export function TanStackTable<TData, TValue>({
             Showing top {rows.length} results
         </div>
       </div>
+      )}
 
       {/* Table Container - Modified to support context menu on empty state */}
       {/* Table Container - Modified to support context menu on empty state */}

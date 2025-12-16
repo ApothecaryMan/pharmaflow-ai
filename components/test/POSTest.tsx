@@ -882,7 +882,7 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
       {/* Main POS Content */}
       <div className="flex-1 flex flex-col lg:flex-row gap-3 animate-fade-in relative overflow-hidden">
       {/* Product Grid - Hidden on Mobile if Cart Tab is active */}
-      <div className={`flex-1 flex flex-col gap-3 h-full overflow-hidden ${mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'}`}>
+      <div className={`flex-1 flex flex-col gap-2 h-full overflow-hidden ${mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'}`}>
         
         {/* Customer Details */}
           <div className={`${CARD_MD} p-3 border border-gray-200 dark:border-gray-800`}>
@@ -1042,8 +1042,8 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
               </div>
             )}
           </div>
-        {/* Search & Filter */}
-        <div className={`${CARD_MD} p-2.5 border border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row gap-2 shrink-0`}>
+        {/* Search & Filter - No Card Container */}
+        <div className="w-full flex flex-col sm:flex-row gap-1 shrink-0">
              <div className="relative flex-1">
                 <SearchInput
                     ref={searchInputRef}
@@ -1055,7 +1055,7 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
                     placeholder={t.searchPlaceholder}
                     badge={
                         groupedDrugs.length > 0 && (
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400`}>
+                            <span className={`inline-flex items-center justify-center h-5 px-2 text-[10px] font-bold rounded-full bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400`}>
                                 {groupedDrugs.length}
                             </span>
                         )
@@ -1131,7 +1131,7 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
                     }}
                 />
             </div>
-            <div className="relative min-w-[150px] h-[42px]">
+            <div className="relative min-w-[110px] h-[42px]">
                 <PosDropdown 
                     variant="input"
                     items={categories}
@@ -1145,7 +1145,7 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
                     color={color}
                 />
             </div>
-            <div className="relative min-w-[150px] h-[42px]">
+            <div className="relative min-w-[110px] h-[42px]">
                 <PosDropdown 
                     variant="input"
                     items={['all', 'in_stock', 'out_of_stock']}
@@ -1208,6 +1208,7 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
                   searchPlaceholder={t.searchPlaceholder}
                   emptyMessage={t.noResults}
                   defaultHiddenColumns={['icon', 'category']}
+                  enableTopToolbar={false}
                />
             )}
         </div>
