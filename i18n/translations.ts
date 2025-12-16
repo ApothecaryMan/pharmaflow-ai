@@ -522,7 +522,9 @@ export const TRANSLATIONS = {
       switchToUnit: 'Switch to Unit',
       removeItem: 'Remove Item',
       viewDetails: 'View Details',
-      copyName: 'Copy Name'
+      copyName: 'Copy Name',
+      addToCart: 'Add to Cart',
+      icon: 'Icon'
     },
     cashRegister: {
       title: 'Cash Register',
@@ -1683,7 +1685,9 @@ export const TRANSLATIONS = {
       switchToUnit: 'تبديل إلى وحدة',
       removeItem: 'إزالة الصنف',
       viewDetails: 'عرض التفاصيل',
-      copyName: 'نسخ الاسم'
+      copyName: 'نسخ الاسم',
+      addToCart: 'إضافة للسلة',
+      icon: 'أيقونة'
     },
     salesHistory: {
       title: 'سجل المبيعات',

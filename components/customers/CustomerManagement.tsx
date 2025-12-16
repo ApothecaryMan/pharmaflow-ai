@@ -253,54 +253,38 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     }
   };
 
-  // Context Menu Handler
+  // Helper: Get context menu actions for a customer
+  const getCustomerActions = (customer: Customer) => [
+    { 
+      label: t.contextMenu?.showProfile || 'Show Profile Info', 
+      icon: 'account_circle', 
+      action: () => handleOpenProfile(customer)
+    },
+    { separator: true },
+    { 
+      label: t.modal.edit, 
+      icon: 'edit', 
+      action: () => handleOpenEdit(customer) 
+    },
+    { 
+      label: t.modal.delete || 'Delete', 
+      icon: 'delete', 
+      action: () => onDeleteCustomer(customer.id),
+      danger: true
+    }
+  ];
 
+  // Context Menu Handler (right-click)
   const handleContextMenu = (e: React.MouseEvent, customer: Customer) => {
     e.preventDefault();
-    showMenu(e.clientX, e.clientY, [
-        { 
-            label: 'Show Profile Info', 
-            icon: 'account_circle', 
-            action: () => handleOpenProfile(customer)
-        },
-        { separator: true },
-        { 
-            label: t.modal.edit, 
-            icon: 'edit', 
-            action: () => handleOpenEdit(customer) 
-        },
-        { 
-            label: t.modal.delete || 'Delete', 
-            icon: 'delete', 
-            action: () => onDeleteCustomer(customer.id),
-            danger: true
-        }
-    ]);
+    showMenu(e.clientX, e.clientY, getCustomerActions(customer));
   };
 
   // Long Press Handler for Touch Screens
   const handleLongPress = (e: React.TouchEvent, customer: Customer) => {
     e.preventDefault();
     const touch = e.touches[0] || e.changedTouches[0];
-    showMenu(touch.clientX, touch.clientY, [
-        { 
-            label: 'Show Profile Info', 
-            icon: 'account_circle', 
-            action: () => handleOpenProfile(customer)
-        },
-        { separator: true },
-        { 
-            label: t.modal.edit, 
-            icon: 'edit', 
-            action: () => handleOpenEdit(customer) 
-        },
-        { 
-            label: t.modal.delete || 'Delete', 
-            icon: 'delete', 
-            action: () => onDeleteCustomer(customer.id),
-            danger: true
-        }
-    ]);
+    showMenu(touch.clientX, touch.clientY, getCustomerActions(customer));
   };
 
 

@@ -72,12 +72,12 @@ export function PosDropdown<T>({
     const isInput = variant === 'input';
 
     return (
-        <div ref={containerRef} className={`relative ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} style={style}>
+        <div ref={containerRef} className={`relative inline-block ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} style={style}>
              <div 
                 tabIndex={disabled ? -1 : 0}
                 onKeyDown={disabled ? undefined : handleKeyDown}
                 onBlur={handleBlur}
-                className={`absolute ${centered ? 'top-1/2 -translate-y-1/2' : 'top-0'} left-0 w-full flex flex-col overflow-hidden rounded-xl border transition-all outline-none
+                className={`relative w-full flex flex-col overflow-hidden rounded-xl border transition-all outline-none
                     ${disabled ? 'cursor-not-allowed bg-gray-100 dark:bg-gray-800' : 'cursor-pointer'}
                     ${/* Base Style & Z-Index */ ''}
                     ${isOpen 
@@ -114,22 +114,31 @@ export function PosDropdown<T>({
                     )}
                 </div>
 
-                {/* Dropdown Menu */}
-                {isOpen && (
-                    <div className="w-full border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto bg-white dark:bg-gray-900">
-                        {items
-                            .filter(item => keyExtractor(item) !== (selectedItem ? keyExtractor(selectedItem) : ''))
-                            .map(item => (
-                                <div 
-                                    key={keyExtractor(item)}
-                                    className={`w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1`}
-                                    onClick={(e) => handleOptionClick(e, item)}
-                                >
-                                    {renderItem(item, false)}
-                                </div>
-                        ))}
+                {/* Dropdown Menu with Animation */}
+                <div 
+                    className="w-full overflow-hidden bg-white dark:bg-gray-900 transition-all duration-200 ease-out"
+                    style={{
+                        display: 'grid',
+                        gridTemplateRows: isOpen ? '1fr' : '0fr',
+                        transition: 'grid-template-rows 200ms ease-out'
+                    }}
+                >
+                    <div className="min-h-0 overflow-hidden">
+                        <div className={`border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto ${isOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-150`}>
+                            {items
+                                .filter(item => keyExtractor(item) !== (selectedItem ? keyExtractor(selectedItem) : ''))
+                                .map(item => (
+                                    <div 
+                                        key={keyExtractor(item)}
+                                        className={`w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1 transition-colors`}
+                                        onClick={(e) => handleOptionClick(e, item)}
+                                    >
+                                        {renderItem(item, false)}
+                                    </div>
+                            ))}
+                        </div>
                     </div>
-                )}
+                </div>
              </div>
         </div>
     );

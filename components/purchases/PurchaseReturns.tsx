@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useContextMenu } from '../common/ContextMenu';
+import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { PurchaseReturn, PurchaseReturnItem, Purchase, Drug } from '../../types';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useSmartDirection } from '../common/SmartInputs';
@@ -146,6 +146,27 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
     status: { label: t.purchaseReturns?.tableHeaders?.status || 'Status', className: 'px-3 py-2 text-center' },
     action: { label: t.purchaseReturns?.tableHeaders?.action || 'Action', className: 'px-3 py-2 text-center' }
   };
+
+  // Helper: Get row context menu actions
+  const getRowActions = (returnRecord: PurchaseReturn) => [
+    { label: t.purchaseReturns?.contextMenu?.viewDetails || 'View Details', icon: 'visibility', action: () => handleViewDetails(returnRecord) }
+  ];
+
+  // Helper: Get header context menu actions
+  const getHeaderActions = () => [
+    { label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', icon: 'visibility', action: () => {} },
+    { separator: true },
+    ...Object.keys(columnsDef).map(colId => ({
+      label: columnsDef[colId as keyof typeof columnsDef].label,
+      icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
+      action: () => toggleColumnVisibility(colId)
+    }))
+  ];
+
+  // Header context menu trigger
+  const { triggerProps: headerTriggerProps } = useContextMenuTrigger({
+    actions: getHeaderActions
+  });
 
   // Add item to return
   const handleAddReturnItem = (drugId: string, quantity: number, reason: PurchaseReturnItem['reason'], condition: PurchaseReturnItem['condition']) => {
@@ -322,9 +343,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              showMenu(e.clientX, e.clientY, [
-                { label: 'View Details', icon: 'visibility', action: () => handleViewDetails(returnRecord) }
-              ]);
+              showMenu(e.clientX, e.clientY, getRowActions(returnRecord));
             }}
             className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors outline-none"
             title="Actions"
@@ -640,19 +659,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                       }}
                       onTouchMove={(e) => handleColumnTouchMove(e)}
                       onTouchEnd={(e) => handleColumnTouchEnd(e)}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        showMenu(e.clientX, e.clientY, [
-                          { label: 'Show/Hide Columns', icon: 'visibility', action: () => {} },
-                          { separator: true },
-                          ...Object.keys(columnsDef).map(colId => ({
-                            label: columnsDef[colId as keyof typeof columnsDef].label,
-                            icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
-                            action: () => toggleColumnVisibility(colId)
-                          }))
-                        ]);
-                      }}
+                      {...headerTriggerProps}
                       style={{ width: columnWidths[columnId] ? `${columnWidths[columnId]}px` : 'auto' }}
                     >
                       <div className="flex items-center justify-between h-full w-full">

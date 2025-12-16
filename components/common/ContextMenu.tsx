@@ -93,8 +93,11 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
     };
     
-    const handleScroll = () => {
-        if(menu.isVisible) hideMenu();
+    const handleScroll = (e: Event) => {
+        // Only hide if scrolling OUTSIDE the menu
+        if (menu.isVisible && menuRef.current && !menuRef.current.contains(e.target as Node)) {
+            hideMenu();
+        }
     }
 
     document.addEventListener('contextmenu', handleGlobalContextMenu);
@@ -110,31 +113,37 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
     };
   }, [menu.isVisible, hideMenu]);
 
-  // Adjust position to keep in viewport
-  const getAdjustedPosition = () => {
-      if (!menuRef.current) return { top: menu.y, left: menu.x };
-      
-      const { innerWidth, innerHeight } = window;
-      const { offsetWidth, offsetHeight } = menuRef.current;
-      
-      let x = menu.x;
-      let y = menu.y;
+  // State for adjusted position (updated after render)
+  const [adjustedPos, setAdjustedPos] = useState({ top: 0, left: 0 });
 
-      if (x + offsetWidth > innerWidth) {
-          x = innerWidth - offsetWidth - 10;
-      }
-      if (y + offsetHeight > innerHeight) {
-          y = innerHeight - offsetHeight - 10;
-      }
-      
-      // Ensure it doesn't go off context top/left either
-      x = Math.max(10, x);
-      y = Math.max(10, y);
+  // Adjust position to keep in viewport - runs after menu renders
+  React.useLayoutEffect(() => {
+    if (!menu.isVisible || !menuRef.current) return;
 
-      return { top: y, left: x };
-  };
+    const { innerWidth, innerHeight } = window;
+    const { offsetWidth, offsetHeight } = menuRef.current;
+    
+    let x = menu.x;
+    let y = menu.y;
 
-  const { top, left } = getAdjustedPosition();
+    // Check right edge
+    if (x + offsetWidth > innerWidth) {
+      x = menu.x - offsetWidth; // Flip to left side
+      if (x < 10) x = innerWidth - offsetWidth - 10; // Fallback if still outside
+    }
+    
+    // Check bottom edge
+    if (y + offsetHeight > innerHeight) {
+      y = menu.y - offsetHeight; // Flip to top
+      if (y < 10) y = innerHeight - offsetHeight - 10; // Fallback if still outside
+    }
+    
+    // Ensure it doesn't go off top/left
+    x = Math.max(10, x);
+    y = Math.max(10, y);
+
+    setAdjustedPos({ top: y, left: x });
+  }, [menu.isVisible, menu.x, menu.y]);
 
   return (
     <ContextMenuContext.Provider value={{ showMenu, hideMenu }}>
@@ -144,7 +153,11 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
         <div 
             ref={menuRef}
             className="fixed z-[9999] min-w-[180px] bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 py-1.5 animate-scale-in origin-top-left overflow-hidden"
-            style={{ top, left }}
+            style={{ 
+              top: adjustedPos.top || menu.y, 
+              left: adjustedPos.left || menu.x,
+              visibility: adjustedPos.top === 0 && adjustedPos.left === 0 ? 'hidden' : 'visible' // Hide until position calculated
+            }}
             onContextMenu={(e) => e.preventDefault()}
         >
             {menu.content ? (
@@ -186,6 +199,72 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
   );
 };
 
+// --- Hook for Context Menu Trigger (use when you can't wrap with ContextMenuTrigger) ---
+interface UseContextMenuTriggerOptions {
+    actions?: ContextMenuAction[] | (() => ContextMenuAction[]);
+    content?: React.ReactNode;
+    disabled?: boolean;
+    onOpen?: (x: number, y: number) => void;
+}
+
+/**
+ * Hook that returns event handlers for context menu functionality.
+ * Use this when you need context menu on elements that can't be wrapped (e.g., table rows).
+ * 
+ * @example
+ * const { triggerProps } = useContextMenuTrigger({
+ *   actions: [{ label: 'Edit', icon: 'edit', action: () => handleEdit() }]
+ * });
+ * 
+ * return <tr {...triggerProps}>...</tr>;
+ */
+export const useContextMenuTrigger = ({ actions, content, disabled = false, onOpen }: UseContextMenuTriggerOptions) => {
+    const { showMenu } = useContextMenu();
+
+    const getActions = () => typeof actions === 'function' ? actions() : actions;
+
+    const handleContextMenu = (e: React.MouseEvent) => {
+        if (disabled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const resolvedActions = getActions();
+        if (onOpen) {
+            onOpen(e.clientX, e.clientY);
+        } else if (resolvedActions) {
+            showMenu(e.clientX, e.clientY, resolvedActions);
+        } else if (content) {
+            showMenu(e.clientX, e.clientY, content);
+        }
+    };
+
+    const { onTouchStart, onTouchEnd, onTouchMove } = useLongPress({
+        threshold: 500,
+        onLongPress: (e) => {
+            if (disabled) return;
+            const touch = e.touches[0];
+            
+            const resolvedActions = getActions();
+            if (onOpen) {
+                onOpen(touch.clientX, touch.clientY);
+            } else if (resolvedActions) {
+                showMenu(touch.clientX, touch.clientY, resolvedActions);
+            } else if (content) {
+                showMenu(touch.clientX, touch.clientY, content);
+            }
+        }
+    });
+
+    return {
+        triggerProps: {
+            onContextMenu: handleContextMenu,
+            onTouchStart,
+            onTouchEnd,
+            onTouchMove
+        }
+    };
+};
+
 // --- Helper Component for Touch Support ---
 interface ContextMenuTriggerProps {
     children: React.ReactNode;
@@ -193,43 +272,28 @@ interface ContextMenuTriggerProps {
     content?: React.ReactNode;
     className?: string;
     disabled?: boolean;
+    as?: React.ElementType;
 }
 
-export const ContextMenuTrigger: React.FC<ContextMenuTriggerProps> = ({ 
+export const ContextMenuTrigger: React.FC<ContextMenuTriggerProps & { onOpen?: (x: number, y: number) => void } & Record<string, any>> = ({ 
     children, 
     actions, 
     content,
     className = "",
-    disabled = false
+    disabled = false,
+    onOpen,
+    as: Component = 'div',
+    ...rest
 }) => {
-    const { showMenu } = useContextMenu();
-
-    const handleContextMenu = (e: React.MouseEvent) => {
-        if (disabled) return;
-        e.preventDefault();
-        e.stopPropagation();
-        if (actions) showMenu(e.clientX, e.clientY, actions);
-        else if (content) showMenu(e.clientX, e.clientY, content);
-    };
-
-    const { onTouchStart, onTouchEnd, onTouchMove } = useLongPress({
-        onLongPress: (e) => {
-            if (disabled) return;
-            const touch = e.touches[0];
-            if (actions) showMenu(touch.clientX, touch.clientY, actions);
-            else if (content) showMenu(touch.clientX, touch.clientY, content);
-        }
-    });
+    const { triggerProps } = useContextMenuTrigger({ actions, content, disabled, onOpen });
 
     return (
-        <div 
+        <Component 
             className={className}
-            onContextMenu={handleContextMenu}
-            onTouchStart={onTouchStart}
-            onTouchEnd={onTouchEnd}
-            onTouchMove={onTouchMove}
+            {...triggerProps}
+            {...rest}
         >
             {children}
-        </div>
+        </Component>
     );
 };

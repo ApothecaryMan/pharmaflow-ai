@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { useContextMenu } from '../common/ContextMenu';
+import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { Drug, Supplier, Purchase, PurchaseItem, PurchaseReturn } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
@@ -307,30 +307,21 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     action: { label: t.tableHeaders?.action || 'Action', className: 'px-3 py-2 text-center' }
   };
     
-  // Long Press for Header (Show/Hide)
-  const {
-      onTouchStart: onHeaderTouchStart,
-      onTouchEnd: onHeaderTouchEnd,
-      onTouchMove: onHeaderTouchMoveHook,
-      isLongPress: isHeaderLongPress
-    } = useLongPress({
-        onLongPress: (e) => {
-          const touch = e.touches[0];
-          showMenu(touch.clientX, touch.clientY, [
-              { 
-                label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', 
-                icon: 'visibility', 
-                action: () => {} 
-              },
-              { separator: true },
-              ...Object.keys(historyColumnsDef).map(colId => ({
-                label: historyColumnsDef[colId as keyof typeof historyColumnsDef].label,
-                icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
-                action: () => toggleColumnVisibility(colId)
-              }))
-          ]);
-        }
-    });
+  // Header context menu actions
+  const getHeaderActions = () => [
+    { label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', icon: 'visibility', action: () => {} },
+    { separator: true },
+    ...Object.keys(historyColumnsDef).map(colId => ({
+      label: historyColumnsDef[colId as keyof typeof historyColumnsDef].label,
+      icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
+      action: () => toggleColumnVisibility(colId)
+    }))
+  ];
+
+  // Header context menu trigger (replaces manual useLongPress)
+  const { triggerProps: headerTriggerProps } = useContextMenuTrigger({
+    actions: getHeaderActions
+  });
 
     // Helper: Get returns for a purchase
     const getPurchaseReturns = (purchaseId: string) => {
@@ -461,11 +452,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     };
 
 
-    // Manual touch handling for rows (can't use useLongPress in map)
-    const touchTimer = useRef<NodeJS.Timeout | null>(null);
-    const touchStartPos = useRef<{ x: number; y: number } | null>(null);
-
-    // Helper: Get context menu actions for a purchase row (avoids duplication)
+    // Helper: Get context menu actions for a purchase row
     const getRowContextActions = (purchase: Purchase) => [
         { label: t.contextMenu?.viewDetails || 'View Details', icon: 'visibility', action: () => setSelectedPurchase(purchase) },
         { separator: true },
@@ -473,36 +460,21 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
         { label: t.contextMenu?.copySupplier || 'Copy Supplier', icon: 'person', action: () => copyToClipboard(purchase.supplierName || '') }
     ];
 
-    const handleRowTouchStart = (e: React.TouchEvent, purchase: Purchase) => {
-        const touch = e.touches[0];
-        touchStartPos.current = { x: touch.clientX, y: touch.clientY };
-        
-        touchTimer.current = setTimeout(() => {
-            showMenu(touch.clientX, touch.clientY, getRowContextActions(purchase));
-        }, 500);
-    };
-
-    const handleRowTouchMove = (e: React.TouchEvent) => {
-        if (!touchStartPos.current) return;
-        const touch = e.touches[0];
-        const deltaX = Math.abs(touch.clientX - touchStartPos.current.x);
-        const deltaY = Math.abs(touch.clientY - touchStartPos.current.y);
-        
-        if (deltaX > 10 || deltaY > 10) {
-            if (touchTimer.current) {
-                clearTimeout(touchTimer.current);
-                touchTimer.current = null;
-            }
+    // Row touch/long-press support
+    const currentTouchRow = useRef<Purchase | null>(null);
+    
+    const { 
+      onTouchStart: onRowTouchStart, 
+      onTouchEnd: onRowTouchEnd, 
+      onTouchMove: onRowTouchMove
+    } = useLongPress({
+      onLongPress: (e) => {
+        if (currentTouchRow.current) {
+          const touch = e.touches[0];
+          showMenu(touch.clientX, touch.clientY, getRowContextActions(currentTouchRow.current));
         }
-    };
-
-    const handleRowTouchEnd = () => {
-        if (touchTimer.current) {
-            clearTimeout(touchTimer.current);
-            touchTimer.current = null;
-        }
-        touchStartPos.current = null;
-    };
+      }
+    });
   
   // Sidebar Resize Logic with localStorage persistence
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -1554,34 +1526,15 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                             onTouchStart={(e) => {
                               if ((e.target as HTMLElement).closest('.resize-handle')) return;
                               e.stopPropagation();
-                              onHeaderTouchStart(e);
                               handleColumnDragStart(e, columnId);
                             }}
                             onTouchMove={(e) => {
-                                onHeaderTouchMoveHook(e);
                                 handleColumnTouchMove(e);
                             }}
                             onTouchEnd={(e) => {
-                                onHeaderTouchEnd();
                                 handleColumnTouchEnd(e);
                             }}
-                            onContextMenu={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              showMenu(e.clientX, e.clientY, [
-                                { 
-                                  label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', 
-                                  icon: 'visibility', 
-                                  action: () => {} 
-                                },
-                                { separator: true },
-                                ...Object.keys(historyColumnsDef).map(colId => ({
-                                  label: historyColumnsDef[colId as keyof typeof historyColumnsDef].label,
-                                  icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
-                                  action: () => toggleColumnVisibility(colId)
-                                }))
-                              ]);
-                            }}
+                            {...headerTriggerProps}
                             style={{ width: historyColumnWidths[columnId] ? `${historyColumnWidths[columnId]}px` : 'auto' }}
                           >
                            <div className="flex items-center justify-between h-full w-full">
@@ -1607,9 +1560,12 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                          <tr 
                             key={p.id} 
                             onClick={(e) => { e.stopPropagation(); setSelectedPurchase(p); }}
-                            onTouchStart={(e) => handleRowTouchStart(e, p)}
-                            onTouchEnd={handleRowTouchEnd}
-                            onTouchMove={handleRowTouchMove}
+                            onTouchStart={(e) => {
+                                currentTouchRow.current = p;
+                                onRowTouchStart(e);
+                            }}
+                            onTouchEnd={onRowTouchEnd}
+                            onTouchMove={onRowTouchMove}
                             onContextMenu={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();

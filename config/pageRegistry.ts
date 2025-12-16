@@ -19,6 +19,7 @@ import { PendingApproval } from '../components/purchases/PendingApproval';
 import { CashRegister } from '../components/sales/CashRegister';
 import { ShiftHistory } from '../components/sales/ShiftHistory';
 import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
+import { POSTest } from '../components/test/POSTest';
 import { DashboardExperiments } from '../components/experiments/DashboardExperiments';
 
 export interface PageConfig {
@@ -229,6 +230,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'science',
     category: 'test',
     requiredProps: ['color', 't', 'language']
+  },
+  'pos-test': {
+    id: 'pos-test',
+    component: POSTest,
+    menuLabel: 'POS Test',
+    menuLabelAr: 'نقطة بيع (اختبار)',
+    icon: 'science',
+    category: 'test',
+    requiredProps: ['inventory', 'customers', 'onCompleteSale', 'color', 't', 'language', 'onAddCustomer']
   }
 };
 

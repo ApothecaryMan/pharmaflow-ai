@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useContextMenu } from '../common/ContextMenu';
+import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { Supplier } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
+import { useLongPress } from '../../hooks/useLongPress';
 import { SearchInput } from '../common/SearchInput';
 import { useSmartDirection, isValidEmail, isValidPhone, SmartPhoneInput, SmartEmailInput } from '../common/SmartInputs';
 import { Modal } from '../common/Modal';
@@ -243,48 +244,48 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
     setMode('list');
   };
 
-  // Touch handling for rows
-  const touchTimer = useRef<NodeJS.Timeout | null>(null);
-  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+  // Helper: Get row context menu actions
+  const getRowActions = (supplier: Supplier) => [
+    { label: t.contextMenu?.viewDetails || 'View Details', icon: 'visibility', action: () => handleViewDetails(supplier) },
+    { label: t.contextMenu?.edit || 'Edit', icon: 'edit', action: () => handleEdit(supplier) },
+    { label: t.contextMenu?.delete || 'Delete', icon: 'delete', action: () => handleDelete(supplier) },
+    { separator: true },
+    { label: t.contextMenu?.copyName || 'Copy Name', icon: 'content_copy', action: () => copyToClipboard(supplier.name) },
+    { label: t.contextMenu?.copyPhone || 'Copy Phone', icon: 'phone', action: () => copyToClipboard(supplier.phone) },
+    { label: t.contextMenu?.copyEmail || 'Copy Email', icon: 'email', action: () => copyToClipboard(supplier.email) }
+  ];
 
-  const handleRowTouchStart = (e: React.TouchEvent, supplier: Supplier) => {
-    const touch = e.touches[0];
-    touchStartPos.current = { x: touch.clientX, y: touch.clientY };
-    
-    touchTimer.current = setTimeout(() => {
-      showMenu(touch.clientX, touch.clientY, [
-        { label: t.contextMenu?.viewDetails || 'View Details', icon: 'visibility', action: () => handleViewDetails(supplier) },
-        { label: t.contextMenu?.edit || 'Edit', icon: 'edit', action: () => handleEdit(supplier) },
-        { label: t.contextMenu?.delete || 'Delete', icon: 'delete', action: () => handleDelete(supplier) },
-        { separator: true },
-        { label: t.contextMenu?.copyName || 'Copy Name', icon: 'content_copy', action: () => copyToClipboard(supplier.name) },
-        { label: t.contextMenu?.copyPhone || 'Copy Phone', icon: 'phone', action: () => copyToClipboard(supplier.phone) },
-        { label: t.contextMenu?.copyEmail || 'Copy Email', icon: 'email', action: () => copyToClipboard(supplier.email) }
-      ]);
-    }, 500);
-  };
+  // Helper: Get header context menu actions
+  const getHeaderActions = () => [
+    { label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', icon: 'visibility', action: () => {} },
+    { separator: true },
+    ...Object.keys(columnsDef).map(colId => ({
+      label: columnsDef[colId as keyof typeof columnsDef].label,
+      icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
+      action: () => toggleColumnVisibility(colId)
+    }))
+  ];
 
-  const handleRowTouchMove = (e: React.TouchEvent) => {
-    if (!touchStartPos.current) return;
-    const touch = e.touches[0];
-    const deltaX = Math.abs(touch.clientX - touchStartPos.current.x);
-    const deltaY = Math.abs(touch.clientY - touchStartPos.current.y);
-    
-    if (deltaX > 10 || deltaY > 10) {
-      if (touchTimer.current) {
-        clearTimeout(touchTimer.current);
-        touchTimer.current = null;
+  // Header context menu trigger
+  const { triggerProps: headerTriggerProps } = useContextMenuTrigger({
+    actions: getHeaderActions
+  });
+
+  // Row touch/long-press support
+  const currentTouchRow = useRef<Supplier | null>(null);
+
+  const {
+    onTouchStart: onRowTouchStart,
+    onTouchEnd: onRowTouchEnd,
+    onTouchMove: onRowTouchMove
+  } = useLongPress({
+    onLongPress: (e) => {
+      if (currentTouchRow.current) {
+        const touch = e.touches[0];
+        showMenu(touch.clientX, touch.clientY, getRowActions(currentTouchRow.current));
       }
     }
-  };
-
-  const handleRowTouchEnd = () => {
-    if (touchTimer.current) {
-      clearTimeout(touchTimer.current);
-      touchTimer.current = null;
-    }
-    touchStartPos.current = null;
-  };
+  });
 
   const renderCell = (supplier: Supplier, columnId: string) => {
     switch(columnId) {
@@ -305,15 +306,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              showMenu(e.clientX, e.clientY, [
-                { label: t.contextMenu?.viewDetails || 'View Details', icon: 'visibility', action: () => handleViewDetails(supplier) },
-                { label: t.contextMenu?.edit || 'Edit', icon: 'edit', action: () => handleEdit(supplier) },
-                { label: t.contextMenu?.delete || 'Delete', icon: 'delete', action: () => handleDelete(supplier) },
-                { separator: true },
-                { label: t.contextMenu?.copyName || 'Copy Name', icon: 'content_copy', action: () => copyToClipboard(supplier.name) },
-                { label: t.contextMenu?.copyPhone || 'Copy Phone', icon: 'phone', action: () => copyToClipboard(supplier.phone) },
-                { label: t.contextMenu?.copyEmail || 'Copy Email', icon: 'email', action: () => copyToClipboard(supplier.email) }
-              ]);
+              showMenu(e.clientX, e.clientY, getRowActions(supplier));
             }}
             className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors outline-none"
             title={t.headers?.actions || 'Actions'}
@@ -406,19 +399,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                   }}
                   onTouchMove={(e) => handleColumnTouchMove(e)}
                   onTouchEnd={(e) => handleColumnTouchEnd(e)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    showMenu(e.clientX, e.clientY, [
-                      { label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', icon: 'visibility', action: () => {} },
-                      { separator: true },
-                      ...Object.keys(columnsDef).map(colId => ({
-                        label: columnsDef[colId as keyof typeof columnsDef].label,
-                        icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
-                        action: () => toggleColumnVisibility(colId)
-                      }))
-                    ]);
-                  }}
+                  {...headerTriggerProps}
                   style={{ width: columnWidths[columnId] ? `${columnWidths[columnId]}px` : 'auto' }}
                 >
                   <div className="flex items-center justify-between h-full w-full">
@@ -442,21 +423,16 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
               <tr 
                 key={supplier.id}
                 onClick={() => handleViewDetails(supplier)}
-                onTouchStart={(e) => handleRowTouchStart(e, supplier)}
-                onTouchEnd={handleRowTouchEnd}
-                onTouchMove={handleRowTouchMove}
+                onTouchStart={(e) => {
+                    currentTouchRow.current = supplier;
+                    onRowTouchStart(e);
+                }}
+                onTouchEnd={onRowTouchEnd}
+                onTouchMove={onRowTouchMove}
                 onContextMenu={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  showMenu(e.clientX, e.clientY, [
-                    { label: t.contextMenu?.viewDetails || 'View Details', icon: 'visibility', action: () => handleViewDetails(supplier) },
-                    { label: t.contextMenu?.edit || 'Edit', icon: 'edit', action: () => handleEdit(supplier) },
-                    { label: t.contextMenu?.delete || 'Delete', icon: 'delete', action: () => handleDelete(supplier) },
-                    { separator: true },
-                    { label: t.contextMenu?.copyName || 'Copy Name', icon: 'content_copy', action: () => copyToClipboard(supplier.name) },
-                    { label: t.contextMenu?.copyPhone || 'Copy Phone', icon: 'phone', action: () => copyToClipboard(supplier.phone) },
-                    { label: t.contextMenu?.copyEmail || 'Copy Email', icon: 'email', action: () => copyToClipboard(supplier.email) }
-                  ]);
+                  showMenu(e.clientX, e.clientY, getRowActions(supplier));
                 }}
                 className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''}`}
               >

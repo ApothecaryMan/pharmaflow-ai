@@ -517,6 +517,30 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
   const selectedElement = elements.find(el => el.id === selectedElementId);
 
+  // Helper: Get context menu actions for a label element
+  const getElementActions = (el: LabelElement) => [
+    { label: t.inspector.elements.remove, icon: 'delete', action: () => setElements(prev => prev.filter(item => item.id !== el.id)), danger: true },
+    { separator: true },
+    { label: t.inspector.elements.duplicate, icon: 'content_copy', action: () => {
+      saveToHistory();
+      const newEl = { ...el, id: Date.now().toString(), x: el.x + 2, y: el.y + 2 };
+      setElements(prev => [...prev, newEl]);
+    }},
+    { label: el.locked ? t.inspector.elements.unlock : t.inspector.elements.lock, icon: el.locked ? 'lock_open' : 'lock', action: () => {
+      saveToHistory();
+      setElements(prev => prev.map(item => item.id === el.id ? { ...item, locked: !item.locked } : item));
+    }},
+    { separator: true },
+    { label: 'Bring to Front', icon: 'flip_to_front', action: () => {
+      saveToHistory();
+      setElements(prev => [...prev.filter(item => item.id !== el.id), el]);
+    }},
+    { label: 'Send to Back', icon: 'flip_to_back', action: () => {
+      saveToHistory();
+      setElements(prev => [el, ...prev.filter(item => item.id !== el.id)]);
+    }}
+  ];
+
   const handlePrint = () => {
       if (!selectedDrug) return;
       const printWindow = window.open('', '', 'width=800,height=1000');
@@ -696,28 +720,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                     onContextMenu={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        showMenu(e.clientX, e.clientY, [
-                                            { label: t.inspector.elements.remove, icon: 'delete', action: () => setElements(prev => prev.filter(item => item.id !== el.id)), danger: true },
-                                            { separator: true },
-                                            { label: t.inspector.elements.duplicate, icon: 'content_copy', action: () => {
-                                                saveToHistory();
-                                                const newEl = { ...el, id: Date.now().toString(), x: el.x + 2, y: el.y + 2 };
-                                                setElements(prev => [...prev, newEl]);
-                                            }},
-                                            { label: el.locked ? t.inspector.elements.unlock : t.inspector.elements.lock, icon: el.locked ? 'lock_open' : 'lock', action: () => {
-                                                saveToHistory();
-                                                setElements(prev => prev.map(item => item.id === el.id ? { ...item, locked: !item.locked } : item));
-                                            }},
-                                            { separator: true },
-                                            { label: 'Bring to Front', icon: 'flip_to_front', action: () => {
-                                                saveToHistory();
-                                                setElements(prev => [...prev.filter(item => item.id !== el.id), el]);
-                                            }},
-                                            { label: 'Send to Back', icon: 'flip_to_back', action: () => {
-                                                saveToHistory();
-                                                setElements(prev => [el, ...prev.filter(item => item.id !== el.id)]);
-                                            }}
-                                        ]);
+                                        showMenu(e.clientX, e.clientY, getElementActions(el));
                                     }}
                                 >
                                     {el.type === 'text' && getElementContent(el)}

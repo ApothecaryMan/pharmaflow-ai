@@ -1083,7 +1083,9 @@ export const PHARMACY_MENU: MenuItem[] = [
         label: "Development",
         items: [
           { label: "Data Context Test", view: "test-data-context" },
+          { label: "Data Context Test", view: "test-data-context" },
           { label: "Service Layer Test", view: "test-services" },
+          { label: "POS Test", view: "pos-test" },
           { label: "Theme Preview", view: "test-theme" }
         ]
       }

@@ -94,6 +94,15 @@ const SortableTab = ({
   const isPinned = tab.isPinned || false;
   const currentTouchTab = useRef<string | null>(null);
 
+  // Helper: Get tab context menu actions
+  const getTabActions = () => [
+    { label: 'Close Tab', icon: 'close', action: () => onTabClose(tab.id) },
+    { label: 'Close Others', icon: 'tab_close_right', action: () => onCloseOthers(tab.id) },
+    { label: 'Duplicate Tab', icon: 'content_copy', action: () => onTabAdd() },
+    { label: tab.isPinned ? 'Unpin' : 'Pin', icon: tab.isPinned ? 'push_pin' : 'keep_off', action: () => onTogglePin(tab.id) },
+    { label: 'Rename', icon: 'edit', action: () => onRenameStart(tab) }
+  ];
+
   const {
     onTouchStart: onTabTouchStart,
     onTouchEnd: onTabTouchEnd,
@@ -105,13 +114,7 @@ const SortableTab = ({
         if (isDragging) return;
         
         const touch = e.touches[0];
-        showMenu(touch.clientX, touch.clientY, [
-            { label: 'Close Tab', icon: 'close', action: () => onTabClose(tab.id) },
-            { label: 'Close Others', icon: 'tab_close_right', action: () => onCloseOthers(tab.id) },
-            { label: 'Duplicate Tab', icon: 'content_copy', action: () => onTabAdd() },
-            { label: tab.isPinned ? 'Unpin' : 'Pin', icon: tab.isPinned ? 'push_pin' : 'keep_off', action: () => onTogglePin(tab.id) },
-            { label: 'Rename', icon: 'edit', action: () => onRenameStart(tab) }
-        ]);
+        showMenu(touch.clientX, touch.clientY, getTabActions());
     }
   });
 
@@ -132,13 +135,7 @@ const SortableTab = ({
       `}
       onContextMenu={(e) => {
         e.preventDefault();
-        showMenu(e.clientX, e.clientY, [
-          { label: 'Close Tab', icon: 'close', action: () => onTabClose(tab.id) },
-          { label: 'Close Others', icon: 'tab_close_right', action: () => onCloseOthers(tab.id) },
-          { label: 'Duplicate Tab', icon: 'content_copy', action: () => onTabAdd() },
-          { label: tab.isPinned ? 'Unpin' : 'Pin', icon: tab.isPinned ? 'push_pin' : 'keep_off', action: () => onTogglePin(tab.id) },
-          { label: 'Rename', icon: 'edit', action: () => onRenameStart(tab) }
-        ]);
+        showMenu(e.clientX, e.clientY, getTabActions());
       }}
       onTouchStart={(e) => {
           listeners?.onTouchStart?.(e);

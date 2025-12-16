@@ -38,7 +38,7 @@ export const useLongPress = ({ threshold = 500, onLongPress }: UseLongPressOptio
         const moveX = Math.abs(touch.clientX - startPos.current.x);
         const moveY = Math.abs(touch.clientY - startPos.current.y);
         
-        if (moveX > 10 || moveY > 10) {
+        if (moveX > 20 || moveY > 20) {
             clearTimeout(timerRef.current);
             timerRef.current = null;
         }

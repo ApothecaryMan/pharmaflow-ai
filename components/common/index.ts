@@ -7,4 +7,4 @@ export { DatePicker } from './DatePicker';
 export { SearchInput } from './SearchInput';
 export { SmartInput, SmartDateInput, useSmartDirection, isValidEmail, isValidPhone, cleanPhone } from './SmartInputs';
 export { PosDropdown } from './PosDropdown';
-export { ContextMenuProvider, useContextMenu } from './ContextMenu';
+export { ContextMenuProvider, useContextMenu, useContextMenuTrigger, ContextMenuTrigger } from './ContextMenu';

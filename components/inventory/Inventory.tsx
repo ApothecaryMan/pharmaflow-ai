@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SmartDateInput, SmartInput } from '../common/SmartInputs';
 import { PosDropdown } from '../common/PosDropdown';
-import { useContextMenu } from '../common/ContextMenu';
+import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useLongPress } from '../../hooks/useLongPress';
 import { SearchInput } from '../common/SearchInput';
@@ -456,56 +456,49 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     }
   };
 
-  // Long Press Logic
-  const currentTouchItem = useRef<Drug | string | null>(null);
+  // Helper: Get row context menu actions
+  const getRowActions = (drug: Drug) => [
+    { label: t.actionsMenu.edit, icon: 'edit', action: () => handleOpenEdit(drug) },
+    { label: t.actionsMenu.viewDetails || t.actionsMenu.view, icon: 'visibility', action: () => handleViewDetails(drug.id) },
+    { separator: true },
+    { label: t.actionsMenu.printBarcode, icon: 'print', action: () => handlePrintBarcode(drug) },
+    { label: t.actionsMenu.duplicate, icon: 'content_copy', action: () => handleDuplicate(drug) },
+    { separator: true },
+    { label: t.actionsMenu.adjustStock, icon: 'inventory', action: () => handleQuickStockAdjust(drug) },
+    { separator: true },
+    { label: t.actionsMenu.delete, icon: 'delete', action: () => handleDelete(drug.id), danger: true }
+  ];
+
+  // Helper: Get header context menu actions
+  const getHeaderActions = () => [
+    { label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', icon: 'visibility', action: () => {} },
+    { separator: true },
+    ...Object.keys(columns).map(colId => ({
+      label: columns[colId as keyof typeof columns].label || 'Icon',
+      icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
+      action: () => toggleColumnVisibility(colId)
+    }))
+  ];
+
+  // Header context menu trigger
+  const { triggerProps: headerTriggerProps } = useContextMenuTrigger({
+    actions: getHeaderActions
+  });
+
+  // Row touch/long-press support
+  const currentTouchItem = useRef<Drug | null>(null);
   
   const { 
     onTouchStart: onRowTouchStart, 
     onTouchEnd: onRowTouchEnd, 
-    onTouchMove: onRowTouchMove, 
-    isLongPress: isRowLongPress 
+    onTouchMove: onRowTouchMove
   } = useLongPress({
     onLongPress: (e) => {
-        if (currentTouchItem.current && typeof currentTouchItem.current !== 'string') {
-            const drug = currentTouchItem.current as Drug;
-            const touch = e.touches[0];
-            showMenu(touch.clientX, touch.clientY, [
-                { label: t.actionsMenu.edit, icon: 'edit', action: () => handleOpenEdit(drug) },
-                { label: t.actionsMenu.viewDetails, icon: 'visibility', action: () => handleViewDetails(drug.id) },
-                { separator: true },
-                { label: t.actionsMenu.printBarcode, icon: 'print', action: () => handlePrintBarcode(drug) },
-                { label: t.actionsMenu.duplicate, icon: 'content_copy', action: () => handleDuplicate(drug) },
-                { separator: true },
-                { label: t.actionsMenu.adjustStock, icon: 'inventory', action: () => handleQuickStockAdjust(drug) },
-                { separator: true },
-                { label: t.actionsMenu.delete, icon: 'delete', action: () => handleDelete(drug.id), danger: true }
-            ]);
-        }
-    }
-  });
-
-  const {
-    onTouchStart: onHeaderTouchStart,
-    onTouchEnd: onHeaderTouchEnd,
-    onTouchMove: onHeaderTouchMove,
-    isLongPress: isHeaderLongPress
-  } = useLongPress({
-      onLongPress: (e) => {
+      if (currentTouchItem.current) {
         const touch = e.touches[0];
-        showMenu(touch.clientX, touch.clientY, [
-            { 
-              label: 'Show/Hide Columns', 
-              icon: 'visibility', 
-              action: () => {} 
-            },
-            { separator: true },
-            ...Object.keys(columns).map(colId => ({
-              label: columns[colId as keyof typeof columns].label || 'Icon',
-              icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
-              action: () => toggleColumnVisibility(colId)
-            }))
-        ]);
+        showMenu(touch.clientX, touch.clientY, getRowActions(currentTouchItem.current));
       }
+    }
   });
 
 
@@ -564,7 +557,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
           <table className="w-full text-start border-collapse type-functional">
             <thead className={`bg-${color}-50 dark:bg-gray-900 sticky top-0 z-10 shadow-sm`}>
               <tr>
-                {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
+              {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
                   <th
                     key={columnId}
                     data-column-id={columnId}
@@ -578,40 +571,20 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                     onDragEnd={handleColumnDragEnd}
                     onTouchStart={(e) => {
                       e.stopPropagation();
-                      currentTouchItem.current = columnId;
-                      onHeaderTouchStart(e);
                       handleColumnDragStart(e, columnId);
                     }}
                     onTouchMove={(e) => {
-                        onHeaderTouchMove(e);
                         handleColumnTouchMove(e);
                     }}
                     onTouchEnd={(e) => {
-                        onHeaderTouchEnd();
                         handleColumnTouchEnd(e);
                     }}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      showMenu(e.clientX, e.clientY, [
-                        {
-                          label: 'Show/Hide Columns',
-                          icon: 'visibility',
-                          action: () => {}
-                        },
-                        { separator: true },
-                        ...Object.keys(columns).map(colId => ({
-                          label: columns[colId as keyof typeof columns].label,
-                          icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
-                          action: () => toggleColumnVisibility(colId)
-                        }))
-                      ]);
-                    }}
+                    {...headerTriggerProps}
                     title="Drag to reorder | Right-click for options"
                   >
                     {columns[columnId as keyof typeof columns].label}
                   </th>
-                ))}
+                ))}              
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -621,12 +594,10 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                     className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${
                         drug.stock <= (drug.minStock || 0) ? 'bg-red-50/50 dark:bg-red-900/10' : (index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : '')
                     }`}
-                    onClick={(e) => {
-                        if (isRowLongPress.current) {
-                            isRowLongPress.current = false;
-                            return;
-                        }
-                        // Normal click action if any
+                    onContextMenu={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showMenu(e.clientX, e.clientY, getRowActions(drug));
                     }}
                     onTouchStart={(e) => {
                         currentTouchItem.current = drug;
@@ -634,20 +605,6 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                     }}
                     onTouchEnd={onRowTouchEnd}
                     onTouchMove={onRowTouchMove}
-                    onContextMenu={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        showMenu(e.clientX, e.clientY, [
-                            { label: t.actionsMenu.edit, icon: 'edit', action: () => handleOpenEdit(drug) },
-                            { label: t.actionsMenu.view, icon: 'visibility', action: () => handleViewDetails(drug.id) },
-                            { label: t.actionsMenu.printBarcode, icon: 'qr_code_2', action: () => handlePrintBarcode(drug) },
-                            { separator: true },
-                            { label: t.actionsMenu.duplicate, icon: 'content_copy', action: () => handleDuplicate(drug) },
-                            { label: t.actionsMenu.adjustStock, icon: 'inventory_2', action: () => handleQuickStockAdjust(drug) },
-                            { separator: true },
-                            { label: t.actionsMenu.delete, icon: 'delete', action: () => handleDelete(drug.id), danger: true },
-                        ]);
-                    }}
                 >
                   {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
                     <td key={columnId} className={columns[columnId as keyof typeof columns].className}>

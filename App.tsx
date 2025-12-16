@@ -1043,7 +1043,7 @@ const App: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 h-full overflow-hidden relative rounded-tl-3xl rounded-tr-3xl border-t border-l border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 shadow-inner">
-        <div className={`h-full overflow-y-auto scrollbar-hide ${view === 'pos' || view === 'purchases' ? 'p-2' : 'max-w-7xl mx-auto p-4 md:p-8'}`}>
+        <div className={`h-full overflow-y-auto scrollbar-hide ${view === 'pos' || view === 'purchases' ? 'p-2' : view === 'pos-test' ? 'w-full px-[30px] py-4' : 'max-w-7xl mx-auto p-4 md:p-8'}`}>
           {/* Dynamic Page Rendering - Automatically handles all pages from registry */}
           {(() => {
             const pageConfig = PAGE_REGISTRY[view];
@@ -1117,6 +1117,8 @@ const App: React.FC = () => {
             } else if (view === 'inventory') {
               props.t = t.inventory;
             } else if (view === 'pos') {
+              props.t = t.pos;
+            } else if (view === 'pos-test') {
               props.t = t.pos;
             } else if (view === 'sales-history') {
               props.t = t.salesHistory;
