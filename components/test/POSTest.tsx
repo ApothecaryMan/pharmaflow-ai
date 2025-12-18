@@ -206,8 +206,7 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
             </span>
           </div>
 
-          {/* Controls V Separator */}
-          <div className="h-3 w-px bg-gray-200 dark:bg-gray-700 mx-0.5"></div>
+
           
           {/* Controls */}
           <div className="flex items-center gap-1">
@@ -217,7 +216,7 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
                  Let's keep one discount input for the row. Apply to both?
                  Or just show discount for 'primary' (Pack if exists).
              */}
-            <div className={`flex items-center rounded-lg border shadow-sm h-6 overflow-hidden transition-colors ${
+            <div className={`flex items-center rounded-lg border shadow-sm h-6 overflow-hidden transition-colors w-14 shrink-0 ${
               (item.discount || 0) > 0 
                 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
                 : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
@@ -231,7 +230,7 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
                    if (newVal > 0) setGlobalDiscount(0);
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
-                className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors ${
+                className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
                   (item.discount || 0) > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-400'
                 }`}
               >
@@ -254,14 +253,18 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
                   if(unitItem) updateItemDiscount(unitItem.id, true, finalVal);
                   if (finalVal > 0) setGlobalDiscount(0);
                 }}
-                className={`w-8 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                    (item.discount || 0) > 0 ? 'text-green-700 dark:text-green-300 placeholder-green-300' : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
                 }`}
               />
             </div>
 
-            {/* Dual Qty Control: [ Pack | Unit ] */}
-            <div className="flex items-center bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm h-6 overflow-hidden">
+            {/* Dual Qty Control: [ Pack | Unit ] - Fixed width matching discount */}
+            <div className={`flex items-center bg-white dark:bg-gray-900 rounded-lg border shadow-sm h-6 overflow-hidden w-14 shrink-0 transition-colors ${
+                hasDualMode && (!packItem || packItem.quantity === 0) && (!unitItem || unitItem.quantity === 0)
+                ? 'border-yellow-400 dark:border-yellow-500 ring-1 ring-yellow-400/20'
+                : 'border-gray-200 dark:border-gray-700'
+            }`}>
                 {/* Pack Input */}
                 <input
                     type="number"
@@ -274,7 +277,6 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
                     onChange={(e) => {
                         const val = e.target.value === '' ? (hasDualMode ? 0 : 1) : parseInt(e.target.value);
                         if (isNaN(val)) return;
-                        // Clamp to min
                         const minVal = hasDualMode ? 0 : 1;
                         const clampedVal = Math.max(minVal, val);
                         if (packItem) {
@@ -283,12 +285,12 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
                             addToCart(item, false);
                         }
                     }}
-                    className="w-8 h-full text-xs font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300"
+                    className={`h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 shrink-0 min-w-0 ${hasDualMode ? 'w-7' : 'w-full'}`}
                 />
                 
                 {/* Separator */}
                 {hasDualMode && (
-                   <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-0"></div>
+                   <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0"></div>
                 )}
                 
                 {/* Unit Input */}
@@ -311,13 +313,13 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
                             addToCart(item, true);
                         }
                     }}
-                    className="w-8 h-full text-xs font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-blue-600 dark:text-blue-400 placeholder-blue-200"
+                    className="w-7 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-blue-600 dark:text-blue-400 placeholder-blue-200 shrink-0"
                 />
                 )}
             </div>
 
             {/* Total Price (Sum of both) */}
-            <div className="text-sm font-bold text-gray-900 dark:text-white min-w-[3rem] text-end">
+            <div className="text-sm font-bold text-gray-900 dark:text-white w-16 shrink-0 text-end tabular-nums">
                 ${((packItem ? calculateItemTotal(packItem) : 0) + (unitItem ? calculateItemTotal(unitItem) : 0)).toFixed(2)}
             </div>
             
@@ -794,33 +796,49 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
         if (itemIndex === -1) return prev;
         
         const item = prev[itemIndex];
-        const targetIsUnit = !currentIsUnit;
-        
-        // Check if target state already exists
-        const targetIndex = prev.findIndex(i => i.id === id && !!i.isUnit === targetIsUnit);
-        
-        if (targetIndex >= 0) {
-            // MERGE: Add current qty to target items qty, remove current
-            // Note: When converting Packs to Units or vice versa, quantities might ideally scale? 
-            // BUT: standard behavior for "Change Unit" button usually just flips the type, typically for 1 item?
-            // User request usually implies just toggling the mode flag.
-            // If I have 1 Pack and toggle to Unit -> 1 Unit? Or 'UnitsPerPack' Units?
-            // Usually in this simple POS, toggle just changes the *pricing/mode* context.
-            // Let's assume quantity is preserved (1 Pack -> 1 Unit) unless we want to convert.
-            // Given "fix when cart contain one pack then add unit another unit sum together as 2 unit",
-            // The user wants separation.
-            // If I toggle, and the other exists, I'll merge their quantities.
+        const unitsPerPack = item.unitsPerPack || 1;
+
+        if (!currentIsUnit) {
+            // Pack -> Unit (Only if qty is 1, convert to 1 unit)
+            // Also prevent if units already exist (merged row logic)
+            const existingUnit = prev.find(i => i.id === id && i.isUnit);
+            if (item.quantity !== 1 || (existingUnit && existingUnit.quantity > 0)) return prev;
             
-            const updated = [...prev];
-            updated[targetIndex] = { ...updated[targetIndex], quantity: updated[targetIndex].quantity + item.quantity };
-            updated.splice(itemIndex, 1);
-            return updated;
-        } else {
-            // Just flip the flag
-            const updated = [...prev];
-            updated[itemIndex] = { ...item, isUnit: targetIsUnit };
+            let updated = prev.filter((_, idx) => idx !== itemIndex);
+            const unitIndex = updated.findIndex(i => i.id === id && i.isUnit);
+            if (unitIndex >= 0) {
+                updated[unitIndex] = { ...updated[unitIndex], quantity: updated[unitIndex].quantity + 1 };
+            } else {
+                updated.push({ ...item, isUnit: true, quantity: 1 });
+            }
             return updated;
         }
+
+        // Unit -> Pack (Smart Conversion)
+        if (unitsPerPack <= 1) return prev;
+
+        const packsToAdd = Math.floor(item.quantity / unitsPerPack);
+        if (packsToAdd <= 0) return prev;
+
+        const unitsToRemove = packsToAdd * unitsPerPack;
+        
+        let updated = [...prev];
+        const updatedUnitItem = { ...item, quantity: item.quantity - unitsToRemove };
+        
+        if (updatedUnitItem.quantity === 0) {
+            updated = updated.filter((_, idx) => idx !== itemIndex);
+        } else {
+            updated[itemIndex] = updatedUnitItem;
+        }
+
+        const packIndex = updated.findIndex(i => i.id === id && !i.isUnit);
+        if (packIndex >= 0) {
+            updated[packIndex] = { ...updated[packIndex], quantity: updated[packIndex].quantity + packsToAdd };
+        } else {
+            updated.push({ ...item, isUnit: false, quantity: packsToAdd });
+        }
+
+        return updated;
     });
   };
 
@@ -831,17 +849,45 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
     ));
   };
 
-  // Helper: Get cart item context menu actions
-  const getCartItemActions = (item: CartItem) => [
-    { label: t.removeItem, icon: 'delete', action: () => removeFromCart(item.id, !!item.isUnit), danger: true },
-    { separator: true },
-    {
-      label: item.isUnit ? t.switchToPack : t.switchToUnit,
-      icon: 'swap_horiz',
-      action: () => toggleUnitMode(item.id, !!item.isUnit),
-      disabled: !item.unitsPerPack || item.unitsPerPack <= 1
-    },
-    {
+  const getCartItemActions = (item: CartItem) => {
+    const actions: any[] = [
+      { label: t.removeItem, icon: 'delete', action: () => removeFromCart(item.id, !!item.isUnit), danger: true },
+    ];
+
+    const unitsPerPack = item.unitsPerPack || 1;
+    const hasDualMode = unitsPerPack > 1;
+
+    // Resolve full drug state from cart to correctly determine actions for merged row
+    const packItem = cart.find(i => i.id === item.id && !i.isUnit);
+    const unitItem = cart.find(i => i.id === item.id && i.isUnit);
+    const packQty = packItem?.quantity || 0;
+    const unitQty = unitItem?.quantity || 0;
+
+    const canSwitchToUnit = hasDualMode && packQty === 1 && unitQty === 0;
+    const canSwitchToPack = hasDualMode && unitQty >= unitsPerPack;
+
+    if (canSwitchToUnit) {
+      actions.push({ separator: true });
+      actions.push({
+        label: t.switchToUnit,
+        icon: 'swap_horiz',
+        action: () => toggleUnitMode(item.id, false), // false = currently is Pack
+        danger: false
+      });
+    }
+
+    if (canSwitchToPack) {
+      actions.push({ separator: true });
+      actions.push({
+        label: t.switchToPack,
+        icon: 'swap_horiz',
+        action: () => toggleUnitMode(item.id, true), // true = currently is Unit
+        danger: false
+      });
+    }
+
+    actions.push({ separator: true });
+    actions.push({
       label: t.actions.discount,
       icon: 'percent',
       action: () => {
@@ -858,9 +904,11 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
             }
           }
         }
-      }
-    }
-  ];
+      },
+      danger: false
+    });
+    return actions;
+  };
 
   // Cart Drag and Drop Sensors
   const cartSensors = useSensors(
@@ -945,10 +993,11 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
 
   const subtotal = cart.reduce((sum, item) => sum + calculateItemTotal(item), 0);
   const cartTotal = subtotal * (1 - (globalDiscount / 100));
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const isValidOrder = cart.length > 0 && mergedCartItems.every(item => (item.pack?.quantity || 0) + (item.unit?.quantity || 0) > 0);
+  const totalItems = mergedCartItems.filter(item => (item.pack?.quantity || 0) + (item.unit?.quantity || 0) > 0).length;
 
   const handleCheckout = (saleType: 'walk-in' | 'delivery' = 'walk-in') => {
-    if (cart.length === 0) return;
+    if (!isValidOrder) return;
 
     let deliveryFee = 0;
     if (saleType === 'delivery') {
@@ -1543,7 +1592,7 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
                         e.stopPropagation();
                         const selection = window.getSelection()?.toString();
                         showMenu(e.clientX, e.clientY, [
-                            ...(selection ? [{ label: t.copy, icon: 'content_copy', action: () => navigator.clipboard.writeText(selection) }] : []),
+                            ...(selection ? [{ label: t.copy, icon: 'content_copy', action: () => navigator.clipboard.writeText(selection), danger: false }] : []),
                             { label: t.paste, icon: 'content_paste', action: async () => {
                                 try {
                                     const text = await navigator.clipboard.readText();
@@ -1551,9 +1600,9 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
                                 } catch (err) {
                                     console.error('Failed to read clipboard', err);
                                 }
-                            }},
-                            { separator: true },
-                            { label: t.clear, icon: 'backspace', action: () => setSearch('') }
+                            }, danger: false },
+                            { separator: true } as any,
+                            { label: t.clear, icon: 'backspace', action: () => setSearch(''), danger: false }
                         ]);
                     }}
                 />
@@ -1626,18 +1675,18 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
                   onRowClick={(item) => addGroupToCart(item.group)}
                   onRowLongPress={(e, item) => {
                     showMenu(e.touches[0].clientX, e.touches[0].clientY, [
-                      { label: t.addToCart, icon: 'add_shopping_cart', action: () => addGroupToCart(item.group) },
-                      { label: t.viewDetails, icon: 'info', action: () => setViewingDrug(item.group[0]) },
-                      { separator: true },
-                      { label: t.actions?.showSimilar || 'Show Similar', icon: 'category', action: () => setSelectedCategory(item.category) }
+                      { label: t.addToCart, icon: 'add_shopping_cart', action: () => addGroupToCart(item.group), danger: false },
+                      { label: t.viewDetails, icon: 'info', action: () => setViewingDrug(item.group[0]), danger: false },
+                      { separator: true } as any,
+                      { label: t.actions?.showSimilar || 'Show Similar', icon: 'category', action: () => setSelectedCategory(item.category), danger: false }
                     ]);
                   }}
                   onRowContextMenu={(e, item) => {
                     showMenu(e.clientX, e.clientY, [
-                      { label: t.addToCart, icon: 'add_shopping_cart', action: () => addGroupToCart(item.group) },
-                      { label: t.viewDetails, icon: 'info', action: () => setViewingDrug(item.group[0]) },
-                      { separator: true },
-                      { label: t.actions?.showSimilar || 'Show Similar', icon: 'category', action: () => setSelectedCategory(item.category) }
+                      { label: t.addToCart, icon: 'add_shopping_cart', action: () => addGroupToCart(item.group), danger: false },
+                      { label: t.viewDetails, icon: 'info', action: () => setViewingDrug(item.group[0]), danger: false },
+                      { separator: true } as any,
+                      { label: t.actions?.showSimilar || 'Show Similar', icon: 'category', action: () => setSelectedCategory(item.category), danger: false }
                     ]);
                   }}
                   searchPlaceholder={t.searchPlaceholder}
@@ -1807,7 +1856,7 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
             <div className="flex gap-2">
                 <button 
                     onClick={() => handleCheckout('walk-in')}
-                    disabled={cart.length === 0 || !hasOpenShift}
+                    disabled={!isValidOrder || !hasOpenShift}
                     className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-${color}-200 dark:shadow-none transition-all active:scale-95 flex justify-center items-center gap-2`}
                 >
                     <span className="material-symbols-rounded text-[18px]">payments</span>
@@ -1815,7 +1864,7 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
                 </button>
                 <button
                     onClick={() => handleCheckout('delivery')}
-                    disabled={cart.length === 0 || !hasOpenShift}
+                    disabled={!isValidOrder || !hasOpenShift}
                     className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex justify-center items-center`}
                     title={t.deliveryOrder}
                 >
