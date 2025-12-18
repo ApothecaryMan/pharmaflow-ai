@@ -34,7 +34,6 @@ export const TRANSLATIONS = {
       reload: 'Reload App'
     },
     profile: {
-      name: 'John Doe',
       role: 'Pharmacist',
       changePhoto: 'Change Photo',
       reset: 'Reset',
@@ -1204,7 +1203,6 @@ export const TRANSLATIONS = {
       reload: 'إعادة تحميل'
     },
     profile: {
-      name: 'John Doe',
       role: 'صيدلي',
       changePhoto: 'تغيير الصورة',
       reset: 'إعادة تعيين',

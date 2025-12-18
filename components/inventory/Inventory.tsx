@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SmartDateInput, SmartInput } from '../common/SmartInputs';
-import { PosDropdown } from '../common/PosDropdown';
+import { PosDropdown } from '../common';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useLongPress } from '../../hooks/useLongPress';

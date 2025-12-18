@@ -145,6 +145,16 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     }
   };
 
+  const getInitials = (name: string) => {
+    if (!name) return '';
+    // Remove titles like Dr, Dr., Doctor, Phd, match Arabic titles too
+    const cleaned = name.replace(/\b(Dr|Dr\.|Doctor|دكتور|د\.?)\b/gi, '').trim();
+    const words = cleaned.split(/\s+/);
+    if (words.length === 0) return '';
+    // Get first letter of every word, cap at 3 chars
+    return words.map(word => word[0]).join('').toUpperCase().substring(0, 3);
+  };
+
   return (
     <nav 
       className="h-16 flex items-center px-4 sticky top-0 z-50"
@@ -347,11 +357,11 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         border: '1px solid rgba(255,255,255,0.2)'
                     }}
                 >
-                    JD
+                    {getInitials("Dr Mohamed Rezk")}
                 </Avatar>
             )}
             <div className="hidden md:flex flex-col items-start">
-                <span className="text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5">{t.profile.name}</span>
+                <span className="text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5">Dr Mohamed Rezk</span>
                 <span className="text-[10px] text-gray-400 leading-none">{t.profile.role}</span>
             </div>
             <span className="hidden md:block material-symbols-rounded text-gray-400 text-[16px]">expand_more</span>
@@ -378,7 +388,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                                 border: '1px solid rgba(255,255,255,0.2)'
                             }}
                         >
-                            JD
+                            {getInitials("Dr Mohamed Rezk")}
                         </Avatar>
                     )}
                     <button 
@@ -390,7 +400,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     </button>
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white">{t.profile.name}</h3>
+                    <h3 className="font-bold text-gray-900 dark:text-white">Dr Mohamed Rezk</h3>
                     <div className="flex items-center gap-2">
                         <p className="text-xs text-gray-500 dark:text-gray-400">{t.profile.role}</p>
                         {profileImage && (
