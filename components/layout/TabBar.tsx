@@ -22,6 +22,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+import { TRANSLATIONS } from '../../i18n/translations';
+
 interface TabBarProps {
   tabs: SaleTab[];
   activeTabId: string;
@@ -32,7 +34,8 @@ interface TabBarProps {
   onTogglePin: (tabId: string) => void;
   onTabReorder: (newOrder: SaleTab[]) => void;
   maxTabs: number;
-  color?: string; // Theme color
+  color?: string;
+  t: typeof TRANSLATIONS.EN.pos; // Strict translation prop
 }
 
 interface SortableTabProps {
@@ -52,8 +55,8 @@ interface SortableTabProps {
   handleRename: (id: string) => void;
   setEditingTabId: (id: string | null) => void;
   showMenu: (x: number, y: number, items: any[]) => void;
-  // Extra props for closing logic
   onCloseOthers: (id: string) => void;
+  t: typeof TRANSLATIONS.EN.pos;
 }
 
 const SortableTab = ({
@@ -72,7 +75,8 @@ const SortableTab = ({
   handleRename,
   setEditingTabId,
   showMenu,
-  onCloseOthers
+  onCloseOthers,
+  t
 }: SortableTabProps) => {
   const {
     attributes,
@@ -96,11 +100,11 @@ const SortableTab = ({
 
   // Helper: Get tab context menu actions
   const getTabActions = () => [
-    { label: 'Close Tab', icon: 'close', action: () => onTabClose(tab.id) },
-    { label: 'Close Others', icon: 'tab_close_right', action: () => onCloseOthers(tab.id) },
-    { label: 'Duplicate Tab', icon: 'content_copy', action: () => onTabAdd() },
-    { label: tab.isPinned ? 'Unpin' : 'Pin', icon: tab.isPinned ? 'push_pin' : 'keep_off', action: () => onTogglePin(tab.id) },
-    { label: 'Rename', icon: 'edit', action: () => onRenameStart(tab) }
+    { label: t.tabs?.closeTab || 'Close Tab', icon: 'close', action: () => onTabClose(tab.id) },
+    { label: t.tabs?.closeOthers || 'Close Others', icon: 'tab_close_right', action: () => onCloseOthers(tab.id) },
+    { label: t.tabs?.duplicateTab || 'Duplicate Tab', icon: 'content_copy', action: () => onTabAdd() },
+    { label: tab.isPinned ? (t.tabs?.unpin || 'Unpin') : (t.tabs?.pin || 'Pin'), icon: tab.isPinned ? 'push_pin' : 'keep_off', action: () => onTogglePin(tab.id) },
+    { label: t.tabs?.rename || 'Rename', icon: 'edit', action: () => onRenameStart(tab) }
   ];
 
   const {
@@ -239,7 +243,8 @@ export const TabBar: React.FC<TabBarProps> = ({
   onTogglePin,
   onTabReorder,
   maxTabs,
-  color = 'blue'
+  color = 'blue',
+  t
 }) => {
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -268,18 +273,6 @@ export const TabBar: React.FC<TabBarProps> = ({
     if (over && active.id !== over.id) {
         const oldIndex = tabs.findIndex((t) => t.id === active.id);
         const newIndex = tabs.findIndex((t) => t.id === over.id);
-        
-        // Don't allow dragging unpinned before pinned if we want to enforce structure?
-        // Or just let arrayMove handle it and let the user sort?
-        // User asked "pin reorder to first". If user drags unpinned to first, it stays?
-        // If we want to strictly enforce Pinned > Unpinned, we might assume user dragging IS reordering.
-        // But if we enforce pinned-first logic, dragging unpinned to pinned area should effectively pin it?
-        // Or reorder within groups?
-        // For simplicity: Allow free reordering, but Pin toggle enforces the sort.
-        // If user drags unpinned above pinned, it just sits there until next pin toggle sort?
-        // Or we can prevent crossing the boundary.
-        // Let's allow free sort for now as per "drag drop function to reorder tab".
-        
         onTabReorder(arrayMove(tabs, oldIndex, newIndex));
     }
   };
@@ -335,6 +328,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                 setEditingTabId={setEditingTabId}
                 showMenu={showMenu}
                 onCloseOthers={handleCloseOthers}
+                t={t}
               />
             ))}
           </SortableContext>
@@ -350,7 +344,7 @@ export const TabBar: React.FC<TabBarProps> = ({
               text-gray-500 hover:text-${color}-600 dark:text-gray-400 dark:hover:text-${color}-400
               shrink-0
             `}
-            title="New Tab"
+            title={t.tabs?.newTab || "New Tab"}
           >
             <span className="material-symbols-rounded text-[20px]">add</span>
           </button>

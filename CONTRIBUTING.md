@@ -57,8 +57,10 @@ While state is in `App.tsx`, complex business logic and data persistence should 
 *   String concatenation: `"Hello " + name`
 
 #### Required ✅
-*   Use `props.t` (translation object) passed from parent.
-*   All Input placeholders, Table headers, Button labels.
+*   **Strict Typing**: NEVER use `any`. Use `t: typeof TRANSLATIONS.EN.moduleName`.
+*   **Friendly Tone**: Use human-centric, polite, and clear language (e.g., "We couldn't find that item" instead of "Item not found error").
+*   **Completeness**: Add keys to `i18n/translations.ts` immediately. MUST have both EN and AR values.
+*   **Usage**: Use `props.t.key`. No hardcoded strings.
 
 ---
 

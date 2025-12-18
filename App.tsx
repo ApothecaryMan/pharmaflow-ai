@@ -61,7 +61,7 @@ const generateInventory = (): Drug[] => {
       expiryDate: new Date(Date.now() + Math.random() * 1000 * 60 * 60 * 24 * 365 * 2).toISOString().split('T')[0],
       description: `Original ${drug.name} (${drug.generic})`,
       barcode: `888${index.toString().padStart(9, '0')}`,
-      internalCode: `REAL-${index.toString().padStart(4, '0')}`,
+      internalCode: (index + 1).toString().padStart(6, '0'),
       unitsPerPack: 1,
       dosageForm: drug.form,
       activeIngredients: drug.generic.split(' + ').map(i => i.trim()),
@@ -132,7 +132,7 @@ const generateInventory = (): Drug[] => {
       expiryDate: new Date(Date.now() + Math.random() * 1000 * 60 * 60 * 24 * 365 * 2).toISOString().split('T')[0], // Next 2 years
       description: desc,
       barcode: Math.floor(Math.random() * 1000000000000).toString(),
-      internalCode: `INT-${i.toString().padStart(5, '0')}`,
+      internalCode: (i + 15).toString().padStart(6, '0'),
       unitsPerPack: units,
       dosageForm: dosageForm,
       activeIngredients: [generic], // Use generic name as active ingredient for mock data
@@ -454,6 +454,29 @@ const App: React.FC = () => {
     ];
     setTip(tips[Math.floor(Math.random() * tips.length)]);
   }, []);
+
+  // MIGRATION: Update Legacy Internal Codes to 6-Digit Format
+  useEffect(() => {
+     // Check for items that need migration (contain non-digits or are not 6 digits)
+     const needsMigration = inventory.some(d => d.internalCode && (!/^\d{6}$/.test(d.internalCode) || d.internalCode.includes('-') || d.internalCode.includes('REAL') || d.internalCode.includes('INT')));
+     
+     if (needsMigration) {
+         console.log('Migrating inventory codes to 6-digit number format...');
+         const migratedInventory = inventory.map((d, index) => {
+             // Only migrate if not already a 6-digit number
+             if (!d.internalCode || !/^\d{6}$/.test(d.internalCode)) {
+                 // Generate a new sequential code based on index (+1 to start from 000001)
+                 // We use index+1 to ensure uniqueness across the migrated set
+                 return {
+                     ...d,
+                     internalCode: (index + 1).toString().padStart(6, '0')
+                 };
+             }
+             return d;
+         });
+         setInventory(migratedInventory);
+     }
+  }, []); // Run on mount only (to avoid potential loops, relying on immediate state update)
 
   // --- Cross-Tab Synchronization ---
   useEffect(() => {

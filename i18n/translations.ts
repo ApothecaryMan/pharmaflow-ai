@@ -1,3 +1,8 @@
+// @protocol: .agent/workflows/enforce-translations.md
+// This file is governed by the Strict Translation Protocol.
+// 1. All keys must exist in both EN and AR.
+// 2. Types are inferred from EN. Do not break the structure.
+
 export const TRANSLATIONS = {
   EN: {
     appTitle: 'PharmaFlow',
@@ -524,7 +529,29 @@ export const TRANSLATIONS = {
       viewDetails: 'View Details',
       copyName: 'Copy Name',
       addToCart: 'Add to Cart',
-      icon: 'Icon'
+      icon: 'Icon',
+      modal: {
+        stock: 'Stock',
+        price: 'Price',
+        category: 'Category',
+        expiry: 'Expiry Date',
+        location: 'Location',
+        description: 'Description',
+        noDescription: 'No description available.',
+        shelf: 'Shelf'
+      },
+      startSearching: 'Start searching...',
+      noResults: 'No drugs found matching your search.',
+      tryDifferentKeywords: 'Try different names or codes.',
+      tabs: {
+        newTab: 'New Tab',
+        closeTab: 'Close Tab',
+        closeOthers: 'Close Others',
+        duplicateTab: 'Duplicate Tab',
+        pin: 'Pin',
+        unpin: 'Unpin',
+        rename: 'Rename'
+      }
     },
     cashRegister: {
       title: 'Cash Register',
@@ -1687,7 +1714,29 @@ export const TRANSLATIONS = {
       viewDetails: 'عرض التفاصيل',
       copyName: 'نسخ الاسم',
       addToCart: 'إضافة للسلة',
-      icon: 'أيقونة'
+      icon: 'أيقونة',
+      modal: {
+        stock: 'المخزون',
+        price: 'السعر',
+        category: 'الفئة',
+        expiry: 'تاريخ الانتهاء',
+        location: 'الموقع',
+        description: 'الوصف',
+        noDescription: 'لا يوجد وصف متاح.',
+        shelf: 'الرف'
+      },
+      startSearching: 'ابدأ البحث...',
+      noResults: 'لم يتم العثور على نتائج.',
+      tryDifferentKeywords: 'جرب كلمات بحث مختلفة.',
+      tabs: {
+        newTab: 'فاتورة جديدة',
+        closeTab: 'إغلاق الفاتورة',
+        closeOthers: 'إغلاق الأخريات',
+        duplicateTab: 'تكرار الفاتورة',
+        pin: 'تثبيت',
+        unpin: 'إلغاء التثبيت',
+        rename: 'إعادة تسمية'
+      }
     },
     salesHistory: {
       title: 'سجل المبيعات',

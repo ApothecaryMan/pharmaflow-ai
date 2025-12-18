@@ -42,10 +42,16 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
   const allCategories = Array.from(new Set([...defaultCategories, ...categories])).sort();
 
   const generateInternalCode = () => {
-    const prefix = formData.category?.substring(0, 2).toUpperCase() || 'GN';
-    const nextId = inventory.length + 1;
-    const code = `${prefix}-${String(nextId).padStart(4, '0')}`;
-    setFormData({ ...formData, internalCode: code });
+    // Find highest existing 6-digit numeric code
+    const existingCodes = inventory
+      .map(d => d.internalCode)
+      .filter(c => c && /^\d{6}$/.test(c))
+      .map(c => parseInt(c!, 10));
+
+    const maxCode = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
+    const nextCode = String(maxCode + 1).padStart(6, '0');
+    
+    setFormData({ ...formData, internalCode: nextCode });
   };
 
   const handleSubmit = (e: React.FormEvent, addAnother: boolean = false) => {

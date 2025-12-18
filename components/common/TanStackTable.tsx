@@ -34,6 +34,7 @@ interface TanStackTableProps<TData, TValue> {
   searchPlaceholder?: string;
   onRowClick?: (row: TData) => void;
   onRowLongPress?: (e: React.TouchEvent, row: TData) => void;
+  onRowContextMenu?: (e: React.MouseEvent, row: TData) => void;
   isLoading?: boolean;
   emptyMessage?: string;
   color?: string; // e.g., 'blue', 'emerald'
@@ -57,6 +58,7 @@ export function TanStackTable<TData, TValue>({
   searchPlaceholder = 'Search...',
   onRowClick,
   onRowLongPress,
+  onRowContextMenu,
   isLoading = false,
   emptyMessage = 'No results found.',
   color = 'blue',
@@ -380,6 +382,12 @@ export function TanStackTable<TData, TValue>({
                     }}
                     onTouchEnd={onRowTouchEnd}
                     onTouchMove={onRowTouchMove}
+                    onContextMenu={(e) => {
+                      if (onRowContextMenu) {
+                        e.preventDefault();
+                        onRowContextMenu(e, row.original);
+                      }
+                    }}
                     className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 overflow-visible ${onRowClick ? 'cursor-pointer' : ''}`}
                   >
                     {row.getVisibleCells().map(cell => {

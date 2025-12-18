@@ -898,6 +898,7 @@ export const POS: React.FC<POSProps> = ({ inventory, onCompleteSale, color, t, c
             onTabReorder={reorderTabs}
             maxTabs={maxTabs}
             color={color}
+            t={t}
           />
         </div>
       </div>
