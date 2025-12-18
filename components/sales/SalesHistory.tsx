@@ -11,8 +11,9 @@ import { SearchInput } from '../common/SearchInput';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
-import { printInvoice } from './InvoiceTemplate';
+import { printInvoice, InvoiceTemplateOptions } from './InvoiceTemplate';
 import { ThermalPrinterService, isSerialAvailable, isUSBAvailable } from '../../utils/printing';
+import { getDefaultTemplateOptions } from '../../utils/printing/template-utils';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -185,19 +186,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
   };
 
   const handlePrint = (sale: Sale) => {
-    // Load saved template options from localStorage
-    let savedOptions = {};
-    try {
-      const saved = localStorage.getItem('invoice_template_options');
-      if (saved) {
-        savedOptions = JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error('Failed to load saved receipt options', e);
-    }
-    
-    // Merge saved options with current language
-    printInvoice(sale, { ...savedOptions, language: language as 'EN' | 'AR' });
+    const options = getDefaultTemplateOptions(language as 'EN' | 'AR');
+    printInvoice(sale, options);
   };
 
   // Direct thermal print (ESC/POS)
@@ -207,9 +197,14 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
       paperSize: '79mm' 
     });
     
+    const templateOptions = getDefaultTemplateOptions(language as 'EN' | 'AR');
+    
     const result = await printer.printReceipt(sale, {
       printBarcode: true,
       cutPaper: true,
+      storeName: templateOptions.storeName,
+      storeSubtitle: templateOptions.storeSubtitle,
+      footerMessage: templateOptions.footerMessage,
     });
     
     if (!result.success) {

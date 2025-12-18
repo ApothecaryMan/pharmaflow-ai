@@ -166,8 +166,8 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
             ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" style="width: 40mm; max-height: 15mm; object-fit: contain;" />`
             : `<img src="/logo_outline.svg" alt="Logo" class="store-logo" />`
         }
-        <div class="store-name">${opts.storeName || (lang === 'AR' ? 'صيدلية فارما فلو' : 'PharmaFlow Pharmacy')}</div>
-        <div class="store-info">${opts.storeSubtitle || (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>
+        <div class="store-name">${opts.storeName ?? (lang === 'AR' ? 'صيدلية فارما فلو' : 'PharmaFlow Pharmacy')}</div>
+        <div class="store-info">${opts.storeSubtitle ?? (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>
         <div class="store-info" dir="auto">${opts.headerAddress ?? currentDefaults.address}</div>
         <div class="store-info" dir="auto">${opts.headerArea ?? currentDefaults.area}</div>
         <div class="hotline" dir="ltr">${opts.headerHotline ?? currentDefaults.hotline}</div>

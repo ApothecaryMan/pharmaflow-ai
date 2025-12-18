@@ -1170,6 +1170,33 @@ export const TRANSLATIONS = {
         error: 'Failed to add product. Please check all fields.',
         cleared: 'Form cleared'
       }
+    },
+    receiptDesigner: {
+      title: 'Receipt Designer',
+      subtitle: 'Customize templates for your sales receipts',
+      activeTemplate: 'Active Template',
+      newTemplate: 'New Template',
+      newTemplatePlaceholder: 'New Template Name...',
+      saveTemplate: 'Save Template',
+      deleteTemplate: 'Delete Template',
+      setDefault: 'Set as Default',
+      printTest: 'Print Test',
+      renameTemplate: 'Rename Template',
+      options: {
+        storeName: 'Store Name',
+        storeSubtitle: 'Subtitle / Tagline',
+        hotline: 'Hotline / Phone',
+        address: 'Address Line 1',
+        area: 'Area / City',
+        footer: 'Footer message',
+        inquiry: 'Inquiry / Contact info',
+        terms: 'Terms & Conditions',
+        font: 'Font Style',
+        logo: 'Store Logo (Base64)',
+        addressBox: 'Show Address Box',
+        delivery: 'Delivery Preview',
+        returns: 'Returns Preview'
+      }
     }
   },
   AR: {
@@ -2354,6 +2381,33 @@ export const TRANSLATIONS = {
         transactions: 'المعاملات',
         transactionLog: 'سجل المعاملات',
         moreTransactions: 'معاملة إضافية'
+      }
+    },
+    receiptDesigner: {
+      title: 'مصمم الفواتير',
+      subtitle: 'خصص قوالب إيصالات المبيعات الخاصة بك',
+      activeTemplate: 'القالب النشط',
+      newTemplate: 'قالب جديد',
+      newTemplatePlaceholder: 'اسم القالب الجديد...',
+      saveTemplate: 'حفظ القالب',
+      deleteTemplate: 'حذف القالب',
+      setDefault: 'تعيين كافتراضي',
+      printTest: 'طباعة تجريبية',
+      renameTemplate: 'إعادة تسمية القالب',
+      options: {
+        storeName: 'اسم الصيدلية',
+        storeSubtitle: 'العنوان الفرعي / الشعار',
+        hotline: 'الخط الساخن / الهاتف',
+        address: 'العنوان - السطر 1',
+        area: 'المنطقة / المدينة',
+        footer: 'رسالة التذييل',
+        inquiry: 'للاستفسار / معلومات الاتصال',
+        terms: 'الشروط والأحكام',
+        font: 'نمط الخط',
+        logo: 'شعار الصيدلية (Base64)',
+        addressBox: 'إظهار مربع العنوان',
+        delivery: 'معاينة الدليفري',
+        returns: 'معاينة المرتجع'
       }
     }
   }
