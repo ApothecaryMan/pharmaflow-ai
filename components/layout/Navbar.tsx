@@ -444,9 +444,19 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   </label>
                   <button
                     onClick={() => setDarkMode(!darkMode)}
-                    className={`w-12 h-6 rounded-full transition-colors relative ${darkMode ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
+                    className={`w-12 h-6 rounded-full relative ${darkMode ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
                   >
-                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${darkMode ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}></div>
+                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm flex items-center justify-center ${darkMode ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}>
+                      {darkMode ? (
+                        <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </div>
                   </button>
                 </div>
 
@@ -474,9 +484,19 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   </label>
                   <button
                     onClick={() => setTextTransform(textTransform === 'normal' ? 'uppercase' : 'normal')}
-                    className={`w-12 h-6 rounded-full transition-colors relative ${textTransform === 'uppercase' ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
+                    className={`w-12 h-6 rounded-full relative ${textTransform === 'uppercase' ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
                   >
-                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${textTransform === 'uppercase' ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}></div>
+                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm flex items-center justify-center ${textTransform === 'uppercase' ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}>
+                      {textTransform === 'uppercase' ? (
+                        <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </div>
                   </button>
                 </div>
 
@@ -489,9 +509,19 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   </label>
                   <button
                     onClick={() => setHideInactiveModules && setHideInactiveModules(!hideInactiveModules)}
-                    className={`w-12 h-6 rounded-full transition-colors relative ${hideInactiveModules ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
+                    className={`w-12 h-6 rounded-full relative ${hideInactiveModules ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
                   >
-                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${hideInactiveModules ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}></div>
+                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm flex items-center justify-center ${hideInactiveModules ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}>
+                      {hideInactiveModules ? (
+                        <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </div>
                   </button>
                 </div>
                 )}
@@ -542,9 +572,19 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         onModuleChange('dashboard');
                       }
                     }}
-                    className={`w-12 h-6 rounded-full transition-colors relative ${developerMode ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
+                    className={`w-12 h-6 rounded-full relative ${developerMode ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
                   >
-                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${developerMode ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}></div>
+                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm flex items-center justify-center ${developerMode ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}>
+                      {developerMode ? (
+                        <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </div>
                   </button>
                 </div>
                 )}

@@ -45,6 +45,8 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 import { TRANSLATIONS } from '../../i18n/translations';
+import { usePosSounds } from '../../components/common/hooks/usePosSounds';
+import { usePosShortcuts } from '../../components/common/hooks/usePosShortcuts';
 
 // --- SortableCartItem Component ---
 interface SortableCartItemProps {
@@ -67,6 +69,7 @@ interface SortableCartItemProps {
   updateQuantity: (id: string, isUnit: boolean, delta: number) => void;
   calculateItemTotal: (item: CartItem) => number;
   addToCart: (drug: Drug, isUnitMode?: boolean) => void;
+  isHighlighted?: boolean;
 }
 
 const SortableCartItem: React.FC<SortableCartItemProps> = ({
@@ -89,6 +92,7 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
   updateQuantity,
   calculateItemTotal,
   addToCart, 
+  isHighlighted
 }) => {
   const {
     attributes,
@@ -162,7 +166,10 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
       style={style}
       {...attributes}
       {...listeners}
-      className={`flex flex-col p-2 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 relative group transition-all touch-manipulation ${isDragging ? 'shadow-xl ring-2 ring-blue-500 scale-[1.02]' : ''}`}
+      {...listeners}
+      className={`flex flex-col p-2 rounded-xl bg-white dark:bg-gray-900 border transition-all touch-manipulation relative group
+        ${isDragging ? 'shadow-xl ring-2 ring-blue-500 scale-[1.02] z-50 opacity-90' : ''}
+        ${isHighlighted ? `border-${color}-500 ring-1 ring-${color}-500 bg-${color}-50/10` : 'border-gray-100 dark:border-gray-800'}`}
       onContextMenu={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -464,21 +471,82 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Global Keydown Listener for Scanner
+  // Keyboard Shortcuts & Sounds
+  const { playBeep, playError, playSuccess, playClick } = usePosSounds();
+  const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+
+  // Reset highlight when items change
+  useEffect(() => {
+    if (mergedCartItems.length > 0 && highlightedIndex === -1) {
+        setHighlightedIndex(0);
+    } else if (mergedCartItems.length === 0) {
+        setHighlightedIndex(-1);
+    } else if (highlightedIndex >= mergedCartItems.length) {
+        setHighlightedIndex(mergedCartItems.length - 1);
+    }
+  }, [mergedCartItems.length]);
+
+  usePosShortcuts({
+    enabled: true,
+    onNavigate: (direction) => {
+        if (mergedCartItems.length === 0) return;
+        setHighlightedIndex(prev => {
+            const next = direction === 'up' ? prev - 1 : prev + 1;
+            const clamped = Math.max(0, Math.min(next, mergedCartItems.length - 1));
+            // Only play click if index actually changed
+            if (clamped !== prev) {
+                 playClick();
+                 // Ensure element is scrolled into view (optional enhancement)
+            }
+            return clamped;
+        });
+    },
+    onQuantityChange: (delta) => {
+        if (highlightedIndex === -1 || !mergedCartItems[highlightedIndex]) {
+            playError();
+            return;
+        }
+        const item = mergedCartItems[highlightedIndex];
+        const targetId = item.common.id;
+        // Logic: if has Pack (even 0), modify Pack. Else Unit.
+        // mergedCartItems contains { pack, unit, common }
+        // cart is the flat list. updateQuantity updates by ID + isUnit.
+        const useUnit = !item.pack; 
+        
+        playBeep();
+        updateQuantity(targetId, useUnit, delta);
+    },
+    onDelete: () => {
+        if (highlightedIndex === -1 || !mergedCartItems[highlightedIndex]) return;
+        const item = mergedCartItems[highlightedIndex];
+        if (item.pack) removeFromCart(item.pack.id, false);
+        if (item.unit) removeFromCart(item.unit.id, true);
+        playClick(); // Delete sound
+    },
+    onCheckout: () => {
+        if (cart.length > 0) {
+             playSuccess();
+             handleCheckout('walk-in');
+        } else {
+             playError();
+        }
+    },
+    onFocusSearch: () => {
+        searchInputRef.current?.focus();
+    }
+  });
+
+  // Global Keydown (Simple Alphanumeric for Scanner / Search Focus)
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-        // Ignore if focus is already on an input or textarea
         if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
             return;
         }
-
-        // Check if key is alphanumeric (simple check)
-        // We want to capture the start of a scan
+        // Capture simple alphanumeric for search focus
         if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
             searchInputRef.current?.focus();
-            // We don't prevent default here so the character types into the input
         }
     };
-
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, []);
@@ -1772,7 +1840,7 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
                     items={mergedCartItems.map(group => group.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    {mergedCartItems.map(group => {
+                    {mergedCartItems.map((group, index) => {
                       // Using Drug ID as the sortable ID logic, assuming unique per drug
                       const itemId = group.id; // Or simple 'group.id' if unique
                       return (
@@ -1797,6 +1865,7 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
                           updateQuantity={updateQuantity}
                           calculateItemTotal={calculateItemTotal}
                           addToCart={addToCart}
+                          isHighlighted={index === highlightedIndex}
                         />
                       );
                     })}
