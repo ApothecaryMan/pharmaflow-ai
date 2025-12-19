@@ -1182,6 +1182,10 @@ export const TRANSLATIONS = {
       setDefault: 'Set as Default',
       printTest: 'Print Test',
       renameTemplate: 'Rename Template',
+      printingPreferences: 'Printing Preferences',
+      autoPrintDelivery: 'Delivery Only',
+      autoPrintAll: 'All Orders',
+      autoPrintNone: 'None',
       options: {
         storeName: 'Store Name',
         storeSubtitle: 'Subtitle / Tagline',
@@ -2394,6 +2398,10 @@ export const TRANSLATIONS = {
       setDefault: 'تعيين كافتراضي',
       printTest: 'طباعة تجريبية',
       renameTemplate: 'إعادة تسمية القالب',
+      printingPreferences: 'تفضيلات الطباعة',
+      autoPrintDelivery: 'توصيل فقط',
+      autoPrintAll: 'كل الطلبات',
+      autoPrintNone: 'لا شيء',
       options: {
         storeName: 'اسم الصيدلية',
         storeSubtitle: 'العنوان الفرعي / الشعار',

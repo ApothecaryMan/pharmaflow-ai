@@ -15,7 +15,7 @@ export interface PosDropdownProps<T> {
     className?: string;
     transparentIfSingle?: boolean;
     color?: string;
-    variant?: 'minimal' | 'input'; // 'minimal' for grid pills, 'input' for search filters
+    variant?: 'minimal' | 'input';
     minHeight?: string | number;
     style?: React.CSSProperties;
     disabled?: boolean;
@@ -23,7 +23,30 @@ export interface PosDropdownProps<T> {
     rounded?: 'xl' | 'full';
 }
 
+/**
+ * PosDropdown - A generic dropdown component.
+ * 
+ * @warning **LAYOUT BEHAVIOR NOTICE**
+ * This component defaults to an **Accordion-style expansion**, meaning it naturally pushes sibling content down when opened.
+ * 
+ * **How to use for Floating/Overlay behavior (Standard Select):**
+ * To make it float *over* content without pushing lines down:
+ * 1. Wrap it in a relative container with fixed dimensions (e.g., `h-10 w-full`).
+ * 2. Position the `PosDropdown` itself as absolute.
+ * 
+ * @example
+ * // Floating implementation
+ * <div className="relative flex-1 h-10">
+ *   <PosDropdown 
+ *      className="absolute top-0 left-0 w-full z-50" 
+ *      ...props 
+ *   />
+ * </div>
+ * 
+ * @param {boolean} minHeight - Use minHeight={38} for standard 40px input alignment (approx 40px with borders).
+ */
 export function PosDropdown<T>({
+
     items,
     selectedItem,
     isOpen,
@@ -74,6 +97,9 @@ export function PosDropdown<T>({
     const isTransparent = transparentIfSingle && isSingle;
     const isInput = variant === 'input';
 
+    // 🔥 الحل: padding موحد لكل الحالات
+    const itemPaddingClasses = 'px-3 py-1';
+
     return (
         <div ref={containerRef} className={`relative inline-block ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} style={style}>
              <div 
@@ -83,28 +109,26 @@ export function PosDropdown<T>({
                 className={`relative w-full flex flex-col overflow-hidden border transition-all outline-none
                     ${rounded === 'full' ? (isOpen ? 'rounded-2xl' : 'rounded-full') : 'rounded-xl'}
                     ${disabled ? 'cursor-not-allowed bg-gray-100 dark:bg-gray-800' : 'cursor-pointer'}
-                    ${/* Base Style & Z-Index */ ''}
                     ${isOpen 
                         ? (isInput ? 'z-50 shadow-xl' : 'z-[5] shadow-xl') 
                         : 'z-0'}
-                    ${/* Background & Border */ ''}
                     ${isOpen 
                         ? 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700' 
                         : (isInput 
-                            ? (disabled ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600') // Input Closed
-                            : (isTransparent ? 'bg-transparent border-transparent' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700') // Minimal Closed
+                            ? (disabled ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600')
+                            : (isTransparent ? 'bg-transparent border-transparent' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700')
                           )
                     }
                 `}
                 style={isOpen ? { borderColor: `var(--color-${color}-500)` } : {}}
                 onClick={disabled ? undefined : handleClick}
             >
-                {/* Trigger Area */}
+                {/* Trigger Area - العنصر المحدد */}
                 <div 
                     className={`w-full flex items-center 
-                        ${isInput ? 'justify-between px-3 py-1' : 'justify-center items-center'}
+                        ${isInput ? `justify-between ${itemPaddingClasses}` : `justify-center items-center ${itemPaddingClasses}`}
                     `}
-                    style={isInput ? { minHeight: minHeight || '42px' } : {}}
+                    style={isInput ? { minHeight: minHeight || '40px' } : {}}
                 >
                     {isInput ? (
                         <>
@@ -134,7 +158,7 @@ export function PosDropdown<T>({
                                 .map(item => (
                                     <div 
                                         key={keyExtractor(item)}
-                                        className={`w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1 transition-colors`}
+                                        className={`w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 ${itemPaddingClasses} transition-colors`}
                                         onClick={(e) => handleOptionClick(e, item)}
                                     >
                                         {renderItem(item, false)}

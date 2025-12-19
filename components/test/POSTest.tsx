@@ -10,8 +10,11 @@ import { usePOSTabs } from '../../hooks/usePOSTabs';
 import { useLongPress } from '../../hooks/useLongPress';
 import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
+import { SegmentedControl } from '../common/SegmentedControl';
 import { TabBar } from '../layout/TabBar';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
+import { generateInvoiceHTML, InvoiceTemplateOptions } from '../sales/InvoiceTemplate';
+import { Sale } from '../../types'; // Ensure Sale is imported
 import { PosDropdown, PosDropdownProps } from '../common/PosDropdown';
 import {
   useReactTable,
@@ -1090,6 +1093,75 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
         subtotal,
         total: cartTotal + deliveryFee
     });
+
+    // Auto-Print Receipt Logic
+    try {
+      const activeId = localStorage.getItem('receipt_active_template_id');
+      const templatesStr = localStorage.getItem('receipt_templates');
+      
+      if (activeId && templatesStr) {
+          const templates = JSON.parse(templatesStr);
+          const activeTemplate = templates.find((t: any) => t.id === activeId);
+          
+          if (activeTemplate) {
+             const opts = activeTemplate.options as InvoiceTemplateOptions;
+             const isDelivery = saleType === 'delivery';
+             // If delivery, check distinct flag. Else check general complete flag.
+             // Usually, 'autoPrintOnComplete' implies ANY complete unless delivery overrides?
+             // Interpreting user request: "Option for delivery order" AND "Option for any order".
+             // If Any Order is checked, it prints for everything.
+             // If Delivery is checked, it prints for delivery.
+             // So: (isDelivery && opts.autoPrintOnDelivery) || opts.autoPrintOnComplete
+             
+             const shouldPrint = (isDelivery && opts.autoPrintOnDelivery) || opts.autoPrintOnComplete;
+
+             if (shouldPrint) {
+                 // Construct a temporary Sale object for printing
+                 // Since onCompleteSale is an event, we don't have the final DB ID yet.
+                 // We'll use a placeholder or handle it gracefully.
+                 const mockSale: Sale = {
+                     id: 'TRX-' + Date.now().toString().slice(-6),
+                     date: new Date().toISOString(),
+                     dailyOrderNumber: 0, // Placeholder
+                     items: cart,
+                     subtotal,
+                     globalDiscount: globalDiscount, // global discount amount? No, Sale interface says globalDiscount is number.
+                     // In POS state, globalDiscount is number (percent).
+                     // In Sale interface: globalDiscount is number.
+                     // But wait, cartTotal calculation uses it as percent: subtotal * (1 - (globalDiscount / 100))
+                     // So we pass it as is.
+                     total: cartTotal + deliveryFee,
+                     paymentMethod,
+                     saleType,
+                     deliveryFee,
+                     status: 'completed',
+                     customerName: customerName || 'Guest Customer',
+                     customerCode, 
+                     customerPhone: selectedCustomer?.phone,
+                     customerAddress: selectedCustomer ? [
+                        selectedCustomer.area ? getLocationName(selectedCustomer.area, 'area', language as 'EN' | 'AR') : '',
+                        selectedCustomer.city ? getLocationName(selectedCustomer.city, 'city', language as 'EN' | 'AR') : '',
+                        selectedCustomer.governorate ? getLocationName(selectedCustomer.governorate, 'gov', language as 'EN' | 'AR') : ''
+                     ].filter(Boolean).join(', ') : undefined,
+                     customerStreetAddress: selectedCustomer?.streetAddress,
+                 };
+
+                 const html = generateInvoiceHTML(mockSale, opts);
+                 
+                 // Open print window
+                 const printWindow = window.open('', '_blank', 'width=400,height=600');
+                 if (printWindow) {
+                     printWindow.document.write(html);
+                     printWindow.document.close();
+                     // printWindow.print(); // Optional: trigger print dialog immediately
+                 }
+             }
+          }
+      }
+    } catch (e) {
+       console.error("Auto-print failed:", e);
+    }
+
     // Close the current tab after successful checkout
     removeTab(activeTabId);
   };
@@ -1472,30 +1544,17 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
                  </div>
 
                  <div className="flex flex-col gap-2 min-w-[140px]">
-                    <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl">
-                        <button
-                        onClick={() => setPaymentMethod('cash')}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all ${
-                            paymentMethod === 'cash'
-                            ? 'bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-sm'
-                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                        }`}
-                        >
-                        <span className="material-symbols-rounded text-[16px]">payments</span>
-                        {t.cash}
-                        </button>
-                        <button
-                        onClick={() => setPaymentMethod('visa')}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all ${
-                            paymentMethod === 'visa'
-                            ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                        }`}
-                        >
-                        <span className="material-symbols-rounded text-[16px]">credit_card</span>
-                        {t.visa}
-                        </button>
-                    </div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{t.paymentMethod}</label>
+                    <SegmentedControl
+                        value={paymentMethod}
+                        onChange={(val) => setPaymentMethod(val as 'cash' | 'visa')}
+                        color={color}
+                        size="xs"
+                        options={[
+                            { label: t.cash || 'Cash', value: 'cash', icon: 'payments', activeColor: 'green' },
+                            { label: t.visa || 'Visa', value: 'visa', icon: 'credit_card', activeColor: 'blue' }
+                        ]}
+                    />
                     <button 
                         onClick={clearCustomerSelection}
                         className="w-full py-1.5 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center justify-center gap-1"
@@ -1558,30 +1617,16 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
 
                 <div className="flex-none">
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{t.paymentMethod}</label>
-                <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl gap-1">
-                    <button
-                    onClick={() => setPaymentMethod('cash')}
-                    className={`w-24 py-1.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                        paymentMethod === 'cash'
-                        ? 'bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                    }`}
-                    >
-                    <span className="material-symbols-rounded text-[18px]">payments</span>
-                    {t.cash}
-                    </button>
-                    <button
-                    onClick={() => setPaymentMethod('visa')}
-                    className={`w-24 py-1.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                        paymentMethod === 'visa'
-                        ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                    }`}
-                    >
-                    <span className="material-symbols-rounded text-[18px]">credit_card</span>
-                    {t.visa}
-                    </button>
-                </div>
+                    <SegmentedControl
+                        value={paymentMethod}
+                        onChange={(val) => setPaymentMethod(val as 'cash' | 'visa')}
+                        color={color}
+                        size="sm"
+                        options={[
+                            { label: t.cash || 'Cash', value: 'cash', icon: 'payments', activeColor: 'green' },
+                            { label: t.visa || 'Visa', value: 'visa', icon: 'credit_card', activeColor: 'blue' }
+                        ]}
+                    />
                 </div>
               </div>
             )}
@@ -1782,7 +1827,7 @@ export const POSTest: React.FC<POSProps> = ({ inventory, onCompleteSale, color, 
 
       {/* Resize Handle (Desktop Only) */}
       <div 
-        className="hidden lg:flex w-4 items-center justify-center cursor-col-resize group z-10 -mx-2"
+        className="hidden lg:flex w-4 h-full items-center justify-center cursor-col-resize group z-10 -mx-2"
         onMouseDown={startResizing}
         onTouchStart={startResizing}
       >

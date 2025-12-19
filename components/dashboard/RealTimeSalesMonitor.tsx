@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { ExpandedModal } from '../common/ExpandedModal';
 import { REALTIME_SALES_MONITOR_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
+import { SegmentedControl } from '../common/SegmentedControl';
 
 interface RealTimeSalesMonitorProps {
   sales: Sale[];
@@ -467,21 +468,19 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                </h3>
                
                {/* Filters */}
-                <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                    {['ALL', 'VIP', 'HIGH_VALUE'].map((filter) => (
-                        <button
-                            key={filter}
-                            onClick={() => setActiveFilter(filter as any)}
-                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
-                                activeFilter === filter
-                                    ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow-sm'
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                            }`}
-                        >
-                            {filter === 'ALL' ? 'All' : filter === 'VIP' ? 'VIP' : 'High Value'}
-                        </button>
-                    ))}
-                </div>
+                <SegmentedControl
+                    value={activeFilter}
+                    onChange={(val) => setActiveFilter(val as any)}
+                    color="emerald"
+                    size="xs"
+                    fullWidth={false}
+                    className="w-auto"
+                    options={[
+                        { label: 'All', value: 'ALL' },
+                        { label: 'VIP', value: 'VIP' },
+                        { label: 'High Value', value: 'HIGH_VALUE' }
+                    ]}
+                />
            </div>
            
            <div className="flex-1 overflow-y-auto custom-scrollbar">

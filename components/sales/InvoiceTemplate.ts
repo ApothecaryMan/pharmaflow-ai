@@ -34,6 +34,10 @@ export interface InvoiceTemplateOptions {
   receiptFont?: 'courier' | 'receipt-basic';
   /** Show border box around delivery address */
   showAddressBox?: boolean;
+  /** Auto-print on Payment Complete (Any Order) */
+  autoPrintOnComplete?: boolean;
+  /** Auto-print on Delivery Order Creation */
+  autoPrintOnDelivery?: boolean;
 }
 
 const defaultOptions: InvoiceTemplateOptions = {
@@ -82,7 +86,6 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
       <title>Receipt #${sale.id}</title>
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-      <link href="https://fonts.googleapis.com/css2?family=Handjet:wght@700&display=swap" rel="stylesheet">
       <style>
         /* Local Font Declarations */
         @font-face {
@@ -99,6 +102,14 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
           font-style: normal;
           font-display: swap;
         }
+        @font-face {
+          font-family: 'Raqami';
+          src: url('/fonts/Raqami.ttf') format('truetype');
+          font-weight: 700;
+          font-style: normal;
+          word-spacing: -2px;
+          font-display: swap;
+        }
         
         /* 79mm Thermal Receipt - ~280px at 72dpi */
         @page { 
@@ -107,7 +118,7 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-          font-family: ${opts.receiptFont === 'receipt-basic' ? "'Receiptional Receipt', 'Handjet', Arial, sans-serif" : "'Fake Receipt', 'Handjet', Arial, sans-serif"}; 
+          font-family: ${opts.receiptFont === 'receipt-basic' ? "'Receiptional Receipt', 'Raqami', Arial, sans-serif" : "'Fake Receipt', 'Raqami', Arial, sans-serif"}; 
           font-size: ${opts.receiptFont === 'receipt-basic' ? '10px' : '11px'};
           font-weight: normal;
           line-height: ${opts.receiptFont === 'receipt-basic' ? '1.5' : '1.3'};

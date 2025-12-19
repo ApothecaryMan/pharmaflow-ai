@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MenuItem } from '../../config/menuData';
-import { Avatar } from '@mui/material'; // Added Import
+import { Modal } from '../common/Modal';
+import { SegmentedControl } from '../common/SegmentedControl';
+import { Avatar } from '@mui/material';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { ThemeColor, Language } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
@@ -473,17 +475,16 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 {/* Language Selector */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-400 uppercase">{t.settings.language}</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {availableLanguages.map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => setLanguage(lang.code)}
-                        className={`py-2 px-3 rounded-xl text-sm font-medium transition-all ${language === lang.code ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 ring-1 ring-${theme}-500/20` : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                      >
-                        {lang.label}
-                      </button>
-                    ))}
-                  </div>
+                  <SegmentedControl
+                    value={language}
+                    onChange={(val) => setLanguage(val as Language)}
+                    color={currentTheme.name}
+                    size="xs"
+                    options={availableLanguages.map(lang => ({
+                      label: lang.label,
+                      value: lang.code
+                    }))}
+                  />
                 </div>
 
                 {/* Text Transform Toggle */}
@@ -542,27 +543,16 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     <label className="text-xs font-bold text-gray-400 uppercase">
                       {language === 'EN' ? 'Design Style (Navbar & Sidebar)' : 'نمط التصميم (الشريط العلوي والجانبي)'}
                     </label>
-                    <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-                      {[1, 2].map((style) => {
-                        let label = '';
-                        if (style === 1) label = language === 'EN' ? 'Full' : 'كامل';
-                        if (style === 2) label = language === 'EN' ? 'Navbar' : 'علوي';
-                        
-                        return (
-                          <button
-                            key={style}
-                            onClick={() => setNavStyle && setNavStyle(style as 1 | 2 | 3)}
-                            className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                              navStyle === style
-                                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                            }`}
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <SegmentedControl
+                      value={navStyle}
+                      onChange={(val) => setNavStyle && setNavStyle(val as 1 | 2 | 3)}
+                      color={currentTheme.name}
+                      size="xs"
+                      options={[
+                        { label: language === 'EN' ? 'Full' : 'كامل', value: 1 },
+                        { label: language === 'EN' ? 'Navbar' : 'علوي', value: 2 }
+                      ]}
+                    />
                   </div>
                 )}
 

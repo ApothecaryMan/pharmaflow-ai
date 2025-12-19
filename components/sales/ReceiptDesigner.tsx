@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { SmartInput } from '../common/SmartInputs';
+import { SmartInput, useSmartDirection } from '../common/SmartInputs';
+import { SegmentedControl } from '../common/SegmentedControl';
 import { PosDropdown } from '../common/PosDropdown';
 import { generateInvoiceHTML, InvoiceTemplateOptions } from '../sales/InvoiceTemplate';
 import { Sale } from '../../types';
@@ -87,12 +88,22 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   
   // Track last saved state to show/hide save button
   const [lastSavedOptions, setLastSavedOptions] = useState<string>(() => JSON.stringify(options));
+  const [quotaError, setQuotaError] = useState(false);
 
   // Persist templates
   useEffect(() => {
     if (hasMounted) {
-      localStorage.setItem('receipt_templates', JSON.stringify(templates));
-      localStorage.setItem('receipt_active_template_id', activeTemplateId);
+      try {
+        localStorage.setItem('receipt_templates', JSON.stringify(templates));
+        localStorage.setItem('receipt_active_template_id', activeTemplateId);
+        setQuotaError(false); // Clear error on successful save
+      } catch (error) {
+        console.error('Failed to save settings:', error);
+        // Only alert if it's a quota error to avoid spamming
+        if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+             setQuotaError(true);
+        }
+      }
     }
   }, [templates, activeTemplateId, hasMounted]);
 
@@ -229,114 +240,117 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                                     value={newTemplateName}
                                     onChange={(e) => setNewTemplateName(e.target.value)}
                                     placeholder={t.receiptDesigner.newTemplatePlaceholder}
-                                    className="flex-1 h-10 bg-white dark:bg-gray-900 border border-blue-500 rounded-xl px-4 text-sm focus:outline-none text-gray-800 dark:text-white transition-all shadow-sm"
+                                    className="flex-1 bg-transparent border border-blue-500 rounded-xl px-3 h-10 text-sm focus:outline-none text-gray-800 dark:text-white"
                                     onKeyDown={(e) => e.key === 'Enter' && handleCreateTemplate()}
                                 />
                                 <button 
                                     onClick={handleCreateTemplate}
-                                    className="w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center transition-all shadow-sm active:scale-95"
+                                    className="w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center transition-colors"
                                 >
                                     <span className="material-symbols-rounded text-[20px]">check</span>
                                 </button>
                                 <button 
                                     onClick={() => setIsAddingTemplate(false)}
-                                    className="w-10 h-10 bg-gray-500 hover:bg-gray-600 text-white rounded-xl flex items-center justify-center transition-all shadow-sm active:scale-95"
+                                    className="w-10 h-10 bg-gray-600 hover:bg-gray-700 text-white rounded-xl flex items-center justify-center transition-colors"
                                 >
                                     <span className="material-symbols-rounded text-[20px]">close</span>
                                 </button>
                             </div>
                         ) : (
                              <>
-                                 <PosDropdown<SavedTemplate>
-                                    items={templates}
-                                    selectedItem={templates.find(t => t.id === activeTemplateId)}
-                                    isOpen={isDropdownOpen}
-                                    onToggle={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    onSelect={(template) => {
-                                        handleSelectTemplate(template);
-                                        setIsDropdownOpen(false);
-                                    }}
-                                    keyExtractor={(item) => item.id}
-                                    renderSelected={(item) => (
-                                        <div className="flex items-center justify-between w-full">
-                                            <span className="font-bold text-gray-800 dark:text-white truncate">{item?.name}</span>
-                                            {item?.isDefault && (
-                                                <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded-md font-bold">
-                                                    Def
-                                                </span>
-                                            )}
-                                        </div>
-                                    )}
-                                    renderItem={(item, isSelected) => (
-                                        <div className="flex items-center justify-between w-full group py-1">
-                                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                {isEditingName === item.id ? (
-                                                    <div className="flex items-center gap-1 w-full" onClick={(e) => e.stopPropagation()}>
-                                                        <input 
-                                                            autoFocus
-                                                            value={editingNameValue}
-                                                            onChange={(e) => setEditingNameValue(e.target.value)}
-                                                            className="flex-1 bg-white dark:bg-gray-800 border border-blue-500 rounded-lg px-2 h-7 text-xs focus:outline-none text-gray-800 dark:text-white"
-                                                            onKeyDown={(e) => e.key === 'Enter' && handleRenameTemplate(e)}
-                                                        />
-                                                        <button 
-                                                            onClick={(e) => handleRenameTemplate(e)}
-                                                            className="w-7 h-7 bg-emerald-500 text-white rounded-lg flex items-center justify-center transition-colors shadow-sm"
-                                                        >
-                                                            <span className="material-symbols-rounded text-[14px]">check</span>
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <span className={`text-sm truncate ${isSelected ? 'font-bold text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}>
-                                                            {item.name}
-                                                        </span>
-                                                        {item.isDefault && (
-                                                            <span className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded-md font-bold">
-                                                                Def
-                                                            </span>
-                                                        )}
-                                                    </>
+                                 <div className="relative flex-1 h-10">
+                                     <PosDropdown<SavedTemplate>
+                                        items={templates}
+                                        selectedItem={templates.find(t => t.id === activeTemplateId)}
+                                        isOpen={isDropdownOpen}
+                                        onToggle={() => setIsDropdownOpen(!isDropdownOpen)}
+                                        onSelect={(template) => {
+                                            handleSelectTemplate(template);
+                                            setIsDropdownOpen(false);
+                                        }}
+                                        minHeight={38}
+                                        keyExtractor={(item) => item.id}
+                                        renderSelected={(item) => (
+                                            <div className="flex items-center justify-between w-full">
+                                                <span className="font-bold text-gray-800 dark:text-white truncate">{item?.name}</span>
+                                                {item?.isDefault && (
+                                                    <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded-md font-bold">
+                                                        Def
+                                                    </span>
                                                 )}
                                             </div>
-                                            {!isEditingName && (
-                                                <div className="flex items-center gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                                                    <button 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setIsEditingName(item.id);
-                                                            setEditingNameValue(item.name);
-                                                        }}
-                                                        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-blue-500"
-                                                        title={t.receiptDesigner.renameTemplate}
-                                                    >
-                                                        <span className="material-symbols-rounded text-[16px]">edit</span>
-                                                    </button>
-                                                    {!item.isDefault && (
-                                                        <button 
-                                                            onClick={(e) => handleSetDefault(e, item.id)}
-                                                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-emerald-500"
-                                                            title={t.receiptDesigner.setDefault}
-                                                        >
-                                                            <span className="material-symbols-rounded text-[16px]">bookmark_add</span>
-                                                        </button>
-                                                    )}
-                                                    {templates.length > 1 && (
-                                                        <button 
-                                                            onClick={(e) => handleDeleteTemplate(e, item.id)}
-                                                            className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-gray-400 hover:text-red-500"
-                                                            title={t.receiptDesigner.deleteTemplate}
-                                                        >
-                                                            <span className="material-symbols-rounded text-[16px]">delete</span>
-                                                        </button>
+                                        )}
+                                        renderItem={(item, isSelected) => (
+                                            <div className="flex items-center justify-between w-full group py-1">
+                                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                    {isEditingName === item.id ? (
+                                                        <div className="flex items-center gap-1 w-full" onClick={(e) => e.stopPropagation()}>
+                                                            <input 
+                                                                autoFocus
+                                                                value={editingNameValue}
+                                                                onChange={(e) => setEditingNameValue(e.target.value)}
+                                                                className="flex-1 bg-white dark:bg-gray-800 border border-blue-500 rounded-lg px-2 py-1 text-xs focus:outline-none text-gray-800 dark:text-white"
+                                                                onKeyDown={(e) => e.key === 'Enter' && handleRenameTemplate(e)}
+                                                            />
+                                                            <button 
+                                                                onClick={(e) => handleRenameTemplate(e)}
+                                                                className="w-6 h-6 bg-emerald-500 text-white rounded-lg flex items-center justify-center transition-colors shadow-sm"
+                                                            >
+                                                                <span className="material-symbols-rounded text-[14px]">check</span>
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <span className={`text-sm truncate ${isSelected ? 'font-bold text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}>
+                                                                {item.name}
+                                                            </span>
+                                                            {item.isDefault && (
+                                                                <span className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded-md font-bold">
+                                                                    Def
+                                                                </span>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
-                                            )}
-                                        </div>
-                                    )}
-                                    variant="input"
-                                    className="w-full flex-1"
-                                 />
+                                                {!isEditingName && (
+                                                    <div className="flex items-center gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setIsEditingName(item.id);
+                                                                setEditingNameValue(item.name);
+                                                            }}
+                                                            className="w-6 h-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center text-gray-400 hover:text-blue-500 transition-colors"
+                                                            title={t.receiptDesigner.renameTemplate}
+                                                        >
+                                                            <span className="material-symbols-rounded text-[14px]">edit</span>
+                                                        </button>
+                                                        {!item.isDefault && (
+                                                            <button 
+                                                                onClick={(e) => handleSetDefault(e, item.id)}
+                                                                className="w-6 h-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center text-gray-400 hover:text-emerald-500 transition-colors"
+                                                                title={t.receiptDesigner.setDefault}
+                                                            >
+                                                                <span className="material-symbols-rounded text-[14px]">bookmark_add</span>
+                                                            </button>
+                                                        )}
+                                                        {templates.length > 1 && (
+                                                            <button 
+                                                                onClick={(e) => handleDeleteTemplate(e, item.id)}
+                                                                className="w-6 h-6 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
+                                                                title={t.receiptDesigner.deleteTemplate}
+                                                            >
+                                                                <span className="material-symbols-rounded text-[14px]">delete</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        variant="input"
+                                        className="w-full absolute top-0 left-0 z-10"
+                                     />
+                                 </div>
                                  {hasChanges && (
                                      <button
                                         onClick={() => {
@@ -368,28 +382,48 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
           <div className="grid grid-cols-2 gap-3">
             {/* Logo Upload */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                <span className="material-symbols-rounded text-[14px]">image</span>
-                {t.inventory.headers.images || 'Image'}
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                    <span className="material-symbols-rounded text-[14px]">image</span>
+                    {t.inventory.headers.images || 'Image'}
+                </div>
+                {quotaError && <span className="text-[10px] text-red-500 font-bold animate-pulse">Storage Full!</span>}
               </label>
               {(options.logoBase64 && !options.logoSvgCode) ? (
-                <div className="relative bg-gray-50 dark:bg-gray-900 rounded-xl p-2 flex items-center justify-center border border-gray-200 dark:border-gray-800 h-24 w-full">
+                <div className={`relative bg-gray-50 dark:bg-gray-900 rounded-xl p-2 flex items-center justify-center border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-800'} h-24 w-full`}>
                   <img 
                     src={options.logoBase64} 
                     alt="Logo" 
                     className="max-h-full max-w-full object-contain"
                   />
                   <button
-                    onClick={() => setOptions({ ...options, logoBase64: '' })}
+                    onClick={() => {
+                        setOptions({ ...options, logoBase64: '' });
+                        setQuotaError(false);
+                    }}
                     className="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-sm z-10"
                   >
                     <span className="material-symbols-rounded text-[12px]">close</span>
                   </button>
+                  {quotaError && (
+                      <div className="absolute inset-0 bg-red-500/10 rounded-xl flex items-center justify-center pointer-events-none">
+                          <span className="text-[10px] bg-red-100 text-red-600 px-2 py-1 rounded-full font-bold">File too large</span>
+                      </div>
+                  )}
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 cursor-pointer hover:border-gray-400 dark:hover:border-gray-600 transition-colors bg-gray-50 dark:bg-gray-900 h-24 w-full">
-                  <span className="material-symbols-rounded text-gray-400 text-[24px]">upload</span>
-                  <span className="text-[10px] text-gray-500 uppercase font-bold">PNG / SVG</span>
+                <label className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed ${quotaError ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'} cursor-pointer transition-colors bg-gray-50 dark:bg-gray-900 h-24 w-full`}>
+                  {quotaError ? (
+                      <>
+                        <span className="material-symbols-rounded text-red-500 text-[24px]">error</span>
+                        <span className="text-[10px] text-red-500 font-bold">Storage Quota Exceeded</span>
+                      </>
+                  ) : (
+                      <>
+                        <span className="material-symbols-rounded text-gray-400 text-[24px]">upload</span>
+                        <span className="text-[10px] text-gray-500 uppercase font-bold">PNG / SVG</span>
+                      </>
+                  )}
                   <input 
                     type="file" 
                     accept=".png,.svg,image/png,image/svg+xml"
@@ -400,6 +434,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                       const reader = new FileReader();
                       reader.onload = (event) => {
                         setOptions({ ...options, logoBase64: event.target?.result as string, logoSvgCode: '' });
+                        setQuotaError(false); // Reset validation check on new attempt
                       };
                       reader.readAsDataURL(file);
                     }}
@@ -410,18 +445,24 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
 
             {/* SVG Code Input */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                <span className="material-symbols-rounded text-[14px]">code</span>
-                SVG Code
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                    <span className="material-symbols-rounded text-[14px]">code</span>
+                    SVG Code
+                </div>
+                {quotaError && <span className="text-[10px] text-red-500 font-bold animate-pulse">Storage Full!</span>}
               </label>
               {options.logoSvgCode ? (
-                <div className="relative bg-gray-50 dark:bg-gray-900 rounded-xl p-2 flex items-center justify-center border border-gray-200 dark:border-gray-800 h-24 w-full">
+                <div className={`relative bg-gray-50 dark:bg-gray-900 rounded-xl p-2 flex items-center justify-center border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-800'} h-24 w-full`}>
                   <div 
                     className="w-full h-full flex items-center justify-center overflow-hidden"
                     dangerouslySetInnerHTML={{ __html: options.logoSvgCode }} 
                   />
                   <button
-                    onClick={() => setOptions({ ...options, logoSvgCode: '' })}
+                    onClick={() => {
+                        setOptions({ ...options, logoSvgCode: '' });
+                        setQuotaError(false);
+                    }}
                     className="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-sm z-10"
                   >
                     <span className="material-symbols-rounded text-[12px]">close</span>
@@ -430,8 +471,11 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               ) : (
                 <textarea 
                   value={options.logoSvgCode || ''}
-                  onChange={(e) => setOptions({ ...options, logoSvgCode: e.target.value, logoBase64: '' })}
-                  className="w-full h-24 p-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:outline-none transition-all resize-none font-mono text-[9px]"
+                  onChange={(e) => {
+                      setOptions({ ...options, logoSvgCode: e.target.value, logoBase64: '' });
+                      setQuotaError(false);
+                  }}
+                  className={`w-full h-24 p-2 rounded-xl border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} bg-gray-50 dark:bg-gray-900 focus:outline-none transition-all resize-none font-mono text-[9px]`}
                   placeholder="Paste SVG code here..."
                   dir="ltr"
                 />
@@ -446,28 +490,16 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     {t.receiptDesigner.options.font}
                 </label>
-                <div className="flex p-1 bg-gray-100 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-                <button
-                    onClick={() => setOptions({ ...options, receiptFont: 'courier' })}
-                    className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    (options.receiptFont || 'courier') === 'courier'
-                        ? `bg-${color}-600 text-white shadow-sm`
-                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
-                    }`}
-                >
-                    Fake Receipt
-                </button>
-                <button
-                    onClick={() => setOptions({ ...options, receiptFont: 'receipt-basic' })}
-                    className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    options.receiptFont === 'receipt-basic'
-                        ? `bg-${color}-600 text-white shadow-sm`
-                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
-                    }`}
-                >
-                    Receiptional
-                </button>
-                </div>
+                <SegmentedControl
+                    value={options.receiptFont || 'courier'}
+                    onChange={(val) => setOptions({ ...options, receiptFont: val })}
+                    color={color}
+                    size="sm"
+                    options={[
+                        { label: 'Fake Receipt', value: 'courier' },
+                        { label: 'Receiptional', value: 'receipt-basic' }
+                    ]}
+                />
             </div>
 
             <div className="col-span-1 space-y-1">
@@ -554,14 +586,41 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                     />
                 </div>
             </div>
+            {/* Printing Preferences */}
+            <div className="col-span-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block">
+                    {t.receiptDesigner.printingPreferences || 'Printing Preferences'}
+                </label>
+                <SegmentedControl
+                    value={
+                        options.autoPrintOnComplete ? 'all' :
+                        options.autoPrintOnDelivery ? 'delivery' : 'none'
+                    }
+                    onChange={(val) => {
+                        setOptions({
+                            ...options,
+                            autoPrintOnComplete: val === 'all',
+                            autoPrintOnDelivery: val === 'delivery'
+                        });
+                    }}
+                    color={color}
+                    size="sm"
+                    options={[
+                        { label: t.receiptDesigner.autoPrintDelivery || 'Delivery Only', value: 'delivery' },
+                        { label: t.receiptDesigner.autoPrintAll || 'All Orders', value: 'all' },
+                        { label: t.receiptDesigner.autoPrintNone || 'None', value: 'none' }
+                    ]}
+                />
+            </div>
 
             <div className="col-span-2 space-y-1">
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     {t.receiptDesigner.options.terms}
                 </label>
                 <textarea 
-                    value={options.termsCondition?.replace(/<br>/g, '\n')}
-                    onChange={(e) => setOptions({...options, termsCondition: e.target.value.replace(/\n/g, '<br>')})}
+                    value={options.termsCondition?.replace(/\u003cbr\u003e/g, '\n')}
+                    onChange={(e) => setOptions({...options, termsCondition: e.target.value.replace(/\n/g, '\u003cbr\u003e')})}
+                    dir={useSmartDirection(options.termsCondition?.replace(/\u003cbr\u003e/g, '\n'), '...')}
                     className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all h-20 resize-none"
                     placeholder="..."
                 />

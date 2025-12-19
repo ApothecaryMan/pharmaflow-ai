@@ -12,6 +12,7 @@ import { settingsService } from '../../services';
 import { FloatingInput } from '../common/FloatingInput';
 import { checkExpiryStatus, sanitizeExpiryInput, formatExpiryDisplay, parseExpiryDisplay, getExpiryStatusStyle } from '../../utils/expiryUtils';
 import { Modal } from '../common/Modal';
+import { SegmentedControl } from '../common/SegmentedControl';
 
 
 interface PurchasesProps {
@@ -1217,20 +1218,17 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                            </div>
 
                            {/* Payment Method Toggle */}
-                           <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg">
-                               <button
-                                   onClick={() => setPaymentMethod('cash')}
-                                   className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${paymentMethod === 'cash' ? `bg-green-600 text-white shadow-sm` : 'text-gray-500 hover:text-gray-700'}`}
-                               >
-                                   {t.cash || 'Cash'}
-                               </button>
-                               <button
-                                   onClick={() => setPaymentMethod('credit')}
-                                   className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${paymentMethod === 'credit' ? `bg-blue-600 text-white shadow-sm` : 'text-gray-500 hover:text-gray-700'}`}
-                               >
-                                   {t.credit || 'Credit'}
-                               </button>
-                           </div>
+                           <SegmentedControl
+                               value={paymentMethod}
+                               onChange={(val) => setPaymentMethod(val as 'cash' | 'credit')}
+                               color={color}
+                               size="sm"
+                               options={[
+                                   { label: t.cash || 'Cash', value: 'cash', activeColor: 'green' },
+                                   { label: t.credit || 'Credit', value: 'credit', activeColor: 'blue' }
+                               ]}
+                               className="w-fit"
+                           />
                        </div>
                    </div>
                    
