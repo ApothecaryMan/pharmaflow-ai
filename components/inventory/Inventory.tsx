@@ -9,8 +9,7 @@ import { Drug } from '../../types';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { Modal } from '../common/Modal';
-import { CATEGORIES, getProductTypes } from '../../data/productCategories';
-import { CATEGORIES_AR, getProductTypesAr } from '../../data/productCategoriesAr';
+import { getCategories, getProductTypes, isMedicineCategory } from '../../data/productCategories';
 
 interface InventoryProps {
   inventory: Drug[];
@@ -26,10 +25,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
   // Detect language direction/locale
   const isRTL = t.direction === 'rtl' || t.lang === 'ar' || (t.title && /[\u0600-\u06FF]/.test(t.title));
-  
-  // Select appropriate data based on language
-  const currentCategories = isRTL ? [...CATEGORIES_AR] : [...CATEGORIES];
-  const currentGetProductTypes = isRTL ? getProductTypesAr : getProductTypes;
+  const currentLang = isRTL ? 'ar' : 'en';
 
   const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchTerm, setSearchTerm] = useState('');
@@ -356,8 +352,8 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     setFormData({ ...formData, internalCode: nextCode });
   };
 
-  // Categories are now determined dynamically
-  const allCategories = currentCategories;
+  // Categories are now determined dynamically using helper
+  const allCategories = getCategories(currentLang);
 
   const filteredInventory = useMemo(() => {
     const { mode, regex } = parseSearchTerm(searchTerm);
@@ -697,7 +693,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
                       <ExpandingDropdown
                         variant="input"
-                        items={currentGetProductTypes(formData.category || (isRTL ? 'عام' : 'General'))}
+                        items={getProductTypes(formData.category || (isRTL ? 'عام' : 'General'), currentLang)}
                         selectedItem={formData.dosageForm || ''}
                         isOpen={isAddDosageOpen}
                         onToggle={() => setIsAddDosageOpen(!isAddDosageOpen)}
@@ -1098,7 +1094,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
                       <ExpandingDropdown
                         variant="input"
-                        items={currentGetProductTypes(formData.category || (isRTL ? 'عام' : 'General'))}
+                        items={getProductTypes(formData.category || (isRTL ? 'عام' : 'General'), currentLang)}
                         selectedItem={formData.dosageForm || ''}
                         isOpen={isEditDosageOpen}
                         onToggle={() => setIsEditDosageOpen(!isEditDosageOpen)}

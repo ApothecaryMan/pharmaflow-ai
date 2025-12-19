@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useSmartDirection } from '../common/SmartInputs';
 import { Drug } from '../../types';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
-import { CATEGORIES, getProductTypes } from '../../data/productCategories';
-import { CATEGORIES_AR, getProductTypesAr } from '../../data/productCategoriesAr';
+import { getCategories, getProductTypes } from '../../data/productCategories';
 
 interface AddProductProps {
   inventory: Drug[];
@@ -16,10 +15,7 @@ interface AddProductProps {
 export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, color, t, onNavigate }) => {
   // Detect language direction/locale
   const isRTL = t.direction === 'rtl' || t.lang === 'ar' || (t.addProduct && /[\u0600-\u06FF]/.test(t.addProduct.title || ''));
-  
-  // Select appropriate data based on language
-  const currentCategories = isRTL ? [...CATEGORIES_AR] : [...CATEGORIES];
-  const currentGetProductTypes = isRTL ? getProductTypesAr : getProductTypes;
+  const currentLang = isRTL ? 'ar' : 'en';
 
   const [formData, setFormData] = useState<Partial<Drug>>({
     name: '',
@@ -46,8 +42,8 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
   const [showSuccess, setShowSuccess] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
-  // Categories are now determined dynamically
-  const allCategories = currentCategories;
+  // Categories are now determined dynamically using helper
+  const allCategories = getCategories(currentLang);
 
   const generateInternalCode = () => {
     // Find highest existing 6-digit numeric code
@@ -223,7 +219,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                     list="product-types"
                   />
                   <datalist id="product-types">
-                    {currentGetProductTypes(formData.category || (isRTL ? 'عام' : 'General')).map(type => (
+                    {getProductTypes(formData.category || (isRTL ? 'عام' : 'General'), currentLang).map(type => (
                       <option key={type} value={type} />
                     ))}
                   </datalist>
