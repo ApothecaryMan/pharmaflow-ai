@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useSmartDirection } from '../common/SmartInputs';
 import { Drug } from '../../types';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { CATEGORIES, getProductTypes } from '../../data/productCategories';
+import { CATEGORIES_AR, getProductTypesAr } from '../../data/productCategoriesAr';
 
 interface AddProductProps {
   inventory: Drug[];
@@ -12,10 +14,17 @@ interface AddProductProps {
 }
 
 export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, color, t, onNavigate }) => {
+  // Detect language direction/locale
+  const isRTL = t.direction === 'rtl' || t.lang === 'ar' || (t.addProduct && /[\u0600-\u06FF]/.test(t.addProduct.title || ''));
+  
+  // Select appropriate data based on language
+  const currentCategories = isRTL ? [...CATEGORIES_AR] : [...CATEGORIES];
+  const currentGetProductTypes = isRTL ? getProductTypesAr : getProductTypes;
+
   const [formData, setFormData] = useState<Partial<Drug>>({
     name: '',
     genericName: '',
-    category: 'General',
+    category: isRTL ? 'عام' : 'General',
     price: 0,
     costPrice: 0,
     stock: 0,
@@ -24,7 +33,8 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
     barcode: '',
     internalCode: '',
     unitsPerPack: 1,
-    maxDiscount: 10
+    maxDiscount: 10,
+    dosageForm: ''
   });
 
   const nameDir = useSmartDirection(formData.name || '', t.addProduct.placeholders.brandName);
@@ -36,10 +46,8 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
   const [showSuccess, setShowSuccess] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
-  // Extract unique categories from existing inventory
-  const categories = Array.from(new Set(inventory.map(drug => drug.category))).sort();
-  const defaultCategories = ['Antibiotics', 'Painkillers', 'Supplements', 'First Aid', 'Cardiovascular', 'Skin Care', 'Personal Care', 'Respiratory', 'Medical Equipment', 'Medical Supplies', 'Baby Care', 'General'];
-  const allCategories = Array.from(new Set([...defaultCategories, ...categories])).sort();
+  // Categories are now determined dynamically
+  const allCategories = currentCategories;
 
   const generateInternalCode = () => {
     // Find highest existing 6-digit numeric code
@@ -70,7 +78,8 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
       barcode: formData.barcode,
       internalCode: formData.internalCode,
       unitsPerPack: formData.unitsPerPack || 1,
-      maxDiscount: formData.maxDiscount
+      maxDiscount: formData.maxDiscount,
+      dosageForm: formData.dosageForm
     };
 
     onAddDrug(newDrug);
@@ -94,7 +103,8 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
         barcode: '',
         internalCode: '',
         unitsPerPack: 1,
-        maxDiscount: 10
+        maxDiscount: 10,
+        dosageForm: ''
       });
     } else {
       // Navigate to inventory
@@ -117,7 +127,8 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
       barcode: '',
       internalCode: '',
       unitsPerPack: 1,
-      maxDiscount: 10
+      maxDiscount: 10,
+      dosageForm: ''
     });
   };
 
@@ -181,7 +192,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                   dir={genericNameDir}
                 />
               </div>
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2 md:col-span-1">
                 <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.category} *</label>
                 <ExpandingDropdown
                   variant="input"
@@ -190,7 +201,8 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                   isOpen={isCategoryOpen}
                   onToggle={() => setIsCategoryOpen(!isCategoryOpen)}
                   onSelect={(cat) => {
-                      setFormData({ ...formData, category: cat });
+                      // Clear dosageForm when category changes to prevent mismatches
+                      setFormData({ ...formData, category: cat, dosageForm: '' });
                       setIsCategoryOpen(false);
                   }}
                   keyExtractor={(cat) => cat}
@@ -200,6 +212,22 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                   color={color}
                 />
               </div>
+               <div className="space-y-2 md:col-span-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.dosageForm || 'Product Type'}</label>
+                  <input
+                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all"
+                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                    placeholder="Select or type..."
+                    value={formData.dosageForm || ''}
+                    onChange={e => setFormData({ ...formData, dosageForm: e.target.value })}
+                    list="product-types"
+                  />
+                  <datalist id="product-types">
+                    {currentGetProductTypes(formData.category || (isRTL ? 'عام' : 'General')).map(type => (
+                      <option key={type} value={type} />
+                    ))}
+                  </datalist>
+               </div>
             </div>
           </div>
 
@@ -222,24 +250,27 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase flex items-center justify-between">
-                  <span>{t.addProduct.fields.internalCode}</span>
-                  <button
-                    type="button"
-                    onClick={generateInternalCode}
-                    className={`text-xs px-2 py-1 rounded-lg bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-400 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 transition-colors`}
-                  >
-                    {t.addProduct.actions.generateCode}
-                  </button>
-                </label>
-                <input
-                  className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all"
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                  placeholder={t.addProduct.placeholders.internalCode}
-                  value={formData.internalCode || ''}
-                  onChange={e => setFormData({ ...formData, internalCode: e.target.value })}
-                  dir={internalCodeDir}
-                />
+                <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.internalCode}</label>
+                <div className="relative group">
+                  <input
+                    className="w-full p-3 pr-12 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all font-mono"
+                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                    placeholder={t.addProduct.placeholders.internalCode}
+                    value={formData.internalCode || ''}
+                    onChange={e => setFormData({ ...formData, internalCode: e.target.value })}
+                    dir={internalCodeDir}
+                  />
+                  <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={generateInternalCode}
+                      className={`w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-${color}-600 hover:bg-${color}-50 dark:hover:bg-${color}-900/20 transition-all duration-200 active:scale-90`}
+                      title={t.addProduct.actions.generateCode}
+                    >
+                      <span className="material-symbols-rounded text-[22px]">magic_button</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

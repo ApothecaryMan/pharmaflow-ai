@@ -9,6 +9,8 @@ import { Drug } from '../../types';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { Modal } from '../common/Modal';
+import { CATEGORIES, getProductTypes } from '../../data/productCategories';
+import { CATEGORIES_AR, getProductTypesAr } from '../../data/productCategoriesAr';
 
 interface InventoryProps {
   inventory: Drug[];
@@ -21,6 +23,14 @@ interface InventoryProps {
 
 export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUpdateDrug, onDeleteDrug, color, t }) => {
   const { showMenu } = useContextMenu();
+
+  // Detect language direction/locale
+  const isRTL = t.direction === 'rtl' || t.lang === 'ar' || (t.title && /[\u0600-\u06FF]/.test(t.title));
+  
+  // Select appropriate data based on language
+  const currentCategories = isRTL ? [...CATEGORIES_AR] : [...CATEGORIES];
+  const currentGetProductTypes = isRTL ? getProductTypesAr : getProductTypes;
+
   const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,8 +42,8 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
   // Form State for Add Product
   const [formData, setFormData] = useState<Partial<Drug>>({
-    name: '', genericName: '', category: 'General', price: 0, costPrice: 0, stock: 0, expiryDate: '', description: '', barcode: '', internalCode: '', unitsPerPack: 1, maxDiscount: 10,
-    additionalBarcodes: [], dosageForm: 'Tablet', activeIngredients: []
+    name: '', genericName: '', category: isRTL ? 'عام' : 'General', price: 0, costPrice: 0, stock: 0, expiryDate: '', description: '', barcode: '', internalCode: '', unitsPerPack: 1, maxDiscount: 10,
+    additionalBarcodes: [], dosageForm: isRTL ? 'قرص' : 'Tablet', activeIngredients: []
   });
 
 
@@ -346,10 +356,8 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     setFormData({ ...formData, internalCode: nextCode });
   };
 
-  const allCategories = Array.from(new Set([
-    'Antibiotics', 'Painkillers', 'Supplements', 'First Aid', 'Cardiovascular', 'Skin Care', 'Personal Care', 'Respiratory', 'Medical Equipment', 'Medical Supplies', 'Baby Care', 'General',
-    ...inventory.map(drug => drug.category)
-  ])).sort();
+  // Categories are now determined dynamically
+  const allCategories = currentCategories;
 
   const filteredInventory = useMemo(() => {
     const { mode, regex } = parseSearchTerm(searchTerm);
@@ -677,7 +685,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                         selectedItem={formData.category}
                         isOpen={isAddCategoryOpen}
                         onToggle={() => setIsAddCategoryOpen(!isAddCategoryOpen)}
-                        onSelect={(val) => { setFormData({ ...formData, category: val }); setIsAddCategoryOpen(false); }}
+                        onSelect={(val) => { setFormData({ ...formData, category: val, dosageForm: '' }); setIsAddCategoryOpen(false); }}
                         keyExtractor={(c) => c}
                         renderSelected={(c) => c || 'Select category'}
                         renderItem={(c) => c}
@@ -686,16 +694,16 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Dosage Form</label>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
                       <ExpandingDropdown
                         variant="input"
-                        items={['Tablet', 'Capsule', 'Syrup', 'Suspension', 'Injection', 'Cream', 'Ointment', 'Gel', 'Drops', 'Spray', 'Inhaler', 'Suppository', 'Patch', 'Sachet', 'Other']}
-                        selectedItem={formData.dosageForm || 'Tablet'}
+                        items={currentGetProductTypes(formData.category || (isRTL ? 'عام' : 'General'))}
+                        selectedItem={formData.dosageForm || ''}
                         isOpen={isAddDosageOpen}
                         onToggle={() => setIsAddDosageOpen(!isAddDosageOpen)}
                         onSelect={(val) => { setFormData({ ...formData, dosageForm: val }); setIsAddDosageOpen(false); }}
                         keyExtractor={(c) => c}
-                        renderSelected={(c) => c || 'Select dosage form'}
+                        renderSelected={(c) => c || 'Select product type'}
                         renderItem={(c) => c}
                         className="w-full h-[50px]"
                         color={color}
@@ -703,7 +711,8 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                     </div>
                   </div>
 
-                  {/* Active Ingredients */}
+                  {/* Active Ingredients - Only for Medicine */}
+                  {(formData.category === 'Medicine' || formData.category === 'دواء') && (
                   <div className="md:col-span-2">
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Active Ingredients (Comma separated)</label>
                     <SmartInput
@@ -713,87 +722,93 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       onChange={e => setFormData({ ...formData, activeIngredients: e.target.value.split(',').map(s => s.trim()) })}
                     />
                   </div>
+                  )}
 
-                  {/* Multi-Barcode Input */}
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.barcode}</label>
-                    <div className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]">
-                      {/* Primary Barcode Chip */}
-                      {formData.barcode && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium border border-blue-200 dark:border-blue-800">
-                          <span className="material-symbols-rounded text-[14px]">qr_code_2</span>
-                          {formData.barcode}
-                          <button 
-                            type="button"
-                            onClick={() => setFormData({ ...formData, barcode: '' })}
-                            className="hover:text-blue-900 dark:hover:text-blue-100"
-                          >
-                            <span className="material-symbols-rounded text-[14px]">close</span>
-                          </button>
-                        </span>
-                      )}
-                      
-                      {/* Additional Barcodes Chips */}
-                      {formData.additionalBarcodes?.map((code, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium border border-gray-300 dark:border-gray-600">
-                          {code}
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              const newCodes = [...(formData.additionalBarcodes || [])];
-                              newCodes.splice(idx, 1);
-                              setFormData({ ...formData, additionalBarcodes: newCodes });
-                            }}
-                            className="hover:text-gray-900 dark:hover:text-gray-100"
-                          >
-                            <span className="material-symbols-rounded text-[14px]">close</span>
-                          </button>
-                        </span>
-                      ))}
+                  {/* Barcode & Internal Code - Side by Side */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                    {/* Barcode Input */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.barcode}</label>
+                      <div className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]">
+                        {/* Primary Barcode Chip */}
+                        {formData.barcode && (
+                          <span className="inline-flex items-center gap-1.5 px-1.5 py-0 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[11px] font-bold border border-blue-200 dark:border-blue-800 h-6">
+                            <span className="material-symbols-rounded text-[13px]">qr_code_2</span>
+                            {formData.barcode}
+                            <button 
+                              type="button"
+                              onClick={() => setFormData({ ...formData, barcode: '' })}
+                              className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                            >
+                              <span className="material-symbols-rounded text-[12px]">close</span>
+                            </button>
+                          </span>
+                        )}
+                        
+                        {/* Additional Barcodes Chips */}
+                        {formData.additionalBarcodes?.map((code, idx) => (
+                          <span key={idx} className="inline-flex items-center gap-1.5 px-1.5 py-0 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[11px] font-bold border border-blue-200/50 dark:border-blue-800/50 h-6">
+                            <span className="material-symbols-rounded text-[13px]">qr_code_2</span>
+                            {code}
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                const newCodes = [...(formData.additionalBarcodes || [])];
+                                newCodes.splice(idx, 1);
+                                setFormData({ ...formData, additionalBarcodes: newCodes });
+                              }}
+                              className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                            >
+                              <span className="material-symbols-rounded text-[12px]">close</span>
+                            </button>
+                          </span>
+                        ))}
 
-                      <input
-                        className="flex-1 bg-transparent border-none outline-none text-sm min-w-[120px]"
-                        placeholder={!formData.barcode ? "Scan primary barcode" : "Add more barcodes..."}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const val = e.currentTarget.value.trim();
-                            if (val) {
-                              if (!formData.barcode) {
-                                setFormData({ ...formData, barcode: val });
-                              } else {
-                                setFormData({ 
-                                  ...formData, 
-                                  additionalBarcodes: [...(formData.additionalBarcodes || []), val] 
-                                });
+                        <input
+                          className="flex-1 bg-transparent border-none outline-none text-sm min-w-[80px]"
+                          placeholder={!formData.barcode ? "Scan barcode" : "More..."}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const val = e.currentTarget.value.trim();
+                              if (val) {
+                                if (!formData.barcode) {
+                                  setFormData({ ...formData, barcode: val });
+                                } else {
+                                  setFormData({ 
+                                    ...formData, 
+                                    additionalBarcodes: [...(formData.additionalBarcodes || []), val] 
+                                  });
+                                }
+                                e.currentTarget.value = '';
                               }
-                              e.currentTarget.value = '';
                             }
-                          }
-                        }}
-                      />
+                          }}
+                        />
+                      </div>
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-1 ml-1">Press Enter to add multiple barcodes</p>
-                  </div>
 
-                  {/* Internal Code with Icon */}
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.internalCode}</label>
-                    <div className="relative">
-                      <input
-                        className="w-full pl-3 pr-10 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-mono"
-                        placeholder="Auto-generated or custom"
-                        value={formData.internalCode || ''}
-                        onChange={e => setFormData({ ...formData, internalCode: e.target.value })}
-                      />
-                      <button
-                        type="button"
-                        onClick={generateInternalCode}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-blue-500 transition-colors"
-                        title={t.autoGenerate || 'Auto-Generate'}
-                      >
-                        <span className="material-symbols-rounded text-[20px]">autorenew</span>
-                      </button>
+                    {/* Internal Code */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.internalCode}</label>
+                      <div className="relative group">
+                        <input
+                          className="w-full pl-3 pr-10 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-mono"
+                          placeholder="Auto-generated or custom"
+                          value={formData.internalCode || ''}
+                          onChange={e => setFormData({ ...formData, internalCode: e.target.value })}
+                        />
+                        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={generateInternalCode}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 active:scale-90"
+                            title={t.autoGenerate || 'Auto-Generate'}
+                          >
+                            <span className="material-symbols-rounded text-[20px]">magic_button</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -1071,7 +1086,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                         selectedItem={formData.category}
                         isOpen={isEditCategoryOpen}
                         onToggle={() => setIsEditCategoryOpen(!isEditCategoryOpen)}
-                        onSelect={(val) => { setFormData({ ...formData, category: val }); setIsEditCategoryOpen(false); }}
+                        onSelect={(val) => { setFormData({ ...formData, category: val, dosageForm: '' }); setIsEditCategoryOpen(false); }}
                         keyExtractor={(c) => c}
                         renderSelected={(c) => c || 'Select category'}
                         renderItem={(c) => c}
@@ -1080,16 +1095,16 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Dosage Form</label>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
                       <ExpandingDropdown
                         variant="input"
-                        items={['Tablet', 'Capsule', 'Syrup', 'Suspension', 'Injection', 'Cream', 'Ointment', 'Gel', 'Drops', 'Spray', 'Inhaler', 'Suppository', 'Patch', 'Sachet', 'Other']}
-                        selectedItem={formData.dosageForm || 'Tablet'}
+                        items={currentGetProductTypes(formData.category || (isRTL ? 'عام' : 'General'))}
+                        selectedItem={formData.dosageForm || ''}
                         isOpen={isEditDosageOpen}
                         onToggle={() => setIsEditDosageOpen(!isEditDosageOpen)}
                         onSelect={(val) => { setFormData({ ...formData, dosageForm: val }); setIsEditDosageOpen(false); }}
                         keyExtractor={(c) => c}
-                        renderSelected={(c) => c || 'Select dosage form'}
+                        renderSelected={(c) => c || 'Select product type'}
                         renderItem={(c) => c}
                         className="w-full h-[50px]"
                          color={color}
@@ -1097,6 +1112,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                     </div>
                   </div>
 
+                  {(formData.category === 'Medicine' || formData.category === 'دواء') && (
                   <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Active Ingredients</label>
                     <input className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
@@ -1105,6 +1121,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       onChange={e => setFormData({ ...formData, activeIngredients: e.target.value.split(',').map(s => s.trim()) })}
                     />
                   </div>
+                  )}
 
                   {/* Multi-Barcode Input */}
                   <div>

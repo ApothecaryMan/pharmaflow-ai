@@ -81,6 +81,8 @@ interface SortableCartItemProps {
   calculateItemTotal: (item: CartItem) => number;
   addToCart: (drug: Drug, isUnitMode?: boolean, quantity?: number) => void;
   removeDrugFromCart: (id: string) => void;
+  allBatches: Drug[];
+  onSelectBatch: (currentItem: CartItem, newBatch: Drug, packQty: number, unitQty: number) => void;
   isHighlighted?: boolean;
 }
 
@@ -105,6 +107,8 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
   calculateItemTotal,
   addToCart,
   removeDrugFromCart,
+  allBatches,
+  onSelectBatch,
   isHighlighted,
 }) => {
   const {
@@ -123,7 +127,13 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
     zIndex: isDragging ? 50 : "auto",
   };
 
-  const item = commonItem; // Use common item for shared props like name, expiry, etc.
+  // Use common item for shared props like name, expiry, etc.
+  // BUT: Look up the fresh batch data from allBatches to ensure we have the latest maxDiscount/costPrice
+  // The cart item might be a stale copy.
+  const staleItem = commonItem;
+  const freshBatch = allBatches.find(b => b.id === staleItem.id) || staleItem;
+  const item = { ...staleItem, ...freshBatch }; // Merge to ensure we have latest props
+
   const hasDualMode = item.unitsPerPack && item.unitsPerPack > 1;
 
   // Helpers to handle updates (create if missing)
@@ -138,43 +148,43 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
   };
 
   const handleManualQty = (isUnit: boolean, val: number) => {
-    const targetItem = isUnit ? unitItem : packItem;
-    if (targetItem) {
-      updateQuantity(
-        targetItem.id,
-        !!targetItem.isUnit,
-        val - targetItem.quantity
-      );
-    } else {
-      // Create new
-      if (val > 0) {
-        // We can use addToCart but we need specific quantity.
-        // addToCart adds +1. We need to refactor logic or just loop add?
-        // Or better: updateQuantity checks if item exists? No.
-        // Let's rely on addToCart adds 1, then we update remainder?
-        // Or expose a setItems logic.
-        // For simplicity: addToCart adds 1, and we assume user types small numbers or we trigger update after?
-        // Actually, simplest is to assume if user types, they want that exact amount.
-        // Use updateQuantity logic but allow it to create?
-        // updateQuantity in POSTest only updates EXISTING.
-        // We need to support 'upsert'.
-        // For now, let's just trigger addToCart loop or just creating invalid state?
-        // Let's modify updateQuantity in parent or just use addToCart for +1 only?
-        // User wants INPUT.
-        // FIX: We need an `upsertCartItem` function. Use `addToCart` loop for now if simple, or just add logic later.
-        // Hack: Call addToCart (creates item with qty 1), then updateQuantity (sets rest).
-        addToCart(item, isUnit);
-        // Wait for state update? No, that won't work in same tick easily without complex logic.
-        // BETTER: Render input as 0 if missing. If changed > 0, call addToCart once.
-        // Then user can adjust.
-        // OR: Just assume user adds via + button first?
-        // User requested INPUT.
-        // We will implement `setCartItemQty` later. For now, rely on existing.
-        // If item missing, we can't update.
-        // Let's auto-create if missing.
-        if (val > 0) addToCart(item, isUnit); // This adds 1.
-      }
+    // Calculate total global stock for this drug (all batches combined)
+    // We filter by name AND dosageForm to ensure accurate stock
+    const totalGlobalStock = allBatches.reduce((sum, b) => sum + b.stock, 0);
+    const unitsPerPack = item.unitsPerPack || 1;
+    const totalStockUnits = totalGlobalStock * unitsPerPack;
+    
+    // Existing totals
+    const currentPackQty = packItem ? packItem.quantity : 0;
+    const currentUnitQty = unitItem ? unitItem.quantity : 0;
+    
+    // New totals based on input
+    let newPackQty = !isUnit ? val : currentPackQty;
+    let newUnitQty = isUnit ? val : currentUnitQty;
+    
+    // Validate Total Request <= Total Stock
+    const requestedTotalUnits = (newPackQty * unitsPerPack) + newUnitQty;
+    
+    if (requestedTotalUnits > totalStockUnits) {
+       // Clamp to Max
+       // If changing Pack: reduce Pack to max possible given current Unit
+       if (!isUnit) {
+          const maxPack = Math.floor((totalStockUnits - currentUnitQty) / unitsPerPack);
+          newPackQty = Math.max(0, maxPack);
+       } else {
+          // If changing Unit: reduce Unit to max possible given current Pack
+          const maxUnit = totalStockUnits - (currentPackQty * unitsPerPack);
+          newUnitQty = Math.max(0, maxUnit);
+       }
     }
+    
+    // If we have any existing item, use it as the "target batch" preference
+    // If not (creating new), use commonItem (which has batch info)
+    const targetBatch = (packItem || unitItem || commonItem) as Drug; 
+    
+    if (val < 0) return;
+
+    onSelectBatch(item, targetBatch, newPackQty, newUnitQty);
   };
 
   return (
@@ -234,10 +244,10 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
 
         {/* Unified 'Rest' Section: Date, Controls, Price */}
         <div className="flex items-center gap-2 shrink-0 ml-auto">
-          {/* Expiry Date Date Badge (Restored) */}
+          {/* Expiry Date Badge with Batch Details */}
           <div className="flex items-center gap-1">
             <span
-              className={`text-[9px] font-bold text-white px-1.5 py-0.5 rounded whitespace-nowrap shadow-sm ${(() => {
+              className={`text-[9px] font-bold text-white px-1.5 py-0.5 rounded whitespace-nowrap shadow-sm cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
                 const today = new Date();
                 const expiry = new Date(item.expiryDate);
                 const monthDiff =
@@ -247,6 +257,24 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
                 if (monthDiff <= 3) return "bg-orange-500";
                 return "bg-gray-500 dark:bg-gray-600";
               })()}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                const batchMenuItems = allBatches.map((batch) => ({
+                  label: `${new Date(batch.expiryDate).toLocaleDateString("en-US", { month: "2-digit", year: "2-digit" })} • ${batch.stock} ${t.pack || 'Pack'}`,
+                  icon: batch.id === item.id ? 'check_circle' : 'inventory_2',
+                  disabled: batch.stock <= 0,
+                  action: () => {
+                    // Call switch function with current quantities to re-distribute if needed
+                    const currentPackQty = packItem ? packItem.quantity : 0;
+                    const currentUnitQty = unitItem ? unitItem.quantity : 0;
+                    onSelectBatch(item, batch, currentPackQty, currentUnitQty);
+                  },
+                }));
+                showMenu(e.clientX, e.clientY, [
+                  ...batchMenuItems,
+                ]);
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
             >
               {new Date(item.expiryDate).toLocaleDateString("en-US", {
                 month: "2-digit",
@@ -262,7 +290,29 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
                  Let's keep one discount input for the row. Apply to both?
                  Or just show discount for 'primary' (Pack if exists).
              */}
+            {/* Smart Discount Logic Info */}
+            {(() => {
+               const cost = item.costPrice || 0;
+               const price = item.price || 0;
+               const margin = price > 0 ? ((price - cost) / price) * 100 : 0;
+               
+               // "Default max is 10%, if margin < 20% then max is floor(margin/2)"
+               let calculatedMax = 10;
+               if (margin < 20) {
+                 calculatedMax = Math.floor(margin / 2);
+               }
+               
+               // If item defines an explicit max (e.g. 5% or 50%), use it? 
+               // User said "logic I calculate... is written", implying this dynamic logic IS the rule.
+               // But let's respect explicit overrides if they exist and are non-zero.
+               // Or simple fallback:
+               const effectiveMax = (item.maxDiscount && item.maxDiscount > 0) 
+                  ? item.maxDiscount 
+                  : calculatedMax;
+
+               return (
             <div
+              title={`Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`}
               className={`flex items-center rounded-lg border shadow-sm h-6 overflow-hidden transition-colors w-14 shrink-0 ${
                 (item.discount || 0) > 0
                   ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
@@ -272,8 +322,9 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
               <button
                 onClick={() => {
                   const currentDiscount = item.discount || 0;
-                  const newVal =
-                    currentDiscount > 0 ? 0 : item.maxDiscount ?? 10;
+                  // Toggle: Apply Max / Clear
+                  const newVal = currentDiscount === 0 ? effectiveMax : 0;
+                  
                   if (packItem) updateItemDiscount(packItem.id, false, newVal);
                   if (unitItem) updateItemDiscount(unitItem.id, true, newVal);
                   if (newVal > 0) setGlobalDiscount(0);
@@ -298,9 +349,11 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
                 onWheel={(e) => (e.target as HTMLInputElement).blur()}
                 onChange={(e) => {
                   const val = parseFloat(e.target.value);
-                  const valid = !isNaN(val) && val >= 0 && val <= 100;
-                  const finalVal = valid ? val : 0;
-                  if (item.maxDiscount && finalVal > item.maxDiscount) return; // Strict clamp?
+                  const valid = !isNaN(val) && val >= 0;
+                  // Clamp to Effective Max
+                  let finalVal = valid ? val : 0;
+                  
+                  if (finalVal > effectiveMax) finalVal = effectiveMax;
 
                   if (packItem)
                     updateItemDiscount(packItem.id, false, finalVal);
@@ -314,6 +367,8 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
                 }`}
               />
             </div>
+               );
+            })()}
 
             {/* Dual Qty Control: [ Pack | Unit ] - Fixed width matching discount */}
             <div
@@ -370,6 +425,7 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
                   type="number"
                   min="0"
                   placeholder="U"
+                  title={`1 Pack = ${item.unitsPerPack || 1} Units`}
                   value={
                     unitItem?.quantity === 0 ? "" : unitItem?.quantity || ""
                   }
@@ -1054,6 +1110,83 @@ export const POSTest: React.FC<POSProps> = ({
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
+  // Switch batch and auto-split quantity across batches if needed
+  const switchBatchWithAutoSplit = (
+    currentItem: CartItem,
+    newBatch: Drug,
+    packQty: number,
+    unitQty: number
+  ) => {
+    // Get all batches for this drug sorted by expiry (FEFO)
+    const allBatches = inventory
+      .filter((d) => d.name === currentItem.name && d.dosageForm === currentItem.dosageForm)
+      .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+
+    // Remove old entries for this drug
+    setCart((prev) => {
+      // Find insertion index (first occurrence)
+      const insertionIndex = prev.findIndex((item) => item.name === currentItem.name && item.dosageForm === currentItem.dosageForm);
+      
+      const filtered = prev.filter((item) => !(item.name === currentItem.name && item.dosageForm === currentItem.dosageForm));
+      
+      // Calculate what we need to add
+      const newItems: CartItem[] = [];
+      let remainingPacks = packQty;
+      let remainingUnits = unitQty;
+      
+      // Start from the selected batch, then continue with others
+      const orderedBatches = [
+        newBatch,
+        ...allBatches.filter((b) => b.id !== newBatch.id)
+      ];
+      
+      for (const batch of orderedBatches) {
+        if (remainingPacks <= 0 && remainingUnits <= 0) break;
+        
+        const unitsPerPack = batch.unitsPerPack || 1;
+        const stockInPacks = batch.stock;
+        
+        // Calculate how much we can take from this batch
+        if (remainingPacks > 0) {
+          const packsTake = Math.min(remainingPacks, stockInPacks);
+          if (packsTake > 0) {
+            newItems.push({
+              ...batch,
+              quantity: packsTake,
+              discount: currentItem.discount || 0,
+              isUnit: false,
+            });
+            remainingPacks -= packsTake;
+          }
+        }
+        
+        // Calculate remaining stock after packs for units
+        const usedPacks = newItems.filter(i => i.id === batch.id && !i.isUnit).reduce((s, i) => s + i.quantity, 0);
+        const remainingStockForUnits = (stockInPacks - usedPacks) * unitsPerPack;
+        
+        if (remainingUnits > 0 && unitsPerPack > 1) {
+          const unitsTake = Math.min(remainingUnits, remainingStockForUnits);
+          if (unitsTake > 0) {
+            newItems.push({
+              ...batch,
+              quantity: unitsTake,
+              discount: currentItem.discount || 0,
+              isUnit: true,
+            });
+            remainingUnits -= unitsTake;
+          }
+        }
+      }
+      
+      if (insertionIndex !== -1) {
+        const result = [...filtered];
+        result.splice(insertionIndex, 0, ...newItems);
+        return result;
+      }
+      return [...filtered, ...newItems];
+    });
+  };
+
   const updateQuantity = (id: string, isUnit: boolean, delta: number) => {
     setCart((prev) => {
       // Find current pack and unit items for this drug in cart
@@ -1610,8 +1743,10 @@ export const POSTest: React.FC<POSProps> = ({
   const groupedDrugs = useMemo(() => {
     const groups: Record<string, Drug[]> = {};
     filteredDrugs.forEach((d) => {
-      if (!groups[d.name]) groups[d.name] = [];
-      groups[d.name].push(d);
+      // Group by Name AND DosageForm to separate different forms
+      const key = `${d.name}|${d.dosageForm || ''}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(d);
     });
 
     // Sort batches by expiry date (asc)
@@ -2511,6 +2646,8 @@ export const POSTest: React.FC<POSProps> = ({
                         calculateItemTotal={calculateItemTotal}
                         addToCart={addToCart}
                         removeDrugFromCart={removeDrugFromCart}
+                        allBatches={inventory.filter(d => d.name === group.common.name && d.dosageForm === group.common.dosageForm).sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())}
+                        onSelectBatch={switchBatchWithAutoSplit}
                         isHighlighted={index === highlightedIndex}
                       />
                     );
