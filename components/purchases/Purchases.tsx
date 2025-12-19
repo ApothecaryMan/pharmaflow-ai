@@ -3,7 +3,7 @@ import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { Drug, Supplier, Purchase, PurchaseItem, PurchaseReturn } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
-import { PosDropdown } from '../common/PosDropdown';
+import { ExpandingDropdown } from '../common/ExpandingDropdown';
 import { DatePicker } from '../common/DatePicker';
 import { useSmartDirection } from '../common/SmartInputs';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
@@ -843,7 +843,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                   {mode === 'history' && (
                       <>
                           <span className="text-gray-300 text-2xl font-light">|</span>
-                          <PosDropdown
+                          <ExpandingDropdown
                               items={[
                                   { id: 'all', label: t.status?.all || 'All Status' },
                                   { id: 'pending', label: t.status?.pending || 'Pending' },
@@ -1053,7 +1053,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                    <div className={`flex-1 ${CARD_BASE} p-4 rounded-3xl flex flex-col overflow-hidden`}>
                         <div className="flex gap-2 mb-4">
                             {/* Filter Dropdown */}
-                            <PosDropdown
+                            <ExpandingDropdown
                                 items={filterOptions}
                                 selectedItem={filterOptions.find(o => o.id === filter)}
                                 isOpen={isFilterOpen}

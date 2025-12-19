@@ -23,7 +23,7 @@ import {
   InvoiceTemplateOptions,
 } from "../sales/InvoiceTemplate";
 import { Sale } from "../../types"; // Ensure Sale is imported
-import { PosDropdown, PosDropdownProps } from "../common/PosDropdown";
+import { ExpandingDropdown, ExpandingDropdownProps } from "../common/ExpandingDropdown";
 import {
   useReactTable,
   getCoreRowModel,
@@ -1745,7 +1745,7 @@ export const POSTest: React.FC<POSProps> = ({
           return (
             <div className="w-full h-full overflow-visible">
               {row.unitsPerPack && row.unitsPerPack > 1 ? (
-                <PosDropdown
+                <ExpandingDropdown
                   items={["pack", "unit"]}
                   selectedItem={selectedUnits[row.id] || "pack"}
                   isOpen={openUnitDropdown === row.id}
@@ -1820,7 +1820,7 @@ export const POSTest: React.FC<POSProps> = ({
 
           return (
             <div className="w-full h-full overflow-visible">
-              <PosDropdown
+              <ExpandingDropdown
                 items={row.group}
                 selectedItem={displayBatch}
                 isOpen={openBatchDropdown === row.id}
@@ -2254,7 +2254,7 @@ export const POSTest: React.FC<POSProps> = ({
               />
             </div>
             <div className="relative min-w-[110px] h-[42px]">
-              <PosDropdown
+              <ExpandingDropdown
                 variant="input"
                 items={categories}
                 selectedItem={categories.find((c) => c.id === selectedCategory)}
@@ -2272,7 +2272,7 @@ export const POSTest: React.FC<POSProps> = ({
               />
             </div>
             <div className="relative min-w-[110px] h-[42px]">
-              <PosDropdown
+              <ExpandingDropdown
                 variant="input"
                 items={["all", "in_stock", "out_of_stock"]}
                 selectedItem={stockFilter}

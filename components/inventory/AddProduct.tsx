@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSmartDirection } from '../common/SmartInputs';
 import { Drug } from '../../types';
-import { PosDropdown } from '../common/PosDropdown';
+import { ExpandingDropdown } from '../common/ExpandingDropdown';
 
 interface AddProductProps {
   inventory: Drug[];
@@ -183,7 +183,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
               </div>
               <div className="space-y-2 md:col-span-2">
                 <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.category} *</label>
-                <PosDropdown
+                <ExpandingDropdown
                   variant="input"
                   items={allCategories}
                   selectedItem={formData.category}

@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-// PosDropdown Component
+// ExpandingDropdown Component
 import { useExpandingDropdown } from '../../hooks/useExpandingDropdown';
 
-export interface PosDropdownProps<T> {
+export interface ExpandingDropdownProps<T> {
     items: T[];
     selectedItem: T | undefined;
     isOpen: boolean;
@@ -24,7 +24,7 @@ export interface PosDropdownProps<T> {
 }
 
 /**
- * PosDropdown - A generic dropdown component.
+ * ExpandingDropdown - A generic dropdown component.
  * 
  * @warning **LAYOUT BEHAVIOR NOTICE**
  * This component defaults to an **Accordion-style expansion**, meaning it naturally pushes sibling content down when opened.
@@ -32,12 +32,12 @@ export interface PosDropdownProps<T> {
  * **How to use for Floating/Overlay behavior (Standard Select):**
  * To make it float *over* content without pushing lines down:
  * 1. Wrap it in a relative container with fixed dimensions (e.g., `h-10 w-full`).
- * 2. Position the `PosDropdown` itself as absolute.
+ * 2. Position the `ExpandingDropdown` itself as absolute.
  * 
  * @example
  * // Floating implementation
  * <div className="relative flex-1 h-10">
- *   <PosDropdown 
+ *   <ExpandingDropdown 
  *      className="absolute top-0 left-0 w-full z-50" 
  *      ...props 
  *   />
@@ -45,7 +45,7 @@ export interface PosDropdownProps<T> {
  * 
  * @param {boolean} minHeight - Use minHeight={38} for standard 40px input alignment (approx 40px with borders).
  */
-export function PosDropdown<T>({
+export function ExpandingDropdown<T>({
 
     items,
     selectedItem,
@@ -65,7 +65,7 @@ export function PosDropdown<T>({
     disabled = false,
     centered = false,
     rounded = 'xl'
-}: PosDropdownProps<T>) {
+}: ExpandingDropdownProps<T>) {
     
     const containerRef = useRef<HTMLDivElement>(null);
     

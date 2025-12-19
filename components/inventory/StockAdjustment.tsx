@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
-import { PosDropdown } from '../common/PosDropdown';
+import { ExpandingDropdown } from '../common/ExpandingDropdown';
 import { Drug } from '../../types';
 import { parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
@@ -274,7 +274,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <PosDropdown
+                                            <ExpandingDropdown
                                                 items={reasons}
                                                 selectedItem={item.reason}
                                                 isOpen={openDropdownIndex === idx}

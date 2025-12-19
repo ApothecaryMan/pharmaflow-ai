@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SmartDateInput, SmartInput } from '../common/SmartInputs';
-import { PosDropdown } from '../common';
+import { ExpandingDropdown } from '../common';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useLongPress } from '../../hooks/useLongPress';
@@ -671,7 +671,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   <div className="grid grid-cols-2 gap-4 md:col-span-2">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.category} *</label>
-                      <PosDropdown
+                      <ExpandingDropdown
                         variant="input"
                         items={allCategories}
                         selectedItem={formData.category}
@@ -687,7 +687,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Dosage Form</label>
-                      <PosDropdown
+                      <ExpandingDropdown
                         variant="input"
                         items={['Tablet', 'Capsule', 'Syrup', 'Suspension', 'Injection', 'Cream', 'Ointment', 'Gel', 'Drops', 'Spray', 'Inhaler', 'Suppository', 'Patch', 'Sachet', 'Other']}
                         selectedItem={formData.dosageForm || 'Tablet'}
@@ -1065,7 +1065,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.category} *</label>
-                      <PosDropdown
+                      <ExpandingDropdown
                         variant="input"
                         items={allCategories}
                         selectedItem={formData.category}
@@ -1081,7 +1081,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Dosage Form</label>
-                      <PosDropdown
+                      <ExpandingDropdown
                         variant="input"
                         items={['Tablet', 'Capsule', 'Syrup', 'Suspension', 'Injection', 'Cream', 'Ointment', 'Gel', 'Drops', 'Spray', 'Inhaler', 'Suppository', 'Patch', 'Sachet', 'Other']}
                         selectedItem={formData.dosageForm || 'Tablet'}

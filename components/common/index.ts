@@ -6,5 +6,5 @@ export { DataTable } from './DataTable';
 export { DatePicker } from './DatePicker';
 export { SearchInput } from './SearchInput';
 export { SmartInput, SmartDateInput, useSmartDirection, isValidEmail, isValidPhone, cleanPhone } from './SmartInputs';
-export { PosDropdown } from './PosDropdown';
+export { ExpandingDropdown, type ExpandingDropdownProps } from './ExpandingDropdown';
 export { ContextMenuProvider, useContextMenu, useContextMenuTrigger, ContextMenuTrigger } from './ContextMenu';
