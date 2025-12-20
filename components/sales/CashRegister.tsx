@@ -329,7 +329,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                 </div>
              </div>
           ) : (
-            <div className={`p-8 rounded-3xl ${CARD_BASE} text-center flex flex-col items-center justify-center h-64 text-gray-400`}>
+            <div className={`p-8 rounded-3xl ${CARD_BASE} text-center flex flex-col items-center justify-center min-h-[430px] text-gray-400`}>
                 <span className="material-symbols-rounded text-5xl mb-3 opacity-50">shopping_bag</span>
                 <p>{t.cashRegister.messages.noShift}</p>
             </div>
@@ -338,7 +338,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
 
         {/* Right Column: Transaction Log */}
         <div className="md:col-span-2 space-y-4">
-             <div className={`rounded-3xl ${CARD_BASE} min-h-[500px] flex flex-col`}>
+             <div className={`rounded-3xl ${CARD_BASE} h-[570px] flex flex-col`}>
                 <div className="p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
                    <h3 className="font-bold text-lg">{t.cashRegister.transactions.title}</h3>
                    <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-500">

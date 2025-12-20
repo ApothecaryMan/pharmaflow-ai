@@ -1913,7 +1913,7 @@ export const POSTest: React.FC<POSProps> = ({
                     </div>
                   )}
                   color={color}
-                  className="h-9 w-24"
+                  className="h-9 w-20"
                 />
               ) : (
                 <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
@@ -2715,42 +2715,42 @@ export const POSTest: React.FC<POSProps> = ({
               </div>
             </div>
 
-            {/* No Shift Warning */}
-            {!hasOpenShift && (
-              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 mb-3">
+            {/* Action Buttons or Warning */}
+            {!hasOpenShift ? (
+              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 flex items-center justify-center text-center">
                 <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
-                  <span className="material-symbols-rounded text-[18px]">
+                  <span className="material-symbols-rounded text-[20px]">
                     warning
                   </span>
-                  <p className="text-xs font-medium">
+                  <p className="font-bold text-sm">
                     {t.noOpenShift || "Open a shift before completing sales"}
                   </p>
                 </div>
               </div>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleCheckout("walk-in")}
+                  disabled={!isValidOrder}
+                  className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-${color}-200 dark:shadow-none transition-all active:scale-95 flex justify-center items-center gap-2`}
+                >
+                  <span className="material-symbols-rounded text-[18px]">
+                    payments
+                  </span>
+                  {t.completeOrder}
+                </button>
+                <button
+                  onClick={() => handleCheckout("delivery")}
+                  disabled={!isValidOrder}
+                  className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex justify-center items-center`}
+                  title={t.deliveryOrder}
+                >
+                  <span className="material-symbols-rounded text-[20px]">
+                    local_shipping
+                  </span>
+                </button>
+              </div>
             )}
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleCheckout("walk-in")}
-                disabled={!isValidOrder || !hasOpenShift}
-                className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-${color}-200 dark:shadow-none transition-all active:scale-95 flex justify-center items-center gap-2`}
-              >
-                <span className="material-symbols-rounded text-[18px]">
-                  payments
-                </span>
-                {t.completeOrder}
-              </button>
-              <button
-                onClick={() => handleCheckout("delivery")}
-                disabled={!isValidOrder || !hasOpenShift}
-                className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex justify-center items-center`}
-                title={t.deliveryOrder}
-              >
-                <span className="material-symbols-rounded text-[20px]">
-                  local_shipping
-                </span>
-              </button>
-            </div>
           </div>
         </div>
 
