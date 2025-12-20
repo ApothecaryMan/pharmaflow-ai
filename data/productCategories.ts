@@ -98,39 +98,63 @@ export const GENERAL_TYPES_DATA: ProductTypeData[] = [
 // --- Helper Functions ---
 
 /**
- * Get available categories in the specified language, sorted alphabetically.
+ * Get available category IDs, sorted alphabetically by their display name in the target language.
  */
 export const getCategories = (lang: 'en' | 'ar' = 'en'): string[] => {
   const isAr = lang === 'ar';
-  return CATEGORIES_DATA.map(c => isAr ? c.ar : c.en).sort((a, b) => a.localeCompare(b, isAr ? 'ar' : 'en'));
+  return [...CATEGORIES_DATA]
+    .sort((a, b) => (isAr ? a.ar : a.en).localeCompare((isAr ? b.ar : b.en), isAr ? 'ar' : 'en'))
+    .map(c => c.id);
 };
 
 /**
- * Get product types for a given category (in any language) returned in the target language.
- * Result is sorted alphabetically in the target language.
+ * Get product type IDs for a given category ID, sorted alphabetically by target language.
  */
-export const getProductTypes = (categoryName: string, lang: 'en' | 'ar' = 'en'): string[] => {
-  // 1. Identify valid category ID from input name (fuzzy match against EN or AR)
-  const categoryId = CATEGORIES_DATA.find(c => c.en === categoryName || c.ar === categoryName)?.id;
+export const getProductTypes = (categoryId: string, lang: 'en' | 'ar' = 'en'): string[] => {
+  // Normalize ID (case insensitive matching against ID or Name just in case)
+  const category = CATEGORIES_DATA.find(c => 
+    c.id === categoryId || c.en === categoryId || c.ar === categoryId
+  );
   
-  // 2. Select data source based on ID
+  if (!category) return [];
+
   let data: ProductTypeData[] = [];
-  switch (categoryId) {
+  switch (category.id) {
     case 'Medicine': data = MEDICINE_TYPES_DATA; break;
     case 'Cosmetics': data = COSMETICS_TYPES_DATA; break;
     case 'General': data = GENERAL_TYPES_DATA; break;
-    default: return []; // Check if maybe the categoryName IS the category ID (fallback)
   }
 
-  // 3. Map to target language and sort
   const isAr = lang === 'ar';
-  return data.map(item => isAr ? item.ar : item.en).sort((a, b) => a.localeCompare(b, isAr ? 'ar' : 'en'));
+  return data
+    .map(item => ({ id: item.en, label: isAr ? item.ar : item.en }))
+    .sort((a, b) => a.label.localeCompare(b.label, isAr ? 'ar' : 'en'))
+    .map(item => item.id);
 };
 
 /**
- * Check if a specific category Name (in EN or AR) corresponds to the 'Medicine' ID.
- * Useful for conditional logic like showing Active Ingredients.
+ * Get localized display name for a category ID.
  */
-export const isMedicineCategory = (categoryName: string): boolean => {
-  return CATEGORIES_DATA.some(c => c.id === 'Medicine' && (c.en === categoryName || c.ar === categoryName));
+export const getLocalizedCategory = (id: string, lang: 'en' | 'ar' = 'en'): string => {
+  const cat = CATEGORIES_DATA.find(c => c.id === id || c.en === id);
+  if (!cat) return id;
+  return lang === 'ar' ? cat.ar : cat.en;
+};
+
+/**
+ * Get localized display name for a product type (id/english name).
+ */
+export const getLocalizedProductType = (id: string, lang: 'en' | 'ar' = 'en'): string => {
+  // Search across all types (simplest for now, or optimizing by passing category if known)
+  const allTypes = [...MEDICINE_TYPES_DATA, ...COSMETICS_TYPES_DATA, ...GENERAL_TYPES_DATA];
+  const typeObj = allTypes.find(t => t.en === id);
+  if (!typeObj) return id;
+  return lang === 'ar' ? typeObj.ar : typeObj.en;
+};
+
+/**
+ * Check if a specific category ID corresponds to Medicine.
+ */
+export const isMedicineCategory = (categoryId: string): boolean => {
+  return categoryId === 'Medicine';
 };

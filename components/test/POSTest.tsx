@@ -9,6 +9,7 @@ import { useContextMenu } from "../common/ContextMenu";
 import { Drug, CartItem, Customer, Language, Shift } from "../../types";
 
 import { useExpandingDropdown } from "../../hooks/useExpandingDropdown";
+import { getCategories, getProductTypes, getLocalizedCategory, getLocalizedProductType } from "../../data/productCategories";
 import { getLocationName } from "../../data/locations";
 import { usePOSTabs } from "../../hooks/usePOSTabs";
 
@@ -84,6 +85,7 @@ interface SortableCartItemProps {
   allBatches: Drug[];
   onSelectBatch: (currentItem: CartItem, newBatch: Drug, packQty: number, unitQty: number) => void;
   isHighlighted?: boolean;
+  currentLang: 'en' | 'ar';
 }
 
 const SortableCartItem: React.FC<SortableCartItemProps> = ({
@@ -110,6 +112,7 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
   allBatches,
   onSelectBatch,
   isHighlighted,
+  currentLang,
 }) => {
   const {
     attributes,
@@ -234,7 +237,7 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
             {item.name}{" "}
             {item.dosageForm ? (
               <span className="font-normal text-gray-500">
-                ({item.dosageForm})
+                ({getLocalizedProductType(item.dosageForm, currentLang)})
               </span>
             ) : (
               ""
@@ -515,6 +518,8 @@ export const POSTest: React.FC<POSProps> = ({
   darkMode,
 }) => {
   const { showMenu } = useContextMenu();
+  const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
+  const currentLang = isRTL ? 'ar' : 'en';
 
   // Multi-tab system
   const {
@@ -1878,7 +1883,7 @@ export const POSTest: React.FC<POSProps> = ({
         cell: (info) => {
           const row = info.row.original;
           return (
-            <div className="w-full h-full overflow-visible">
+            <div className="w-full h-full overflow-visible flex items-center">
               {row.unitsPerPack && row.unitsPerPack > 1 ? (
                 <ExpandingDropdown
                   items={["pack", "unit"]}
@@ -1954,7 +1959,7 @@ export const POSTest: React.FC<POSProps> = ({
           }
 
           return (
-            <div className="w-full h-full overflow-visible">
+            <div className="w-full h-full overflow-visible flex items-center">
               <ExpandingDropdown
                 items={row.group}
                 selectedItem={displayBatch}
@@ -2649,6 +2654,7 @@ export const POSTest: React.FC<POSProps> = ({
                         allBatches={inventory.filter(d => d.name === group.common.name && d.dosageForm === group.common.dosageForm).sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())}
                         onSelectBatch={switchBatchWithAutoSplit}
                         isHighlighted={index === highlightedIndex}
+                        currentLang={currentLang}
                       />
                     );
                   })}

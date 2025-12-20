@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSmartDirection } from '../common/SmartInputs';
 import { Drug } from '../../types';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
-import { getCategories, getProductTypes } from '../../data/productCategories';
+import { getCategories, getProductTypes, getLocalizedCategory, getLocalizedProductType } from '../../data/productCategories';
 
 interface AddProductProps {
   inventory: Drug[];
@@ -20,7 +20,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
   const [formData, setFormData] = useState<Partial<Drug>>({
     name: '',
     genericName: '',
-    category: isRTL ? 'عام' : 'General',
+    category: 'General',
     price: 0,
     costPrice: 0,
     stock: 0,
@@ -41,6 +41,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [isTypeOpen, setIsTypeOpen] = useState(false);
 
   // Categories are now determined dynamically using helper
   const allCategories = getCategories(currentLang);
@@ -193,7 +194,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                 <ExpandingDropdown
                   variant="input"
                   items={allCategories}
-                  selectedItem={formData.category}
+                  selectedItem={formData.category} // Stores English ID
                   isOpen={isCategoryOpen}
                   onToggle={() => setIsCategoryOpen(!isCategoryOpen)}
                   onSelect={(cat) => {
@@ -202,27 +203,30 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
                       setIsCategoryOpen(false);
                   }}
                   keyExtractor={(cat) => cat}
-                  renderItem={(cat, isSelected) => cat}
-                  renderSelected={(cat) => cat || t.addProduct.fields.category}
+                  renderItem={(cat, isSelected) => getLocalizedCategory(cat, currentLang)}
+                  renderSelected={(cat) => getLocalizedCategory(cat || 'General', currentLang)}
                   className="w-full h-[50px]"
                   color={color}
                 />
               </div>
                <div className="space-y-2 md:col-span-1">
                   <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.dosageForm || 'Product Type'}</label>
-                  <input
-                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all"
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    placeholder="Select or type..."
-                    value={formData.dosageForm || ''}
-                    onChange={e => setFormData({ ...formData, dosageForm: e.target.value })}
-                    list="product-types"
+                  <ExpandingDropdown
+                    variant="input"
+                    items={getProductTypes(formData.category || 'General', currentLang)} // Returns English IDs
+                    selectedItem={formData.dosageForm || ''}
+                    isOpen={isTypeOpen}
+                    onToggle={() => setIsTypeOpen(!isTypeOpen)}
+                    onSelect={(val) => {
+                         setFormData({ ...formData, dosageForm: val });
+                         setIsTypeOpen(false);
+                    }}
+                    keyExtractor={(c) => c}
+                    renderItem={(c) => getLocalizedProductType(c, currentLang)}
+                    renderSelected={(c) => c ? getLocalizedProductType(c, currentLang) : (t.addProduct.placeholders?.dosageForm || 'Select Type')}
+                    className="w-full h-[50px]"
+                    color={color}
                   />
-                  <datalist id="product-types">
-                    {getProductTypes(formData.category || (isRTL ? 'عام' : 'General'), currentLang).map(type => (
-                      <option key={type} value={type} />
-                    ))}
-                  </datalist>
                </div>
             </div>
           </div>

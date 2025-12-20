@@ -9,7 +9,7 @@ import { Drug } from '../../types';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { Modal } from '../common/Modal';
-import { getCategories, getProductTypes, isMedicineCategory } from '../../data/productCategories';
+import { getCategories, getProductTypes, isMedicineCategory, getLocalizedCategory, getLocalizedProductType } from '../../data/productCategories';
 
 interface InventoryProps {
   inventory: Drug[];
@@ -38,8 +38,8 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
   // Form State for Add Product
   const [formData, setFormData] = useState<Partial<Drug>>({
-    name: '', genericName: '', category: isRTL ? 'عام' : 'General', price: 0, costPrice: 0, stock: 0, expiryDate: '', description: '', barcode: '', internalCode: '', unitsPerPack: 1, maxDiscount: 10,
-    additionalBarcodes: [], dosageForm: isRTL ? 'قرص' : 'Tablet', activeIngredients: []
+    name: '', genericName: '', category: 'General', price: 0, costPrice: 0, stock: 0, expiryDate: '', description: '', barcode: '', internalCode: '', unitsPerPack: 1, maxDiscount: 10,
+    additionalBarcodes: [], dosageForm: '', activeIngredients: []
   });
 
 
@@ -392,7 +392,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
         return (
           <>
             <div className="font-medium text-gray-900 dark:text-gray-100 text-sm drug-name">
-              {drug.name} {drug.dosageForm ? <span className="text-gray-500 font-normal">({drug.dosageForm})</span> : ''}
+              {drug.name} {drug.dosageForm ? <span className="text-gray-500 font-normal">({getLocalizedProductType(drug.dosageForm, currentLang)})</span> : ''}
             </div>
             <div className="text-xs text-gray-500">{drug.genericName}</div>
           </>
@@ -407,8 +407,8 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
         );
       case 'category':
         return (
-          <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-            {drug.category}
+          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${color}-50 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300`}>
+            {getLocalizedCategory(drug.category || 'General', currentLang)}
           </span>
         );
       case 'stock':
@@ -677,30 +677,30 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.category} *</label>
                       <ExpandingDropdown
                         variant="input"
-                        items={allCategories}
-                        selectedItem={formData.category}
+                        items={getCategories(currentLang)}
+                        selectedItem={formData.category} // English ID
                         isOpen={isAddCategoryOpen}
                         onToggle={() => setIsAddCategoryOpen(!isAddCategoryOpen)}
                         onSelect={(val) => { setFormData({ ...formData, category: val, dosageForm: '' }); setIsAddCategoryOpen(false); }}
                         keyExtractor={(c) => c}
-                        renderSelected={(c) => c || 'Select category'}
-                        renderItem={(c) => c}
+                        renderSelected={(c) => getLocalizedCategory(c || 'General', currentLang)}
+                        renderItem={(c) => getLocalizedCategory(c, currentLang)}
                         className="w-full h-[50px]"
                         color={color}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.addProduct?.fields?.dosageForm || 'Product Type'}</label>
                       <ExpandingDropdown
                         variant="input"
-                        items={getProductTypes(formData.category || (isRTL ? 'عام' : 'General'), currentLang)}
+                        items={getProductTypes(formData.category || 'General', currentLang)} // English IDs
                         selectedItem={formData.dosageForm || ''}
                         isOpen={isAddDosageOpen}
                         onToggle={() => setIsAddDosageOpen(!isAddDosageOpen)}
                         onSelect={(val) => { setFormData({ ...formData, dosageForm: val }); setIsAddDosageOpen(false); }}
                         keyExtractor={(c) => c}
-                        renderSelected={(c) => c || 'Select product type'}
-                        renderItem={(c) => c}
+                        renderSelected={(c) => c ? getLocalizedProductType(c, currentLang) : (t.addProduct?.placeholders?.dosageForm || 'Select Type')}
+                        renderItem={(c) => getLocalizedProductType(c, currentLang)}
                         className="w-full h-[50px]"
                         color={color}
                       />
@@ -708,7 +708,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   </div>
 
                   {/* Active Ingredients - Only for Medicine */}
-                  {(formData.category === 'Medicine' || formData.category === 'دواء') && (
+                  {isMedicineCategory(formData.category || '') && (
                   <div className="md:col-span-2">
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Active Ingredients (Comma separated)</label>
                     <SmartInput
@@ -1078,14 +1078,14 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.category} *</label>
                       <ExpandingDropdown
                         variant="input"
-                        items={allCategories}
-                        selectedItem={formData.category}
+                        items={getCategories(currentLang)}
+                        selectedItem={formData.category} // English ID
                         isOpen={isEditCategoryOpen}
                         onToggle={() => setIsEditCategoryOpen(!isEditCategoryOpen)}
                         onSelect={(val) => { setFormData({ ...formData, category: val, dosageForm: '' }); setIsEditCategoryOpen(false); }}
                         keyExtractor={(c) => c}
-                        renderSelected={(c) => c || 'Select category'}
-                        renderItem={(c) => c}
+                        renderSelected={(c) => getLocalizedCategory(c || 'General', currentLang)}
+                        renderItem={(c) => getLocalizedCategory(c, currentLang)}
                         className="w-full h-[50px]"
                         color={color}
                       />
@@ -1094,21 +1094,21 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
                       <ExpandingDropdown
                         variant="input"
-                        items={getProductTypes(formData.category || (isRTL ? 'عام' : 'General'), currentLang)}
+                        items={getProductTypes(formData.category || 'General', currentLang)} // English IDs
                         selectedItem={formData.dosageForm || ''}
                         isOpen={isEditDosageOpen}
                         onToggle={() => setIsEditDosageOpen(!isEditDosageOpen)}
                         onSelect={(val) => { setFormData({ ...formData, dosageForm: val }); setIsEditDosageOpen(false); }}
                         keyExtractor={(c) => c}
-                        renderSelected={(c) => c || 'Select product type'}
-                        renderItem={(c) => c}
+                        renderSelected={(c) => c ? getLocalizedProductType(c, currentLang) : (t.addProduct?.placeholders?.dosageForm || 'Select Type')}
+                        renderItem={(c) => getLocalizedProductType(c, currentLang)}
                         className="w-full h-[50px]"
                          color={color}
                       />
                     </div>
                   </div>
 
-                  {(formData.category === 'Medicine' || formData.category === 'دواء') && (
+                  {isMedicineCategory(formData.category || '') && (
                   <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Active Ingredients</label>
                     <input className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
