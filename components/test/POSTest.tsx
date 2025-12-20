@@ -1883,7 +1883,7 @@ export const POSTest: React.FC<POSProps> = ({
         cell: (info) => {
           const row = info.row.original;
           return (
-            <div className="w-full h-full overflow-visible flex items-center">
+            <div className="w-full h-full overflow-visible">
               {row.unitsPerPack && row.unitsPerPack > 1 ? (
                 <ExpandingDropdown
                   items={["pack", "unit"]}
@@ -1913,7 +1913,7 @@ export const POSTest: React.FC<POSProps> = ({
                     </div>
                   )}
                   color={color}
-                  className="h-7 w-24"
+                  className="h12 w-24"
                 />
               ) : (
                 <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
@@ -1959,7 +1959,7 @@ export const POSTest: React.FC<POSProps> = ({
           }
 
           return (
-            <div className="w-full h-full overflow-visible flex items-center">
+            <div className="w-full h-full overflow-visible">
               <ExpandingDropdown
                 items={row.group}
                 selectedItem={displayBatch}
@@ -2011,7 +2011,7 @@ export const POSTest: React.FC<POSProps> = ({
                   setActiveIndex(0);
                   searchInputRef.current?.focus();
                 }}
-                className="h-7 w-32"
+                className="h-10 w-30"
                 color={color}
               />
             </div>

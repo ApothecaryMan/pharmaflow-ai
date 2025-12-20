@@ -401,7 +401,7 @@ export function TanStackTable<TData, TValue>({
                       return (
                         <td 
                           key={cell.id} 
-                          className={`py-3 px-4 text-sm text-gray-700 dark:text-gray-300 whitespace-normal overflow-visible ${textAlignClass}`}
+                          className={`py-2 px-4 text-sm text-gray-700 dark:text-gray-300 whitespace-normal overflow-visible align-middle ${textAlignClass}`}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </td>
