@@ -1913,7 +1913,7 @@ export const POSTest: React.FC<POSProps> = ({
                     </div>
                   )}
                   color={color}
-                  className="h12 w-24"
+                  className="h-9 w-24"
                 />
               ) : (
                 <span className="text-sm font-bold text-gray-700 dark:text-gray-300">

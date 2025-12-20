@@ -152,7 +152,31 @@ export function ExpandingDropdown<T>({
                     }}
                 >
                     <div className="min-h-0 overflow-hidden">
-                        <div className={`border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto ${isOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-150`}>
+                        <div 
+                            className={`expanding-dropdown-scroll mb-2 border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto ${isOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-150`}
+                            style={{
+                                scrollbarWidth: 'thin',
+                                scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
+                            }}
+                        >
+                            <style>{`
+                                .expanding-dropdown-scroll::-webkit-scrollbar {
+                                    width: 2px;
+                                    background: transparent;
+                                }
+                                .expanding-dropdown-scroll::-webkit-scrollbar-track {
+                                    background: transparent;
+                                    border: none;
+                                    box-shadow: none;
+                                }
+                                .expanding-dropdown-scroll::-webkit-scrollbar-thumb {
+                                    background: rgba(156, 163, 175, 0.6);
+                                    border-radius: 9999px;
+                                }
+                                .expanding-dropdown-scroll::-webkit-scrollbar-corner {
+                                    background: transparent;
+                                }
+                            `}</style>
                             {items
                                 .filter(item => keyExtractor(item) !== (selectedItem ? keyExtractor(selectedItem) : ''))
                                 .map(item => (
