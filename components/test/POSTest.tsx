@@ -1021,6 +1021,12 @@ export const POSTest: React.FC<POSProps> = ({
 
   const filteredDrugs = useMemo(() => {
     const { mode, regex } = parseSearchTerm(search);
+    const trimmedSearch = search.trim();
+    
+    // Get search term without @ prefix for length check
+    const searchTermForLength = mode === 'ingredient' 
+      ? search.trimStart().substring(1).trim() 
+      : trimmedSearch;
 
     return inventory.filter((d) => {
       const drugBroadCat = getBroadCategory(d.category);
@@ -1029,26 +1035,34 @@ export const POSTest: React.FC<POSProps> = ({
 
       let matchesSearch = false;
 
-      if (mode === "ingredient") {
-        matchesSearch =
-          !!d.activeIngredients &&
-          d.activeIngredients.some((ing) => regex.test(ing));
-      } else {
-        const searchableText = [
-          d.name,
-          d.genericName,
-          d.dosageForm,
-          d.category,
-          d.description,
-          ...(Array.isArray(d.activeIngredients) ? d.activeIngredients : []),
-        ]
-          .filter(Boolean)
-          .join(" ");
+      // If search is empty, show all
+      if (!trimmedSearch) {
+        matchesSearch = true;
+      }
+      // Exact code match (barcode or internal code) - no minimum length
+      else if (d.barcode === trimmedSearch || d.internalCode === trimmedSearch) {
+        matchesSearch = true;
+      }
+      // Text search requires minimum 2 characters
+      else if (searchTermForLength.length >= 2) {
+        if (mode === "ingredient") {
+          matchesSearch =
+            !!d.activeIngredients &&
+            d.activeIngredients.some((ing) => regex.test(ing));
+        } else {
+          const searchableText = [
+            d.name,
+            d.genericName,
+            d.dosageForm,
+            d.category,
+            d.description,
+            ...(Array.isArray(d.activeIngredients) ? d.activeIngredients : []),
+          ]
+            .filter(Boolean)
+            .join(" ");
 
-        matchesSearch =
-          regex.test(searchableText) ||
-          (d.barcode && regex.test(d.barcode)) ||
-          (d.internalCode && regex.test(d.internalCode));
+          matchesSearch = regex.test(searchableText);
+        }
       }
 
       const matchesStock =
@@ -1060,16 +1074,34 @@ export const POSTest: React.FC<POSProps> = ({
     });
   }, [inventory, search, selectedCategory, stockFilter]);
 
-  // Dynamic suggestions: active ingredients when @ prefix, else drug names
+  // Dynamic suggestions: active ingredients when @ prefix, else drug names (requires 2+ chars)
   const searchSuggestions = useMemo(() => {
-    if (search.trimStart().startsWith('@')) {
+    const trimmed = search.trim();
+    const isIngredientMode = search.trimStart().startsWith('@');
+    const searchTermLength = isIngredientMode 
+      ? search.trimStart().substring(1).trim().length 
+      : trimmed.length;
+    
+    // Only show suggestions after 2 characters
+    if (searchTermLength < 2) return [];
+    
+    // Check if uppercase mode is enabled
+    const isUppercase = typeof window !== 'undefined' && 
+      localStorage.getItem('pharma_textTransform') === 'uppercase';
+    
+    let suggestions: string[];
+    if (isIngredientMode) {
       const ingredients = new Set<string>();
       inventory.forEach(d => {
         d.activeIngredients?.forEach(ing => ingredients.add(`@${ing}`));
       });
-      return Array.from(ingredients);
+      suggestions = Array.from(ingredients);
+    } else {
+      suggestions = inventory.map(d => `${d.name} ${d.dosageForm}`);
     }
-    return inventory.map(d => `${d.name} ${d.dosageForm}`);
+    
+    // Apply uppercase transform if enabled
+    return isUppercase ? suggestions.map(s => s.toUpperCase()) : suggestions;
   }, [search, inventory]);
 
   // Group drugs by name and sort batches by expiry
@@ -1788,6 +1820,17 @@ export const POSTest: React.FC<POSProps> = ({
                   ]);
                 }}
               />
+              {/* Results Count Badge */}
+              {search.trim().length >= 2 && (() => {
+                const searchDir = /[\u0600-\u06FF]/.test(search) ? 'rtl' : 'ltr';
+                return (
+                  <div className={`absolute inset-y-0 flex items-center pointer-events-none ${searchDir === 'rtl' ? 'left-3' : 'right-3'}`}>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400`}>
+                      {filteredDrugs.length}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
             <div className="relative min-w-[110px] h-[42px]">
               <ExpandingDropdown
