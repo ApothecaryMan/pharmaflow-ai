@@ -405,68 +405,6 @@ export const POSTest: React.FC<POSProps> = ({
     setExpandedGroups((prev) => ({ ...prev, [drugName]: !prev[drugName] }));
   };
 
-  // Helper to get short form label
-  const getFormLabel = (drug: Drug): string => {
-    const text = (
-      drug.name +
-      " " +
-      drug.description +
-      " " +
-      drug.genericName
-    ).toLowerCase();
-
-    // Equipment
-    if (
-      text.includes("monitor") ||
-      text.includes("meter") ||
-      text.includes("thermometer")
-    )
-      return "Device";
-
-    // Baby
-    if (text.includes("diaper")) return "Pack";
-    if (text.includes("formula")) return "Tin";
-
-    // Supplies
-    if (
-      text.includes("mask") ||
-      text.includes("glove") ||
-      text.includes("syringe") ||
-      text.includes("gauze")
-    )
-      return "Box";
-
-    // Cosmetics
-    if (text.includes("shampoo")) return "Shampoo";
-    if (text.includes("cleanser")) return "Cleanser";
-    if (text.includes("wash")) return "Wash";
-    if (text.includes("cream")) return "Cream";
-    if (text.includes("gel")) return "Gel";
-    if (text.includes("ointment")) return "Ointment";
-    if (text.includes("lotion")) return "Lotion";
-    if (text.includes("balm")) return "Balm";
-
-    // Medications
-    if (text.includes("syrup")) return "Syrup";
-    if (text.includes("suspension")) return "Suspension";
-    if (text.includes("solution") || text.includes("liquid")) return "Liquid";
-    if (text.includes("drops") || text.includes("drop")) return "Drops";
-    if (
-      text.includes("injection") ||
-      text.includes("ampoule") ||
-      text.includes("vial") ||
-      text.includes("syringe")
-    )
-      return "Injection";
-    if (text.includes("inhaler")) return "Inhaler";
-    if (text.includes("spray")) return "Spray";
-    if (text.includes("suppository")) return "Suppository";
-    if (text.includes("capsule")) return "Capsule";
-    if (text.includes("tablet") || text.includes("pill")) return "Tablet";
-
-    return "";
-  };
-
   const addToCart = (
     drug: Drug,
     isUnitMode: boolean = false,
