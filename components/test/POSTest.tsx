@@ -405,101 +405,6 @@ export const POSTest: React.FC<POSProps> = ({
     setExpandedGroups((prev) => ({ ...prev, [drugName]: !prev[drugName] }));
   };
 
-  // Helper to determine icon based on drug keywords
-  const getDrugIcon = (drug: Drug): string => {
-    const text = (
-      drug.name +
-      " " +
-      drug.description +
-      " " +
-      drug.genericName +
-      " " +
-      drug.category
-    ).toLowerCase();
-
-    // Equipment & Devices
-    if (
-      text.includes("monitor") ||
-      text.includes("meter") ||
-      text.includes("pressure") ||
-      text.includes("glucose")
-    )
-      return "vital_signs";
-    if (text.includes("thermometer") || text.includes("temperature"))
-      return "thermometer";
-    if (text.includes("device") || text.includes("machine")) return "router";
-
-    // Baby Care
-    if (
-      text.includes("diaper") ||
-      text.includes("baby") ||
-      text.includes("infant") ||
-      text.includes("formula") ||
-      text.includes("powder")
-    )
-      return "child_care";
-
-    // Cosmetics & Personal Care
-    if (
-      text.includes("shampoo") ||
-      text.includes("wash") ||
-      text.includes("cleanser")
-    )
-      return "soap";
-    if (
-      text.includes("cream") ||
-      text.includes("gel") ||
-      text.includes("ointment") ||
-      text.includes("lotion") ||
-      text.includes("topical") ||
-      text.includes("balm") ||
-      text.includes("sunblock") ||
-      text.includes("sunscreen")
-    )
-      return "sanitizer";
-
-    // Medical Supplies
-    if (
-      text.includes("bandage") ||
-      text.includes("gauze") ||
-      text.includes("cotton") ||
-      text.includes("plaster")
-    )
-      return "healing";
-    if (
-      text.includes("syringe") ||
-      text.includes("needle") ||
-      text.includes("injection") ||
-      text.includes("vial") ||
-      text.includes("ampoule")
-    )
-      return "vaccines";
-    if (text.includes("mask") || text.includes("glove")) return "masks";
-
-    // Respiratory
-    if (text.includes("inhaler") || text.includes("spray")) return "air";
-
-    // Oral Forms
-    if (
-      text.includes("syrup") ||
-      text.includes("suspension") ||
-      text.includes("liquid") ||
-      text.includes("solution") ||
-      text.includes("drop")
-    )
-      return "water_drop";
-    if (
-      text.includes("tablet") ||
-      text.includes("capsule") ||
-      text.includes("pill")
-    )
-      return "pill";
-
-    if (text.includes("suppository")) return "medication";
-
-    return "medication"; // Generic Default
-  };
-
   // Helper to get short form label
   const getFormLabel = (drug: Drug): string => {
     const text = (
@@ -1435,21 +1340,7 @@ export const POSTest: React.FC<POSProps> = ({
 
   const tableColumns = useMemo<ColumnDef<(typeof tableData)[0], any>[]>(
     () => [
-      columnHelper.display({
-        id: "icon",
-        header: t.icon || "Icon",
-        size: 60,
-        enableSorting: false,
-        cell: (info) => (
-          <div
-            className={`w-8 h-8 rounded-lg bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 flex items-center justify-center`}
-          >
-            <span className="material-symbols-rounded text-[18px]">
-              {getDrugIcon(info.row.original as unknown as Drug)}
-            </span>
-          </div>
-        ),
-      }),
+
       columnHelper.accessor("barcode", {
         header: t.code,
         size: 140,
@@ -1689,7 +1580,6 @@ export const POSTest: React.FC<POSProps> = ({
       openUnitDropdown,
       selectedBatches,
       openBatchDropdown,
-      getDrugIcon,
     ]
   );
 
@@ -2171,7 +2061,7 @@ export const POSTest: React.FC<POSProps> = ({
                 }}
                 searchPlaceholder={t.searchPlaceholder}
                 emptyMessage={t.noResults}
-                defaultHiddenColumns={["icon", "category"]}
+                defaultHiddenColumns={["category"]}
                 activeIndex={activeIndex}
                 enableTopToolbar={false}
               />
