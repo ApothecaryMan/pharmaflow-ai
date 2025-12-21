@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { SegmentedControl } from '../common/SegmentedControl';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { PurchaseReturn, PurchaseReturnItem, Purchase, Drug } from '../../types';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
@@ -364,20 +365,17 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'create' ? (t.purchaseReturns?.createReturn || 'Create Return') : (t.purchaseReturns?.returnHistory || 'Return History')}</h2>
           <p className="text-sm text-gray-500">{mode === 'create' ? (t.purchaseReturns?.createSubtitle || 'Return items to supplier') : (t.purchaseReturns?.historySubtitle || 'View all purchase returns')}</p>
         </div>
-        <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-full flex text-xs font-bold">
-          <button 
-            onClick={() => setMode('create')}
-            className={`px-4 py-2 rounded-full transition-all ${mode === 'create' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-          >
-            {t.purchaseReturns?.createReturn || 'Create Return'}
-          </button>
-          <button 
-            onClick={() => setMode('history')}
-            className={`px-4 py-2 rounded-full transition-all ${mode === 'history' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-          >
-            {t.purchaseReturns?.returnHistory || 'Return History'}
-          </button>
-        </div>
+          <SegmentedControl
+            value={mode}
+            onChange={(val) => setMode(val as 'create' | 'history')}
+            color={color}
+            shape="pill"
+            size="sm"
+            options={[
+                { label: t.purchaseReturns?.createReturn || 'Create Return', value: 'create' },
+                { label: t.purchaseReturns?.returnHistory || 'Return History', value: 'history' }
+            ]}
+          />
       </div>
 
       {mode === 'create' ? (

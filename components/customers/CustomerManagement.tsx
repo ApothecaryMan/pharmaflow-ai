@@ -10,6 +10,7 @@ import { ExpandingDropdown } from '../common/ExpandingDropdown';
 import { COUNTRY_CODES } from '../../data/countryCodes';
 import { useLongPress } from '../../hooks/useLongPress';
 import { Modal } from '../common/Modal';
+import { SegmentedControl } from '../common/SegmentedControl';
 
 interface CustomerManagementProps {
   customers: Customer[];
@@ -728,20 +729,20 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             <span className="hidden md:inline">{t.modal.kioskMode}</span>
             </button>
 
-            <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-full flex text-xs font-bold">
-              <button 
-                onClick={() => setMode('list')}
-                className={`px-4 py-2 rounded-full transition-all ${mode === 'list' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-              >
-                {t.allCustomers || 'All Customers'}
-              </button>
-              <button 
-                onClick={handleOpenAdd}
-                className={`px-4 py-2 rounded-full transition-all ${mode === 'add' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-              >
-                {t.addCustomer || 'Add New Customer'}
-              </button>
-            </div>
+            <SegmentedControl
+                value={mode}
+                onChange={(val) => {
+                    if (val === 'list') setMode('list');
+                    else if (val === 'add') handleOpenAdd();
+                }}
+                color={color}
+                shape="pill"
+                size="sm"
+                options={[
+                    { label: t.allCustomers || 'All Customers', value: 'list' },
+                    { label: t.addCustomer || 'Add New Customer', value: 'add' }
+                ]}
+            />
         </div>
       </div>
 

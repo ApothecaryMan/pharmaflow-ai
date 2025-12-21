@@ -941,20 +941,17 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                   </>
              )}
 
-             <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-full flex text-xs font-bold">
-                <button 
-                    onClick={() => setMode('create')}
-                    className={`px-4 py-2 rounded-full transition-all type-interactive ${mode === 'create' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                    {t.newPurchase}
-                </button>
-                <button 
-                    onClick={() => setMode('history')}
-                    className={`px-4 py-2 rounded-full transition-all type-interactive ${mode === 'history' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                    {t.viewHistory}
-                </button>
-             </div>
+                <SegmentedControl
+                    value={mode}
+                    onChange={(val) => setMode(val as 'create' | 'history')}
+                    color={color}
+                    shape="pill"
+                    size="sm"
+                    options={[
+                        { label: t.newPurchase, value: 'create' },
+                        { label: t.viewHistory, value: 'history' }
+                    ]}
+                />
          </div>
        </div>
 

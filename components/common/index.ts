@@ -8,3 +8,4 @@ export { SearchInput } from './SearchInput';
 export { SmartInput, SmartDateInput, useSmartDirection, isValidEmail, isValidPhone, cleanPhone } from './SmartInputs';
 export { ExpandingDropdown, type ExpandingDropdownProps } from './ExpandingDropdown';
 export { ContextMenuProvider, useContextMenu, useContextMenuTrigger, ContextMenuTrigger } from './ContextMenu';
+export { SegmentedControl } from './SegmentedControl';

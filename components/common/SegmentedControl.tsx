@@ -42,6 +42,8 @@ interface SegmentedControlOption<T> {
 
 type SegmentedControlSize = 'xs' | 'sm' | 'md' | 'lg';
 
+type SegmentedControlShape = 'rounded' | 'pill';
+
 interface SegmentedControlProps<T> {
   options: SegmentedControlOption<T>[];
   value: T;
@@ -50,6 +52,7 @@ interface SegmentedControlProps<T> {
   color?: string;
   size?: SegmentedControlSize;
   fullWidth?: boolean; // If true, buttons use flex-1 for equal width. If false, buttons use natural width.
+  shape?: SegmentedControlShape; // 'rounded' (default) or 'pill' for circular style
 }
 
 const SIZE_CLASSES = {
@@ -71,6 +74,24 @@ const SIZE_CLASSES = {
   }
 };
 
+// Color map for pill indicator since Tailwind doesn't support dynamic class names
+const PILL_COLOR_MAP: Record<string, string> = {
+  emerald: '#059669',
+  green: '#16a34a',
+  blue: '#2563eb',
+  indigo: '#4f46e5',
+  purple: '#9333ea',
+  pink: '#db2777',
+  red: '#dc2626',
+  orange: '#ea580c',
+  amber: '#d97706',
+  yellow: '#ca8a04',
+  teal: '#0d9488',
+  cyan: '#0891b2',
+  sky: '#0284c7',
+  gray: '#4b5563'
+};
+
 export function SegmentedControl<T extends string | number | boolean>({
   options,
   value,
@@ -78,8 +99,13 @@ export function SegmentedControl<T extends string | number | boolean>({
   className = '',
   color = 'emerald',
   size = 'sm',
-  fullWidth = true
+  fullWidth = true,
+  shape = 'rounded'
 }: SegmentedControlProps<T>) {
+  const isPill = shape === 'pill';
+  const containerRound = isPill ? 'rounded-full' : 'rounded-xl';
+  const buttonRound = isPill ? 'rounded-full' : 'rounded-lg';
+  const indicatorRound = isPill ? 'rounded-full' : 'rounded-lg';
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
@@ -118,16 +144,17 @@ export function SegmentedControl<T extends string | number | boolean>({
   return (
     <div 
       ref={containerRef}
-      className={`relative flex p-1 gap-1 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 isolate ${className}`}
+      className={`relative flex p-1 gap-1 bg-gray-100 dark:bg-gray-800 ${containerRound} isolate ${className}`}
     >
       {indicatorStyle && (
         <div 
-          className={`absolute bg-white dark:bg-gray-700 rounded-lg pointer-events-none z-0 ${
+          className={`absolute ${isPill ? '' : 'bg-white dark:bg-gray-700'} ${indicatorRound} pointer-events-none z-0 ${
             !isFirstRender.current ? 'transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]' : ''
           }`}
           style={{
             ...indicatorStyle,
-            boxShadow: 'rgba(0, 0, 0, 0.09) 0px 3px 12px'
+            boxShadow: isPill ? '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)' : 'rgba(0, 0, 0, 0.09) 0px 3px 12px',
+            backgroundColor: isPill ? (PILL_COLOR_MAP[color] || '#059669') : undefined
           }}
         />
       )}
@@ -141,10 +168,18 @@ export function SegmentedControl<T extends string | number | boolean>({
             onClick={() => onChange(option.value)}
             type="button"
             data-active={isActive}
-            className={`${fullWidth ? 'flex-1' : 'flex-none'} ${sizeClasses.button} rounded-lg font-bold transition-colors z-10 relative flex items-center justify-center gap-2 whitespace-nowrap ${
+            className={`${fullWidth ? 'flex-1' : 'flex-none'} ${sizeClasses.button} ${buttonRound} transition-colors z-10 relative flex items-center justify-center gap-2 whitespace-nowrap ${
+              isPill 
+                ? (isActive ? 'font-bold' : 'font-medium') 
+                : 'font-bold'
+            } ${
               isActive
-                ? `text-${optionColor}-600 dark:text-${optionColor}-400`
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50'
+                ? isPill 
+                  ? 'text-white' 
+                  : `text-${optionColor}-600 dark:text-${optionColor}-400`
+                : isPill
+                  ? 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50'
             }`}
           >
             {option.icon && (

@@ -195,7 +195,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 <button
                 onClick={(e) => handleModuleClick(module.id, hasPage, e)}
                 disabled={isEffectivelyDisabled}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap relative type-interactive
+                className={`main-nav-tab flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap relative type-interactive
                     ${isEffectivelyDisabled
                             ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
                             : isActive 

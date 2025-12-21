@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SmartDateInput, SmartInput } from '../common/SmartInputs';
-import { ExpandingDropdown } from '../common';
+import { ExpandingDropdown, SegmentedControl } from '../common';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useLongPress } from '../../hooks/useLongPress';
@@ -521,20 +521,21 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
           <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'list' ? t.title : (t.addNewProduct || 'Add New Product')}</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">{mode === 'list' ? t.subtitle : (t.addProductSubtitle || 'Add a new item to your inventory')}</p>
         </div>
-        <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-full flex text-xs font-bold">
-          <button 
-            onClick={() => setMode('list')}
-            className={`px-4 py-2 rounded-full transition-all type-interactive ${mode === 'list' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-          >
-            {t.allProducts || 'All Products'}
-          </button>
-          <button 
-            onClick={() => { setMode('add'); handleOpenAdd(); }}
-            className={`px-4 py-2 rounded-full transition-all type-interactive ${mode === 'add' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-          >
-            {t.addNewProduct || 'Add New Product'}
-          </button>
-        </div>
+        <SegmentedControl
+          value={mode}
+          onChange={(val) => { 
+            setMode(val); 
+            if (val === 'add') handleOpenAdd(); 
+          }}
+          options={[
+            { label: t.allProducts || 'All Products', value: 'list' as const },
+            { label: t.addNewProduct || 'Add New Product', value: 'add' as const }
+          ]}
+          shape="pill"
+          size="sm"
+          color={color}
+          fullWidth={false}
+        />
       </div>
 
       {/* Success Message */}

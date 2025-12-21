@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { SegmentedControl } from '../common/SegmentedControl';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { Supplier } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
@@ -339,20 +340,20 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
           <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'list' ? (t.suppliersList || 'Suppliers List') : (t.addNewSupplier || 'Add New Supplier')}</h2>
           <p className="text-sm text-gray-500">{mode === 'list' ? (t.manageSuppliers || 'Manage your suppliers') : (t.createNewRecord || 'Create a new supplier record')}</p>
         </div>
-        <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-full flex text-xs font-bold">
-          <button 
-            onClick={() => setMode('list')}
-            className={`px-4 py-2 rounded-full transition-all ${mode === 'list' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-          >
-            {t.allSuppliers || 'All Suppliers'}
-          </button>
-          <button 
-            onClick={handleAddNew}
-            className={`px-4 py-2 rounded-full transition-all ${mode === 'add' ? `bg-${color}-600 text-white shadow-md` : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-          >
-            {t.addNewSupplier || 'Add New Supplier'}
-          </button>
-        </div>
+        <SegmentedControl
+            value={mode}
+            onChange={(val) => {
+                if (val === 'list') setMode('list');
+                else if (val === 'add') handleAddNew();
+            }}
+            color={color}
+            shape="pill"
+            size="sm"
+            options={[
+                { label: t.allSuppliers || 'All Suppliers', value: 'list' },
+                { label: t.addNewSupplier || 'Add New Supplier', value: 'add' }
+            ]}
+        />
       </div>
 
       {mode === 'list' ? (

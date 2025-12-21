@@ -233,8 +233,8 @@ html[lang="ar"] nav {
 }
 
 /* Adjust padding/height for Arabic Navigation to accommodate font weight/size */
-html[dir="rtl"] nav button,
-html[lang="ar"] nav button {
+html[dir="rtl"] nav .main-nav-tab,
+html[lang="ar"] nav .main-nav-tab {
   padding-top: 0.4rem !important;
   padding-bottom: 0.4rem !important;
   line-height: 1.5 !important;
