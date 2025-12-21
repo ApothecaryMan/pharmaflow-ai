@@ -39,6 +39,7 @@ interface TanStackTableProps<TData, TValue> {
   emptyMessage?: string;
   color?: string; // e.g., 'blue', 'emerald'
   defaultHiddenColumns?: string[]; // Column IDs to hide by default
+  activeIndex?: number; // For keyboard navigation highlight
 }
 
 // Helper to get stored settings
@@ -63,6 +64,7 @@ export function TanStackTable<TData, TValue>({
   emptyMessage = 'No results found.',
   color = 'blue',
   defaultHiddenColumns = [],
+  activeIndex,
   enableTopToolbar = true
 }: TanStackTableProps<TData, TValue> & { enableTopToolbar?: boolean }) {
   
@@ -375,6 +377,7 @@ export function TanStackTable<TData, TValue>({
                 rows.map(row => (
                   <tr
                     key={row.id}
+                    id={`drug-row-${row.index}`}
                     onClick={() => onRowClick && onRowClick(row.original)}
                     onTouchStart={(e) => {
                       currentTouchRow.current = row.original;
@@ -388,7 +391,11 @@ export function TanStackTable<TData, TValue>({
                         onRowContextMenu(e, row.original);
                       }
                     }}
-                    className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 overflow-visible ${onRowClick ? 'cursor-pointer' : ''}`}
+                    className={`transition-colors overflow-visible ${onRowClick ? 'cursor-pointer' : ''} ${
+                      activeIndex !== undefined && row.index === activeIndex
+                        ? `bg-${color}-50 dark:bg-${color}-900/20`
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                    }`}
                   >
                     {row.getVisibleCells().map(cell => {
                       const align = contentAlignment[cell.column.id] || 'left';

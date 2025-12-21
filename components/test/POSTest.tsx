@@ -205,7 +205,7 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
         }
         ${
           isHighlighted
-            ? `border-gray-100 dark:border-gray-800 bg-${color}-50 dark:bg-${color}-900/20`
+            ? `border-gray-100 dark:border-gray-800 bg-${color}-100 dark:bg-${color}-900/20`
             : "border-gray-100 dark:border-gray-800"
         }`}
       onContextMenu={(e) => {
@@ -221,10 +221,8 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
       onTouchMove={onCartItemTouchMove}
     >
       {/* Drag Handle */}
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-full flex items-center justify-center cursor-grab active:cursor-grabbing text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">
-        <span className="material-symbols-rounded text-[16px]">
-          drag_indicator
-        </span>
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-full flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className={`w-1 h-3/5 rounded-full bg-${color}-100 dark:bg-${color}-800`}></div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 relative pl-3">
@@ -671,55 +669,7 @@ export const POSTest: React.FC<POSProps> = ({
     }
   }, [mergedCartItems.length]);
 
-  usePosShortcuts({
-    enabled: true,
-    onNavigate: (direction) => {
-      if (mergedCartItems.length === 0) return;
-      setHighlightedIndex((prev) => {
-        const next = direction === "up" ? prev - 1 : prev + 1;
-        const clamped = Math.max(0, Math.min(next, mergedCartItems.length - 1));
-        // Only play click if index actually changed
-        if (clamped !== prev) {
-          playClick();
-          // Ensure element is scrolled into view (optional enhancement)
-        }
-        return clamped;
-      });
-    },
-    onQuantityChange: (delta) => {
-      if (highlightedIndex === -1 || !mergedCartItems[highlightedIndex]) {
-        playError();
-        return;
-      }
-      const item = mergedCartItems[highlightedIndex];
-      const targetId = item.common.id;
-      // Logic: if has Pack (even 0), modify Pack. Else Unit.
-      // mergedCartItems contains { pack, unit, common }
-      // cart is the flat list. updateQuantity updates by ID + isUnit.
-      const useUnit = !item.pack;
 
-      playBeep();
-      updateQuantity(targetId, useUnit, delta);
-    },
-    onDelete: () => {
-      if (highlightedIndex === -1 || !mergedCartItems[highlightedIndex]) return;
-      const item = mergedCartItems[highlightedIndex];
-      if (item.pack) removeFromCart(item.pack.id, false);
-      if (item.unit) removeFromCart(item.unit.id, true);
-      playClick(); // Delete sound
-    },
-    onCheckout: () => {
-      if (cart.length > 0) {
-        playSuccess();
-        handleCheckout("walk-in");
-      } else {
-        playError();
-      }
-    },
-    onFocusSearch: () => {
-      searchInputRef.current?.focus();
-    },
-  });
 
   // Global Keydown (Simple Alphanumeric for Scanner / Search Focus)
   useEffect(() => {
@@ -828,7 +778,7 @@ export const POSTest: React.FC<POSProps> = ({
         newWidth = rect.right - clientX;
       }
 
-      if (newWidth > 280 && newWidth < 800) {
+      if (newWidth > 290 && newWidth < 800) {
         setSidebarWidth(newWidth);
       }
     }
@@ -1703,6 +1653,34 @@ export const POSTest: React.FC<POSProps> = ({
     }
   }, [activeIndex]);
 
+  // Auto-scroll active CART item into view
+  useEffect(() => {
+    if (highlightedIndex !== -1) {
+      const activeCartRow = document.getElementById(`cart-item-${highlightedIndex}`);
+      if (activeCartRow) {
+        activeCartRow.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [highlightedIndex]);
+
+  // Auto-highlight last item when added
+  const prevCartLengthRef = useRef(cart.length);
+  useEffect(() => {
+    if (cart.length > prevCartLengthRef.current) {
+        // Item added - highlight the last one (which is usually at the bottom or top depending on sort? assumption: bottom/end of merged list)
+        // mergedCartItems syncs with cart? Yes.
+        // Wait, mergedCartItems might not be updated immediately in this render cycle if it depends on cart state which just updated?
+        // mergedCartItems is a useMemo on [cart]. So it updates when cart updates.
+        // So safe to set index to length - 1.
+        if (mergedCartItems.length > 0) {
+            setHighlightedIndex(mergedCartItems.length - 1);
+        }
+    }
+    prevCartLengthRef.current = cart.length;
+  }, [cart.length, mergedCartItems.length]);
+
+
+
   const filteredDrugs = useMemo(() => {
     const { mode, regex } = parseSearchTerm(search);
 
@@ -1783,6 +1761,78 @@ export const POSTest: React.FC<POSProps> = ({
       };
     });
   }, [groupedDrugs, cart]);
+
+  // --- Keyboard Shortcuts & Navigation ---
+  const isTableFocused = search.trim().length > 0 && tableData.length > 0;
+
+  // Auto-focus Cart when Table is not focused
+  useEffect(() => {
+    if (!isTableFocused && mergedCartItems.length > 0 && highlightedIndex === -1) {
+        setHighlightedIndex(0);
+    }
+  }, [isTableFocused, mergedCartItems.length, highlightedIndex]);
+
+  usePosShortcuts({
+    enabled: true,
+    focusMode: isTableFocused ? 'table' : 'cart',
+    onTableNavigate: (direction) => {
+        setActiveIndex((prev) => {
+            const next = direction === "up" ? prev - 1 : prev + 1;
+            const clamped = Math.max(0, Math.min(next, tableData.length - 1));
+            return clamped;
+        });
+    },
+    onAddFromTable: () => {
+        if (tableData[activeIndex]) {
+            addGroupToCart(tableData[activeIndex].group);
+            // Replicate existing behavior on selection: clear search and reset focus
+            setSearch("");
+            setActiveIndex(0);
+            searchInputRef.current?.focus();
+        }
+    },
+    onNavigate: (direction) => {
+      if (mergedCartItems.length === 0) return;
+      setHighlightedIndex((prev) => {
+        const next = direction === "up" ? prev - 1 : prev + 1;
+        const clamped = Math.max(0, Math.min(next, mergedCartItems.length - 1));
+        if (clamped !== prev) {
+          playClick();
+        }
+        return clamped;
+      });
+    },
+    onQuantityChange: (delta) => {
+      if (highlightedIndex === -1 || !mergedCartItems[highlightedIndex]) {
+        playError();
+        return;
+      }
+      const item = mergedCartItems[highlightedIndex];
+      const targetId = item.common.id;
+      const useUnit = !item.pack;
+
+      playBeep();
+      updateQuantity(targetId, useUnit, delta);
+    },
+    onDelete: () => {
+      if (highlightedIndex === -1 || !mergedCartItems[highlightedIndex]) return;
+      const item = mergedCartItems[highlightedIndex];
+      if (item.pack) removeFromCart(item.pack.id, false);
+      if (item.unit) removeFromCart(item.unit.id, true);
+      playClick();
+    },
+    onCheckout: () => {
+      if (cart.length > 0) {
+        playSuccess();
+        handleCheckout("walk-in");
+      } else {
+        playError();
+      }
+    },
+    onFocusSearch: () => {
+      searchInputRef.current?.focus();
+    },
+  });
 
   // --- TanStack Table Configuration ---
   const columnHelper = createColumnHelper<(typeof tableData)[0]>();
@@ -2526,6 +2576,7 @@ export const POSTest: React.FC<POSProps> = ({
                 searchPlaceholder={t.searchPlaceholder}
                 emptyMessage={t.noResults}
                 defaultHiddenColumns={["icon", "category"]}
+                activeIndex={activeIndex}
                 enableTopToolbar={false}
               />
             )}
@@ -2601,7 +2652,32 @@ export const POSTest: React.FC<POSProps> = ({
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-2 space-y-2" dir="ltr">
+          <div 
+            className="flex-1 overflow-y-auto p-2 space-y-2 cart-scroll" 
+            dir="ltr"
+            style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
+            }}
+          >
+            <style>{`
+                .cart-scroll::-webkit-scrollbar {
+                    width: 2px;
+                    background: transparent;
+                }
+                .cart-scroll::-webkit-scrollbar-track {
+                    background: transparent;
+                    border: none;
+                    box-shadow: none;
+                }
+                .cart-scroll::-webkit-scrollbar-thumb {
+                    background: rgba(156, 163, 175, 0.6);
+                    border-radius: 9999px;
+                }
+                .cart-scroll::-webkit-scrollbar-corner {
+                    background: transparent;
+                }
+            `}</style>
             {cart.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-2">
                 <span className="material-symbols-rounded text-4xl opacity-20">
@@ -2629,33 +2705,44 @@ export const POSTest: React.FC<POSProps> = ({
                     // Using Drug ID as the sortable ID logic, assuming unique per drug
                     const itemId = group.id; // Or simple 'group.id' if unique
                     return (
-                      <SortableCartItem
-                        key={itemId}
-                        packItem={group.pack}
-                        unitItem={group.unit}
-                        commonItem={group.common}
-                        itemId={itemId}
-                        color={color}
-                        t={t}
-                        showMenu={showMenu}
-                        getCartItemActions={getCartItemActions}
-                        currentTouchCartItem={currentTouchCartItem}
-                        onCartItemTouchStart={onCartItemTouchStart}
-                        onCartItemTouchEnd={onCartItemTouchEnd}
-                        onCartItemTouchMove={onCartItemTouchMove}
-                        removeFromCart={removeFromCart}
-                        toggleUnitMode={toggleUnitMode}
-                        updateItemDiscount={updateItemDiscount}
-                        setGlobalDiscount={setGlobalDiscount}
-                        updateQuantity={updateQuantity}
-                        calculateItemTotal={calculateItemTotal}
-                        addToCart={addToCart}
-                        removeDrugFromCart={removeDrugFromCart}
-                        allBatches={inventory.filter(d => d.name === group.common.name && d.dosageForm === group.common.dosageForm).sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())}
-                        onSelectBatch={switchBatchWithAutoSplit}
-                        isHighlighted={index === highlightedIndex}
-                        currentLang={currentLang}
-                      />
+                      <div key={itemId} id={`cart-item-${index}`} className="w-full">
+                        <SortableCartItem
+                          packItem={group.pack}
+                          unitItem={group.unit}
+                          commonItem={group.common}
+                          itemId={itemId}
+                          color={color}
+                          t={t}
+                          showMenu={showMenu}
+                          getCartItemActions={getCartItemActions}
+                          currentTouchCartItem={currentTouchCartItem}
+                          onCartItemTouchStart={onCartItemTouchStart}
+                          onCartItemTouchEnd={onCartItemTouchEnd}
+                          onCartItemTouchMove={onCartItemTouchMove}
+                          removeFromCart={removeFromCart}
+                          toggleUnitMode={toggleUnitMode}
+                          updateItemDiscount={updateItemDiscount}
+                          setGlobalDiscount={setGlobalDiscount}
+                          updateQuantity={updateQuantity}
+                          calculateItemTotal={calculateItemTotal}
+                          addToCart={addToCart}
+                          removeDrugFromCart={removeDrugFromCart}
+                          allBatches={inventory
+                            .filter(
+                              (d) =>
+                                d.name === group.common.name &&
+                                d.dosageForm === group.common.dosageForm
+                            )
+                            .sort(
+                              (a, b) =>
+                                new Date(a.expiryDate).getTime() -
+                                new Date(b.expiryDate).getTime()
+                            )}
+                          onSelectBatch={switchBatchWithAutoSplit}
+                          isHighlighted={index === highlightedIndex}
+                          currentLang={currentLang}
+                        />
+                      </div>
                     );
                   })}
                 </SortableContext>
