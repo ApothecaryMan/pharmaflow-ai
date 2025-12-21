@@ -184,7 +184,11 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                                     ${action.disabled ? 'opacity-50 cursor-not-allowed' : ''}
                                 `}
                             >
-                                {action.icon && <span className="material-symbols-rounded text-[18px] opacity-70">{action.icon}</span>}
+                                {action.icon ? (
+                                    <span className="material-symbols-rounded text-[18px] opacity-70">{action.icon}</span>
+                                ) : (
+                                    <span className="inline-block w-[18px] shrink-0"></span>
+                                )}
                                 <span className="font-medium">{action.label}</span>
                             </button>
                         )

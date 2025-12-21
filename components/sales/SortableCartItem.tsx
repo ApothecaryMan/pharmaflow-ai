@@ -178,7 +178,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
             {item.name}{" "}
             {item.dosageForm ? (
               <span className="font-normal text-gray-500">
-                ({getLocalizedProductType(item.dosageForm, currentLang)})
+                ({item.dosageForm})
               </span>
             ) : (
               ""
@@ -205,7 +205,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                 e.stopPropagation();
                 const batchMenuItems = allBatches.map((batch) => ({
                   label: `${new Date(batch.expiryDate).toLocaleDateString("en-US", { month: "2-digit", year: "2-digit" })} • ${batch.stock} ${t.pack || 'Pack'}`,
-                  icon: batch.id === item.id ? 'check_circle' : 'inventory_2',
+                  icon: batch.id === item.id ? 'check_circle' : undefined,
                   disabled: batch.stock <= 0,
                   action: () => {
                     // Call switch function with current quantities to re-distribute if needed

@@ -214,9 +214,7 @@ export const POSTest: React.FC<POSProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [mobileTab, setMobileTab] = useState<"products" | "cart">("products");
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
-    {}
-  );
+
   const [selectedUnits, setSelectedUnits] = useState<
     Record<string, "pack" | "unit">
   >({});
@@ -400,10 +398,7 @@ export const POSTest: React.FC<POSProps> = ({
     }
   };
 
-  const toggleBatchList = (e: React.MouseEvent, drugName: string) => {
-    e.stopPropagation();
-    setExpandedGroups((prev) => ({ ...prev, [drugName]: !prev[drugName] }));
-  };
+
 
   const addToCart = (
     drug: Drug,
