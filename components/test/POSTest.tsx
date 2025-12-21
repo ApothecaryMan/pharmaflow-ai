@@ -2026,7 +2026,7 @@ export const POSTest: React.FC<POSProps> = ({
           </div>
 
           <div 
-            className="flex-1 overflow-y-auto p-2 space-y-2 cart-scroll" 
+            className={`flex-1 p-2 space-y-2 cart-scroll ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
             dir="ltr"
             style={{
                 scrollbarWidth: 'thin',
