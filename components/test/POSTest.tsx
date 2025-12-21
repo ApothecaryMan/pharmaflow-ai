@@ -26,16 +26,11 @@ import {
 import { Sale } from "../../types"; // Ensure Sale is imported
 import { ExpandingDropdown, ExpandingDropdownProps } from "../common/ExpandingDropdown";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
   createColumnHelper,
-  flexRender,
   ColumnDef,
 } from "@tanstack/react-table";
-import { TanStackTable } from "../common/TanStackTable"; // IMPORTED
-import { CARD_MD, CARD_LG } from "../../utils/themeStyles";
+import { TanStackTable } from "../common/TanStackTable";
+import { CARD_MD } from "../../utils/themeStyles";
 import { Modal } from "../common/Modal";
 import {
   DndContext,
@@ -228,6 +223,10 @@ export const POSTest: React.FC<POSProps> = ({
   const [activeIndex, setActiveIndex] = useState(0); // For grid navigation
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // checkout state for inline calculator
+  const [isCheckoutMode, setIsCheckoutMode] = useState(false);
+  const [amountPaid, setAmountPaid] = useState("");
+
   // Global Keydown Listener for Scanner
   // Keyboard Shortcuts & Sounds
   const { playBeep, playError, playSuccess, playClick } = usePosSounds();
@@ -353,7 +352,7 @@ export const POSTest: React.FC<POSProps> = ({
         newWidth = rect.right - clientX;
       }
 
-      if (newWidth > 290 && newWidth < 800) {
+      if (newWidth > 500 && newWidth < 700) {
         setSidebarWidth(newWidth);
       }
     }
@@ -388,17 +387,6 @@ export const POSTest: React.FC<POSProps> = ({
     if (general.includes(category)) return "General";
     return "Medicine";
   };
-
-  // --- Nested/Future Functions for Item Actions ---
-  const handleViewProductDetails = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Prevent adding to cart
-    const drug = inventory.find((d) => d.id === id);
-    if (drug) {
-      setViewingDrug(drug);
-    }
-  };
-
-
 
   const addToCart = (
     drug: Drug,
@@ -756,6 +744,17 @@ export const POSTest: React.FC<POSProps> = ({
       },
       danger: false,
     });
+    
+    // Search in table option
+    actions.push({
+      label: t.actions?.searchInTable || "Search in Table",
+      icon: "search",
+      action: () => {
+        setSearch(item.name);
+        searchInputRef.current?.focus();
+      },
+      danger: false,
+    });
     return actions;
   };
 
@@ -848,6 +847,17 @@ export const POSTest: React.FC<POSProps> = ({
     (sum, item) => sum + calculateItemTotal(item),
     0
   );
+  
+  // Calculate total item discount amount (for display only)
+  const totalItemDiscountAmount = cart.reduce((sum, item) => {
+    let unitPrice = item.price;
+    if (item.isUnit && item.unitsPerPack) {
+      unitPrice = item.price / item.unitsPerPack;
+    }
+    const baseTotal = unitPrice * item.quantity;
+    return sum + (baseTotal * ((item.discount || 0) / 100));
+  }, 0);
+
   const cartTotal = subtotal * (1 - globalDiscount / 100);
   const isValidOrder =
     cart.length > 0 &&
@@ -1958,14 +1968,6 @@ export const POSTest: React.FC<POSProps> = ({
                       label: t.viewDetails,
                       icon: "info",
                       action: () => setViewingDrug(item.group[0]),
-                      danger: false,
-                    },
-                    { separator: true } as any,
-                    {
-                      label: t.actions?.showSimilar || "Show Similar",
-                      icon: "category",
-                      action: () => setSelectedCategory(item.category),
-                      danger: false,
                     },
                   ]);
                 }}
@@ -1981,14 +1983,6 @@ export const POSTest: React.FC<POSProps> = ({
                       label: t.viewDetails,
                       icon: "info",
                       action: () => setViewingDrug(item.group[0]),
-                      danger: false,
-                    },
-                    { separator: true } as any,
-                    {
-                      label: t.actions?.showSimilar || "Show Similar",
-                      icon: "category",
-                      action: () => setSelectedCategory(item.category),
-                      danger: false,
                     },
                   ]);
                 }}
@@ -2165,7 +2159,8 @@ export const POSTest: React.FC<POSProps> = ({
                             )}
                           onSelectBatch={switchBatchWithAutoSplit}
                           isHighlighted={index === highlightedIndex}
-                          currentLang={currentLang}
+                          currentLang={currentLang as 'en' | 'ar'}
+                          globalDiscount={globalDiscount}
                         />
                       </div>
                     );
@@ -2175,76 +2170,94 @@ export const POSTest: React.FC<POSProps> = ({
             )}
           </div>
 
-          <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-2 shrink-0">
-            {/* Totals Section */}
-            <div className="space-y-1">
-              <div className="flex justify-between items-center text-[10px] text-gray-500 dark:text-gray-400">
-                <span>{t.subtotal}</span>
-                <span>${subtotal.toFixed(2)}</span>
+          <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-3 shrink-0">
+            {/* Summary Row - Horizontal Layout like Purchases */}
+            <div className="flex items-center justify-between gap-2">
+              {/* Subtotal */}
+              <div className="flex flex-col ps-3">
+                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.subtotal}</span>
+                <span className="font-medium text-sm text-gray-700 dark:text-gray-300">${subtotal.toFixed(2)}</span>
               </div>
 
-              <div className="flex justify-between items-center text-[10px]">
-                <span className="text-gray-500 dark:text-gray-400">
-                  {t.orderDiscount}
-                </span>
-                <div className="flex items-center gap-1">
-                  <span className="material-symbols-rounded text-[14px] text-gray-400">
-                    percent
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={globalDiscount || ""}
-                    placeholder="0"
-                    onChange={(e) => {
-                      const val = Math.min(
-                        100,
-                        Math.max(0, parseFloat(e.target.value) || 0)
-                      );
-                      setGlobalDiscount(val);
-                      if (val > 0) {
-                        setCart((prev) =>
-                          prev.map((item) => ({ ...item, discount: 0 }))
+              {/* Discount */}
+              <div className="flex flex-col border-s border-gray-200 dark:border-gray-700 ps-3">
+                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.orderDiscount}</span>
+                
+                {totalItemDiscountAmount > 0 ? (
+                  /* Item Discounts Active -> Show Total Amount Read-only */
+                  <div className="flex items-center gap-1 h-[26px]">
+                    <span className="text-sm font-bold text-green-600">
+                      ${totalItemDiscountAmount.toFixed(2)}
+                    </span>
+                  </div>
+                ) : (
+                  /* Global Discount Input */
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={globalDiscount || ""}
+                      placeholder="0"
+                      onChange={(e) => {
+                        const val = Math.min(
+                          100,
+                          Math.max(0, parseFloat(e.target.value) || 0)
                         );
+                        setGlobalDiscount(val);
+                        if (val > 0) {
+                          setCart((prev) =>
+                            prev.map((item) => ({ ...item, discount: 0 }))
+                          );
+                        }
+                      }}
+                      className="w-10 px-1 py-0.5 text-center rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 text-sm font-medium text-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      style={
+                        { "--tw-ring-color": `var(--color-${color}-500)` } as any
                       }
-                    }}
-                    className="w-10 px-1 py-0.5 text-end rounded bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-1 text-gray-700 dark:text-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    style={
-                      { "--tw-ring-color": `var(--color-${color}-500)` } as any
-                    }
-                  />
-                </div>
+                    />
+                    <span className="text-green-600 font-medium text-sm">%</span>
+                  </div>
+                )}
               </div>
 
-              <div className="flex justify-between items-center text-sm font-medium pt-2 border-t border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400">
-                <span>{t.total}</span>
-                <span
-                  className={`text-xl font-bold text-${color}-700 dark:text-${color}-300`}
-                >
+              {/* Total */}
+              <div className="flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3">
+                <span className="text-xs text-gray-500 font-bold uppercase whitespace-nowrap">{t.total}:</span>
+                <span className={`text-2xl font-bold text-${color}-600 dark:text-${color}-400`}>
                   ${cartTotal.toFixed(2)}
                 </span>
               </div>
             </div>
 
-            {/* Action Buttons or Warning */}
+            {/* Checkout Area Container */}
             {!hasOpenShift ? (
-              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 flex items-center justify-center text-center">
+              <div className="flex h-[42px] items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
                 <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
-                  <span className="material-symbols-rounded text-[20px]">
+                  <span className="material-symbols-rounded text-[18px]">
                     warning
                   </span>
-                  <p className="font-bold text-sm">
+                  <p className="text-xs font-medium">
                     {t.noOpenShift || "Open a shift before completing sales"}
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="flex gap-2">
+            <div className="flex h-[42px] overflow-hidden">
+              
+              {/* Standard Mode - Shrinks to 0 width when checkout active */}
+              <div 
+                className={`flex gap-2 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                  isCheckoutMode ? 'w-0 opacity-0 overflow-hidden' : 'w-full opacity-100'
+                }`}
+              >
                 <button
-                  onClick={() => handleCheckout("walk-in")}
-                  disabled={!isValidOrder}
-                  className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-${color}-200 dark:shadow-none transition-all active:scale-95 flex justify-center items-center gap-2`}
+                  onClick={() => {
+                    setIsCheckoutMode(true);
+                    setAmountPaid("");
+                  }}
+                  disabled={!isValidOrder || !hasOpenShift}
+                  className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
                 >
                   <span className="material-symbols-rounded text-[18px]">
                     payments
@@ -2253,8 +2266,8 @@ export const POSTest: React.FC<POSProps> = ({
                 </button>
                 <button
                   onClick={() => handleCheckout("delivery")}
-                  disabled={!isValidOrder}
-                  className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex justify-center items-center`}
+                  disabled={!isValidOrder || !hasOpenShift}
+                  className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex justify-center items-center shrink-0`}
                   title={t.deliveryOrder}
                 >
                   <span className="material-symbols-rounded text-[20px]">
@@ -2262,6 +2275,76 @@ export const POSTest: React.FC<POSProps> = ({
                   </span>
                 </button>
               </div>
+
+              {/* Checkout Mode - Expands from 0 to full width */}
+              <div 
+                 className={`flex gap-2 items-stretch transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                    isCheckoutMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
+                 }`}
+              >
+                {/* Amount Input */}
+                <div className={`flex-1 bg-white dark:bg-gray-900 border-2 border-${color}-500 rounded-xl flex items-center px-2 gap-1 overflow-hidden whitespace-nowrap`}>
+                  <input
+                    ref={(el) => { if (el && isCheckoutMode) setTimeout(() => el.focus(), 50); }}
+                    type="number"
+                    value={amountPaid}
+                    onChange={(e) => setAmountPaid(e.target.value)}
+                    placeholder={cartTotal.toFixed(2)}
+                    className="flex-1 min-w-0 bg-transparent border-none focus:outline-none focus:ring-0 font-bold text-base text-gray-900 dark:text-white p-0 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleCheckout("walk-in");
+                        setIsCheckoutMode(false);
+                        setAmountPaid("");
+                      }
+                      if (e.key === 'Escape') {
+                        setIsCheckoutMode(false);
+                        setAmountPaid("");
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* Change Display */}
+                <div className={`flex flex-col justify-center px-2 rounded-xl border min-w-[70px] transition-colors overflow-hidden whitespace-nowrap ${
+                  (parseFloat(amountPaid) || 0) >= cartTotal
+                    ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-700`
+                    : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                }`}>
+                  <span className="text-[8px] text-gray-500 uppercase font-bold text-center">{t.change || "Change"}</span>
+                  <span className={`text-sm font-bold text-center tabular-nums ${
+                    (parseFloat(amountPaid) || 0) >= cartTotal
+                      ? `text-${color}-600 dark:text-${color}-400`
+                      : 'text-gray-400'
+                  }`}>
+                    ${Math.max(0, (parseFloat(amountPaid) || 0) - cartTotal).toFixed(2)}
+                  </span>
+                </div>
+
+                {/* Confirm Button */}
+                <button
+                  onClick={() => {
+                    handleCheckout("walk-in");
+                    setIsCheckoutMode(false);
+                    setAmountPaid("");
+                  }}
+                  className={`w-11 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white flex items-center justify-center transition-colors shrink-0`}
+                >
+                  <span className="material-symbols-rounded">check</span>
+                </button>
+
+                {/* Cancel Button */}
+                <button
+                  onClick={() => {
+                    setIsCheckoutMode(false);
+                    setAmountPaid("");
+                  }}
+                  className="w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0"
+                >
+                  <span className="material-symbols-rounded text-[18px]">close</span>
+                </button>
+              </div>
+            </div>
             )}
           </div>
         </div>
@@ -2396,5 +2479,3 @@ export const POSTest: React.FC<POSProps> = ({
   );
 };
 
-// --- Local Component for Dropdown ---
-// Inlined to avoid extra files, reusing the generic hook efficiently.

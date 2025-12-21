@@ -30,6 +30,7 @@ export interface SortableCartItemProps {
   onSelectBatch: (currentItem: CartItem, newBatch: Drug, packQty: number, unitQty: number) => void;
   isHighlighted?: boolean;
   currentLang: 'en' | 'ar';
+  globalDiscount?: number;
 }
 
 export const SortableCartItem: React.FC<SortableCartItemProps> = ({
@@ -57,6 +58,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
   onSelectBatch,
   isHighlighted,
   currentLang,
+  globalDiscount,
 }) => {
   const {
     attributes,
@@ -248,6 +250,9 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                const effectiveMax = (item.maxDiscount && item.maxDiscount > 0) 
                   ? item.maxDiscount 
                   : calculatedMax;
+
+               // Hide discount control if global discount is active and > 0
+               if (globalDiscount && globalDiscount > 0) return null;
 
                return (
             <div

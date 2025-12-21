@@ -599,6 +599,10 @@ export const POS: React.FC<POSProps> = ({
   const { playBeep, playError, playSuccess, playClick } = usePosSounds();
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
+  // Inline Checkout Calculator State
+  const [isCheckoutMode, setIsCheckoutMode] = useState(false);
+  const [amountPaid, setAmountPaid] = useState("");
+
   // Reset highlight when items change
   useEffect(() => {
     if (mergedCartItems.length > 0 && highlightedIndex === -1) {
@@ -2586,27 +2590,108 @@ export const POS: React.FC<POSProps> = ({
               </div>
             )}
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleCheckout("walk-in")}
-                disabled={!isValidOrder || !hasOpenShift}
-                className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-${color}-200 dark:shadow-none transition-all active:scale-95 flex justify-center items-center gap-2`}
+            {/* Checkout Area Container */}
+            <div className="flex h-[42px] overflow-hidden">
+              
+              {/* Standard Mode - Shrinks to 0 width when checkout active */}
+              <div 
+                className={`flex gap-2 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                  isCheckoutMode ? 'w-0 opacity-0 overflow-hidden' : 'w-full opacity-100'
+                }`}
               >
-                <span className="material-symbols-rounded text-[18px]">
-                  payments
-                </span>
-                {t.completeOrder}
-              </button>
-              <button
-                onClick={() => handleCheckout("delivery")}
-                disabled={!isValidOrder || !hasOpenShift}
-                className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex justify-center items-center`}
-                title={t.deliveryOrder}
+                <button
+                  onClick={() => {
+                    setIsCheckoutMode(true);
+                    setAmountPaid("");
+                  }}
+                  disabled={!isValidOrder || !hasOpenShift}
+                  className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-${color}-200 dark:shadow-none transition-all active:scale-95 flex justify-center items-center gap-2 whitespace-nowrap`}
+                >
+                  <span className="material-symbols-rounded text-[18px]">
+                    payments
+                  </span>
+                  {t.completeOrder}
+                </button>
+                <button
+                  onClick={() => handleCheckout("delivery")}
+                  disabled={!isValidOrder || !hasOpenShift}
+                  className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex justify-center items-center shrink-0`}
+                  title={t.deliveryOrder}
+                >
+                  <span className="material-symbols-rounded text-[20px]">
+                    local_shipping
+                  </span>
+                </button>
+              </div>
+
+              {/* Checkout Mode - Expands from 0 to full width */}
+              <div 
+                 className={`flex gap-2 items-stretch transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                    isCheckoutMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
+                 }`}
               >
-                <span className="material-symbols-rounded text-[20px]">
-                  local_shipping
-                </span>
-              </button>
+                {/* Amount Input */}
+                <div className={`flex-1 bg-white dark:bg-gray-900 border-2 border-${color}-500 rounded-xl flex items-center px-2 gap-1 overflow-hidden whitespace-nowrap`}>
+                  <input
+                    ref={(el) => { if (el && isCheckoutMode) setTimeout(() => el.focus(), 50); }}
+                    type="number"
+                    value={amountPaid}
+                    onChange={(e) => setAmountPaid(e.target.value)}
+                    placeholder={cartTotal.toFixed(2)}
+                    className="flex-1 min-w-0 bg-transparent border-none focus:outline-none focus:ring-0 font-bold text-base text-gray-900 dark:text-white p-0 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleCheckout("walk-in");
+                        setIsCheckoutMode(false);
+                        setAmountPaid("");
+                      }
+                      if (e.key === 'Escape') {
+                        setIsCheckoutMode(false);
+                        setAmountPaid("");
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* Change Display */}
+                <div className={`flex flex-col justify-center px-2 rounded-xl border min-w-[70px] transition-colors overflow-hidden whitespace-nowrap ${
+                  (parseFloat(amountPaid) || 0) >= cartTotal
+                    ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-700`
+                    : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                }`}>
+                  <span className="text-[8px] text-gray-500 uppercase font-bold text-center">{t.change || "Change"}</span>
+                  <span className={`text-sm font-bold text-center tabular-nums ${
+                    (parseFloat(amountPaid) || 0) >= cartTotal
+                      ? `text-${color}-600 dark:text-${color}-400`
+                      : 'text-gray-400'
+                  }`}>
+                    ${Math.max(0, (parseFloat(amountPaid) || 0) - cartTotal).toFixed(2)}
+                  </span>
+                </div>
+
+                {/* Confirm Button */}
+                <button
+                  onClick={() => {
+                    handleCheckout("walk-in");
+                    setIsCheckoutMode(false);
+                    setAmountPaid("");
+                  }}
+                  className={`w-11 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white flex items-center justify-center shadow-lg shadow-${color}-500/30 transition-all active:scale-95 shrink-0`}
+                >
+                  <span className="material-symbols-rounded">check</span>
+                </button>
+
+                {/* Cancel Button */}
+                <button
+                  onClick={() => {
+                    setIsCheckoutMode(false);
+                    setAmountPaid("");
+                  }}
+                  className="w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0"
+                >
+                  <span className="material-symbols-rounded text-[18px]">close</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

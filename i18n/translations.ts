@@ -498,8 +498,10 @@ export const TRANSLATIONS = {
         checkStock: 'Check Stock',
         showSimilar: 'Show Similar',
         discount: 'Apply Discount',
-        changeQty: 'Change Quantity'
+        changeQty: 'Change Quantity',
+        searchInTable: 'Search in Table'
       },
+      change: 'Change',
       allStock: 'All Stock',
       inStock: 'In Stock',
       outOfStock: 'Out of Stock',
@@ -1713,8 +1715,10 @@ export const TRANSLATIONS = {
         checkStock: 'فحص المخزون',
         showSimilar: 'عرض بدائل',
         discount: 'تطبيق خصم',
-        changeQty: 'تغيير الكمية'
+        changeQty: 'تغيير الكمية',
+        searchInTable: 'بحث في الجدول'
       },
+      change: 'الباقي',
       allStock: 'كل المخزون',
       inStock: 'متوفر',
       outOfStock: 'غير متوفر',
