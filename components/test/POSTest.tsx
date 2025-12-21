@@ -197,7 +197,7 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
       {...attributes}
       {...listeners}
       {...listeners}
-      className={`flex flex-col p-2 rounded-xl bg-white dark:bg-gray-900 border transition-all touch-manipulation relative group
+      className={`flex flex-col p-2 rounded-xl bg-white dark:bg-gray-900 border transition-all touch-manipulation relative group outline-none
         ${
           isDragging
             ? "shadow-xl ring-2 ring-blue-500 scale-[1.02] z-50 opacity-90"
@@ -205,7 +205,7 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
         }
         ${
           isHighlighted
-            ? `border-gray-100 dark:border-gray-800 bg-${color}-100 dark:bg-${color}-900/20`
+            ? `border-gray-100 dark:border-gray-800 bg-${color}-50 dark:bg-${color}-900/20`
             : "border-gray-100 dark:border-gray-800"
         }`}
       onContextMenu={(e) => {
@@ -226,6 +226,9 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 relative pl-3">
+        {/* ... (rest of content same) ... */}
+        {/* Delete button logic ... I need to replace it down ... */} 
+
         {/* Name Section */}
         <div className="flex-1 min-w-[120px]">
           <h4
@@ -321,6 +324,7 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
               }`}
             >
               <button
+                tabIndex={-1}
                 onClick={() => {
                   const currentDiscount = item.discount || 0;
                   // Toggle: Apply Max / Clear
@@ -464,12 +468,15 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
 
             {/* Delete button (if both, maybe show one delete for row?) */}
             <button
+              tabIndex={-1}
               onClick={(e) => {
+                e.preventDefault(); // Prevent default focus jump if clicking specifically closes something? 
+                // Actually preventDefault on click might stop focus. But we want button to work.
                 e.stopPropagation();
                 removeDrugFromCart(item.id);
               }}
               onPointerDown={(e) => e.stopPropagation()}
-              className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors"
+              className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors focus:outline-none focus:bg-red-50 dark:focus:bg-red-900/30 focus:text-red-500"
             >
               <span className="material-symbols-rounded text-[16px]">
                 close
@@ -1658,7 +1665,7 @@ export const POSTest: React.FC<POSProps> = ({
     if (highlightedIndex !== -1) {
       const activeCartRow = document.getElementById(`cart-item-${highlightedIndex}`);
       if (activeCartRow) {
-        activeCartRow.scrollIntoView({ behavior: "smooth", block: "center" });
+        activeCartRow.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
     }
   }, [highlightedIndex]);
@@ -1765,11 +1772,18 @@ export const POSTest: React.FC<POSProps> = ({
   // --- Keyboard Shortcuts & Navigation ---
   const isTableFocused = search.trim().length > 0 && tableData.length > 0;
 
-  // Auto-focus Cart when Table is not focused
+  // Auto-focus Cart when Table focus is lost (transition from table to cart)
+  const prevIsTableFocusedRef = useRef(isTableFocused);
   useEffect(() => {
+    // Transition: was table focused, now not focused -> move to cart
+    if (prevIsTableFocusedRef.current && !isTableFocused && mergedCartItems.length > 0) {
+        setHighlightedIndex(0);
+    }
+    // Also handle initial case: table never focused and cart has items
     if (!isTableFocused && mergedCartItems.length > 0 && highlightedIndex === -1) {
         setHighlightedIndex(0);
     }
+    prevIsTableFocusedRef.current = isTableFocused;
   }, [isTableFocused, mergedCartItems.length, highlightedIndex]);
 
   usePosShortcuts({
@@ -1789,6 +1803,18 @@ export const POSTest: React.FC<POSProps> = ({
             setSearch("");
             setActiveIndex(0);
             searchInputRef.current?.focus();
+        }
+    },
+    onTab: () => {
+        // Find the active cart item row and focus its first input
+        if (highlightedIndex !== -1) {
+            const row = document.getElementById(`cart-item-${highlightedIndex}`);
+            if (row) {
+                const firstInput = row.querySelector('input, button');
+                if (firstInput) {
+                    (firstInput as HTMLElement).focus();
+                }
+            }
         }
     },
     onNavigate: (direction) => {
@@ -2705,7 +2731,13 @@ export const POSTest: React.FC<POSProps> = ({
                     // Using Drug ID as the sortable ID logic, assuming unique per drug
                     const itemId = group.id; // Or simple 'group.id' if unique
                     return (
-                      <div key={itemId} id={`cart-item-${index}`} className="w-full">
+                      <div 
+                        key={itemId} 
+                        id={`cart-item-${index}`} 
+                        className="w-full"
+                        onClick={() => setHighlightedIndex(index)}
+                        onMouseDown={() => setHighlightedIndex(index)}
+                      >
                         <SortableCartItem
                           packItem={group.pack}
                           unitItem={group.unit}

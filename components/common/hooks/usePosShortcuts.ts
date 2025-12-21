@@ -8,6 +8,7 @@ interface UsePosShortcutsProps {
     onCheckout: () => void;
     onFocusSearch: () => void;
     onAddFromTable?: () => void; // Add highlighted table row to cart
+    onTab?: () => void; // Handle Tab key
     focusMode?: 'table' | 'cart'; // Which area has focus for arrow keys
     enabled?: boolean;
 }
@@ -20,6 +21,7 @@ export const usePosShortcuts = ({
     onCheckout,
     onFocusSearch,
     onAddFromTable,
+    onTab,
     focusMode = 'cart',
     enabled = true
 }: UsePosShortcutsProps) => {
@@ -27,9 +29,13 @@ export const usePosShortcuts = ({
         if (!enabled) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Ignore if focus is in an input/textarea (except for specific overrides if needed)
-            const activeTag = document.activeElement?.tagName;
-            const isInputActive = activeTag === 'INPUT' || activeTag === 'TEXTAREA';
+            // Check active element to avoid interfering with inputs
+            const activeElement = document.activeElement as HTMLElement;
+            const isInputActive = activeElement && (
+                activeElement.tagName === 'INPUT' ||
+                activeElement.tagName === 'TEXTAREA' ||
+                activeElement.isContentEditable
+            );
 
             // Global Shortcuts (Work even when input is active)
             if (e.key === 'F9') {
@@ -45,7 +51,10 @@ export const usePosShortcuts = ({
             }
 
             // Shortcuts that shouldn't trigger when typing in a field
-            if (isInputActive) return;
+            // EXCEPTION: Allow Arrow navigation to cart even when input is focused
+            const isArrowKey = e.key === 'ArrowUp' || e.key === 'ArrowDown';
+            const allowArrowsForCart = isArrowKey && focusMode === 'cart';
+            if (isInputActive && !allowArrowsForCart) return;
 
             switch (e.key) {
                 case 'ArrowUp':
