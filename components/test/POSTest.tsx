@@ -1060,6 +1060,18 @@ export const POSTest: React.FC<POSProps> = ({
     });
   }, [inventory, search, selectedCategory, stockFilter]);
 
+  // Dynamic suggestions: active ingredients when @ prefix, else drug names
+  const searchSuggestions = useMemo(() => {
+    if (search.trimStart().startsWith('@')) {
+      const ingredients = new Set<string>();
+      inventory.forEach(d => {
+        d.activeIngredients?.forEach(ing => ingredients.add(`@${ing}`));
+      });
+      return Array.from(ingredients);
+    }
+    return inventory.map(d => `${d.name} ${d.dosageForm}`);
+  }, [search, inventory]);
+
   // Group drugs by name and sort batches by expiry
   const groupedDrugs = useMemo(() => {
     const groups: Record<string, Drug[]> = {};
@@ -1676,7 +1688,7 @@ export const POSTest: React.FC<POSProps> = ({
                   setSearch(val);
                   setActiveIndex(0);
                 }}
-                suggestions={inventory.map(d => `${d.name} ${d.dosageForm}`)}
+                suggestions={searchSuggestions}
                 placeholder={t.searchPlaceholder}
                 className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 transition-all text-gray-900 dark:text-gray-100 placeholder-gray-400"
                 style={
