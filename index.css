@@ -2,6 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
+/* PWA Styles - iOS/iPad Safe Areas & Standalone Mode */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    /* Handle notch/home indicator safe areas */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Prevent iOS rubber-band scrolling on the body */
+html,
+body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* PWA Standalone Mode Detection */
+@media (display-mode: standalone) {
+  /* Add any standalone-specific styles here */
+  body {
+    /* Slightly different styling when running as PWA */
+  }
+}
+
+/* Touch optimization for iPad */
+@media (pointer: coarse) {
+  /* Larger touch targets on touch devices */
+  button,
+  .btn,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Prevent text selection on UI elements (PWA feel) */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
@@ -120,59 +164,66 @@ html:not(.dark) .card-shadow {
 /* --- IBM Plex Sans Arabic (Restricted to Arabic Range) --- */
 /* We inline this to force unicode-range, ensuring English NEVER uses this font */
 @font-face {
-  font-family: 'IBM Plex Sans Arabic';
+  font-family: "IBM Plex Sans Arabic";
   font-style: normal;
   font-weight: 100;
   font-display: swap;
-  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3MZRtWPQCuHme67tEYUIx3Kh0PHR9N6YNe3PA.ttf) format('truetype');
+  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3MZRtWPQCuHme67tEYUIx3Kh0PHR9N6YNe3PA.ttf)
+    format("truetype");
   unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
 }
 @font-face {
-  font-family: 'IBM Plex Sans Arabic';
+  font-family: "IBM Plex Sans Arabic";
   font-style: normal;
   font-weight: 200;
   font-display: swap;
-  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPy_dCT.ttf) format('truetype');
+  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPy_dCT.ttf)
+    format("truetype");
   unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
 }
 @font-face {
-  font-family: 'IBM Plex Sans Arabic';
+  font-family: "IBM Plex Sans Arabic";
   font-style: normal;
   font-weight: 300;
   font-display: swap;
-  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YOW_tCT.ttf) format('truetype');
+  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YOW_tCT.ttf)
+    format("truetype");
   unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
 }
 @font-face {
-  font-family: 'IBM Plex Sans Arabic';
+  font-family: "IBM Plex Sans Arabic";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3CZRtWPQCuHme67tEYUIx3Kh0PHR9N6bs6.ttf) format('truetype');
+  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3CZRtWPQCuHme67tEYUIx3Kh0PHR9N6bs6.ttf)
+    format("truetype");
   unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
 }
 @font-face {
-  font-family: 'IBM Plex Sans Arabic';
+  font-family: "IBM Plex Sans Arabic";
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPO_9CT.ttf) format('truetype');
+  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPO_9CT.ttf)
+    format("truetype");
   unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
 }
 @font-face {
-  font-family: 'IBM Plex Sans Arabic';
+  font-family: "IBM Plex Sans Arabic";
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPi-NCT.ttf) format('truetype');
+  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPi-NCT.ttf)
+    format("truetype");
   unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
 }
 @font-face {
-  font-family: 'IBM Plex Sans Arabic';
+  font-family: "IBM Plex Sans Arabic";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YOG-dCT.ttf) format('truetype');
+  src: url(https://fonts.gstatic.com/s/ibmplexsansarabic/v14/Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YOG-dCT.ttf)
+    format("truetype");
   unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
 }
 
@@ -199,7 +250,8 @@ body {
    but falls back to Noto Sans Arabic for the family */
 html[dir="rtl"] body,
 html[lang="ar"] body {
-  font-family: -apple-system, BlinkMacSystemFont, "Google Sans Flex", "IBM Plex Sans Arabic", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Google Sans Flex",
+    "IBM Plex Sans Arabic", sans-serif;
 }
 
 /* Arabic Headings & Active UI - IBM Plex Sans Arabic */
@@ -229,7 +281,8 @@ html[lang="ar"] .h5,
 html[lang="ar"] h6,
 html[lang="ar"] .h6,
 html[lang="ar"] nav {
-  font-family: -apple-system, BlinkMacSystemFont, "Google Sans Flex", "IBM Plex Sans Arabic", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Google Sans Flex",
+    "IBM Plex Sans Arabic", sans-serif;
 }
 
 /* Adjust padding/height for Arabic Navigation to accommodate font weight/size */
@@ -317,5 +370,6 @@ h3,
 html[dir="rtl"] .font-bold,
 html[lang="ar"] .font-bold {
   font-weight: 700 !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Google Sans Flex", "IBM Plex Sans Arabic", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Google Sans Flex",
+    "IBM Plex Sans Arabic", sans-serif;
 }
