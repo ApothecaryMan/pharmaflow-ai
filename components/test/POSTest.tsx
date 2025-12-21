@@ -255,7 +255,10 @@ export const POSTest: React.FC<POSProps> = ({
       }
       // Capture simple alphanumeric for search focus
       if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
         searchInputRef.current?.focus();
+        // Append the character to the search
+        setSearch((prev) => prev + e.key);
       }
     };
     window.addEventListener("keydown", handleGlobalKeyDown);
