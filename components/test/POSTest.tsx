@@ -13,8 +13,7 @@ import { getCategories, getProductTypes, getLocalizedCategory, getLocalizedProdu
 import { getLocationName } from "../../data/locations";
 import { usePOSTabs } from "../../hooks/usePOSTabs";
 
-import { useLongPress } from "../../hooks/useLongPress";
-import { useSmartDirection } from "../common/SmartInputs";
+import { useSmartDirection, SmartAutocomplete } from "../common/SmartInputs";
 import { SearchInput } from "../common/SearchInput";
 import { SegmentedControl } from "../common/SegmentedControl";
 import { TabBar } from "../layout/TabBar";
@@ -52,7 +51,7 @@ import {
 import { TRANSLATIONS } from "../../i18n/translations";
 import { usePosSounds } from "../../components/common/hooks/usePosSounds";
 import { usePosShortcuts } from "../../components/common/hooks/usePosShortcuts";
-import { SortableCartItem } from "../sales/SortableCartItem";
+import { SortableCartItem, calculateItemTotal } from "../sales/SortableCartItem";
 
 // --- Main POS Component ---
 interface POSProps {
@@ -678,85 +677,7 @@ export const POSTest: React.FC<POSProps> = ({
     );
   };
 
-  const getCartItemActions = (item: CartItem) => {
-    const actions: any[] = [
-      {
-        label: t.removeItem,
-        icon: "delete",
-        action: () => removeFromCart(item.id, !!item.isUnit),
-        danger: true,
-      },
-    ];
-
-    const unitsPerPack = item.unitsPerPack || 1;
-    const hasDualMode = unitsPerPack > 1;
-
-    // Resolve full drug state from cart to correctly determine actions for merged row
-    const packItem = cart.find((i) => i.id === item.id && !i.isUnit);
-    const unitItem = cart.find((i) => i.id === item.id && i.isUnit);
-    const packQty = packItem?.quantity || 0;
-    const unitQty = unitItem?.quantity || 0;
-
-    const canSwitchToUnit = hasDualMode && packQty === 1 && unitQty === 0;
-    const canSwitchToPack = hasDualMode && unitQty >= unitsPerPack;
-
-    if (canSwitchToUnit) {
-      actions.push({ separator: true });
-      actions.push({
-        label: t.switchToUnit,
-        icon: "swap_horiz",
-        action: () => toggleUnitMode(item.id, false), // false = currently is Pack
-        danger: false,
-      });
-    }
-
-    if (canSwitchToPack) {
-      actions.push({ separator: true });
-      actions.push({
-        label: t.switchToPack,
-        icon: "swap_horiz",
-        action: () => toggleUnitMode(item.id, true), // true = currently is Unit
-        danger: false,
-      });
-    }
-
-    actions.push({ separator: true });
-    actions.push({
-      label: t.actions.discount,
-      icon: "percent",
-      action: () => {
-        const disc = prompt(
-          "Enter discount percentage (0-100):",
-          item.discount?.toString() || "0"
-        );
-        if (disc !== null) {
-          const val = parseFloat(disc);
-          if (!isNaN(val) && val >= 0 && val <= 100) {
-            const maxDisc = item.maxDiscount ?? 10;
-            if (val > maxDisc) {
-              alert(`Discount cannot exceed ${maxDisc}%`);
-            } else {
-              updateItemDiscount(item.id, !!item.isUnit, val);
-              if (val > 0) setGlobalDiscount(0);
-            }
-          }
-        }
-      },
-      danger: false,
-    });
-    
-    // Search in table option
-    actions.push({
-      label: t.actions?.searchInTable || "Search in Table",
-      icon: "search",
-      action: () => {
-        setSearch(item.name);
-        searchInputRef.current?.focus();
-      },
-      danger: false,
-    });
-    return actions;
-  };
+  // getCartItemActions logic moved to SortableCartItem
 
   // Cart Drag and Drop Sensors
   const cartSensors = useSensors(
@@ -813,35 +734,10 @@ export const POSTest: React.FC<POSProps> = ({
     }
   };
 
-  // Long-press support for cart items (touch devices)
-  const currentTouchCartItem = useRef<CartItem | null>(null);
-  const {
-    onTouchStart: onCartItemTouchStart,
-    onTouchEnd: onCartItemTouchEnd,
-    onTouchMove: onCartItemTouchMove,
-  } = useLongPress({
-    onLongPress: (e) => {
-      if (currentTouchCartItem.current) {
-        const touch = e.touches[0];
-        showMenu(
-          touch.clientX,
-          touch.clientY,
-          getCartItemActions(currentTouchCartItem.current)
-        );
-      }
-    },
-  });
+
 
   // Calculations
-  const calculateItemTotal = (item: CartItem) => {
-    let unitPrice = item.price;
-    if (item.isUnit && item.unitsPerPack) {
-      unitPrice = item.price / item.unitsPerPack;
-    }
-    const baseTotal = unitPrice * item.quantity;
-    const discountAmount = baseTotal * ((item.discount || 0) / 100);
-    return baseTotal - discountAmount;
-  };
+  // calculateItemTotal logic moved to SortableCartItem (imported)
 
   const subtotal = cart.reduce(
     (sum, item) => sum + calculateItemTotal(item),
@@ -1756,24 +1652,16 @@ export const POSTest: React.FC<POSProps> = ({
           {/* Search & Filter - No Card Container */}
           <div className="w-full flex flex-col sm:flex-row gap-1 shrink-0">
             <div className="relative flex-1">
-              <SearchInput
-                ref={searchInputRef}
+              <SmartAutocomplete
+                inputRef={searchInputRef}
                 value={search}
-                onSearchChange={(val) => {
+                onChange={(val) => {
                   setSearch(val);
                   setActiveIndex(0);
                 }}
+                suggestions={inventory.map(d => `${d.name} ${d.dosageForm}`)}
                 placeholder={t.searchPlaceholder}
-                badge={
-                  groupedDrugs.length > 0 && (
-                    <span
-                      className={`inline-flex items-center justify-center h-5 px-2 text-[10px] font-bold rounded-full bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400`}
-                    >
-                      {groupedDrugs.length}
-                    </span>
-                  )
-                }
-                className="border-gray-200 dark:border-gray-800"
+                className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 transition-all text-gray-900 dark:text-gray-100 placeholder-gray-400"
                 style={
                   { "--tw-ring-color": `var(--color-${color}-500)` } as any
                 }
@@ -2133,17 +2021,11 @@ export const POSTest: React.FC<POSProps> = ({
                           color={color}
                           t={t}
                           showMenu={showMenu}
-                          getCartItemActions={getCartItemActions}
-                          currentTouchCartItem={currentTouchCartItem}
-                          onCartItemTouchStart={onCartItemTouchStart}
-                          onCartItemTouchEnd={onCartItemTouchEnd}
-                          onCartItemTouchMove={onCartItemTouchMove}
                           removeFromCart={removeFromCart}
                           toggleUnitMode={toggleUnitMode}
                           updateItemDiscount={updateItemDiscount}
                           setGlobalDiscount={setGlobalDiscount}
                           updateQuantity={updateQuantity}
-                          calculateItemTotal={calculateItemTotal}
                           addToCart={addToCart}
                           removeDrugFromCart={removeDrugFromCart}
                           allBatches={inventory
@@ -2161,6 +2043,10 @@ export const POSTest: React.FC<POSProps> = ({
                           isHighlighted={index === highlightedIndex}
                           currentLang={currentLang as 'en' | 'ar'}
                           globalDiscount={globalDiscount}
+                          onSearchInTable={(term) => {
+                             setSearch(term);
+                             searchInputRef.current?.focus();
+                          }}
                         />
                       </div>
                     );

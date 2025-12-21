@@ -4,6 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Drug, CartItem } from "../../types";
 import { TRANSLATIONS } from "../../i18n/translations";
 import { getLocalizedProductType } from "../../data/productCategories";
+import { useLongPress } from "../../hooks/useLongPress";
 
 export interface SortableCartItemProps {
   packItem?: CartItem;
@@ -13,17 +14,11 @@ export interface SortableCartItemProps {
   color: string;
   t: typeof TRANSLATIONS.EN.pos;
   showMenu: (x: number, y: number, items: any[]) => void;
-  getCartItemActions: (item: CartItem) => any[];
-  currentTouchCartItem: React.MutableRefObject<CartItem | null>;
-  onCartItemTouchStart: (e: React.TouchEvent) => void;
-  onCartItemTouchEnd: () => void;
-  onCartItemTouchMove: (e: React.TouchEvent) => void;
   removeFromCart: (id: string, isUnit: boolean) => void;
   toggleUnitMode: (id: string, currentIsUnit: boolean) => void;
   updateItemDiscount: (id: string, isUnit: boolean, discount: number) => void;
   setGlobalDiscount: (discount: number) => void;
   updateQuantity: (id: string, isUnit: boolean, delta: number) => void;
-  calculateItemTotal: (item: CartItem) => number;
   addToCart: (drug: Drug, isUnitMode?: boolean, quantity?: number) => void;
   removeDrugFromCart: (id: string) => void;
   allBatches: Drug[];
@@ -31,7 +26,18 @@ export interface SortableCartItemProps {
   isHighlighted?: boolean;
   currentLang: 'en' | 'ar';
   globalDiscount?: number;
+  onSearchInTable: (term: string) => void;
 }
+
+export const calculateItemTotal = (item: CartItem) => {
+  let unitPrice = item.price;
+  if (item.isUnit && item.unitsPerPack) {
+    unitPrice = item.price / item.unitsPerPack;
+  }
+  const baseTotal = unitPrice * item.quantity;
+  const discountAmount = baseTotal * ((item.discount || 0) / 100);
+  return baseTotal - discountAmount;
+};
 
 export const SortableCartItem: React.FC<SortableCartItemProps> = ({
   packItem,
@@ -41,17 +47,11 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
   color,
   t,
   showMenu,
-  getCartItemActions,
-  currentTouchCartItem,
-  onCartItemTouchStart,
-  onCartItemTouchEnd,
-  onCartItemTouchMove,
   removeFromCart,
   toggleUnitMode,
   updateItemDiscount,
   setGlobalDiscount,
   updateQuantity,
-  calculateItemTotal,
   addToCart,
   removeDrugFromCart,
   allBatches,
@@ -59,6 +59,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
   isHighlighted,
   currentLang,
   globalDiscount,
+  onSearchInTable,
 }) => {
   const {
     attributes,
@@ -84,6 +85,97 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
   const item = { ...staleItem, ...freshBatch }; // Merge to ensure we have latest props
 
   const hasDualMode = item.unitsPerPack && item.unitsPerPack > 1;
+
+  const getCartItemActions = (item: CartItem) => {
+    const actions: any[] = [
+      {
+        label: t.removeItem,
+        icon: "delete",
+        action: () => removeFromCart(item.id, !!item.isUnit),
+        danger: true,
+      },
+    ];
+
+    const unitsPerPack = item.unitsPerPack || 1;
+    const hasDualMode = unitsPerPack > 1;
+
+    // Resolve full drug state from props to correctly determine actions for merged row
+    const packQty = packItem?.quantity || 0;
+    const unitQty = unitItem?.quantity || 0;
+
+    const canSwitchToUnit = hasDualMode && packQty === 1 && unitQty === 0;
+    const canSwitchToPack = hasDualMode && unitQty >= unitsPerPack;
+
+    // When switching, we need to know the CURRENT state of THIS item being clicked
+    // The item passed to this function is the one that triggered the menu/action.
+    
+    if (canSwitchToUnit) {
+      actions.push({ separator: true });
+      actions.push({
+        label: t.switchToUnit,
+        icon: "swap_horiz",
+        action: () => toggleUnitMode(item.id, false), // false = currently is Pack
+        danger: false,
+      });
+    }
+
+    if (canSwitchToPack) {
+      actions.push({ separator: true });
+      actions.push({
+        label: t.switchToPack,
+        icon: "swap_horiz",
+        action: () => toggleUnitMode(item.id, true), // true = currently is Unit
+        danger: false,
+      });
+    }
+
+    actions.push({ separator: true });
+    actions.push({
+      label: t.actions.discount,
+      icon: "percent",
+      action: () => {
+        const disc = prompt(
+          "Enter discount percentage (0-100):",
+          item.discount?.toString() || "0"
+        );
+        if (disc !== null) {
+          const val = parseFloat(disc);
+          if (!isNaN(val) && val >= 0 && val <= 100) {
+            const maxDisc = item.maxDiscount ?? 10;
+            if (val > maxDisc) {
+              alert(`Discount cannot exceed ${maxDisc}%`);
+            } else {
+              updateItemDiscount(item.id, !!item.isUnit, val);
+              if (val > 0) setGlobalDiscount(0);
+            }
+          }
+        }
+      },
+      danger: false,
+    });
+    
+    // Search in table option
+    actions.push({
+      label: t.actions?.searchInTable || "Search in Table",
+      icon: "search",
+      action: () => {
+        onSearchInTable(item.name);
+      },
+      danger: false,
+    });
+    return actions;
+  };
+
+  const {
+    onTouchStart: onLongPressTouchStart,
+    onTouchEnd: onLongPressTouchEnd,
+    onTouchMove: onLongPressTouchMove,
+  } = useLongPress({
+    onLongPress: (e) => {
+      const touch = e.touches[0];
+      showMenu(touch.clientX, touch.clientY, getCartItemActions(item));
+    },
+  });
 
   // Helpers to handle updates (create if missing)
   const handleQtyChange = (isUnit: boolean, delta: number) => {
@@ -158,12 +250,9 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
         e.stopPropagation();
         showMenu(e.clientX, e.clientY, getCartItemActions(item)); // Actions for general
       }}
-      onTouchStart={(e) => {
-        currentTouchCartItem.current = item;
-        onCartItemTouchStart(e);
-      }}
-      onTouchEnd={onCartItemTouchEnd}
-      onTouchMove={onCartItemTouchMove}
+      onTouchStart={onLongPressTouchStart}
+      onTouchEnd={onLongPressTouchEnd}
+      onTouchMove={onLongPressTouchMove}
     >
       {/* Drag Handle */}
       <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-full flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">

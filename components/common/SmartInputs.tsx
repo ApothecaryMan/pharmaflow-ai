@@ -8,11 +8,13 @@ import React, { InputHTMLAttributes, useState, useEffect, useRef, useMemo } from
  * 1. Automatic LTR/RTL text direction switching (Critical for Arabic support).
  * 2. Standardized validation and input masking for Phones and Emails.
  * 3. Consistent styling and behavior across the application.
+ * 4. Smart autocomplete with ghost text suggestions.
  *
  * @guidelines
  * - **ALWAYS** use `SmartInput` for generic text fields (Name, Address, Notes).
  * - **ALWAYS** use `SmartPhoneInput` for telephone numbers.
  * - **ALWAYS** use `SmartEmailInput` for email addresses.
+ * - **ALWAYS** use `SmartAutocomplete` for search fields with suggestions.
  * - **ALWAYS** use helper functions (`isValidEmail`, `cleanPhone`) instead of writing custom Regex.
  * - **NEVER** use standard HTML `<input>` directly for form fields unless absolutely necessary.
  */
@@ -115,6 +117,7 @@ interface SmartInputProps extends InputHTMLAttributes<HTMLInputElement> {
  * - Emails (Use `SmartEmailInput`)
  * - Phone Numbers (Use `SmartPhoneInput`)
  * - Numeric Codes/Barcodes (Use standard `<input dir="ltr" />`)
+ * - Search with autocomplete (Use `SmartAutocomplete`)
  */
 export const SmartInput: React.FC<SmartInputProps> = ({ value, className, placeholder, ...props }) => {
   // We cast value to string to keep useSmartDirection happy, 
@@ -336,5 +339,166 @@ export const SmartEmailInput: React.FC<SmartSpecializedInputProps> = ({ value, o
       onChange={handleChange}
       className={className}
     />
+  );
+};
+
+// --- Smart Autocomplete ---
+
+export interface SmartAutocompleteProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+  value: string;
+  onChange: (value: string) => void;
+  suggestions: string[];
+  placeholder?: string;
+  disabled?: boolean;
+  className?: string;
+  ghostTextClassName?: string;
+  debounceMs?: number;
+  caseSensitive?: boolean;
+  onSuggestionAccept?: (suggestion: string) => void;
+  inputRef?: React.RefObject<HTMLInputElement>;
+}
+
+/**
+ * **SmartAutocomplete Component**
+ * 
+ * An intelligent autocomplete input with ghost text suggestions.
+ * - Shows inline suggestion as semi-transparent text overlay
+ * - Automatically detects RTL/LTR direction
+ * - Keyboard shortcuts: Tab/→ to accept, Escape to reject
+ * - Debounced suggestion calculation
+ * 
+ * @usage
+ * Use for search fields where you want to provide inline suggestions.
+ * 
+ * @example
+ * <SmartAutocomplete
+ *   value={search}
+ *   onChange={setSearch}
+ *   suggestions={drugNames}
+ *   placeholder="Search..."
+ * />
+ */
+export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
+  value,
+  onChange,
+  suggestions,
+  placeholder = '',
+  disabled = false,
+  className = '',
+  ghostTextClassName = '',
+  debounceMs = 100,
+  caseSensitive = false,
+  onSuggestionAccept,
+  inputRef: externalRef,
+  ...restProps
+}) => {
+  const [currentSuggestion, setCurrentSuggestion] = useState<string>('');
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  const internalRef = useRef<HTMLInputElement>(null);
+  const inputRef = externalRef || internalRef;
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Auto-detect text direction
+  const dir = useSmartDirection(value, placeholder);
+
+  // Debounce the input value
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, debounceMs);
+
+    return () => clearTimeout(timer);
+  }, [value, debounceMs]);
+
+  // Calculate suggestion based on current input
+  const suggestion = useMemo(() => {
+    if (!debouncedValue || disabled) return '';
+
+    const searchValue = caseSensitive ? debouncedValue : debouncedValue.toLowerCase();
+    
+    const match = suggestions.find(s => {
+      const suggestionValue = caseSensitive ? s : s.toLowerCase();
+      return suggestionValue.startsWith(searchValue) && suggestionValue !== searchValue;
+    });
+
+    return match || '';
+  }, [debouncedValue, suggestions, caseSensitive, disabled]);
+
+  // Update current suggestion
+  useEffect(() => {
+    setCurrentSuggestion(suggestion);
+  }, [suggestion]);
+
+  // Handle keyboard shortcuts
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (currentSuggestion) {
+      // Accept suggestion with Tab or Right Arrow
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        onChange(currentSuggestion);
+        setCurrentSuggestion('');
+        onSuggestionAccept?.(currentSuggestion);
+      }
+      // Reject suggestion with Escape
+      else if (e.key === 'Escape') {
+        e.preventDefault();
+        setCurrentSuggestion('');
+      }
+    }
+
+    // Call original onKeyDown if provided
+    restProps.onKeyDown?.(e);
+  };
+
+  // Calculate ghost text (the remaining part of the suggestion)
+  const ghostText = useMemo(() => {
+    if (!currentSuggestion || !value) return '';
+    
+    const valueToCompare = caseSensitive ? value : value.toLowerCase();
+    const suggestionToCompare = caseSensitive ? currentSuggestion : currentSuggestion.toLowerCase();
+    
+    if (suggestionToCompare.startsWith(valueToCompare)) {
+      return currentSuggestion.slice(value.length);
+    }
+    
+    return '';
+  }, [currentSuggestion, value, caseSensitive]);
+
+  return (
+    <div ref={containerRef} className="relative inline-block w-full">
+      {/* Actual Input with Smart Direction */}
+      <input
+        {...restProps}
+        ref={inputRef}
+        type="text"
+        autoComplete="off"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        disabled={disabled}
+        dir={dir}
+        className={className}
+      />
+      
+      {/* Ghost Text Overlay */}
+      {ghostText && (
+        <div
+          className={`absolute inset-0 pointer-events-none flex items-center ${ghostTextClassName}`}
+          style={{
+            paddingLeft: inputRef.current?.style.paddingLeft || '0.75rem',
+            paddingRight: inputRef.current?.style.paddingRight || '0.75rem',
+            direction: dir, // Match input direction
+          }}
+        >
+          {/* Invisible spacer matching the actual input value */}
+          <span className="invisible">{value}</span>
+          {/* Visible ghost text */}
+          <span className="text-gray-400 dark:text-gray-600">
+            {ghostText}
+          </span>
+        </div>
+      )}
+    </div>
   );
 };
