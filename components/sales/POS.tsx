@@ -9,10 +9,10 @@ import { useContextMenu } from "../common/ContextMenu";
 import { Drug, CartItem, Customer, Language, Shift } from "../../types";
 
 import { useExpandingDropdown } from "../../hooks/useExpandingDropdown";
+import { getCategories, getProductTypes, getLocalizedCategory, getLocalizedProductType } from "../../data/productCategories";
 import { getLocationName } from "../../data/locations";
 import { usePOSTabs } from "../../hooks/usePOSTabs";
 
-import { useLongPress } from "../../hooks/useLongPress";
 import { useSmartDirection, SmartAutocomplete } from "../common/SmartInputs";
 import { SearchInput } from "../common/SearchInput";
 import { SegmentedControl } from "../common/SegmentedControl";
@@ -21,20 +21,15 @@ import { createSearchRegex, parseSearchTerm } from "../../utils/searchUtils";
 import {
   generateInvoiceHTML,
   InvoiceTemplateOptions,
-} from "./InvoiceTemplate";
+} from "../sales/InvoiceTemplate";
 import { Sale } from "../../types"; // Ensure Sale is imported
 import { ExpandingDropdown, ExpandingDropdownProps } from "../common/ExpandingDropdown";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
   createColumnHelper,
-  flexRender,
   ColumnDef,
 } from "@tanstack/react-table";
-import { TanStackTable } from "../common/TanStackTable"; // IMPORTED
-import { CARD_MD, CARD_LG } from "../../utils/themeStyles";
+import { TanStackTable } from "../common/TanStackTable";
+import { CARD_MD } from "../../utils/themeStyles";
 import { Modal } from "../common/Modal";
 import {
   DndContext,
@@ -51,379 +46,12 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  useSortable,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 
 import { TRANSLATIONS } from "../../i18n/translations";
 import { usePosSounds } from "../../components/common/hooks/usePosSounds";
 import { usePosShortcuts } from "../../components/common/hooks/usePosShortcuts";
-
-// --- SortableCartItem Component ---
-interface SortableCartItemProps {
-  packItem?: CartItem;
-  unitItem?: CartItem;
-  commonItem: CartItem;
-  itemId: string;
-  color: string;
-  t: typeof TRANSLATIONS.EN.pos;
-  showMenu: (x: number, y: number, items: any[]) => void;
-  getCartItemActions: (item: CartItem) => any[];
-  currentTouchCartItem: React.MutableRefObject<CartItem | null>;
-  onCartItemTouchStart: (e: React.TouchEvent) => void;
-  onCartItemTouchEnd: () => void;
-  onCartItemTouchMove: (e: React.TouchEvent) => void;
-  removeFromCart: (id: string, isUnit: boolean) => void;
-  toggleUnitMode: (id: string, currentIsUnit: boolean) => void;
-  updateItemDiscount: (id: string, isUnit: boolean, discount: number) => void;
-  setGlobalDiscount: (discount: number) => void;
-  updateQuantity: (id: string, isUnit: boolean, delta: number) => void;
-  calculateItemTotal: (item: CartItem) => number;
-  addToCart: (drug: Drug, isUnitMode?: boolean, quantity?: number) => void;
-  removeDrugFromCart: (id: string) => void;
-  isHighlighted?: boolean;
-}
-
-const SortableCartItem: React.FC<SortableCartItemProps> = ({
-  packItem,
-  unitItem,
-  commonItem,
-  itemId,
-  color,
-  t,
-  showMenu,
-  getCartItemActions,
-  currentTouchCartItem,
-  onCartItemTouchStart,
-  onCartItemTouchEnd,
-  onCartItemTouchMove,
-  removeFromCart,
-  toggleUnitMode,
-  updateItemDiscount,
-  setGlobalDiscount,
-  updateQuantity,
-  calculateItemTotal,
-  addToCart,
-  removeDrugFromCart,
-  isHighlighted,
-}) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: itemId });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.6 : 1,
-    zIndex: isDragging ? 50 : "auto",
-  };
-
-  const item = commonItem; // Use common item for shared props like name, expiry, etc.
-  const hasDualMode = item.unitsPerPack && item.unitsPerPack > 1;
-
-  // Helpers to handle updates (create if missing)
-  const handleQtyChange = (isUnit: boolean, delta: number) => {
-    const targetItem = isUnit ? unitItem : packItem;
-    if (targetItem) {
-      updateQuantity(targetItem.id, !!targetItem.isUnit, delta);
-    } else {
-      // Create new entry
-      if (delta > 0) addToCart(item, isUnit); // Add 1
-    }
-  };
-
-  const handleManualQty = (isUnit: boolean, val: number) => {
-    const targetItem = isUnit ? unitItem : packItem;
-    if (targetItem) {
-      updateQuantity(
-        targetItem.id,
-        !!targetItem.isUnit,
-        val - targetItem.quantity
-      );
-    } else {
-      // Create new
-      if (val > 0) {
-        // We can use addToCart but we need specific quantity.
-        // addToCart adds +1. We need to refactor logic or just loop add?
-        // Or better: updateQuantity checks if item exists? No.
-        // Let's rely on addToCart adds 1, then we update remainder?
-        // Or expose a setItems logic.
-        // For simplicity: addToCart adds 1, and we assume user types small numbers or we trigger update after?
-        // Actually, simplest is to assume if user types, they want that exact amount.
-        // Use updateQuantity logic but allow it to create?
-        // updateQuantity in POSTest only updates EXISTING.
-        // We need to support 'upsert'.
-        // For now, let's just trigger addToCart loop or just creating invalid state?
-        // Let's modify updateQuantity in parent or just use addToCart for +1 only?
-        // User wants INPUT.
-        // FIX: We need an `upsertCartItem` function. Use `addToCart` loop for now if simple, or just add logic later.
-        // Hack: Call addToCart (creates item with qty 1), then updateQuantity (sets rest).
-        addToCart(item, isUnit);
-        // Wait for state update? No, that won't work in same tick easily without complex logic.
-        // BETTER: Render input as 0 if missing. If changed > 0, call addToCart once.
-        // Then user can adjust.
-        // OR: Just assume user adds via + button first?
-        // User requested INPUT.
-        // We will implement `setCartItemQty` later. For now, rely on existing.
-        // If item missing, we can't update.
-        // Let's auto-create if missing.
-        if (val > 0) addToCart(item, isUnit); // This adds 1.
-      }
-    }
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      {...listeners}
-      className={`flex flex-col p-2 rounded-xl bg-white dark:bg-gray-900 border transition-all touch-manipulation relative group
-        ${
-          isDragging
-            ? "shadow-xl ring-2 ring-blue-500 scale-[1.02] z-50 opacity-90"
-            : ""
-        }
-        ${
-          isHighlighted
-            ? `border-${color}-500 ring-1 ring-${color}-500 bg-${color}-50/10`
-            : "border-gray-100 dark:border-gray-800"
-        }`}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        showMenu(e.clientX, e.clientY, getCartItemActions(item)); // Actions for general
-      }}
-      onTouchStart={(e) => {
-        currentTouchCartItem.current = item;
-        onCartItemTouchStart(e);
-      }}
-      onTouchEnd={onCartItemTouchEnd}
-      onTouchMove={onCartItemTouchMove}
-    >
-      {/* Drag Handle */}
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-full flex items-center justify-center cursor-grab active:cursor-grabbing text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">
-        <span className="material-symbols-rounded text-[16px]">
-          drag_indicator
-        </span>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 relative pl-3">
-        {/* Name Section */}
-        <div className="flex-1 min-w-[120px]">
-          <h4
-            className="font-bold text-xs text-gray-900 dark:text-gray-100 leading-tight line-clamp-2 drug-name"
-            title={item.name}
-          >
-            {item.name}{" "}
-            {item.dosageForm ? (
-              <span className="font-normal text-gray-500">
-                ({item.dosageForm})
-              </span>
-            ) : (
-              ""
-            )}
-          </h4>
-        </div>
-
-        {/* Unified 'Rest' Section: Date, Controls, Price */}
-        <div className="flex items-center gap-2 shrink-0 ml-auto">
-          {/* Expiry Date Date Badge (Restored) */}
-          <div className="flex items-center gap-1">
-            <span
-              className={`text-[9px] font-bold text-white px-1.5 py-0.5 rounded whitespace-nowrap shadow-sm ${(() => {
-                const today = new Date();
-                const expiry = new Date(item.expiryDate);
-                const monthDiff =
-                  (expiry.getFullYear() - today.getFullYear()) * 12 +
-                  (expiry.getMonth() - today.getMonth());
-                if (monthDiff <= 0) return "bg-red-500";
-                if (monthDiff <= 3) return "bg-orange-500";
-                return "bg-gray-500 dark:bg-gray-600";
-              })()}`}
-            >
-              {new Date(item.expiryDate).toLocaleDateString("en-US", {
-                month: "2-digit",
-                year: "2-digit",
-              })}
-            </span>
-          </div>
-
-          {/* Controls */}
-          <div className="flex items-center gap-1">
-            {/* Discount Input (Unified for group? Or per item? UI suggests per row. Let's use PACK discount or Unit? Sync them?) 
-                 For simplicity, apply to whichever exists or both? 
-                 Let's keep one discount input for the row. Apply to both?
-                 Or just show discount for 'primary' (Pack if exists).
-             */}
-            <div
-              className={`flex items-center rounded-lg border shadow-sm h-6 overflow-hidden transition-colors w-14 shrink-0 ${
-                (item.discount || 0) > 0
-                  ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
-                  : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-              }`}
-            >
-              <button
-                onClick={() => {
-                  const currentDiscount = item.discount || 0;
-                  const newVal =
-                    currentDiscount > 0 ? 0 : item.maxDiscount ?? 10;
-                  if (packItem) updateItemDiscount(packItem.id, false, newVal);
-                  if (unitItem) updateItemDiscount(unitItem.id, true, newVal);
-                  if (newVal > 0) setGlobalDiscount(0);
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-                className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
-                  (item.discount || 0) > 0
-                    ? "text-green-600 dark:text-green-400"
-                    : "text-gray-400"
-                }`}
-              >
-                <span className="material-symbols-rounded text-[12px]">
-                  percent
-                </span>
-              </button>
-              <input
-                type="number"
-                value={item.discount || ""}
-                placeholder="0"
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  const valid = !isNaN(val) && val >= 0 && val <= 100;
-                  const finalVal = valid ? val : 0;
-                  if (item.maxDiscount && finalVal > item.maxDiscount) return; // Strict clamp?
-
-                  if (packItem)
-                    updateItemDiscount(packItem.id, false, finalVal);
-                  if (unitItem) updateItemDiscount(unitItem.id, true, finalVal);
-                  if (finalVal > 0) setGlobalDiscount(0);
-                }}
-                className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                  (item.discount || 0) > 0
-                    ? "text-green-700 dark:text-green-300 placeholder-green-300"
-                    : "text-gray-900 dark:text-gray-100 placeholder-gray-400"
-                }`}
-              />
-            </div>
-
-            {/* Dual Qty Control: [ Pack | Unit ] - Fixed width matching discount */}
-            <div
-              className={`flex items-center bg-white dark:bg-gray-900 rounded-lg border shadow-sm h-6 overflow-hidden w-14 shrink-0 transition-colors ${
-                hasDualMode &&
-                (!packItem || packItem.quantity === 0) &&
-                (!unitItem || unitItem.quantity === 0)
-                  ? "border-yellow-400 dark:border-yellow-500 ring-1 ring-yellow-400/20"
-                  : "border-gray-200 dark:border-gray-700"
-              }`}
-            >
-              {/* Pack Input */}
-              <input
-                type="number"
-                min={hasDualMode ? "0" : "1"}
-                placeholder={hasDualMode ? "P" : "1"}
-                value={packItem?.quantity === 0 ? "" : packItem?.quantity || ""}
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                onChange={(e) => {
-                  const val =
-                    e.target.value === ""
-                      ? hasDualMode
-                        ? 0
-                        : 1
-                      : parseInt(e.target.value);
-                  if (isNaN(val)) return;
-                  const minVal = hasDualMode ? 0 : 1;
-                  const clampedVal = Math.max(minVal, val);
-                  if (packItem) {
-                    updateQuantity(
-                      packItem.id,
-                      false,
-                      clampedVal - packItem.quantity
-                    );
-                  } else if (clampedVal > 0) {
-                    addToCart(item, false, clampedVal);
-                  }
-                }}
-                className={`h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 shrink-0 min-w-0 ${
-                  hasDualMode ? "w-7" : "w-full"
-                }`}
-              />
-
-              {/* Separator */}
-              {hasDualMode && (
-                <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0"></div>
-              )}
-
-              {/* Unit Input */}
-              {hasDualMode && (
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="U"
-                  value={
-                    unitItem?.quantity === 0 ? "" : unitItem?.quantity || ""
-                  }
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                  onChange={(e) => {
-                    const val =
-                      e.target.value === "" ? 0 : parseInt(e.target.value);
-                    if (isNaN(val)) return;
-                    const clampedVal = Math.max(0, val);
-                    if (unitItem) {
-                      updateQuantity(
-                        unitItem.id,
-                        true,
-                        clampedVal - unitItem.quantity
-                      );
-                    } else if (clampedVal > 0) {
-                      addToCart(item, true, clampedVal);
-                    }
-                  }}
-                  className="w-7 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-blue-600 dark:text-blue-400 placeholder-blue-200 shrink-0"
-                />
-              )}
-            </div>
-
-            {/* Total Price (Sum of both) */}
-            <div className="text-sm font-bold text-gray-900 dark:text-white w-16 shrink-0 text-end tabular-nums">
-              $
-              {(
-                (packItem ? calculateItemTotal(packItem) : 0) +
-                (unitItem ? calculateItemTotal(unitItem) : 0)
-              ).toFixed(2)}
-            </div>
-
-            {/* Delete button (if both, maybe show one delete for row?) */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                removeDrugFromCart(item.id);
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors"
-            >
-              <span className="material-symbols-rounded text-[16px]">
-                close
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+import { SortableCartItem, calculateItemTotal } from "../sales/SortableCartItem";
 
 // --- Main POS Component ---
 interface POSProps {
@@ -459,6 +87,8 @@ export const POS: React.FC<POSProps> = ({
   darkMode,
 }) => {
   const { showMenu } = useContextMenu();
+  const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
+  const currentLang = isRTL ? 'ar' : 'en';
 
   // Multi-tab system
   const {
@@ -578,9 +208,7 @@ export const POS: React.FC<POSProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [mobileTab, setMobileTab] = useState<"products" | "cart">("products");
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
-    {}
-  );
+
   const [selectedUnits, setSelectedUnits] = useState<
     Record<string, "pack" | "unit">
   >({});
@@ -594,14 +222,14 @@ export const POS: React.FC<POSProps> = ({
   const [activeIndex, setActiveIndex] = useState(0); // For grid navigation
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // checkout state for inline calculator
+  const [isCheckoutMode, setIsCheckoutMode] = useState(false);
+  const [amountPaid, setAmountPaid] = useState("");
+
   // Global Keydown Listener for Scanner
   // Keyboard Shortcuts & Sounds
   const { playBeep, playError, playSuccess, playClick } = usePosSounds();
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
-
-  // Inline Checkout Calculator State
-  const [isCheckoutMode, setIsCheckoutMode] = useState(false);
-  const [amountPaid, setAmountPaid] = useState("");
 
   // Reset highlight when items change
   useEffect(() => {
@@ -614,55 +242,7 @@ export const POS: React.FC<POSProps> = ({
     }
   }, [mergedCartItems.length]);
 
-  usePosShortcuts({
-    enabled: true,
-    onNavigate: (direction) => {
-      if (mergedCartItems.length === 0) return;
-      setHighlightedIndex((prev) => {
-        const next = direction === "up" ? prev - 1 : prev + 1;
-        const clamped = Math.max(0, Math.min(next, mergedCartItems.length - 1));
-        // Only play click if index actually changed
-        if (clamped !== prev) {
-          playClick();
-          // Ensure element is scrolled into view (optional enhancement)
-        }
-        return clamped;
-      });
-    },
-    onQuantityChange: (delta) => {
-      if (highlightedIndex === -1 || !mergedCartItems[highlightedIndex]) {
-        playError();
-        return;
-      }
-      const item = mergedCartItems[highlightedIndex];
-      const targetId = item.common.id;
-      // Logic: if has Pack (even 0), modify Pack. Else Unit.
-      // mergedCartItems contains { pack, unit, common }
-      // cart is the flat list. updateQuantity updates by ID + isUnit.
-      const useUnit = !item.pack;
 
-      playBeep();
-      updateQuantity(targetId, useUnit, delta);
-    },
-    onDelete: () => {
-      if (highlightedIndex === -1 || !mergedCartItems[highlightedIndex]) return;
-      const item = mergedCartItems[highlightedIndex];
-      if (item.pack) removeFromCart(item.pack.id, false);
-      if (item.unit) removeFromCart(item.unit.id, true);
-      playClick(); // Delete sound
-    },
-    onCheckout: () => {
-      if (cart.length > 0) {
-        playSuccess();
-        handleCheckout("walk-in");
-      } else {
-        playError();
-      }
-    },
-    onFocusSearch: () => {
-      searchInputRef.current?.focus();
-    },
-  });
 
   // Global Keydown (Simple Alphanumeric for Scanner / Search Focus)
   useEffect(() => {
@@ -675,7 +255,10 @@ export const POS: React.FC<POSProps> = ({
       }
       // Capture simple alphanumeric for search focus
       if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
         searchInputRef.current?.focus();
+        // Append the character to the search
+        setSearch((prev) => prev + e.key);
       }
     };
     window.addEventListener("keydown", handleGlobalKeyDown);
@@ -771,7 +354,7 @@ export const POS: React.FC<POSProps> = ({
         newWidth = rect.right - clientX;
       }
 
-      if (newWidth > 280 && newWidth < 800) {
+      if (newWidth > 500 && newWidth < 700) {
         setSidebarWidth(newWidth);
       }
     }
@@ -805,177 +388,6 @@ export const POS: React.FC<POSProps> = ({
     if (cosmetics.includes(category)) return "Cosmetics";
     if (general.includes(category)) return "General";
     return "Medicine";
-  };
-
-  // --- Nested/Future Functions for Item Actions ---
-  const handleViewProductDetails = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Prevent adding to cart
-    const drug = inventory.find((d) => d.id === id);
-    if (drug) {
-      setViewingDrug(drug);
-    }
-  };
-
-  const toggleBatchList = (e: React.MouseEvent, drugName: string) => {
-    e.stopPropagation();
-    setExpandedGroups((prev) => ({ ...prev, [drugName]: !prev[drugName] }));
-  };
-
-  // Helper to determine icon based on drug keywords
-  const getDrugIcon = (drug: Drug): string => {
-    const text = (
-      drug.name +
-      " " +
-      drug.description +
-      " " +
-      drug.genericName +
-      " " +
-      drug.category
-    ).toLowerCase();
-
-    // Equipment & Devices
-    if (
-      text.includes("monitor") ||
-      text.includes("meter") ||
-      text.includes("pressure") ||
-      text.includes("glucose")
-    )
-      return "vital_signs";
-    if (text.includes("thermometer") || text.includes("temperature"))
-      return "thermometer";
-    if (text.includes("device") || text.includes("machine")) return "router";
-
-    // Baby Care
-    if (
-      text.includes("diaper") ||
-      text.includes("baby") ||
-      text.includes("infant") ||
-      text.includes("formula") ||
-      text.includes("powder")
-    )
-      return "child_care";
-
-    // Cosmetics & Personal Care
-    if (
-      text.includes("shampoo") ||
-      text.includes("wash") ||
-      text.includes("cleanser")
-    )
-      return "soap";
-    if (
-      text.includes("cream") ||
-      text.includes("gel") ||
-      text.includes("ointment") ||
-      text.includes("lotion") ||
-      text.includes("topical") ||
-      text.includes("balm") ||
-      text.includes("sunblock") ||
-      text.includes("sunscreen")
-    )
-      return "sanitizer";
-
-    // Medical Supplies
-    if (
-      text.includes("bandage") ||
-      text.includes("gauze") ||
-      text.includes("cotton") ||
-      text.includes("plaster")
-    )
-      return "healing";
-    if (
-      text.includes("syringe") ||
-      text.includes("needle") ||
-      text.includes("injection") ||
-      text.includes("vial") ||
-      text.includes("ampoule")
-    )
-      return "vaccines";
-    if (text.includes("mask") || text.includes("glove")) return "masks";
-
-    // Respiratory
-    if (text.includes("inhaler") || text.includes("spray")) return "air";
-
-    // Oral Forms
-    if (
-      text.includes("syrup") ||
-      text.includes("suspension") ||
-      text.includes("liquid") ||
-      text.includes("solution") ||
-      text.includes("drop")
-    )
-      return "water_drop";
-    if (
-      text.includes("tablet") ||
-      text.includes("capsule") ||
-      text.includes("pill")
-    )
-      return "pill";
-
-    if (text.includes("suppository")) return "medication";
-
-    return "medication"; // Generic Default
-  };
-
-  // Helper to get short form label
-  const getFormLabel = (drug: Drug): string => {
-    const text = (
-      drug.name +
-      " " +
-      drug.description +
-      " " +
-      drug.genericName
-    ).toLowerCase();
-
-    // Equipment
-    if (
-      text.includes("monitor") ||
-      text.includes("meter") ||
-      text.includes("thermometer")
-    )
-      return "Device";
-
-    // Baby
-    if (text.includes("diaper")) return "Pack";
-    if (text.includes("formula")) return "Tin";
-
-    // Supplies
-    if (
-      text.includes("mask") ||
-      text.includes("glove") ||
-      text.includes("syringe") ||
-      text.includes("gauze")
-    )
-      return "Box";
-
-    // Cosmetics
-    if (text.includes("shampoo")) return "Shampoo";
-    if (text.includes("cleanser")) return "Cleanser";
-    if (text.includes("wash")) return "Wash";
-    if (text.includes("cream")) return "Cream";
-    if (text.includes("gel")) return "Gel";
-    if (text.includes("ointment")) return "Ointment";
-    if (text.includes("lotion")) return "Lotion";
-    if (text.includes("balm")) return "Balm";
-
-    // Medications
-    if (text.includes("syrup")) return "Syrup";
-    if (text.includes("suspension")) return "Suspension";
-    if (text.includes("solution") || text.includes("liquid")) return "Liquid";
-    if (text.includes("drops") || text.includes("drop")) return "Drops";
-    if (
-      text.includes("injection") ||
-      text.includes("ampoule") ||
-      text.includes("vial") ||
-      text.includes("syringe")
-    )
-      return "Injection";
-    if (text.includes("inhaler")) return "Inhaler";
-    if (text.includes("spray")) return "Spray";
-    if (text.includes("suppository")) return "Suppository";
-    if (text.includes("capsule")) return "Capsule";
-    if (text.includes("tablet") || text.includes("pill")) return "Tablet";
-
-    return "";
   };
 
   const addToCart = (
@@ -1056,6 +468,83 @@ export const POS: React.FC<POSProps> = ({
 
   const removeDrugFromCart = (id: string) => {
     setCart((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  // Switch batch and auto-split quantity across batches if needed
+  const switchBatchWithAutoSplit = (
+    currentItem: CartItem,
+    newBatch: Drug,
+    packQty: number,
+    unitQty: number
+  ) => {
+    // Get all batches for this drug sorted by expiry (FEFO)
+    const allBatches = inventory
+      .filter((d) => d.name === currentItem.name && d.dosageForm === currentItem.dosageForm)
+      .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+
+    // Remove old entries for this drug
+    setCart((prev) => {
+      // Find insertion index (first occurrence)
+      const insertionIndex = prev.findIndex((item) => item.name === currentItem.name && item.dosageForm === currentItem.dosageForm);
+      
+      const filtered = prev.filter((item) => !(item.name === currentItem.name && item.dosageForm === currentItem.dosageForm));
+      
+      // Calculate what we need to add
+      const newItems: CartItem[] = [];
+      let remainingPacks = packQty;
+      let remainingUnits = unitQty;
+      
+      // Start from the selected batch, then continue with others
+      const orderedBatches = [
+        newBatch,
+        ...allBatches.filter((b) => b.id !== newBatch.id)
+      ];
+      
+      for (const batch of orderedBatches) {
+        if (remainingPacks <= 0 && remainingUnits <= 0) break;
+        
+        const unitsPerPack = batch.unitsPerPack || 1;
+        const stockInPacks = batch.stock;
+        
+        // Calculate how much we can take from this batch
+        if (remainingPacks > 0) {
+          const packsTake = Math.min(remainingPacks, stockInPacks);
+          if (packsTake > 0) {
+            newItems.push({
+              ...batch,
+              quantity: packsTake,
+              discount: currentItem.discount || 0,
+              isUnit: false,
+            });
+            remainingPacks -= packsTake;
+          }
+        }
+        
+        // Calculate remaining stock after packs for units
+        const usedPacks = newItems.filter(i => i.id === batch.id && !i.isUnit).reduce((s, i) => s + i.quantity, 0);
+        const remainingStockForUnits = (stockInPacks - usedPacks) * unitsPerPack;
+        
+        if (remainingUnits > 0 && unitsPerPack > 1) {
+          const unitsTake = Math.min(remainingUnits, remainingStockForUnits);
+          if (unitsTake > 0) {
+            newItems.push({
+              ...batch,
+              quantity: unitsTake,
+              discount: currentItem.discount || 0,
+              isUnit: true,
+            });
+            remainingUnits -= unitsTake;
+          }
+        }
+      }
+      
+      if (insertionIndex !== -1) {
+        const result = [...filtered];
+        result.splice(insertionIndex, 0, ...newItems);
+        return result;
+      }
+      return [...filtered, ...newItems];
+    });
   };
 
   const updateQuantity = (id: string, isUnit: boolean, delta: number) => {
@@ -1191,74 +680,7 @@ export const POS: React.FC<POSProps> = ({
     );
   };
 
-  const getCartItemActions = (item: CartItem) => {
-    const actions: any[] = [
-      {
-        label: t.removeItem,
-        icon: "delete",
-        action: () => removeFromCart(item.id, !!item.isUnit),
-        danger: true,
-      },
-    ];
-
-    const unitsPerPack = item.unitsPerPack || 1;
-    const hasDualMode = unitsPerPack > 1;
-
-    // Resolve full drug state from cart to correctly determine actions for merged row
-    const packItem = cart.find((i) => i.id === item.id && !i.isUnit);
-    const unitItem = cart.find((i) => i.id === item.id && i.isUnit);
-    const packQty = packItem?.quantity || 0;
-    const unitQty = unitItem?.quantity || 0;
-
-    const canSwitchToUnit = hasDualMode && packQty === 1 && unitQty === 0;
-    const canSwitchToPack = hasDualMode && unitQty >= unitsPerPack;
-
-    if (canSwitchToUnit) {
-      actions.push({ separator: true });
-      actions.push({
-        label: t.switchToUnit,
-        icon: "swap_horiz",
-        action: () => toggleUnitMode(item.id, false), // false = currently is Pack
-        danger: false,
-      });
-    }
-
-    if (canSwitchToPack) {
-      actions.push({ separator: true });
-      actions.push({
-        label: t.switchToPack,
-        icon: "swap_horiz",
-        action: () => toggleUnitMode(item.id, true), // true = currently is Unit
-        danger: false,
-      });
-    }
-
-    actions.push({ separator: true });
-    actions.push({
-      label: t.actions.discount,
-      icon: "percent",
-      action: () => {
-        const disc = prompt(
-          "Enter discount percentage (0-100):",
-          item.discount?.toString() || "0"
-        );
-        if (disc !== null) {
-          const val = parseFloat(disc);
-          if (!isNaN(val) && val >= 0 && val <= 100) {
-            const maxDisc = item.maxDiscount ?? 10;
-            if (val > maxDisc) {
-              alert(`Discount cannot exceed ${maxDisc}%`);
-            } else {
-              updateItemDiscount(item.id, !!item.isUnit, val);
-              if (val > 0) setGlobalDiscount(0);
-            }
-          }
-        }
-      },
-      danger: false,
-    });
-    return actions;
-  };
+  // getCartItemActions logic moved to SortableCartItem
 
   // Cart Drag and Drop Sensors
   const cartSensors = useSensors(
@@ -1315,40 +737,26 @@ export const POS: React.FC<POSProps> = ({
     }
   };
 
-  // Long-press support for cart items (touch devices)
-  const currentTouchCartItem = useRef<CartItem | null>(null);
-  const {
-    onTouchStart: onCartItemTouchStart,
-    onTouchEnd: onCartItemTouchEnd,
-    onTouchMove: onCartItemTouchMove,
-  } = useLongPress({
-    onLongPress: (e) => {
-      if (currentTouchCartItem.current) {
-        const touch = e.touches[0];
-        showMenu(
-          touch.clientX,
-          touch.clientY,
-          getCartItemActions(currentTouchCartItem.current)
-        );
-      }
-    },
-  });
+
 
   // Calculations
-  const calculateItemTotal = (item: CartItem) => {
-    let unitPrice = item.price;
-    if (item.isUnit && item.unitsPerPack) {
-      unitPrice = item.price / item.unitsPerPack;
-    }
-    const baseTotal = unitPrice * item.quantity;
-    const discountAmount = baseTotal * ((item.discount || 0) / 100);
-    return baseTotal - discountAmount;
-  };
+  // calculateItemTotal logic moved to SortableCartItem (imported)
 
   const subtotal = cart.reduce(
     (sum, item) => sum + calculateItemTotal(item),
     0
   );
+  
+  // Calculate total item discount amount (for display only)
+  const totalItemDiscountAmount = cart.reduce((sum, item) => {
+    let unitPrice = item.price;
+    if (item.isUnit && item.unitsPerPack) {
+      unitPrice = item.price / item.unitsPerPack;
+    }
+    const baseTotal = unitPrice * item.quantity;
+    return sum + (baseTotal * ((item.discount || 0) / 100));
+  }, 0);
+
   const cartTotal = subtotal * (1 - globalDiscount / 100);
   const isValidOrder =
     cart.length > 0 &&
@@ -1569,6 +977,34 @@ export const POS: React.FC<POSProps> = ({
     }
   }, [activeIndex]);
 
+  // Auto-scroll active CART item into view
+  useEffect(() => {
+    if (highlightedIndex !== -1) {
+      const activeCartRow = document.getElementById(`cart-item-${highlightedIndex}`);
+      if (activeCartRow) {
+        activeCartRow.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  }, [highlightedIndex]);
+
+  // Auto-highlight last item when added
+  const prevCartLengthRef = useRef(cart.length);
+  useEffect(() => {
+    if (cart.length > prevCartLengthRef.current) {
+        // Item added - highlight the last one (which is usually at the bottom or top depending on sort? assumption: bottom/end of merged list)
+        // mergedCartItems syncs with cart? Yes.
+        // Wait, mergedCartItems might not be updated immediately in this render cycle if it depends on cart state which just updated?
+        // mergedCartItems is a useMemo on [cart]. So it updates when cart updates.
+        // So safe to set index to length - 1.
+        if (mergedCartItems.length > 0) {
+            setHighlightedIndex(mergedCartItems.length - 1);
+        }
+    }
+    prevCartLengthRef.current = cart.length;
+  }, [cart.length, mergedCartItems.length]);
+
+
+
   const filteredDrugs = useMemo(() => {
     const { mode, regex } = parseSearchTerm(search);
 
@@ -1614,8 +1050,10 @@ export const POS: React.FC<POSProps> = ({
   const groupedDrugs = useMemo(() => {
     const groups: Record<string, Drug[]> = {};
     filteredDrugs.forEach((d) => {
-      if (!groups[d.name]) groups[d.name] = [];
-      groups[d.name].push(d);
+      // Group by Name AND DosageForm to separate different forms
+      const key = `${d.name}|${d.dosageForm || ''}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(d);
     });
 
     // Sort batches by expiry date (asc)
@@ -1648,26 +1086,103 @@ export const POS: React.FC<POSProps> = ({
     });
   }, [groupedDrugs, cart]);
 
+  // --- Keyboard Shortcuts & Navigation ---
+  const isTableFocused = search.trim().length > 0 && tableData.length > 0;
+
+  // Auto-focus Cart when Table focus is lost (transition from table to cart)
+  const prevIsTableFocusedRef = useRef(isTableFocused);
+  useEffect(() => {
+    // Transition: was table focused, now not focused -> move to cart
+    if (prevIsTableFocusedRef.current && !isTableFocused && mergedCartItems.length > 0) {
+        setHighlightedIndex(0);
+    }
+    // Also handle initial case: table never focused and cart has items
+    if (!isTableFocused && mergedCartItems.length > 0 && highlightedIndex === -1) {
+        setHighlightedIndex(0);
+    }
+    prevIsTableFocusedRef.current = isTableFocused;
+  }, [isTableFocused, mergedCartItems.length, highlightedIndex]);
+
+  usePosShortcuts({
+    enabled: true,
+    focusMode: isTableFocused ? 'table' : 'cart',
+    onTableNavigate: (direction) => {
+        setActiveIndex((prev) => {
+            const next = direction === "up" ? prev - 1 : prev + 1;
+            const clamped = Math.max(0, Math.min(next, tableData.length - 1));
+            return clamped;
+        });
+    },
+    onAddFromTable: () => {
+        if (tableData[activeIndex]) {
+            addGroupToCart(tableData[activeIndex].group);
+            // Replicate existing behavior on selection: clear search and reset focus
+            setSearch("");
+            setActiveIndex(0);
+            searchInputRef.current?.focus();
+        }
+    },
+    onTab: () => {
+        // Find the active cart item row and focus its first input
+        if (highlightedIndex !== -1) {
+            const row = document.getElementById(`cart-item-${highlightedIndex}`);
+            if (row) {
+                const firstInput = row.querySelector('input, button');
+                if (firstInput) {
+                    (firstInput as HTMLElement).focus();
+                }
+            }
+        }
+    },
+    onNavigate: (direction) => {
+      if (mergedCartItems.length === 0) return;
+      setHighlightedIndex((prev) => {
+        const next = direction === "up" ? prev - 1 : prev + 1;
+        const clamped = Math.max(0, Math.min(next, mergedCartItems.length - 1));
+        if (clamped !== prev) {
+          playClick();
+        }
+        return clamped;
+      });
+    },
+    onQuantityChange: (delta) => {
+      if (highlightedIndex === -1 || !mergedCartItems[highlightedIndex]) {
+        playError();
+        return;
+      }
+      const item = mergedCartItems[highlightedIndex];
+      const targetId = item.common.id;
+      const useUnit = !item.pack;
+
+      playBeep();
+      updateQuantity(targetId, useUnit, delta);
+    },
+    onDelete: () => {
+      if (highlightedIndex === -1 || !mergedCartItems[highlightedIndex]) return;
+      const item = mergedCartItems[highlightedIndex];
+      if (item.pack) removeFromCart(item.pack.id, false);
+      if (item.unit) removeFromCart(item.unit.id, true);
+      playClick();
+    },
+    onCheckout: () => {
+      if (cart.length > 0) {
+        playSuccess();
+        handleCheckout("walk-in");
+      } else {
+        playError();
+      }
+    },
+    onFocusSearch: () => {
+      searchInputRef.current?.focus();
+    },
+  });
+
   // --- TanStack Table Configuration ---
   const columnHelper = createColumnHelper<(typeof tableData)[0]>();
 
   const tableColumns = useMemo<ColumnDef<(typeof tableData)[0], any>[]>(
     () => [
-      columnHelper.display({
-        id: "icon",
-        header: t.icon || "Icon",
-        size: 60,
-        enableSorting: false,
-        cell: (info) => (
-          <div
-            className={`w-8 h-8 rounded-lg bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 flex items-center justify-center`}
-          >
-            <span className="material-symbols-rounded text-[18px]">
-              {getDrugIcon(info.row.original as unknown as Drug)}
-            </span>
-          </div>
-        ),
-      }),
+
       columnHelper.accessor("barcode", {
         header: t.code,
         size: 140,
@@ -1777,7 +1292,7 @@ export const POS: React.FC<POSProps> = ({
                     </div>
                   )}
                   color={color}
-                  className="h-7 w-24"
+                  className="h-9 w-20"
                 />
               ) : (
                 <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
@@ -1875,7 +1390,7 @@ export const POS: React.FC<POSProps> = ({
                   setActiveIndex(0);
                   searchInputRef.current?.focus();
                 }}
-                className="h-7 w-32"
+                className="h-10 w-30"
                 color={color}
               />
             </div>
@@ -1907,7 +1422,6 @@ export const POS: React.FC<POSProps> = ({
       openUnitDropdown,
       selectedBatches,
       openBatchDropdown,
-      getDrugIcon,
     ]
   );
 
@@ -2345,14 +1859,6 @@ export const POS: React.FC<POSProps> = ({
                       label: t.viewDetails,
                       icon: "info",
                       action: () => setViewingDrug(item.group[0]),
-                      danger: false,
-                    },
-                    { separator: true } as any,
-                    {
-                      label: t.actions?.showSimilar || "Show Similar",
-                      icon: "category",
-                      action: () => setSelectedCategory(item.category),
-                      danger: false,
                     },
                   ]);
                 }}
@@ -2368,20 +1874,13 @@ export const POS: React.FC<POSProps> = ({
                       label: t.viewDetails,
                       icon: "info",
                       action: () => setViewingDrug(item.group[0]),
-                      danger: false,
-                    },
-                    { separator: true } as any,
-                    {
-                      label: t.actions?.showSimilar || "Show Similar",
-                      icon: "category",
-                      action: () => setSelectedCategory(item.category),
-                      danger: false,
                     },
                   ]);
                 }}
                 searchPlaceholder={t.searchPlaceholder}
                 emptyMessage={t.noResults}
-                defaultHiddenColumns={["icon", "category"]}
+                defaultHiddenColumns={["category"]}
+                activeIndex={activeIndex}
                 enableTopToolbar={false}
               />
             )}
@@ -2457,7 +1956,32 @@ export const POS: React.FC<POSProps> = ({
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-2 space-y-2" dir="ltr">
+          <div 
+            className="flex-1 overflow-y-auto p-2 space-y-2 cart-scroll" 
+            dir="ltr"
+            style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
+            }}
+          >
+            <style>{`
+                .cart-scroll::-webkit-scrollbar {
+                    width: 2px;
+                    background: transparent;
+                }
+                .cart-scroll::-webkit-scrollbar-track {
+                    background: transparent;
+                    border: none;
+                    box-shadow: none;
+                }
+                .cart-scroll::-webkit-scrollbar-thumb {
+                    background: rgba(156, 163, 175, 0.6);
+                    border-radius: 9999px;
+                }
+                .cart-scroll::-webkit-scrollbar-corner {
+                    background: transparent;
+                }
+            `}</style>
             {cart.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-2">
                 <span className="material-symbols-rounded text-4xl opacity-20">
@@ -2485,30 +2009,49 @@ export const POS: React.FC<POSProps> = ({
                     // Using Drug ID as the sortable ID logic, assuming unique per drug
                     const itemId = group.id; // Or simple 'group.id' if unique
                     return (
-                      <SortableCartItem
-                        key={itemId}
-                        packItem={group.pack}
-                        unitItem={group.unit}
-                        commonItem={group.common}
-                        itemId={itemId}
-                        color={color}
-                        t={t}
-                        showMenu={showMenu}
-                        getCartItemActions={getCartItemActions}
-                        currentTouchCartItem={currentTouchCartItem}
-                        onCartItemTouchStart={onCartItemTouchStart}
-                        onCartItemTouchEnd={onCartItemTouchEnd}
-                        onCartItemTouchMove={onCartItemTouchMove}
-                        removeFromCart={removeFromCart}
-                        toggleUnitMode={toggleUnitMode}
-                        updateItemDiscount={updateItemDiscount}
-                        setGlobalDiscount={setGlobalDiscount}
-                        updateQuantity={updateQuantity}
-                        calculateItemTotal={calculateItemTotal}
-                        addToCart={addToCart}
-                        removeDrugFromCart={removeDrugFromCart}
-                        isHighlighted={index === highlightedIndex}
-                      />
+                      <div 
+                        key={itemId} 
+                        id={`cart-item-${index}`} 
+                        className="w-full"
+                        onClick={() => setHighlightedIndex(index)}
+                        onMouseDown={() => setHighlightedIndex(index)}
+                      >
+                        <SortableCartItem
+                          packItem={group.pack}
+                          unitItem={group.unit}
+                          commonItem={group.common}
+                          itemId={itemId}
+                          color={color}
+                          t={t}
+                          showMenu={showMenu}
+                          removeFromCart={removeFromCart}
+                          toggleUnitMode={toggleUnitMode}
+                          updateItemDiscount={updateItemDiscount}
+                          setGlobalDiscount={setGlobalDiscount}
+                          updateQuantity={updateQuantity}
+                          addToCart={addToCart}
+                          removeDrugFromCart={removeDrugFromCart}
+                          allBatches={inventory
+                            .filter(
+                              (d) =>
+                                d.name === group.common.name &&
+                                d.dosageForm === group.common.dosageForm
+                            )
+                            .sort(
+                              (a, b) =>
+                                new Date(a.expiryDate).getTime() -
+                                new Date(b.expiryDate).getTime()
+                            )}
+                          onSelectBatch={switchBatchWithAutoSplit}
+                          isHighlighted={index === highlightedIndex}
+                          currentLang={currentLang as 'en' | 'ar'}
+                          globalDiscount={globalDiscount}
+                          onSearchInTable={(term) => {
+                             setSearch(term);
+                             searchInputRef.current?.focus();
+                          }}
+                        />
+                      </div>
                     );
                   })}
                 </SortableContext>
@@ -2516,61 +2059,69 @@ export const POS: React.FC<POSProps> = ({
             )}
           </div>
 
-          <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-2 shrink-0">
-            {/* Totals Section */}
-            <div className="space-y-1">
-              <div className="flex justify-between items-center text-[10px] text-gray-500 dark:text-gray-400">
-                <span>{t.subtotal}</span>
-                <span>${subtotal.toFixed(2)}</span>
+          <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-3 shrink-0">
+            {/* Summary Row - Horizontal Layout like Purchases */}
+            <div className="flex items-center justify-between gap-2">
+              {/* Subtotal */}
+              <div className="flex flex-col ps-3">
+                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.subtotal}</span>
+                <span className="font-medium text-sm text-gray-700 dark:text-gray-300">${subtotal.toFixed(2)}</span>
               </div>
 
-              <div className="flex justify-between items-center text-[10px]">
-                <span className="text-gray-500 dark:text-gray-400">
-                  {t.orderDiscount}
-                </span>
-                <div className="flex items-center gap-1">
-                  <span className="material-symbols-rounded text-[14px] text-gray-400">
-                    percent
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={globalDiscount || ""}
-                    placeholder="0"
-                    onChange={(e) => {
-                      const val = Math.min(
-                        100,
-                        Math.max(0, parseFloat(e.target.value) || 0)
-                      );
-                      setGlobalDiscount(val);
-                      if (val > 0) {
-                        setCart((prev) =>
-                          prev.map((item) => ({ ...item, discount: 0 }))
+              {/* Discount */}
+              <div className="flex flex-col border-s border-gray-200 dark:border-gray-700 ps-3">
+                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.orderDiscount}</span>
+                
+                {totalItemDiscountAmount > 0 ? (
+                  /* Item Discounts Active -> Show Total Amount Read-only */
+                  <div className="flex items-center gap-1 h-[26px]">
+                    <span className="text-sm font-bold text-green-600">
+                      ${totalItemDiscountAmount.toFixed(2)}
+                    </span>
+                  </div>
+                ) : (
+                  /* Global Discount Input */
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={globalDiscount || ""}
+                      placeholder="0"
+                      onChange={(e) => {
+                        const val = Math.min(
+                          100,
+                          Math.max(0, parseFloat(e.target.value) || 0)
                         );
+                        setGlobalDiscount(val);
+                        if (val > 0) {
+                          setCart((prev) =>
+                            prev.map((item) => ({ ...item, discount: 0 }))
+                          );
+                        }
+                      }}
+                      className="w-10 px-1 py-0.5 text-center rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 text-sm font-medium text-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      style={
+                        { "--tw-ring-color": `var(--color-${color}-500)` } as any
                       }
-                    }}
-                    className="w-10 px-1 py-0.5 text-end rounded bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-1 text-gray-700 dark:text-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    style={
-                      { "--tw-ring-color": `var(--color-${color}-500)` } as any
-                    }
-                  />
-                </div>
+                    />
+                    <span className="text-green-600 font-medium text-sm">%</span>
+                  </div>
+                )}
               </div>
 
-              <div className="flex justify-between items-center text-sm font-medium pt-2 border-t border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400">
-                <span>{t.total}</span>
-                <span
-                  className={`text-xl font-bold text-${color}-700 dark:text-${color}-300`}
-                >
+              {/* Total */}
+              <div className="flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3">
+                <span className="text-xs text-gray-500 font-bold uppercase whitespace-nowrap">{t.total}:</span>
+                <span className={`text-2xl font-bold text-${color}-600 dark:text-${color}-400`}>
                   ${cartTotal.toFixed(2)}
                 </span>
               </div>
             </div>
 
-            {/* No Shift Warning */}
-            {!hasOpenShift && (
-              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 mb-3">
+            {/* Checkout Area Container */}
+            {!hasOpenShift ? (
+              <div className="flex h-[42px] items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
                 <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
                   <span className="material-symbols-rounded text-[18px]">
                     warning
@@ -2580,9 +2131,7 @@ export const POS: React.FC<POSProps> = ({
                   </p>
                 </div>
               </div>
-            )}
-
-            {/* Checkout Area Container */}
+            ) : (
             <div className="flex h-[42px] overflow-hidden">
               
               {/* Standard Mode - Shrinks to 0 width when checkout active */}
@@ -2597,7 +2146,7 @@ export const POS: React.FC<POSProps> = ({
                     setAmountPaid("");
                   }}
                   disabled={!isValidOrder || !hasOpenShift}
-                  className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-${color}-200 dark:shadow-none transition-all active:scale-95 flex justify-center items-center gap-2 whitespace-nowrap`}
+                  className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
                 >
                   <span className="material-symbols-rounded text-[18px]">
                     payments
@@ -2607,7 +2156,7 @@ export const POS: React.FC<POSProps> = ({
                 <button
                   onClick={() => handleCheckout("delivery")}
                   disabled={!isValidOrder || !hasOpenShift}
-                  className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex justify-center items-center shrink-0`}
+                  className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex justify-center items-center shrink-0`}
                   title={t.deliveryOrder}
                 >
                   <span className="material-symbols-rounded text-[20px]">
@@ -2668,7 +2217,7 @@ export const POS: React.FC<POSProps> = ({
                     setIsCheckoutMode(false);
                     setAmountPaid("");
                   }}
-                  className={`w-11 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white flex items-center justify-center shadow-lg shadow-${color}-500/30 transition-all active:scale-95 shrink-0`}
+                  className={`w-11 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white flex items-center justify-center transition-colors shrink-0`}
                 >
                   <span className="material-symbols-rounded">check</span>
                 </button>
@@ -2685,6 +2234,7 @@ export const POS: React.FC<POSProps> = ({
                 </button>
               </div>
             </div>
+            )}
           </div>
         </div>
 
@@ -2818,5 +2368,3 @@ export const POS: React.FC<POSProps> = ({
   );
 };
 
-// --- Local Component for Dropdown ---
-// Inlined to avoid extra files, reusing the generic hook efficiently.
