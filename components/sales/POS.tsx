@@ -916,6 +916,20 @@ export const POS: React.FC<POSProps> = ({
     removeTab(activeTabId);
   };
 
+  // Alt+S: Save/Checkout invoice from anywhere on the page
+  useEffect(() => {
+    const handleAltS = (e: KeyboardEvent) => {
+      if (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'س')) {
+        e.preventDefault();
+        if (isValidOrder) {
+          handleCheckout("walk-in");
+        }
+      }
+    };
+    window.addEventListener("keydown", handleAltS);
+    return () => window.removeEventListener("keydown", handleAltS);
+  }, [isValidOrder, handleCheckout]);
+
   // Filter customers when name changes
   useEffect(() => {
     if (customerName && showCustomerDropdown && !selectedCustomer) {
