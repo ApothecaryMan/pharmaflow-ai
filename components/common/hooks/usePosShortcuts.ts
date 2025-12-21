@@ -1,20 +1,26 @@
 import { useEffect } from 'react';
 
 interface UsePosShortcutsProps {
-    onNavigate: (direction: 'up' | 'down') => void;
+    onNavigate: (direction: 'up' | 'down') => void; // Cart navigation
+    onTableNavigate?: (direction: 'up' | 'down') => void; // Table navigation
     onQuantityChange: (delta: number) => void;
     onDelete: () => void;
     onCheckout: () => void;
     onFocusSearch: () => void;
+    onAddFromTable?: () => void; // Add highlighted table row to cart
+    focusMode?: 'table' | 'cart'; // Which area has focus for arrow keys
     enabled?: boolean;
 }
 
 export const usePosShortcuts = ({
     onNavigate,
+    onTableNavigate,
     onQuantityChange,
     onDelete,
     onCheckout,
     onFocusSearch,
+    onAddFromTable,
+    focusMode = 'cart',
     enabled = true
 }: UsePosShortcutsProps) => {
     useEffect(() => {
@@ -44,11 +50,26 @@ export const usePosShortcuts = ({
             switch (e.key) {
                 case 'ArrowUp':
                     e.preventDefault();
-                    onNavigate('up');
+                    if (focusMode === 'table' && onTableNavigate) {
+                        onTableNavigate('up');
+                    } else {
+                        onNavigate('up');
+                    }
                     break;
                 case 'ArrowDown':
                     e.preventDefault();
-                    onNavigate('down');
+                    if (focusMode === 'table' && onTableNavigate) {
+                        onTableNavigate('down');
+                    } else {
+                        onNavigate('down');
+                    }
+                    break;
+                case 'Enter':
+                    // When table is focused, Enter adds the highlighted row to cart
+                    if (focusMode === 'table' && onAddFromTable) {
+                        e.preventDefault();
+                        onAddFromTable();
+                    }
                     break;
                 case '+':
                 case '=': // Often sharing key with +
@@ -71,5 +92,5 @@ export const usePosShortcuts = ({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [enabled, onNavigate, onQuantityChange, onDelete, onCheckout, onFocusSearch]);
+    }, [enabled, onNavigate, onTableNavigate, onQuantityChange, onDelete, onCheckout, onFocusSearch, onAddFromTable, focusMode]);
 };

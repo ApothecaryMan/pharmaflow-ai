@@ -205,7 +205,7 @@ const SortableCartItem: React.FC<SortableCartItemProps> = ({
         }
         ${
           isHighlighted
-            ? `border-${color}-500 ring-1 ring-${color}-500 bg-${color}-50/10`
+            ? `border-gray-100 dark:border-gray-800 bg-${color}-50 dark:bg-${color}-900/20`
             : "border-gray-100 dark:border-gray-800"
         }`}
       onContextMenu={(e) => {

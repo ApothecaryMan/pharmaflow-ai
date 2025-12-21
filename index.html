@@ -7,7 +7,7 @@
     <title>PharmaFlow AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
-      href="https://cdn.jsdelivr.net/npm/@fontsource/google-sans-flex@5.0.13/index.css"
+      href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght,wdth,GRAD,slnt,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC@8..144,100..1000,50..150,-200..150,-10..0,323..603,25..135,649..854,98..305,560..788,416..570,528..760&display=swap"
       rel="stylesheet"
     />
     <link
@@ -22,10 +22,7 @@
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100..900&display=swap"
       rel="stylesheet"
     />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100;200;300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <!-- IBM Plex Sans Arabic removed (Inlined in CSS with unicode-range) -->
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Google Sans Flex",
@@ -169,7 +166,7 @@
         theme: {
           extend: {
             fontFamily: {
-              sans: ['"Google Sans Flex"', "dashed", "sans-serif"],
+              sans: ['-apple-system', 'BlinkMacSystemFont', '"Google Sans Flex"', 'sans-serif'],
             },
             colors: {
               // We will rely on dynamic classes for primary colors,
