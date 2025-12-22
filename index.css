@@ -28,16 +28,7 @@ body {
   }
 }
 
-/* Touch optimization for iPad */
-@media (pointer: coarse) {
-  /* Larger touch targets on touch devices */
-  button,
-  .btn,
-  [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
-  }
-}
+
 
 /* Prevent text selection on UI elements (PWA feel) */
 .no-select {
