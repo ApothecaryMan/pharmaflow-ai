@@ -1,60 +1,113 @@
-
-
 # PharmaFlow AI 💊
 
-A modern pharmacy management system built with React and TypeScript.
+A modern pharmacy management system built with React, TypeScript, and Tailwind CSS.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1wPbz9vbBakTJ9mKgBHCTEqw3ZfXFLxlM
-
----
-
-## ⚠️ MANDATORY Development Rules
-
-### Dropdown/Combobox Components
-
-**🚨 REQUIRED:** All dropdown/select components MUST use:
-- ✅ `PosDropdown` component from `components/PosDropdown.tsx`
-- ✅ `useExpandingDropdown` hook from `hooks/useExpandingDropdown.ts`
-
-**❌ FORBIDDEN:**
-- Native `<select>` elements
-- Native `<option>` elements
-- Custom dropdown implementations
-
-**Enforcement:** ESLint will **block** any code violating this rule.
-
-📖 **Complete Guide:** See [`docs/dropdown-usage.md`](docs/dropdown-usage.md)
+**Live Demo:** [pharmaflow-ai.netlify.app](https://pharmaflow-ai.netlify.app)
 
 ---
 
-## 🚀 Run Locally
+## ✨ Features
 
-**Prerequisites:** Node.js
+- **Point of Sale (POS)**: Multi-tab system, barcode scanning, customer lookup
+- **Inventory Management**: Stock tracking, expiry alerts, batch management
+- **Sales & Returns**: Complete sales history, return processing, receipt printing
+- **Cash Register**: Shift management, cash reconciliation
+- **Dashboard**: Real-time sales monitoring, analytics, top products
+- **Customer Management**: Customer directory, VIP tracking
+- **AI Assistant**: Gemini-powered assistant (optional)
+- **Fully Bilingual**: Complete EN/AR support with RTL
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+---
 
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+## 🚀 Quick Start
 
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
+**Prerequisites:** Node.js 18+
 
-4. Run linter (checks for forbidden patterns):
-   ```bash
-   npm run lint
-   ```
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+**Environment Variables:** Set `GEMINI_API_KEY` in `.env.local` for AI features.
+
+---
+
+## 📂 Project Structure
+
+```
+pharmaflow-ai/
+├── components/          # React components (organized by module)
+│   ├── common/          # Shared UI (SmartInputs, SegmentedControl, Switch, etc.)
+│   ├── layout/          # Navigation (Navbar, Sidebar, TabBar)
+│   ├── dashboard/       # Dashboard views
+│   ├── sales/           # POS, CashRegister, SalesHistory
+│   ├── inventory/       # Inventory management
+│   ├── purchases/       # Purchase orders
+│   └── customers/       # Customer directory
+├── services/            # Backend service layer
+├── hooks/               # Custom React hooks
+├── utils/               # Utility functions
+├── data/                # Static data (locations, categories)
+├── config/              # App configuration (menu, page registry)
+├── i18n/                # Translations (EN + AR)
+└── types/               # TypeScript definitions
+```
+
+---
+
+## ⚠️ Development Rules
+
+### 1. Use Standard Components
+
+| Component | Use For |
+|-----------|---------|
+| `SmartInputs` | All text inputs (handles RTL) |
+| `ExpandingDropdown` | Dropdown selections |
+| `SegmentedControl` | Segmented buttons |
+| `Switch` | Toggle switches |
+| `TanStackTable` | Data tables |
+
+**Forbidden:** Native `<select>`, raw `<input>`, HTML `<table>`.
+
+### 2. Internationalization
+
+All text MUST be in `i18n/translations.ts` with both EN and AR.
+
+### 3. iOS Safari Compatibility
+
+Buttons with explicit dimensions need:
+```tsx
+style={{ WebkitAppearance: 'none', appearance: 'none' }}
+```
 
 ---
 
 ## 📚 Documentation
 
-- **[Dropdown Usage Guide](docs/dropdown-usage.md)** - Required reading for all developers
-- **[Contributing Guidelines](CONTRIBUTING.md)** - Development standards and rules
-- **[Type Definitions](types.ts)** - TypeScript types
+- **[Contributing Guidelines](CONTRIBUTING.md)** - Full development standards
+- **[Theme Guide](THEME_GUIDE.md)** - Color and styling guide
+- **[Type Definitions](types/index.ts)** - TypeScript types
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 18, TypeScript
+- **Styling**: Tailwind CSS (local build, not CDN)
+- **State**: Props-based (App.tsx as central store)
+- **Tables**: TanStack Table
+- **Drag & Drop**: dnd-kit
+- **Icons**: Material Symbols
+- **Build**: Vite
 
 ---
 
@@ -62,11 +115,11 @@ View your app in AI Studio: https://ai.studio/apps/drive/1wPbz9vbBakTJ9mKgBHCTEq
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) before making changes.
 
-**Key Rules:**
-1. Use `PosDropdown` for ALL dropdowns
-2. Run ESLint before committing
-3. Follow existing code patterns
-4. Update documentation when needed
+**Quick Checklist:**
+1. Use standard components (no raw HTML)
+2. Add translations (EN + AR)
+3. Test in RTL mode
+4. Run `npm run lint` before committing
 
 ---
 

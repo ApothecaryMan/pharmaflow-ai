@@ -44,6 +44,11 @@ type SegmentedControlSize = 'xs' | 'sm' | 'md' | 'lg';
 
 type SegmentedControlShape = 'rounded' | 'pill';
 
+// Variant controls the dark mode background:
+// 'onCard' (default): Use when on gray-800 card backgrounds -> container uses dark:bg-gray-900
+// 'onPage': Use when on gray-900 page backgrounds -> container uses dark:bg-gray-800
+type SegmentedControlVariant = 'onCard' | 'onPage';
+
 interface SegmentedControlProps<T> {
   options: SegmentedControlOption<T>[];
   value: T;
@@ -53,6 +58,7 @@ interface SegmentedControlProps<T> {
   size?: SegmentedControlSize;
   fullWidth?: boolean; // If true, buttons use flex-1 for equal width. If false, buttons use natural width.
   shape?: SegmentedControlShape; // 'rounded' (default) or 'pill' for circular style
+  variant?: SegmentedControlVariant; // 'onCard' (default) or 'onPage' - controls dark mode background
 }
 
 const SIZE_CLASSES = {
@@ -100,12 +106,14 @@ export function SegmentedControl<T extends string | number | boolean>({
   color = 'emerald',
   size = 'sm',
   fullWidth = true,
-  shape = 'rounded'
+  shape = 'rounded',
+  variant = 'onCard'
 }: SegmentedControlProps<T>) {
   const isPill = shape === 'pill';
   const containerRound = isPill ? 'rounded-full' : 'rounded-xl';
   const buttonRound = isPill ? 'rounded-full' : 'rounded-lg';
   const indicatorRound = isPill ? 'rounded-full' : 'rounded-lg';
+  const darkBg = variant === 'onPage' ? 'dark:bg-gray-800' : 'dark:bg-gray-900';
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
@@ -144,7 +152,7 @@ export function SegmentedControl<T extends string | number | boolean>({
   return (
     <div 
       ref={containerRef}
-      className={`relative flex p-1 gap-1 bg-gray-100 dark:bg-gray-800 ${containerRound} isolate ${className}`}
+      className={`relative flex p-1 gap-1 bg-gray-100 ${darkBg} ${containerRound} isolate ${className}`}
     >
       {indicatorStyle && (
         <div 
@@ -168,6 +176,7 @@ export function SegmentedControl<T extends string | number | boolean>({
             onClick={() => onChange(option.value)}
             type="button"
             data-active={isActive}
+            style={{ WebkitAppearance: 'none', appearance: 'none' }}
             className={`${fullWidth ? 'flex-1' : 'flex-none'} ${sizeClasses.button} ${buttonRound} transition-colors z-10 relative flex items-center justify-center gap-2 whitespace-nowrap ${
               isPill 
                 ? (isActive ? 'font-bold' : 'font-medium') 

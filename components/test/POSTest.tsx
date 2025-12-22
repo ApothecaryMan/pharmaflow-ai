@@ -1592,6 +1592,7 @@ export const POSTest: React.FC<POSProps> = ({
                     onChange={(val) => setPaymentMethod(val as "cash" | "visa")}
                     color={color}
                     size="xs"
+                    variant="onPage"
                     options={[
                       {
                         label: t.cash || "Cash",
@@ -1691,6 +1692,7 @@ export const POSTest: React.FC<POSProps> = ({
                     onChange={(val) => setPaymentMethod(val as "cash" | "visa")}
                     color={color}
                     size="sm"
+                    variant="onPage"
                     options={[
                       {
                         label: t.cash || "Cash",

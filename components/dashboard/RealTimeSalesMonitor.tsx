@@ -474,6 +474,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     color="emerald"
                     size="xs"
                     fullWidth={false}
+                    variant="onPage"
                     className="w-auto"
                     options={[
                         { label: 'All', value: 'ALL' },

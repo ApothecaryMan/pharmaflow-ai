@@ -81,7 +81,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
 
   return (
     <div 
-      className="fixed mt-1 w-64 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden z-[9999] animate-fade-in origin-top"
+      className="fixed mt-1 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[9999] animate-fade-in origin-top"
       style={{
         top: position.top,
         left: position.left,
@@ -119,7 +119,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                                         ? 'opacity-50 cursor-not-allowed text-gray-400' 
                                         : isActive
                                             ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold`
-                                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                                 }`}
                             >
                                 <span>{getMenuTranslation(itemLabel, language)}</span>

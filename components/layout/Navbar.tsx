@@ -7,6 +7,7 @@ import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { ThemeColor, Language } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { SidebarDropdown } from './SidebarDropdown';
+import { Switch } from '../common/Switch';
 import { DashboardIcon } from './DashboardIcon';
 
 interface NavbarProps {
@@ -371,7 +372,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
           {/* Profile Dropdown */}
           {showProfileMenu && (
-            <div className="absolute ltr:right-0 rtl:left-0 mt-2 w-72 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden z-50 animate-fade-in">
+            <div className="absolute ltr:right-0 rtl:left-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50 animate-fade-in">
               {/* User Info */}
               <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/50">
                 <div className="flex items-center gap-3">
@@ -395,6 +396,14 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     )}
                     <button 
                       onClick={() => fileInputRef.current?.click()}
+                      style={{ 
+                        WebkitAppearance: 'none', 
+                        appearance: 'none',
+                        width: '20px',
+                        height: '20px',
+                        minWidth: '20px',
+                        minHeight: '20px'
+                      }}
                       className="absolute bottom-0 right-0 w-5 h-5 bg-gray-800 text-white rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors shadow-sm"
                       title="Change Photo"
                     >
@@ -454,22 +463,11 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     <span className="material-symbols-rounded text-gray-400">dark_mode</span>
                     {t.settings.darkMode}
                   </label>
-                  <button
-                    onClick={() => setDarkMode(!darkMode)}
-                    className={`w-12 h-6 rounded-full relative ${darkMode ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
-                  >
-                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm flex items-center justify-center ${darkMode ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}>
-                      {darkMode ? (
-                        <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      )}
-                    </div>
-                  </button>
+                  <Switch 
+                    checked={darkMode}
+                    onChange={setDarkMode}
+                    theme={theme}
+                  />
                 </div>
 
                 {/* Language Selector */}
@@ -493,22 +491,11 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     <span className="material-symbols-rounded text-gray-400">text_fields</span>
                     {language === 'EN' ? 'Uppercase Names' : 'أسماء بأحرف كبيرة'}
                   </label>
-                  <button
-                    onClick={() => setTextTransform(textTransform === 'normal' ? 'uppercase' : 'normal')}
-                    className={`w-12 h-6 rounded-full relative ${textTransform === 'uppercase' ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
-                  >
-                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm flex items-center justify-center ${textTransform === 'uppercase' ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}>
-                      {textTransform === 'uppercase' ? (
-                        <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      )}
-                    </div>
-                  </button>
+                  <Switch 
+                    checked={textTransform === 'uppercase'}
+                    onChange={() => setTextTransform(textTransform === 'normal' ? 'uppercase' : 'normal')}
+                    theme={theme}
+                  />
                 </div>
 
                 {/* Hide Inactive Tabs Toggle (Renamed to Focus Mode) */}
@@ -518,22 +505,11 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     <span className="material-symbols-rounded text-gray-400">filter_center_focus</span>
                     {language === 'EN' ? 'Focus Mode' : 'وضع التركيز'}
                   </label>
-                  <button
-                    onClick={() => setHideInactiveModules && setHideInactiveModules(!hideInactiveModules)}
-                    className={`w-12 h-6 rounded-full relative ${hideInactiveModules ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
-                  >
-                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm flex items-center justify-center ${hideInactiveModules ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}>
-                      {hideInactiveModules ? (
-                        <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      )}
-                    </div>
-                  </button>
+                  <Switch 
+                    checked={hideInactiveModules}
+                    onChange={(val) => setHideInactiveModules && setHideInactiveModules(val)}
+                    theme={theme}
+                  />
                 </div>
                 )}
 
@@ -563,29 +539,16 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     <span className="material-symbols-rounded text-gray-400">science</span>
                     {language === 'EN' ? 'Developer Mode' : 'وضع المطور'}
                   </label>
-                  <button
-                    onClick={() => {
-                      const newMode = !developerMode;
+                  <Switch 
+                    checked={developerMode}
+                    onChange={(newMode) => {
                       setDeveloperMode(newMode);
-                      // If turning off and on test module, navigate to dashboard
                       if (!newMode && activeModule === 'test') {
                         onModuleChange('dashboard');
                       }
                     }}
-                    className={`w-12 h-6 rounded-full relative ${developerMode ? `bg-${theme}-600` : 'bg-gray-200 dark:bg-gray-700'}`}
-                  >
-                    <div className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm flex items-center justify-center ${developerMode ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'}`}>
-                      {developerMode ? (
-                        <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      )}
-                    </div>
-                  </button>
+                    theme={theme}
+                  />
                 </div>
                 )}
               </div>
