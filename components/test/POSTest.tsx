@@ -354,7 +354,7 @@ export const POSTest: React.FC<POSProps> = ({
         newWidth = rect.right - clientX;
       }
 
-      if (newWidth > 500 && newWidth < 700) {
+      if (newWidth > 350 && newWidth < 800) {
         setSidebarWidth(newWidth);
       }
     }
@@ -742,22 +742,29 @@ export const POSTest: React.FC<POSProps> = ({
   // Calculations
   // calculateItemTotal logic moved to SortableCartItem (imported)
 
-  const subtotal = cart.reduce(
-    (sum, item) => sum + calculateItemTotal(item),
-    0
-  );
-  
-  // Calculate total item discount amount (for display only)
-  const totalItemDiscountAmount = cart.reduce((sum, item) => {
+  const grossSubtotal = cart.reduce((sum, item) => {
     let unitPrice = item.price;
     if (item.isUnit && item.unitsPerPack) {
       unitPrice = item.price / item.unitsPerPack;
     }
-    const baseTotal = unitPrice * item.quantity;
-    return sum + (baseTotal * ((item.discount || 0) / 100));
+    return sum + (unitPrice * item.quantity);
   }, 0);
 
-  const cartTotal = subtotal * (1 - globalDiscount / 100);
+  const netItemTotal = cart.reduce(
+    (sum, item) => sum + calculateItemTotal(item),
+    0
+  );
+
+  // Cart Total is Net Item Total - Global Discount
+  const cartTotal = netItemTotal * (1 - (globalDiscount || 0) / 100);
+  
+  // Calculate total discount amount (Gross - Net)
+  const totalDiscountAmount = grossSubtotal - cartTotal;
+  const orderDiscountPercent = grossSubtotal > 0 ? (totalDiscountAmount / grossSubtotal) * 100 : 0;
+  
+  // Alias for backward compatibility / API usage
+  const subtotal = grossSubtotal;
+
   const isValidOrder =
     cart.length > 0 &&
     mergedCartItems.every(
@@ -1950,7 +1957,7 @@ export const POSTest: React.FC<POSProps> = ({
                 }}
                 searchPlaceholder={t.searchPlaceholder}
                 emptyMessage={t.noResults}
-                defaultHiddenColumns={["category"]}
+                defaultHiddenColumns={["category", "inCart"]}
                 activeIndex={activeIndex}
                 enableTopToolbar={false}
               />
@@ -2136,55 +2143,25 @@ export const POSTest: React.FC<POSProps> = ({
               {/* Subtotal */}
               <div className="flex flex-col ps-3">
                 <span className="text-[10px] text-gray-500 font-medium uppercase">{t.subtotal}</span>
-                <span className="font-medium text-sm text-gray-700 dark:text-gray-300">${subtotal.toFixed(2)}</span>
+                <span className="font-medium text-sm text-gray-700 dark:text-gray-300">${grossSubtotal.toFixed(2)}</span>
               </div>
 
               {/* Discount */}
               <div className="flex flex-col border-s border-gray-200 dark:border-gray-700 ps-3">
                 <span className="text-[10px] text-gray-500 font-medium uppercase">{t.orderDiscount}</span>
                 
-                {totalItemDiscountAmount > 0 ? (
-                  /* Item Discounts Active -> Show Total Amount Read-only */
-                  <div className="flex items-center gap-1 h-[26px]">
-                    <span className="text-sm font-bold text-green-600">
-                      ${totalItemDiscountAmount.toFixed(2)}
-                    </span>
-                  </div>
-                ) : (
-                  /* Global Discount Input */
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={globalDiscount || ""}
-                      placeholder="0"
-                      onChange={(e) => {
-                        const val = Math.min(
-                          100,
-                          Math.max(0, parseFloat(e.target.value) || 0)
-                        );
-                        setGlobalDiscount(val);
-                        if (val > 0) {
-                          setCart((prev) =>
-                            prev.map((item) => ({ ...item, discount: 0 }))
-                          );
-                        }
-                      }}
-                      className="w-10 px-1 py-0.5 text-center rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 text-sm font-medium text-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      style={
-                        { "--tw-ring-color": `var(--color-${color}-500)` } as any
-                      }
-                    />
-                    <span className="text-green-600 font-medium text-sm">%</span>
-                  </div>
-                )}
+                {/* Order Discount % */}
+                <div className="flex items-center gap-1 h-[26px]">
+                  <span className="text-sm font-bold text-green-600">
+                    {orderDiscountPercent > 0 ? orderDiscountPercent.toFixed(1) : 0}%
+                  </span>
+                </div>
               </div>
 
               {/* Total */}
               <div className="flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3">
                 <span className="text-xs text-gray-500 font-bold uppercase whitespace-nowrap">{t.total}:</span>
-                <span className={`text-2xl font-bold text-${color}-600 dark:text-${color}-400`}>
+                <span className={`text-2xl font-black text-${color}-600 dark:text-${color}-400`}>
                   ${cartTotal.toFixed(2)}
                 </span>
               </div>

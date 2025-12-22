@@ -282,7 +282,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
           {/* Expiry Date Badge with Batch Details */}
           <div className="flex items-center gap-1">
             <span
-              className={`text-[9px] font-bold text-white px-1.5 py-0.5 rounded whitespace-nowrap shadow-sm cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
+              className={`text-[9px] font-bold text-white w-[38px] h-[18px] flex items-center justify-center rounded shadow-sm cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
                 const today = new Date();
                 const expiry = new Date(item.expiryDate);
                 const monthDiff =
