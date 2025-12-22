@@ -40,6 +40,7 @@ interface TanStackTableProps<TData, TValue> {
   color?: string; // e.g., 'blue', 'emerald'
   defaultHiddenColumns?: string[]; // Column IDs to hide by default
   activeIndex?: number; // For keyboard navigation highlight
+  defaultColumnAlignment?: Record<string, 'left' | 'center' | 'right'>; // Default alignment for specific columns
 }
 
 // Helper to get stored settings
@@ -65,7 +66,8 @@ export function TanStackTable<TData, TValue>({
   color = 'blue',
   defaultHiddenColumns = [],
   activeIndex,
-  enableTopToolbar = true
+  enableTopToolbar = true,
+  defaultColumnAlignment = {},
 }: TanStackTableProps<TData, TValue> & { enableTopToolbar?: boolean }) {
   
   // Long-press support for rows
@@ -97,8 +99,16 @@ export function TanStackTable<TData, TValue>({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(storedSettings?.columnVisibility || defaultVisibility);
-  const [headerAlignment, setHeaderAlignment] = useState<Record<string, 'left' | 'center' | 'right'>>(storedSettings?.headerAlignment || {});
-  const [contentAlignment, setContentAlignment] = useState<Record<string, 'left' | 'center' | 'right'>>(storedSettings?.contentAlignment || {});
+  
+  // Initialize alignment with defaults merged with stored settings
+  const [headerAlignment, setHeaderAlignment] = useState<Record<string, 'left' | 'center' | 'right'>>({
+    ...defaultColumnAlignment,
+    ...(storedSettings?.headerAlignment || {})
+  });
+  const [contentAlignment, setContentAlignment] = useState<Record<string, 'left' | 'center' | 'right'>>({
+    ...defaultColumnAlignment,
+    ...(storedSettings?.contentAlignment || {})
+  });
   
   // Save settings to localStorage whenever they change
   React.useEffect(() => {

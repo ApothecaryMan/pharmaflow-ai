@@ -1958,6 +1958,7 @@ export const POSTest: React.FC<POSProps> = ({
                 searchPlaceholder={t.searchPlaceholder}
                 emptyMessage={t.noResults}
                 defaultHiddenColumns={["category", "inCart"]}
+                defaultColumnAlignment={{ unit: 'center', batches: 'center', stock: 'center' }}
                 activeIndex={activeIndex}
                 enableTopToolbar={false}
               />

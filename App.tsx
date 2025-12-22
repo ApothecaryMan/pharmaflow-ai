@@ -217,7 +217,7 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pharma_language');
-      return (saved as Language) || 'EN';
+      return (saved as Language) || 'AR';
     }
     return 'EN';
   });
@@ -232,7 +232,7 @@ const App: React.FC = () => {
   const [textTransform, setTextTransform] = useState<'normal' | 'uppercase'>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pharma_textTransform');
-      return (saved as 'normal' | 'uppercase') || 'normal';
+      return (saved as 'normal' | 'uppercase') || 'uppercase';
     }
     return 'normal';
   });
@@ -240,7 +240,7 @@ const App: React.FC = () => {
   const [sidebarVisible, setSidebarVisible] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pharma_sidebarVisible');
-      return saved ? JSON.parse(saved) : true;
+      return saved ? JSON.parse(saved) : false;
     }
     return true;
   });
@@ -248,7 +248,7 @@ const App: React.FC = () => {
   const [hideInactiveModules, setHideInactiveModules] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pharma_hideInactiveModules');
-      return saved ? JSON.parse(saved) : false;
+      return saved ? JSON.parse(saved) : true;
     }
     return false;
   });
@@ -264,7 +264,7 @@ const App: React.FC = () => {
   const [navStyle, setNavStyle] = useState<1 | 2 | 3>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pharma_navStyle');
-      return (Number(saved) as 1 | 2 | 3) || 1;
+      return (Number(saved) as 1 | 2 | 3) || 2;
     }
     return 1;
   });
