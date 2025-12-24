@@ -40,12 +40,27 @@ export interface InvoiceTemplateOptions {
   autoPrintOnDelivery?: boolean;
 }
 
-const defaultOptions: InvoiceTemplateOptions = {
+export const defaultOptions: InvoiceTemplateOptions = {
   storeName: 'PharmaFlow',
   storeSubtitle: 'Pharmacy Management System',
   footerMessage: 'Thank you for choosing PharmaFlow.<br>We wish you good health!',
   footerInquiry: 'For inquiries, please keep this receipt.',
   language: 'EN'
+};
+
+export const INVOICE_DEFAULTS = {
+  EN: {
+    address: '123 Rasena',
+    area: 'Nasr City',
+    hotline: '19099',
+    terms: `Refrigerated medicines, cosmetics & strips are non-refundable<br>Medicines & devices refundable within 14 days<br>30-day warranty on devices`
+  },
+  AR: {
+    address: '١٢٣ رسينا',
+    area: 'مدينة نصر',
+    hotline: '19099',
+    terms: `ادوية التلاجة ومستحضرات التجميل وشرايط الدواء لا ترجع<br>استرجاع الادوية والاجهزة السليمة خلال 14 يوم<br>ضمان 30 يوم على الاجهزة`
+  }
 };
 
 /**
@@ -62,22 +77,7 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
   // Default fallbacks if keys are missing but allow empty string if explicitly set?
   // We use || which means empty string falls back to default. 
   // If user wants completely empty, they might need a way, but simple || is safer for now.
-  const defaults = {
-    EN: {
-      address: '123 Rasena',
-      area: 'Nasr City',
-      hotline: '19099',
-      terms: `Refrigerated medicines, cosmetics & strips are non-refundable<br>Medicines & devices refundable within 14 days<br>30-day warranty on devices`
-    },
-    AR: {
-      address: '١٢٣ رسينا',
-      area: 'مدينة نصر',
-      hotline: '19099',
-      terms: `ادوية التلاجة ومستحضرات التجميل وشرايط الدواء لا ترجع<br>استرجاع الادوية والاجهزة السليمة خلال 14 يوم<br>ضمان 30 يوم على الاجهزة`
-    }
-  };
-
-  const currentDefaults = defaults[lang];
+  const currentDefaults = INVOICE_DEFAULTS[lang];
 
   return `
     <!DOCTYPE html>

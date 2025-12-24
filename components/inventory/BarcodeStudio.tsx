@@ -7,6 +7,7 @@ import { SearchInput } from '../common/SearchInput';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { Modal } from '../common/Modal';
+import { defaultOptions, INVOICE_DEFAULTS } from '../sales/InvoiceTemplate';
 
 interface BarcodeStudioProps {
   inventory: Drug[];
@@ -19,15 +20,7 @@ const MM_TO_PX = 3.78;
 
 // Industry Standard Thermal Label Sizes
 const LABEL_PRESETS: Record<string, { w: number, h: number, label: string }> = {
-    '38x12': { w: 38, h: 12, label: '38×12 mm (Default)' },
-    '25x15': { w: 25, h: 15, label: '25×15 mm (Mini)' },
-    '30x20': { w: 30, h: 20, label: '30×20 mm' },
-    '32x25': { w: 32, h: 25, label: '32×25 mm' },
-    '40x20': { w: 40, h: 20, label: '40×20 mm' },
-    '40x30': { w: 40, h: 30, label: '40×30 mm' },
-    '50x25': { w: 50, h: 25, label: '50×25 mm' },
-    '50x30': { w: 50, h: 30, label: '50×30 mm' },
-    'custom': { w: 0, h: 0, label: 'Custom Size' }
+    '38x12': { w: 38, h: 12, label: '38×12 mm (Default)' }
 };
 
 interface LabelElement {
@@ -75,14 +68,17 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   // Global Settings
   const [selectedPreset, setSelectedPreset] = useState<string>('38x12');
   const [customDims, setCustomDims] = useState<{ w: number, h: number }>({ w: 38, h: 12 });
-  const [zoom, setZoom] = useState(2);
+  const [zoom, setZoom] = useState(5);
   const [borderStyle, setBorderStyle] = useState<'none' | 'solid' | 'dashed'>('none');
   const [printMode, setPrintMode] = useState<'single' | 'sheet'>('single');
   const [barcodeSource, setBarcodeSource] = useState<'global' | 'internal'>('global');
+  const [showPairedPreview, setShowPairedPreview] = useState(false);
+  const [showPrintBorders, setShowPrintBorders] = useState(true);
   
   // Data State
-  const [storeName, setStoreName] = useState('PharmaFlow');
-  const [hotline, setHotline] = useState('16999');
+  // Data State - Fetched from InvoiceTemplate defaults
+  const [storeName, setStoreName] = useState(defaultOptions.storeName || 'PharmaFlow');
+  const [hotline, setHotline] = useState(INVOICE_DEFAULTS.EN.hotline || '19099');
   
   const storeNameDir = useSmartDirection(storeName, t.elements.storeName);
   const hotlineDir = useSmartDirection(hotline, t.elements.hotline);
@@ -162,11 +158,18 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     }
   }, []);
 
+  // Auto-select first drug if none selected
+  useEffect(() => {
+    if (!selectedDrug && inventory.length > 0) {
+        setSelectedDrug(inventory[0]);
+    }
+  }, [inventory, selectedDrug]);
+
   // Autosave current workspace
   useEffect(() => {
     const designState = getDesignState();
     localStorage.setItem('pharma_label_design', JSON.stringify(designState));
-  }, [elements, selectedPreset, customDims, borderStyle, storeName, hotline, uploadedLogo, barcodeSource, activeTemplateId]);
+  }, [elements, selectedPreset, customDims, borderStyle, storeName, hotline, uploadedLogo, barcodeSource, activeTemplateId, showPrintBorders]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -203,14 +206,13 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       const { w, h } = presetKey === 'custom' ? customDims : (LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x12']);
       
       const newElements: LabelElement[] = [
-          { id: 'store', type: 'text', label: 'Store Name', x: w/2, y: 1, fontSize: 6, align: 'center', isVisible: true, field: 'store', color: '#64748b' },
-          { id: 'name', type: 'text', label: 'Drug Name', x: w/2, y: 3.5, fontSize: 8, fontWeight: 'bold', align: 'center', isVisible: true, field: 'name' },
-          { id: 'barcode', type: 'barcode', label: 'Barcode', x: w/2, y: 6.5, fontSize: 19, align: 'center', isVisible: true, width: w * 0.9, barcodeFormat: 'code39-text' },
-          { id: 'price', type: 'text', label: 'Price', x: 1, y: h - 2.5, fontSize: 6, align: 'left', isVisible: true, field: 'price' },
-          // Removed 'internal' text element from default layout
-          { id: 'expiry', type: 'text', label: 'Expiry', x: w - 1, y: h - 2.5, fontSize: 6, align: 'right', isVisible: true, field: 'expiryDate' },
-          { id: 'hotline', type: 'text', label: 'Hotline', x: w/2, y: 2, fontSize: 5, align: 'center', isVisible: false, field: 'hotline' },
-          { id: 'generic', type: 'text', label: 'Generic Name', x: w/2, y: 4.5, fontSize: 6, align: 'center', isVisible: false, field: 'genericName' }
+          { id: 'store', type: 'text', label: 'Store Name', x: w/2, y: 0.7, fontSize: 4, align: 'center', isVisible: true, field: 'store' },
+          { id: 'name', type: 'text', label: 'Drug Name', x: w/2, y: 1.8, fontSize: 7, fontWeight: 'bold', align: 'center', isVisible: true, field: 'name' },
+          { id: 'barcode', type: 'barcode', label: 'Barcode', x: w/2, y: 5.5, fontSize: 24, align: 'center', isVisible: true, width: w * 0.95, barcodeFormat: 'code128' },
+          { id: 'price', type: 'text', label: 'Price', x: 1.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'left', isVisible: true, field: 'price' },
+          { id: 'expiry', type: 'text', label: 'Expiry', x: w - 1.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'right', isVisible: true, field: 'expiryDate' },
+          { id: 'hotline', type: 'text', label: 'Hotline', x: w/2, y: 0.7, fontSize: 4, align: 'center', isVisible: false, field: 'hotline' },
+          { id: 'generic', type: 'text', label: 'Generic Name', x: w/2, y: 3.8, fontSize: 5, align: 'center', isVisible: false, field: 'genericName' }
       ];
       setElements(newElements);
       setHistory([]);
@@ -307,11 +309,6 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       }
   };
 
-  const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const newPreset = e.target.value;
-      setSelectedPreset(newPreset);
-      initializeLayout(newPreset);
-  };
 
   const addElement = (type: 'text' | 'image' | 'qrcode') => {
       const id = `custom-${Date.now()}`;
@@ -473,7 +470,11 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           case 'hotline': return `Tel: ${hotline}`;
           case 'internalCode': return selectedDrug.internalCode || '';
           case 'barcode': return barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id);
-          case 'expiryDate': return new Date(selectedDrug.expiryDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+          case 'expiryDate': 
+            const expDate = new Date(selectedDrug.expiryDate);
+            const month = String(expDate.getMonth() + 1).padStart(2, '0');
+            const year = String(expDate.getFullYear());
+            return `${month}/${year}`;
           case 'category': return selectedDrug.category;
           case 'genericName': return selectedDrug.genericName || '';
           default: return el.content || el.label;
@@ -558,7 +559,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
               return `<div style="${commonStyle} font-size: ${el.fontSize}px; font-weight: ${el.fontWeight || 'normal'}; color: ${el.color || 'black'}; white-space: nowrap;">${content}</div>`;
           }
           if (el.type === 'barcode') {
-              const format = el.barcodeFormat || 'code39-text';
+              const format = el.barcodeFormat || 'code128';
               let encoded = barcodeText;
               let fontFamily = 'Libre Barcode 39 Text';
               
@@ -582,32 +583,39 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           return '';
       };
 
+      const labelContainerStyle = `
+        width: ${dims.w}mm; height: ${dims.h}mm;
+        position: relative; overflow: hidden;
+        background: white;
+        border: ${showPrintBorders ? '1px solid #000' : 'none'};
+        box-sizing: border-box;
+        page-break-inside: avoid;
+      `;
+
       const labelHTML = `
-        <div class="label-container">
+        <div style="${labelContainerStyle}">
+            ${elements.map(generateElementHTML).join('')}
+        </div>
+        <div style="${labelContainerStyle}">
             ${elements.map(generateElementHTML).join('')}
         </div>
       `;
 
       const css = `
-        @page { size: ${printMode === 'single' ? `${dims.w}mm ${dims.h}mm` : 'A4'}; margin: ${printMode === 'single' ? '0' : '10mm'}; }
+        @page { size: ${dims.w}mm ${dims.h * 2}mm; margin: 0; }
         body { margin: 0; padding: 0; font-family: 'Roboto', sans-serif; }
-        .label-container {
-            width: ${dims.w}mm; height: ${dims.h}mm;
-            position: relative; overflow: hidden;
+        .print-container {
+            width: ${dims.w}mm; height: ${dims.h * 2}mm;
+            position: relative;
             background: white;
-            border: ${borderStyle === 'none' ? 'none' : `1px ${borderStyle} #000`};
-            box-sizing: border-box;
-            page-break-inside: avoid;
         }
-        .sheet { display: grid; grid-template-columns: repeat(auto-fill, ${dims.w}mm); gap: 5mm; }
       `;
 
       printWindow.document.write(`
         <html><head><title>Print</title>
-        <html><head><title>Print</title>
         <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
         <style>${css}</style></head><body>
-        ${printMode === 'single' ? labelHTML : `<div class="sheet">${Array(30).fill(labelHTML).join('')}</div>`}
+        <div class="print-container">${labelHTML}</div>
         <script>document.fonts.ready.then(() => window.print());</script></body></html>
       `);
       printWindow.document.close();
@@ -702,46 +710,63 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                             ref={canvasRef} onMouseDown={() => setSelectedElementId(null)} onTouchStart={() => setSelectedElementId(null)}
                             className="bg-white shadow-2xl relative transition-transform duration-75 ease-linear rounded-lg overflow-hidden"
                             style={{
-                                width: `${dims.w * MM_TO_PX}px`, height: `${dims.h * MM_TO_PX}px`, transform: `scale(${zoom})`, transformOrigin: 'center',
+                                width: `${dims.w}mm`, 
+                                height: `${showPairedPreview ? dims.h * 2 : dims.h}mm`, 
+                                transform: `scale(${zoom})`, 
+                                transformOrigin: 'center',
                                 border: borderStyle === 'none' ? '1px dashed #e2e8f0' : `1px ${borderStyle} #000`
                             }}
                         >
                             {/* Guidelines */}
                             {showVGuide && <div className="absolute top-0 bottom-0 left-1/2 w-px bg-red-500 border-l border-dashed border-red-500 z-50 pointer-events-none" style={{ transform: 'translateX(-0.5px)' }}></div>}
+                            
+                            {/* Imaginary Gap Line */}
+                            {showPairedPreview && (
+                                <div className="absolute left-0 right-0 border-t border-dashed border-gray-300 z-40 pointer-events-none" style={{ top: `${dims.h}mm` }}></div>
+                            )}
 
-                            {elements.filter(el => el.isVisible).map(el => (
-                                <div key={el.id} onMouseDown={(e) => handleMouseDown(e, el.id)} onTouchStart={(e) => handleTouchStart(e, el.id)}
-                                    className={`absolute cursor-move select-none touch-none ${selectedElementId === el.id ? 'ring-1 ring-blue-500 z-10' : ''}`}
-                                    style={{
-                                        left: `${el.x * MM_TO_PX}px`, top: `${el.y * MM_TO_PX}px`,
-                                        transform: `translate(${el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0'}, 0)`,
-                                        fontSize: `${el.fontSize}px`, fontWeight: el.fontWeight, color: el.color || 'black', whiteSpace: 'nowrap'
-                                    }}
-                                    onContextMenu={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        showMenu(e.clientX, e.clientY, getElementActions(el));
-                                    }}
-                                >
-                                    {el.type === 'text' && getElementContent(el)}
-                                    {el.type === 'barcode' && (() => {
-                                        const format = el.barcodeFormat || 'code39-text';
-                                        let encoded = `*${(barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id)).replace(/\s/g, '').toUpperCase()}*`;
-                                        let fontFamily = '"Libre Barcode 39 Text", cursive';
-                                        
-                                        if (format === 'code39') { fontFamily = '"Libre Barcode 39", cursive'; }
-                                        else if (format === 'code39-text') { fontFamily = '"Libre Barcode 39 Text", cursive'; }
-                                        else if (format.startsWith('code128')) {
-                                            const rawVal = barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id);
-                                            encoded = encodeCode128(rawVal);
-                                            fontFamily = format === 'code128-text' ? '"Libre Barcode 128 Text", cursive' : '"Libre Barcode 128", cursive';
-                                        }
+                            {[0, ...(showPairedPreview ? [1] : [])].map(offsetIndex => (
+                                <React.Fragment key={offsetIndex}>
+                                    {elements.filter(el => el.isVisible).map(el => {
+                                        const yOffset = offsetIndex * dims.h;
+                                        return (
+                                            <div key={`${el.id}-${offsetIndex}`} onMouseDown={(e) => handleMouseDown(e, el.id)} onTouchStart={(e) => handleTouchStart(e, el.id)}
+                                                className={`absolute cursor-move select-none touch-none ${selectedElementId === el.id ? 'ring-1 ring-blue-500 z-10' : ''}`}
+                                                style={{
+                                                    left: `${el.x}mm`, top: `${el.y + yOffset}mm`,
+                                                    transform: `translate(${el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0'}, 0)`,
+                                                    fontSize: `${el.fontSize}px`, // Restore original fontSize since container is now naturally sized
+                                                    fontWeight: el.fontWeight, color: el.color || 'black', whiteSpace: 'nowrap',
+                                                    opacity: offsetIndex > 0 ? 0.6 : 1
+                                                }}
+                                                onContextMenu={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    showMenu(e.clientX, e.clientY, getElementActions(el));
+                                                }}
+                                            >
+                                                {el.type === 'text' && getElementContent(el)}
+                                                {el.type === 'barcode' && (() => {
+                                                    const format = el.barcodeFormat || 'code128';
+                                                    let encoded = `*${(barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id)).replace(/\s/g, '').toUpperCase()}*`;
+                                                    let fontFamily = '"Libre Barcode 39 Text", cursive';
+                                                    
+                                                    if (format === 'code39') { fontFamily = '"Libre Barcode 39", cursive'; }
+                                                    else if (format === 'code39-text') { fontFamily = '"Libre Barcode 39 Text", cursive'; }
+                                                    else if (format.startsWith('code128')) {
+                                                        const rawVal = barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id);
+                                                        encoded = encodeCode128(rawVal);
+                                                        fontFamily = format === 'code128-text' ? '"Libre Barcode 128 Text", cursive' : '"Libre Barcode 128", cursive';
+                                                    }
 
-                                        return <div style={{ fontFamily, lineHeight: 0.8, paddingTop: '1px', whiteSpace: 'nowrap' }}>{encoded}</div>;
-                                    })()}
-                                    {el.type === 'qrcode' && qrCodeDataUrl && <img src={qrCodeDataUrl} style={{ width: `${(el.width || 10) * MM_TO_PX}px`, height: `${(el.height || 10) * MM_TO_PX}px` }} draggable={false} />}
-                                    {el.type === 'image' && (el.id === 'logo' ? uploadedLogo : el.content) && <img src={el.id === 'logo' ? uploadedLogo : el.content} style={{ width: `${(el.width || 10) * MM_TO_PX}px`, height: `${(el.height || 10) * MM_TO_PX}px`, objectFit: 'contain' }} draggable={false} />}
-                                </div>
+                                                    return <div style={{ fontFamily, fontSize: `${el.fontSize}px`, lineHeight: 0.8, paddingTop: '1px', whiteSpace: 'nowrap' }}>{encoded}</div>;
+                                                })()}
+                                                {el.type === 'qrcode' && qrCodeDataUrl && <img src={qrCodeDataUrl} style={{ width: `${el.width || 10}mm`, height: `${el.height || 10}mm` }} draggable={false} />}
+                                                {el.type === 'image' && (el.id === 'logo' ? uploadedLogo : el.content) && <img src={el.id === 'logo' ? uploadedLogo : el.content} style={{ width: `${el.width || 10}mm`, height: `${el.height || 10}mm`, objectFit: 'contain' }} draggable={false} />}
+                                            </div>
+                                        );
+                                    })}
+                                </React.Fragment>
                             ))}
                         </div>
                     )}
@@ -795,43 +820,67 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
                              <hr className="border-gray-100 dark:border-gray-800"/>
 
-                             {/* Global Settings (Product, Size, etc.) */}
-                             <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase block mb-2">{t.selectProduct}</label>
-                                <div className="relative">
-                                    <SearchInput
-                                        value={searchTerm}
-                                        onSearchChange={setSearchTerm}
-                                        placeholder={t.searchPlaceholder}
-                                        className="p-2.5 rounded-xl border-gray-200 dark:border-gray-800 ps-10"
-                                        style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                                    />
-                                    {searchTerm && !selectedDrug && (
-                                        <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg max-h-40 overflow-y-auto">
-                                             {filteredDrugs.map(d => <div key={d.id} onClick={() => { setSelectedDrug(d); setSearchTerm(''); }} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer text-sm">{d.name}</div>)}
+                            {inventory.length > 1 && (
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase block mb-2">{t.selectProduct}</label>
+                                    <div className="relative">
+                                        <SearchInput
+                                            value={searchTerm}
+                                            onSearchChange={setSearchTerm}
+                                            placeholder={t.searchPlaceholder}
+                                            className="p-2.5 rounded-xl border-gray-200 dark:border-gray-800 ps-10"
+                                            style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                                        />
+                                        {searchTerm && (
+                                            <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                                                {filteredDrugs.map(d => <div key={d.id} onClick={() => { setSelectedDrug(d); setSearchTerm(''); }} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer text-sm">{d.name}</div>)}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {selectedDrug && (
+                                        <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex justify-between items-center">
+                                            <span className="text-sm font-bold text-blue-700 dark:text-blue-300">{selectedDrug.name}</span>
+                                            <span className="material-symbols-rounded text-sm text-blue-500">check_circle</span>
                                         </div>
                                     )}
                                 </div>
-                                {selectedDrug && (
-                                    <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex justify-between items-center">
-                                        <span className="text-sm font-bold text-blue-700 dark:text-blue-300">{selectedDrug.name}</span>
-                                        <button onClick={() => setSelectedDrug(null)} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"><span className="material-symbols-rounded text-sm">close</span></button>
-                                    </div>
-                                )}
-                            </div>
+                            )}
                             
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase block mb-2">{t.labelSize}</label>
-                                <select value={selectedPreset} onChange={handlePresetChange} className="w-full p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 border-none text-sm">
-                                    {Object.entries(LABEL_PRESETS).map(([key, val]) => <option key={key} value={key}>{val.label}</option>)}
-                                </select>
+                             <div>
+                                <label className="flex items-center gap-2 cursor-pointer p-3 bg-gray-50 dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={showPairedPreview} 
+                                        onChange={e => setShowPairedPreview(e.target.checked)}
+                                        className={`w-4 h-4 rounded text-${color}-600 focus:ring-${color}-500`}
+                                    />
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        عرض معاينة الملصق المزدوج
+                                    </span>
+                                </label>
+                                <p className="text-[10px] text-gray-500 mt-1 px-1">
+                                    سيتم دائمًا طباعة ملصقين معًا ليتناسب مع الرول المزدوج.
+                                </p>
                             </div>
 
-                            {/* Inputs for Store/Hotline */}
-                            <div className="space-y-3">
-                                <div><label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">{t.elements.storeName}</label><input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} dir={storeNameDir} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm" /></div>
-                                <div><label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">{t.elements.hotline}</label><input type="text" value={hotline} onChange={e => setHotline(e.target.value)} dir={hotlineDir} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm" /></div>
+                            <div>
+                                <label className="flex items-center gap-2 cursor-pointer p-3 bg-gray-50 dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={showPrintBorders} 
+                                        onChange={e => setShowPrintBorders(e.target.checked)}
+                                        className={`w-4 h-4 rounded text-${color}-600 focus:ring-${color}-500`}
+                                    />
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        إظهار الحدود عند الطباعة
+                                    </span>
+                                </label>
+                                <p className="text-[10px] text-gray-500 mt-1 px-1">
+                                    لمعرفة الحجم الدقيق أثناء الاختبار.
+                                </p>
                             </div>
+
+                            {/* Inputs for Store/Hotline - Removed as they are now pulled from InvoiceTemplate */ }
 
                              {/* Border */}
                              <div>
@@ -856,14 +905,14 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                     <div className="mt-2">
                                         <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Barcode Style</label>
                                         <select 
-                                            value={selectedElement.barcodeFormat || 'code39-text'} 
+                                            value={selectedElement.barcodeFormat || 'code128'} 
                                             onChange={(e) => handlePropertyChange('barcodeFormat', e.target.value)}
                                             className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"
                                         >
-                                            <option value="code39-text">Code 39 (Standard Text)</option>
-                                            <option value="code39">Code 39 (Lines Only)</option>
-                                            <option value="code128-text">Code 128 (Text)</option>
                                             <option value="code128">Code 128 (Lines Only)</option>
+                                            <option value="code128-text">Code 128 (Text)</option>
+                                            <option value="code39">Code 39 (Lines Only)</option>
+                                            <option value="code39-text">Code 39 (Standard Text)</option>
                                         </select>
                                     </div>
                                 )}
