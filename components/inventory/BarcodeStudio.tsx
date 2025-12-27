@@ -9,6 +9,10 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { Modal } from '../common/Modal';
 import { TRANSLATIONS } from '../../i18n/translations';
 
+import { generateLabelHTML, LabelDesign, getLabelElementContent, generateTemplateCSS, getReceiptSettings } from './LabelPrinter';
+import { useDebounce } from '../../hooks/useDebounce';
+
+
 interface BarcodeStudioProps {
   inventory: Drug[];
   color: string;
@@ -82,46 +86,26 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [tempTemplateName, setTempTemplateName] = useState('');
   
   // Data State - Dynamically synced from ReceiptDesigner localStorage
-  const getReceiptSettings = () => {
-    try {
-      const templatesJson = localStorage.getItem('receipt_templates');
-      const activeId = localStorage.getItem('receipt_active_template_id');
-      if (templatesJson) {
-        const templates = JSON.parse(templatesJson);
-        const activeTemplate = templates.find((t: any) => t.id === activeId) || 
-                              templates.find((t: any) => t.isDefault) ||
-                              templates[0];
-        if (activeTemplate?.options) {
-          return {
-            storeName: activeTemplate.options.storeName || 'PharmaFlow',
-            hotline: activeTemplate.options.headerHotline || '19099'
-          };
-        }
-      }
-    } catch (e) { console.error('Failed to read receipt settings', e); }
-    return { storeName: 'PharmaFlow', hotline: '19099' };
-  };
+  const [receiptSettings, setLocalReceiptSettings] = useState(getReceiptSettings);
 
-  const [receiptSettings, setReceiptSettings] = useState(getReceiptSettings);
-  
-  // Listen for localStorage changes (from ReceiptDesigner)
+  // --- Receipt Settings Polling (Optimized) ---
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'receipt_templates' || e.key === 'receipt_active_template_id') {
-        setReceiptSettings(getReceiptSettings());
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also poll periodically for same-tab changes (storage event only fires cross-tab)
-    const interval = setInterval(() => {
-      setReceiptSettings(getReceiptSettings());
-    }, 2000);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
+     // Initial load
+     setLocalReceiptSettings(getReceiptSettings());
+
+     // Check every 3 seconds for changes
+     const interval = setInterval(() => {
+         const newSettings = getReceiptSettings();
+         setLocalReceiptSettings(current => {
+             // Only update if changed to avoid re-renders
+             if (current.storeName !== newSettings.storeName || current.hotline !== newSettings.hotline) {
+                 return newSettings;
+             }
+             return current;
+         });
+     }, 3000);
+     
+     return () => clearInterval(interval);
   }, []);
 
   const storeName = receiptSettings.storeName;
@@ -139,6 +123,46 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [saveStatus, setSaveStatus] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
+
+  // --- Improvements: Debounced State for Autosave ---
+  // Debounce critical state saved to local storage
+  const debouncedElements = useDebounce(elements, 500);
+  const debouncedSelectedPreset = useDebounce(selectedPreset, 500);
+  const debouncedCustomDims = useDebounce(customDims, 500);
+  const debouncedBarcodeSource = useDebounce(barcodeSource, 500);
+  const debouncedShowPrintBorders = useDebounce(showPrintBorders, 500);
+  const debouncedPrintOffsets = useDebounce({ x: printOffsetX, y: printOffsetY }, 500);
+  const debouncedUploadedLogo = useDebounce(uploadedLogo, 500);
+  
+  // --- Autosave Effect (Performance Optimized) ---
+  useEffect(() => {
+    const designState = {
+        elements: debouncedElements,
+        selectedPreset: debouncedSelectedPreset,
+        customDims: debouncedCustomDims,
+        borderStyle: 'none', 
+        uploadedLogo: debouncedUploadedLogo,
+        barcodeSource: debouncedBarcodeSource,
+        activeTemplateId: activeTemplateId ? activeTemplateId : null,
+        showPrintBorders: debouncedShowPrintBorders,
+        printOffsetX: debouncedPrintOffsets.x,
+        printOffsetY: debouncedPrintOffsets.y
+    };
+    try {
+        localStorage.setItem('pharma_label_design', JSON.stringify(designState));
+    } catch (e) {
+        console.error('Autosave failed', e);
+    }
+  }, [
+    debouncedElements, 
+    debouncedSelectedPreset, 
+    debouncedCustomDims, 
+    debouncedUploadedLogo, 
+    debouncedBarcodeSource, 
+    activeTemplateId, 
+    debouncedShowPrintBorders, 
+    debouncedPrintOffsets
+  ]);
 
   // Dragging Refs
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -210,11 +234,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   }, [inventory, selectedDrug]);
 
   // Autosave current workspace
-  useEffect(() => {
-    const designState = getDesignState();
-    localStorage.setItem('pharma_label_design', JSON.stringify(designState));
-    localStorage.setItem('pharma_label_design', JSON.stringify(designState));
-  }, [elements, selectedPreset, customDims, borderStyle, storeName, hotline, uploadedLogo, barcodeSource, activeTemplateId, showPrintBorders, printOffsetX, printOffsetY]);
+
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -512,43 +532,9 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       }
   };
 
-  const getUnitLabel = (drug: Drug): string => {
-      const text = (drug.name + " " + drug.description + " " + drug.category).toLowerCase();
-      if (text.includes('tablet') || text.includes('pill')) return 'Tab';
-      if (text.includes('capsule')) return 'Cap';
-      if (text.includes('syrup') || text.includes('liquid')) return 'Btl';
-      if (text.includes('cream') || text.includes('gel')) return 'Tube';
-      if (text.includes('injection') || text.includes('ampoule')) return 'Amp';
-      if (text.includes('vial')) return 'Vial';
-      if (text.includes('mask') || text.includes('glove')) return 'Box';
-      return 'Unit';
-  };
-
   const getElementContent = (el: LabelElement) => {
       if (!selectedDrug) return el.content || el.label;
-      if (el.content && el.type === 'text' && !el.field) return el.content;
-      switch (el.field) {
-          case 'name': 
-              if (selectedDrug.dosageForm) {
-                  return `${selectedDrug.name} ${selectedDrug.dosageForm}`;
-              }
-              return selectedDrug.name;
-          case 'price': 
-            const unit = getUnitLabel(selectedDrug);
-            return `$${selectedDrug.price.toFixed(2)}`;
-          case 'store': return storeName;
-          case 'hotline': return `Tel: ${hotline}`;
-          case 'internalCode': return selectedDrug.internalCode || '';
-          case 'barcode': return barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id);
-          case 'expiryDate': 
-            const expDate = new Date(selectedDrug.expiryDate);
-            const month = String(expDate.getMonth() + 1).padStart(2, '0');
-            const year = String(expDate.getFullYear());
-            return `${month}/${year}`;
-          case 'category': return selectedDrug.category;
-          case 'genericName': return selectedDrug.genericName || '';
-          default: return el.content || el.label;
-      }
+      return getLabelElementContent(el, selectedDrug, { storeName, hotline });
   };
 
   const handlePropertyChange = (key: keyof LabelElement, value: any) => {
@@ -616,55 +602,33 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const generatePrintHTML = (forPrint: boolean = false, singleLabel: boolean = false) => {
       if (!selectedDrug) return '';
       
-      const barcodeValue = barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id);
-      const barcodeText = `*${barcodeValue.replace(/\s/g, '').toUpperCase()}*`;
-
-      const generateElementHTML = (el: LabelElement) => {
-          if (!el.isVisible) return '';
-          const content = getElementContent(el);
-          const commonStyle = `position: absolute; left: ${el.x}mm; top: ${el.y}mm; transform: translate(${el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0'}, 0);`;
-          
-          if (el.type === 'text') {
-              return `<div style="${commonStyle} font-size: ${el.fontSize}px; font-weight: ${el.fontWeight || 'normal'}; color: ${el.color || 'black'}; white-space: nowrap;">${content}</div>`;
-          }
-          if (el.type === 'barcode') {
-              const format = el.barcodeFormat || 'code128';
-              let encoded = barcodeText;
-              let fontFamily = 'Libre Barcode 39 Text';
-              
-              if (format === 'code39') { encoded = barcodeText; fontFamily = 'Libre Barcode 39'; }
-              else if (format === 'code39-text') { encoded = barcodeText; fontFamily = 'Libre Barcode 39 Text'; }
-              else if (format.startsWith('code128')) {
-                  const rawVal = barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id);
-                  encoded = encodeCode128(rawVal);
-                  fontFamily = format === 'code128-text' ? 'Libre Barcode 128 Text' : 'Libre Barcode 128';
-              }
-              
-              return `<div style="${commonStyle} font-family: '${fontFamily}'; font-size: ${el.fontSize}px; line-height: 0.8; padding-top: 1px; white-space: nowrap;">${encoded}</div>`;
-          }
-          if (el.type === 'qrcode') {
-              return `<img src="${qrCodeDataUrl}" style="${commonStyle} width: ${el.width}mm; height: ${el.height}mm;" />`;
-          }
-          if (el.type === 'image') {
-              const src = el.id === 'logo' ? uploadedLogo : el.content;
-              if (src) return `<img src="${src}" style="${commonStyle} width: ${el.width}mm; height: ${el.height}mm; object-fit: contain;" />`;
-          }
-          return '';
+      const design: LabelDesign = {
+          elements,
+          selectedPreset,
+          customDims,
+          barcodeSource,
+          showPrintBorders,
+          printOffsetX,
+          printOffsetY
       };
 
-      const labelContainerStyle = `
-        width: ${dims.w}mm; height: ${dims.h}mm;
-        position: relative; overflow: hidden;
-        background: white;
-        border: ${showPrintBorders ? '1px solid #000' : 'none'};
-        box-sizing: border-box;
-        page-break-inside: avoid;
-      `;
+      const receiptSettings = { storeName, hotline };
+
+      const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
+
+      const singleLabelHTML = generateLabelHTML(
+          selectedDrug,
+          design,
+          dims,
+          receiptSettings,
+          undefined,
+          qrCodeDataUrl,
+          uploadedLogo,
+          classNameMap
+      );
 
       const labelCount = singleLabel ? 1 : 2;
-      const labelHTML = Array(labelCount).fill(null).map(() => 
-          `<div style="${labelContainerStyle}">${elements.map(generateElementHTML).join('')}</div>`
-      ).join('');
+      const labelHTML = Array(labelCount).fill(null).map(() => singleLabelHTML).join('');
 
       const totalHeight = dims.h * labelCount;
 
@@ -694,7 +658,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       return `<!DOCTYPE html>
 <html><head><title>Print</title>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-<style>${css}</style></head><body>
+<style>${css} ${templateCSS} </style></head><body>
 <div class="print-container">${labelHTML}</div>
 ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>' : ''}
 </body></html>`;
@@ -933,7 +897,18 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                                     showMenu(e.clientX, e.clientY, getElementActions(el));
                                                 }}
                                             >
-                                                {el.type === 'text' && <span dangerouslySetInnerHTML={{__html: getElementContent(el)}} />}
+                                                {el.type === 'text' && (
+                                                    <span 
+                                                        style={{ 
+                                                            fontSize: `${el.fontSize}px`,
+                                                            fontWeight: el.fontWeight || 'normal',
+                                                            color: el.color || 'black',
+                                                            whiteSpace: 'nowrap'
+                                                        }}
+                                                    >
+                                                        {getElementContent(el)}
+                                                    </span>
+                                                )}
                                                 {el.type === 'barcode' && (() => {
                                                     const format = el.barcodeFormat || 'code128';
                                                     let encoded = `*${(barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id)).replace(/\s/g, '').toUpperCase()}*`;

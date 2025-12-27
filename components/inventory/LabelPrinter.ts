@@ -57,29 +57,108 @@ const LABEL_PRESETS: Record<string, { w: number; h: number }> = {
     '38x12': { w: 38, h: 12 }
 };
 
+const PRINT_WINDOW_CONFIG = {
+    width: 800,
+    height: 1000,
+    features: 'width=800,height=1000,scrollbars=yes,resizable=yes'
+} as const;
+
 // --- Helper Functions ---
+
+/**
+ * Escape HTML characters to prevent XSS
+ */
+const escapeHtml = (text: string): string => {
+    const map: Record<string, string> = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+};
+
+/**
+ * Validate drug data before printing
+ */
+const validateDrug = (drug: Drug): boolean => {
+    return !!(
+        drug &&
+        (drug.id || drug.internalCode) &&
+        drug.name &&
+        typeof drug.price === 'number'
+    );
+};
+
+/**
+ * Get content for a label element (reusable logic)
+ */
+export const getLabelElementContent = (
+    el: LabelElement,
+    drug: Drug,
+    receiptSettings: { storeName: string; hotline: string },
+    expiryOverride?: string
+): string => {
+    if (el.content && el.type === 'text' && !el.field) return el.content;
+    
+    const expiryDate = expiryOverride || drug.expiryDate;
+    
+    switch (el.field) {
+        case 'name':
+            if (drug.dosageForm) {
+                return `${drug.name} ${drug.dosageForm}`;
+            }
+            return drug.name;
+        case 'price': return `${drug.price.toFixed(2)}`;
+        case 'store': return receiptSettings.storeName;
+        case 'hotline': return receiptSettings.hotline ? `${receiptSettings.hotline}` : '';
+        case 'internalCode': return drug.internalCode || '';
+        case 'expiryDate':
+            if (expiryDate) {
+                const d = new Date(expiryDate);
+                return `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+            }
+            return '';
+        case 'genericName': return drug.genericName || '';
+        default: return el.content || el.label || '';
+    }
+};
 
 /**
  * Get receipt settings (store name, hotline) from localStorage
  */
-const getReceiptSettings = (): { storeName: string; hotline: string } => {
+/**
+ * Get receipt settings (store name, hotline) from localStorage with robust error handling
+ */
+export const getReceiptSettings = (): { storeName: string; hotline: string } => {
+    const defaultSettings = { storeName: 'PharmaFlow', hotline: '19099' };
+    
     try {
         const templatesJson = localStorage.getItem('receipt_templates');
-        const activeId = localStorage.getItem('receipt_active_template_id');
-        if (templatesJson) {
-            const templates = JSON.parse(templatesJson);
-            const activeTemplate = templates.find((t: any) => t.id === activeId) ||
-                templates.find((t: any) => t.isDefault) ||
-                templates[0];
-            if (activeTemplate?.options) {
-                return {
-                    storeName: activeTemplate.options.storeName || 'PharmaFlow',
-                    hotline: activeTemplate.options.headerHotline || '19099'
-                };
-            }
+        if (!templatesJson) return defaultSettings;
+        
+        const templates = JSON.parse(templatesJson);
+        if (!Array.isArray(templates) || templates.length === 0) {
+            return defaultSettings;
         }
-    } catch (e) { console.error('Failed to read receipt settings', e); }
-    return { storeName: 'PharmaFlow', hotline: '19099' };
+        
+        const activeId = localStorage.getItem('receipt_active_template_id');
+        const activeTemplate = templates.find((t: any) => t?.id === activeId) ||
+            templates.find((t: any) => t?.isDefault) ||
+            templates[0];
+        
+        if (activeTemplate?.options) {
+            return {
+                storeName: activeTemplate.options.storeName || defaultSettings.storeName,
+                hotline: activeTemplate.options.headerHotline || defaultSettings.hotline
+            };
+        }
+    } catch (e) { 
+        console.error('Failed to read receipt settings:', e);
+    }
+    
+    return defaultSettings;
 };
 
 /**
@@ -130,14 +209,60 @@ const getPrintOffsets = (): { x: number; y: number } => {
 };
 
 /**
+ * Generate CSS for a design to optimize print size
+ */
+export const generateTemplateCSS = (design: LabelDesign): { css: string, classNameMap: Record<string, string> } => {
+    let css = '';
+    const classNameMap: Record<string, string> = {};
+
+    design.elements.forEach(el => {
+        const className = `lbl-el-${el.id}`;
+        classNameMap[el.id] = className;
+
+        const alignTransform = el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0';
+        
+        css += `
+            .${className} {
+                position: absolute;
+                left: ${el.x}mm;
+                top: ${el.y}mm;
+                transform: translate(${alignTransform}, 0);
+                ${el.fontSize ? `font-size: ${el.fontSize}px;` : ''}
+                ${el.fontWeight ? `font-weight: ${el.fontWeight};` : ''}
+                ${el.color ? `color: ${el.color};` : ''}
+                white-space: nowrap;
+                ${el.width ? `width: ${el.width}mm;` : ''}
+                ${el.height ? `height: ${el.height}mm;` : ''}
+                ${el.type === 'image' || el.type === 'qrcode' ? 'object-fit: contain;' : ''}
+            }
+        `;
+
+        if (el.type === 'barcode') {
+             const format = el.barcodeFormat || 'code128';
+             let fontFamily = 'Libre Barcode 39 Text';
+             if (format === 'code39') fontFamily = 'Libre Barcode 39';
+             else if (format === 'code39-text') fontFamily = 'Libre Barcode 39 Text';
+             else if (format.startsWith('code128')) fontFamily = format === 'code128-text' ? 'Libre Barcode 128 Text' : 'Libre Barcode 128';
+             
+             css += `.${className} { font-family: '${fontFamily}'; line-height: 0.8; padding-top: 1px; }`;
+        }
+    });
+
+    return { css, classNameMap };
+};
+
+/**
  * Generate HTML for a single label using the template
  */
-const generateLabelHTML = (
+export const generateLabelHTML = (
     drug: Drug,
     design: LabelDesign,
     dims: { w: number; h: number },
     receiptSettings: { storeName: string; hotline: string },
-    expiryOverride?: string
+    expiryOverride?: string,
+    qrDataUrl?: string,
+    logoDataUrl?: string,
+    classNameMap?: Record<string, string>
 ): string => {
     const barcodeSource = design.barcodeSource || 'global';
     const barcodeValue = barcodeSource === 'internal'
@@ -146,54 +271,57 @@ const generateLabelHTML = (
     const barcodeText = `*${barcodeValue.replace(/\s/g, '').toUpperCase()}*`;
 
     const getElementContent = (el: LabelElement): string => {
-        if (el.content && el.type === 'text' && !el.field) return el.content;
-        
-        const expiryDate = expiryOverride || drug.expiryDate;
-        
-        switch (el.field) {
-            case 'name':
-                if (drug.dosageForm) {
-                    return `${drug.name} ${drug.dosageForm}`;
-                }
-                return drug.name;
-            case 'price': return `${drug.price.toFixed(2)}`;
-            case 'store': return receiptSettings.storeName;
-            case 'hotline': return receiptSettings.hotline ? `${receiptSettings.hotline}` : '';
-            case 'internalCode': return drug.internalCode || '';
-            case 'expiryDate':
-                if (expiryDate) {
-                    const d = new Date(expiryDate);
-                    return `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-                }
-                return '';
-            case 'genericName': return drug.genericName || '';
-            default: return el.content || el.label || '';
-        }
+        return getLabelElementContent(el, drug, receiptSettings, expiryOverride);
     };
 
     const generateElementHTML = (el: LabelElement): string => {
         if (!el.isVisible) return '';
         const content = getElementContent(el);
-        const alignTransform = el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0';
-        const commonStyle = `position: absolute; left: ${el.x}mm; top: ${el.y}mm; transform: translate(${alignTransform}, 0);`;
+        
+        // Use class if available, otherwise inline style (fallback/preview)
+        let styleAttr = '';
+        let classAttr = '';
+
+        if (classNameMap && classNameMap[el.id]) {
+            classAttr = `class="${classNameMap[el.id]}"`;
+        } else {
+             const alignTransform = el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0';
+             styleAttr = `style="position: absolute; left: ${el.x}mm; top: ${el.y}mm; transform: translate(${alignTransform}, 0); `;
+             
+             if (el.type === 'text') {
+                 styleAttr += `font-size: ${el.fontSize}px; font-weight: ${el.fontWeight || 'normal'}; color: ${el.color || 'black'}; white-space: nowrap;"`;
+             } else if (el.type === 'barcode') {
+                const format = el.barcodeFormat || 'code128';
+                let fontFamily = 'Libre Barcode 39 Text';
+                if (format === 'code39') fontFamily = 'Libre Barcode 39';
+                else if (format === 'code39-text') fontFamily = 'Libre Barcode 39 Text';
+                else if (format.startsWith('code128')) fontFamily = format === 'code128-text' ? 'Libre Barcode 128 Text' : 'Libre Barcode 128';
+                styleAttr += `font-family: '${fontFamily}'; font-size: ${el.fontSize}px; line-height: 0.8; padding-top: 1px; white-space: nowrap;"`;
+             } else {
+                styleAttr += `width: ${el.width || 10}mm; height: ${el.height || 10}mm; object-fit: contain;"`;
+             }
+        }
 
         if (el.type === 'text') {
-            return `<div style="${commonStyle} font-size: ${el.fontSize}px; font-weight: ${el.fontWeight || 'normal'}; color: ${el.color || 'black'}; white-space: nowrap;">${content}</div>`;
+            return `<div ${classAttr} ${styleAttr}>${escapeHtml(content)}</div>`;
         }
         if (el.type === 'barcode') {
-            const format = el.barcodeFormat || 'code128';
-            let encoded = barcodeText;
-            let fontFamily = 'Libre Barcode 39 Text';
-
-            if (format === 'code39') { encoded = barcodeText; fontFamily = 'Libre Barcode 39'; }
-            else if (format === 'code39-text') { encoded = barcodeText; fontFamily = 'Libre Barcode 39 Text'; }
-            else if (format.startsWith('code128')) {
-                const rawVal = barcodeSource === 'internal' ? (drug.internalCode || drug.id) : (drug.barcode || drug.id);
-                encoded = encodeCode128(rawVal);
-                fontFamily = format === 'code128-text' ? 'Libre Barcode 128 Text' : 'Libre Barcode 128';
-            }
-
-            return `<div style="${commonStyle} font-family: '${fontFamily}'; font-size: ${el.fontSize}px; line-height: 0.8; padding-top: 1px; white-space: nowrap;">${encoded}</div>`;
+            // Recalculate encoded value here or reuse if passed? 
+            // The class handles font, but content is dynamic.
+             const format = el.barcodeFormat || 'code128';
+             let encoded = barcodeText;
+             if (format.startsWith('code128')) {
+                  const rawVal = barcodeSource === 'internal' ? (drug.internalCode || drug.id) : (drug.barcode || drug.id);
+                  encoded = encodeCode128(rawVal);
+             }
+            return `<div ${classAttr} ${styleAttr}>${encoded}</div>`;
+        }
+        if (el.type === 'qrcode' && qrDataUrl) {
+            return `<img src="${qrDataUrl}" ${classAttr} ${styleAttr} />`;
+        }
+        if (el.type === 'image') {
+            const src = el.id === 'logo' ? logoDataUrl : el.content;
+            if (src) return `<img src="${src}" ${classAttr} ${styleAttr} />`;
         }
         return '';
     };
@@ -304,90 +432,126 @@ const generateBasicLabelHTML = (drug: Drug, quantity: number): string => {
  * ]);
  */
 export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {}): void => {
-    if (items.length === 0) return;
+    const validItems = items.filter(item => {
+        if (!validateDrug(item.drug)) {
+            console.warn('Invalid drug data skipped:', item.drug);
+            return false;
+        }
+        if (item.quantity <= 0) return false;
+        return true;
+    });
 
-    const printWindow = window.open('', '', 'width=800,height=1000');
-    if (!printWindow) {
-        alert('Popup blocked. Please allow popups for this site.');
+    if (validItems.length === 0) {
+        console.warn('No valid items to print');
         return;
     }
 
-    // Check for template
-    const template = options.forceBasicTemplate ? null : getDefaultTemplate();
+    let printWindow: Window | null = null;
 
-    if (!template) {
-        // Fallback to basic template for first drug only
-        const firstItem = items[0];
-        printWindow.document.write(generateBasicLabelHTML(firstItem.drug, firstItem.quantity));
-        printWindow.document.close();
-        return;
-    }
+    try {
+        printWindow = window.open('', '', PRINT_WINDOW_CONFIG.features);
+        if (!printWindow) {
+            throw new Error('Popup blocked');
+        }
 
-    // Use template
-    const design = template.design as LabelDesign;
-    const dims = design.selectedPreset === 'custom'
-        ? (design.customDims || { w: 38, h: 12 })
-        : (LABEL_PRESETS[design.selectedPreset] || LABEL_PRESETS['38x12']);
+        // Check for template
+        const template = options.forceBasicTemplate ? null : getDefaultTemplate();
 
-    const receiptSettings = getReceiptSettings();
-    const offsets = getPrintOffsets();
-    const printOffsetX = offsets.x;
-    const printOffsetY = offsets.y;
-    const pairedLabels = options.pairedLabels ?? false;
+        if (!template) {
+            // Fallback to basic template for first drug only
+            const firstItem = validItems[0];
+            printWindow.document.write(generateBasicLabelHTML(firstItem.drug, firstItem.quantity));
+            printWindow.document.close();
+            return;
+        }
 
-    // Calculate total labels
-    const totalLabels = items.reduce((sum, item) => sum + item.quantity, 0);
-    const labelsPerPage = pairedLabels ? 2 : 1;
-    
-    // Generate all label HTML
-    let allLabelsHTML = '';
-    for (const item of items) {
-        for (let i = 0; i < item.quantity; i++) {
-            allLabelsHTML += generateLabelHTML(
+        // Use template
+        const design = template.design as LabelDesign;
+        const dims = design.selectedPreset === 'custom'
+            ? (design.customDims || { w: 38, h: 12 })
+            : (LABEL_PRESETS[design.selectedPreset] || LABEL_PRESETS['38x12']);
+
+        const receiptSettings = getReceiptSettings();
+        const offsets = getPrintOffsets();
+        const printOffsetX = offsets.x;
+        const printOffsetY = offsets.y;
+        const pairedLabels = options.pairedLabels ?? false;
+
+        const labelsPerPage = pairedLabels ? 2 : 1;
+        
+        const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
+
+        // Generate all label HTML using array join for performance
+        const labelFragments: string[] = [];
+        for (const item of validItems) {
+            // Generate one label instance
+            const singleLabel = generateLabelHTML(
                 item.drug,
                 design,
                 dims,
                 receiptSettings,
-                item.expiryDateOverride
+                item.expiryDateOverride,
+                undefined,
+                undefined,
+                classNameMap
             );
+            
+            // Push n copies
+            for (let i = 0; i < item.quantity; i++) {
+                labelFragments.push(singleLabel);
+            }
         }
+        const allLabelsHTML = labelFragments.join('');
+
+        // Calculate page height
+        const heightPerPage = dims.h * labelsPerPage;
+
+        const css = `
+            ${templateCSS}
+            @page { size: ${dims.w}mm auto; margin: 0; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+                margin: 0; 
+                padding: 0; 
+                font-family: 'Roboto', sans-serif; 
+            }
+            .print-container {
+                width: ${dims.w}mm; 
+                position: relative;
+                background: white;
+                font-size: 0;
+                line-height: 0;
+                padding-left: ${printOffsetX > 0 ? printOffsetX : 0}mm;
+                padding-right: ${printOffsetX < 0 ? Math.abs(printOffsetX) : 0}mm;
+                padding-top: ${printOffsetY > 0 ? printOffsetY : 0}mm;
+                padding-bottom: ${printOffsetY < 0 ? Math.abs(printOffsetY) : 0}mm;
+                box-sizing: border-box;
+            }
+        `;
+
+        const htmlContent = `<!DOCTYPE html>
+    <html><head><title>Print Labels</title>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>${css}</style></head><body>
+    <div class="print-container">${allLabelsHTML}</div>
+    <script>
+        document.fonts.ready.then(() => {
+            window.print();
+            // Optional: window.close() after print if needed, but risky if print dialog is open
+        }).catch(e => {
+            console.error('Font loading failed', e);
+            window.print();
+        });
+    </script>
+    </body></html>`;
+
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+    } catch (e) {
+        console.error('Print failed', e);
+        if (printWindow) printWindow.close();
+        alert('Failed to initialize print window. Please allow popups.');
     }
-
-    // Calculate page height
-    const heightPerPage = dims.h * labelsPerPage;
-
-    const css = `
-        @page { size: ${dims.w}mm auto; margin: 0; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'Roboto', sans-serif; 
-        }
-        .print-container {
-            width: ${dims.w}mm; 
-            position: relative;
-            background: white;
-            font-size: 0;
-            line-height: 0;
-            padding-left: ${printOffsetX > 0 ? printOffsetX : 0}mm;
-            padding-right: ${printOffsetX < 0 ? Math.abs(printOffsetX) : 0}mm;
-            padding-top: ${printOffsetY > 0 ? printOffsetY : 0}mm;
-            padding-bottom: ${printOffsetY < 0 ? Math.abs(printOffsetY) : 0}mm;
-            box-sizing: border-box;
-        }
-    `;
-
-    const htmlContent = `<!DOCTYPE html>
-<html><head><title>Print Labels</title>
-<link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-<style>${css}</style></head><body>
-<div class="print-container">${allLabelsHTML}</div>
-<script>document.fonts.ready.then(() => window.print());</script>
-</body></html>`;
-
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
 };
 
 /**
