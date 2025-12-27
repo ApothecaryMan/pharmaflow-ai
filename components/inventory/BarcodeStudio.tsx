@@ -7,7 +7,6 @@ import { SearchInput } from '../common/SearchInput';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { Modal } from '../common/Modal';
-import { defaultOptions, INVOICE_DEFAULTS } from '../sales/InvoiceTemplate';
 
 interface BarcodeStudioProps {
   inventory: Drug[];
@@ -74,14 +73,55 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [barcodeSource, setBarcodeSource] = useState<'global' | 'internal'>('global');
   const [showPairedPreview, setShowPairedPreview] = useState(false);
   const [showPrintBorders, setShowPrintBorders] = useState(true);
+  const [printOffsetX, setPrintOffsetX] = useState(0); // Horizontal offset in mm (positive = right)
+  const [printOffsetY, setPrintOffsetY] = useState(0); // Vertical offset in mm (positive = down)
+  const [previewMode, setPreviewMode] = useState<'edit' | 'preview'>('edit'); // Dual-mode system
   
-  // Data State
-  // Data State - Fetched from InvoiceTemplate defaults
-  const [storeName, setStoreName] = useState(defaultOptions.storeName || 'PharmaFlow');
-  const [hotline, setHotline] = useState(INVOICE_DEFAULTS.EN.hotline || '19099');
+  // Data State - Dynamically synced from ReceiptDesigner localStorage
+  const getReceiptSettings = () => {
+    try {
+      const templatesJson = localStorage.getItem('receipt_templates');
+      const activeId = localStorage.getItem('receipt_active_template_id');
+      if (templatesJson) {
+        const templates = JSON.parse(templatesJson);
+        const activeTemplate = templates.find((t: any) => t.id === activeId) || 
+                              templates.find((t: any) => t.isDefault) ||
+                              templates[0];
+        if (activeTemplate?.options) {
+          return {
+            storeName: activeTemplate.options.storeName || 'PharmaFlow',
+            hotline: activeTemplate.options.headerHotline || '19099'
+          };
+        }
+      }
+    } catch (e) { console.error('Failed to read receipt settings', e); }
+    return { storeName: 'PharmaFlow', hotline: '19099' };
+  };
+
+  const [receiptSettings, setReceiptSettings] = useState(getReceiptSettings);
   
-  const storeNameDir = useSmartDirection(storeName, t.elements.storeName);
-  const hotlineDir = useSmartDirection(hotline, t.elements.hotline);
+  // Listen for localStorage changes (from ReceiptDesigner)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'receipt_templates' || e.key === 'receipt_active_template_id') {
+        setReceiptSettings(getReceiptSettings());
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also poll periodically for same-tab changes (storage event only fires cross-tab)
+    const interval = setInterval(() => {
+      setReceiptSettings(getReceiptSettings());
+    }, 2000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const storeName = receiptSettings.storeName;
+  const hotline = receiptSettings.hotline;
   // For content input (dynamic selected element)
   const selectedContentDir = useSmartDirection(selectedElementId && elements.find(e => e.id === selectedElementId)?.content || '', 'Content');
 
@@ -195,8 +235,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       if (state.customDims) setCustomDims(state.customDims);
       if (state.elements) setElements(state.elements);
       if (state.borderStyle) setBorderStyle(state.borderStyle);
-      if (state.storeName) setStoreName(state.storeName);
-      if (state.hotline) setHotline(state.hotline);
+      // storeName and hotline are now read from ReceiptDesigner localStorage
       if (state.uploadedLogo) setUploadedLogo(state.uploadedLogo);
       if (state.barcodeSource) setBarcodeSource(state.barcodeSource);
       if (state.activeTemplateId) setActiveTemplateId(state.activeTemplateId);
@@ -542,11 +581,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     }}
   ];
 
-  const handlePrint = () => {
-      if (!selectedDrug) return;
-      const printWindow = window.open('', '', 'width=800,height=1000');
-      if (!printWindow) return;
-
+  // Shared HTML generator - used by BOTH print and preview to ensure 100% match
+  const generatePrintHTML = (forPrint: boolean = false, singleLabel: boolean = false) => {
+      if (!selectedDrug) return '';
+      
       const barcodeValue = barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id);
       const barcodeText = `*${barcodeValue.replace(/\s/g, '').toUpperCase()}*`;
 
@@ -592,32 +630,50 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
         page-break-inside: avoid;
       `;
 
-      const labelHTML = `
-        <div style="${labelContainerStyle}">
-            ${elements.map(generateElementHTML).join('')}
-        </div>
-        <div style="${labelContainerStyle}">
-            ${elements.map(generateElementHTML).join('')}
-        </div>
-      `;
+      const labelCount = singleLabel ? 1 : 2;
+      const labelHTML = Array(labelCount).fill(null).map(() => 
+          `<div style="${labelContainerStyle}">${elements.map(generateElementHTML).join('')}</div>`
+      ).join('');
+
+      const totalHeight = dims.h * labelCount;
 
       const css = `
-        @page { size: ${dims.w}mm ${dims.h * 2}mm; margin: 0; }
-        body { margin: 0; padding: 0; font-family: 'Roboto', sans-serif; }
+        @page { size: ${dims.w}mm ${totalHeight}mm; margin: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Roboto', sans-serif; 
+        }
         .print-container {
-            width: ${dims.w}mm; height: ${dims.h * 2}mm;
+            width: ${dims.w}mm; 
+            height: ${totalHeight}mm;
             position: relative;
             background: white;
+            font-size: 0;
+            line-height: 0;
+            padding-left: ${printOffsetX > 0 ? printOffsetX : 0}mm;
+            padding-right: ${printOffsetX < 0 ? Math.abs(printOffsetX) : 0}mm;
+            padding-top: ${printOffsetY > 0 ? printOffsetY : 0}mm;
+            padding-bottom: ${printOffsetY < 0 ? Math.abs(printOffsetY) : 0}mm;
+            box-sizing: border-box;
         }
       `;
 
-      printWindow.document.write(`
-        <html><head><title>Print</title>
-        <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-        <style>${css}</style></head><body>
-        <div class="print-container">${labelHTML}</div>
-        <script>document.fonts.ready.then(() => window.print());</script></body></html>
-      `);
+      return `<!DOCTYPE html>
+<html><head><title>Print</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>${css}</style></head><body>
+<div class="print-container">${labelHTML}</div>
+${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>' : ''}
+</body></html>`;
+  };
+
+  const handlePrint = () => {
+      if (!selectedDrug) return;
+      const printWindow = window.open('', '', 'width=800,height=1000');
+      if (!printWindow) return;
+      printWindow.document.write(generatePrintHTML(true, false));
       printWindow.document.close();
   };
 
@@ -675,7 +731,23 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                     <div className="flex items-center gap-2 px-2 border-e border-gray-200 dark:border-gray-800">
                         <button onClick={() => setZoom(Math.max(1, zoom - 0.5))} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors"><span className="material-symbols-rounded text-[18px]">remove</span></button>
                         <span className="text-xs font-bold w-10 text-center text-gray-700 dark:text-gray-300">{Math.round(zoom * 100)}%</span>
-                        <button onClick={() => setZoom(Math.min(5, zoom + 0.5))} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors"><span className="material-symbols-rounded text-[18px]">add</span></button>
+                        <button onClick={() => setZoom(Math.min(8, zoom + 0.5))} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors"><span className="material-symbols-rounded text-[18px]">add</span></button>
+                    </div>
+
+                    {/* Mode Toggle */}
+                    <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg">
+                        <button 
+                            onClick={() => setPreviewMode('edit')} 
+                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${previewMode === 'edit' ? 'bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500'}`}
+                        >
+                            تعديل
+                        </button>
+                        <button 
+                            onClick={() => setPreviewMode('preview')} 
+                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${previewMode === 'preview' ? 'bg-white dark:bg-gray-900 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-gray-500'}`}
+                        >
+                            معاينة حقيقية
+                        </button>
                     </div>
                     
                     <div className="flex items-center gap-1 px-2 border-e border-gray-200 dark:border-gray-800">
@@ -705,6 +777,25 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                  >
                     {!selectedDrug ? (
                         <div className="text-center text-gray-400 dark:text-gray-500"><span className="material-symbols-rounded text-6xl opacity-20 mb-2">touch_app</span><p>{t.noProductSelected}</p></div>
+                    ) : previewMode === 'preview' ? (
+                        /* True Preview Mode - Uses EXACT same HTML as print */
+                        <div 
+                            className="bg-white shadow-2xl overflow-hidden"
+                            style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
+                        >
+                            <iframe
+                                srcDoc={generatePrintHTML(false, !showPairedPreview)}
+                                scrolling="no"
+                                style={{ 
+                                    width: `${dims.w}mm`, 
+                                    height: `${showPairedPreview ? dims.h * 2 : dims.h}mm`,
+                                    border: 'none',
+                                    display: 'block',
+                                    overflow: 'hidden'
+                                }}
+                                title="True Preview"
+                            />
+                        </div>
                     ) : (
                         <div 
                             ref={canvasRef} onMouseDown={() => setSelectedElementId(null)} onTouchStart={() => setSelectedElementId(null)}
@@ -714,7 +805,12 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                 height: `${showPairedPreview ? dims.h * 2 : dims.h}mm`, 
                                 transform: `scale(${zoom})`, 
                                 transformOrigin: 'center',
-                                border: borderStyle === 'none' ? '1px dashed #e2e8f0' : `1px ${borderStyle} #000`
+                                border: borderStyle === 'none' ? '1px dashed #e2e8f0' : `1px ${borderStyle} #000`,
+                                paddingLeft: printOffsetX > 0 ? `${printOffsetX}mm` : undefined,
+                                paddingRight: printOffsetX < 0 ? `${Math.abs(printOffsetX)}mm` : undefined,
+                                paddingTop: printOffsetY > 0 ? `${printOffsetY}mm` : undefined,
+                                paddingBottom: printOffsetY < 0 ? `${Math.abs(printOffsetY)}mm` : undefined,
+                                boxSizing: 'border-box'
                             }}
                         >
                             {/* Guidelines */}
@@ -878,6 +974,47 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                                 <p className="text-[10px] text-gray-500 mt-1 px-1">
                                     لمعرفة الحجم الدقيق أثناء الاختبار.
                                 </p>
+                            </div>
+
+                            {/* Print Offset Calibration */}
+                            <div className="space-y-3 p-3 bg-gray-50 dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800">
+                                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase block">
+                                    معايرة الطباعة
+                                </label>
+                                <div className="space-y-2">
+                                    <div>
+                                        <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                            <span>أفقي (يمين/شمال)</span>
+                                            <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded">{printOffsetX}mm</span>
+                                        </div>
+                                        <input 
+                                            type="range" 
+                                            min="-5" max="5" step="0.5"
+                                            value={printOffsetX}
+                                            onChange={e => setPrintOffsetX(parseFloat(e.target.value))}
+                                            className={`w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-${color}-500`}
+                                        />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                            <span>رأسي (فوق/تحت)</span>
+                                            <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded">{printOffsetY}mm</span>
+                                        </div>
+                                        <input 
+                                            type="range" 
+                                            min="-5" max="5" step="0.5"
+                                            value={printOffsetY}
+                                            onChange={e => setPrintOffsetY(parseFloat(e.target.value))}
+                                            className={`w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-${color}-500`}
+                                        />
+                                    </div>
+                                    <button 
+                                        onClick={() => { setPrintOffsetX(0); setPrintOffsetY(0); }}
+                                        className="w-full text-[10px] py-1.5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                                    >
+                                        إعادة ضبط المعايرة
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Inputs for Store/Hotline - Removed as they are now pulled from InvoiceTemplate */ }
