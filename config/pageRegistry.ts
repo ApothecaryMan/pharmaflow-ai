@@ -7,6 +7,7 @@ import { ReturnHistory } from '../components/sales/ReturnHistory';
 import { SuppliersList } from '../components/purchases/SuppliersList';
 import { Purchases } from '../components/purchases/Purchases';
 import { PurchaseReturns } from '../components/purchases/PurchaseReturns';
+import { BarcodePrinter } from '../components/inventory/BarcodePrinter';
 import { BarcodeStudio } from '../components/inventory/BarcodeStudio';
 import { CustomerManagement } from '../components/customers/CustomerManagement';
 import { CustomerOverview } from '../components/customers/CustomerOverview';
@@ -122,6 +123,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'assignment_return',
     category: 'purchase',
     requiredProps: ['purchases', 'purchaseReturns', 'setPurchaseReturns', 'drugs', 'setDrugs', 'color', 't', 'language']
+  },
+  'barcode-printer': {
+    id: 'barcode-printer',
+    component: BarcodePrinter,
+    menuLabel: 'Barcode Printer',
+    menuLabelAr: 'طباعة الباركود',
+    icon: 'print',
+    category: 'tools',
+    requiredProps: ['inventory', 'color', 't', 'language']
   },
   'barcode-studio': {
     id: 'barcode-studio',

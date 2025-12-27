@@ -1,0 +1,280 @@
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Drug } from '../../types';
+import { SearchInput } from '../common/SearchInput';
+import { printLabels, PrintLabelItem } from './LabelPrinter';
+import { useSmartDirection } from '../common/SmartInputs';
+
+interface BarcodePrinterProps {
+  inventory: Drug[];
+  color: string;
+  t: any;
+  language: string;
+}
+
+interface QueueItem extends PrintLabelItem {
+  id: string; // Unique ID for the queue item (e.g. timestamp)
+}
+
+export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color, t, language }) => {
+  const [search, setSearch] = useState('');
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [isPrinting, setIsPrinting] = useState(false);
+  
+  // Smart direction for search
+  const dir = useSmartDirection(search, t.barcodePrinter?.searchPlaceholder || 'Search product to print...');
+
+  // Search logic
+  const searchResults = useMemo(() => {
+    if (!search.trim()) return [];
+    const term = search.toLowerCase();
+    return inventory.filter(d => 
+      d.name.toLowerCase().includes(term) || 
+      (d.barcode && d.barcode.includes(term)) ||
+      (d.internalCode && d.internalCode.includes(term))
+    ).slice(0, 10); // Limit to 10 results
+  }, [search, inventory]);
+
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const addToQueue = (drug: Drug) => {
+    const newItem: QueueItem = {
+      id: Date.now().toString(),
+      drug,
+      quantity: 1,
+      expiryDateOverride: drug.expiryDate || ''
+    };
+    setQueue(prev => [...prev, newItem]);
+    setSearch('');
+    setShowSuggestions(false);
+  };
+
+  const removeFromQueue = (id: string) => {
+    setQueue(prev => prev.filter(item => item.id !== id));
+  };
+
+  const updateQuantity = (id: string, qty: number) => {
+    setQueue(prev => prev.map(item => item.id === id ? { ...item, quantity: Math.max(1, qty) } : item));
+  };
+
+  const updateExpiry = (id: string, date: string) => {
+    setQueue(prev => prev.map(item => item.id === id ? { ...item, expiryDateOverride: date } : item));
+  };
+
+  const handlePrint = () => {
+    if (queue.length === 0) return;
+    setIsPrinting(true);
+    
+    // Convert QueueItem to PrintLabelItem (strip internal ID if needed, though extra props are usually fine)
+    const itemsToPrint: PrintLabelItem[] = queue.map(({ drug, quantity, expiryDateOverride }) => ({
+        drug,
+        quantity,
+        expiryDateOverride
+    }));
+
+    // Try to load current design from localStorage
+    let currentDesign: any = null;
+    try {
+        const saved = localStorage.getItem('pharma_label_design');
+        if (saved) currentDesign = JSON.parse(saved);
+    } catch (e) {
+        console.error('Failed to load current design', e);
+    }
+
+    printLabels(itemsToPrint, { design: currentDesign });
+    
+    // Optional: Clear queue after print? Or keep for re-print?
+    // Let's keep it for now, user can clear manually if they want.
+    setIsPrinting(false);
+  };
+
+  const clearQueue = () => {
+      if (window.confirm(t.barcodePrinter?.alerts?.confirmClear || 'Clear print queue?')) {
+          setQueue([]);
+      }
+  };
+
+  return (
+    <div className="h-full flex flex-col gap-4">
+      {/* Header Card */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+              <span className={`p-2 rounded-xl bg-${color}-100 text-${color}-600 dark:bg-${color}-900/30 dark:text-${color}-400`}>
+                <span className="material-symbols-rounded">print</span>
+              </span>
+              {t.barcodePrinter?.title || 'Barcode Printer'}
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
+              {t.barcodePrinter?.subtitle || 'Queue and print product labels'}
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+             <button 
+                onClick={clearQueue}
+                disabled={queue.length === 0}
+                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+             >
+               {t.barcodePrinter?.clearQueue || 'Clear Queue'}
+             </button>
+             <button 
+                onClick={handlePrint}
+                disabled={queue.length === 0}
+                className={`px-6 py-2 bg-${color}-600 hover:bg-${color}-700 text-white rounded-xl shadow-lg shadow-${color}-500/30 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none`}
+             >
+               <span className="material-symbols-rounded">print</span>
+               {t.barcodePrinter?.printLabels || 'Print Labels'}
+             </button>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative z-20" ref={searchRef}>
+          <SearchInput
+            value={search}
+            onSearchChange={(val) => {
+                setSearch(val);
+                setShowSuggestions(true);
+            }}
+            placeholder={t.barcodePrinter?.searchPlaceholder || 'Search product to print...'}
+            className="w-full"
+            autoComplete="off"
+            onFocus={() => setShowSuggestions(true)}
+          />
+          
+          {/* Suggestions Dropdown */}
+          {showSuggestions && search.trim() && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto overflow-x-hidden z-50">
+                {searchResults.length > 0 ? (
+                    searchResults.map(drug => (
+                        <button
+                            key={drug.id}
+                            onClick={() => addToQueue(drug)}
+                            className="w-full text-start p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between group border-b border-gray-100 dark:border-gray-800 last:border-0"
+                        >
+                            <div className="flex flex-col">
+                                <span className="font-medium text-gray-900 dark:text-white">{drug.name}</span>
+                                <span className="text-xs text-gray-500">{drug.genericName}</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                                <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-600 dark:text-gray-300">
+                                    {drug.internalCode || drug.id}
+                                </span>
+                                {drug.expiryDate && <span className="text-[10px] text-gray-400 mt-1">Exp: {drug.expiryDate}</span>}
+                            </div>
+                        </button>
+                    ))
+                ) : (
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                        {t.pos?.noResults || 'No results found'}
+                    </div>
+                )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Queue Table */}
+      <div className="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
+         <div className="overflow-x-auto flex-1">
+            <table className="w-full text-left border-collapse">
+                <thead>
+                    <tr className="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-800">
+                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-sm">{t.barcodePrinter?.tableHeaders?.item || 'Item'}</th>
+                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-sm w-48">{t.barcodePrinter?.tableHeaders?.expiry || 'Expiry'}</th>
+                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-sm w-32">{t.barcodePrinter?.tableHeaders?.qty || 'Qty'}</th>
+                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-sm w-20 text-center">{t.barcodePrinter?.tableHeaders?.actions || 'Actions'}</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {queue.length > 0 ? (
+                        queue.map((item) => (
+                            <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+                                <td className="p-4">
+                                    <div className="flex flex-col">
+                                        <span className="font-medium text-gray-900 dark:text-white">{item.drug.name}</span>
+                                        <span className="text-xs text-gray-500">{item.drug.genericName}</span>
+                                    </div>
+                                </td>
+                                <td className="p-4">
+                                    <input 
+                                        type="text" 
+                                        value={item.expiryDateOverride}
+                                        onChange={(e) => updateExpiry(item.id, e.target.value)}
+                                        placeholder="MM/YYYY"
+                                        className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all placeholder-gray-400"
+                                    />
+                                </td>
+                                <td className="p-4">
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors"
+                                        >
+                                            -
+                                        </button>
+                                        <input 
+                                            type="number"
+                                            value={item.quantity}
+                                            onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
+                                            className="w-16 text-center bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg py-1.5 focus:border-blue-500 outline-none"
+                                            min="1"
+                                        />
+                                        <button 
+                                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </td>
+                                <td className="p-4 text-center">
+                                    <button 
+                                        onClick={() => removeFromQueue(item.id)}
+                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                    >
+                                        <span className="material-symbols-rounded text-[20px]">delete</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        ))
+                    ) : (
+                        <tr>
+                            <td colSpan={4} className="p-12 text-center">
+                                <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+                                    <span className="material-symbols-rounded text-6xl mb-4 bg-gray-50 dark:bg-gray-800 p-6 rounded-full">print_disabled</span>
+                                    <p className="text-lg font-medium">{t.barcodePrinter?.alerts?.queueEmpty || 'Print queue is empty'}</p>
+                                    <p className="text-sm mt-1">{t.barcodePrinter?.subtitle || 'Add items to start printing labels'}</p>
+                                </div>
+                            </td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
+         </div>
+         {/* Footer Summary */}
+         {queue.length > 0 && (
+             <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex justify-between items-center">
+                 <span className="text-sm text-gray-500 dark:text-gray-400">{t.barcodePrinter?.totalLabels || 'Total Labels'}:</span>
+                 <span className="text-xl font-bold text-gray-900 dark:text-white">
+                     {queue.reduce((acc, item) => acc + item.quantity, 0)}
+                 </span>
+             </div>
+         )}
+      </div>
+    </div>
+  );
+};

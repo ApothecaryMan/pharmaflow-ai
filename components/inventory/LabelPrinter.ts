@@ -49,6 +49,7 @@ export interface PrintOptions {
     forceBasicTemplate?: boolean;
     showBorders?: boolean;
     pairedLabels?: boolean; // Print 2 labels per page (for dual-roll printers)
+    design?: LabelDesign;   // Explicit design to use (overrides default/autosave lookup)
 }
 
 // --- Constants ---
@@ -342,74 +343,16 @@ export const generateLabelHTML = (
     return `<div style="${labelContainerStyle}">${design.elements.map(generateElementHTML).join('')}</div>`;
 };
 
-/**
- * Generate basic fallback label HTML when no template is available
- */
-const generateBasicLabelHTML = (drug: Drug, quantity: number): string => {
-    const barcodeValue = drug.barcode || drug.internalCode || drug.id;
-    const barcodeText = `*${barcodeValue.replace(/\s/g, '').toUpperCase()}*`;
-
-    const labelHTML = `
-        <div class="label">
-            <div class="store-name">PharmaFlow Property</div>
-            <div class="name">${drug.name}</div>
-            <div class="meta">${drug.genericName} | Exp: ${drug.expiryDate}</div>
-            <div class="barcode">${barcodeText}</div>
-            <div class="price-tag">$${drug.price.toFixed(2)}</div>
-        </div>
-    `;
-
-    return `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Barcode: ${drug.name}</title>
-            <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-            <style>
-                body { 
-                    font-family: 'Roboto', sans-serif; 
-                    text-align: center; 
-                    padding: 20px; 
-                    display: flex; 
-                    flex-direction: column; 
-                    align-items: center; 
-                    justify-content: center;
-                    gap: 10px;
-                }
-                .label { 
-                    border: 2px solid #000; 
-                    padding: 15px; 
-                    display: inline-block; 
-                    border-radius: 8px; 
-                    width: 300px;
-                    page-break-inside: avoid;
-                }
-                .store-name { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; color: #555; }
-                .name { font-weight: 700; font-size: 16px; margin-bottom: 2px; line-height: 1.2; }
-                .meta { font-size: 11px; color: #444; margin-bottom: 10px; }
-                .barcode { 
-                    font-family: 'Libre Barcode 39 Text', cursive; 
-                    font-size: 52px; 
-                    line-height: 1; 
-                    margin: 5px 0 10px 0; 
-                    white-space: nowrap; 
-                    overflow: hidden;
-                }
-                .price-tag { 
-                    font-size: 24px; 
-                    font-weight: 800; 
-                    margin-top: 5px; 
-                    border-top: 1px dashed #999;
-                    padding-top: 5px;
-                }
-            </style>
-        </head>
-        <body>
-            ${Array(quantity).fill(labelHTML).join('')}
-            <script>window.onload = function() { window.print(); }</script>
-        </body>
-        </html>
-    `;
+// --- Constants ---
+const DEFAULT_LABEL_DESIGN: LabelDesign = {
+    selectedPreset: '38x12',
+    elements: [
+        { id: 'store', type: 'text', label: 'Store Name', x: 19, y: 0.7, fontSize: 4, align: 'center', isVisible: true, field: 'store' },
+        { id: 'name', type: 'text', label: 'Drug Name', x: 19, y: 1.8, fontSize: 7, fontWeight: 'bold', align: 'center', isVisible: true, field: 'name' },
+        { id: 'barcode', type: 'barcode', label: 'Barcode', x: 19, y: 5.5, fontSize: 24, align: 'center', isVisible: true, width: 36, barcodeFormat: 'code128' },
+        { id: 'price', type: 'text', label: 'Price', x: 1.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'left', isVisible: true, field: 'price' },
+        { id: 'expiry', type: 'text', label: 'Expiry', x: 36.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'right', isVisible: true, field: 'expiryDate' }
+    ]
 };
 
 // --- Main API ---
@@ -457,16 +400,8 @@ export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {})
         // Check for template
         const template = options.forceBasicTemplate ? null : getDefaultTemplate();
 
-        if (!template) {
-            // Fallback to basic template for first drug only
-            const firstItem = validItems[0];
-            printWindow.document.write(generateBasicLabelHTML(firstItem.drug, firstItem.quantity));
-            printWindow.document.close();
-            return;
-        }
-
-        // Use template
-        const design = template.design as LabelDesign;
+        // Use template (explicit > default > fallback to DEFAULT_LABEL_DESIGN)
+        const design = options.design || (template?.design as LabelDesign) || DEFAULT_LABEL_DESIGN;
         const dims = design.selectedPreset === 'custom'
             ? (design.customDims || { w: 38, h: 12 })
             : (LABEL_PRESETS[design.selectedPreset] || LABEL_PRESETS['38x12']);

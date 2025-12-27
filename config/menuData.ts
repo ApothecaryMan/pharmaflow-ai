@@ -284,6 +284,7 @@ export const PHARMACY_MENU: MenuItem[] = [
           "Product Categories",
           "Product Attributes",
           "Barcodes/SKU",
+          { label: "Barcode Printer", view: "barcode-printer" },
           { label: "Barcode Studio", view: "barcode-studio" },
           { label: "Stock Adjustment", view: "stock-adjustment" },
           "Product Images",

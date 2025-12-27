@@ -17,6 +17,7 @@ export const TRANSLATIONS = {
       suppliers: 'Suppliers',
       purchases: 'Purchases / Stock In',
       barcodeStudio: 'Barcode Studio',
+      barcodePrinter: 'Barcode Printer',
       stockAdjustment: 'Stock Adjustment',
     },
     menu: {
@@ -140,6 +141,26 @@ export const TRANSLATIONS = {
       },
       success: 'Stock adjustment saved successfully!',
       empty: 'No items to adjust. Search and add products.'
+    },
+    barcodePrinter: {
+      title: 'Barcode Printer',
+      subtitle: 'Queue and print product labels',
+      searchPlaceholder: 'Search product to print...',
+      addToQueue: 'Add to Queue',
+      printLabels: 'Print Labels',
+      totalLabels: 'Total Labels',
+      clearQueue: 'Clear Queue',
+      tableHeaders: {
+        item: 'Item',
+        expiry: 'Expiry',
+        qty: 'Qty',
+        actions: 'Actions'
+      },
+      alerts: {
+        queueEmpty: 'Print queue is empty. Add items to print.',
+        printing: 'Generating labels...',
+        printSuccess: 'Labels sent to printer'
+      }
     },
     suppliers: {
       title: 'Suppliers',
@@ -1245,6 +1266,7 @@ export const TRANSLATIONS = {
       suppliers: 'الموردين',
       purchases: 'المشتريات / المخزون',
       barcodeStudio: 'ستوديو الباركود',
+      barcodePrinter: 'طباعة الباركود',
       stockAdjustment: 'جرد المخزون',
     },
     menu: {
@@ -1384,6 +1406,26 @@ export const TRANSLATIONS = {
       },
       success: 'تم حفظ تعديل المخزون بنجاح!',
       empty: 'لا توجد عناصر للتعديل. ابحث وأضف منتجات.'
+    },
+    barcodePrinter: {
+      title: 'طباعة الباركود',
+      subtitle: 'قائمة انتظار وطباعة ملصقات المنتجات',
+      searchPlaceholder: 'بحث عن منتج للطباعة...',
+      addToQueue: 'إضافة للقائمة',
+      printLabels: 'طباعة الملصقات',
+      totalLabels: 'إجمالي الملصقات',
+      clearQueue: 'مسح القائمة',
+      tableHeaders: {
+        item: 'المنتج',
+        expiry: 'الصلاحية',
+        qty: 'الكمية',
+        actions: 'إجراءات'
+      },
+      alerts: {
+        queueEmpty: 'قائمة الطباعة فارغة. أضف عناصر للطباعة.',
+        printing: 'جاري إنشاء الملصقات...',
+        printSuccess: 'تم إرسال الملصقات للطابعة'
+      }
     },
     suppliers: {
       title: 'الموردين',
