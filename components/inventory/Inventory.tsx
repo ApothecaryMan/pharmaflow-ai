@@ -36,6 +36,10 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
   const menuRef = useRef<HTMLDivElement>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Print Label Modal State
+  const [printModalDrug, setPrintModalDrug] = useState<Drug | null>(null);
+  const [printQuantity, setPrintQuantity] = useState(1);
+
   // Form State for Add Product
   const [formData, setFormData] = useState<Partial<Drug>>({
     name: '', genericName: '', category: 'General', price: 0, costPrice: 0, stock: 0, expiryDate: '', description: '', barcode: '', internalCode: '', unitsPerPack: 1, maxDiscount: 10,
@@ -85,182 +89,18 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
   const handlePrintBarcode = (drug: Drug) => {
     setActiveMenuId(null);
-    
-    // Check for default template from BarcodeStudio
-    const defaultTemplateId = localStorage.getItem('pharma_label_default_template');
-    const savedTemplates = localStorage.getItem('pharma_label_templates');
-    
-    if (defaultTemplateId && savedTemplates) {
-      try {
-        const templates = JSON.parse(savedTemplates);
-        const defaultTemplate = templates.find((t: any) => t.id === defaultTemplateId);
-        
-        if (defaultTemplate && defaultTemplate.design) {
-          // Use the default template design
-          printWithTemplate(drug, defaultTemplate.design);
-          return;
-        }
-      } catch (e) {
-        console.error('Error loading template', e);
-      }
+    // Open print modal
+    setPrintModalDrug(drug);
+    setPrintQuantity(1);
+  };
+
+  const handleConfirmPrint = () => {
+    if (printModalDrug && printQuantity > 0) {
+      import('./LabelPrinter').then(({ printSingleLabel }) => {
+        printSingleLabel(printModalDrug, printQuantity);
+      });
     }
-    
-    // Fallback to basic print if no template
-    printBasicBarcode(drug);
-  };
-
-  const printWithTemplate = (drug: Drug, design: any) => {
-    const printWindow = window.open('', '', 'width=400,height=600');
-    if (!printWindow) return;
-
-    const MM_TO_PX = 3.78;
-    const dims = design.selectedPreset === 'custom' 
-      ? design.customDims 
-      : { '38x12': { w: 38, h: 12 }, '25x15': { w: 25, h: 15 }, '30x20': { w: 30, h: 20 }, '40x20': { w: 40, h: 20 }, '50x25': { w: 50, h: 25 } }[design.selectedPreset] || { w: 38, h: 12 };
-    
-    const barcodeSource = design.barcodeSource || 'global';
-    const barcodeValue = barcodeSource === 'internal' ? (drug.internalCode || drug.id) : (drug.barcode || drug.id);
-    const barcodeText = `*${barcodeValue.replace(/\\s/g, '').toUpperCase()}*`;
-    const storeName = design.storeName || 'PharmaFlow';
-    const hotline = design.hotline || '';
-
-    const getContent = (el: any): string => {
-      if (el.content && el.type === 'text' && !el.field) return el.content;
-      switch (el.field) {
-        case 'name': return drug.name;
-        case 'price': return `$${drug.price.toFixed(2)}`;
-        case 'store': return storeName;
-        case 'hotline': return hotline ? `Tel: ${hotline}` : '';
-        case 'internalCode': return drug.internalCode || '';
-        case 'expiryDate': return new Date(drug.expiryDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        case 'genericName': return drug.genericName || '';
-        default: return el.content || el.label || '';
-      }
-    };
-
-    const generateElementHTML = (el: any) => {
-      if (!el.isVisible) return '';
-      const content = getContent(el);
-      const alignTransform = el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0';
-      const commonStyle = `position: absolute; left: ${el.x}mm; top: ${el.y}mm; transform: translate(${alignTransform}, 0);`;
-      
-      if (el.type === 'text') {
-        return `<div style="${commonStyle} font-size: ${el.fontSize}px; font-weight: ${el.fontWeight || 'normal'}; color: ${el.color || 'black'}; white-space: nowrap;">${content}</div>`;
-      }
-      if (el.type === 'barcode') {
-        const format = el.barcodeFormat || 'code39-text';
-        let fontFamily = 'Libre Barcode 39 Text';
-        if (format === 'code39') fontFamily = 'Libre Barcode 39';
-        else if (format === 'code128-text') fontFamily = 'Libre Barcode 128 Text';
-        else if (format === 'code128') fontFamily = 'Libre Barcode 128';
-        return `<div style="${commonStyle} font-family: '${fontFamily}'; font-size: ${el.fontSize}px; line-height: 0.8; white-space: nowrap;">${barcodeText}</div>`;
-      }
-      return '';
-    };
-
-    const labelHTML = `<div class="label-container">${(design.elements || []).map(generateElementHTML).join('')}</div>`;
-    const borderStyle = design.borderStyle || 'none';
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Barcode: ${drug.name}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-        <style>
-          @page { size: ${dims.w}mm ${dims.h}mm; margin: 0; }
-          body { margin: 0; padding: 0; font-family: 'Roboto', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-          .label-container {
-            width: ${dims.w}mm; height: ${dims.h}mm;
-            position: relative; overflow: hidden;
-            background: white;
-            border: ${borderStyle === 'none' ? 'none' : `1px ${borderStyle} #000`};
-            border-radius: 4px;
-            box-sizing: border-box;
-          }
-        </style>
-      </head>
-      <body>
-        ${labelHTML}
-        <script>document.fonts.ready.then(() => window.print());</script>
-      </body>
-      </html>
-    `;
-
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-  };
-
-  const printBasicBarcode = (drug: Drug) => {
-    const printWindow = window.open('', '', 'width=400,height=600');
-    if (!printWindow) return;
-
-    // Use barcode or internal code or ID, defaulting to fallback
-    const barcodeValue = drug.barcode || drug.internalCode || drug.id;
-    // Note: Code 39 fonts usually require * wrapping the content
-    const barcodeText = `*${barcodeValue.replace(/\\s/g, '').toUpperCase()}*`;
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Barcode: ${drug.name}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-        <style>
-          body { 
-            font-family: 'Roboto', sans-serif; 
-            text-align: center; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-          }
-          .label { 
-            border: 2px solid #000; 
-            padding: 15px; 
-            display: inline-block; 
-            border-radius: 8px; 
-            width: 300px;
-            page-break-inside: avoid;
-          }
-          .store-name { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; color: #555; }
-          .name { font-weight: 700; font-size: 16px; margin-bottom: 2px; line-height: 1.2; }
-          .meta { font-size: 11px; color: #444; margin-bottom: 10px; }
-          .barcode { 
-            font-family: 'Libre Barcode 39 Text', cursive; 
-            font-size: 52px; 
-            line-height: 1; 
-            margin: 5px 0 10px 0; 
-            white-space: nowrap; 
-            overflow: hidden;
-          }
-          .price-tag { 
-            font-size: 24px; 
-            font-weight: 800; 
-            margin-top: 5px; 
-            border-top: 1px dashed #999;
-            padding-top: 5px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="label">
-          <div class="store-name">PharmaFlow Property</div>
-          <div class="name">${drug.name}</div>
-          <div class="meta">${drug.genericName} | Exp: ${drug.expiryDate}</div>
-          <div class="barcode">${barcodeText}</div>
-          <div class="price-tag">$${drug.price.toFixed(2)}</div>
-        </div>
-        <script>
-           window.onload = function() { window.print(); }
-        </script>
-      </body>
-      </html>
-    `;
-
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    setPrintModalDrug(null);
   };
 
   const handleOpenAdd = () => {
@@ -1240,6 +1080,70 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                 </button>
               </div>
             </form>
+        </Modal>
+      )}
+
+      {/* Print Quantity Modal */}
+      {printModalDrug && (
+        <Modal isOpen={true} onClose={() => setPrintModalDrug(null)} size="sm">
+          <div className="p-6 space-y-4">
+            <h3 className="text-lg font-bold text-center text-gray-900 dark:text-gray-100 flex items-center justify-center gap-2">
+              <span className="material-symbols-rounded">print</span>
+              {t.actionsMenu.printBarcode}
+            </h3>
+            
+            <div className="text-center">
+              <div className="font-medium text-gray-900 dark:text-gray-100">{printModalDrug.name}</div>
+              <div className="text-sm text-gray-500">{printModalDrug.genericName}</div>
+            </div>
+            
+            <div className="flex items-center justify-center gap-4">
+              <button 
+                type="button"
+                onClick={() => setPrintQuantity(Math.max(1, printQuantity - 1))}
+                className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
+              >
+                <span className="material-symbols-rounded text-xl">remove</span>
+              </button>
+              
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={printQuantity}
+                onChange={(e) => setPrintQuantity(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                className="w-20 h-12 text-center text-2xl font-bold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+              
+              <button 
+                type="button"
+                onClick={() => setPrintQuantity(Math.min(100, printQuantity + 1))}
+                className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
+              >
+                <span className="material-symbols-rounded text-xl">add</span>
+              </button>
+            </div>
+            
+            <p className="text-xs text-center text-gray-400">{t.actionsMenu.printQtyPrompt}</p>
+            
+            <div className="flex gap-3 pt-2">
+              <button 
+                type="button"
+                onClick={() => setPrintModalDrug(null)}
+                className="flex-1 py-3 rounded-xl font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
+              >
+                {t.modal.cancel}
+              </button>
+              <button 
+                type="button"
+                onClick={handleConfirmPrint}
+                className={`flex-1 py-3 rounded-xl font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2`}
+              >
+                <span className="material-symbols-rounded text-lg">print</span>
+                {t.actionsMenu.printBarcode}
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>

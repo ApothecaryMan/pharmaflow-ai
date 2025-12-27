@@ -213,7 +213,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   useEffect(() => {
     const designState = getDesignState();
     localStorage.setItem('pharma_label_design', JSON.stringify(designState));
-  }, [elements, selectedPreset, customDims, borderStyle, storeName, hotline, uploadedLogo, barcodeSource, activeTemplateId, showPrintBorders]);
+    localStorage.setItem('pharma_label_design', JSON.stringify(designState));
+  }, [elements, selectedPreset, customDims, borderStyle, storeName, hotline, uploadedLogo, barcodeSource, activeTemplateId, showPrintBorders, printOffsetX, printOffsetY]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -231,7 +232,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   }, [history, redoStack, elements]);
 
   const getDesignState = () => ({
-      selectedPreset, customDims, elements, borderStyle, storeName, hotline, uploadedLogo, barcodeSource, activeTemplateId
+      selectedPreset, customDims, elements, borderStyle, storeName, hotline, uploadedLogo, barcodeSource, activeTemplateId, showPrintBorders, printOffsetX, printOffsetY
   });
 
   const applyDesignState = (state: any) => {
@@ -243,6 +244,9 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       if (state.uploadedLogo) setUploadedLogo(state.uploadedLogo);
       if (state.barcodeSource) setBarcodeSource(state.barcodeSource);
       if (state.activeTemplateId) setActiveTemplateId(state.activeTemplateId);
+      if (typeof state.showPrintBorders !== 'undefined') setShowPrintBorders(state.showPrintBorders);
+      if (typeof state.printOffsetX !== 'undefined') setPrintOffsetX(state.printOffsetX);
+      if (typeof state.printOffsetY !== 'undefined') setPrintOffsetY(state.printOffsetY);
   };
 
   const initializeLayout = (presetKey: string) => {

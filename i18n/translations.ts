@@ -87,7 +87,8 @@ export const TRANSLATIONS = {
         view: 'View Details',
         printBarcode: 'Print Barcode',
         duplicate: 'Duplicate Drug',
-        adjustStock: 'Quick Stock Adjust'
+        adjustStock: 'Quick Stock Adjust',
+        printQtyPrompt: 'How many labels to print?'
       },
       noResults: 'No drugs found matching your search.',
       modal: {
@@ -1329,7 +1330,8 @@ export const TRANSLATIONS = {
         view: 'عرض التفاصيل',
         printBarcode: 'طباعة الباركود',
         duplicate: 'نسخ الدواء',
-        adjustStock: 'تعديل سريع للمخزون'
+        adjustStock: 'تعديل سريع للمخزون',
+        printQtyPrompt: 'كم عدد الملصقات للطباعة؟'
       },
       noResults: 'لم يتم العثور على أدوية مطابقة لبحثك.',
       modal: {
