@@ -528,7 +528,11 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       if (!selectedDrug) return el.content || el.label;
       if (el.content && el.type === 'text' && !el.field) return el.content;
       switch (el.field) {
-          case 'name': return selectedDrug.name;
+          case 'name': 
+              if (selectedDrug.dosageForm) {
+                  return `${selectedDrug.name} ${selectedDrug.dosageForm}`;
+              }
+              return selectedDrug.name;
           case 'price': 
             const unit = getUnitLabel(selectedDrug);
             return `$${selectedDrug.price.toFixed(2)}`;
@@ -929,7 +933,7 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                                     showMenu(e.clientX, e.clientY, getElementActions(el));
                                                 }}
                                             >
-                                                {el.type === 'text' && getElementContent(el)}
+                                                {el.type === 'text' && <span dangerouslySetInnerHTML={{__html: getElementContent(el)}} />}
                                                 {el.type === 'barcode' && (() => {
                                                     const format = el.barcodeFormat || 'code128';
                                                     let encoded = `*${(barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id)).replace(/\s/g, '').toUpperCase()}*`;

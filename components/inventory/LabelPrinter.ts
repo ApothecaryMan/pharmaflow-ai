@@ -151,7 +151,11 @@ const generateLabelHTML = (
         const expiryDate = expiryOverride || drug.expiryDate;
         
         switch (el.field) {
-            case 'name': return drug.name;
+            case 'name':
+                if (drug.dosageForm) {
+                    return `${drug.name} ${drug.dosageForm}`;
+                }
+                return drug.name;
             case 'price': return `${drug.price.toFixed(2)}`;
             case 'store': return receiptSettings.storeName;
             case 'hotline': return receiptSettings.hotline ? `${receiptSettings.hotline}` : '';
