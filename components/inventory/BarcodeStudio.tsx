@@ -7,11 +7,12 @@ import { SearchInput } from '../common/SearchInput';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { Modal } from '../common/Modal';
+import { TRANSLATIONS } from '../../i18n/translations';
 
 interface BarcodeStudioProps {
   inventory: Drug[];
   color: string;
-  t: any;
+  t: typeof TRANSLATIONS.EN.barcodeStudio;
 }
 
 // 1mm approx 3.78px at 96 DPI
@@ -63,6 +64,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   // Guidelines
   const [showVGuide, setShowVGuide] = useState(false);
   const [showHGuide, setShowHGuide] = useState(false);
+  const [alignmentGuides, setAlignmentGuides] = useState<{x?: number; y?: number}[]>([]);
 
   // Global Settings
   const [selectedPreset, setSelectedPreset] = useState<string>('38x12');
@@ -76,6 +78,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [printOffsetX, setPrintOffsetX] = useState(0); // Horizontal offset in mm (positive = right)
   const [printOffsetY, setPrintOffsetY] = useState(0); // Vertical offset in mm (positive = down)
   const [previewMode, setPreviewMode] = useState<'edit' | 'preview'>('edit'); // Dual-mode system
+  const [editingTemplateName, setEditingTemplateName] = useState(false);
+  const [tempTemplateName, setTempTemplateName] = useState('');
   
   // Data State - Dynamically synced from ReceiptDesigner localStorage
   const getReceiptSettings = () => {
@@ -410,10 +414,28 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       // Snap to center logic
       const centerX = dims.w / 2;
       const centerY = dims.h / 2;
-      const snapThreshold = 1.0; 
+      const snapThreshold = 0.5; 
 
       if (Math.abs(newX - centerX) < snapThreshold) { newX = centerX; setShowVGuide(true); } else { setShowVGuide(false); }
       if (Math.abs(newY - centerY) < snapThreshold) { newY = centerY; setShowHGuide(true); } else { setShowHGuide(false); }
+
+      // Element-to-element alignment detection
+      const otherElements = elements.filter(el => el.id !== selectedElementId && el.isVisible);
+      const guides: {x?: number; y?: number}[] = [];
+      
+      for (const other of otherElements) {
+          // Horizontal alignment (same Y)
+          if (Math.abs(newY - other.y) < snapThreshold) {
+              newY = other.y;
+              guides.push({ y: other.y });
+          }
+          // Vertical alignment (same X)
+          if (Math.abs(newX - other.x) < snapThreshold) {
+              newX = other.x;
+              guides.push({ x: other.x });
+          }
+      }
+      setAlignmentGuides(guides);
 
       setElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, x: newX, y: newY } : el));
   };
@@ -446,6 +468,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           isDragging.current = false;
           setShowVGuide(false);
           setShowHGuide(false);
+          setAlignmentGuides([]);
           if (JSON.stringify(dragStartSnapshot.current) !== JSON.stringify(elements)) {
               setHistory(prev => [...prev, dragStartSnapshot.current]);
               setRedoStack([]);
@@ -559,23 +582,23 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
   // Helper: Get context menu actions for a label element
   const getElementActions = (el: LabelElement) => [
-    { label: t.inspector.elements.remove, icon: 'delete', action: () => setElements(prev => prev.filter(item => item.id !== el.id)), danger: true },
+    { label: t.inspector.remove, icon: 'delete', action: () => setElements(prev => prev.filter(item => item.id !== el.id)), danger: true },
     { separator: true },
-    { label: t.inspector.elements.duplicate, icon: 'content_copy', action: () => {
+    { label: t.inspector.duplicate, icon: 'content_copy', action: () => {
       saveToHistory();
       const newEl = { ...el, id: Date.now().toString(), x: el.x + 2, y: el.y + 2 };
       setElements(prev => [...prev, newEl]);
     }},
-    { label: el.locked ? t.inspector.elements.unlock : t.inspector.elements.lock, icon: el.locked ? 'lock_open' : 'lock', action: () => {
+    { label: el.locked ? t.inspector.unlock : t.inspector.lock, icon: el.locked ? 'lock_open' : 'lock', action: () => {
       saveToHistory();
       setElements(prev => prev.map(item => item.id === el.id ? { ...item, locked: !item.locked } : item));
     }},
     { separator: true },
-    { label: 'Bring to Front', icon: 'flip_to_front', action: () => {
+    { label: t.inspector.bringToFront, icon: 'flip_to_front', action: () => {
       saveToHistory();
       setElements(prev => [...prev.filter(item => item.id !== el.id), el]);
     }},
-    { label: 'Send to Back', icon: 'flip_to_back', action: () => {
+    { label: t.inspector.sendToBack, icon: 'flip_to_back', action: () => {
       saveToHistory();
       setElements(prev => [el, ...prev.filter(item => item.id !== el.id)]);
     }}
@@ -687,39 +710,70 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                 <h2 className="text-2xl font-bold tracking-tight type-expressive">{t.title}</h2>
                 <div className="flex items-center gap-2">
                     <p className="text-sm text-gray-500 dark:text-gray-400">{t.subtitle}</p>
-                    {activeTemplateId && (
-                         <span className={`px-2 py-0.5 rounded-full text-[10px] bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 font-bold uppercase`}>
-                             {templates.find(t => t.id === activeTemplateId)?.name}
-                         </span>
-                    )}
+                    <div className="flex items-center gap-1">
+                        {activeTemplateId && (
+                            editingTemplateName ? (
+                                <input
+                                    type="text"
+                                    value={tempTemplateName}
+                                    onChange={e => setTempTemplateName(e.target.value)}
+                                    onBlur={() => {
+                                        if (tempTemplateName.trim()) {
+                                            setTemplates(prev => prev.map(t => 
+                                                t.id === activeTemplateId ? { ...t, name: tempTemplateName.trim() } : t
+                                            ));
+                                        }
+                                        setEditingTemplateName(false);
+                                    }}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            if (tempTemplateName.trim()) {
+                                                setTemplates(prev => prev.map(t => 
+                                                    t.id === activeTemplateId ? { ...t, name: tempTemplateName.trim() } : t
+                                                ));
+                                            }
+                                            setEditingTemplateName(false);
+                                        }
+                                        if (e.key === 'Escape') setEditingTemplateName(false);
+                                    }}
+                                    autoFocus
+                                    className={`px-2 py-0.5 rounded-full text-[10px] bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 font-bold uppercase border-2 border-${color}-400 outline-none w-20`}
+                                />
+                            ) : (
+                                <span 
+                                    onDoubleClick={() => {
+                                        const currentName = templates.find(t => t.id === activeTemplateId)?.name || '';
+                                        setTempTemplateName(currentName);
+                                        setEditingTemplateName(true);
+                                    }}
+                                    className={`px-2 py-0.5 rounded-full text-[10px] bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 font-bold uppercase cursor-pointer hover:bg-${color}-200 dark:hover:bg-${color}-800/40 transition-colors`}
+                                    title={t.tooltips.doubleClickRename}
+                                >
+                                    {templates.find(t => t.id === activeTemplateId)?.name}
+                                </span>
+                            )
+                        )}
+                        {/* Compact Action Badges */}
+                        <button onClick={handleUndo} disabled={history.length === 0} className={`w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors`} title={t.undo}>
+                            <span className="material-symbols-rounded text-[12px]">undo</span>
+                        </button>
+                        <button onClick={handleRedo} disabled={redoStack.length === 0} className={`w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors`} title={t.redo}>
+                            <span className="material-symbols-rounded text-[12px]">redo</span>
+                        </button>
+                        <button onClick={handleSaveClick} className={`w-5 h-5 flex items-center justify-center rounded-full bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 hover:bg-${color}-200 dark:hover:bg-${color}-800/40 transition-colors`} title={t.saveTemplate}>
+                            <span className="material-symbols-rounded text-[12px]">save</span>
+                        </button>
+                        <button onClick={() => initializeLayout(selectedPreset)} className={`w-5 h-5 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 hover:bg-red-200 dark:hover:bg-red-800/40 transition-colors`} title={t.toolbar.resetLayout}>
+                            <span className="material-symbols-rounded text-[12px]">restart_alt</span>
+                        </button>
+                    </div>
                 </div>
             </div>
              <div className="flex items-center gap-2">
-                {/* History Group */}
-                <div className="flex items-center gap-1 p-1 bg-white dark:bg-gray-900 rounded-full border border-gray-200 dark:border-gray-800">
-                    <button onClick={handleUndo} disabled={history.length === 0} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-30 text-gray-500 transition-colors" title={t.undo}>
-                        <span className="material-symbols-rounded text-[18px]">undo</span>
-                    </button>
-                    <button onClick={handleRedo} disabled={redoStack.length === 0} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-30 text-gray-500 transition-colors" title={t.redo}>
-                        <span className="material-symbols-rounded text-[18px]">redo</span>
-                    </button>
-                    <button onClick={() => initializeLayout(selectedPreset)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-500 transition-colors" title="Reset Layout">
-                        <span className="material-symbols-rounded text-[18px]">restart_alt</span>
-                    </button>
-                </div>
-                
-                {/* Actions Group */}
-                <div className="flex items-center gap-2">
-                    <button onClick={handleSaveClick} className={`px-3 py-2 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-${color}-600 dark:text-${color}-400 font-medium text-sm flex items-center gap-2 transition-colors`}>
-                         <span className="material-symbols-rounded text-[18px]">save</span>
-                         <span className="hidden sm:inline">{saveStatus || t.saveTemplate}</span>
-                    </button>
-                    
                      <button onClick={handlePrint} disabled={!selectedDrug} className={`px-4 py-2 rounded-full bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 text-white font-bold text-sm shadow-sm transition-all flex items-center gap-2`}>
                          <span className="material-symbols-rounded text-[18px]">print</span>
                          <span>{t.print}</span>
                     </button>
-                </div>
              </div>
         </div>
 
@@ -740,21 +794,22 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                             onClick={() => setPreviewMode('edit')} 
                             className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${previewMode === 'edit' ? 'bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500'}`}
                         >
-                            تعديل
+                            {t.mode.edit}
                         </button>
                         <button 
                             onClick={() => setPreviewMode('preview')} 
                             className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${previewMode === 'preview' ? 'bg-white dark:bg-gray-900 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-gray-500'}`}
                         >
-                            معاينة حقيقية
+                            {t.mode.truePreview}
                         </button>
                     </div>
                     
                     <div className="flex items-center gap-1 px-2 border-e border-gray-200 dark:border-gray-800">
-                        <button onClick={() => addElement('text')} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors" title="Add Text">
+                        <button onClick={() => addElement('text')} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors" title={t.toolbar.addText}>
                             <span className="material-symbols-rounded text-[18px]">title</span>
                         </button>
-                        <button onClick={() => document.getElementById('img-upload-hidden')?.click()} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors" title="Add Image">
+                        <button onClick={() => document.getElementById('img-upload-hidden')?.click()} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors" title={t.toolbar.addImage}>
+
                             <span className="material-symbols-rounded text-[18px]">image</span>
                         </button>
                         <input type="file" id="img-upload-hidden" className="hidden" accept="image/*" onChange={handleAddImageElement} />
@@ -771,7 +826,7 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
 
                  {/* Canvas */}
                  <div 
-                    className="flex-1 bg-gray-100 dark:bg-gray-950 rounded-3xl border border-gray-200 dark:border-gray-800 relative overflow-hidden flex items-center justify-center bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)]"
+                    className={`flex-1 bg-gray-100 dark:bg-gray-950 rounded-3xl border border-gray-200 dark:border-gray-800 relative flex items-center justify-center bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] ${previewMode === 'preview' ? 'overflow-hidden' : 'overflow-visible'}`}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                  >
@@ -797,25 +852,54 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                             />
                         </div>
                     ) : (
+                        /* Edit Mode - with virtual gray border for extended editing */
                         <div 
-                            ref={canvasRef} onMouseDown={() => setSelectedElementId(null)} onTouchStart={() => setSelectedElementId(null)}
-                            className="bg-white shadow-2xl relative transition-transform duration-75 ease-linear rounded-lg overflow-hidden"
-                            style={{
-                                width: `${dims.w}mm`, 
-                                height: `${showPairedPreview ? dims.h * 2 : dims.h}mm`, 
-                                transform: `scale(${zoom})`, 
-                                transformOrigin: 'center',
-                                border: borderStyle === 'none' ? '1px dashed #e2e8f0' : `1px ${borderStyle} #000`,
-                                paddingLeft: printOffsetX > 0 ? `${printOffsetX}mm` : undefined,
-                                paddingRight: printOffsetX < 0 ? `${Math.abs(printOffsetX)}mm` : undefined,
-                                paddingTop: printOffsetY > 0 ? `${printOffsetY}mm` : undefined,
-                                paddingBottom: printOffsetY < 0 ? `${Math.abs(printOffsetY)}mm` : undefined,
-                                boxSizing: 'border-box'
-                            }}
+                            className="relative"
+                            style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
                         >
+                            {/* Virtual gray border area */}
+                            <div 
+                                className="absolute bg-gray-200 dark:bg-gray-700 opacity-30 pointer-events-none"
+                                style={{
+                                    top: '-3mm', left: '-3mm', right: '-3mm', bottom: '-3mm',
+                                    border: '1px dashed #9ca3af'
+                                }}
+                            />
+                            <div 
+                                ref={canvasRef} onMouseDown={() => setSelectedElementId(null)} onTouchStart={() => setSelectedElementId(null)}
+                                className="bg-white shadow-2xl relative transition-transform duration-75 ease-linear overflow-visible"
+                                style={{
+                                    width: `${dims.w}mm`, 
+                                    height: `${showPairedPreview ? dims.h * 2 : dims.h}mm`, 
+                                    border: borderStyle === 'none' ? '1px dashed #e2e8f0' : `1px ${borderStyle} #000`,
+                                    paddingLeft: printOffsetX > 0 ? `${printOffsetX}mm` : undefined,
+                                    paddingRight: printOffsetX < 0 ? `${Math.abs(printOffsetX)}mm` : undefined,
+                                    paddingTop: printOffsetY > 0 ? `${printOffsetY}mm` : undefined,
+                                    paddingBottom: printOffsetY < 0 ? `${Math.abs(printOffsetY)}mm` : undefined,
+                                    boxSizing: 'border-box'
+                                }}
+                            >
                             {/* Guidelines */}
                             {showVGuide && <div className="absolute top-0 bottom-0 left-1/2 w-px bg-red-500 border-l border-dashed border-red-500 z-50 pointer-events-none" style={{ transform: 'translateX(-0.5px)' }}></div>}
                             
+                            {/* Element-to-Element Alignment Guides */}
+                            {alignmentGuides.map((guide, idx) => (
+                                <React.Fragment key={idx}>
+                                    {guide.x !== undefined && (
+                                        <div 
+                                            className="absolute top-0 bottom-0 w-px bg-blue-500 z-50 pointer-events-none" 
+                                            style={{ left: `${guide.x}mm`, opacity: 0.7 }}
+                                        />
+                                    )}
+                                    {guide.y !== undefined && (
+                                        <div 
+                                            className="absolute left-0 right-0 h-px bg-blue-500 z-50 pointer-events-none" 
+                                            style={{ top: `${guide.y}mm`, opacity: 0.7 }}
+                                        />
+                                    )}
+                                </React.Fragment>
+                            ))}
+
                             {/* Imaginary Gap Line */}
                             {showPairedPreview && (
                                 <div className="absolute left-0 right-0 border-t border-dashed border-gray-300 z-40 pointer-events-none" style={{ top: `${dims.h}mm` }}></div>
@@ -865,6 +949,7 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                 </React.Fragment>
                             ))}
                         </div>
+                        </div>
                     )}
                  </div>
             </div>
@@ -901,12 +986,12 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                             onClick={() => {
                                                 setDefaultTemplateId(activeTemplateId);
                                                 localStorage.setItem('pharma_label_default_template', activeTemplateId);
-                                                setSaveStatus(t.defaultSet || 'Set as default');
+                                                setSaveStatus(t.inspector.defaultSet);
                                                 setTimeout(() => setSaveStatus(''), 2000);
                                             }} 
                                             className={`text-xs font-bold ${defaultTemplateId === activeTemplateId ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-500 hover:text-yellow-600'}`}
                                         >
-                                            {defaultTemplateId === activeTemplateId ? '★ Default' : '☆ Set Default'}
+                                            {defaultTemplateId === activeTemplateId ? `★ ${t.inspector.defaultSet}` : `☆ ${t.inspector.defaultSet}`}
                                         </button>
                                         <span className="text-gray-300 dark:text-gray-700">|</span>
                                         <button onClick={() => deleteTemplate(activeTemplateId)} className="text-xs text-red-500 hover:text-red-600 font-bold">{t.deleteTemplate}</button>
@@ -951,11 +1036,11 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                         className={`w-4 h-4 rounded text-${color}-600 focus:ring-${color}-500`}
                                     />
                                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        عرض معاينة الملصق المزدوج
+                                        {t.printSettings.pairedPreview}
                                     </span>
                                 </label>
                                 <p className="text-[10px] text-gray-500 mt-1 px-1">
-                                    سيتم دائمًا طباعة ملصقين معًا ليتناسب مع الرول المزدوج.
+                                    {t.printSettings.pairedPreviewDesc}
                                 </p>
                             </div>
 
@@ -968,23 +1053,23 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                         className={`w-4 h-4 rounded text-${color}-600 focus:ring-${color}-500`}
                                     />
                                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        إظهار الحدود عند الطباعة
+                                        {t.printSettings.showBorders}
                                     </span>
                                 </label>
                                 <p className="text-[10px] text-gray-500 mt-1 px-1">
-                                    لمعرفة الحجم الدقيق أثناء الاختبار.
+                                    {t.printSettings.showBordersDesc}
                                 </p>
                             </div>
 
                             {/* Print Offset Calibration */}
                             <div className="space-y-3 p-3 bg-gray-50 dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800">
                                 <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase block">
-                                    معايرة الطباعة
+                                    {t.printSettings.printCalibration}
                                 </label>
                                 <div className="space-y-2">
                                     <div>
                                         <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
-                                            <span>أفقي (يمين/شمال)</span>
+                                            <span>{t.printSettings.horizontalOffset}</span>
                                             <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded">{printOffsetX}mm</span>
                                         </div>
                                         <input 
@@ -997,7 +1082,7 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                     </div>
                                     <div>
                                         <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
-                                            <span>رأسي (فوق/تحت)</span>
+                                            <span>{t.printSettings.verticalOffset}</span>
                                             <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded">{printOffsetY}mm</span>
                                         </div>
                                         <input 
@@ -1012,7 +1097,7 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                         onClick={() => { setPrintOffsetX(0); setPrintOffsetY(0); }}
                                         className="w-full text-[10px] py-1.5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                                     >
-                                        إعادة ضبط المعايرة
+                                        {t.printSettings.resetCalibration}
                                     </button>
                                 </div>
                             </div>

@@ -238,6 +238,7 @@ export const MENU_TRANSLATIONS = {
     'Bulk Upload': 'رفع جماعي',
     'Product Images': 'صور المنتجات',
     'Barcodes/SKU': 'الباركود/رمز المنتج',
+    'Barcode Studio': 'ستوديو الباركود',
     
     // Stock Control Items
     'Current Stock': 'المخزون الحالي',

@@ -878,13 +878,17 @@ export const TRANSLATIONS = {
         width: 'W (mm)',
         height: 'H (mm)',
         fontSize: 'Font Size',
+        fontWeight: 'Font Weight',
         align: 'Alignment',
         content: 'Content',
         remove: 'Remove Element',
         elements: 'Elements',
         duplicate: 'Duplicate Element',
         lock: 'Lock Position',
-        unlock: 'Unlock Position'
+        unlock: 'Unlock Position',
+        bringToFront: 'Bring to Front',
+        sendToBack: 'Send to Back',
+        defaultSet: 'Set as Default Template'
       },
       elements: {
         storeName: 'Store Name',
@@ -899,6 +903,28 @@ export const TRANSLATIONS = {
         image: 'Image/Logo',
         hotline: 'Hotline',
         genericName: 'Generic Name'
+      },
+      mode: {
+        edit: 'Edit',
+        truePreview: 'True Preview'
+      },
+      toolbar: {
+        addText: 'Add Text',
+        addImage: 'Add Image',
+        resetLayout: 'Reset Layout'
+      },
+      printSettings: {
+        pairedPreview: 'Show paired label preview',
+        pairedPreviewDesc: 'Two labels will always be printed together to fit the dual roll.',
+        showBorders: 'Show borders when printing',
+        showBordersDesc: 'To verify exact dimensions during testing.',
+        printCalibration: 'Print Calibration',
+        horizontalOffset: 'Horizontal (Left/Right)',
+        verticalOffset: 'Vertical (Up/Down)',
+        resetCalibration: 'Reset Calibration'
+      },
+      tooltips: {
+        doubleClickRename: 'Double-click to rename'
       }
     },
     returnHistory: {
@@ -2118,13 +2144,17 @@ export const TRANSLATIONS = {
         width: 'العرض (مم)',
         height: 'الارتفاع (مم)',
         fontSize: 'حجم الخط',
+        fontWeight: 'وزن الخط',
         align: 'المحاذاة',
         content: 'المحتوى',
         remove: 'حذف العنصر',
         elements: 'العناصر',
         duplicate: 'نسخ العنصر',
         lock: 'قفل الموقع',
-        unlock: 'فك القفل'
+        unlock: 'فك القفل',
+        bringToFront: 'إحضار للأمام',
+        sendToBack: 'إرسال للخلف',
+        defaultSet: 'تعيين كقالب افتراضي'
       },
       elements: {
         storeName: 'اسم المتجر',
@@ -2139,6 +2169,28 @@ export const TRANSLATIONS = {
         image: 'شعار/صورة',
         hotline: 'الخط الساخن',
         genericName: 'الاسم العلمي'
+      },
+      mode: {
+        edit: 'تعديل',
+        truePreview: 'معاينة حقيقية'
+      },
+      toolbar: {
+        addText: 'إضافة نص',
+        addImage: 'إضافة صورة',
+        resetLayout: 'إعادة ضبط التصميم'
+      },
+      printSettings: {
+        pairedPreview: 'عرض معاينة الملصق المزدوج',
+        pairedPreviewDesc: 'سيتم دائمًا طباعة ملصقين معًا ليتناسب مع الرول المزدوج.',
+        showBorders: 'إظهار الحدود عند الطباعة',
+        showBordersDesc: 'لمعرفة الحجم الدقيق أثناء الاختبار.',
+        printCalibration: 'معايرة الطباعة',
+        horizontalOffset: 'أفقي (يمين/شمال)',
+        verticalOffset: 'رأسي (فوق/تحت)',
+        resetCalibration: 'إعادة ضبط المعايرة'
+      },
+      tooltips: {
+        doubleClickRename: 'انقر مرتين لتغيير الاسم'
       }
     },
     returnHistory: {
