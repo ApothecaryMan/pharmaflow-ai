@@ -9,7 +9,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { Modal } from '../common/Modal';
 import { TRANSLATIONS } from '../../i18n/translations';
 
-import { generateLabelHTML, LabelDesign, getLabelElementContent, generateTemplateCSS, getReceiptSettings } from './LabelPrinter';
+import { generateLabelHTML, LabelDesign, getLabelElementContent, generateTemplateCSS, getReceiptSettings, DEFAULT_LABEL_DESIGN } from './LabelPrinter';
 import { useDebounce } from '../../hooks/useDebounce';
 
 
@@ -19,8 +19,11 @@ interface BarcodeStudioProps {
   t: typeof TRANSLATIONS.EN.barcodeStudio;
 }
 
-// 1mm approx 3.78px at 96 DPI
-const MM_TO_PX = 3.78;
+import { ScreenCalibration } from '../common/ScreenCalibration';
+import { BarcodePreview } from './BarcodePreview';
+
+// Default: 1mm approx 3.78px at 96 DPI
+const DEFAULT_MM_TO_PX = 3.78;
 
 // Industry Standard Thermal Label Sizes
 const LABEL_PRESETS: Record<string, { w: number, h: number, label: string }> = {
@@ -70,6 +73,17 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [showHGuide, setShowHGuide] = useState(false);
   const [alignmentGuides, setAlignmentGuides] = useState<{x?: number; y?: number}[]>([]);
 
+  // Screen Calibration
+  const [mmToPx, setMmToPx] = useState(DEFAULT_MM_TO_PX);
+  const [showCalibrationModal, setShowCalibrationModal] = useState(false);
+
+  useEffect(() => {
+      const savedRatio = localStorage.getItem('pharma_screen_calibration_ratio');
+      if (savedRatio) {
+          setMmToPx(parseFloat(savedRatio));
+      }
+  }, []);
+
   // Global Settings
   const [selectedPreset, setSelectedPreset] = useState<string>('38x12');
   const [customDims, setCustomDims] = useState<{ w: number, h: number }>({ w: 38, h: 12 });
@@ -77,13 +91,14 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [borderStyle, setBorderStyle] = useState<'none' | 'solid' | 'dashed'>('none');
   const [printMode, setPrintMode] = useState<'single' | 'sheet'>('single');
   const [barcodeSource, setBarcodeSource] = useState<'global' | 'internal'>('global');
+  // Constants
   const [showPairedPreview, setShowPairedPreview] = useState(false);
   const [showPrintBorders, setShowPrintBorders] = useState(true);
-  const [printOffsetX, setPrintOffsetX] = useState(0); // Horizontal offset in mm (positive = right)
-  const [printOffsetY, setPrintOffsetY] = useState(0); // Vertical offset in mm (positive = down)
-  const [previewMode, setPreviewMode] = useState<'edit' | 'preview'>('edit'); // Dual-mode system
+  const [printOffsetX, setPrintOffsetX] = useState(0); 
+  const [printOffsetY, setPrintOffsetY] = useState(0);
   const [editingTemplateName, setEditingTemplateName] = useState(false);
   const [tempTemplateName, setTempTemplateName] = useState('');
+  const [showHitboxCalibration, setShowHitboxCalibration] = useState(false);
   
   // Data State - Dynamically synced from ReceiptDesigner localStorage
   const [receiptSettings, setLocalReceiptSettings] = useState(getReceiptSettings);
@@ -272,15 +287,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const initializeLayout = (presetKey: string) => {
       const { w, h } = presetKey === 'custom' ? customDims : (LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x12']);
       
-      const newElements: LabelElement[] = [
-          { id: 'store', type: 'text', label: 'Store Name', x: w/2, y: 0.7, fontSize: 4, align: 'center', isVisible: true, field: 'store' },
-          { id: 'name', type: 'text', label: 'Drug Name', x: w/2, y: 1.8, fontSize: 7, fontWeight: 'bold', align: 'center', isVisible: true, field: 'name' },
-          { id: 'barcode', type: 'barcode', label: 'Barcode', x: w/2, y: 5.5, fontSize: 24, align: 'center', isVisible: true, width: w * 0.95, barcodeFormat: 'code128' },
-          { id: 'price', type: 'text', label: 'Price', x: 1.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'left', isVisible: true, field: 'price' },
-          { id: 'expiry', type: 'text', label: 'Expiry', x: w - 1.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'right', isVisible: true, field: 'expiryDate' },
-          { id: 'hotline', type: 'text', label: 'Hotline', x: w/2, y: 0.7, fontSize: 4, align: 'center', isVisible: false, field: 'hotline' },
-          { id: 'generic', type: 'text', label: 'Generic Name', x: w/2, y: 3.8, fontSize: 5, align: 'center', isVisible: false, field: 'genericName' }
-      ];
+      const newElements = [...DEFAULT_LABEL_DESIGN.elements];
       setElements(newElements);
       setHistory([]);
       setRedoStack([]);
@@ -429,8 +436,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       const dxPx = clientX - dragStart.current.x;
       const dyPx = clientY - dragStart.current.y;
       
-      const dxMm = dxPx / (MM_TO_PX * zoom);
-      const dyMm = dyPx / (MM_TO_PX * zoom);
+      const dxMm = dxPx / (mmToPx * zoom);
+      const dyMm = dyPx / (mmToPx * zoom);
 
       let newX = Number((initialElemPos.current.x + dxMm).toFixed(1));
       let newY = Number((initialElemPos.current.y + dyMm).toFixed(1));
@@ -518,8 +525,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
               
               if (canvasRef.current) {
                   const rect = canvasRef.current.getBoundingClientRect();
-                  const x = (e.clientX - rect.left) / (MM_TO_PX * zoom);
-                  const y = (e.clientY - rect.top) / (MM_TO_PX * zoom);
+                  const x = (e.clientX - rect.left) / (mmToPx * zoom);
+                  const y = (e.clientY - rect.top) / (mmToPx * zoom);
                   
                   saveToHistory();
                   setElements(prev => prev.map(el => 
@@ -759,22 +766,16 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                         <span className="text-xs font-bold w-10 text-center text-gray-700 dark:text-gray-300">{Math.round(zoom * 100)}%</span>
                         <button onClick={() => setZoom(Math.min(8, zoom + 0.5))} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors"><span className="material-symbols-rounded text-[18px]">add</span></button>
                     </div>
+                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700"></div>
+                    <button 
+                         onClick={() => setShowCalibrationModal(true)} 
+                         className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors" 
+                         title={t.calibration?.title || "Calibrate Screen"}
+                    >
+                        <span className="material-symbols-rounded text-[18px]">aspect_ratio</span>
+                    </button>
 
-                    {/* Mode Toggle */}
-                    <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg">
-                        <button 
-                            onClick={() => setPreviewMode('edit')} 
-                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${previewMode === 'edit' ? 'bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500'}`}
-                        >
-                            {t.mode.edit}
-                        </button>
-                        <button 
-                            onClick={() => setPreviewMode('preview')} 
-                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${previewMode === 'preview' ? 'bg-white dark:bg-gray-900 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-gray-500'}`}
-                        >
-                            {t.mode.truePreview}
-                        </button>
-                    </div>
+
                     
                     <div className="flex items-center gap-1 px-2 border-e border-gray-200 dark:border-gray-800">
                         <button onClick={() => addElement('text')} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors" title={t.toolbar.addText}>
@@ -798,141 +799,32 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
 
                  {/* Canvas */}
                  <div 
-                    className={`flex-1 bg-gray-100 dark:bg-gray-950 rounded-3xl border border-gray-200 dark:border-gray-800 relative flex items-center justify-center bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] ${previewMode === 'preview' ? 'overflow-hidden' : 'overflow-visible'}`}
+                    className={`flex-1 bg-gray-100 dark:bg-gray-950 rounded-3xl border border-gray-200 dark:border-gray-800 relative flex items-center justify-center bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] overflow-hidden`}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                  >
                     {!selectedDrug ? (
                         <div className="text-center text-gray-400 dark:text-gray-500"><span className="material-symbols-rounded text-6xl opacity-20 mb-2">touch_app</span><p>{t.noProductSelected}</p></div>
-                    ) : previewMode === 'preview' ? (
-                        /* True Preview Mode - Uses EXACT same HTML as print */
-                        <div 
-                            className="bg-white shadow-2xl overflow-hidden"
-                            style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
-                        >
-                            <iframe
-                                srcDoc={generatePrintHTML(false, !showPairedPreview)}
-                                scrolling="no"
-                                style={{ 
-                                    width: `${dims.w}mm`, 
-                                    height: `${showPairedPreview ? dims.h * 2 : dims.h}mm`,
-                                    border: 'none',
-                                    display: 'block',
-                                    overflow: 'hidden'
-                                }}
-                                title="True Preview"
-                            />
-                        </div>
                     ) : (
-                        /* Edit Mode - with virtual gray border for extended editing */
-                        <div 
-                            className="relative"
-                            style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
-                        >
-                            {/* Virtual gray border area */}
-                            <div 
-                                className="absolute bg-gray-200 dark:bg-gray-700 opacity-30 pointer-events-none"
-                                style={{
-                                    top: '-3mm', left: '-3mm', right: '-3mm', bottom: '-3mm',
-                                    border: '1px dashed #9ca3af'
-                                }}
-                            />
-                            <div 
-                                ref={canvasRef} onMouseDown={() => setSelectedElementId(null)} onTouchStart={() => setSelectedElementId(null)}
-                                className="bg-white shadow-2xl relative transition-transform duration-75 ease-linear overflow-visible"
-                                style={{
-                                    width: `${dims.w}mm`, 
-                                    height: `${showPairedPreview ? dims.h * 2 : dims.h}mm`, 
-                                    border: borderStyle === 'none' ? '1px dashed #e2e8f0' : `1px ${borderStyle} #000`,
-                                    paddingLeft: printOffsetX > 0 ? `${printOffsetX}mm` : undefined,
-                                    paddingRight: printOffsetX < 0 ? `${Math.abs(printOffsetX)}mm` : undefined,
-                                    paddingTop: printOffsetY > 0 ? `${printOffsetY}mm` : undefined,
-                                    paddingBottom: printOffsetY < 0 ? `${Math.abs(printOffsetY)}mm` : undefined,
-                                    boxSizing: 'border-box'
-                                }}
-                            >
-                            {/* Guidelines */}
-                            {showVGuide && <div className="absolute top-0 bottom-0 left-1/2 w-px bg-red-500 border-l border-dashed border-red-500 z-50 pointer-events-none" style={{ transform: 'translateX(-0.5px)' }}></div>}
-                            
-                            {/* Element-to-Element Alignment Guides */}
-                            {alignmentGuides.map((guide, idx) => (
-                                <React.Fragment key={idx}>
-                                    {guide.x !== undefined && (
-                                        <div 
-                                            className="absolute top-0 bottom-0 w-px bg-blue-500 z-50 pointer-events-none" 
-                                            style={{ left: `${guide.x}mm`, opacity: 0.7 }}
-                                        />
-                                    )}
-                                    {guide.y !== undefined && (
-                                        <div 
-                                            className="absolute left-0 right-0 h-px bg-blue-500 z-50 pointer-events-none" 
-                                            style={{ top: `${guide.y}mm`, opacity: 0.7 }}
-                                        />
-                                    )}
-                                </React.Fragment>
-                            ))}
-
-                            {/* Imaginary Gap Line */}
-                            {showPairedPreview && (
-                                <div className="absolute left-0 right-0 border-t border-dashed border-gray-300 z-40 pointer-events-none" style={{ top: `${dims.h}mm` }}></div>
-                            )}
-
-                            {[0, ...(showPairedPreview ? [1] : [])].map(offsetIndex => (
-                                <React.Fragment key={offsetIndex}>
-                                    {elements.filter(el => el.isVisible).map(el => {
-                                        const yOffset = offsetIndex * dims.h;
-                                        return (
-                                            <div key={`${el.id}-${offsetIndex}`} onMouseDown={(e) => handleMouseDown(e, el.id)} onTouchStart={(e) => handleTouchStart(e, el.id)}
-                                                className={`absolute cursor-move select-none touch-none ${selectedElementId === el.id ? 'ring-1 ring-blue-500 z-10' : ''}`}
-                                                style={{
-                                                    left: `${el.x}mm`, top: `${el.y + yOffset}mm`,
-                                                    transform: `translate(${el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0'}, 0)`,
-                                                    fontSize: `${el.fontSize}px`, // Restore original fontSize since container is now naturally sized
-                                                    fontWeight: el.fontWeight, color: el.color || 'black', whiteSpace: 'nowrap',
-                                                    opacity: offsetIndex > 0 ? 0.6 : 1
-                                                }}
-                                                onContextMenu={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    showMenu(e.clientX, e.clientY, getElementActions(el));
-                                                }}
-                                            >
-                                                {el.type === 'text' && (
-                                                    <span 
-                                                        style={{ 
-                                                            fontSize: `${el.fontSize}px`,
-                                                            fontWeight: el.fontWeight || 'normal',
-                                                            color: el.color || 'black',
-                                                            whiteSpace: 'nowrap'
-                                                        }}
-                                                    >
-                                                        {getElementContent(el)}
-                                                    </span>
-                                                )}
-                                                {el.type === 'barcode' && (() => {
-                                                    const format = el.barcodeFormat || 'code128';
-                                                    let encoded = `*${(barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id)).replace(/\s/g, '').toUpperCase()}*`;
-                                                    let fontFamily = '"Libre Barcode 39 Text", cursive';
-                                                    
-                                                    if (format === 'code39') { fontFamily = '"Libre Barcode 39", cursive'; }
-                                                    else if (format === 'code39-text') { fontFamily = '"Libre Barcode 39 Text", cursive'; }
-                                                    else if (format.startsWith('code128')) {
-                                                        const rawVal = barcodeSource === 'internal' ? (selectedDrug.internalCode || selectedDrug.id) : (selectedDrug.barcode || selectedDrug.id);
-                                                        encoded = encodeCode128(rawVal);
-                                                        fontFamily = format === 'code128-text' ? '"Libre Barcode 128 Text", cursive' : '"Libre Barcode 128", cursive';
-                                                    }
-
-                                                    return <div style={{ fontFamily, fontSize: `${el.fontSize}px`, lineHeight: 0.8, paddingTop: '1px', whiteSpace: 'nowrap' }}>{encoded}</div>;
-                                                })()}
-                                                {el.type === 'qrcode' && qrCodeDataUrl && <img src={qrCodeDataUrl} style={{ width: `${el.width || 10}mm`, height: `${el.height || 10}mm` }} draggable={false} />}
-                                                {el.type === 'image' && (el.id === 'logo' ? uploadedLogo : el.content) && <img src={el.id === 'logo' ? uploadedLogo : el.content} style={{ width: `${el.width || 10}mm`, height: `${el.height || 10}mm`, objectFit: 'contain' }} draggable={false} />}
-                                            </div>
-                                        );
-                                    })}
-                                </React.Fragment>
-                            ))}
-                        </div>
-                        </div>
+                        <BarcodePreview
+                            elements={elements}
+                            selectedElementId={selectedElementId}
+                            zoom={zoom}
+                            dims={dims}
+                            showPairedPreview={showPairedPreview}
+                            drug={selectedDrug!} // Safe assertion as check is above
+                            receiptSettings={receiptSettings}
+                            barcodeSource={barcodeSource}
+                            showPrintBorders={showPrintBorders}
+                            uploadedLogo={uploadedLogo}
+                            qrCodeDataUrl={qrCodeDataUrl}
+                            printOffsetX={printOffsetX}
+                            printOffsetY={printOffsetY}
+                            onSelect={setSelectedElementId}
+                            onDragStart={(e, id) => {
+                                handleMouseDown(e as React.MouseEvent, id);
+                            }}
+                        />
                     )}
                  </div>
             </div>
@@ -1114,10 +1006,8 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                             onChange={(e) => handlePropertyChange('barcodeFormat', e.target.value)}
                                             className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"
                                         >
-                                            <option value="code128">Code 128 (Lines Only)</option>
-                                            <option value="code128-text">Code 128 (Text)</option>
-                                            <option value="code39">Code 39 (Lines Only)</option>
-                                            <option value="code39-text">Code 39 (Standard Text)</option>
+                                            <option value="code128">Code 128</option>
+                                            <option value="code39">Code 39</option>
                                         </select>
                                     </div>
                                 )}
@@ -1163,6 +1053,96 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                         QR Code content is automatically generated from the selected barcode source.
                                     </div>
                                 )}
+                                {/* Hitbox Calibration */}
+                                <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800/30">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase flex items-center gap-1">
+                                            <span className="material-symbols-rounded text-xs">tune</span>
+                                            Hitbox Calibration
+                                        </label>
+                                        <div className="flex gap-1">
+                                            <button 
+                                                onClick={() => setShowHitboxCalibration(!showHitboxCalibration)}
+                                                className="p-1 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded transition-colors"
+                                            >
+                                                <span className="material-symbols-rounded text-sm">{showHitboxCalibration ? 'expand_less' : 'expand_more'}</span>
+                                            </button>
+                                            <button 
+                                                onClick={() => { 
+                                                    handlePropertyChange('hitboxOffsetX' as any, 0); 
+                                                    handlePropertyChange('hitboxOffsetY' as any, 0); 
+                                                    handlePropertyChange('hitboxWidth' as any, undefined); 
+                                                    handlePropertyChange('hitboxHeight' as any, undefined); 
+                                                }}
+                                                className="p-1 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded transition-colors"
+                                                title="Reset Calibration"
+                                            >
+                                                <span className="material-symbols-rounded text-sm">restart_alt</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {showHitboxCalibration && (
+                                        <div className="space-y-2 mt-2">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                                        <span>Offset X</span>
+                                                        <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded">{((selectedElement as any).hitboxOffsetX || 0).toFixed(1)}mm</span>
+                                                    </div>
+                                                    <input 
+                                                        type="range" 
+                                                        min="-5" max="5" step="0.1"
+                                                        value={(selectedElement as any).hitboxOffsetX || 0}
+                                                        onChange={e => handlePropertyChange('hitboxOffsetX' as any, parseFloat(e.target.value))}
+                                                        className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                                        <span>Offset Y</span>
+                                                        <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded">{((selectedElement as any).hitboxOffsetY || 0).toFixed(1)}mm</span>
+                                                    </div>
+                                                    <input 
+                                                        type="range" 
+                                                        min="-5" max="5" step="0.1"
+                                                        value={(selectedElement as any).hitboxOffsetY || 0}
+                                                        onChange={e => handlePropertyChange('hitboxOffsetY' as any, parseFloat(e.target.value))}
+                                                        className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                                        <span>Width</span>
+                                                        <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded">{((selectedElement as any).hitboxWidth || (selectedElement.type === 'barcode' ? 30 : 10)).toFixed(0)}mm</span>
+                                                    </div>
+                                                    <input 
+                                                        type="range" 
+                                                        min="5" max="50" step="1"
+                                                        value={(selectedElement as any).hitboxWidth || (selectedElement.type === 'barcode' ? 30 : 10)}
+                                                        onChange={e => handlePropertyChange('hitboxWidth' as any, parseFloat(e.target.value))}
+                                                        className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                                        <span>Height</span>
+                                                        <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded">{((selectedElement as any).hitboxHeight || (selectedElement.type === 'barcode' ? 8 : 4)).toFixed(0)}mm</span>
+                                                    </div>
+                                                    <input 
+                                                        type="range" 
+                                                        min="2" max="20" step="0.5"
+                                                        value={(selectedElement as any).hitboxHeight || (selectedElement.type === 'barcode' ? 8 : 4)}
+                                                        onChange={e => handlePropertyChange('hitboxHeight' as any, parseFloat(e.target.value))}
+                                                        className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
                                 <button onClick={() => toggleVisibility(selectedElement.id)} className="w-full py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100">{t.inspector.remove}</button>
                             </>
                         )
@@ -1194,6 +1174,18 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                  </div>
              </div>
         </Modal>
+        
+        {/* Calibration Modal */}
+        <ScreenCalibration 
+            isOpen={showCalibrationModal} 
+            onClose={() => setShowCalibrationModal(false)}
+            onSave={(ratio) => {
+                setMmToPx(ratio);
+                localStorage.setItem('pharma_screen_calibration_ratio', ratio.toString());
+            }}
+            initialValue={mmToPx}
+            t={t}
+        />
     </div>
   );
 };

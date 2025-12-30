@@ -945,6 +945,12 @@ export const TRANSLATIONS = {
         verticalOffset: 'Vertical (Up/Down)',
         resetCalibration: 'Reset Calibration'
       },
+      calibration: {
+          title: 'Screen Calibration',
+          subtitle: 'Adjust scale to match physical size',
+          button: 'Calibrate',
+          reset: 'Reset Default'
+      },
       tooltips: {
         doubleClickRename: 'Double-click to rename'
       }
@@ -1407,6 +1413,7 @@ export const TRANSLATIONS = {
       success: 'تم حفظ تعديل المخزون بنجاح!',
       empty: 'لا توجد عناصر للتعديل. ابحث وأضف منتجات.'
     },
+
     barcodePrinter: {
       title: 'طباعة الباركود',
       subtitle: 'قائمة انتظار وطباعة ملصقات المنتجات',
@@ -2149,6 +2156,12 @@ export const TRANSLATIONS = {
     barcodeStudio: {
       title: 'ستوديو الباركود',
       subtitle: 'تصميم وطباعة ملصقات احترافية للمنتجات',
+      calibration: {
+          title: 'معايرة الشاشة',
+          subtitle: 'ضبط المقياس لمطابقة الحجم الحقيقي',
+          button: 'معايرة',
+          reset: 'استعادة الافتراضي'
+      },
       selectProduct: 'اختر المنتج',
       settings: 'إعدادات الملصق',
       preview: 'المعاينة الحية',

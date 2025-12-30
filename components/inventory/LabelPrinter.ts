@@ -27,6 +27,11 @@ export interface LabelElement {
     field?: keyof Drug | 'unit' | 'store' | 'hotline';
     locked?: boolean;
     barcodeFormat?: 'code39' | 'code39-text' | 'code128' | 'code128-text';
+    // Hitbox calibration (manual adjustment for selection accuracy)
+    hitboxOffsetX?: number; // mm offset for selection box
+    hitboxOffsetY?: number; // mm offset for selection box
+    hitboxWidth?: number;   // mm width override for selection box
+    hitboxHeight?: number;  // mm height override for selection box
 }
 
 export interface LabelDesign {
@@ -344,7 +349,8 @@ export const generateLabelHTML = (
 };
 
 // --- Constants ---
-const DEFAULT_LABEL_DESIGN: LabelDesign = {
+// --- Constants ---
+export const DEFAULT_LABEL_DESIGN: LabelDesign = {
     selectedPreset: '38x12',
     elements: [
         { id: 'store', type: 'text', label: 'Store Name', x: 19, y: 0.7, fontSize: 4, align: 'center', isVisible: true, field: 'store' },

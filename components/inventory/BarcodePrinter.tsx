@@ -3,6 +3,7 @@ import { Drug } from '../../types';
 import { SearchInput } from '../common/SearchInput';
 import { printLabels, PrintLabelItem } from './LabelPrinter';
 import { useSmartDirection } from '../common/SmartInputs';
+import { useContextMenu } from '../common/ContextMenu';
 
 interface BarcodePrinterProps {
   inventory: Drug[];
@@ -16,6 +17,7 @@ interface QueueItem extends PrintLabelItem {
 }
 
 export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color, t, language }) => {
+  const { showMenu } = useContextMenu();
   const [search, setSearch] = useState('');
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -49,13 +51,46 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
   }, []);
 
   const addToQueue = (drug: Drug) => {
-    const newItem: QueueItem = {
-      id: Date.now().toString(),
-      drug,
-      quantity: 1,
-      expiryDateOverride: drug.expiryDate || ''
-    };
-    setQueue(prev => [...prev, newItem]);
+    // Format expiry date to MM/YY
+    let formattedExpiry = '';
+    if (drug.expiryDate) {
+      const date = new Date(drug.expiryDate);
+      if (!isNaN(date.getTime())) {
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = String(date.getFullYear()).slice(-2);
+        formattedExpiry = `${month}/${year}`;
+      } else {
+        formattedExpiry = drug.expiryDate;
+      }
+    }
+    
+    setQueue(prev => {
+      // Check if item already exists with same drug ID and expiry
+      const existingIndex = prev.findIndex(item => 
+          item.drug.id === drug.id && 
+          item.expiryDateOverride === formattedExpiry
+      );
+
+      if (existingIndex >= 0) {
+          // Update quantity of existing item
+          const updated = [...prev];
+          updated[existingIndex] = {
+              ...updated[existingIndex],
+              quantity: updated[existingIndex].quantity + 1
+          };
+          return updated;
+      }
+
+      // Add new item
+      const newItem: QueueItem = {
+          id: Date.now().toString(),
+          drug,
+          quantity: 1,
+          expiryDateOverride: formattedExpiry
+      };
+      return [...prev, newItem];
+    });
+
     setSearch('');
     setShowSuggestions(false);
   };
@@ -68,8 +103,22 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
     setQueue(prev => prev.map(item => item.id === id ? { ...item, quantity: Math.max(1, qty) } : item));
   };
 
-  const updateExpiry = (id: string, date: string) => {
-    setQueue(prev => prev.map(item => item.id === id ? { ...item, expiryDateOverride: date } : item));
+  const updateExpiryAndBatch = (id: string, newBatch: Drug) => {
+    let formattedExpiry = '';
+    if (newBatch.expiryDate) {
+      const date = new Date(newBatch.expiryDate);
+      if (!isNaN(date.getTime())) {
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = String(date.getFullYear()).slice(-2);
+        formattedExpiry = `${month}/${year}`;
+      }
+    }
+
+    setQueue(prev => prev.map(item => 
+        item.id === id 
+            ? { ...item, drug: newBatch, expiryDateOverride: formattedExpiry } 
+            : item
+    ));
   };
 
   const handlePrint = () => {
@@ -106,7 +155,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
   };
 
   return (
-    <div className="h-full flex flex-col gap-4">
+    <div className="h-full flex flex-col gap-4 overflow-hidden">
       {/* Header Card */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -141,19 +190,20 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative z-20" ref={searchRef}>
-          <SearchInput
-            value={search}
-            onSearchChange={(val) => {
-                setSearch(val);
-                setShowSuggestions(true);
-            }}
-            placeholder={t.barcodePrinter?.searchPlaceholder || 'Search product to print...'}
-            className="w-full"
-            autoComplete="off"
-            onFocus={() => setShowSuggestions(true)}
-          />
+        {/* Search Bar with Total Badge */}
+        <div className="flex items-center gap-3">
+          <div className="relative z-20 flex-1" ref={searchRef}>
+            <SearchInput
+              value={search}
+              onSearchChange={(val) => {
+                  setSearch(val);
+                  setShowSuggestions(true);
+              }}
+              placeholder={t.barcodePrinter?.searchPlaceholder || 'Search product to print...'}
+              className="w-full"
+              autoComplete="off"
+              onFocus={() => setShowSuggestions(true)}
+            />
           
           {/* Suggestions Dropdown */}
           {showSuggestions && search.trim() && (
@@ -166,8 +216,8 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
                             className="w-full text-start p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between group border-b border-gray-100 dark:border-gray-800 last:border-0"
                         >
                             <div className="flex flex-col">
-                                <span className="font-medium text-gray-900 dark:text-white">{drug.name}</span>
-                                <span className="text-xs text-gray-500">{drug.genericName}</span>
+                                <span className="font-medium text-gray-900 dark:text-white">{drug.name} {drug.dosageForm}</span>
+
                             </div>
                             <div className="flex flex-col items-end">
                                 <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-600 dark:text-gray-300">
@@ -185,95 +235,116 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
             </div>
           )}
         </div>
+          
+          {/* Total Labels Badge */}
+          {queue.length > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl shrink-0">
+              <span className="text-xs text-gray-500 dark:text-gray-400">{t.barcodePrinter?.totalLabels || 'Labels'}:</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">
+                {queue.reduce((acc, item) => acc + item.quantity, 0)}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Queue Table */}
-      <div className="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col">
-         <div className="overflow-x-auto flex-1">
-            <table className="w-full text-left border-collapse">
-                <thead>
-                    <tr className="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-800">
-                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-sm">{t.barcodePrinter?.tableHeaders?.item || 'Item'}</th>
-                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-sm w-48">{t.barcodePrinter?.tableHeaders?.expiry || 'Expiry'}</th>
-                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-sm w-32">{t.barcodePrinter?.tableHeaders?.qty || 'Qty'}</th>
-                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-sm w-20 text-center">{t.barcodePrinter?.tableHeaders?.actions || 'Actions'}</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {queue.length > 0 ? (
-                        queue.map((item) => (
-                            <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-                                <td className="p-4">
-                                    <div className="flex flex-col">
-                                        <span className="font-medium text-gray-900 dark:text-white">{item.drug.name}</span>
-                                        <span className="text-xs text-gray-500">{item.drug.genericName}</span>
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    <input 
-                                        type="text" 
-                                        value={item.expiryDateOverride}
-                                        onChange={(e) => updateExpiry(item.id, e.target.value)}
-                                        placeholder="MM/YYYY"
-                                        className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all placeholder-gray-400"
-                                    />
-                                </td>
-                                <td className="p-4">
-                                    <div className="flex items-center gap-2">
-                                        <button 
-                                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors"
-                                        >
-                                            -
-                                        </button>
-                                        <input 
-                                            type="number"
-                                            value={item.quantity}
-                                            onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
-                                            className="w-16 text-center bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg py-1.5 focus:border-blue-500 outline-none"
-                                            min="1"
-                                        />
-                                        <button 
-                                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors"
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </td>
-                                <td className="p-4 text-center">
-                                    <button 
-                                        onClick={() => removeFromQueue(item.id)}
-                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                                    >
-                                        <span className="material-symbols-rounded text-[20px]">delete</span>
-                                    </button>
-                                </td>
-                            </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan={4} className="p-12 text-center">
-                                <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
-                                    <span className="material-symbols-rounded text-6xl mb-4 bg-gray-50 dark:bg-gray-800 p-6 rounded-full">print_disabled</span>
-                                    <p className="text-lg font-medium">{t.barcodePrinter?.alerts?.queueEmpty || 'Print queue is empty'}</p>
-                                    <p className="text-sm mt-1">{t.barcodePrinter?.subtitle || 'Add items to start printing labels'}</p>
-                                </div>
-                            </td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
-         </div>
-         {/* Footer Summary */}
-         {queue.length > 0 && (
-             <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex justify-between items-center">
-                 <span className="text-sm text-gray-500 dark:text-gray-400">{t.barcodePrinter?.totalLabels || 'Total Labels'}:</span>
-                 <span className="text-xl font-bold text-gray-900 dark:text-white">
-                     {queue.reduce((acc, item) => acc + item.quantity, 0)}
-                 </span>
-             </div>
-         )}
+      {/* Queue Container */}
+      <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden">
+        {/* Queue Items - 2 Column Grid Layout */}
+        <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
+          {queue.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2">
+              {queue.map((item) => (
+                <div 
+                  key={item.id} 
+                  className="flex items-center p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all group gap-3"
+                >
+                  {/* Name Section */}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-sm text-gray-900 dark:text-white leading-tight truncate">
+                      {item.drug.name} {item.drug.dosageForm}
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {item.drug.internalCode || item.drug.barcode}
+                    </p>
+                  </div>
+
+                  {/* Expiry Badge with Context Menu */}
+                  <div className="flex items-center gap-1">
+                      <span
+                          className={`text-[9px] font-bold text-white w-[38px] h-[18px] flex items-center justify-center rounded shadow-sm cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
+                              if (!item.drug.expiryDate) return 'bg-gray-400';
+                              const today = new Date();
+                              const expiry = new Date(item.drug.expiryDate);
+                              const monthDiff = (expiry.getFullYear() - today.getFullYear()) * 12 + (expiry.getMonth() - today.getMonth());
+                              if (monthDiff <= 0) return "bg-red-500";
+                              if (monthDiff <= 3) return "bg-orange-500";
+                              return "bg-gray-500 dark:bg-gray-600";
+                          })()}`}
+                          onClick={(e) => {
+                              e.stopPropagation();
+                              const sameNameBatches = inventory.filter(d => 
+                                d.name === item.drug.name && 
+                                d.dosageForm === item.drug.dosageForm
+                              ).sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+
+                              const batchMenuItems = sameNameBatches.map((batch) => ({
+                                  label: `${new Date(batch.expiryDate).toLocaleDateString("en-US", { month: "2-digit", year: "2-digit" })} • ${batch.stock} ${t.pack || 'Pack'}`,
+                                  icon: batch.id === item.drug.id ? 'check_circle' : undefined,
+                                  disabled: batch.stock <= 0,
+                                  action: () => {
+                                      updateExpiryAndBatch(item.id, batch);
+                                  },
+                              }));
+                              showMenu(e.clientX, e.clientY, batchMenuItems);
+                          }}
+                          title={t.clickToSelectBatch || 'Click to select batch'}
+                      >
+                          {item.expiryDateOverride || 'N/A'}
+                      </span>
+                  </div>
+
+                  {/* Quantity Controls */}
+                  <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 h-7 overflow-hidden">
+                    <button 
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      className="w-6 h-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+                    >
+                      <span className="material-symbols-rounded text-[14px]">remove</span>
+                    </button>
+                    <input 
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
+                      className="w-8 h-full text-center bg-transparent text-xs font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      min="1"
+                    />
+                    <button 
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      className="w-6 h-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+                    >
+                      <span className="material-symbols-rounded text-[14px]">add</span>
+                    </button>
+                  </div>
+
+                  {/* Delete Button */}
+                  <button 
+                    onClick={() => removeFromQueue(item.id)}
+                    className="w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-60 group-hover:opacity-100"
+                  >
+                    <span className="material-symbols-rounded text-[16px]">close</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 py-12">
+              <span className="material-symbols-rounded text-6xl mb-4 bg-gray-50 dark:bg-gray-800 p-6 rounded-full">print_disabled</span>
+              <p className="text-lg font-medium">{t.barcodePrinter?.alerts?.queueEmpty || 'Print queue is empty'}</p>
+              <p className="text-sm mt-1">{t.barcodePrinter?.subtitle || 'Add items to start printing labels'}</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
