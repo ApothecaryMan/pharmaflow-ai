@@ -120,6 +120,7 @@ export const getLabelElementContent = (
         case 'store': return receiptSettings.storeName;
         case 'hotline': return receiptSettings.hotline ? `${receiptSettings.hotline}` : '';
         case 'internalCode': return drug.internalCode || '';
+        case 'barcode': return drug.internalCode || drug.barcode || '';
         case 'expiryDate':
             if (expiryDate) {
                 const d = new Date(expiryDate);
@@ -356,6 +357,7 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
         { id: 'store', type: 'text', label: 'Store Name', x: 19, y: 0.7, fontSize: 4, align: 'center', isVisible: true, field: 'store' },
         { id: 'name', type: 'text', label: 'Drug Name', x: 19, y: 1.8, fontSize: 7, fontWeight: 'bold', align: 'center', isVisible: true, field: 'name' },
         { id: 'barcode', type: 'barcode', label: 'Barcode', x: 19, y: 5.5, fontSize: 24, align: 'center', isVisible: true, width: 36, barcodeFormat: 'code128' },
+        { id: 'barcodeNumber', type: 'text', label: 'Barcode Number', x: 19, y: 8.5, fontSize: 4, align: 'center', isVisible: false, field: 'barcode' },
         { id: 'price', type: 'text', label: 'Price', x: 1.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'left', isVisible: true, field: 'price' },
         { id: 'expiry', type: 'text', label: 'Expiry', x: 36.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'right', isVisible: true, field: 'expiryDate' }
     ]
@@ -444,31 +446,33 @@ export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {})
         }
         const allLabelsHTML = labelFragments.join('');
 
-        // Calculate page height
-        const heightPerPage = dims.h * labelsPerPage;
+            /* Calculate total height for the print strip (matches BarcodeStudio behavior) */
+            const totalQuantity = validItems.reduce((acc, item) => acc + item.quantity, 0);
+            const totalHeight = dims.h * totalQuantity;
 
-        const css = `
-            ${templateCSS}
-            @page { size: ${dims.w}mm auto; margin: 0; }
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-                margin: 0; 
-                padding: 0; 
-                font-family: 'Roboto', sans-serif; 
-            }
-            .print-container {
-                width: ${dims.w}mm; 
-                position: relative;
-                background: white;
-                font-size: 0;
-                line-height: 0;
-                padding-left: ${printOffsetX > 0 ? printOffsetX : 0}mm;
-                padding-right: ${printOffsetX < 0 ? Math.abs(printOffsetX) : 0}mm;
-                padding-top: ${printOffsetY > 0 ? printOffsetY : 0}mm;
-                padding-bottom: ${printOffsetY < 0 ? Math.abs(printOffsetY) : 0}mm;
-                box-sizing: border-box;
-            }
-        `;
+            const css = `
+                ${templateCSS}
+                @page { size: ${dims.w}mm ${totalHeight}mm; margin: 0; }
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                    margin: 0; 
+                    padding: 0; 
+                    font-family: 'Roboto', sans-serif; 
+                }
+                .print-container {
+                    width: ${dims.w}mm; 
+                    height: ${totalHeight}mm;
+                    position: relative;
+                    background: white;
+                    font-size: 0;
+                    line-height: 0;
+                    padding-left: ${printOffsetX > 0 ? printOffsetX : 0}mm;
+                    padding-right: ${printOffsetX < 0 ? Math.abs(printOffsetX) : 0}mm;
+                    padding-top: ${printOffsetY > 0 ? printOffsetY : 0}mm;
+                    padding-bottom: ${printOffsetY < 0 ? Math.abs(printOffsetY) : 0}mm;
+                    box-sizing: border-box;
+                }
+            `;
 
         const htmlContent = `<!DOCTYPE html>
     <html><head><title>Print Labels</title>

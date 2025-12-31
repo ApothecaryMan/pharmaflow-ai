@@ -22,6 +22,7 @@ import { ShiftHistory } from '../components/sales/ShiftHistory';
 import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
 import { POSTest } from '../components/test/POSTest';
 import { DashboardExperiments } from '../components/experiments/DashboardExperiments';
+import { PrinterSettings } from '../components/settings/PrinterSettings';
 
 export interface PageConfig {
   id: string;
@@ -249,6 +250,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'science',
     category: 'test',
     requiredProps: ['inventory', 'customers', 'onCompleteSale', 'color', 't', 'language', 'onAddCustomer']
+  },
+  'printer-settings': {
+    id: 'printer-settings',
+    component: PrinterSettings,
+    menuLabel: 'Printer Settings',
+    menuLabelAr: 'إعدادات الطابعات',
+    icon: 'print',
+    category: 'settings',
+    requiredProps: ['color', 'language']
   }
 };
 

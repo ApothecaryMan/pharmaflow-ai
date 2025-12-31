@@ -206,7 +206,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-800 dark:hover:text-gray-200'
                     }
                 `}
-                title={!hasPage && navStyle !== 2 ? 'قريباً / Coming Soon' : ''}
+                title={!hasPage && navStyle !== 2 ? t.settings.comingSoon : ''}
                 >
             <span className={`transition-transform flex items-center justify-center ${(isActive || isDropdownOpen) && hasPage ? 'icon-filled scale-110' : hasPage ? 'group-hover/item:scale-105' : ''}`}>
                 {module.id === 'dashboard' ? (
@@ -489,7 +489,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                     <span className="material-symbols-rounded text-gray-400">text_fields</span>
-                    {language === 'EN' ? 'Uppercase Names' : 'أسماء بأحرف كبيرة'}
+                    {t.settings.textTransform}
                   </label>
                   <Switch 
                     checked={textTransform === 'uppercase'}
@@ -503,7 +503,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                     <span className="material-symbols-rounded text-gray-400">filter_center_focus</span>
-                    {language === 'EN' ? 'Focus Mode' : 'وضع التركيز'}
+                    {t.settings.focusMode}
                   </label>
                   <Switch 
                     checked={hideInactiveModules}
@@ -517,7 +517,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 {setNavStyle && (
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-400 uppercase">
-                      {language === 'EN' ? 'Design Style (Navbar & Sidebar)' : 'نمط التصميم (الشريط العلوي والجانبي)'}
+                      {t.settings.designStyle}
                     </label>
                     <SegmentedControl
                       value={navStyle}
@@ -525,8 +525,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                       color={currentTheme.name}
                       size="xs"
                       options={[
-                        { label: language === 'EN' ? 'Full' : 'كامل', value: 1 },
-                        { label: language === 'EN' ? 'Navbar' : 'علوي', value: 2 }
+                        { label: t.settings.designStyleFull, value: 1 },
+                        { label: t.settings.designStyleNavbar, value: 2 }
                       ]}
                     />
                   </div>
@@ -537,7 +537,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                     <span className="material-symbols-rounded text-gray-400">science</span>
-                    {language === 'EN' ? 'Developer Mode' : 'وضع المطور'}
+                    {t.settings.developerMode}
                   </label>
                   <Switch 
                     checked={developerMode}

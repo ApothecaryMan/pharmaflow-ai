@@ -951,7 +951,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     label: "Settings",
     icon: "settings",
     order: 11,
-    hasPage: false,
+    hasPage: true,
     submenus: [
       {
         id: "general-settings",
@@ -1016,6 +1016,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "print-settings",
         label: "Print Settings",
         items: [
+          { label: "Printer Settings", view: "printer-settings" },
           "Invoice Templates",
           "Receipt Format",
           "Label Printing",

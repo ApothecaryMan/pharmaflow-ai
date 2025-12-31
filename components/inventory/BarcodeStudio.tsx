@@ -96,6 +96,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [showPrintBorders, setShowPrintBorders] = useState(true);
   const [printOffsetX, setPrintOffsetX] = useState(0); 
   const [printOffsetY, setPrintOffsetY] = useState(0);
+  const [printTopMargin, setPrintTopMargin] = useState(0.6); // mm above first text element
+  const [printElementSpacing, setPrintElementSpacing] = useState(0.6); // mm between elements
   const [editingTemplateName, setEditingTemplateName] = useState(false);
   const [tempTemplateName, setTempTemplateName] = useState('');
   const [showHitboxCalibration, setShowHitboxCalibration] = useState(false);
@@ -273,7 +275,12 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const applyDesignState = (state: any) => {
       if (state.selectedPreset) setSelectedPreset(state.selectedPreset);
       if (state.customDims) setCustomDims(state.customDims);
-      if (state.elements) setElements(state.elements);
+      if (state.elements) {
+          // Merge missing elements from DEFAULT_LABEL_DESIGN
+          const existingIds = new Set(state.elements.map((el: any) => el.id));
+          const missingElements = DEFAULT_LABEL_DESIGN.elements.filter(el => !existingIds.has(el.id));
+          setElements([...state.elements, ...missingElements]);
+      }
       if (state.borderStyle) setBorderStyle(state.borderStyle);
       // storeName and hotline are now read from ReceiptDesigner localStorage
       if (state.uploadedLogo) setUploadedLogo(state.uploadedLogo);
@@ -968,8 +975,34 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                             className={`w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-${color}-500`}
                                         />
                                     </div>
+                                    <div>
+                                        <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                            <span>{t.printSettings.topMargin || 'Top Margin'}</span>
+                                            <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded">{printTopMargin}mm</span>
+                                        </div>
+                                        <input 
+                                            type="range" 
+                                            min="0.2" max="2" step="0.2"
+                                            value={printTopMargin}
+                                            onChange={e => setPrintTopMargin(parseFloat(e.target.value))}
+                                            className={`w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-${color}-500`}
+                                        />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                            <span>{t.printSettings.elementSpacing || 'Element Spacing'}</span>
+                                            <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded">{printElementSpacing}mm</span>
+                                        </div>
+                                        <input 
+                                            type="range" 
+                                            min="0.2" max="2" step="0.2"
+                                            value={printElementSpacing}
+                                            onChange={e => setPrintElementSpacing(parseFloat(e.target.value))}
+                                            className={`w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-${color}-500`}
+                                        />
+                                    </div>
                                     <button 
-                                        onClick={() => { setPrintOffsetX(0); setPrintOffsetY(0); }}
+                                        onClick={() => { setPrintOffsetX(0); setPrintOffsetY(0); setPrintTopMargin(0.6); setPrintElementSpacing(0.6); }}
                                         className="w-full text-[10px] py-1.5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                                     >
                                         {t.printSettings.resetCalibration}

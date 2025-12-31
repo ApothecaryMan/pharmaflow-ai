@@ -950,7 +950,7 @@ const App: React.FC = () => {
             'reports': 'dashboard',
             'hr': 'dashboard',
             'compliance': 'dashboard',
-            'settings': 'dashboard',
+            'settings': 'printer-settings',
             'return-history': 'return-history',
           };
           const newView = viewMapping[moduleId] || 'dashboard';
@@ -979,7 +979,7 @@ const App: React.FC = () => {
         developerMode={developerMode}
         setDeveloperMode={setDeveloperMode}
         currentView={activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view}
-        onNavigate={handleViewChange}
+        onNavigate={handleNavigate}
       />
 
       {/* Main Layout: Sidebar + Content */}
