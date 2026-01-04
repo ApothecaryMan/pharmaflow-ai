@@ -12,6 +12,7 @@ import { TRANSLATIONS } from '../../i18n/translations';
 import { generateLabelHTML, LabelDesign, getLabelElementContent, generateTemplateCSS, getReceiptSettings, DEFAULT_LABEL_DESIGN, LABEL_PRESETS } from './LabelPrinter';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useDebounce } from '../../hooks/useDebounce';
+import { ExpandingDropdown } from '../common/ExpandingDropdown';
 
 
 // Reusable Sidebar Section Component
@@ -108,6 +109,14 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   // Screen Calibration
   const [mmToPx, setMmToPx] = useState(DEFAULT_MM_TO_PX);
   const [showCalibrationModal, setShowCalibrationModal] = useState(false);
+
+  // Unsaved Changes Tracking
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const lastSavedState = useRef<string>('');
+  const justLoaded = useRef(false);
+
+  // Template Dropdown
+  const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false);
 
   useEffect(() => {
       const savedRatio = localStorage.getItem('pharma_screen_calibration_ratio');
@@ -326,6 +335,20 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       if (state.currency) setCurrency(state.currency);
   };
 
+  // Track unsaved changes
+  useEffect(() => {
+    const currentState = JSON.stringify(getDesignState());
+    if (justLoaded.current) {
+        lastSavedState.current = currentState;
+        justLoaded.current = false;
+    }
+    setHasUnsavedChanges(currentState !== lastSavedState.current);
+  }, [
+    selectedPreset, customDims, elements, borderStyle, storeName, hotline, 
+    uploadedLogo, barcodeSource, activeTemplateId, showPrintBorders, 
+    printOffsetX, printOffsetY, labelGap, currency
+  ]);
+
   const initializeLayout = (presetKey: string) => {
       const { w, h } = presetKey === 'custom' ? customDims : (LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x12']);
       
@@ -333,7 +356,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       setElements(newElements);
       setHistory([]);
       setRedoStack([]);
+      setHistory([]);
+      setRedoStack([]);
       setActiveTemplateId(null); // Reset active template on fresh layout
+      justLoaded.current = true;
   };
 
   const saveToHistory = () => {
@@ -387,7 +413,9 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       setTemplates(updatedTemplates);
       localStorage.setItem('pharma_label_templates', JSON.stringify(updatedTemplates));
       
+      
       setActiveTemplateId(newId);
+      justLoaded.current = true;
       setShowSaveModal(false);
       setSaveStatus(t.templateSaved);
       setTimeout(() => setSaveStatus(''), 2000);
@@ -400,6 +428,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       );
       setTemplates(updatedTemplates);
       localStorage.setItem('pharma_label_templates', JSON.stringify(updatedTemplates));
+      justLoaded.current = true;
       setSaveStatus(t.templateSaved);
       setTimeout(() => setSaveStatus(''), 2000);
   };
@@ -413,6 +442,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       if (template) {
           applyDesignState(template.design);
           setActiveTemplateId(id);
+          justLoaded.current = true;
       }
   };
 
@@ -789,7 +819,12 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                         <button onClick={handleRedo} disabled={redoStack.length === 0} className={`w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors`} title={t.redo}>
                             <span className="material-symbols-rounded text-[12px]">redo</span>
                         </button>
-                        <button onClick={handleSaveClick} className={`w-5 h-5 flex items-center justify-center rounded-full bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 hover:bg-${color}-200 dark:hover:bg-${color}-800/40 transition-colors`} title={t.saveTemplate}>
+                        <button 
+                            onClick={handleSaveClick} 
+                            disabled={!hasUnsavedChanges}
+                            className={`w-5 h-5 flex items-center justify-center rounded-full bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 hover:bg-${color}-200 dark:hover:bg-${color}-800/40 transition-colors ${!hasUnsavedChanges ? 'opacity-50 cursor-not-allowed grayscale' : ''}`} 
+                            title={t.saveTemplate}
+                        >
                             <span className="material-symbols-rounded text-[12px]">save</span>
                         </button>
                         <button onClick={() => initializeLayout(selectedPreset)} className={`w-5 h-5 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 hover:bg-red-200 dark:hover:bg-red-800/40 transition-colors`} title={t.toolbar.resetLayout}>
@@ -798,18 +833,45 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                         {/* Separator */}
                         <div className="w-px h-5 bg-gray-300 dark:bg-gray-700"></div>
                         {/* Template Controls */}
-                        <select 
-                            className="px-2 py-1 text-xs bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
-                            value={activeTemplateId || ''}
-                            onChange={(e) => loadTemplate(e.target.value)}
-                        >
-                            <option value="">{t.createNew}</option>
-                            {templates.map(tmp => (
-                                <option key={tmp.id} value={tmp.id}>
-                                    {tmp.name}{tmp.id === defaultTemplateId ? ' ★' : ''}
-                                </option>
-                            ))}
-                        </select>
+                        {/* Template Controls */}
+                        <div className="relative w-48 h-8 z-[20]">
+                            <ExpandingDropdown
+                                items={[{ id: '', name: t.createNew, design: null } as any, ...templates]}
+                                selectedItem={activeTemplateId ? templates.find(tmp => tmp.id === activeTemplateId) : { id: '', name: t.createNew, design: null } as any}
+                                isOpen={isTemplateDropdownOpen}
+                                onToggle={() => setIsTemplateDropdownOpen(!isTemplateDropdownOpen)}
+                                onSelect={(item) => {
+                                    setIsTemplateDropdownOpen(false);
+                                    loadTemplate(item.id);
+                                }}
+                                keyExtractor={(item) => item.id}
+                                renderSelected={(item) => (
+                                    <div className="flex items-center gap-2 px-1">
+                                        <span className={`material-symbols-rounded text-lg ${!item?.id ? 'text-blue-500' : (item.id === defaultTemplateId ? 'text-green-500' : 'text-gray-400')}`}>
+                                            {!item?.id ? 'add_circle' : (item.id === defaultTemplateId ? 'check_circle' : 'article')}
+                                        </span>
+                                        <span className="text-xs font-bold text-gray-700 dark:text-gray-200 truncate">
+                                            {item?.name || t.createNew}
+                                        </span>
+                                    </div>
+                                )}
+                                renderItem={(item, isSelected) => (
+                                    <div className="flex items-center gap-2">
+                                        <span className={`material-symbols-rounded text-lg ${!item.id ? 'text-blue-500' : (item.id === defaultTemplateId ? 'text-green-500' : 'text-gray-400')}`}>
+                                            {!item.id ? 'add_circle' : (item.id === defaultTemplateId ? 'check_circle' : 'article')}
+                                        </span>
+                                        <span className={`text-xs ${!item.id ? 'text-blue-600 font-bold' : 'text-gray-700 dark:text-gray-300'}`}>
+                                            {item.name}
+                                        </span>
+                                    </div>
+                                )}
+                                variant="input"
+                                className="absolute top-0 left-0 w-full"
+                                color={color}
+                                rounded="full"
+                                minHeight={32}
+                            />
+                        </div>
                         {activeTemplateId && (
                             <>
                                 <button 
@@ -819,10 +881,10 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                         setSaveStatus(t.inspector.defaultSet);
                                         setTimeout(() => setSaveStatus(''), 2000);
                                     }} 
-                                    className={`w-5 h-5 flex items-center justify-center rounded-full transition-colors ${defaultTemplateId === activeTemplateId ? 'text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                                    className={`w-5 h-5 flex items-center justify-center rounded-full transition-colors ${defaultTemplateId === activeTemplateId ? 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
                                     title={defaultTemplateId === activeTemplateId ? t.inspector.defaultSet : 'Set as Default'}
                                 >
-                                    <span className="material-symbols-rounded text-[14px]">{defaultTemplateId === activeTemplateId ? 'star' : 'star_border'}</span>
+                                    <span className={`material-symbols-rounded text-[16px] ${defaultTemplateId === activeTemplateId ? 'filled' : ''}`}>{defaultTemplateId === activeTemplateId ? 'check_circle' : 'radio_button_unchecked'}</span>
                                 </button>
                                 <button 
                                     onClick={() => deleteTemplate(activeTemplateId)} 

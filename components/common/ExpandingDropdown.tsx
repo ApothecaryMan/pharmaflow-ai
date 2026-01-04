@@ -107,7 +107,7 @@ export function ExpandingDropdown<T>({
                 onKeyDown={disabled ? undefined : handleKeyDown}
                 onBlur={handleBlur}
                 className={`relative w-full flex flex-col overflow-hidden border transition-all outline-none
-                    ${rounded === 'full' ? (isOpen ? 'rounded-2xl' : 'rounded-full') : 'rounded-xl'}
+                    ${rounded === 'full' ? 'rounded-[20px]' : 'rounded-xl'}
                     ${disabled ? 'cursor-not-allowed bg-gray-100 dark:bg-gray-800' : 'cursor-pointer'}
                     ${isOpen 
                         ? (isInput ? 'z-50 shadow-xl' : 'z-[5] shadow-xl') 
