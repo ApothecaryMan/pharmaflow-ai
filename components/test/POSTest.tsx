@@ -1721,7 +1721,8 @@ export const POSTest: React.FC<POSProps> = ({
           </div>
           {/* Search & Filter - No Card Container */}
           <div className="w-full flex flex-col sm:flex-row gap-1 shrink-0">
-            <div className="relative flex-1">
+            {/* search length */}
+            <div className="relative flex-[6]"> 
               <SmartAutocomplete
                 inputRef={searchInputRef}
                 value={search}
@@ -1841,7 +1842,7 @@ export const POSTest: React.FC<POSProps> = ({
                 );
               })()}
             </div>
-            <div className="relative min-w-[110px] h-[42px]">
+            <div className="relative flex-1 h-[42px]">
               <ExpandingDropdown
                 variant="input"
                 items={categories}
@@ -1857,9 +1858,10 @@ export const POSTest: React.FC<POSProps> = ({
                 renderSelected={(item) => item?.label || selectedCategory}
                 renderItem={(item) => item.label}
                 color={color}
+                className="w-full"
               />
             </div>
-            <div className="relative min-w-[110px] h-[42px]">
+            <div className="relative flex-1 h-[42px]">
               <ExpandingDropdown
                 variant="input"
                 items={["all", "in_stock", "out_of_stock"]}
@@ -1887,6 +1889,7 @@ export const POSTest: React.FC<POSProps> = ({
                   return item as string;
                 }}
                 color={color}
+                className="w-full"
               />
             </div>
           </div>

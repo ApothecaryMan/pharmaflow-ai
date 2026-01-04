@@ -21,6 +21,7 @@ import { CashRegister } from '../components/sales/CashRegister';
 import { ShiftHistory } from '../components/sales/ShiftHistory';
 import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
 import { POSTest } from '../components/test/POSTest';
+import { PurchasesTest } from '../components/test/PurchasesTest';
 import { DashboardExperiments } from '../components/experiments/DashboardExperiments';
 import { PrinterSettings } from '../components/settings/PrinterSettings';
 
@@ -250,6 +251,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'science',
     category: 'test',
     requiredProps: ['inventory', 'customers', 'onCompleteSale', 'color', 't', 'language', 'onAddCustomer']
+  },
+  'purchases-test': {
+    id: 'purchases-test',
+    component: PurchasesTest,
+    menuLabel: 'Create PO (Test)',
+    menuLabelAr: 'انشاء امر شراء (تيست)',
+    icon: 'shopping_cart',
+    category: 'test',
+    requiredProps: ['inventory', 'suppliers', 'purchases', 'purchaseReturns', 'onCompletePurchase', 'color', 't', 'language']
   },
   'printer-settings': {
     id: 'printer-settings',

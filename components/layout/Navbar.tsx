@@ -158,6 +158,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     return words.map(word => word[0]).join('').toUpperCase().substring(0, 3);
   };
 
+  const handleWheel = (e: React.WheelEvent) => {
+    if (dropdownRef.current) {
+      dropdownRef.current.scrollLeft += e.deltaY;
+    }
+  };
+
   return (
     <nav 
       className="h-16 flex items-center px-4 sticky top-0 z-50"
@@ -178,7 +184,11 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       </div>
 
       {/* Desktop: Horizontal Module Tabs */}
-      <div className={`hidden md:flex items-center gap-1 flex-1 scrollbar-hide ${activeDropdown && navStyle === 2 ? 'overflow-hidden' : 'overflow-x-auto'}`} ref={dropdownRef}>
+      <div 
+        className={`hidden md:flex items-center gap-1 flex-1 scrollbar-hide ${activeDropdown && navStyle === 2 ? 'overflow-hidden' : 'overflow-x-auto'}`} 
+        ref={dropdownRef}
+        onWheel={handleWheel}
+      >
         {menuItems.filter(m => m.id !== 'settings' && (m.id !== 'test' || developerMode)).map((module) => {
           const isActive = activeModule === module.id;
           const isDropdownOpen = activeDropdown === module.id;

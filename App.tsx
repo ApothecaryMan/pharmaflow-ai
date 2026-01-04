@@ -1154,6 +1154,8 @@ const App: React.FC = () => {
               props.t = t.suppliers;
             } else if (view === 'purchases') {
               props.t = t.purchases;
+            } else if (view === 'purchases-test') {
+              props.t = t.purchases;
             } else if (view === 'pending-approval') {
               props.t = t.pendingApproval;
             } else if (view === 'barcode-studio') {
