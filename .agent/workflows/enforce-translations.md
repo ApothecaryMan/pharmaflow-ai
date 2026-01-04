@@ -78,3 +78,16 @@ Before using a translation key `t.someKey`:
   - Check `translations.ts` (under `settings` or `nav`) for UI controls like "Dark Mode", "Theme", "Focus Mode".
 - **Conditional Strings:** Pay attention to strings inside ternary operators (e.g., `isOpen ? 'Close' : 'Open'`). These are often missed.
 - **Tooltips:** Ensure `title` attributes on buttons are also translated.
+
+## 6. Search Strategy (CRITICAL)
+
+When searching for UI-related code (settings, buttons, sections, etc.):
+
+1. **ALWAYS search `translations.ts` FIRST** using the translation key or English text.
+2. The translation structure reveals the exact location in the component (e.g., `barcodeStudio.printSettings.labelGap` → search for `t.printSettings.labelGap` in `BarcodeStudio.tsx`).
+3. This is faster than searching for variable names which may not match the stored string.
+
+**Example:**
+
+- ❌ Slow: Searching for `printOffsetX,` (might not match code structure)
+- ✅ Fast: Search `translations.ts` for "Print Calibration" → find `printSettings.printCalibration` → search component for `t.printSettings`

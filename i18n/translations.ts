@@ -943,7 +943,8 @@ export const TRANSLATIONS = {
         unlock: 'Unlock Position',
         bringToFront: 'Bring to Front',
         sendToBack: 'Send to Back',
-        defaultSet: 'Set as Default Template'
+        defaultSet: 'Set as Default Template',
+        rotate90: 'Rotate 90°'
       },
       elements: {
         storeName: 'Store Name',
@@ -976,7 +977,12 @@ export const TRANSLATIONS = {
         printCalibration: 'Print Calibration',
         horizontalOffset: 'Horizontal (Left/Right)',
         verticalOffset: 'Vertical (Up/Down)',
-        resetCalibration: 'Reset Calibration'
+        resetCalibration: 'Reset Calibration',
+        labelGap: 'Label Gap',
+        labelGapDesc: 'Vertical spacing between labels on the same page.',
+        currency: 'Currency Symbol',
+        currencyEGP: 'EGP (ج.م)',
+        currencyUSD: 'USD ($)'
       },
       calibration: {
           title: 'Screen Calibration',
@@ -2277,7 +2283,8 @@ export const TRANSLATIONS = {
         unlock: 'فك القفل',
         bringToFront: 'إحضار للأمام',
         sendToBack: 'إرسال للخلف',
-        defaultSet: 'تعيين كقالب افتراضي'
+        defaultSet: 'تعيين كقالب افتراضي',
+        rotate90: 'تدوير 90°'
       },
       elements: {
         storeName: 'اسم المتجر',
@@ -2310,7 +2317,12 @@ export const TRANSLATIONS = {
         printCalibration: 'معايرة الطباعة',
         horizontalOffset: 'أفقي (يمين/شمال)',
         verticalOffset: 'رأسي (فوق/تحت)',
-        resetCalibration: 'إعادة ضبط المعايرة'
+        resetCalibration: 'إعادة ضبط المعايرة',
+        labelGap: 'المسافة بين الملصقات',
+        labelGapDesc: 'المسافة الرأسية بين الملصقات في نفس الصفحة.',
+        currency: 'رمز العملة',
+        currencyEGP: 'جنيه (ج.م)',
+        currencyUSD: 'دولار ($)'
       },
       tooltips: {
         doubleClickRename: 'انقر مرتين لتغيير الاسم'

@@ -10,6 +10,7 @@ import { Modal } from '../common/Modal';
 import { TRANSLATIONS } from '../../i18n/translations';
 
 import { generateLabelHTML, LabelDesign, getLabelElementContent, generateTemplateCSS, getReceiptSettings, DEFAULT_LABEL_DESIGN, LABEL_PRESETS } from './LabelPrinter';
+import { SegmentedControl } from '../common/SegmentedControl';
 import { useDebounce } from '../../hooks/useDebounce';
 
 
@@ -42,6 +43,7 @@ interface LabelElement {
     field?: keyof Drug | 'unit' | 'store' | 'hotline';
     locked?: boolean;
     barcodeFormat?: 'code39' | 'code39-text' | 'code128' | 'code128-text';
+    rotation?: 0 | 90;
 }
 
 interface SavedTemplate {
@@ -91,6 +93,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [showPrintBorders, setShowPrintBorders] = useState(true);
   const [printOffsetX, setPrintOffsetX] = useState(0); 
   const [printOffsetY, setPrintOffsetY] = useState(0);
+  const [labelGap, setLabelGap] = useState<0 | 0.5 | 1>(0);
+  const [currency, setCurrency] = useState<'EGP' | 'USD'>('EGP');
 
   const [editingTemplateName, setEditingTemplateName] = useState(false);
   const [tempTemplateName, setTempTemplateName] = useState('');
@@ -263,7 +267,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   }, [history, redoStack, elements]);
 
   const getDesignState = () => ({
-      selectedPreset, customDims, elements, borderStyle, storeName, hotline, uploadedLogo, barcodeSource, activeTemplateId, showPrintBorders, printOffsetX, printOffsetY
+      selectedPreset, customDims, elements, borderStyle, storeName, hotline, uploadedLogo, barcodeSource, activeTemplateId, showPrintBorders, printOffsetX, printOffsetY, labelGap, currency
   });
 
   const applyDesignState = (state: any) => {
@@ -283,6 +287,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       if (typeof state.showPrintBorders !== 'undefined') setShowPrintBorders(state.showPrintBorders);
       if (typeof state.printOffsetX !== 'undefined') setPrintOffsetX(state.printOffsetX);
       if (typeof state.printOffsetY !== 'undefined') setPrintOffsetY(state.printOffsetY);
+      if (typeof state.labelGap !== 'undefined') setLabelGap(state.labelGap);
+      if (state.currency) setCurrency(state.currency);
   };
 
   const initializeLayout = (presetKey: string) => {
@@ -595,6 +601,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       saveToHistory();
       setElements(prev => prev.map(item => item.id === el.id ? { ...item, locked: !item.locked } : item));
     }},
+    { label: t.inspector.rotate90, icon: 'rotate_right', action: () => {
+      saveToHistory();
+      setElements(prev => prev.map(item => item.id === el.id ? { ...item, rotation: item.rotation === 90 ? 0 : 90 } : item));
+    }},
     { separator: true },
     { label: t.inspector.bringToFront, icon: 'flip_to_front', action: () => {
       saveToHistory();
@@ -617,7 +627,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           barcodeSource,
           showPrintBorders,
           printOffsetX,
-          printOffsetY
+          printOffsetY,
+          labelGap
       };
 
       const receiptSettings = { storeName, hotline };
@@ -636,9 +647,12 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       );
 
       const labelCount = singleLabel ? 1 : 2;
-      const labelHTML = Array(labelCount).fill(null).map(() => singleLabelHTML).join('');
+      const gapMm = labelGap || 0;
+      const gapDivider = gapMm > 0 ? `<div style="height: ${gapMm}mm;"></div>` : '';
+      const labelHTML = Array(labelCount).fill(null).map(() => singleLabelHTML).join(gapDivider);
 
-      const totalHeight = dims.h * labelCount;
+      // Total height = (label height × count) + gap between them (only 1 gap for 2 labels)
+      const totalHeight = (dims.h * labelCount) + (labelCount > 1 ? gapMm : 0);
 
       const css = `
         @page { size: ${dims.w}mm ${totalHeight}mm; margin: 0; }
@@ -1005,6 +1019,46 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                     <span className="material-symbols-rounded text-sm">restart_alt</span>
                                     {t.printSettings.resetCalibration}
                                 </button>
+                                
+                                {/* Label Gap Control */}
+                                <div className="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="material-symbols-rounded text-sm text-gray-400">vertical_distribute</span>
+                                            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{t.printSettings.labelGap}</span>
+                                        </div>
+                                    </div>
+                                    <SegmentedControl
+                                        value={labelGap || 0}
+                                        onChange={(val) => setLabelGap(val as 0 | 0.5 | 1)}
+                                        options={[
+                                            { label: '0mm', value: 0 },
+                                            { label: '0.5mm', value: 0.5 },
+                                            { label: '1mm', value: 1 }
+                                        ]}
+                                        color={color}
+                                        size="xs"
+                                    />
+                                    <p className="text-[10px] text-gray-500 mt-1.5 px-1">{t.printSettings.labelGapDesc}</p>
+                                </div>
+                                
+                                {/* Currency Selector */}
+                                <div className="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="material-symbols-rounded text-sm text-gray-400">paid</span>
+                                        <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{t.printSettings.currency}</span>
+                                    </div>
+                                    <SegmentedControl
+                                        value={currency || 'EGP'}
+                                        onChange={(val) => setCurrency(val as 'EGP' | 'USD')}
+                                        options={[
+                                            { label: t.printSettings.currencyEGP, value: 'EGP' },
+                                            { label: t.printSettings.currencyUSD, value: 'USD' }
+                                        ]}
+                                        color={color}
+                                        size="xs"
+                                    />
+                                </div>
                             </div>
 
                             {/* Inputs for Store/Hotline - Removed as they are now pulled from InvoiceTemplate */ }
@@ -1012,9 +1066,17 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                              {/* Border */}
                              <div>
                                 <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase block mb-2">{t.borderStyle}</label>
-                                <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-                                    {(['none', 'solid', 'dashed'] as const).map(style => <button key={style} onClick={() => setBorderStyle(style)} className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${borderStyle === style ? 'bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>{style}</button>)}
-                                </div>
+                                <SegmentedControl
+                                    value={borderStyle}
+                                    onChange={(val) => setBorderStyle(val as any)}
+                                    options={[
+                                        { label: t.borders.none, value: 'none' },
+                                        { label: t.borders.solid, value: 'solid' },
+                                        { label: t.borders.dashed, value: 'dashed' }
+                                    ]}
+                                    color={color}
+                                    size="xs"
+                                />
                             </div>
                         </>
                     ) : (
@@ -1044,10 +1106,16 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                 {(selectedElement.type === 'text') && (
                                     <div>
                                         <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">{t.inspector.fontWeight || 'Font Weight'}</label>
-                                        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                                            <button onClick={() => handlePropertyChange('fontWeight', 'normal')} className={`flex-1 py-1 rounded text-xs transition-all ${!selectedElement.fontWeight || selectedElement.fontWeight === 'normal' ? 'bg-white dark:bg-gray-900 shadow-sm font-bold text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>Normal</button>
-                                            <button onClick={() => handlePropertyChange('fontWeight', 'bold')} className={`flex-1 py-1 rounded text-xs transition-all ${selectedElement.fontWeight === 'bold' ? 'bg-white dark:bg-gray-900 shadow-sm font-bold text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>Bold</button>
-                                        </div>
+                                        <SegmentedControl
+                                            value={selectedElement.fontWeight || 'normal'}
+                                            onChange={(val) => handlePropertyChange('fontWeight', val)}
+                                            options={[
+                                                { label: 'Normal', value: 'normal' },
+                                                { label: 'Bold', value: 'bold' }
+                                            ]}
+                                            color={color}
+                                            size="xs"
+                                        />
                                     </div>
                                 )}
                                 {selectedElement.type === 'text' && !selectedElement.field && (
@@ -1061,21 +1129,46 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                                 )}
                                 <div>
                                     <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">{t.inspector.align}</label>
-                                    <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                                        {(['left', 'center', 'right'] as const).map(align => (
-                                            <button key={align} onClick={() => handlePropertyChange('align', align)} className={`flex-1 py-1 rounded text-xs transition-all ${selectedElement.align === align ? 'bg-white dark:bg-gray-900 shadow-sm font-bold text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
-                                                <span className="material-symbols-rounded text-sm">{align === 'left' ? 'format_align_left' : align === 'center' ? 'format_align_center' : 'format_align_right'}</span>
-                                            </button>
-                                        ))}
+                                    <SegmentedControl
+                                        value={selectedElement.align || 'center'}
+                                        onChange={(val) => handlePropertyChange('align', val)}
+                                        options={[
+                                            { label: '', value: 'left', icon: 'format_align_left' },
+                                            { label: '', value: 'center', icon: 'format_align_center' },
+                                            { label: '', value: 'right', icon: 'format_align_right' }
+                                        ]}
+                                        color={color}
+                                        size="xs"
+                                        fullWidth
+                                    />
                                     </div>
+                                {/* Rotation Toggle */}
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">{t.inspector.rotate90}</label>
+                                    <SegmentedControl
+                                        value={selectedElement.rotation || 0}
+                                        onChange={(val) => handlePropertyChange('rotation', val)}
+                                        options={[
+                                            { label: '0°', value: 0 },
+                                            { label: '90°', value: 90, icon: 'rotate_right' }
+                                        ]}
+                                        color={color}
+                                        size="xs"
+                                    />
                                 </div>
                                 {selectedElement.type === 'barcode' && (
                                     <div>
                                          <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">{t.barcodeSource}</label>
-                                         <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                                             <button onClick={() => setBarcodeSource('global')} className={`flex-1 py-1 rounded text-xs transition-all ${barcodeSource === 'global' ? 'bg-white dark:bg-gray-900 shadow-sm font-bold text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>Global</button>
-                                             <button onClick={() => setBarcodeSource('internal')} className={`flex-1 py-1 rounded text-xs transition-all ${barcodeSource === 'internal' ? 'bg-white dark:bg-gray-900 shadow-sm font-bold text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>Internal</button>
-                                         </div>
+                                         <SegmentedControl
+                                              value={barcodeSource}
+                                              onChange={(val) => setBarcodeSource(val as 'global' | 'internal')}
+                                              options={[
+                                                  { label: 'Global', value: 'global' },
+                                                  { label: 'Internal', value: 'internal' }
+                                              ]}
+                                              color={color}
+                                              size="xs"
+                                         />
                                     </div>
                                 )}
                                 {selectedElement.type === 'qrcode' && (

@@ -10,62 +10,122 @@ import { encodeCode128 } from '../../utils/barcodeEncoders';
 
 // --- Types ---
 
+/**
+ * Represents a single visual element within a label design.
+ */
 export interface LabelElement {
+    /** Unique identifier for the element (e.g., 'drugName', 'barcode') */
     id: string;
+    /** The type of content to render */
     type: 'text' | 'barcode' | 'qrcode' | 'image';
+    /** Human-readable name for the element in the UI */
     label: string;
-    x: number; // mm
-    y: number; // mm
-    width?: number; // mm
-    height?: number; // mm
-    fontSize?: number; // px
+    /** Horizontal position in millimeters */
+    x: number;
+    /** Vertical position in millimeters */
+    y: number;
+    /** Width in millimeters (required for images/shapes) */
+    width?: number;
+    /** Height in millimeters (required for images/shapes) */
+    height?: number;
+    /** Font size in pixels */
+    fontSize?: number;
+    /** CSS font-weight value (e.g., 'bold', '700') */
     fontWeight?: string;
+    /** Text alignment relative to the x/y coordinates */
     align?: 'left' | 'center' | 'right';
+    /** Static content for text/images, or specific identifier */
     content?: string;
+    /** Whether the element should be rendered or hidden */
     isVisible: boolean;
+    /** hex or named color for the element */
     color?: string;
+    /** Mapping to a data field from the Drug object or system settings */
     field?: keyof Drug | 'unit' | 'store' | 'hotline';
+    /** Prevents the element from being moved in the UI editor */
     locked?: boolean;
+    /** Specific barcode symbology and styling options */
     barcodeFormat?: 'code39' | 'code39-text' | 'code128' | 'code128-text';
-    // Hitbox calibration (manual adjustment for selection accuracy)
-    hitboxOffsetX?: number; // mm offset for selection box
-    hitboxOffsetY?: number; // mm offset for selection box
-    hitboxWidth?: number;   // mm width override for selection box
-    hitboxHeight?: number;  // mm height override for selection box
+    /** Rotation angle in degrees (currently only 0 or 90 supported) */
+    rotation?: 0 | 90;
+    
+    // Hitbox calibration (manual adjustment for selection accuracy in BarcodeStudio)
+    /** Horizontal offset for the selection hitbox in mm */
+    hitboxOffsetX?: number;
+    /** Vertical offset for the selection hitbox in mm */
+    hitboxOffsetY?: number;
+    /** Width override for the selection hitbox in mm */
+    hitboxWidth?: number;
+    /** Height override for the selection hitbox in mm */
+    hitboxHeight?: number;
 }
 
+/**
+ * Container for a complete label layout design.
+ */
 export interface LabelDesign {
+    /** List of all elements included in this design */
     elements: LabelElement[];
+    /** Key referencing a preset in LABEL_PRESETS */
     selectedPreset: string;
+    /** Physical dimensions if selectedPreset is 'custom' */
     customDims?: { w: number; h: number };
+    /** Rule for which barcode value to prioritize */
     barcodeSource?: 'global' | 'internal';
+    /** UI helper to show boxes around elements for layout debugging */
     showPrintBorders?: boolean;
+    /** Global horizontal print offset (calibration) in mm */
     printOffsetX?: number;
+    /** Global vertical print offset (calibration) in mm */
     printOffsetY?: number;
+    /** Vertical gap between labels on the same page in mm */
+    labelGap?: 0 | 0.5 | 1;
+    /** Currency symbol preference */
+    currency?: 'EGP' | 'USD';
 }
 
+/**
+ * Data required to print a label for a specific item.
+ */
 export interface PrintLabelItem {
+    /** The drug entity containing data to be rendered */
     drug: Drug;
+    /** Number of copies to print */
     quantity: number;
-    expiryDateOverride?: string; // Optional override for expiry date
+    /** Optional date string to override the drug's default expiry */
+    expiryDateOverride?: string;
 }
 
+/**
+ * Global configuration options for the printing process.
+ */
 export interface PrintOptions {
+    /** Skip local storage lookups and use hardcoded basic style */
     forceBasicTemplate?: boolean;
+    /** Enable visualization of label boundaries (useful for testing) */
     showBorders?: boolean;
-    pairedLabels?: boolean; // Print 2 labels per page (for dual-roll printers)
-    design?: LabelDesign;   // Explicit design to use (overrides default/autosave lookup)
+    /** UNUSED: Legacy property for dual-roll grouping (now handled automatically) */
+    pairedLabels?: boolean;
+    /** Use a specific design instead of searching local storage */
+    design?: LabelDesign;
 }
 
 // --- Constants ---
 
+/**
+ * Industry-standard physical dimensions for common thermal label sizes.
+ * Values are in millimeters (mm).
+ */
 export const LABEL_PRESETS: Record<string, { w: number; h: number; label: string }> = {
     '38x12': { w: 38, h: 12, label: '38×12 mm (Single)' },
     '38x25': { w: 38, h: 25, label: '38×25 mm (Double)' }
 };
 
 /**
- * Get dimensions for a preset with fallback support
+ * Retrieves physical dimensions for a preset, with automatic fallback.
+ * @param presetKey - The key to look up (e.g., '38x12')
+ * @param customDims - Custom dimensions to return if key is 'custom'
+ * @returns Object with width (w) and height (h) in mm
  */
 export const getPresetDimensions = (
     presetKey: string, 
@@ -75,16 +135,17 @@ export const getPresetDimensions = (
     return LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x12'];
 };
 
+/** Configuration for the popup window used to trigger the browser's print dialog */
 const PRINT_WINDOW_CONFIG = {
     width: 800,
     height: 1000,
     features: 'width=800,height=1000,scrollbars=yes,resizable=yes'
 } as const;
 
-// --- Helper Functions ---
-
 /**
- * Escape HTML characters to prevent XSS
+ * Escapes special HTML characters to prevent XSS when rendering drug data.
+ * @param text - Raw text to escape
+ * @returns HTML-safe string
  */
 const escapeHtml = (text: string): string => {
     const map: Record<string, string> = {
@@ -98,7 +159,9 @@ const escapeHtml = (text: string): string => {
 };
 
 /**
- * Validate drug data before printing
+ * Ensures minimal required data exists for a drug before attempting to print.
+ * @param drug - The drug object to validate
+ * @returns True if valid, false otherwise
  */
 const validateDrug = (drug: Drug): boolean => {
     return !!(
@@ -110,45 +173,48 @@ const validateDrug = (drug: Drug): boolean => {
 };
 
 /**
- * Get content for a label element (reusable logic)
+ * Resolves the final content for a label element, handling dynamic fields.
+ * Bridges the gap between a design element and actual drug/system data.
+ * @param el - The visual element definition
+ * @param drug - Source drug data
+ * @param receiptSettings - Global settings (store name, etc.)
+ * @param expiryOverride - Optional manual expiry date
+ * @returns The final string content to display in the element
  */
 export const getLabelElementContent = (
     el: LabelElement,
     drug: Drug,
     receiptSettings: { storeName: string; hotline: string },
-    expiryOverride?: string
+    expiryOverride?: string,
+    currency: 'EGP' | 'USD' = 'EGP',
+    barcodeSource: 'global' | 'internal' = 'global'
 ): string => {
-    if (el.content && el.type === 'text' && !el.field) return el.content;
-    
-    const expiryDate = expiryOverride || drug.expiryDate;
-    
-    switch (el.field) {
-        case 'name':
-            if (drug.dosageForm) {
-                return `${drug.name} ${drug.dosageForm}`;
-            }
-            return drug.name;
-        case 'price': return `${drug.price.toFixed(2)}`;
+    if (el.content) return el.content;
+    if (!el.field) return el.label;
+
+    switch (el.field as string) {
         case 'store': return receiptSettings.storeName;
-        case 'hotline': return receiptSettings.hotline ? `${receiptSettings.hotline}` : '';
-        case 'internalCode': return drug.internalCode || '';
-        case 'barcode': return drug.internalCode || drug.barcode || '';
-        case 'expiryDate':
-            if (expiryDate) {
-                const d = new Date(expiryDate);
-                return `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-            }
-            return '';
+        case 'hotline': return receiptSettings.hotline || '19099';
+        case 'name': return drug.name;
+        case 'price': return `${Number(drug.price).toFixed(2)} ${currency === 'EGP' ? 'EGP' : '$'}`;
+        case 'barcode': return barcodeSource === 'internal' 
+            ? (drug.internalCode || drug.id) 
+            : (drug.barcode || drug.id);
+        case 'type': return (drug as any).type || '';
+        case 'unit': return (drug as any).unit || '';
+        case 'expiryDate': 
+            if (expiryOverride) return expiryOverride;
+             // If drug has expiry date, use it, otherwise show generic format MM/YYYY
+            return drug.expiryDate ? new Date(drug.expiryDate).toLocaleDateString('en-GB', { month: '2-digit', year: 'numeric' }) : 'MM/YYYY';
         case 'genericName': return drug.genericName || '';
         default: return el.content || el.label || '';
     }
 };
 
 /**
- * Get receipt settings (store name, hotline) from localStorage
- */
-/**
- * Get receipt settings (store name, hotline) from localStorage with robust error handling
+ * Retrieves global store branding from LocalStorage (receipt module shared settings).
+ * Used to populate 'store' and 'hotline' fields on labels.
+ * @returns Object with storeName and hotline
  */
 export const getReceiptSettings = (): { storeName: string; hotline: string } => {
     const defaultSettings = { storeName: 'PharmaFlow', hotline: '19099' };
@@ -181,7 +247,9 @@ export const getReceiptSettings = (): { storeName: string; hotline: string } => 
 };
 
 /**
- * Get default template from localStorage
+ * Resolves the preferred label design from LocalStorage.
+ * Prioritizes: Default Template ID > Autosaved Studio Design.
+ * @returns The saved design or null if no custom design is found
  */
 const getDefaultTemplate = (): { design: LabelDesign } | null => {
     try {
@@ -211,7 +279,8 @@ const getDefaultTemplate = (): { design: LabelDesign } | null => {
 };
 
 /**
- * Get print calibration offsets from localStorage
+ * Reads printer calibration settings (X/Y offsets) from the saved design.
+ * @returns Offset object in millimeters
  */
 const getPrintOffsets = (): { x: number; y: number } => {
     try {
@@ -228,7 +297,10 @@ const getPrintOffsets = (): { x: number; y: number } => {
 };
 
 /**
- * Generate CSS for a design to optimize print size
+ * Generates the CSS rules for a specific label design.
+ * Uses absolute positioning with millimeter units to ensure physical accuracy.
+ * @param design - The design to generate CSS for
+ * @returns Object containing the CSS string and a map of element IDs to class names
  */
 export const generateTemplateCSS = (design: LabelDesign): { css: string, classNameMap: Record<string, string> } => {
     let css = '';
@@ -239,13 +311,15 @@ export const generateTemplateCSS = (design: LabelDesign): { css: string, classNa
         classNameMap[el.id] = className;
 
         const alignTransform = el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0';
+        const rotationCSS = el.rotation ? ` rotate(${el.rotation}deg)` : '';
         
         css += `
             .${className} {
                 position: absolute;
                 left: ${el.x}mm;
                 top: ${el.y}mm;
-                transform: translate(${alignTransform}, 0);
+                transform: translate(${alignTransform}, 0)${rotationCSS};
+                transform-origin: left top;
                 ${el.fontSize ? `font-size: ${el.fontSize}px;` : ''}
                 ${el.fontWeight ? `font-weight: ${el.fontWeight};` : ''}
                 ${el.color ? `color: ${el.color};` : ''}
@@ -271,7 +345,16 @@ export const generateTemplateCSS = (design: LabelDesign): { css: string, classNa
 };
 
 /**
- * Generate HTML for a single label using the template
+ * Generates the complete HTML string for a single label instance.
+ * @param drug - Source drug data
+ * @param design - Layout design to use
+ * @param dims - Physical dimensions of the label
+ * @param receiptSettings - Global branding settings
+ * @param expiryOverride - Manual expiry date override
+ * @param qrDataUrl - Pre-generated QR code image data
+ * @param logoDataUrl - Pre-generated logo image data
+ * @param classNameMap - Map of element IDs to CSS classes (from generateTemplateCSS)
+ * @returns HTML string for the individual label
  */
 export const generateLabelHTML = (
     drug: Drug,
@@ -290,14 +373,13 @@ export const generateLabelHTML = (
     const barcodeText = `*${barcodeValue.replace(/\s/g, '').toUpperCase()}*`;
 
     const getElementContent = (el: LabelElement): string => {
-        return getLabelElementContent(el, drug, receiptSettings, expiryOverride);
+        return getLabelElementContent(el, drug, receiptSettings, expiryOverride, design.currency, design.barcodeSource);
     };
 
     const generateElementHTML = (el: LabelElement): string => {
         if (!el.isVisible) return '';
         const content = getElementContent(el);
         
-        // Use class if available, otherwise inline style (fallback/preview)
         let styleAttr = '';
         let classAttr = '';
 
@@ -325,8 +407,6 @@ export const generateLabelHTML = (
             return `<div ${classAttr} ${styleAttr}>${escapeHtml(content)}</div>`;
         }
         if (el.type === 'barcode') {
-            // Recalculate encoded value here or reuse if passed? 
-            // The class handles font, but content is dynamic.
              const format = el.barcodeFormat || 'code128';
              let encoded = barcodeText;
              if (format.startsWith('code128')) {
@@ -361,8 +441,11 @@ export const generateLabelHTML = (
     return `<div style="${labelContainerStyle}">${design.elements.map(generateElementHTML).join('')}</div>`;
 };
 
-// --- Constants ---
-// --- Constants ---
+// --- Default Design Configuration ---
+
+/**
+ * Standard factory fallback design for 38x12mm labels.
+ */
 export const DEFAULT_LABEL_DESIGN: LabelDesign = {
     selectedPreset: '38x12',
     elements: [
@@ -371,28 +454,29 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
         { id: 'barcode', type: 'barcode', label: 'Barcode', x: 19, y: 5.5, fontSize: 24, align: 'center', isVisible: true, width: 36, barcodeFormat: 'code128' },
         { id: 'barcodeNumber', type: 'text', label: 'Barcode Number', x: 19, y: 8.5, fontSize: 4, align: 'center', isVisible: false, field: 'barcode' },
         { id: 'price', type: 'text', label: 'Price', x: 1.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'left', isVisible: true, field: 'price' },
-        { id: 'expiry', type: 'text', label: 'Expiry', x: 36.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'right', isVisible: true, field: 'expiryDate' }
+        { id: 'expiry', type: 'text', label: 'Expiry', x: 36.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'right', isVisible: true, field: 'expiryDate' },
+        { id: 'hotline', type: 'text', label: 'Hotline', x: 19, y: 11, fontSize: 4, align: 'center', isVisible: false, field: 'hotline' }
     ]
 };
 
 // --- Main API ---
 
 /**
- * Print labels for one or more drugs
+ * Triggers the browser's print dialog for a batch of drug labels.
  * 
- * @param items - Array of drugs with quantities to print
- * @param options - Print options
+ * Process:
+ * 1. Validates input data
+ * 2. Opens a blank popup window
+ * 3. Resolves the correct label design (template or manual override)
+ * 4. Generates HTML/CSS with grouping logic (2 labels per page for dual-roll)
+ * 5. Writes content to window and calls window.print()
+ * 
+ * @param items - List of drugs and quantities to print
+ * @param options - UI/Rendering overrides
  * 
  * @example
  * // Print 5 labels for a single drug
  * printLabels([{ drug: myDrug, quantity: 5 }]);
- * 
- * @example
- * // Print multiple drugs with different quantities
- * printLabels([
- *   { drug: drug1, quantity: 3 },
- *   { drug: drug2, quantity: 2, expiryDateOverride: '2025-06-01' }
- * ]);
  */
 export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {}): void => {
     const validItems = items.filter(item => {
@@ -417,10 +501,7 @@ export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {})
             throw new Error('Popup blocked');
         }
 
-        // Check for template
         const template = options.forceBasicTemplate ? null : getDefaultTemplate();
-
-        // Use template (explicit > default > fallback to DEFAULT_LABEL_DESIGN)
         const design = options.design || (template?.design as LabelDesign) || DEFAULT_LABEL_DESIGN;
         const dims = design.selectedPreset === 'custom'
             ? (design.customDims || { w: 38, h: 12 })
@@ -430,16 +511,11 @@ export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {})
         const offsets = getPrintOffsets();
         const printOffsetX = offsets.x;
         const printOffsetY = offsets.y;
-        const pairedLabels = options.pairedLabels ?? false;
-
-        const labelsPerPage = pairedLabels ? 2 : 1;
         
         const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
 
-        // Generate all label HTML using array join for performance
         const labelFragments: string[] = [];
         for (const item of validItems) {
-            // Generate one label instance
             const singleLabel = generateLabelHTML(
                 item.drug,
                 design,
@@ -451,56 +527,76 @@ export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {})
                 classNameMap
             );
             
-            // Push n copies
             for (let i = 0; i < item.quantity; i++) {
                 labelFragments.push(singleLabel);
             }
         }
-        const allLabelsHTML = labelFragments.join('');
+        
+        // Pagination logic: group labels into pages of 2
+        const labelsPerPage = 2;
+        const labelGap = design.labelGap || 0;
+        // Total page height = (label height × 2) + gap between them
+        const pageHeight = (dims.h * labelsPerPage) + labelGap;
+        const gapDivider = labelGap > 0 ? `<div style="height: ${labelGap}mm;"></div>` : '';
+        const pages: string[] = [];
+        
+        for (let i = 0; i < labelFragments.length; i += labelsPerPage) {
+            const pageLabels = labelFragments.slice(i, i + labelsPerPage);
+            const isLastPage = i + labelsPerPage >= labelFragments.length;
+            
+            // Join labels with gap divider (only between labels, not after last one)
+            const labelsWithGap = pageLabels.join(gapDivider);
+            const pageHTML = `<div class="page-container" style="page-break-after: ${isLastPage ? 'auto' : 'always'};">${labelsWithGap}</div>`;
+            pages.push(pageHTML);
+        }
+        
+        const allPagesHTML = pages.join('');
 
-            /* Calculate total height for the print strip (matches BarcodeStudio behavior) */
-            const totalQuantity = validItems.reduce((acc, item) => acc + item.quantity, 0);
-            const totalHeight = dims.h * totalQuantity;
-
-            const css = `
-                ${templateCSS}
-                @page { size: ${dims.w}mm ${totalHeight}mm; margin: 0; }
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { 
-                    margin: 0; 
-                    padding: 0; 
-                    font-family: 'Roboto', sans-serif; 
-                }
-                .print-container {
-                    width: ${dims.w}mm; 
-                    height: ${totalHeight}mm;
-                    position: relative;
-                    background: white;
-                    font-size: 0;
-                    line-height: 0;
-                    padding-left: ${printOffsetX > 0 ? printOffsetX : 0}mm;
-                    padding-right: ${printOffsetX < 0 ? Math.abs(printOffsetX) : 0}mm;
-                    padding-top: ${printOffsetY > 0 ? printOffsetY : 0}mm;
-                    padding-bottom: ${printOffsetY < 0 ? Math.abs(printOffsetY) : 0}mm;
-                    box-sizing: border-box;
-                }
-            `;
+        const css = `
+            ${templateCSS}
+            @page { size: ${dims.w}mm ${pageHeight}mm; margin: 0; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+                margin: 0; 
+                padding: 0; 
+                font-family: 'Roboto', sans-serif; 
+            }
+            .print-container {
+                width: ${dims.w}mm;
+                background: white;
+                font-size: 0;
+                line-height: 0;
+                padding-left: ${printOffsetX > 0 ? printOffsetX : 0}mm;
+                padding-right: ${printOffsetX < 0 ? Math.abs(printOffsetX) : 0}mm;
+                padding-top: ${printOffsetY > 0 ? printOffsetY : 0}mm;
+                padding-bottom: ${printOffsetY < 0 ? Math.abs(printOffsetY) : 0}mm;
+                box-sizing: border-box;
+            }
+            .page-container {
+                width: ${dims.w}mm;
+                height: ${pageHeight}mm;
+                position: relative;
+                background: white;
+                font-size: 0;
+                line-height: 0;
+                box-sizing: border-box;
+            }
+        `;
 
         const htmlContent = `<!DOCTYPE html>
-    <html><head><title>Print Labels</title>
-    <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <style>${css}</style></head><body>
-    <div class="print-container">${allLabelsHTML}</div>
-    <script>
-        document.fonts.ready.then(() => {
-            window.print();
-            // Optional: window.close() after print if needed, but risky if print dialog is open
-        }).catch(e => {
-            console.error('Font loading failed', e);
-            window.print();
-        });
-    </script>
-    </body></html>`;
+            <html><head><title>Print Labels</title>
+            <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+            <style>${css}</style></head><body>
+            <div class="print-container">${allPagesHTML}</div>
+            <script>
+                document.fonts.ready.then(() => {
+                    window.print();
+                }).catch(e => {
+                    console.error('Font loading failed', e);
+                    window.print();
+                });
+            </script>
+            </body></html>`;
 
         printWindow.document.write(htmlContent);
         printWindow.document.close();
@@ -512,7 +608,10 @@ export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {})
 };
 
 /**
- * Print a single drug label (convenience function)
+ * Convenience wrapper to print labels for a single drug.
+ * @param drug - The drug to print
+ * @param quantity - Number of labels (defaults to 1)
+ * @param expiryDateOverride - Optional custom expiry date
  */
 export const printSingleLabel = (drug: Drug, quantity: number = 1, expiryDateOverride?: string): void => {
     printLabels([{ drug, quantity, expiryDateOverride }]);
