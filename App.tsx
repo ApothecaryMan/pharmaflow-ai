@@ -1091,6 +1091,7 @@ const App: React.FC = () => {
             props.color = theme.primary;
             props.t = t;
             props.language = language;
+            props.textTransform = textTransform;
             
             // Conditionally add props based on page requirements
             const requiredProps = pageConfig.requiredProps || [];

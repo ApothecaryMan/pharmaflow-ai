@@ -108,6 +108,8 @@ export interface PrintOptions {
     pairedLabels?: boolean;
     /** Use a specific design instead of searching local storage */
     design?: LabelDesign;
+    /** Overrides for specific element visibility by ID */
+    elementVisibility?: Record<string, boolean>;
 }
 
 // --- Constants ---
@@ -478,6 +480,8 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
  * // Print 5 labels for a single drug
  * printLabels([{ drug: myDrug, quantity: 5 }]);
  */
+
+
 export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {}): void => {
     const validItems = items.filter(item => {
         if (!validateDrug(item.drug)) {
@@ -502,7 +506,20 @@ export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {})
         }
 
         const template = options.forceBasicTemplate ? null : getDefaultTemplate();
-        const design = options.design || (template?.design as LabelDesign) || DEFAULT_LABEL_DESIGN;
+        // Deep clone to prevent mutation when applying overrides
+        let design = JSON.parse(JSON.stringify(
+            options.design || (template?.design as LabelDesign) || DEFAULT_LABEL_DESIGN
+        ));
+
+        // Apply dynamic visibility overrides
+        if (options.elementVisibility) {
+            design.elements.forEach((el: LabelElement) => {
+                if (options.elementVisibility![el.id] !== undefined) {
+                    el.isVisible = options.elementVisibility![el.id];
+                }
+            });
+        }
+
         const dims = design.selectedPreset === 'custom'
             ? (design.customDims || { w: 38, h: 12 })
             : (LABEL_PRESETS[design.selectedPreset] || LABEL_PRESETS['38x12']);

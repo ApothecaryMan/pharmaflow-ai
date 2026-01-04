@@ -4,40 +4,146 @@ import { SearchInput } from '../common/SearchInput';
 import { printLabels, PrintLabelItem } from './LabelPrinter';
 import { useSmartDirection } from '../common/SmartInputs';
 import { useContextMenu } from '../common/ContextMenu';
+import { usePosSounds } from '../common/hooks/usePosSounds';
+import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 
 interface BarcodePrinterProps {
   inventory: Drug[];
   color: string;
   t: any;
   language: string;
+  textTransform: 'normal' | 'uppercase';
 }
 
 interface QueueItem extends PrintLabelItem {
   id: string; // Unique ID for the queue item (e.g. timestamp)
 }
 
-export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color, t, language }) => {
+export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color, t, language, textTransform }) => {
   const { showMenu } = useContextMenu();
+  const { playBeep } = usePosSounds();
   const [search, setSearch] = useState('');
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null);
+  const [printConfig, setPrintConfig] = useState({
+      store: true,
+      name: true,
+      price: true,
+      expiry: true,
+      barcode: true,
+      hotline: false
+  });
   
   // Smart direction for search
   const dir = useSmartDirection(search, t.barcodePrinter?.searchPlaceholder || 'Search product to print...');
 
   // Search logic
   const searchResults = useMemo(() => {
-    if (!search.trim()) return [];
-    const term = search.toLowerCase();
-    return inventory.filter(d => 
-      d.name.toLowerCase().includes(term) || 
-      (d.barcode && d.barcode.includes(term)) ||
-      (d.internalCode && d.internalCode.includes(term))
-    ).slice(0, 10); // Limit to 10 results
+    const trimmed = search.trim();
+    // Reset selection when search changes
+    setSelectedSuggestionIndex(-1);
+    
+    if (!trimmed) return [];
+    
+    const { mode, regex } = parseSearchTerm(search);
+
+    return inventory.filter(d => {
+        // Exact code match (no regex needed)
+        if (d.barcode === trimmed || d.internalCode === trimmed) return true;
+
+        if (mode === 'ingredient') {
+            return d.activeIngredients?.some(ing => regex.test(ing));
+        }
+
+        const searchableText = [
+            d.name,
+            d.genericName,
+            d.dosageForm,
+            d.category,
+            d.description,
+            ...(Array.isArray(d.activeIngredients) ? d.activeIngredients : []),
+        ].filter(Boolean).join(" ");
+
+        return regex.test(searchableText);
+    }).slice(0, 10);
   }, [search, inventory]);
 
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Global Keydown (Simple Alphanumeric for Search Focus + Shortcuts)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // 1. Ignore if already in an input
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        // Handle Escape to blur
+        if (e.key === 'Escape') {
+            (document.activeElement as HTMLElement).blur();
+            setShowSuggestions(false);
+        }
+        return;
+      }
+
+      // 2. Capture Alphanumeric for search focus
+      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setSearch((prev) => prev + e.key);
+        setShowSuggestions(true);
+        return;
+      }
+
+      // 3. Shortcuts
+      // Alt+P: Print
+      if (e.altKey && (e.key === 'p' || e.key === 'P' || e.key === 'ح')) {
+          e.preventDefault();
+          if (queue.length > 0) handlePrint();
+          return;
+      }
+      // Alt+C: Clear
+      if (e.altKey && (e.key === 'c' || e.key === 'C' || e.key === 'ؤ')) {
+          e.preventDefault();
+          if (queue.length > 0) clearQueue();
+          return;
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [queue.length]); // Re-bind when queue length changes for shortcuts
+
+  // Auto-fill on exact barcode match
+  useEffect(() => {
+     let trimmed = search.trim();
+     let scanQty = 1;
+
+     // Support qty*barcode format (e.g. 10*123456)
+     if (trimmed.includes('*')) {
+         const parts = trimmed.split('*');
+         if (parts.length === 2 && !isNaN(parseInt(parts[0]))) {
+             scanQty = Math.max(1, parseInt(parts[0]));
+             trimmed = parts[1].trim();
+         }
+     }
+
+     if (trimmed.length < 4) return; // Min length for auto-detect
+
+     const match = inventory.find(d => 
+        (d.barcode === trimmed) || 
+        (d.internalCode === trimmed)
+     );
+
+     if (match) {
+         addToQueue(match, scanQty);
+         setSearch('');
+         setShowSuggestions(false);
+     }
+  }, [search, inventory]);
 
   // Close suggestions on click outside
   useEffect(() => {
@@ -50,7 +156,10 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const addToQueue = (drug: Drug) => {
+  const addToQueue = (drug: Drug, initialQty: number = 1) => {
+    // Play sound callback
+    playBeep();
+    
     // Format expiry date to MM/YY
     let formattedExpiry = '';
     if (drug.expiryDate) {
@@ -74,20 +183,24 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
       if (existingIndex >= 0) {
           // Update quantity of existing item
           const updated = [...prev];
+          const existingId = updated[existingIndex].id;
           updated[existingIndex] = {
               ...updated[existingIndex],
               quantity: updated[existingIndex].quantity + 1
           };
+          setLastAddedId(existingId);
           return updated;
       }
 
       // Add new item
+      const newId = Date.now().toString();
       const newItem: QueueItem = {
-          id: Date.now().toString(),
+          id: newId,
           drug,
-          quantity: 1,
+          quantity: initialQty,
           expiryDateOverride: formattedExpiry
       };
+      setLastAddedId(newId);
       return [...prev, newItem];
     });
 
@@ -141,7 +254,10 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
         console.error('Failed to load current design', e);
     }
 
-    printLabels(itemsToPrint, { design: currentDesign });
+    printLabels(itemsToPrint, { 
+        design: currentDesign,
+        elementVisibility: printConfig
+    });
     
     // Optional: Clear queue after print? Or keep for re-print?
     // Let's keep it for now, user can clear manually if they want.
@@ -157,7 +273,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
   return (
     <div className="h-full flex flex-col gap-4 overflow-hidden">
       {/* Header Card */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
@@ -194,47 +310,76 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
         <div className="flex items-center gap-3">
           <div className="relative z-20 flex-1" ref={searchRef}>
             <SearchInput
+              ref={searchInputRef}
               value={search}
               onSearchChange={(val) => {
                   setSearch(val);
                   setShowSuggestions(true);
+                  setSelectedSuggestionIndex(-1);
               }}
+              onKeyDown={(e) => {
+                  if (searchResults.length > 0) {
+                      if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          setSelectedSuggestionIndex(prev => (prev + 1) % searchResults.length);
+                      } else if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          setSelectedSuggestionIndex(prev => (prev - 1 + searchResults.length) % searchResults.length);
+                      } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (selectedSuggestionIndex >= 0) {
+                              addToQueue(searchResults[selectedSuggestionIndex]);
+                          } else if (searchResults.length === 1) {
+                              addToQueue(searchResults[0]);
+                          }
+                      }
+                  }
+              }}
+              onClear={() => setSearch('')}
               placeholder={t.barcodePrinter?.searchPlaceholder || 'Search product to print...'}
               className="w-full"
               autoComplete="off"
               onFocus={() => setShowSuggestions(true)}
             />
           
-          {/* Suggestions Dropdown */}
-          {showSuggestions && search.trim() && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto overflow-x-hidden z-50">
-                {searchResults.length > 0 ? (
-                    searchResults.map(drug => (
-                        <button
-                            key={drug.id}
-                            onClick={() => addToQueue(drug)}
-                            className="w-full text-start p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between group border-b border-gray-100 dark:border-gray-800 last:border-0"
-                        >
-                            <div className="flex flex-col">
-                                <span className="font-medium text-gray-900 dark:text-white">{drug.name} {drug.dosageForm}</span>
-
-                            </div>
-                            <div className="flex flex-col items-end">
-                                <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-600 dark:text-gray-300">
-                                    {drug.internalCode || drug.id}
-                                </span>
-                                {drug.expiryDate && <span className="text-[10px] text-gray-400 mt-1">Exp: {drug.expiryDate}</span>}
-                            </div>
-                        </button>
+            {/* Suggestions Dropdown */}
+            {showSuggestions && search.trim() && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-2xl overflow-hidden z-[100]">
+                <div className="max-h-[300px] overflow-y-auto p-1 custom-scrollbar">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((drug, index) => (
+                      <button
+                        key={drug.id}
+                        onClick={() => addToQueue(drug)}
+                        className={`w-full text-left p-3 flex items-center gap-3 transition-all rounded-lg ${
+                            index === selectedSuggestionIndex 
+                            ? 'bg-blue-50 dark:bg-blue-900/30 ring-2 ring-blue-500/20' 
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                        }`}
+                        dir="ltr"
+                      >
+                        <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-300 shrink-0">
+                          {drug.internalCode || drug.barcode || drug.id}
+                        </span>
+                        <span className={`font-medium text-gray-900 dark:text-white flex-1 truncate ${textTransform === 'uppercase' ? 'uppercase' : ''}`}>
+                          {drug.name} <span className="opacity-75 font-normal">{drug.dosageForm}</span>
+                        </span>
+                        {drug.expiryDate && (
+                          <span className="text-xs text-gray-400 shrink-0 whitespace-nowrap">
+                            {drug.expiryDate}
+                          </span>
+                        )}
+                      </button>
                     ))
-                ) : (
-                    <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                        {t.pos?.noResults || 'No results found'}
+                  ) : (
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 font-medium">
+                      {t.pos?.noResults || 'No results found'}
                     </div>
-                )}
-            </div>
-          )}
-        </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           
           {/* Total Labels Badge */}
           {queue.length > 0 && (
@@ -243,13 +388,54 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
               <span className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">
                 {queue.reduce((acc, item) => acc + item.quantity, 0)}
               </span>
+              <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    const menuItems = [
+                        { 
+                            label: t.barcodePrinter?.settings?.store || 'Pharmacy Name', 
+                            icon: printConfig.store ? 'check' : undefined, 
+                            action: () => setPrintConfig(p => ({ ...p, store: !p.store })) 
+                        },
+                        { 
+                            label: t.barcodePrinter?.settings?.name || 'Drug Name', 
+                            icon: printConfig.name ? 'check' : undefined, 
+                            action: () => setPrintConfig(p => ({ ...p, name: !p.name })) 
+                        },
+                        { 
+                            label: t.barcodePrinter?.settings?.price || 'Price', 
+                            icon: printConfig.price ? 'check' : undefined, 
+                            action: () => setPrintConfig(p => ({ ...p, price: !p.price })) 
+                        },
+                        { 
+                            label: t.barcodePrinter?.settings?.expiry || 'Expiry Date', 
+                            icon: printConfig.expiry ? 'check' : undefined, 
+                            action: () => setPrintConfig(p => ({ ...p, expiry: !p.expiry })) 
+                        },
+                        { 
+                            label: t.barcodePrinter?.settings?.barcode || 'Barcode', 
+                            icon: printConfig.barcode ? 'check' : undefined, 
+                            action: () => setPrintConfig(p => ({ ...p, barcode: !p.barcode })) 
+                        },
+                        { 
+                            label: t.barcodePrinter?.settings?.hotline || 'Hotline', 
+                            icon: printConfig.hotline ? 'check' : undefined, 
+                            action: () => setPrintConfig(p => ({ ...p, hotline: !p.hotline })) 
+                        }
+                    ];
+                    showMenu(e.clientX, e.clientY, menuItems);
+                }}
+                className="ml-2 w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 transition-colors"
+              >
+                  <span className="material-symbols-rounded text-sm">settings</span>
+              </button>
             </div>
           )}
         </div>
       </div>
 
       {/* Queue Container */}
-      <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 bg-white dark:bg-gray-900/40 rounded-2xl shadow-inner border border-gray-100 dark:border-gray-800 flex flex-col overflow-hidden">
         {/* Queue Items - 2 Column Grid Layout */}
         <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
           {queue.length > 0 ? (
@@ -257,11 +443,16 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
               {queue.map((item) => (
                 <div 
                   key={item.id} 
-                  className="flex items-center p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all group gap-3"
+                  className={`border transition-all group gap-3 flex items-center p-3 rounded-xl ${
+                      lastAddedId === item.id 
+                      ? `bg-${color}-500/10 dark:bg-${color}-400/10 border-${color}-200 dark:border-${color}-700/50` 
+                      : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                  dir="ltr"
                 >
                   {/* Name Section */}
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-sm text-gray-900 dark:text-white leading-tight truncate">
+                    <h4 className={`font-bold text-sm text-gray-900 dark:text-white leading-tight truncate ${textTransform === 'uppercase' ? 'uppercase' : ''}`}>
                       {item.drug.name} {item.drug.dosageForm}
                     </h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
@@ -272,7 +463,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
                   {/* Expiry Badge with Context Menu */}
                   <div className="flex items-center gap-1">
                       <span
-                          className={`text-[9px] font-bold text-white w-[38px] h-[18px] flex items-center justify-center rounded shadow-sm cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
+                          className={`text-[10px] font-bold text-white px-3 h-7 flex items-center justify-center rounded-lg shadow-sm cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
                               if (!item.drug.expiryDate) return 'bg-gray-400';
                               const today = new Date();
                               const expiry = new Date(item.drug.expiryDate);
@@ -283,13 +474,19 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
                           })()}`}
                           onClick={(e) => {
                               e.stopPropagation();
-                              const sameNameBatches = inventory.filter(d => 
-                                d.name === item.drug.name && 
-                                d.dosageForm === item.drug.dosageForm
-                              ).sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+                              const normalize = (s: string | undefined) => (s || '').toLowerCase().trim();
+                              
+                              const sameNameBatches = inventory.filter(d => {
+                                // 1. Strong Match: Same Barcode
+                                if (d.barcode && item.drug.barcode && d.barcode === item.drug.barcode) return true;
+                                
+                                // 2. Fallback: Same Name & Dosage Form (normalized)
+                                return normalize(d.name) === normalize(item.drug.name) && 
+                                       normalize(d.dosageForm) === normalize(item.drug.dosageForm);
+                              }).sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
 
                               const batchMenuItems = sameNameBatches.map((batch) => ({
-                                  label: `${new Date(batch.expiryDate).toLocaleDateString("en-US", { month: "2-digit", year: "2-digit" })} • ${batch.stock} ${t.pack || 'Pack'}`,
+                                  label: `${new Date(batch.expiryDate).toLocaleDateString("en-US", { month: "2-digit", year: "2-digit" })} • ${batch.stock} ${t.menu?.pack || 'Pack'}`,
                                   icon: batch.id === item.drug.id ? 'check_circle' : undefined,
                                   disabled: batch.stock <= 0,
                                   action: () => {

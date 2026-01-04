@@ -132,7 +132,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'طباعة الباركود',
     icon: 'print',
     category: 'tools',
-    requiredProps: ['inventory', 'color', 't', 'language']
+    requiredProps: ['inventory', 'color', 't', 'language', 'textTransform']
   },
   'barcode-studio': {
     id: 'barcode-studio',

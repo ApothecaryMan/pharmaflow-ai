@@ -24,7 +24,8 @@ export const TRANSLATIONS = {
       modules: 'Modules',
       sections: 'sections',
       totalItems: 'Total Items',
-      searchIn: 'Search in'
+      searchIn: 'Search in',
+      pack: 'Pack'
     },
     settings: {
       theme: 'Theme',
@@ -192,6 +193,14 @@ export const TRANSLATIONS = {
         queueEmpty: 'Print queue is empty. Add items to print.',
         printing: 'Generating labels...',
         printSuccess: 'Labels sent to printer'
+      },
+      settings: {
+        store: 'Pharmacy Name',
+        hotline: 'Hotline',
+        name: 'Drug Name',
+        price: 'Price',
+        expiry: 'Expiry Date',
+        barcode: 'Barcode'
       }
     },
     suppliers: {
@@ -1319,7 +1328,8 @@ export const TRANSLATIONS = {
       modules: 'الوحدات',
       sections: 'أقسام',
       totalItems: 'إجمالي العناصر',
-      searchIn: 'بحث في'
+      searchIn: 'بحث في',
+      pack: 'عبوة'
     },
     settings: {
       theme: 'السمة',
@@ -1503,6 +1513,14 @@ export const TRANSLATIONS = {
         queueEmpty: 'قائمة الطباعة فارغة. أضف عناصر للطباعة.',
         printing: 'جاري إنشاء الملصقات...',
         printSuccess: 'تم إرسال الملصقات للطابعة'
+      },
+      settings: {
+        store: 'اسم الصيدلية',
+        hotline: 'الخط الساخن',
+        name: 'اسم الدواء',
+        price: 'السعر',
+        expiry: 'تاريخ الانتهاء',
+        barcode: 'الباركود'
       }
     },
     suppliers: {
