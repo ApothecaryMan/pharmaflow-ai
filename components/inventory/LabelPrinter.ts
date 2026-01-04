@@ -59,8 +59,20 @@ export interface PrintOptions {
 
 // --- Constants ---
 
-const LABEL_PRESETS: Record<string, { w: number; h: number }> = {
-    '38x12': { w: 38, h: 12 }
+export const LABEL_PRESETS: Record<string, { w: number; h: number; label: string }> = {
+    '38x12': { w: 38, h: 12, label: '38×12 mm (Single)' },
+    '38x25': { w: 38, h: 25, label: '38×25 mm (Double)' }
+};
+
+/**
+ * Get dimensions for a preset with fallback support
+ */
+export const getPresetDimensions = (
+    presetKey: string, 
+    customDims?: { w: number; h: number }
+): { w: number; h: number } => {
+    if (presetKey === 'custom' && customDims) return customDims;
+    return LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x12'];
 };
 
 const PRINT_WINDOW_CONFIG = {

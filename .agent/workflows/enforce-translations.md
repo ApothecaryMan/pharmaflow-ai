@@ -35,6 +35,32 @@ interface Props {
 - Replace them with `t.key`.
 - If the key doesn't exist, **ADD IT** to `i18n/translations.ts` (both EN and AR).
 
+## 2.1 Verify Keys Before Use (CRITICAL)
+
+Before using a translation key `t.someKey`:
+
+1. **ALWAYS** search `translations.ts` first to confirm the key exists.
+2. If key doesn't exist → **Add it to EN and AR sections** before using it in code.
+3. **NEVER** assume a key exists based on pattern similarity.
+
+**Safe Pattern (for optional/new keys):**
+
+```tsx
+// Use fallback if key might not exist
+{
+  t.someOptionalKey || "Fallback Text";
+}
+```
+
+**Preferred Pattern (for required keys):**
+
+```tsx
+// Add key to translations.ts FIRST, then use it
+{
+  t.requiredKey;
+}
+```
+
 ## 3. Mandatory Arabic
 
 - Every new key added to `translations.ts` **MUST** have an Arabic equivalent in the `AR` object.
