@@ -502,3 +502,54 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
     </div>
   );
 };
+
+// --- Drug Search Input ---
+
+export interface DrugSearchInputProps extends Omit<SmartAutocompleteProps, 'onKeyDown'> {
+  onEnter?: () => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+}
+
+/**
+ * **DrugSearchInput Component**
+ * 
+ * A specialized search input for drug/product searches.
+ * - Wraps SmartAutocomplete with Enter-to-add callback
+ * - Autocomplete suggestions (optional)
+ * - RTL/LTR auto-detection
+ * 
+ * @usage
+ * Use for all drug search fields in POS and Purchases.
+ * 
+ * @example
+ * <DrugSearchInput
+ *   value={search}
+ *   onChange={setSearch}
+ *   suggestions={drugNames}
+ *   onEnter={() => addFirstItem()}
+ *   placeholder="Search..."
+ * />
+ */
+export const DrugSearchInput: React.FC<DrugSearchInputProps> = ({
+  onEnter,
+  onKeyDown,
+  ...props
+}) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Call custom handler first
+    onKeyDown?.(e);
+    
+    // Then handle Enter
+    if (e.key === 'Enter' && onEnter) {
+      e.preventDefault();
+      onEnter();
+    }
+  };
+
+  return (
+    <SmartAutocomplete
+      {...props}
+      onKeyDown={handleKeyDown}
+    />
+  );
+};

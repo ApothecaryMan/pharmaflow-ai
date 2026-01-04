@@ -7,6 +7,7 @@ export interface FloatingInputProps {
   type?: string;
   className?: string;
   inputClassName?: string;
+  labelBgClassName?: string;
   min?: string | number;
   max?: string | number;
   title?: string;
@@ -25,6 +26,7 @@ export const FloatingInput: React.FC<FloatingInputProps> = ({
   type = "text", 
   className = "", 
   inputClassName = "",
+  labelBgClassName = "bg-gray-50 dark:bg-gray-800",
   min, 
   max, 
   title,
@@ -52,7 +54,7 @@ export const FloatingInput: React.FC<FloatingInputProps> = ({
         onBlur={onBlur}
         maxLength={maxLength}
       />
-      <label className="absolute text-[8px] text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-2.5 scale-75 top-1 z-10 origin-[0] bg-gray-50 dark:bg-gray-800 px-1 peer-focus:px-1 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-2.5 left-1 pointer-events-none font-bold tracking-wide">
+      <label className={`absolute text-[11px] text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-2.5 scale-75 top-1 z-10 origin-[0] ${labelBgClassName} px-1 peer-focus:px-1 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-2.5 left-1 pointer-events-none font-bold tracking-wide`}>
         {label}
       </label>
     </div>

@@ -5,7 +5,8 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
 import { DatePicker } from '../common/DatePicker';
-import { useSmartDirection } from '../common/SmartInputs';
+import { useSmartDirection, DrugSearchInput } from '../common/SmartInputs';
+import { usePosSounds } from '../common/hooks/usePosSounds';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useLongPress } from '../../hooks/useLongPress';
 import { settingsService } from '../../services';
@@ -62,6 +63,9 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
   const [focusedInput, setFocusedInput] = useState<{id: string, field: string} | null>(null);
   const [filter, setFilter] = useState<'all' | 'in-stock' | 'out-stock'>('all');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  const [selectedCartIndex, setSelectedCartIndex] = useState(-1);
   const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
 
   const filterOptions = [
@@ -73,20 +77,100 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
 
 
   const supplierDropdownRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  // Sound effects
+  const { playBeep } = usePosSounds();
   
   // Refs for keyboard navigation
   const inputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
 
-  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, rowIndex: number, field: string) => {
-    if (e.key === 'Enter') {
+  // Global Keydown - Focus search on alphanumeric key press + Arrow navigation
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignore if already in an input
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        if (e.key === 'Escape') {
+            (document.activeElement as HTMLElement).blur();
+            setShowSuggestions(false);
+        }
+        return;
+      }
+
+      // Arrow navigation for cart items
+      if (e.key === 'ArrowDown' && cart.length > 0) {
         e.preventDefault();
-        const nextRowIndex = rowIndex + 1;
-        // Key format: "rowIndex-field"
+        setSelectedCartIndex(prev => (prev + 1) % cart.length);
+        return;
+      }
+      if (e.key === 'ArrowUp' && cart.length > 0) {
+        e.preventDefault();
+        setSelectedCartIndex(prev => (prev - 1 + cart.length) % cart.length);
+        return;
+      }
+
+      // Capture Alphanumeric for search focus
+      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setSearch((prev) => prev + e.key);
+        setShowSuggestions(true);
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [cart.length]);
+
+  // Auto-add on barcode match
+  useEffect(() => {
+    let trimmed = search.trim();
+    if (trimmed.length < 4) return;
+
+    const match = inventory.find(d => 
+      (d.barcode === trimmed) || 
+      (d.internalCode === trimmed)
+    );
+
+    if (match) {
+      handleAddItem(match);
+      setSearch('');
+      setShowSuggestions(false);
+    }
+  }, [search, inventory]);
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, rowIndex: number, field: string) => {
+    if (e.key === 'Enter' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextRowIndex = (rowIndex + 1) % cart.length;
         const nextInput = inputRefs.current[`${nextRowIndex}-${field}`];
         if (nextInput) {
             nextInput.focus();
-            // Select text if needed
-            nextInput.select(); 
+            nextInput.select();
+            setSelectedCartIndex(nextRowIndex);
+        }
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevRowIndex = (rowIndex - 1 + cart.length) % cart.length;
+        const prevInput = inputRefs.current[`${prevRowIndex}-${field}`];
+        if (prevInput) {
+            prevInput.focus();
+            prevInput.select();
+            setSelectedCartIndex(prevRowIndex);
         }
     }
   };
@@ -574,6 +658,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
   }, [isSupplierOpen]);
 
   const handleAddItem = (drug: Drug) => {
+    playBeep();
     setCart(prev => {
       const existing = prev.find(i => i.drugId === drug.id);
       if (existing) {
@@ -612,6 +697,8 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
         tax: initialTaxPercent // Tax as percentage
       }];
     });
+    // Select the newly added item (will be at the end of cart)
+    setSelectedCartIndex(cart.length);
     setSearch(''); // Clear search on add
   };
 
@@ -957,227 +1044,202 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
 
 
        {mode === 'create' ? (
-           <div className="flex flex-col lg:flex-row gap-4 h-full overflow-hidden">
-               {/* LEFT: Selection Area */}
-               <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-                   {/* Supplier Select with Autocomplete */}
-                   <div className={`${CARD_BASE} p-4 rounded-3xl`}>
-                        <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">{t.selectSupplier}</label>
-                        
-                        <div ref={supplierDropdownRef} className="relative">
-                            <input
-                                type="text"
-                                placeholder={t.placeholders?.searchSupplier || 'Search and select supplier...'}
-                                value={supplierSearch || (selectedSupplierId ? suppliers.find(s => s.id === selectedSupplierId)?.name : '')}
-                                onChange={(e) => {
-                                    setSupplierSearch(e.target.value);
-                                    setSelectedSupplierId('');
-                                    if (!isSupplierOpen) setIsSupplierOpen(true);
-                                }}
-                                onFocus={() => setIsSupplierOpen(true)}
-                                onBlur={() => {
-                                    // Delay to allow click on dropdown item
-                                    setTimeout(() => {
-                                        // If no supplier selected and search text doesn't match any supplier, clear it
-                                        if (!selectedSupplierId && supplierSearch) {
-                                            const match = suppliers.find(s => 
-                                                s.name.toLowerCase() === supplierSearch.toLowerCase()
-                                            );
-                                            if (match) {
-                                                setSelectedSupplierId(match.id);
-                                                setSupplierSearch('');
-                                            } else {
-                                                setSupplierSearch('');
-                                            }
-                                        }
-                                        setIsSupplierOpen(false);
-                                    }, 200);
-                                }}
-                                dir={supplierSearchDir}
-                                autoComplete="off"
-                                className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
-                            />
-                            
-                            {/* Clear button when supplier selected */}
-                            {selectedSupplierId && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setSelectedSupplierId('');
-                                        setSupplierSearch('');
-                                    }}
-                                    className="absolute end-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                                >
-                                    <span className="material-symbols-rounded text-lg">close</span>
-                                </button>
-                            )}
-                            
-                            {/* Dropdown Results */}
-                            {isSupplierOpen && filteredSuppliers.length > 0 && (
-                                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl max-h-60 overflow-y-auto">
-                                    {filteredSuppliers.map(supplier => (
-                                        <div
-                                            key={supplier.id}
-                                            onMouseDown={(e) => e.preventDefault()} // Prevent blur before click
-                                            onClick={() => {
-                                                setSelectedSupplierId(supplier.id);
-                                                setSupplierSearch('');
-                                                setIsSupplierOpen(false);
-                                            }}
-                                            className={`px-3 py-2 cursor-pointer hover:bg-${color}-50 dark:hover:bg-${color}-900/20 transition-colors ${
-                                                selectedSupplierId === supplier.id ? `bg-${color}-50 dark:bg-${color}-900/20` : ''
-                                            }`}
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-medium text-sm">{supplier.name}</span>
-                                                <span className="text-xs text-gray-400 font-mono">{supplier.id}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                            
-                            {/* No results message */}
-                            {isSupplierOpen && supplierSearch && filteredSuppliers.length === 0 && (
-                                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 text-center text-sm text-gray-500">
-                                    {t.noResults || 'No suppliers found'}
-                                </div>
-                            )}
-                        </div>
-                   </div>
+           <div className="flex flex-col gap-4 h-full overflow-hidden">
 
-                   {/* Drug Search & Grid */}
-                   <div className={`flex-1 ${CARD_BASE} p-4 rounded-3xl flex flex-col overflow-hidden`}>
-                        <div className="flex gap-2 mb-4">
-                            {/* Filter Dropdown */}
-                            <ExpandingDropdown
-                                items={filterOptions}
-                                selectedItem={filterOptions.find(o => o.id === filter)}
-                                isOpen={isFilterOpen}
-                                onToggle={() => setIsFilterOpen(!isFilterOpen)}
-                                onSelect={(item) => {
-                                    setFilter(item.id as any);
-                                    setIsFilterOpen(false);
-                                }}
-                                keyExtractor={(item) => item.id}
-                                renderItem={(item, isSelected) => (
-                                    <div className="flex items-center justify-between w-full">
-                                        <span>{item.label}</span>
-                                        {isSelected && <span className="material-symbols-rounded text-sm">check</span>}
+
+                {/* TOP: Search Controls */}
+                <div className={`${CARD_BASE} p-4 rounded-3xl flex flex-col xl:flex-row gap-4 items-end flex-shrink-0`}>
+                        {/* Drug Search & Filter */}
+                        <div className="flex-[1.5] w-full flex gap-2">
+                             <ExpandingDropdown
+                                 items={filterOptions}
+                                 selectedItem={filterOptions.find(o => o.id === filter)}
+                                 isOpen={isFilterOpen}
+                                 onToggle={() => setIsFilterOpen(!isFilterOpen)}
+                                 onSelect={(item) => {
+                                     setFilter(item.id as any);
+                                     setIsFilterOpen(false);
+                                 }}
+                                 keyExtractor={(item) => item.id}
+                                 renderItem={(item, isSelected) => (
+                                     <div className="flex items-center justify-between w-full">
+                                         <span>{item.label}</span>
+                                         {isSelected && <span className="material-symbols-rounded text-sm">check</span>}
+                                     </div>
+                                 )}
+                                 renderSelected={(item) => item?.label}
+                                 className="w-32 h-[42px]"
+                                 variant="input"
+                                 color={color}
+                             />
+
+                             <div className="relative flex-1" ref={searchRef}>
+                               <DrugSearchInput
+                                   inputRef={searchInputRef}
+                                   value={search}
+                                   onChange={(val) => {
+                                       setSearch(val);
+                                       setShowSuggestions(true);
+                                       setSelectedSuggestionIndex(-1);
+                                   }}
+                                   onEnter={() => {
+                                       if (selectedSuggestionIndex >= 0 && filteredDrugs[selectedSuggestionIndex]) {
+                                           handleAddItem(filteredDrugs[selectedSuggestionIndex]);
+                                       } else if (filteredDrugs.length > 0) {
+                                           handleAddItem(filteredDrugs[0]);
+                                       }
+                                       setShowSuggestions(false);
+                                       setSearch('');
+                                   }}
+                                   suggestions={[]} 
+                                   placeholder={t.searchDrug}
+                                   className="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all text-sm h-[42px]"
+                                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                                   onFocus={() => setShowSuggestions(true)}
+                                   onKeyDown={(e) => {
+                                       if (filteredDrugs.length > 0) {
+                                           if (e.key === 'ArrowDown') {
+                                               e.preventDefault();
+                                               setSelectedSuggestionIndex(prev => (prev + 1) % filteredDrugs.length);
+                                           } else if (e.key === 'ArrowUp') {
+                                               e.preventDefault();
+                                               setSelectedSuggestionIndex(prev => (prev - 1 + filteredDrugs.length) % filteredDrugs.length);
+                                           } else if (e.key === 'Escape') {
+                                               setShowSuggestions(false);
+                                           }
+                                       }
+                                   }}
+                               />
+                               
+                               {/* Search Suggestions Dropdown */}
+                               {showSuggestions && search.trim() && (
+                                 <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-2xl overflow-hidden z-[100]">
+                                   <div className="max-h-[300px] overflow-y-auto p-1 custom-scrollbar">
+                                     {filteredDrugs.length > 0 ? (
+                                       filteredDrugs.slice(0, 10).map((drug, index) => (
+                                         <button
+                                           key={drug.id}
+                                           onClick={() => {
+                                               handleAddItem(drug);
+                                               setShowSuggestions(false);
+                                               setSearch('');
+                                           }}
+                                           className={`w-full text-left p-3 flex items-center gap-3 transition-all rounded-lg ${
+                                               index === selectedSuggestionIndex 
+                                               ? `bg-${color}-50 dark:bg-${color}-900/30 ring-2 ring-${color}-500/20` 
+                                               : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                                           }`}
+                                           dir="ltr"
+                                         >
+                                           <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-300 shrink-0">
+                                             {drug.internalCode || drug.barcode || drug.id}
+                                           </span>
+                                           <span className={`font-medium text-gray-900 dark:text-white flex-1 truncate ${typeof window !== 'undefined' && localStorage.getItem('pharma_textTransform') === 'uppercase' ? 'uppercase' : ''}`}>
+                                             {drug.name} {drug.dosageForm}
+                                           </span>
+                                           <span className="text-xs text-gray-500 shrink-0">
+                                             {drug.stock} {t.inStock || 'in stock'}
+                                           </span>
+                                         </button>
+                                       ))
+                                     ) : (
+                                       <div className="p-4 text-center text-gray-500 dark:text-gray-400 font-medium">
+                                         {t.noResults || 'No results found'}
+                                       </div>
+                                     )}
+                                   </div>
+                                 </div>
+                               )}
+                             </div>
+                        </div>
+
+                        {/* Supplier Select */}
+                        <div className="flex-1 w-full">
+                            <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">{t.selectSupplier}</label>
+                            
+                            <div ref={supplierDropdownRef} className="relative">
+                                <input
+                                    type="text"
+                                    placeholder={t.placeholders?.searchSupplier || 'Search and select supplier...'}
+                                    value={supplierSearch || (selectedSupplierId ? suppliers.find(s => s.id === selectedSupplierId)?.name : '')}
+                                    onChange={(e) => {
+                                        setSupplierSearch(e.target.value);
+                                        setSelectedSupplierId('');
+                                        if (!isSupplierOpen) setIsSupplierOpen(true);
+                                    }}
+                                    onFocus={() => setIsSupplierOpen(true)}
+                                    onBlur={() => {
+                                        setTimeout(() => {
+                                            if (!selectedSupplierId && supplierSearch) {
+                                                const match = suppliers.find(s => 
+                                                    s.name.toLowerCase() === supplierSearch.toLowerCase()
+                                                );
+                                                if (match) {
+                                                    setSelectedSupplierId(match.id);
+                                                    setSupplierSearch('');
+                                                } else {
+                                                    setSupplierSearch('');
+                                                }
+                                            }
+                                            setIsSupplierOpen(false);
+                                        }, 200);
+                                    }}
+                                    dir={supplierSearchDir}
+                                    autoComplete="off"
+                                    className="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm h-[42px]"
+                                />
+                                
+                                {selectedSupplierId && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedSupplierId('');
+                                            setSupplierSearch('');
+                                        }}
+                                        className="absolute end-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                    >
+                                        <span className="material-symbols-rounded text-lg">close</span>
+                                    </button>
+                                )}
+                                
+                                {isSupplierOpen && filteredSuppliers.length > 0 && (
+                                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                                        {filteredSuppliers.map(supplier => (
+                                            <div
+                                                key={supplier.id}
+                                                onMouseDown={(e) => e.preventDefault()} 
+                                                onClick={() => {
+                                                    setSelectedSupplierId(supplier.id);
+                                                    setSupplierSearch('');
+                                                    setIsSupplierOpen(false);
+                                                }}
+                                                className={`px-3 py-2 cursor-pointer hover:bg-${color}-50 dark:hover:bg-${color}-900/20 transition-colors ${
+                                                    selectedSupplierId === supplier.id ? `bg-${color}-50 dark:bg-${color}-900/20` : ''
+                                                }`}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-medium text-sm">{supplier.name}</span>
+                                                    <span className="text-xs text-gray-400 font-mono">{supplier.id}</span>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
-                                renderSelected={(item) => item?.label}
-                                className="w-32 h-[46px]"
-                                variant="input"
-                                color={color}
-                            />
-
-                            <input 
-                                type="text" 
-                                placeholder={t.searchDrug}
-                                className="flex-1 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2"
-                                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && filteredDrugs.length > 0) {
-                                        handleAddItem(filteredDrugs[0]);
-                                    }
-                                }}
-                                dir={drugSearchDir}
-                                autoComplete="off"
-                                onContextMenu={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    const selection = window.getSelection()?.toString();
-                                    showMenu(e.clientX, e.clientY, [
-                                        ...(selection ? [{ label: t.contextMenu?.copy || 'Copy', icon: 'content_copy', action: () => copyToClipboard(selection) }] : []),
-                                        { label: t.contextMenu?.paste || 'Paste', icon: 'content_paste', action: async () => {
-                                            try {
-                                                const text = await navigator.clipboard.readText();
-                                                setSearch(prev => prev + text);
-                                            } catch (err) {
-                                                console.error('Failed to read clipboard', err);
-                                            }
-                                        }},
-                                        { separator: true },
-                                        { label: t.contextMenu?.clear || 'Clear', icon: 'backspace', action: () => setSearch('') }
-                                    ]);
-                                }}
-                            />
-                        </div>
-                        <div className="flex-1 overflow-y-auto">
-                            {search.trim() === '' ? (
-                              <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-4 p-8">
-                                <span className="material-symbols-rounded text-8xl opacity-30">search</span>
-                                <p className="text-lg font-bold">{t.searchDrug}</p>
-                                <p className="text-sm text-center max-w-xs opacity-70">
-                                  {t.startSearching || 'Start searching for products to add to purchase order'}
-                                </p>
-                              </div>
-                            ) : filteredDrugs.length === 0 ? (
-                              <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-4 p-8">
-                                <span className="material-symbols-rounded text-8xl opacity-30">search_off</span>
-                                <p className="text-lg font-bold">
-                                  {t.noResults || 'No results found'}
-                                </p>
-                                <p className="text-sm text-center max-w-xs opacity-70">
-                                  {t.tryDifferentKeywords || 'Try searching with different keywords'}
-                                </p>
-                              </div>
-                            ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-2">
-                                    {filteredDrugs.map(drug => (
-                                    <div key={drug.id} 
-                                         onClick={() => handleAddItem(drug)}
-                                         onContextMenu={(e) => {
-                                             e.preventDefault();
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            showMenu(e.clientX, e.clientY, [
-                                                { label: t.contextMenu?.addToOrder || 'Add to Order', icon: 'add_shopping_cart', action: () => handleAddItem(drug) },
-                                                { separator: true },
-                                                { label: t.contextMenu?.copyName || 'Copy Name', icon: 'content_copy', action: () => copyToClipboard(drug.name) }
-                                            ]);
-                                         }}
-                                         className={`p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-900/20 cursor-pointer transition-colors group`}
-                                    >    <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-bold text-sm text-gray-800 dark:text-gray-200 drug-name">
-                                                    {drug.name} {drug.dosageForm ? <span className="font-normal text-gray-500">({drug.dosageForm})</span> : ''}
-                                                </p>
-                                                <p className="text-xs text-gray-500 font-mono tracking-wider">{drug.internalCode || drug.barcode || drug.id}</p>
-                                            </div>
-                                            <span className={`material-symbols-rounded text-${color}-600 opacity-0 group-hover:opacity-100`}>add_circle</span>
-                                        </div>
+                                
+                                {isSupplierOpen && supplierSearch && filteredSuppliers.length === 0 && (
+                                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 text-center text-sm text-gray-500">
+                                        {t.noResults || 'No suppliers found'}
                                     </div>
-                                ))}
+                                )}
                             </div>
-                            )}
-                        </div>
+                       </div>
+
                    </div>
-               </div>
-
-               {/* Resize Handle (Desktop Only) */}
+               {/* BOTTOM: Order Cart */}
                <div 
-                 className="hidden lg:flex w-4 items-center justify-center cursor-col-resize group z-10 -mx-2"
-                 onMouseDown={startResizing}
-                 onTouchStart={startResizing}
+                 className={`flex-1 ${CARD_BASE} p-5 rounded-3xl flex flex-col overflow-hidden`}
                >
-                 <div className="w-1 h-16 rounded-full bg-gray-200 dark:bg-gray-700 group-hover:bg-blue-500 transition-colors"></div>
-               </div>
-
-               {/* RIGHT: Order Cart */}
-               <div 
-                 ref={sidebarRef}
-                 style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}
-                 className={`w-full lg:w-[var(--sidebar-width)] ${CARD_BASE} p-5 rounded-3xl flex flex-col`}
-               >
-                   <div className="flex justify-between items-start mb-4">
-                       <h3 className="font-bold text-lg flex items-center gap-2 mt-1">
-                           <span className="material-symbols-rounded">shopping_cart</span>
-                           {t.cartTitle}
-                       </h3>
+                    <div className="flex justify-end items-center mb-4 gap-4">
 
                        <div className="flex items-center gap-4">
                            {/* System Order ID (Read Only) */}
@@ -1220,6 +1282,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                onChange={(val) => setPaymentMethod(val as 'cash' | 'credit')}
                                color={color}
                                size="sm"
+                               variant="onPage"
                                options={[
                                    { label: t.cash || 'Cash', value: 'cash', activeColor: 'green' },
                                    { label: t.credit || 'Credit', value: 'credit', activeColor: 'blue' }
@@ -1237,7 +1300,12 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                <div 
                                    key={item.drugId} 
                                    dir="ltr"
-                                   className="p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl relative group pr-2 type-functional"
+                                   onClick={() => setSelectedCartIndex(index)}
+                                   className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer transition-all ${
+                                       selectedCartIndex === index 
+                                       ? `bg-${color}-50 dark:bg-${color}-900/30` 
+                                       : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                   }`}
                                    onContextMenu={(e) => {
                                        e.preventDefault();
                                        e.stopPropagation();
@@ -1267,8 +1335,8 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                     <div className="flex gap-1.5 items-center pe-4">
                                         {/* Product Name */}
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-xs drug-name truncate mb-1" title={item.name}>
-                                                {item.name} {item.dosageForm ? <span className="font-normal text-gray-500 text-[10px]">({item.dosageForm})</span> : ''}
+                                            <p className="font-bold text-md drug-name truncate mb-1" title={item.name}>
+                                                {item.name} {item.dosageForm || ''}
                                             </p>
                                         </div>
                                         
@@ -1281,7 +1349,8 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 type="number"
                                                 maxLength={4}
                                                 value={item.quantity}
-                                                onFocus={(e) => e.target.select()}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
+                                                onFocus={(e) => { setSelectedCartIndex(index); e.target.select(); }}
                                                 onChange={e => {
                                                     const val = e.target.value.slice(0, 4);
                                                     updateItem(item.drugId, 'quantity', parseFloat(val) || 0);
@@ -1302,12 +1371,14 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                     const status = checkExpiryStatus(item.expiryDate || '', { checkIncomplete: !isFocused });
                                                     return getExpiryStatusStyle(status, 'input');
                                                 })()}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
                                                 value={
                                                     focusedInput?.id === item.drugId && focusedInput?.field === 'expiryDate'
                                                         ? parseExpiryDisplay(item.expiryDate || '')
                                                         : formatExpiryDisplay(item.expiryDate || '')
                                                 }
                                                 onFocus={(e) => {
+                                                    setSelectedCartIndex(index);
                                                     setFocusedInput({ id: item.drugId, field: 'expiryDate' });
                                                     setTimeout(() => e.target.select(), 10);
                                                 }}
@@ -1336,7 +1407,8 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 label={t.cartFields?.cost || 'Cost'}
                                                 type="number"
                                                 value={item.costPrice}
-                                                onFocus={(e) => e.target.select()}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
+                                                onFocus={(e) => { setSelectedCartIndex(index); e.target.select(); }}
                                                 onChange={e => updateItem(item.drugId, 'costPrice', parseFloat(e.target.value) || 0)}
                                             />
                                         </div>
@@ -1351,7 +1423,8 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 min={0}
                                                 max={100}
                                                 value={item.discount || 0}
-                                                onFocus={(e) => e.target.select()}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
+                                                onFocus={(e) => { setSelectedCartIndex(index); e.target.select(); }}
                                                 onChange={e => updateItem(item.drugId, 'discount', parseFloat(e.target.value) || 0)}
                                             />
                                         </div>
@@ -1364,7 +1437,8 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 label={t.cartFields?.sale || 'Sale'}
                                                 type="number"
                                                 value={item.salePrice || 0}
-                                                onFocus={(e) => e.target.select()}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
+                                                onFocus={(e) => { setSelectedCartIndex(index); e.target.select(); }}
                                                 onChange={e => updateItem(item.drugId, 'salePrice', parseFloat(e.target.value) || 0)}
                                             />
                                         </div>
@@ -1379,7 +1453,8 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 min={0}
                                                 max={100}
                                                 value={item.tax || 0}
-                                                onFocus={(e) => e.target.select()}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
+                                                onFocus={(e) => { setSelectedCartIndex(index); e.target.select(); }}
                                                 onChange={e => updateItem(item.drugId, 'tax', parseFloat(e.target.value) || 0)}
                                             />
                                         </div>
@@ -1391,6 +1466,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 type="number"
                                                 value={Number((item.costPrice * item.quantity).toFixed(2))}
                                                 onChange={() => {}} // Read only
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
                                                 className="opacity-75 pointer-events-none" // Visual cue
                                             />
                                         </div>
@@ -1402,6 +1478,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 type="number"
                                                 value={Number(((item.costPrice * item.quantity) + ((item.costPrice * item.quantity) * ((item.tax || 0) / 100))).toFixed(2))}
                                                 onChange={() => {}} // Read only
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
                                                 className="opacity-75 pointer-events-none" // Visual cue
                                             />
                                         </div>
@@ -1411,18 +1488,19 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                        )}
                    </div>
 
-                    <div className="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
-                        {/* Summary Row */}
-                        <div className="flex items-center justify-between gap-2">
-                             {/* Items */}
-                            <div className="flex flex-col">
-                                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.summary.totalItems}</span>
-                                <span className="font-bold text-sm">{cart.reduce((a, b) => a + (Number(b.quantity) || 0), 0)}</span>
-                            </div>
-                            
-                            {/* Discount */}
-                            <div className="flex flex-col border-s border-gray-200 dark:border-gray-700 ps-4">
-                                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.summary.discount || 'Discount'}</span>
+                    <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                            {/* Left: Metrics Group */}
+                            <div className="flex items-center gap-6 text-sm">
+                                {/* Items Count */}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-400 font-medium">{t.summary.totalItems}</span>
+                                    <span className="font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg">
+                                        {cart.reduce((a, b) => a + (Number(b.quantity) || 0), 0)}
+                                    </span>
+                                </div>
+                                
+                                {/* Discount */}
                                 {(() => {
                                     const totalCost = cart.reduce((sum, i) => sum + (i.costPrice * i.quantity), 0);
                                     const totalSale = cart.reduce((sum, i) => sum + (i.salePrice * i.quantity), 0);
@@ -1430,66 +1508,73 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                     const discountPercent = totalSale > 0 ? (totalDiscount / totalSale) * 100 : 0;
                                     
                                     return (
-                                        <span className="font-medium text-sm text-green-600">
-                                            ${totalDiscount.toFixed(2)} ({discountPercent.toFixed(1)}%)
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-400 font-medium">{t.summary.discount || 'Disc'}</span>
+                                            <span className={`font-medium ${totalDiscount > 0 ? 'text-green-600' : 'text-gray-600'}`}>
+                                                ${totalDiscount.toFixed(2)} <span className="text-xs opacity-75">({discountPercent.toFixed(1)}%)</span>
+                                            </span>
+                                        </div>
                                     );
                                 })()}
-                            </div>
 
-                            {/* Tax */}
-                            <div className="flex flex-col border-s border-gray-200 dark:border-gray-700 ps-4">
-                                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.summary.tax || 'Tax'}</span>
+                                {/* Tax */}
                                 {(() => {
                                     const totalTaxAmount = cart.reduce((sum, i) => {
                                         const subtotal = i.costPrice * i.quantity;
                                         return sum + (subtotal * ((i.tax || 0) / 100));
                                     }, 0);
                                     return (
-                                        <span className="font-medium text-sm text-orange-600">
-                                            ${totalTaxAmount.toFixed(2)}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-400 font-medium">{t.summary.tax || 'Tax'}</span>
+                                            <span className="font-medium text-orange-600">
+                                                ${totalTaxAmount.toFixed(2)}
+                                            </span>
+                                        </div>
                                     );
                                 })()}
                             </div>
 
-                            {/* Total Cost */}
-                            <div className="flex items-center gap-2 text-right border-s border-gray-200 dark:border-gray-700 ps-4">
-                                <span className="text-xs text-gray-500 font-bold uppercase whitespace-nowrap">{t.summary.totalCost}:</span>
-                                {(() => {
-                                    const subtotal = cart.reduce((sum, i) => sum + (i.costPrice * i.quantity), 0);
-                                    const totalTax = cart.reduce((sum, i) => {
-                                        const itemSubtotal = i.costPrice * i.quantity;
-                                        return sum + (itemSubtotal * ((i.tax || 0) / 100));
-                                    }, 0);
-                                    return (
-                                        <span className={`text-2xl font-bold ${paymentMethod === 'cash' ? 'text-green-600' : 'text-blue-600'}`}>
-                                            ${(subtotal + totalTax).toFixed(2)}
-                                        </span>
-                                    );
-                                })()}
+                            {/* Right: Total & Actions */}
+                            <div className="flex items-center gap-4 flex-1 justify-end">
+                                {/* Total Display */}
+                                <div className="text-right me-2">
+                                    <div className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">{t.summary.totalCost}</div>
+                                    {(() => {
+                                        const subtotal = cart.reduce((sum, i) => sum + (i.costPrice * i.quantity), 0);
+                                        const totalTax = cart.reduce((sum, i) => {
+                                            const itemSubtotal = i.costPrice * i.quantity;
+                                            return sum + (itemSubtotal * ((i.tax || 0) / 100));
+                                        }, 0);
+                                        return (
+                                            <div className={`text-2xl font-black ${paymentMethod === 'cash' ? 'text-green-600' : 'text-blue-600'}`}>
+                                                ${(subtotal + totalTax).toFixed(2)}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex items-center gap-2">
+                                     <button 
+                                         onClick={handlePendingPO}
+                                         disabled={cart.length === 0 || !selectedSupplierId}
+                                         title={t.pending || 'Save as Pending'} 
+                                         className="h-12 w-12 flex items-center justify-center rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-600 disabled:bg-gray-100 disabled:text-gray-400 dark:bg-orange-900/20 dark:hover:bg-orange-900/30 dark:disabled:bg-gray-800 transition-all active:scale-95"
+                                     >
+                                         <span className="material-symbols-rounded">pending_actions</span>
+                                     </button>
+
+                                     <button 
+                                         onClick={handleConfirm}
+                                         disabled={cart.length === 0 || !selectedSupplierId}
+                                         className={`h-12 w-80 justify-center rounded-xl flex items-center gap-2 shadow-lg shadow-gray-200 dark:shadow-none ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:shadow-none text-white font-bold transition-all active:scale-95`}
+                                     >
+                                         <span>{t.summary.confirm}</span>
+                                     </button>
+                                </div>
                             </div>
                         </div>
-                       <div className="flex items-center gap-2">
-                            <button 
-                                onClick={handleConfirm}
-                                disabled={cart.length === 0 || !selectedSupplierId}
-                                className={`flex-1 py-3 rounded-xl type-interactive ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white font-bold transition-all active:scale-95`}
-                                style={{ boxShadow: 'rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px' }}
-                            >
-                                {t.summary.confirm} ({paymentMethod === 'cash' ? (t.cash || 'Cash') : (t.credit || 'Credit')})
-                            </button>
-                            <button 
-                                onClick={handlePendingPO}
-                                disabled={cart.length === 0 || !selectedSupplierId}
-                                title={t.pending || 'Save as Pending'} 
-                                className="w-12 py-3 flex items-center justify-center rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-600 disabled:bg-orange-50 disabled:text-orange-300 transition-all active:scale-95 type-interactive"
-                                style={{ boxShadow: 'rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px' }}
-                            >
-                                <span className="material-symbols-rounded">pending_actions</span>
-                            </button>
-                       </div>
-                   </div>
+                    </div>
                </div>
            </div>
        ) : (

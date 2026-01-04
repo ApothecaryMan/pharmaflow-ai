@@ -330,7 +330,6 @@ export const TRANSLATIONS = {
       subtitle: 'Restock inventory from suppliers',
       selectSupplier: 'Select Supplier',
       searchDrug: 'Search drug to buy...',
-      cartTitle: 'Purchase Order',
       emptyCart: 'No items in order',
       // Stock filter options
       filters: {
@@ -429,7 +428,7 @@ export const TRANSLATIONS = {
       summary: {
         totalItems: 'Total Items',
         totalCost: 'Total Cost',
-        confirm: 'Confirm & Receive Stock',
+        confirm: 'Confirm',
         discount: 'Discount',
         tax: 'Tax'
       },
@@ -1650,7 +1649,6 @@ export const TRANSLATIONS = {
       subtitle: 'إعادة تعبئة المخزون من الموردين',
       selectSupplier: 'اختر المورد',
       searchDrug: 'بحث عن دواء للشراء...',
-      cartTitle: 'أمر الشراء',
       emptyCart: 'لا توجد عناصر',
       // Stock filter options
       filters: {
@@ -1742,7 +1740,7 @@ export const TRANSLATIONS = {
         cost: 'التكلفة',
         discount: 'الخصم %',
         sale: 'البيع',
-        tax: 'الضريبة %',
+        tax: 'ض %',
         subtotal: 'المجموع',
         totalWithTax: 'الإجمالي+ض'
       },
