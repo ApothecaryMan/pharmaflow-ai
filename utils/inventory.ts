@@ -53,18 +53,19 @@ export const validateStock = (stock: number): number => {
  * formatStock(10, 1)   // Returns: "10 Packs" (when unitsPerPack=1, treats each unit as a pack)
  */
 export const formatStock = (stock: number, unitsPerPack: number = 1): string => {
-    const packs = Math.floor(stock / unitsPerPack);
-    const units = stock % unitsPerPack;
+    if (stock <= 0) return 'Out of Stock';
     
-    // Special case: when unitsPerPack is 1, don't show separate units
-    if (unitsPerPack === 1) return `${packs} Packs`;
+    // If unit based (1 unit/pack), just show count
+    if (unitsPerPack === 1) return `${stock} Packs`;
     
-    // Handle various stock compositions
-    if (packs === 0 && units === 0) return 'Out of Stock';
-    if (packs === 0) return `${units} Units`;
-    if (units === 0) return `${packs} Packs`;
+    // User request: Show stock as fractional packs visually (e.g. 5.5 Packs)
+    const packs = stock / unitsPerPack;
     
-    return `${packs} Packs + ${units} Units`;
+    // If integer, show as integer
+    if (Number.isInteger(packs)) return `${packs} Packs`;
+    
+    // Show up to 2 decimal places, stripping trailing zeros if possible (e.g. 5.50 -> 5.5)
+    return `${parseFloat(packs.toFixed(2))} Packs`;
 };
 
 /**

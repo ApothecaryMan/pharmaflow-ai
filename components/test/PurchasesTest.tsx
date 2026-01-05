@@ -922,9 +922,9 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
   }, [suppliers, supplierSearch]);
 
   return (
-    <div className="h-full flex flex-col space-y-4 animate-fade-in p-4 overflow-hidden">
+    <div className="h-full flex flex-col gap-2 animate-fade-in overflow-hidden">
        {/* Header with toggle */}
-       <div className="flex justify-between items-center flex-shrink-0">
+       <div className="flex justify-between items-center px-2 flex-shrink-0">
           <div>
               <div className="flex items-center gap-3">
                   <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'create' ? t.title : t.historyTitle}</h2>

@@ -621,54 +621,53 @@ export const POSTest: React.FC<POSProps> = ({
       const item = prev[itemIndex];
       const unitsPerPack = item.unitsPerPack || 1;
 
-      if (!currentIsUnit) {
-        // Pack -> Unit (Only if qty is 1, convert to 1 unit)
-        // Also prevent if units already exist (merged row logic)
-        const existingUnit = prev.find((i) => i.id === id && i.isUnit);
-        if (item.quantity !== 1 || (existingUnit && existingUnit.quantity > 0))
-          return prev;
+      // Logic: Switch Mode means transferring the quantity to the other mode
+      // Pack -> Unit: quantity * unitsPerPack
+      // Unit -> Pack: quantity / unitsPerPack (can be float)
 
-        let updated = prev.filter((_, idx) => idx !== itemIndex);
-        const unitIndex = updated.findIndex((i) => i.id === id && i.isUnit);
-        if (unitIndex >= 0) {
-          updated[unitIndex] = {
-            ...updated[unitIndex],
-            quantity: updated[unitIndex].quantity + 1,
-          };
+      if (!currentIsUnit) {
+        // Pack -> Unit
+        // Check if there is already a Unit item to merge into
+        const existingUnitIndex = prev.findIndex((i) => i.id === id && i.isUnit);
+        
+        const convertedQty = item.quantity * unitsPerPack;
+        
+        let updated = [...prev];
+        
+        if (existingUnitIndex >= 0) {
+            // Merge into existing Unit item
+            updated[existingUnitIndex] = {
+                ...updated[existingUnitIndex],
+                quantity: updated[existingUnitIndex].quantity + convertedQty
+            };
+            // Remove the Pack item
+            updated = updated.filter((_, idx) => idx !== itemIndex);
         } else {
-          updated.push({ ...item, isUnit: true, quantity: 1 });
+            // Just convert this item to Unit
+            updated[itemIndex] = { ...item, isUnit: true, quantity: convertedQty };
         }
         return updated;
       }
 
-      // Unit -> Pack (Smart Conversion)
+      // Unit -> Pack
       if (unitsPerPack <= 1) return prev;
 
-      const packsToAdd = Math.floor(item.quantity / unitsPerPack);
-      if (packsToAdd <= 0) return prev;
-
-      const unitsToRemove = packsToAdd * unitsPerPack;
-
+      const convertedPacks = item.quantity / unitsPerPack; // Allow float
+      
+      const existingPackIndex = prev.findIndex((i) => i.id === id && !i.isUnit);
       let updated = [...prev];
-      const updatedUnitItem = {
-        ...item,
-        quantity: item.quantity - unitsToRemove,
-      };
 
-      if (updatedUnitItem.quantity === 0) {
-        updated = updated.filter((_, idx) => idx !== itemIndex);
+      if (existingPackIndex >= 0) {
+          // Merge into existing Pack item
+          updated[existingPackIndex] = {
+              ...updated[existingPackIndex],
+              quantity: updated[existingPackIndex].quantity + convertedPacks
+          };
+          // Remove the Unit item
+          updated = updated.filter((_, idx) => idx !== itemIndex);
       } else {
-        updated[itemIndex] = updatedUnitItem;
-      }
-
-      const packIndex = updated.findIndex((i) => i.id === id && !i.isUnit);
-      if (packIndex >= 0) {
-        updated[packIndex] = {
-          ...updated[packIndex],
-          quantity: updated[packIndex].quantity + packsToAdd,
-        };
-      } else {
-        updated.push({ ...item, isUnit: false, quantity: packsToAdd });
+          // Convert to Pack
+          updated[itemIndex] = { ...item, isUnit: false, quantity: convertedPacks };
       }
 
       return updated;
@@ -1319,16 +1318,34 @@ export const POSTest: React.FC<POSProps> = ({
         id: "stock",
         header: t.stock,
         size: 100,
-        cell: (info) =>
-          info.getValue() === 0 ? (
-            <span className="text-xs font-bold text-red-500">
-              {t.outOfStock}
-            </span>
-          ) : (
+        cell: (info) => {
+          const row = info.row.original;
+          const mode = selectedUnits[row.id] || "pack";
+          const unitsPerPack = row.unitsPerPack || 1;
+          
+          if (info.getValue() <= 0) {
+            return (
+              <span className="text-xs font-bold text-red-500">
+                {t.outOfStock}
+              </span>
+            );
+          }
+
+          let displayValue;
+          if (mode === 'unit') {
+             displayValue = info.getValue(); // Show total units
+          } else {
+             // Show fractional packs
+             const packs = info.getValue() / unitsPerPack;
+             displayValue = parseFloat(packs.toFixed(2));
+          }
+
+          return (
             <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-              {parseFloat(info.getValue().toFixed(2))}
+              {displayValue}
             </span>
-          ),
+          );
+        },
       }),
       columnHelper.display({
         id: "unit",

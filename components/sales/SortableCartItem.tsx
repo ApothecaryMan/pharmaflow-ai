@@ -418,6 +418,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
               <input
                 type="number"
                 min={hasDualMode ? "0" : "1"}
+                step="any" // Allow decimals
                 placeholder={hasDualMode ? "P" : "1"}
                 value={packItem?.quantity === 0 ? "" : packItem?.quantity || ""}
                 onClick={(e) => e.stopPropagation()}
@@ -429,7 +430,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                       ? hasDualMode
                         ? 0
                         : 1
-                      : parseInt(e.target.value);
+                      : parseFloat(e.target.value); // Use parseFloat to allow fractional packs
                   if (isNaN(val)) return;
                   const minVal = hasDualMode ? 0 : 1;
                   const clampedVal = Math.max(minVal, val);

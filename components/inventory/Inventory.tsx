@@ -246,7 +246,11 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
             <div className="font-medium text-gray-900 dark:text-gray-100 text-sm drug-name">
               {drug.name} {drug.dosageForm ? <span className="text-gray-500 font-normal">({getLocalizedProductType(drug.dosageForm, currentLang)})</span> : ''}
             </div>
-            <div className="text-xs text-gray-500">{drug.genericName}</div>
+            <div className="text-xs text-gray-500 flex items-center gap-1">
+              <span>{drug.genericName}</span>
+              {/* {drug.class && <span className="opacity-50">•</span>}
+              {drug.class && <span className="opacity-70 italic">{drug.class}</span>} */}
+            </div>
           </>
         );
       case 'codes':
@@ -274,7 +278,10 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       case 'cost':
         return <span className="text-gray-500 text-xs hidden lg:table-cell">${drug.costPrice ? drug.costPrice.toFixed(2) : '-'}</span>;
       case 'expiry':
-        return <span className="text-gray-500 text-sm">{drug.expiryDate}</span>;
+        // Show MM/YY instead of full date
+        const date = new Date(drug.expiryDate);
+        const formatted = date.toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' });
+        return <span className="text-gray-500 text-sm">{formatted}</span>;
       case 'actions':
         return (
           <div className="relative">

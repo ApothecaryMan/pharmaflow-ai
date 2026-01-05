@@ -2,7 +2,9 @@
 
 export interface Drug {
   id: string;
+  dbId?: string; // New: DB-ID from CSV
   name: string;
+  nameArabic?: string; // New: الاسم عربي
   genericName: string;
   category: string;
   price: number;
@@ -20,6 +22,10 @@ export interface Drug {
   dosageForm?: string; // Tablet, Capsule, Syrup, etc.
   activeIngredients?: string[]; // For formula/composition
   minStock?: number;
+  class?: string; // New: Category from CSV
+  origin?: string; // New: محلي/مستورد
+  itemRank?: string; // New: شهرة الصنف
+  manufacturer?: string; // New: الشركة المنتجة
 }
 
 export interface Supplier {

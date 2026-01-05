@@ -8,6 +8,7 @@ import { SidebarContent } from './components/layout/SidebarContent';
 import { Navbar } from './components/layout/Navbar';
 import { PAGE_REGISTRY } from './config/pageRegistry';
 import { useTheme } from './hooks/useTheme';
+import { CSV_INVENTORY } from './data/sample-inventory';
 
 // Inventory Generator
 
@@ -152,7 +153,7 @@ const generateInventory = (): Drug[] => {
   return inventory;
 };
 
-const INITIAL_INVENTORY = generateInventory();
+const INITIAL_INVENTORY = CSV_INVENTORY;
 
 const INITIAL_SUPPLIERS: Supplier[] = [
   { id: '1', name: 'PharmaDist Co', contactPerson: 'John Smith', phone: '+1234567890', email: 'john@pharmadist.com', address: '123 Supply St, Medical City' },
@@ -308,10 +309,19 @@ const App: React.FC = () => {
   const [inventory, setInventory] = useState<Drug[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pharma_inventory');
-      // If saved inventory is small (old sample data) or missing new fields, replace with new large generator
+      
+      // One-time override to load CSV data if not already done (v5 for dosage fix)
+      const isCsvLoaded = localStorage.getItem('pharma_csv_loaded_v5');
+      if (!isCsvLoaded) {
+          localStorage.setItem('pharma_csv_loaded_v5', 'true');
+          return INITIAL_INVENTORY;
+      }
+
       if (saved) {
          const parsed = JSON.parse(saved);
-         if (parsed.length > 5000 && parsed[0].dosageForm && parsed[0].activeIngredients) return parsed;
+         // If saved inventory is old or missing new fields like 'class', we refresh it.
+         if (parsed.length > 0 && parsed[0].class) return parsed;
+         return INITIAL_INVENTORY;
       }
       return INITIAL_INVENTORY;
     }
@@ -1162,7 +1172,7 @@ const App: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 h-full overflow-hidden relative rounded-tl-3xl rounded-tr-3xl border-t border-l border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 shadow-inner">
-        <div className={`h-full overflow-y-auto scrollbar-hide ${(view === 'pos' || view === 'purchases' || view === 'pos-test') ? 'w-full px-[30px] py-4' : 'max-w-[90rem] mx-auto p-4 md:p-8'}`}>
+        <div className={`h-full overflow-y-auto scrollbar-hide ${(view === 'pos' || view === 'purchases' || view === 'pos-test'|| view === 'purchases-test') ? 'w-full px-[30px] py-4' : 'max-w-[90rem] mx-auto p-4 md:p-8'}`}>
           {/* Dynamic Page Rendering - Automatically handles all pages from registry */}
           {(() => {
             const pageConfig = PAGE_REGISTRY[view];
