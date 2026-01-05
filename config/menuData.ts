@@ -818,7 +818,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "employee-management",
         label: "Employee Management",
         items: [
-          "Employee List",
+          { label: "Employee List", view: "employee-list" },
           "Add Employee",
           "Employee Profile",
           "Employee Documents",
@@ -1065,7 +1065,8 @@ export const PHARMACY_MENU: MenuItem[] = [
         items: [
           { label: "POS v2", view: "test-pos-v2" },
           { label: "New Components", view: "test-components" },
-          { label: "Dashboard Experiments", view: "dashboard-experiments" }
+          { label: "Dashboard Experiments", view: "dashboard-experiments" },
+          { label: "Advanced Sm Card", view: "advanced-sm-card" }
         ]
       },
       {

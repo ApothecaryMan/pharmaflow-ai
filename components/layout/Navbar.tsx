@@ -161,7 +161,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   };
 
   const handleWheel = (e: React.WheelEvent) => {
-    if (dropdownRef.current) {
+    if (dropdownRef.current && !activeDropdown) {
       dropdownRef.current.scrollLeft += e.deltaY;
     }
   };
@@ -199,9 +199,9 @@ const NavbarComponent: React.FC<NavbarProps> = ({
               submenu.items.some(item => typeof item === 'object' && !!item.view)
           ) ?? false;
           
-          const isEffectivelyDisabled = navStyle === 2 
+          const isEffectivelyDisabled = (!developerMode) && (navStyle === 2 
                 ? !hasPage && !hasImplementedSubItems 
-                : !hasPage;
+                : !hasPage);
 
           return (
             <div key={module.id} className="relative group/item">
@@ -268,7 +268,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         }}
                         theme={theme}
                         language={language}
-                        hideInactiveModules={hideInactiveModules}
+                        hideInactiveModules={hideInactiveModules && !developerMode}
                         anchorEl={activeAnchor}
                     />
                 )}
@@ -303,9 +303,9 @@ const NavbarComponent: React.FC<NavbarProps> = ({
               submenu.items.some(item => typeof item === 'object' && !!item.view)
             ) ?? false;
             
-            const isEffectivelyDisabled = navStyle === 2 
+            const isEffectivelyDisabled = (!developerMode) && (navStyle === 2 
                 ? !hasPage && !hasImplementedSubItems 
-                : !hasPage;
+                : !hasPage);
 
             return (
                 <div className="relative group/settings">
@@ -344,7 +344,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                             }}
                             theme={theme}
                             language={language}
-                            hideInactiveModules={hideInactiveModules}
+                            hideInactiveModules={hideInactiveModules && !developerMode}
                             anchorEl={activeAnchor}
                         />
                     )}

@@ -1039,7 +1039,7 @@ const App: React.FC = () => {
       
       {/* Navbar */}
       <Navbar 
-        menuItems={useMemo(() => !hideInactiveModules ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false), [hideInactiveModules])}
+        menuItems={useMemo(() => (!hideInactiveModules || developerMode) ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false || m.submenus?.some(s => s.items.some(i => typeof i === 'object' && !!i.view))), [hideInactiveModules, developerMode])}
         activeModule={activeModule}
         onModuleChange={React.useCallback((moduleId: string) => {
           setActiveModule(moduleId);
@@ -1098,7 +1098,7 @@ const App: React.FC = () => {
           }}
         >
           <SidebarContent 
-            menuItems={useMemo(() => !hideInactiveModules ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false), [hideInactiveModules])}
+            menuItems={useMemo(() => (!hideInactiveModules || developerMode) ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false || m.submenus?.some(s => s.items.some(i => typeof i === 'object' && !!i.view))), [hideInactiveModules, developerMode])}
             activeModule={activeModule}
             view={view}
             dashboardSubView={dashboardSubView}
@@ -1134,7 +1134,7 @@ const App: React.FC = () => {
                   </button>
                 </div>
                  <div className="grid grid-cols-2 gap-2">
-                  {(hideInactiveModules ? PHARMACY_MENU.filter(m => m.hasPage !== false) : PHARMACY_MENU).map(module => (
+                  {((!hideInactiveModules || developerMode) ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false || m.submenus?.some(s => s.items.some(i => typeof i === 'object' && !!i.view)))).map(module => (
                     <button
                       key={module.id}
                       onClick={() => {
@@ -1153,7 +1153,7 @@ const App: React.FC = () => {
                 </div>
               </div>
               <SidebarContent 
-                menuItems={!hideInactiveModules ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false)}
+                menuItems={(!hideInactiveModules || developerMode) ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false || m.submenus?.some(s => s.items.some(i => typeof i === 'object' && !!i.view)))}
                 activeModule={activeModule}
                 view={view}
                 dashboardSubView={dashboardSubView}

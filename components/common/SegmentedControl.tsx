@@ -185,7 +185,7 @@ export function SegmentedControl<T extends string | number | boolean>({
               isActive
                 ? isPill 
                   ? 'text-white' 
-                  : `text-${optionColor}-600 dark:text-${optionColor}-400`
+                  : 'text-gray-900 dark:text-white'
                 : isPill
                   ? 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50'

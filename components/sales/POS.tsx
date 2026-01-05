@@ -1,4 +1,4 @@
-import React, {
+﻿import React, {
   useState,
   useMemo,
   useRef,
@@ -22,7 +22,9 @@ import {
   generateInvoiceHTML,
   InvoiceTemplateOptions,
 } from "../sales/InvoiceTemplate";
+import { formatStock } from "../../utils/inventory";
 import { Sale } from "../../types"; // Ensure Sale is imported
+import { getPrinterSettings, printReceiptSilently } from "../../utils/qzPrinter";
 import { ExpandingDropdown, ExpandingDropdownProps } from "../common/ExpandingDropdown";
 import {
   createColumnHelper,
@@ -354,7 +356,7 @@ export const POS: React.FC<POSProps> = ({
         newWidth = rect.right - clientX;
       }
 
-      if (newWidth > 500 && newWidth < 700) {
+      if (newWidth > 350 && newWidth < 800) {
         setSidebarWidth(newWidth);
       }
     }
@@ -397,21 +399,30 @@ export const POS: React.FC<POSProps> = ({
   ) => {
     if (drug.stock <= 0) return;
     setCart((prev) => {
-      // Find existing item with same ID AND same unit mode
+      // Calculate Validation Logic (Total Units)
+      const currentCartItems = prev.filter(i => i.id === drug.id);
+      let totalUnitsInCart = 0;
+      
+      currentCartItems.forEach(i => {
+          if (i.isUnit) totalUnitsInCart += i.quantity;
+          else totalUnitsInCart += i.quantity * (drug.unitsPerPack || 1);
+      });
+      
+      // Calculate Units attempting to add
+      const unitsToAdd = isUnitMode ? initialQuantity : initialQuantity * (drug.unitsPerPack || 1);
+      
+      if (totalUnitsInCart + unitsToAdd > drug.stock) {
+          // Toast or error could be shown here
+          return prev; 
+      }
+
+      // Existing Item Logic
       const existingIndex = prev.findIndex(
         (item) => item.id === drug.id && !!item.isUnit === isUnitMode
       );
-
+      
       if (existingIndex >= 0) {
         const existing = prev[existingIndex];
-
-        // Check limits for the specific mode
-        if (isUnitMode && existing.unitsPerPack) {
-          // Unit mode stock check logic could go here if strict
-        } else {
-          if (existing.quantity >= drug.stock) return prev;
-        }
-
         const updated = [...prev];
         updated[existingIndex] = {
           ...existing,
@@ -504,7 +515,7 @@ export const POS: React.FC<POSProps> = ({
         if (remainingPacks <= 0 && remainingUnits <= 0) break;
         
         const unitsPerPack = batch.unitsPerPack || 1;
-        const stockInPacks = batch.stock;
+        const stockInPacks = Math.floor(batch.stock / unitsPerPack);
         
         // Calculate how much we can take from this batch
         if (remainingPacks > 0) {
@@ -576,9 +587,9 @@ export const POS: React.FC<POSProps> = ({
         newPackQty = newQty;
       }
 
-      const totalPacksUsed =
-        newPackQty + (hasDualMode ? newUnitQty / unitsPerPack : 0);
-      const isStockValid = totalPacksUsed <= stock;
+      const totalUnitsUsed =
+        (newPackQty * unitsPerPack) + newUnitQty;
+      const isStockValid = totalUnitsUsed <= stock;
 
       // Min qty validation
       // If ONLY pack mode (no dual), pack must be >= 1
@@ -611,54 +622,53 @@ export const POS: React.FC<POSProps> = ({
       const item = prev[itemIndex];
       const unitsPerPack = item.unitsPerPack || 1;
 
-      if (!currentIsUnit) {
-        // Pack -> Unit (Only if qty is 1, convert to 1 unit)
-        // Also prevent if units already exist (merged row logic)
-        const existingUnit = prev.find((i) => i.id === id && i.isUnit);
-        if (item.quantity !== 1 || (existingUnit && existingUnit.quantity > 0))
-          return prev;
+      // Logic: Switch Mode means transferring the quantity to the other mode
+      // Pack -> Unit: quantity * unitsPerPack
+      // Unit -> Pack: quantity / unitsPerPack (can be float)
 
-        let updated = prev.filter((_, idx) => idx !== itemIndex);
-        const unitIndex = updated.findIndex((i) => i.id === id && i.isUnit);
-        if (unitIndex >= 0) {
-          updated[unitIndex] = {
-            ...updated[unitIndex],
-            quantity: updated[unitIndex].quantity + 1,
-          };
+      if (!currentIsUnit) {
+        // Pack -> Unit
+        // Check if there is already a Unit item to merge into
+        const existingUnitIndex = prev.findIndex((i) => i.id === id && i.isUnit);
+        
+        const convertedQty = item.quantity * unitsPerPack;
+        
+        let updated = [...prev];
+        
+        if (existingUnitIndex >= 0) {
+            // Merge into existing Unit item
+            updated[existingUnitIndex] = {
+                ...updated[existingUnitIndex],
+                quantity: updated[existingUnitIndex].quantity + convertedQty
+            };
+            // Remove the Pack item
+            updated = updated.filter((_, idx) => idx !== itemIndex);
         } else {
-          updated.push({ ...item, isUnit: true, quantity: 1 });
+            // Just convert this item to Unit
+            updated[itemIndex] = { ...item, isUnit: true, quantity: convertedQty };
         }
         return updated;
       }
 
-      // Unit -> Pack (Smart Conversion)
+      // Unit -> Pack
       if (unitsPerPack <= 1) return prev;
 
-      const packsToAdd = Math.floor(item.quantity / unitsPerPack);
-      if (packsToAdd <= 0) return prev;
-
-      const unitsToRemove = packsToAdd * unitsPerPack;
-
+      const convertedPacks = item.quantity / unitsPerPack; // Allow float
+      
+      const existingPackIndex = prev.findIndex((i) => i.id === id && !i.isUnit);
       let updated = [...prev];
-      const updatedUnitItem = {
-        ...item,
-        quantity: item.quantity - unitsToRemove,
-      };
 
-      if (updatedUnitItem.quantity === 0) {
-        updated = updated.filter((_, idx) => idx !== itemIndex);
+      if (existingPackIndex >= 0) {
+          // Merge into existing Pack item
+          updated[existingPackIndex] = {
+              ...updated[existingPackIndex],
+              quantity: updated[existingPackIndex].quantity + convertedPacks
+          };
+          // Remove the Unit item
+          updated = updated.filter((_, idx) => idx !== itemIndex);
       } else {
-        updated[itemIndex] = updatedUnitItem;
-      }
-
-      const packIndex = updated.findIndex((i) => i.id === id && !i.isUnit);
-      if (packIndex >= 0) {
-        updated[packIndex] = {
-          ...updated[packIndex],
-          quantity: updated[packIndex].quantity + packsToAdd,
-        };
-      } else {
-        updated.push({ ...item, isUnit: false, quantity: packsToAdd });
+          // Convert to Pack
+          updated[itemIndex] = { ...item, isUnit: false, quantity: convertedPacks };
       }
 
       return updated;
@@ -742,22 +752,29 @@ export const POS: React.FC<POSProps> = ({
   // Calculations
   // calculateItemTotal logic moved to SortableCartItem (imported)
 
-  const subtotal = cart.reduce(
-    (sum, item) => sum + calculateItemTotal(item),
-    0
-  );
-  
-  // Calculate total item discount amount (for display only)
-  const totalItemDiscountAmount = cart.reduce((sum, item) => {
+  const grossSubtotal = cart.reduce((sum, item) => {
     let unitPrice = item.price;
     if (item.isUnit && item.unitsPerPack) {
       unitPrice = item.price / item.unitsPerPack;
     }
-    const baseTotal = unitPrice * item.quantity;
-    return sum + (baseTotal * ((item.discount || 0) / 100));
+    return sum + (unitPrice * item.quantity);
   }, 0);
 
-  const cartTotal = subtotal * (1 - globalDiscount / 100);
+  const netItemTotal = cart.reduce(
+    (sum, item) => sum + calculateItemTotal(item),
+    0
+  );
+
+  // Cart Total is Net Item Total - Global Discount
+  const cartTotal = netItemTotal * (1 - (globalDiscount || 0) / 100);
+  
+  // Calculate total discount amount (Gross - Net)
+  const totalDiscountAmount = grossSubtotal - cartTotal;
+  const orderDiscountPercent = grossSubtotal > 0 ? (totalDiscountAmount / grossSubtotal) * 100 : 0;
+  
+  // Alias for backward compatibility / API usage
+  const subtotal = grossSubtotal;
+
   const isValidOrder =
     cart.length > 0 &&
     mergedCartItems.every(
@@ -894,16 +911,47 @@ export const POS: React.FC<POSProps> = ({
 
             const html = generateInvoiceHTML(mockSale, opts);
 
-            // Open print window
-            const printWindow = window.open(
-              "",
-              "_blank",
-              "width=400,height=600"
-            );
-            if (printWindow) {
-              printWindow.document.write(html);
-              printWindow.document.close();
-              // printWindow.print(); // Optional: trigger print dialog immediately
+            // Try QZ Tray silent printing first
+            const printerSettings = getPrinterSettings();
+            const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
+            
+            if (shouldTrySilent) {
+              (async () => {
+                try {
+                  const silentPrinted = await printReceiptSilently(html);
+                  if (silentPrinted) {
+                    console.log('Receipt printed silently via QZ Tray');
+                    return;
+                  }
+                } catch (silentErr) {
+                  console.warn('QZ Tray silent print failed, falling back to browser print:', silentErr);
+                  if (printerSettings.silentMode !== 'fallback') {
+                    return; // Don't fall back if not in fallback mode
+                  }
+                }
+                
+                // Fallback to browser print
+                const printWindow = window.open(
+                  "",
+                  "_blank",
+                  "width=400,height=600"
+                );
+                if (printWindow) {
+                  printWindow.document.write(html);
+                  printWindow.document.close();
+                }
+              })();
+            } else {
+              // Browser print (original behavior)
+              const printWindow = window.open(
+                "",
+                "_blank",
+                "width=400,height=600"
+              );
+              if (printWindow) {
+                printWindow.document.write(html);
+                printWindow.document.close();
+              }
             }
           }
         }
@@ -919,7 +967,7 @@ export const POS: React.FC<POSProps> = ({
   // Alt+S: Save/Checkout invoice from anywhere on the page
   useEffect(() => {
     const handleAltS = (e: KeyboardEvent) => {
-      if (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'س')) {
+      if (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'Ø³')) {
         e.preventDefault();
         if (isValidOrder) {
           handleCheckout("walk-in");
@@ -1021,6 +1069,12 @@ export const POS: React.FC<POSProps> = ({
 
   const filteredDrugs = useMemo(() => {
     const { mode, regex } = parseSearchTerm(search);
+    const trimmedSearch = search.trim();
+    
+    // Get search term without @ prefix for length check
+    const searchTermForLength = mode === 'ingredient' 
+      ? search.trimStart().substring(1).trim() 
+      : trimmedSearch;
 
     return inventory.filter((d) => {
       const drugBroadCat = getBroadCategory(d.category);
@@ -1029,26 +1083,34 @@ export const POS: React.FC<POSProps> = ({
 
       let matchesSearch = false;
 
-      if (mode === "ingredient") {
-        matchesSearch =
-          !!d.activeIngredients &&
-          d.activeIngredients.some((ing) => regex.test(ing));
-      } else {
-        const searchableText = [
-          d.name,
-          d.genericName,
-          d.dosageForm,
-          d.category,
-          d.description,
-          ...(Array.isArray(d.activeIngredients) ? d.activeIngredients : []),
-        ]
-          .filter(Boolean)
-          .join(" ");
+      // If search is empty, show all
+      if (!trimmedSearch) {
+        matchesSearch = true;
+      }
+      // Exact code match (barcode or internal code) - no minimum length
+      else if (d.barcode === trimmedSearch || d.internalCode === trimmedSearch) {
+        matchesSearch = true;
+      }
+      // Text search requires minimum 2 characters
+      else if (searchTermForLength.length >= 2) {
+        if (mode === "ingredient") {
+          matchesSearch =
+            !!d.activeIngredients &&
+            d.activeIngredients.some((ing) => regex.test(ing));
+        } else {
+          const searchableText = [
+            d.name,
+            d.genericName,
+            d.dosageForm,
+            d.category,
+            d.description,
+            ...(Array.isArray(d.activeIngredients) ? d.activeIngredients : []),
+          ]
+            .filter(Boolean)
+            .join(" ");
 
-        matchesSearch =
-          regex.test(searchableText) ||
-          (d.barcode && regex.test(d.barcode)) ||
-          (d.internalCode && regex.test(d.internalCode));
+          matchesSearch = regex.test(searchableText);
+        }
       }
 
       const matchesStock =
@@ -1059,6 +1121,36 @@ export const POS: React.FC<POSProps> = ({
       return matchesCategory && matchesSearch && matchesStock;
     });
   }, [inventory, search, selectedCategory, stockFilter]);
+
+  // Dynamic suggestions: active ingredients when @ prefix, else drug names (requires 2+ chars)
+  const searchSuggestions = useMemo(() => {
+    const trimmed = search.trim();
+    const isIngredientMode = search.trimStart().startsWith('@');
+    const searchTermLength = isIngredientMode 
+      ? search.trimStart().substring(1).trim().length 
+      : trimmed.length;
+    
+    // Only show suggestions after 2 characters
+    if (searchTermLength < 2) return [];
+    
+    // Check if uppercase mode is enabled
+    const isUppercase = typeof window !== 'undefined' && 
+      localStorage.getItem('pharma_textTransform') === 'uppercase';
+    
+    let suggestions: string[];
+    if (isIngredientMode) {
+      const ingredients = new Set<string>();
+      inventory.forEach(d => {
+        d.activeIngredients?.forEach(ing => ingredients.add(`@${ing}`));
+      });
+      suggestions = Array.from(ingredients);
+    } else {
+      suggestions = inventory.map(d => `${d.name} ${d.dosageForm}`);
+    }
+    
+    // Apply uppercase transform if enabled
+    return isUppercase ? suggestions.map(s => s.toUpperCase()) : suggestions;
+  }, [search, inventory]);
 
   // Group drugs by name and sort batches by expiry
   const groupedDrugs = useMemo(() => {
@@ -1258,16 +1350,34 @@ export const POS: React.FC<POSProps> = ({
         id: "stock",
         header: t.stock,
         size: 100,
-        cell: (info) =>
-          info.getValue() === 0 ? (
-            <span className="text-xs font-bold text-red-500">
-              {t.outOfStock}
-            </span>
-          ) : (
+        cell: (info) => {
+          const row = info.row.original;
+          const mode = selectedUnits[row.id] || "pack";
+          const unitsPerPack = row.unitsPerPack || 1;
+          
+          if (info.getValue() <= 0) {
+            return (
+              <span className="text-xs font-bold text-red-500">
+                {t.outOfStock}
+              </span>
+            );
+          }
+
+          let displayValue;
+          if (mode === 'unit') {
+             displayValue = info.getValue(); // Show total units
+          } else {
+             // Show fractional packs
+             const packs = info.getValue() / unitsPerPack;
+             displayValue = parseFloat(packs.toFixed(2));
+          }
+
+          return (
             <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-              {parseFloat(info.getValue().toFixed(2))}
+              {displayValue}
             </span>
-          ),
+          );
+        },
       }),
       columnHelper.display({
         id: "unit",
@@ -1339,12 +1449,12 @@ export const POS: React.FC<POSProps> = ({
               <div className="w-full h-full">
                 <div className="text-sm font-bold text-gray-700 dark:text-gray-300">
                   {i
-                    ? (i.expiryDate
+                      ? (i.expiryDate
                         ? new Date(i.expiryDate).toLocaleDateString("en-US", {
                             month: "2-digit",
                             year: "2-digit",
                           })
-                        : "-") + ` • ${i.stock}`
+                        : "-") + ` â€¢ ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                     : t.noStock}
                 </div>
               </div>
@@ -1380,7 +1490,7 @@ export const POS: React.FC<POSProps> = ({
                                 "en-US",
                                 { month: "2-digit", year: "2-digit" }
                               )
-                            : "-") + ` • ${i.stock}`
+                            : "-") + ` â€¢ ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                         : t.noStock}
                     </div>
                   );
@@ -1394,7 +1504,7 @@ export const POS: React.FC<POSProps> = ({
                             month: "2-digit",
                             year: "2-digit",
                           })
-                        : "-") + ` • ${i.stock}`}
+                        : "-") + ` â€¢ ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
                     </div>
                   );
                 }}
@@ -1631,7 +1741,7 @@ export const POS: React.FC<POSProps> = ({
                             dir="ltr"
                           >
                             <span>{customer.phone}</span>
-                            {customer.code && <span>• {customer.code}</span>}
+                            {customer.code && <span>â€¢ {customer.code}</span>}
                           </div>
                         </div>
                       ))}
@@ -1670,7 +1780,8 @@ export const POS: React.FC<POSProps> = ({
           </div>
           {/* Search & Filter - No Card Container */}
           <div className="w-full flex flex-col sm:flex-row gap-1 shrink-0">
-            <div className="relative flex-1">
+            {/* search length */}
+            <div className="relative flex-[6]"> 
               <SmartAutocomplete
                 inputRef={searchInputRef}
                 value={search}
@@ -1678,7 +1789,7 @@ export const POS: React.FC<POSProps> = ({
                   setSearch(val);
                   setActiveIndex(0);
                 }}
-                suggestions={inventory.map(d => `${d.name} ${d.dosageForm}`)}
+                suggestions={searchSuggestions}
                 placeholder={t.searchPlaceholder}
                 className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 transition-all text-gray-900 dark:text-gray-100 placeholder-gray-400"
                 style={
@@ -1778,8 +1889,19 @@ export const POS: React.FC<POSProps> = ({
                   ]);
                 }}
               />
+              {/* Results Count Badge */}
+              {search.trim().length >= 2 && (() => {
+                const searchDir = /[\u0600-\u06FF]/.test(search) ? 'rtl' : 'ltr';
+                return (
+                  <div className={`absolute inset-y-0 flex items-center pointer-events-none ${searchDir === 'rtl' ? 'left-3' : 'right-3'}`}>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400`}>
+                      {filteredDrugs.length}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
-            <div className="relative min-w-[110px] h-[42px]">
+            <div className="relative flex-1 h-[42px]">
               <ExpandingDropdown
                 variant="input"
                 items={categories}
@@ -1795,9 +1917,10 @@ export const POS: React.FC<POSProps> = ({
                 renderSelected={(item) => item?.label || selectedCategory}
                 renderItem={(item) => item.label}
                 color={color}
+                className="w-full"
               />
             </div>
-            <div className="relative min-w-[110px] h-[42px]">
+            <div className="relative flex-1 h-[42px]">
               <ExpandingDropdown
                 variant="input"
                 items={["all", "in_stock", "out_of_stock"]}
@@ -1825,6 +1948,7 @@ export const POS: React.FC<POSProps> = ({
                   return item as string;
                 }}
                 color={color}
+                className="w-full"
               />
             </div>
           </div>
@@ -1895,7 +2019,8 @@ export const POS: React.FC<POSProps> = ({
                 }}
                 searchPlaceholder={t.searchPlaceholder}
                 emptyMessage={t.noResults}
-                defaultHiddenColumns={["category"]}
+                defaultHiddenColumns={["category", "inCart"]}
+                defaultColumnAlignment={{ unit: 'center', batches: 'center', stock: 'center' }}
                 activeIndex={activeIndex}
                 enableTopToolbar={false}
               />
@@ -1973,7 +2098,7 @@ export const POS: React.FC<POSProps> = ({
           </div>
 
           <div 
-            className="flex-1 overflow-y-auto p-2 space-y-2 cart-scroll" 
+            className={`flex-1 p-2 space-y-2 cart-scroll ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
             dir="ltr"
             style={{
                 scrollbarWidth: 'thin',
@@ -2081,55 +2206,25 @@ export const POS: React.FC<POSProps> = ({
               {/* Subtotal */}
               <div className="flex flex-col ps-3">
                 <span className="text-[10px] text-gray-500 font-medium uppercase">{t.subtotal}</span>
-                <span className="font-medium text-sm text-gray-700 dark:text-gray-300">${subtotal.toFixed(2)}</span>
+                <span className="font-medium text-sm text-gray-700 dark:text-gray-300">${grossSubtotal.toFixed(2)}</span>
               </div>
 
               {/* Discount */}
               <div className="flex flex-col border-s border-gray-200 dark:border-gray-700 ps-3">
                 <span className="text-[10px] text-gray-500 font-medium uppercase">{t.orderDiscount}</span>
                 
-                {totalItemDiscountAmount > 0 ? (
-                  /* Item Discounts Active -> Show Total Amount Read-only */
-                  <div className="flex items-center gap-1 h-[26px]">
-                    <span className="text-sm font-bold text-green-600">
-                      ${totalItemDiscountAmount.toFixed(2)}
-                    </span>
-                  </div>
-                ) : (
-                  /* Global Discount Input */
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={globalDiscount || ""}
-                      placeholder="0"
-                      onChange={(e) => {
-                        const val = Math.min(
-                          100,
-                          Math.max(0, parseFloat(e.target.value) || 0)
-                        );
-                        setGlobalDiscount(val);
-                        if (val > 0) {
-                          setCart((prev) =>
-                            prev.map((item) => ({ ...item, discount: 0 }))
-                          );
-                        }
-                      }}
-                      className="w-10 px-1 py-0.5 text-center rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 text-sm font-medium text-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      style={
-                        { "--tw-ring-color": `var(--color-${color}-500)` } as any
-                      }
-                    />
-                    <span className="text-green-600 font-medium text-sm">%</span>
-                  </div>
-                )}
+                {/* Order Discount % */}
+                <div className="flex items-center gap-1 h-[26px]">
+                  <span className="text-sm font-bold text-green-600">
+                    {orderDiscountPercent > 0 ? orderDiscountPercent.toFixed(1) : 0}%
+                  </span>
+                </div>
               </div>
 
               {/* Total */}
               <div className="flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3">
                 <span className="text-xs text-gray-500 font-bold uppercase whitespace-nowrap">{t.total}:</span>
-                <span className={`text-2xl font-bold text-${color}-600 dark:text-${color}-400`}>
+                <span className={`text-2xl font-black text-${color}-600 dark:text-${color}-400`}>
                   ${cartTotal.toFixed(2)}
                 </span>
               </div>
@@ -2345,7 +2440,7 @@ export const POS: React.FC<POSProps> = ({
               </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-100 dark:border-gray-800 mt-4">
+            <div className="p-4 bg-gray-50 dark:bg-gray-950/50 border-t border-gray-100 dark:border-gray-800">
               <button
                 onClick={() => setViewingDrug(null)}
                 className={`w-full py-3 rounded-xl font-bold text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all`}

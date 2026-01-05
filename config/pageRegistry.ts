@@ -23,6 +23,8 @@ import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
 import { POSTest } from '../components/test/POSTest';
 import { PurchasesTest } from '../components/test/PurchasesTest';
 import { DashboardExperiments } from '../components/experiments/DashboardExperiments';
+import { AdvancedSmCard } from '../components/experiments/AdvancedSmCard';
+import { EmployeeList } from '../components/hr/EmployeeList';
 
 
 export interface PageConfig {
@@ -261,7 +263,24 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'test',
     requiredProps: ['inventory', 'suppliers', 'purchases', 'purchaseReturns', 'onCompletePurchase', 'color', 't', 'language']
   },
-
+  'advanced-sm-card': {
+    id: 'advanced-sm-card',
+    component: AdvancedSmCard,
+    menuLabel: 'Advanced Sm Card',
+    menuLabelAr: 'بطاقات صغيرة متطورة',
+    icon: 'dashboard_customize',
+    category: 'test',
+    requiredProps: ['color', 't', 'language']
+  },
+  'employee-list': {
+    id: 'employee-list',
+    component: EmployeeList,
+    menuLabel: 'Employee List',
+    menuLabelAr: 'قائمة الموظفين',
+    icon: 'badge',
+    category: 'hr',
+    requiredProps: ['color', 't', 'language']
+  },
 };
 
 // Helper function to get page config
