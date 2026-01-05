@@ -8,6 +8,7 @@ import { SearchInput } from '../common/SearchInput';
 import { Drug } from '../../types';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { formatStock, validateStock } from '../../utils/inventory';
 import { Modal } from '../common/Modal';
 import { getCategories, getProductTypes, isMedicineCategory, getLocalizedCategory, getLocalizedProductType } from '../../data/productCategories';
 
@@ -112,7 +113,9 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
   const handleOpenEdit = (drug: Drug) => {
     setEditingDrug(drug);
-    setFormData({ ...drug, maxDiscount: drug.maxDiscount ?? 10 });
+    // Load stock as PACKS for editing
+    const stockInPacks = drug.stock / (drug.unitsPerPack || 1);
+    setFormData({ ...drug, stock: stockInPacks, maxDiscount: drug.maxDiscount ?? 10 });
     setIsModalOpen(true);
     setActiveMenuId(null);
   };
@@ -126,11 +129,13 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
   };
 
   const handleQuickStockAdjust = (drug: Drug) => {
-      const newStock = prompt(`Adjust stock for ${drug.name}:`, drug.stock.toString());
+      const currentPacks = drug.stock / (drug.unitsPerPack || 1);
+      const newStock = prompt(`Adjust stock for ${drug.name} (in Packs):`, currentPacks.toString());
       if (newStock !== null) {
           const val = parseFloat(newStock);
           if (!isNaN(val)) {
-              onUpdateDrug({ ...drug, stock: val });
+              // Save as Total Units
+              onUpdateDrug({ ...drug, stock: validateStock(val * (drug.unitsPerPack || 1)) });
           }
       }
       setActiveMenuId(null);
@@ -143,13 +148,20 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
   const handleSubmit = (e: React.FormEvent, addAnother: boolean = false) => {
     e.preventDefault();
+    
+    // Prepare data: Convert stock (Packs) to Total Units
+    const submissionData = {
+        ...formData,
+        stock: validateStock((formData.stock || 0) * (formData.unitsPerPack || 1))
+    };
+
     if (editingDrug) {
-      onUpdateDrug({ ...editingDrug, ...formData } as Drug);
+      onUpdateDrug({ ...editingDrug, ...submissionData } as Drug);
       setIsModalOpen(false);
     } else {
       const newDrug: Drug = {
         id: Date.now().toString(),
-        ...formData as Omit<Drug, 'id'>
+        ...submissionData as Omit<Drug, 'id'>
       };
       onAddDrug(newDrug);
       
@@ -253,8 +265,8 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
         );
       case 'stock':
         return (
-          <div className={`font-medium text-sm ${drug.stock < 20 ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
-            {parseFloat(drug.stock.toFixed(2))}
+          <div className={`font-medium text-sm ${drug.stock < (drug.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
+            {formatStock(drug.stock, drug.unitsPerPack)}
           </div>
         );
       case 'price':

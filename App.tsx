@@ -10,6 +10,13 @@ import { PAGE_REGISTRY } from './config/pageRegistry';
 import { useTheme } from './hooks/useTheme';
 
 // Inventory Generator
+
+// Helper: Ensure stock is always a valid integer
+const validateStock = (stock: number): number => {
+  if (isNaN(stock) || stock < 0) return 0;
+  return Math.round(stock);
+};
+
 const generateInventory = (): Drug[] => {
   const medPrefixes = ['Amox', 'Cipro', 'Pana', 'Bru', 'Volta', 'Zyr', 'Clar', 'Augmen', 'Lipi', 'Gluco', 'Metfor', 'Omepra', 'Lorata', 'Ibu', 'Para', 'Aspi', 'Venta', 'Corti', 'Derm', 'Hist', 'Neur', 'Beta', 'Cefa', 'Azith'];
   const medSuffixes = ['il', 'fen', 'dol', 'ren', 'tec', 'tin', 'tor', 'phage', 'zole', 'dine', 'rin', 'lin', 'zone', 'vate', 'mine', 'bion', 'dine', 'max', 'pro'];
@@ -49,6 +56,8 @@ const generateInventory = (): Drug[] => {
   REAL_DRUGS.forEach((drug, index) => {
     const cost = parseFloat((Math.random() * 50 + 1).toFixed(2));
     const price = parseFloat((cost * (1.2 + Math.random() * 0.5)).toFixed(2));
+    const units = 1; // Default for these real drugs is 1 unless specified
+    const stockPacks = Math.floor(Math.random() * 200) + 50;
     
     inventory.push({
       id: `real-${index}`,
@@ -57,17 +66,17 @@ const generateInventory = (): Drug[] => {
       category: drug.category,
       price: price,
       costPrice: cost,
-      stock: Math.floor(Math.random() * 200) + 50,
+      stock: stockPacks * units, // Convert to Total Units
       expiryDate: new Date(Date.now() + Math.random() * 1000 * 60 * 60 * 24 * 365 * 2).toISOString().split('T')[0],
       description: `Original ${drug.name} (${drug.generic})`,
       barcode: `888${index.toString().padStart(9, '0')}`,
       internalCode: (index + 1).toString().padStart(6, '0'),
-      unitsPerPack: 1,
+      unitsPerPack: units,
       dosageForm: drug.form,
       activeIngredients: drug.generic.split(' + ').map(i => i.trim()),
     });
   });
-  for (let i = 1; i <= 10000; i++) {
+  for (let i = 1; i <= 2000; i++) {
     const typeRoll = Math.random();
     let category = '';
     let name = '';
@@ -120,6 +129,7 @@ const generateInventory = (): Drug[] => {
 
     const cost = parseFloat((Math.random() * 50 + 1).toFixed(2));
     const price = parseFloat((cost * (1.2 + Math.random() * 0.5)).toFixed(2)); // 20-70% margin
+    const stockPacks = Math.floor(Math.random() * 150);
 
     inventory.push({
       id: i.toString(),
@@ -128,7 +138,7 @@ const generateInventory = (): Drug[] => {
       category: category,
       price: price,
       costPrice: cost,
-      stock: Math.floor(Math.random() * 150),
+      stock: stockPacks * units, // Convert to Total Units
       expiryDate: new Date(Date.now() + Math.random() * 1000 * 60 * 60 * 24 * 365 * 2).toISOString().split('T')[0], // Next 2 years
       description: desc,
       barcode: Math.floor(Math.random() * 1000000000000).toString(),
@@ -455,18 +465,18 @@ const App: React.FC = () => {
     setTip(tips[Math.floor(Math.random() * tips.length)]);
   }, []);
 
-  // MIGRATION: Update Legacy Internal Codes to 6-Digit Format
+  // MIGRATION: Update Legacy Internal Codes to 6-Digit Format AND Convert to Unit-Based Inventory
   useEffect(() => {
-     // Check for items that need migration (contain non-digits or are not 6 digits)
-     const needsMigration = inventory.some(d => d.internalCode && (!/^\d{6}$/.test(d.internalCode) || d.internalCode.includes('-') || d.internalCode.includes('REAL') || d.internalCode.includes('INT')));
+     // 1. Code Migration (Keep existing logic)
+     const needsCodeMigration = inventory.some(d => d.internalCode && (!/^\d{6}$/.test(d.internalCode) || d.internalCode.includes('-') || d.internalCode.includes('REAL') || d.internalCode.includes('INT')));
      
-     if (needsMigration) {
+     let migratedInventory = [...inventory];
+     let hasUpdates = false;
+
+     if (needsCodeMigration) {
          console.log('Migrating inventory codes to 6-digit number format...');
-         const migratedInventory = inventory.map((d, index) => {
-             // Only migrate if not already a 6-digit number
+         migratedInventory = migratedInventory.map((d, index) => {
              if (!d.internalCode || !/^\d{6}$/.test(d.internalCode)) {
-                 // Generate a new sequential code based on index (+1 to start from 000001)
-                 // We use index+1 to ensure uniqueness across the migrated set
                  return {
                      ...d,
                      internalCode: (index + 1).toString().padStart(6, '0')
@@ -474,9 +484,72 @@ const App: React.FC = () => {
              }
              return d;
          });
+         hasUpdates = true;
+     }
+
+     // 2. Unit-Based Inventory Migration
+     // Check flag in localStorage
+     const isMigratedToUnits = localStorage.getItem('pharma_migration_v1_units');
+     
+     if (!isMigratedToUnits) {
+         console.log('STARTING MIGRATION: Converting Stock to Total Units...');
+         
+         // A. BACKUP
+         try {
+             localStorage.setItem('pharma_backup_pre_migration_v1', JSON.stringify(inventory));
+             console.log('Backup created: pharma_backup_pre_migration_v1');
+         } catch (error) {
+             console.warn('Backup failed: Storage Quota Exceeded. Proceeding without backup.');
+             // Optional: Alert user
+             // alert('Warning: Could not create backup due to storage limits. Migration continuing.');
+         }
+
+         // B. ROLLBACK MECHANISM
+         (window as any).rollbackMigrationV1 = () => {
+             const backup = localStorage.getItem('pharma_backup_pre_migration_v1');
+             if (backup) {
+                 localStorage.setItem('pharma_inventory', backup);
+                 localStorage.removeItem('pharma_migration_v1_units');
+                 alert('Rollback successful. Reloading...');
+                 window.location.reload();
+             } else {
+                 alert('No backup found (likely due to storage limits).');
+             }
+         };
+
+         // C. MIGRATE LOGIC
+         migratedInventory = migratedInventory.map(d => {
+             // Heuristic: If stock is float OR small number (< 1000), assume it is PACKS
+             // If stock is huge (> 1000) and integer, it MIGHT be units already, but to be safe for 
+             // this specific app (where stock was packs), we assume ALL are packs unless explicitly flagged (which we don't have).
+             // Given the generator used max 150 packs, stock < 1000 is a safe bet for "Packs".
+             // If a user had 5000 packs, this might misinterpret, but typical pharmacy stock is < 1000 packs per item.
+             
+             const isLikelyPacks = (d.stock < 1000) || !Number.isInteger(d.stock);
+             
+             if (isLikelyPacks) {
+                 const units = d.unitsPerPack || 1;
+                 const newStock = Math.round(d.stock * units); // Convert to Total Units
+                 
+                 // console.log(`Migrating ${d.name}: ${d.stock} Packs -> ${newStock} Units (PackSize: ${units})`);
+                 
+                 return { ...d, stock: validateStock(newStock) };
+             }
+             return { ...d, stock: validateStock(d.stock) };
+         });
+         
+         hasUpdates = true;
+         localStorage.setItem('pharma_migration_v1_units', 'true');
+         console.log('Migration Complete: pharma_migration_v1_units = true');
+         
+         // Notify user about rollback capability
+         console.info('To rollback, run: window.rollbackMigrationV1()');
+     }
+
+     if (hasUpdates) {
          setInventory(migratedInventory);
      }
-  }, []); // Run on mount only (to avoid potential loops, relying on immediate state update)
+  }, []); // Run on mount only
 
   // --- Cross-Tab Synchronization ---
   useEffect(() => {
@@ -548,7 +621,9 @@ const App: React.FC = () => {
   const handleRestock = (id: string, qty: number) => {
     setInventory(prev => prev.map(d => {
       if (d.id === id) {
-        return { ...d, stock: d.stock + qty };
+        // Assume Restock input is in PACKS (Standard)
+        const unitsToAdd = qty * (d.unitsPerPack || 1);
+        return { ...d, stock: validateStock(d.stock + unitsToAdd) };
       }
       return d;
     }));
@@ -562,9 +637,11 @@ const App: React.FC = () => {
         setInventory(prev => prev.map(drug => {
           const purchasedItem = purchase.items.find(i => i.drugId === drug.id);
           if (purchasedItem) {
+            // Convert purchased packs to units
+            const unitsToAdd = purchasedItem.quantity * (drug.unitsPerPack || 1);
             return {
               ...drug,
-              stock: drug.stock + purchasedItem.quantity,
+              stock: validateStock(drug.stock + unitsToAdd), // Integer Math
               costPrice: purchasedItem.costPrice // Update latest cost price
             };
           }
@@ -586,9 +663,11 @@ const App: React.FC = () => {
        setInventory(prev => prev.map(drug => {
           const purchasedItem = purchase.items.find(i => i.drugId === drug.id);
           if (purchasedItem) {
+            // Convert purchased packs to units
+            const unitsToAdd = purchasedItem.quantity * (drug.unitsPerPack || 1);
             return {
               ...drug,
-              stock: drug.stock + purchasedItem.quantity,
+              stock: validateStock(drug.stock + unitsToAdd), // Integer Math
               costPrice: purchasedItem.costPrice // Update latest cost price
             };
           }
@@ -622,15 +701,30 @@ const App: React.FC = () => {
       ...saleData
     };
     
-    // Update inventory with pack/unit logic
+    // Update inventory with pack/unit logic (INTEGER UNITS)
     setInventory(prev => prev.map(drug => {
       const soldItem = saleData.items.find(i => i.id === drug.id);
       if (soldItem) {
-        let quantityToDeduct = soldItem.quantity;
-        if (soldItem.isUnit && drug.unitsPerPack && drug.unitsPerPack > 0) {
-           quantityToDeduct = soldItem.quantity / drug.unitsPerPack;
+        let quantityToDeduct = 0;
+        
+        if (soldItem.isUnit) {
+            quantityToDeduct = soldItem.quantity;
+        } else {
+            // Convert packs to units
+            quantityToDeduct = soldItem.quantity * (drug.unitsPerPack || 1);
         }
-        return { ...drug, stock: Math.max(0, drug.stock - quantityToDeduct) };
+
+        const newStock = drug.stock - quantityToDeduct;
+        
+        if (newStock < 0) {
+            console.error(`STOCK ERROR: Negative stock detected for ${drug.name}. Selling ${quantityToDeduct}, Available ${drug.stock}.`);
+            // We allow it to go negative? Or clamp to 0? 
+            // Better to allow negative for accounting if needed, but here we clamp to 0 as per previous logic.
+            // Actually, negative stock is bad. Let's clamp to 0 and log error.
+            return { ...drug, stock: 0 };
+        }
+        
+        return { ...drug, stock: validateStock(newStock) };
       }
       return drug;
     }));
@@ -787,20 +881,22 @@ const App: React.FC = () => {
       return sale;
     }));
     
-    // Restore inventory
+    // Restore inventory (INTEGER UNITS)
     setInventory(prev => prev.map(drug => {
       const returnedItem = returnData.items.find(i => i.drugId === drug.id);
       if (returnedItem) {
-        let quantityToRestore = returnedItem.quantityReturned;
+        let quantityToRestore = 0;
         
-        // Convert units back to packs if necessary
-        if (returnedItem.isUnit && drug.unitsPerPack && drug.unitsPerPack > 0) {
-          quantityToRestore = returnedItem.quantityReturned / drug.unitsPerPack;
+        if (returnedItem.isUnit) {
+            quantityToRestore = returnedItem.quantityReturned;
+        } else {
+            // Convert packs to units
+            quantityToRestore = returnedItem.quantityReturned * (drug.unitsPerPack || 1);
         }
         
         return {
           ...drug,
-          stock: drug.stock + quantityToRestore
+          stock: validateStock(drug.stock + quantityToRestore)
         };
       }
       return drug;

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { Drug, Supplier, Purchase, PurchaseItem, PurchaseReturn } from '../../types';
+import { formatStock } from '../../utils/inventory';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
@@ -1126,7 +1127,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                            }}
                                            className={`w-full text-left p-3 flex items-center gap-3 transition-all rounded-lg ${
                                                index === selectedSuggestionIndex 
-                                               ? `bg-${color}-50 dark:bg-${color}-900/30 ring-2 ring-${color}-500/20` 
+                                               ? `bg-${color}-50 dark:bg-gray-700 ring-2 ring-${color}-500/20` 
                                                : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
                                            }`}
                                            dir="ltr"
@@ -1214,7 +1215,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                     setIsSupplierOpen(false);
                                                 }}
                                                 className={`px-3 py-2 cursor-pointer hover:bg-${color}-50 dark:hover:bg-${color}-900/20 transition-colors ${
-                                                    selectedSupplierId === supplier.id ? `bg-${color}-50 dark:bg-${color}-900/20` : ''
+                                                    selectedSupplierId === supplier.id ? `bg-${color}-50 dark:bg-gray-700/20` : ''
                                                 }`}
                                             >
                                                 <div className="flex items-center justify-between">
@@ -1239,7 +1240,57 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                <div 
                  className={`flex-1 ${CARD_BASE} p-5 rounded-3xl flex flex-col overflow-hidden`}
                >
-                    <div className="flex justify-end items-center mb-4 gap-4">
+                    <div className="flex justify-between items-center mb-4 gap-4">
+                        {/* Left: Selected Item Details (Existing Inventory) */}
+                        <div className="flex-1 min-w-0">
+                           {(() => {
+                               if (selectedCartIndex === -1 || !cart[selectedCartIndex]) return null;
+                               const selectedItem = cart[selectedCartIndex];
+                               const invItem = inventory.find(d => d.id === selectedItem.drugId);
+                               if (!invItem) return null;
+
+                               const profit = invItem.costPrice > 0 
+                                ? ((invItem.price - invItem.costPrice) / invItem.costPrice) * 100 
+                                : 0;
+                               
+                               return (
+                                   <div className="flex items-center gap-3 animate-fadeIn">
+                                       {/* Stock */}
+                                       <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50">
+                                            <span className="material-symbols-rounded text-gray-400 text-lg">inventory_2</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-[9px] text-gray-400 uppercase font-bold leading-none mb-0.5">{t.headers?.stock || 'Stock'}</span>
+                                                <span className="text-xs font-bold text-gray-700 dark:text-gray-200 font-mono leading-none">{formatStock(invItem.stock, invItem.unitsPerPack)}</span>
+                                            </div>
+                                       </div>
+
+                                       {/* Expiry */}
+                                       <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50">
+                                            <span className="material-symbols-rounded text-orange-400 text-lg">event_upcoming</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-[9px] text-gray-400 uppercase font-bold leading-none mb-0.5">{t.cartFields?.expiry || 'Expiry'}</span>
+                                                <span className="text-xs font-bold text-gray-700 dark:text-gray-200 font-mono leading-none">
+                                                    {invItem.expiryDate ? new Date(invItem.expiryDate).toLocaleDateString('en-US', { month: '2-digit', year: 'numeric' }) : ''}
+                                                </span>
+                                            </div>
+                                       </div>
+
+                                       {/* Profit */}
+                                       <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50">
+                                            <span className={`material-symbols-rounded text-lg ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                                {profit >= 0 ? 'trending_up' : 'trending_down'}
+                                            </span>
+                                            <div className="flex flex-col">
+                                                <span className="text-[9px] text-gray-400 uppercase font-bold leading-none mb-0.5">{t.headers?.profit || 'Profit'}</span>
+                                                <span className={`text-xs font-bold font-mono leading-none ${profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                    {profit.toFixed(1)}%
+                                                </span>
+                                            </div>
+                                       </div>
+                                   </div>
+                               );
+                           })()}
+                        </div>
 
                        <div className="flex items-center gap-4">
                            {/* System Order ID (Read Only) */}
@@ -1292,7 +1343,31 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                        </div>
                    </div>
                    
-                   <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+                   <div 
+                     className={`flex-1 space-y-3 mb-4 cart-scroll pe-3 ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
+                     style={{
+                         scrollbarWidth: 'thin',
+                         scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
+                     }}
+                   >
+                     <style>{`
+                         .cart-scroll::-webkit-scrollbar {
+                             width: 2px;
+                             background: transparent;
+                         }
+                         .cart-scroll::-webkit-scrollbar-track {
+                             background: transparent;
+                             border: none;
+                             box-shadow: none;
+                         }
+                         .cart-scroll::-webkit-scrollbar-thumb {
+                             background: rgba(156, 163, 175, 0.6);
+                             border-radius: 9999px;
+                         }
+                         .cart-scroll::-webkit-scrollbar-corner {
+                             background: transparent;
+                         }
+                     `}</style>
                        {cart.length === 0 ? (
                            <div className="text-center text-gray-400 py-10">{t.emptyCart}</div>
                        ) : (
@@ -1303,7 +1378,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                    onClick={() => setSelectedCartIndex(index)}
                                    className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer transition-all ${
                                        selectedCartIndex === index 
-                                       ? `bg-${color}-50 dark:bg-${color}-900/30` 
+                                       ? `bg-${color}-50 dark:bg-gray-700` 
                                        : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
                                    }`}
                                    onContextMenu={(e) => {
@@ -1349,7 +1424,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 type="number"
                                                 maxLength={4}
                                                 value={item.quantity}
-                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-gray-700` : 'bg-gray-50 dark:bg-gray-800'}
                                                 onFocus={(e) => { setSelectedCartIndex(index); e.target.select(); }}
                                                 onChange={e => {
                                                     const val = e.target.value.slice(0, 4);
@@ -1371,7 +1446,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                     const status = checkExpiryStatus(item.expiryDate || '', { checkIncomplete: !isFocused });
                                                     return getExpiryStatusStyle(status, 'input');
                                                 })()}
-                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-gray-700` : 'bg-gray-50 dark:bg-gray-800'}
                                                 value={
                                                     focusedInput?.id === item.drugId && focusedInput?.field === 'expiryDate'
                                                         ? parseExpiryDisplay(item.expiryDate || '')
@@ -1407,7 +1482,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 label={t.cartFields?.cost || 'Cost'}
                                                 type="number"
                                                 value={item.costPrice}
-                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-gray-700` : 'bg-gray-50 dark:bg-gray-800'}
                                                 onFocus={(e) => { setSelectedCartIndex(index); e.target.select(); }}
                                                 onChange={e => updateItem(item.drugId, 'costPrice', parseFloat(e.target.value) || 0)}
                                             />
@@ -1423,7 +1498,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 min={0}
                                                 max={100}
                                                 value={item.discount || 0}
-                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-gray-700` : 'bg-gray-50 dark:bg-gray-800'}
                                                 onFocus={(e) => { setSelectedCartIndex(index); e.target.select(); }}
                                                 onChange={e => updateItem(item.drugId, 'discount', parseFloat(e.target.value) || 0)}
                                             />
@@ -1437,7 +1512,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 label={t.cartFields?.sale || 'Sale'}
                                                 type="number"
                                                 value={item.salePrice || 0}
-                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-gray-700` : 'bg-gray-50 dark:bg-gray-800'}
                                                 onFocus={(e) => { setSelectedCartIndex(index); e.target.select(); }}
                                                 onChange={e => updateItem(item.drugId, 'salePrice', parseFloat(e.target.value) || 0)}
                                             />
@@ -1453,7 +1528,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 min={0}
                                                 max={100}
                                                 value={item.tax || 0}
-                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-gray-700` : 'bg-gray-50 dark:bg-gray-800'}
                                                 onFocus={(e) => { setSelectedCartIndex(index); e.target.select(); }}
                                                 onChange={e => updateItem(item.drugId, 'tax', parseFloat(e.target.value) || 0)}
                                             />
@@ -1466,7 +1541,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 type="number"
                                                 value={Number((item.costPrice * item.quantity).toFixed(2))}
                                                 onChange={() => {}} // Read only
-                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-gray-700` : 'bg-gray-50 dark:bg-gray-800'}
                                                 className="opacity-75 pointer-events-none" // Visual cue
                                             />
                                         </div>
@@ -1478,7 +1553,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                                                 type="number"
                                                 value={Number(((item.costPrice * item.quantity) + ((item.costPrice * item.quantity) * ((item.tax || 0) / 100))).toFixed(2))}
                                                 onChange={() => {}} // Read only
-                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-${color}-900/30` : 'bg-gray-50 dark:bg-gray-800'}
+                                                labelBgClassName={selectedCartIndex === index ? `bg-${color}-50 dark:bg-gray-700` : 'bg-gray-50 dark:bg-gray-800'}
                                                 className="opacity-75 pointer-events-none" // Visual cue
                                             />
                                         </div>

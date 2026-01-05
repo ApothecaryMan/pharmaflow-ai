@@ -22,6 +22,7 @@ import {
   generateInvoiceHTML,
   InvoiceTemplateOptions,
 } from "../sales/InvoiceTemplate";
+import { formatStock } from "../../utils/inventory";
 import { Sale } from "../../types"; // Ensure Sale is imported
 import { ExpandingDropdown, ExpandingDropdownProps } from "../common/ExpandingDropdown";
 import {
@@ -397,21 +398,30 @@ export const POSTest: React.FC<POSProps> = ({
   ) => {
     if (drug.stock <= 0) return;
     setCart((prev) => {
-      // Find existing item with same ID AND same unit mode
+      // Calculate Validation Logic (Total Units)
+      const currentCartItems = prev.filter(i => i.id === drug.id);
+      let totalUnitsInCart = 0;
+      
+      currentCartItems.forEach(i => {
+          if (i.isUnit) totalUnitsInCart += i.quantity;
+          else totalUnitsInCart += i.quantity * (drug.unitsPerPack || 1);
+      });
+      
+      // Calculate Units attempting to add
+      const unitsToAdd = isUnitMode ? initialQuantity : initialQuantity * (drug.unitsPerPack || 1);
+      
+      if (totalUnitsInCart + unitsToAdd > drug.stock) {
+          // Toast or error could be shown here
+          return prev; 
+      }
+
+      // Existing Item Logic
       const existingIndex = prev.findIndex(
         (item) => item.id === drug.id && !!item.isUnit === isUnitMode
       );
-
+      
       if (existingIndex >= 0) {
         const existing = prev[existingIndex];
-
-        // Check limits for the specific mode
-        if (isUnitMode && existing.unitsPerPack) {
-          // Unit mode stock check logic could go here if strict
-        } else {
-          if (existing.quantity >= drug.stock) return prev;
-        }
-
         const updated = [...prev];
         updated[existingIndex] = {
           ...existing,
@@ -504,7 +514,7 @@ export const POSTest: React.FC<POSProps> = ({
         if (remainingPacks <= 0 && remainingUnits <= 0) break;
         
         const unitsPerPack = batch.unitsPerPack || 1;
-        const stockInPacks = batch.stock;
+        const stockInPacks = Math.floor(batch.stock / unitsPerPack);
         
         // Calculate how much we can take from this batch
         if (remainingPacks > 0) {
@@ -576,9 +586,9 @@ export const POSTest: React.FC<POSProps> = ({
         newPackQty = newQty;
       }
 
-      const totalPacksUsed =
-        newPackQty + (hasDualMode ? newUnitQty / unitsPerPack : 0);
-      const isStockValid = totalPacksUsed <= stock;
+      const totalUnitsUsed =
+        (newPackQty * unitsPerPack) + newUnitQty;
+      const isStockValid = totalUnitsUsed <= stock;
 
       // Min qty validation
       // If ONLY pack mode (no dual), pack must be >= 1
@@ -1390,12 +1400,12 @@ export const POSTest: React.FC<POSProps> = ({
               <div className="w-full h-full">
                 <div className="text-sm font-bold text-gray-700 dark:text-gray-300">
                   {i
-                    ? (i.expiryDate
+                      ? (i.expiryDate
                         ? new Date(i.expiryDate).toLocaleDateString("en-US", {
                             month: "2-digit",
                             year: "2-digit",
                           })
-                        : "-") + ` • ${i.stock}`
+                        : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                     : t.noStock}
                 </div>
               </div>
@@ -1431,7 +1441,7 @@ export const POSTest: React.FC<POSProps> = ({
                                 "en-US",
                                 { month: "2-digit", year: "2-digit" }
                               )
-                            : "-") + ` • ${i.stock}`
+                            : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                         : t.noStock}
                     </div>
                   );
@@ -1445,7 +1455,7 @@ export const POSTest: React.FC<POSProps> = ({
                             month: "2-digit",
                             year: "2-digit",
                           })
-                        : "-") + ` • ${i.stock}`}
+                        : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
                     </div>
                   );
                 }}
