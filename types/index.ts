@@ -271,3 +271,27 @@ export interface Shift {
   transactions: CashTransaction[];
   notes?: string;
 }
+
+export interface Employee {
+  // --- Identification ---
+  id: string;              // Unique UUID
+  employeeCode: string;    // Auto-generated: EMP-001, EMP-002, etc.
+  
+  // --- Personal Info ---
+  name: string;            // Full name (English)
+  phone: string;           // Required, validated by SmartPhoneInput
+  email?: string;          // Optional, validated by SmartEmailInput
+  
+  // --- Employment Details ---
+  position: string;        // Job title (e.g., "Senior Pharmacist")
+  department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it';  // Department
+  role: 'pharmacist' | 'cashier' | 'manager' | 'delivery' | 'officeboy';      // System role
+  startDate: string;       // ISO date (YYYY-MM-DD)
+  status: 'active' | 'inactive' | 'holiday';  // Employment status
+  
+  // --- Financial (Optional) ---
+  salary?: number;         // Monthly salary
+  
+  // --- Additional ---
+  notes?: string;          // Free text notes
+}

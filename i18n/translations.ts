@@ -1327,9 +1327,117 @@ export const TRANSLATIONS = {
         printFailed: 'Print failed',
         notInstalled: 'QZ Tray is not installed. Please download from qz.io'
       }
-    }
+    },
+    employeeList: {
+      title: 'Employee List',
+      subtitle: 'Manage pharmacy staff',
+      addEmployee: 'Add Employee',
+      editEmployee: 'Edit Employee',
+      viewDetails: 'Employee Details',
+      deleteConfirm: 'Delete this employee?',
+      name: 'Full Name',
+      phone: 'Phone Number',
+      email: 'Email Address',
+      position: 'Position',
+      department: 'Department',
+      role: 'System Role',
+      status: 'Status',
+      salary: 'Salary',
+      notes: 'Notes',
+      table: {
+        code: 'Code',
+        name: 'Name',
+        position: 'Position', 
+        department: 'Department',
+        phone: 'Phone',
+        status: 'Status',
+        actions: 'Actions'
+      },
+      departments: {
+        sales: 'Sales',
+        pharmacy: 'Pharmacy',
+        marketing: 'Marketing',
+        hr: 'Human Resources',
+        it: 'IT'
+      },
+      roles: {
+        pharmacist: 'Pharmacist',
+        cashier: 'Cashier',
+        manager: 'Manager',
+        delivery: 'Delivery',
+        officeboy: 'Office Boy'
+      },
+      statusOptions: {
+        all: 'All',
+        active: 'Active',
+        inactive: 'Inactive',
+        holiday: 'On Holiday'
+      },
+      modal: {
+        save: 'Save Employee',
+        cancel: 'Cancel',
+        deleteTitle: 'Delete Employee',
+        successAdd: 'Employee added successfully',
+        successUpdate: 'Employee updated successfully',
+        successDelete: 'Employee deleted successfully'
+      }
+    },
   },
   AR: {
+    employeeList: {
+      title: 'قائمة الموظفين',
+      subtitle: 'إدارة طاقم الصيدلية',
+      addEmployee: 'إضافة موظف',
+      editEmployee: 'تعديل موظف',
+      viewDetails: 'تفاصيل الموظف',
+      deleteConfirm: 'حذف هذا الموظف؟',
+      name: 'الاسم بالكامل',
+      phone: 'رقم الهاتف',
+      email: 'البريد الإلكتروني',
+      position: 'المسمى الوظيفي',
+      department: 'القسم',
+      role: 'الدور في النظام',
+      status: 'الحالة',
+      salary: 'الراتب',
+      notes: 'ملاحظات',
+      table: {
+        code: 'الكود',
+        name: 'الاسم',
+        position: 'الوظيفة', 
+        department: 'القسم',
+        phone: 'الهاتف',
+        status: 'الحالة',
+        actions: 'إجراءات'
+      },
+      departments: {
+        sales: 'المبيعات',
+        pharmacy: 'الصيدلية',
+        marketing: 'التسويق',
+        hr: 'الموارد البشرية',
+        it: 'تقنية المعلومات'
+      },
+      roles: {
+        pharmacist: 'صيدلي',
+        cashier: 'كاشير',
+        manager: 'مدير',
+        delivery: 'توصيل',
+        officeboy: 'عامل',
+      },
+      statusOptions: {
+        all: 'الكل',
+        active: 'نشط',
+        inactive: 'غير نشط',
+        holiday: 'في إجازة'
+      },
+      modal: {
+        save: 'حفظ الموظف',
+        cancel: 'إلغاء',
+        deleteTitle: 'حذف الموظف',
+        successAdd: 'تم إضافة الموظف بنجاح',
+        successUpdate: 'تم تحديث بيانات الموظف بنجاح',
+        successDelete: 'تم حذف الموظف بنجاح'
+      }
+    },
     appTitle: 'PharmaFlow',
     date: 'التاريخ',
     orderId: 'رقم الطلب',

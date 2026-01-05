@@ -41,6 +41,8 @@ interface TanStackTableProps<TData, TValue> {
   defaultHiddenColumns?: string[]; // Column IDs to hide by default
   activeIndex?: number; // For keyboard navigation highlight
   defaultColumnAlignment?: Record<string, 'left' | 'center' | 'right'>; // Default alignment for specific columns
+  globalFilter?: string; // External global filter value
+  enableSearch?: boolean; // Whether to show the internal search input
 }
 
 // Helper to get stored settings
@@ -68,6 +70,8 @@ export function TanStackTable<TData, TValue>({
   activeIndex,
   enableTopToolbar = true,
   defaultColumnAlignment = {},
+  globalFilter: externalGlobalFilter,
+  enableSearch = true,
 }: TanStackTableProps<TData, TValue> & { enableTopToolbar?: boolean }) {
   
   // Long-press support for rows
@@ -97,7 +101,15 @@ export function TanStackTable<TData, TValue>({
   }, [defaultHiddenColumns]);
   
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
+  const [internalGlobalFilter, setInternalGlobalFilter] = useState('');
+  
+  const globalFilter = externalGlobalFilter !== undefined ? externalGlobalFilter : internalGlobalFilter;
+  const setGlobalFilter = (val: string) => {
+      if (externalGlobalFilter === undefined) {
+          setInternalGlobalFilter(val);
+      }
+  };
+
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(storedSettings?.columnVisibility || defaultVisibility);
   
   // Initialize alignment with defaults merged with stored settings
@@ -306,18 +318,17 @@ export function TanStackTable<TData, TValue>({
       {enableTopToolbar && (
       <div className="flex items-center justify-between mb-4">
         <div className="w-full max-w-sm">
+           {enableSearch && (
            <SearchInput
              value={globalFilter ?? ''}
              onSearchChange={(val) => setGlobalFilter(val)}
              onClear={() => setGlobalFilter('')}
              placeholder={searchPlaceholder}
            />
+           )}
         </div>
         
-        {/* Results Info */}
-        <div className="text-xs text-gray-500">
-            Showing top {rows.length} results
-        </div>
+
       </div>
       )}
 
