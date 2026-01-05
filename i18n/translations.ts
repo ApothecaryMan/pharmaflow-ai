@@ -733,7 +733,9 @@ export const TRANSLATIONS = {
         print: 'Print Receipt',
         qty: 'Qty',
         price: 'Price',
-        unitType: 'Type'
+        unitType: 'Type',
+        receipt: 'Receipt',
+        return: 'Return'
       },
       returns: {
         processReturn: 'Process Return',
@@ -791,7 +793,13 @@ export const TRANSLATIONS = {
         validation: {
           noOpenShift: 'Cannot process return - no open shift',
           insufficientBalance: 'Return amount exceeds available sales balance'
-        }
+        },
+        item: 'item',
+        items: 'items',
+        pack: 'pack',
+        packs: 'packs',
+        unit: 'unit',
+        units: 'units'
       }
     },
     dashboard: {
@@ -1964,7 +1972,9 @@ export const TRANSLATIONS = {
         print: 'طباعة الإيصال',
         qty: 'الكمية',
         price: 'السعر',
-        unitType: 'النوع'
+        unitType: 'النوع',
+        receipt: 'الإيصال',
+        return: 'إرجاع'
       },
       returns: {
         processReturn: 'معالجة الإرجاع',
@@ -2022,7 +2032,13 @@ export const TRANSLATIONS = {
         validation: {
           noOpenShift: 'لا يمكن معالجة المرتجع - لا توجد وردية مفتوحة',
           insufficientBalance: 'مبلغ المرتجع يتجاوز رصيد المبيعات المتاح'
-        }
+        },
+        item: 'عنصر',
+        items: 'عناصر',
+        pack: 'عبوة',
+        packs: 'عبوات',
+        unit: 'وحدة',
+        units: 'وحدات'
       }
     },
     customers: {

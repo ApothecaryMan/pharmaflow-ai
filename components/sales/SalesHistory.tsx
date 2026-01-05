@@ -434,15 +434,15 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                             <span>{t.modal.subtotal}</span>
                                             <span>${(sale.subtotal || 0).toFixed(2)}</span>
                                         </div>
-                                        {sale.globalDiscount && sale.globalDiscount > 0 && (
+                                        {sale.globalDiscount > 0 && (
                                             <div className="flex justify-between text-xs text-green-600 dark:text-green-400">
-                                                <span>Disc. ({sale.globalDiscount}%)</span>
+                                                <span>{t.modal.discount} ({sale.globalDiscount}%)</span>
                                                 <span>-${((sale.subtotal || 0) * sale.globalDiscount / 100).toFixed(2)}</span>
                                             </div>
                                         )}
-                                        {sale.deliveryFee && sale.deliveryFee > 0 && (
+                                        {sale.deliveryFee > 0 && (
                                             <div className="flex justify-between text-xs text-gray-500">
-                                                <span>Delivery</span>
+                                                <span>{t.pos?.deliveryOrder || t.deliveryFee || "Delivery"}</span>
                                                 <span>+${sale.deliveryFee.toFixed(2)}</span>
                                             </div>
                                         )}
@@ -472,7 +472,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                                             className="py-1.5 px-2 rounded-md text-[10px] font-bold uppercase tracking-wide text-white bg-orange-500 hover:bg-orange-600 transition-colors flex items-center justify-center gap-1 shadow-sm shadow-orange-200 dark:shadow-none"
                                                         >
                                                             <span className="material-symbols-rounded text-[14px]">keyboard_return</span>
-                                                            {t.returns?.return || 'Return'}
+                                                            {t.modal.return || 'Return'}
                                                         </button>
                                                     )}
                                                     <button 
@@ -480,7 +480,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                                         className={`py-1.5 px-2 rounded-md text-[10px] font-bold uppercase tracking-wide text-white bg-${color}-600 hover:bg-${color}-700 transition-colors flex items-center justify-center gap-1 shadow-sm shadow-${color}-200 dark:shadow-none ${!hasItemsToReturn ? 'col-span-2' : ''}`}
                                                     >
                                                         <span className="material-symbols-rounded text-[14px]">print</span>
-                                                        Receipt
+                                                        {t.modal.receipt || 'Receipt'}
                                                     </button>
                                                 </>
                                             );
@@ -584,7 +584,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                        )}
                        {selectedSale.deliveryFee && selectedSale.deliveryFee > 0 && (
                            <div className="flex justify-between text-gray-500">
-                               <span>Delivery Fee</span>
+                               <span>{t.pos?.deliveryOrder || t.deliveryFee || "Delivery"}</span>
                                <span>+${selectedSale.deliveryFee.toFixed(2)}</span>
                            </div>
                        )}
