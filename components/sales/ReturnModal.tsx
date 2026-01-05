@@ -197,29 +197,11 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         onClose={handleClose}
         size="2xl"
         zIndex={100}
+        title={t.returns.processReturn}
+        subtitle={`${step === 1 ? t.returns.step2 : step === 2 ? t.returns.step3 : t.returns.step4}`}
     >
-        {/* Header */}
-        <div className={`flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-${color}-50 dark:bg-${color}-950/20`}>
-          <div>
-            <h2 className={`text-xl font-bold text-${color}-900 dark:text-${color}-100`}>
-              {t.returns.processReturn}
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {step === 1 && t.returns.step2}
-              {step === 2 && t.returns.step3}
-              {step === 3 && t.returns.step4}
-            </p>
-          </div>
-          <button
-            onClick={handleClose}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
-          >
-            <span className="material-symbols-rounded">close</span>
-          </button>
-        </div>
-
-        {/* Progress Indicator */}
-        <div className="flex items-center justify-center gap-2 p-4 bg-gray-50 dark:bg-gray-950/50">
+        {/* Progress Indicator - Sticky at top of content if needed, or just flow */}
+        <div className="flex items-center justify-center gap-2 p-4 mb-4 bg-gray-50 dark:bg-gray-950/50 rounded-xl">
           {[1, 2, 3].map(s => (
             <div key={s} className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
@@ -237,7 +219,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1">
           {/* Step 1: Select Items */}
           {step === 1 && (
             <div className="space-y-3">
@@ -424,7 +406,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/50 flex gap-3">
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-800 flex gap-3 mt-4">
           {step > 1 && (
             <button
               onClick={handleBack}

@@ -2261,32 +2261,10 @@ export const POS: React.FC<POSProps> = ({
             onClose={() => setViewingDrug(null)}
             size="md"
             zIndex={50}
+            title={t.productDetails}
+            icon="info"
           >
-            <div
-              className={`p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}
-                >
-                  <span className="material-symbols-rounded">info</span>
-                </div>
-                <h3
-                  className={`text-lg font-bold type-expressive text-${color}-900 dark:text-${color}-100`}
-                >
-                  {t.productDetails}
-                </h3>
-              </div>
-              <button
-                onClick={() => setViewingDrug(null)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                title={t.close}
-              >
-                <span className="material-symbols-rounded">close</span>
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto space-y-4">
+            <div className="space-y-4">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {viewingDrug.name}{" "}
@@ -2367,7 +2345,7 @@ export const POS: React.FC<POSProps> = ({
               </div>
             </div>
 
-            <div className="p-4 bg-gray-50 dark:bg-gray-950/50 border-t border-gray-100 dark:border-gray-800">
+            <div className="pt-4 border-t border-gray-100 dark:border-gray-800 mt-4">
               <button
                 onClick={() => setViewingDrug(null)}
                 className={`w-full py-3 rounded-xl font-bold text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all`}

@@ -610,15 +610,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             onClose={() => setRestockDrug(null)}
             size="sm"
             zIndex={50}
+            title={t.modal.title}
+            subtitle={`${restockDrug.name} (${restockDrug.stock} left)`}
         >
-             <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900`}>
-                 <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100`}>
-                    {t.modal.title}
-                 </h3>
-                 <p className="text-xs text-gray-500 mt-1">{restockDrug.name} ({restockDrug.stock} left)</p>
-             </div>
              
-             <form onSubmit={handleRestockSubmit} className="p-5 space-y-5">
+             <form onSubmit={handleRestockSubmit} className="space-y-5">
                 <div className="space-y-2">
                    <label className="text-xs font-bold text-gray-500 uppercase">{t.modal.qty}</label>
                    <div className="flex items-center gap-3">

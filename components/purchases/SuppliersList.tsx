@@ -462,116 +462,118 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
       ) : (
         /* ADD SUPPLIER FORM VIEW - INLINE */
         <div className="flex-1 overflow-y-auto">
-          <form onSubmit={handleSaveNew} className="max-w-4xl mx-auto space-y-6 pb-20">
-            {/* Company Information Card */}
-            <div className={`${CARD_BASE} rounded-3xl p-6`}>
-              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
-                <span className="material-symbols-rounded text-[18px]">business</span>
-                {t.form?.companyInfo || 'Company Information'}
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.form?.id || 'ID'}</label>
-                  <div className="w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 font-mono text-sm">
-                    {editForm.id}
-                  </div>
+          <form onSubmit={handleSaveNew} className="max-w-full mx-auto pb-20 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                {/* Company Information Card */}
+                <div className={`${CARD_BASE} rounded-3xl p-6`}>
+                <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
+                    <span className="material-symbols-rounded text-[18px]">business</span>
+                    {t.form?.companyInfo || 'Company Information'}
+                </h3>
+                <div className="space-y-4">
+                    <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.form?.id || 'ID'}</label>
+                    <div className="w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 font-mono text-sm">
+                        {editForm.id}
+                    </div>
+                    </div>
+                    <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t.form?.companyName || 'Company Name'} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        required
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
+                        style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                        placeholder={t.form?.enterCompanyName || 'Enter company name'}
+                        dir={nameDir}
+                    />
+                    </div>
+                    <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.form?.address || 'Address'}</label>
+                    <textarea
+                        value={editForm.address}
+                        onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                        rows={3}
+                        className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all resize-none"
+                        style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                        placeholder={t.form?.enterAddress || 'Enter company address'}
+                        dir={addressDir}
+                    />
+                    </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {t.form?.companyName || 'Company Name'} <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    placeholder={t.form?.enterCompanyName || 'Enter company name'}
-                    dir={nameDir}
-                  />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.form?.address || 'Address'}</label>
-                  <textarea
-                    value={editForm.address}
-                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                    rows={3}
-                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all resize-none"
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    placeholder={t.form?.enterAddress || 'Enter company address'}
-                    dir={addressDir}
-                  />
+
+                {/* Contact Information Card */}
+                <div className={`${CARD_BASE} rounded-3xl p-6`}>
+                <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
+                    <span className="material-symbols-rounded text-[18px]">person</span>
+                    {t.form?.contactInfo || 'Contact Information'}
+                </h3>
+                <div className="space-y-4">
+                    <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t.form?.contactPerson || 'Contact Person'} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        required
+                        value={editForm.contactPerson}
+                        onChange={(e) => setEditForm({ ...editForm, contactPerson: e.target.value })}
+                        className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
+                        style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                        placeholder={t.form?.enterContactPerson || 'Enter contact person name'}
+                        dir={contactPersonDir}
+                    />
+                    </div>
+                    <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t.form?.phone || 'Phone'} <span className="text-red-500">*</span>
+                    </label>
+                    <SmartPhoneInput
+                        required
+                        value={editForm.phone}
+                        onChange={(val) => setEditForm({ ...editForm, phone: val })}
+                        className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
+                        style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                        placeholder={t.form?.phonePlaceholder || '+1234567890'}
+                    />
+                    </div>
+                    <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t.form?.email || 'Email'} <span className="text-red-500">*</span>
+                    </label>
+                    <SmartEmailInput
+                        required
+                        value={editForm.email}
+                        onChange={(val) => setEditForm({ ...editForm, email: val })}
+                        className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
+                        style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                        placeholder={t.form?.emailPlaceholder || 'email@example.com'}
+                    />
+                    </div>
                 </div>
-              </div>
+                </div>
             </div>
 
-            {/* Contact Information Card */}
-            <div className={`${CARD_BASE} rounded-3xl p-6`}>
-              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
-                <span className="material-symbols-rounded text-[18px]">person</span>
-                {t.form?.contactInfo || 'Contact Information'}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {t.form?.contactPerson || 'Contact Person'} <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editForm.contactPerson}
-                    onChange={(e) => setEditForm({ ...editForm, contactPerson: e.target.value })}
-                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    placeholder={t.form?.enterContactPerson || 'Enter contact person name'}
-                    dir={contactPersonDir}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {t.form?.phone || 'Phone'} <span className="text-red-500">*</span>
-                  </label>
-                  <SmartPhoneInput
-                    required
-                    value={editForm.phone}
-                    onChange={(val) => setEditForm({ ...editForm, phone: val })}
-                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    placeholder={t.form?.phonePlaceholder || '+1234567890'}
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {t.form?.email || 'Email'} <span className="text-red-500">*</span>
-                  </label>
-                  <SmartEmailInput
-                    required
-                    value={editForm.email}
-                    onChange={(val) => setEditForm({ ...editForm, email: val })}
-                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all"
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                    placeholder={t.form?.emailPlaceholder || 'email@example.com'}
-                  />
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="mt-6 flex gap-3 justify-end">
+            {/* Action Buttons */}
+            <div className="mt-6 flex gap-3 justify-end">
                 <button
-                  type="button"
-                  onClick={() => setMode('list')}
-                  className="px-6 py-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-sm font-medium"
+                type="button"
+                onClick={() => setMode('list')}
+                className="px-6 py-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-sm font-medium"
                 >
-                  {t.modal?.cancel || 'Cancel'}
+                {t.modal?.cancel || 'Cancel'}
                 </button>
                 <button
-                  type="submit"
-                  className={`px-6 py-3 bg-${color}-600 hover:bg-${color}-700 text-white rounded-xl shadow-lg transition-all font-bold`}
+                type="submit"
+                className={`px-6 py-3 bg-${color}-600 hover:bg-${color}-700 text-white rounded-xl shadow-lg transition-all font-bold`}
                 >
-                  {t.modal?.addSupplier || 'Add Supplier'}
+                {t.modal?.addSupplier || 'Add Supplier'}
                 </button>
-              </div>
             </div>
           </form>
         </div>
@@ -584,28 +586,13 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
             onClose={() => setEditingSupplier(null)}
             size="2xl"
             zIndex={50}
+            title={t.modal?.edit || 'Edit Supplier'}
+            icon="edit"
+            subtitle={t.modal?.editSubtitle || 'Update supplier information'}
         >
-            {/* Header */}
-            <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
-              <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
-                  <span className="material-symbols-rounded">edit</span>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">{t.modal?.edit || 'Edit Supplier'}</h3>
-                  <p className="text-xs text-gray-500">{t.modal?.editSubtitle || 'Update supplier information'}</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setEditingSupplier(null)}
-                className="p-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
-              >
-                <span className="material-symbols-rounded">close</span>
-              </button>
-            </div>
 
             {/* Form */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="space-y-6">
               {/* ID Field */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.form?.id || 'ID'}</label>
@@ -724,17 +711,11 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
             onClose={() => setDeleteConfirm(null)}
             size="md"
             zIndex={50}
+            title={t.modal?.delete || 'Delete Supplier'}
+            icon="warning"
+            subtitle={t.modal?.deleteSubtitle || 'This action cannot be undone'}
         >
-            <div className="p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600">
-                  <span className="material-symbols-rounded text-[32px]">warning</span>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">{t.modal?.delete || 'Delete Supplier'}</h3>
-                  <p className="text-sm text-gray-500">{t.modal?.deleteSubtitle || 'This action cannot be undone'}</p>
-                </div>
-              </div>
+            <div className="space-y-4">
               <p className="text-gray-700 dark:text-gray-300 mb-6">
                 {t.modal?.confirmDelete || 'Are you sure you want to delete'} <strong>{deleteConfirm.name}</strong>?
               </p>
@@ -763,28 +744,11 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
             onClose={() => setViewingSupplier(null)}
             size="2xl"
             zIndex={50}
+            title={t.modal?.details || 'Supplier Details'}
+            icon="visibility"
         >
-            {/* Header */}
-            <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
-              <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
-                  <span className="material-symbols-rounded">visibility</span>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">{t.modal?.details || 'Supplier Details'}</h3>
-                  <p className="text-xs text-gray-500">{t.modal?.detailsSubtitle || 'View supplier information'}</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setViewingSupplier(null)}
-                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
-              >
-                <span className="material-symbols-rounded">close</span>
-              </button>
-            </div>
-
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="space-y-6">
               {/* Company Information */}
               <div>
                 <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">

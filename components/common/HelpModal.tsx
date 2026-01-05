@@ -61,23 +61,12 @@ export const HelpModal: React.FC<HelpModalProps> = ({ show, onClose, helpContent
         onClose={onClose}
         size="4xl"
         zIndex={50}
+        title={helpContent.title}
+        icon="help"
     >
-        {/* Header */}
-        <div className={`p-6 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
-          <h2 className={`text-2xl font-bold text-${color}-900 dark:text-${color}-100 flex items-center gap-3`}>
-            <span className="material-symbols-rounded text-3xl">help</span>
-            {helpContent.title}
-          </h2>
-          <button 
-            onClick={onClose} 
-            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-          >
-            <span className="material-symbols-rounded text-gray-500 text-xl">close</span>
-          </button>
-        </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="space-y-6">
           {/* Overview */}
           <div className={`p-5 rounded-2xl ${CARD_BASE}`}>
             <h3 className="text-xl font-bold mb-3">{helpContent.overview.title}</h3>

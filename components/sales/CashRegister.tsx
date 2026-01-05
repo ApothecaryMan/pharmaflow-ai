@@ -404,17 +404,15 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
             onClose={closeModal}
             size="md"
             zIndex={50}
-        >
-               <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900`}>
-                  <h3 className={`text-lg font-bold text-${color}-900 dark:text-${color}-100`}>
-                     {modalMode === 'open' && t.cashRegister.modal.openTitle}
-                     {modalMode === 'close' && t.cashRegister.modal.closeTitle}
-                     {modalMode === 'in' && t.cashRegister.actions.addCash}
-                     {modalMode === 'out' && t.cashRegister.actions.removeCash}
-                  </h3>
-               </div>
-               
-               <div className="p-6 space-y-4">
+            title={
+                modalMode === 'open' ? t.cashRegister.modal.openTitle :
+                modalMode === 'close' ? t.cashRegister.modal.closeTitle :
+                modalMode === 'in' ? t.cashRegister.actions.addCash :
+                modalMode === 'out' ? t.cashRegister.actions.removeCash :
+                ''
+            }
+        > 
+               <div className="space-y-4">
                   <div>
                      <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
                         {modalMode === 'close' ? t.cashRegister.messages.countedCash : t.cashRegister.modal.amount}

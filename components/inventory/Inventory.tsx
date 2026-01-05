@@ -801,21 +801,11 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
             onClose={() => setViewingDrug(null)}
             size="lg"
             zIndex={50}
+            title={t.actionsMenu.view}
+            icon="visibility"
         >
-            <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
-              <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100 flex items-center gap-2`}>
-                <span className="material-symbols-rounded">visibility</span>
-                {t.actionsMenu.view}
-              </h3>
-              <button 
-                  onClick={() => setViewingDrug(null)} 
-                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
-              >
-                  <span className="material-symbols-rounded">close</span>
-              </button>
-            </div>
             
-            <div className="p-6 overflow-y-auto space-y-6">
+            <div className="space-y-6">
                 <div className="flex justify-between items-start">
                     <div>
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -902,20 +892,11 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
             onClose={() => setIsModalOpen(false)}
             size="4xl"
             zIndex={50}
+            title={editingDrug ? t.modal.edit : t.modal.add}
+            icon={editingDrug ? 'edit' : 'add_circle'}
         >
-            <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}>
-              <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100`}>
-                {editingDrug ? t.modal.edit : t.modal.add}
-              </h3>
-              <button 
-                  onClick={() => setIsModalOpen(false)} 
-                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
-              >
-                  <span className="material-symbols-rounded">close</span>
-              </button>
-            </div>
             
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+            <form onSubmit={handleSubmit} className="h-full">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* LEFT COLUMN: Main Info */}
@@ -1104,12 +1085,14 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
       {/* Print Quantity Modal */}
       {printModalDrug && (
-        <Modal isOpen={true} onClose={() => setPrintModalDrug(null)} size="sm">
-          <div className="p-6 space-y-4">
-            <h3 className="text-lg font-bold text-center text-gray-900 dark:text-gray-100 flex items-center justify-center gap-2">
-              <span className="material-symbols-rounded">print</span>
-              {t.actionsMenu.printBarcode}
-            </h3>
+        <Modal 
+          isOpen={true} 
+          onClose={() => setPrintModalDrug(null)} 
+          size="sm"
+          title={t.actionsMenu.printBarcode}
+          icon="print"
+        >
+          <div className="space-y-4">
             
             <div className="text-center">
               <div className="font-medium text-gray-900 dark:text-gray-100">{printModalDrug.name}</div>

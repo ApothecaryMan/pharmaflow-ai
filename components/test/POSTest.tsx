@@ -24,6 +24,7 @@ import {
 } from "../sales/InvoiceTemplate";
 import { formatStock } from "../../utils/inventory";
 import { Sale } from "../../types"; // Ensure Sale is imported
+import { getPrinterSettings, printReceiptSilently } from "../../utils/qzPrinter";
 import { ExpandingDropdown, ExpandingDropdownProps } from "../common/ExpandingDropdown";
 import {
   createColumnHelper,
@@ -910,16 +911,47 @@ export const POSTest: React.FC<POSProps> = ({
 
             const html = generateInvoiceHTML(mockSale, opts);
 
-            // Open print window
-            const printWindow = window.open(
-              "",
-              "_blank",
-              "width=400,height=600"
-            );
-            if (printWindow) {
-              printWindow.document.write(html);
-              printWindow.document.close();
-              // printWindow.print(); // Optional: trigger print dialog immediately
+            // Try QZ Tray silent printing first
+            const printerSettings = getPrinterSettings();
+            const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
+            
+            if (shouldTrySilent) {
+              (async () => {
+                try {
+                  const silentPrinted = await printReceiptSilently(html);
+                  if (silentPrinted) {
+                    console.log('Receipt printed silently via QZ Tray');
+                    return;
+                  }
+                } catch (silentErr) {
+                  console.warn('QZ Tray silent print failed, falling back to browser print:', silentErr);
+                  if (printerSettings.silentMode !== 'fallback') {
+                    return; // Don't fall back if not in fallback mode
+                  }
+                }
+                
+                // Fallback to browser print
+                const printWindow = window.open(
+                  "",
+                  "_blank",
+                  "width=400,height=600"
+                );
+                if (printWindow) {
+                  printWindow.document.write(html);
+                  printWindow.document.close();
+                }
+              })();
+            } else {
+              // Browser print (original behavior)
+              const printWindow = window.open(
+                "",
+                "_blank",
+                "width=400,height=600"
+              );
+              if (printWindow) {
+                printWindow.document.write(html);
+                printWindow.document.close();
+              }
             }
           }
         }
@@ -2324,32 +2356,10 @@ export const POSTest: React.FC<POSProps> = ({
             onClose={() => setViewingDrug(null)}
             size="md"
             zIndex={50}
+            title={t.productDetails}
+            icon="info"
           >
-            <div
-              className={`p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}
-                >
-                  <span className="material-symbols-rounded">info</span>
-                </div>
-                <h3
-                  className={`text-lg font-bold type-expressive text-${color}-900 dark:text-${color}-100`}
-                >
-                  {t.productDetails}
-                </h3>
-              </div>
-              <button
-                onClick={() => setViewingDrug(null)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                title={t.close}
-              >
-                <span className="material-symbols-rounded">close</span>
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto space-y-4">
+            <div className="space-y-4">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {viewingDrug.name}{" "}

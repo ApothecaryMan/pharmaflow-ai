@@ -66,7 +66,13 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
-  const [selectedCartIndex, setSelectedCartIndex] = useState(-1);
+  const [selectedCartIndex, setSelectedCartIndex] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('purchases_cart_selected');
+      return saved ? parseInt(saved, 10) : -1;
+    }
+    return -1;
+  });
   const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
 
   const filterOptions = [
@@ -578,11 +584,12 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
     localStorage.setItem('purchases_cart_width', sidebarWidth.toString());
   }, [sidebarWidth]);
 
-  // Persist Cart & Supplier
+  // Persist Cart, Supplier, and Selected Index
   useEffect(() => {
       localStorage.setItem('purchases_cart_items', JSON.stringify(cart));
       localStorage.setItem('purchases_cart_supplier', selectedSupplierId);
-  }, [cart, selectedSupplierId]);
+      localStorage.setItem('purchases_cart_selected', selectedCartIndex.toString());
+  }, [cart, selectedSupplierId, selectedCartIndex]);
 
   // Load tax rate from settings
   useEffect(() => {
@@ -1753,32 +1760,12 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                 onClose={() => setSelectedPurchase(null)}
                 size="4xl"
                 zIndex={50}
+                title={t.detailsModal?.title || 'Purchase Order Details'}
+                icon="receipt_long"
+                subtitle={`${selectedPurchase.invoiceId} • ${new Date(selectedPurchase.date).toLocaleDateString()} ${formatTime(new Date(selectedPurchase.date))}`}
             >
-                    {/* Header */}
-                    <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
-                        <div className="flex items-center gap-4">
-                            <div className={`p-2 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
-                                <span className="material-symbols-rounded">receipt_long</span>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t.detailsModal?.title || 'Purchase Order Details'}</h3>
-                                <p className="text-xs text-gray-500 flex items-center gap-2">
-                                    <span className="font-mono">{selectedPurchase.invoiceId}</span>
-                                    <span>•</span>
-                                    <span>{new Date(selectedPurchase.date).toLocaleDateString()} {formatTime(new Date(selectedPurchase.date))}</span>
-                                </p>
-                            </div>
-                        </div>
-                        <button 
-                            onClick={() => setSelectedPurchase(null)}
-                            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
-                        >
-                            <span className="material-symbols-rounded">close</span>
-                        </button>
-                    </div>
-                    
                     {/* Info Bar */}
-                    <div className="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-2 bg-white dark:bg-gray-900 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-2 bg-white dark:bg-gray-900 text-sm mb-4">
                         <div>
                             <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.detailsModal?.supplier || 'Supplier'}</p>
                             <p className="font-bold">{selectedPurchase.supplierName}</p>
@@ -1824,7 +1811,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                     </div>
 
                     {/* Items Table */}
-                    <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-black/20">
+                    <div className="bg-gray-50 dark:bg-black/20 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800">
                         <table className="w-full text-left border-collapse">
                             <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900 shadow-sm">
                                 <tr className="border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500 uppercase">

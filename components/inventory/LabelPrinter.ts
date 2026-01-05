@@ -7,6 +7,7 @@
 
 import { Drug } from '../../types';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
+import { getPrinterSettings, printLabelSilently } from '../../utils/qzPrinter';
 
 // --- Types ---
 
@@ -482,7 +483,7 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
  */
 
 
-export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {}): void => {
+export const printLabels = async (items: PrintLabelItem[], options: PrintOptions = {}): Promise<void> => {
     const validItems = items.filter(item => {
         if (!validateDrug(item.drug)) {
             console.warn('Invalid drug data skipped:', item.drug);
@@ -497,14 +498,13 @@ export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {})
         return;
     }
 
+    // Check if QZ Tray silent printing should be attempted
+    const printerSettings = getPrinterSettings();
+    const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
+
     let printWindow: Window | null = null;
 
     try {
-        printWindow = window.open('', '', PRINT_WINDOW_CONFIG.features);
-        if (!printWindow) {
-            throw new Error('Popup blocked');
-        }
-
         const template = options.forceBasicTemplate ? null : getDefaultTemplate();
         // Deep clone to prevent mutation when applying overrides
         let design = JSON.parse(JSON.stringify(
@@ -605,6 +605,34 @@ export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {})
             <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
             <style>${css}</style></head><body>
             <div class="print-container">${allPagesHTML}</div>
+            </body></html>`;
+
+        // Try silent printing via QZ Tray first
+        if (shouldTrySilent) {
+            try {
+                const silentPrinted = await printLabelSilently(htmlContent, { width: dims.w, height: dims.h });
+                if (silentPrinted) {
+                    console.log('Labels printed silently via QZ Tray');
+                    return; // Success - no need for browser popup
+                }
+                // If silentPrinted is false, fallback mode is active - continue to browser print
+            } catch (silentErr) {
+                console.warn('QZ Tray silent print failed, falling back to browser print:', silentErr);
+                // Only throw if not in fallback mode
+                if (printerSettings.silentMode !== 'fallback') {
+                    throw silentErr;
+                }
+            }
+        }
+
+        // Browser print fallback
+        printWindow = window.open('', '', PRINT_WINDOW_CONFIG.features);
+        if (!printWindow) {
+            throw new Error('Popup blocked');
+        }
+
+        // Add the print script for browser print
+        const browserHtmlContent = htmlContent.replace('</body></html>', `
             <script>
                 document.fonts.ready.then(() => {
                     window.print();
@@ -613,9 +641,9 @@ export const printLabels = (items: PrintLabelItem[], options: PrintOptions = {})
                     window.print();
                 });
             </script>
-            </body></html>`;
+            </body></html>`);
 
-        printWindow.document.write(htmlContent);
+        printWindow.document.write(browserHtmlContent);
         printWindow.document.close();
     } catch (e) {
         console.error('Print failed', e);

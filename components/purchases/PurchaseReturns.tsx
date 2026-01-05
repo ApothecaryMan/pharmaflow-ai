@@ -717,28 +717,11 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
             onClose={() => setViewingReturn(null)}
             size="3xl"
             zIndex={50}
+            title={t.purchaseReturns?.returnDetails || 'Return Details'}
+            icon="assignment_return"
         >
-            {/* Header */}
-            <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
-              <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
-                  <span className="material-symbols-rounded">assignment_return</span>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white type-expressive">{t.purchaseReturns?.returnDetails || 'Return Details'}</h3>
-                  <p className="text-xs text-gray-500">{t.purchaseReturns?.tableHeaders?.id || 'Return ID'} #{viewingReturn.id}</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setViewingReturn(null)}
-                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
-              >
-                <span className="material-symbols-rounded">close</span>
-              </button>
-            </div>
-
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="space-y-6">
               {/* Return Information */}
               <div>
                 <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">

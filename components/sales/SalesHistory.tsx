@@ -512,25 +512,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
             isOpen={true}
             onClose={() => setSelectedSale(null)}
             size="lg"
+            title={t.modal.title}
+            icon="receipt_long"
         >
-              <div className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50`}>
-                  <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
-                          <span className="material-symbols-rounded">receipt_long</span>
-                      </div>
-                      <h3 className={`text-lg font-bold type-expressive text-${color}-900 dark:text-${color}-100`}>
-                        {t.modal.title}
-                      </h3>
-                  </div>
-                  <button 
-                    onClick={() => setSelectedSale(null)} 
-                    className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
-                  >
-                    <span className="material-symbols-rounded">close</span>
-                  </button>
-              </div>
-
-              <div className="p-5 overflow-y-auto space-y-4">
+              <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                           <p className="text-gray-500">{t.modal.id}</p>
@@ -610,7 +595,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                   </div>
               </div>
 
-              <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/50 flex gap-3">
+              <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex gap-3 mt-4">
                   {(() => {
                       // Check if there are any items that can still be returned (using lineKey pattern)
                       const hasItemsToReturn = selectedSale.items.some((item, index) => {

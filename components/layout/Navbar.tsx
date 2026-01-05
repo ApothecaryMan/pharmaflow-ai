@@ -9,6 +9,7 @@ import { TRANSLATIONS } from '../../i18n/translations';
 import { SidebarDropdown } from './SidebarDropdown';
 import { Switch } from '../common/Switch';
 import { DashboardIcon } from './DashboardIcon';
+import { PrinterSettings } from '../settings/PrinterSettings';
 
 interface NavbarProps {
   menuItems: MenuItem[];
@@ -72,6 +73,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   setDeveloperMode
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showPrinterSettings, setShowPrinterSettings] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const t = TRANSLATIONS[language];
@@ -563,6 +565,20 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 )}
               </div>
 
+              {/* Printer Settings Button */}
+              <div className="p-2 border-t border-gray-100 dark:border-gray-800">
+                <button 
+                  onClick={() => {
+                    setShowPrinterSettings(true);
+                    setShowProfileMenu(false);
+                  }}
+                  className={`w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-${theme}-50 dark:hover:bg-${theme}-900/20 rounded-lg transition-colors flex items-center justify-center gap-2`}
+                >
+                  <span className="material-symbols-rounded text-[18px]">print</span>
+                  {(t as any).printerSettings?.title || 'Printer Settings'}
+                </button>
+              </div>
+
               {/* Sign Out */}
               <div className="p-2 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/50">
                 <button className="w-full p-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center justify-center gap-2">
@@ -574,6 +590,15 @@ const NavbarComponent: React.FC<NavbarProps> = ({
           )}
         </div>
       </div>
+
+      {/* Printer Settings Modal */}
+      <PrinterSettings
+        isOpen={showPrinterSettings}
+        onClose={() => setShowPrinterSettings(false)}
+        color={theme}
+        t={t}
+        language={language}
+      />
     </nav>
   );
 };

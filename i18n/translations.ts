@@ -1280,6 +1280,45 @@ export const TRANSLATIONS = {
         delivery: 'Delivery Preview',
         returns: 'Returns Preview'
       }
+    },
+    printerSettings: {
+      title: 'Printer Settings',
+      subtitle: 'Configure silent printing with QZ Tray',
+      connection: 'Connection',
+      enabled: 'QZ Tray Enabled',
+      status: {
+        connected: 'Connected',
+        disconnected: 'Disconnected',
+        notInstalled: 'Not Installed',
+        connecting: 'Connecting...'
+      },
+      reconnect: 'Reconnect',
+      download: 'Download QZ Tray',
+      labelPrinter: 'Label Printer',
+      receiptPrinter: 'Receipt Printer',
+      selectPrinter: 'Select Printer...',
+      noPrinters: 'No printers found',
+      refreshList: 'Refresh Printer List',
+      testPrintLabel: 'Test',
+      testPrintReceipt: 'Test',
+      silentMode: 'Silent Mode',
+      silentModes: {
+        on: 'ON',
+        off: 'OFF',
+        fallback: 'FALLBACK'
+      },
+      silentHints: {
+        on: 'Always print silently (requires QZ Tray)',
+        off: 'Always show print dialog',
+        fallback: 'Silent if QZ available, dialog otherwise'
+      },
+      alerts: {
+        connected: 'QZ Tray connected successfully',
+        disconnected: 'QZ Tray disconnected',
+        printSuccess: 'Printed successfully',
+        printFailed: 'Print failed',
+        notInstalled: 'QZ Tray is not installed. Please download from qz.io'
+      }
     }
   },
   AR: {
@@ -2575,6 +2614,45 @@ export const TRANSLATIONS = {
         addressBox: 'إظهار مربع العنوان',
         delivery: 'معاينة الدليفري',
         returns: 'معاينة المرتجع'
+      }
+    },
+    printerSettings: {
+      title: 'إعدادات الطابعة',
+      subtitle: 'إعداد الطباعة الصامتة باستخدام QZ Tray',
+      connection: 'الاتصال',
+      enabled: 'تفعيل QZ Tray',
+      status: {
+        connected: 'متصل',
+        disconnected: 'غير متصل',
+        notInstalled: 'غير مثبت',
+        connecting: 'جاري الاتصال...'
+      },
+      reconnect: 'إعادة الاتصال',
+      download: 'تحميل QZ Tray',
+      labelPrinter: 'طابعة الملصقات',
+      receiptPrinter: 'طابعة الفواتير',
+      selectPrinter: 'اختر الطابعة...',
+      noPrinters: 'لا توجد طابعات',
+      refreshList: 'تحديث قائمة الطابعات',
+      testPrintLabel: 'تجربة',
+      testPrintReceipt: 'تجربة',
+      silentMode: 'الطباعة الصامتة',
+      silentModes: {
+        on: 'تشغيل',
+        off: 'إيقاف',
+        fallback: 'تلقائي'
+      },
+      silentHints: {
+        on: 'طباعة صامتة دائماً (يتطلب QZ Tray)',
+        off: 'إظهار نافذة الطباعة دائماً',
+        fallback: 'طباعة صامتة إذا توفر QZ، وإلا نافذة الطباعة'
+      },
+      alerts: {
+        connected: 'تم الاتصال بـ QZ Tray بنجاح',
+        disconnected: 'تم قطع الاتصال بـ QZ Tray',
+        printSuccess: 'تمت الطباعة بنجاح',
+        printFailed: 'فشلت الطباعة',
+        notInstalled: 'QZ Tray غير مثبت. يرجى التحميل من qz.io'
       }
     }
   }

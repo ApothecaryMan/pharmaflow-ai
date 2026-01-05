@@ -14,6 +14,10 @@ interface ModalProps {
   className?: string; // extra classes for the container
   closeOnBackdropClick?: boolean;
   zIndex?: number;
+  title?: string;
+  subtitle?: string;
+  icon?: string;
+  headerActions?: React.ReactNode;
 }
 
 const SIZE_MAP = {
@@ -41,7 +45,11 @@ export const Modal: React.FC<ModalProps> = ({
   width,
   className = '',
   closeOnBackdropClick = true,
-  zIndex = 100
+  zIndex = 100,
+  title,
+  subtitle,
+  icon,
+  headerActions
 }) => {
   
   // Handle ESC key and Body Scroll Lock
@@ -93,7 +101,67 @@ export const Modal: React.FC<ModalProps> = ({
          className={`relative w-full ${maxWidthClass} bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-in max-h-[95vh] ${className}`}
          onClick={e => e.stopPropagation()}
        >
-         {children}
+         {title ? (
+           <div className="p-6 h-full flex flex-col overflow-hidden">
+             {/* Standard Header */}
+             <div className="flex items-center justify-between mb-6 shrink-0">
+               <div>
+                 <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                   {icon && <span className="material-symbols-rounded text-[24px]">{icon}</span>}
+                   {title}
+                 </h2>
+                 {subtitle && (
+                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                     {subtitle}
+                   </p>
+                 )}
+               </div>
+               <div className="flex items-center gap-2">
+                 {headerActions}
+                 <button
+                   onClick={onClose}
+                   className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                 >
+                   <span className="material-symbols-rounded">close</span>
+                 </button>
+               </div>
+             </div>
+             
+             {/* Content */}
+             <div 
+                className="flex-1 overflow-y-auto modal-scroll"
+                style={{
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
+                }}
+             >
+                <style>{`
+                    .modal-scroll::-webkit-scrollbar {
+                        width: 4px;
+                        background: transparent;
+                    }
+                    .modal-scroll::-webkit-scrollbar-track {
+                        background: transparent;
+                        border: none;
+                        box-shadow: none;
+                    }
+                    .modal-scroll::-webkit-scrollbar-thumb {
+                        background: rgba(156, 163, 175, 0.3);
+                        border-radius: 9999px;
+                    }
+                    .modal-scroll:hover::-webkit-scrollbar-thumb {
+                        background: rgba(156, 163, 175, 0.6);
+                    }
+                    .modal-scroll::-webkit-scrollbar-corner {
+                        background: transparent;
+                    }
+                `}</style>
+               {children}
+             </div>
+           </div>
+         ) : (
+           children
+         )}
        </div>
     </div>,
     document.body

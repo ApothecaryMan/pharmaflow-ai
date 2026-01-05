@@ -1593,30 +1593,10 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                 onClose={() => setSelectedPurchase(null)}
                 size="4xl"
                 zIndex={50}
+                title={t.detailsModal?.title || 'Purchase Order Details'}
+                icon="receipt_long"
             >
-                    {/* Header */}
-                    <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
-                        <div className="flex items-center gap-4">
-                            <div className={`p-2 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
-                                <span className="material-symbols-rounded">receipt_long</span>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t.detailsModal?.title || 'Purchase Order Details'}</h3>
-                                <p className="text-xs text-gray-500 flex items-center gap-2">
-                                    <span className="font-mono">{selectedPurchase.invoiceId}</span>
-                                    <span>•</span>
-                                    <span>{new Date(selectedPurchase.date).toLocaleDateString()} {formatTime(new Date(selectedPurchase.date))}</span>
-                                </p>
-                            </div>
-                        </div>
-                        <button 
-                            onClick={() => setSelectedPurchase(null)}
-                            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
-                        >
-                            <span className="material-symbols-rounded">close</span>
-                        </button>
-                    </div>
-                    
+                <div className="space-y-6">
                     {/* Info Bar */}
                     <div className="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-2 bg-white dark:bg-gray-900 text-sm">
                         <div>
@@ -1741,6 +1721,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                             </tbody>
                         </table>
                     </div>
+                </div>
             </Modal>
        )}
     </div>
