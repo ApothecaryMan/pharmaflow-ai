@@ -1046,7 +1046,7 @@ const App: React.FC = () => {
             'reports': 'dashboard',
             'hr': 'dashboard',
             'compliance': 'dashboard',
-            'settings': 'printer-settings',
+            'settings': 'dashboard',
             'return-history': 'return-history',
           };
           const newView = viewMapping[moduleId] || 'dashboard';

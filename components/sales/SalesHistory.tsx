@@ -11,9 +11,7 @@ import { SearchInput } from '../common/SearchInput';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
-import { printInvoice, InvoiceTemplateOptions } from './InvoiceTemplate';
-import { ThermalPrinterService, isSerialAvailable, isUSBAvailable } from '../../utils/printing';
-import { getDefaultTemplateOptions } from '../../utils/printing/template-utils';
+import { printInvoice, InvoiceTemplateOptions, defaultOptions } from './InvoiceTemplate';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -186,33 +184,14 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
   };
 
   const handlePrint = (sale: Sale) => {
-    const options = getDefaultTemplateOptions(language as 'EN' | 'AR');
+    const options: InvoiceTemplateOptions = { 
+        ...defaultOptions, 
+        language: language as 'EN' | 'AR' 
+    };
     printInvoice(sale, options);
   };
 
-  // Direct thermal print (ESC/POS)
-  const handleThermalPrint = async (sale: Sale, connectionType: 'serial' | 'usb') => {
-    const printer = new ThermalPrinterService({ 
-      connectionType,
-      paperSize: '79mm' 
-    });
-    
-    const templateOptions = getDefaultTemplateOptions(language as 'EN' | 'AR');
-    
-    const result = await printer.printReceipt(sale, {
-      printBarcode: true,
-      cutPaper: true,
-      storeName: templateOptions.storeName,
-      storeSubtitle: templateOptions.storeSubtitle,
-      footerMessage: templateOptions.footerMessage,
-    });
-    
-    if (!result.success) {
-      console.error('Thermal print failed:', result.message);
-      // Fallback to browser print
-      printInvoice(sale);
-    }
-  };
+
 
   return (
     <div className="h-full flex flex-col space-y-4 animate-fade-in">

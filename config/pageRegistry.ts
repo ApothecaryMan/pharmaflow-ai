@@ -23,7 +23,7 @@ import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
 import { POSTest } from '../components/test/POSTest';
 import { PurchasesTest } from '../components/test/PurchasesTest';
 import { DashboardExperiments } from '../components/experiments/DashboardExperiments';
-import { PrinterSettings } from '../components/settings/PrinterSettings';
+
 
 export interface PageConfig {
   id: string;
@@ -261,15 +261,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'test',
     requiredProps: ['inventory', 'suppliers', 'purchases', 'purchaseReturns', 'onCompletePurchase', 'color', 't', 'language']
   },
-  'printer-settings': {
-    id: 'printer-settings',
-    component: PrinterSettings,
-    menuLabel: 'Printer Settings',
-    menuLabelAr: 'إعدادات الطابعات',
-    icon: 'print',
-    category: 'settings',
-    requiredProps: ['color', 'language']
-  }
+
 };
 
 // Helper function to get page config
