@@ -1336,6 +1336,9 @@ const App: React.FC = () => {
               props.t = t.customers;
             } else if (view === 'customer-overview') {
               props.t = t.customerOverview;
+            } else if (view === 'employees') {
+                props.t = t.employeeList;
+                props.onUpdateEmployees = (newEmp: Employee[]) => setEmployees(newEmp);
             } else if (view === 'add-product') {
               props.t = t.inventory;
               props.initialMode = 'add';
@@ -1344,6 +1347,8 @@ const App: React.FC = () => {
             // Pass generic props including theme
             props.darkMode = darkMode;
             props.color = theme.primary;
+            props.employees = employees;
+            props.currentEmployeeId = currentEmployeeId;
             
             return <PageComponent {...props} />;
           })()}
@@ -1356,6 +1361,9 @@ const App: React.FC = () => {
         theme={theme.primary}
         language={language}
         t={t.statusBar}
+        employees={employees}
+        currentEmployeeId={currentEmployeeId}
+        onSelectEmployee={setCurrentEmployeeId}
       />
 
        {/* Mobile Bottom Nav */}

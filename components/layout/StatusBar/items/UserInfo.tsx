@@ -1,11 +1,8 @@
 import React from 'react';
 import { StatusBarItem } from '../StatusBarItem';
+import { useContextMenu } from '../../../common/ContextMenu';
 
-export interface Employee {
-  id: string;
-  name: string;
-  employeeCode: string;
-}
+import { Employee } from '../../../../types';
 
 interface UserInfoProps {
   userName?: string;
@@ -13,7 +10,7 @@ interface UserInfoProps {
   avatarUrl?: string;
   employees?: Employee[];
   currentEmployeeId?: string | null;
-  onSelectEmployee?: (id: string) => void;
+  onSelectEmployee?: (id: string | null) => void;
   language?: 'EN' | 'AR';
 }
 
@@ -26,32 +23,114 @@ export const UserInfo: React.FC<UserInfoProps> = ({
   onSelectEmployee,
   language = 'EN',
 }) => {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const [step, setStep] = React.useState<'idle' | 'username' | 'password'>('idle');
+  const [inputVal, setInputVal] = React.useState(''); // Shared input for username/password
+  const [tempEmployee, setTempEmployee] = React.useState<Employee | null>(null);
+  const [isError, setIsError] = React.useState(false);
+  
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
+  // Focus input on step change
+  React.useEffect(() => {
+    if (step !== 'idle' && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [step]);
+
+  // Click outside handler
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        if (step !== 'idle') {
+           resetState();
+        }
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [step]);
 
-  const handleSelect = (id: string) => {
-    if (onSelectEmployee) {
-      onSelectEmployee(id);
-      setIsOpen(false);
+  const resetState = () => {
+    setStep('idle');
+    setInputVal('');
+    setTempEmployee(null);
+    setIsError(false);
+  };
+
+  const handleStartLogin = () => {
+    if (!onSelectEmployee) return;
+    setStep('username');
+    setInputVal(''); // Clear
+    setIsError(false);
+  };
+
+  /* 
+   * Check Auth
+   */
+  const checkAuth = async () => {
+     if (step === 'username') {
+         // Validate Username
+         const query = inputVal.trim().toLowerCase();
+         if (!query) return;
+
+         // Find employee by name, code OR username
+         const found = employees.find(emp => 
+           emp.name.toLowerCase().includes(query) || 
+           emp.employeeCode.toLowerCase() === query ||
+           (emp.username && emp.username.toLowerCase() === query)
+         );
+
+         if (found) {
+           setTempEmployee(found);
+           setStep('password');
+           setInputVal(''); // Clear for password
+           setIsError(false);
+         } else {
+           setIsError(true);
+         }
+       } else if (step === 'password') {
+         // Validate Password
+         if (tempEmployee && onSelectEmployee) {
+             const inputPass = inputVal.trim();
+             
+             // Dynamic Import for security util
+             const { verifyPassword } = await import('../../../../utils/auth');
+
+             let isValid = false;
+
+             if (tempEmployee.password) {
+                 // Verify Hash
+                 isValid = await verifyPassword(inputPass, tempEmployee.password);
+             } else {
+                 // Fallback: If no password set, allow any non-empty input (Legacy Mode)
+                 isValid = inputPass.length > 0;
+             }
+
+             if (isValid) {
+                 onSelectEmployee(tempEmployee.id);
+                 resetState();
+             } else {
+                 setIsError(true);
+             }
+         }
+       }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+       checkAuth();
+    } else if (e.key === 'Escape') {
+        resetState();
     }
   };
 
-  const displayName = userName || (language === 'AR' ? 'اختر موظف' : 'Select Employee');
+  const displayName = userName || (language === 'AR' ? 'تسجيل الدخول' : 'Login');
   const displayRole = userRole || (employees.length > 0 ? (language === 'AR' ? 'الموظف الحالي' : 'Current Employee') : '');
 
-  // If no employees or no handler, just show static info
-  if (employees.length === 0 || !onSelectEmployee) {
-    if (!userName) return null;
+  // Render Logic
+  if (!onSelectEmployee) {
+    // Static View (No interaction if no logic)
     return (
       <StatusBarItem
         icon="person"
@@ -62,51 +141,68 @@ export const UserInfo: React.FC<UserInfoProps> = ({
     );
   }
 
-  return (
-    <div className="relative flex items-center h-full" ref={dropdownRef}>
-      <StatusBarItem
-        icon="person"
-        label={displayName}
-        tooltip={displayRole}
-        onClick={() => setIsOpen(!isOpen)}
-        variant={currentEmployeeId ? 'info' : 'warning'}
-        className="min-w-[120px]"
-      />
+  /* 
+   * Context Menu for Sign Out
+   */
+  const { showMenu } = useContextMenu();
 
-      {isOpen && (
-        <div 
-          className="absolute bottom-full right-0 mb-1 w-64 max-h-80 overflow-y-auto rounded-lg shadow-xl border z-50 mobile-safe-bottom"
-          style={{
-            backgroundColor: 'var(--bg-primary)',
-            borderColor: 'var(--border-primary)',
-          }}
-        >
-          <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase border-b" style={{ borderColor: 'var(--border-primary)' }}>
-            {language === 'AR' ? 'تغيير الموظف' : 'Switch Employee'}
-          </div>
-          <div className="divide-y" style={{ borderColor: 'var(--border-primary)' }}>
-            {employees.map((emp) => (
-              <button
-                key={emp.id}
-                onClick={() => handleSelect(emp.id)}
-                className={`w-full px-3 py-2 text-left hover:bg-white/5 transition-colors flex items-center justify-between group
-                  ${currentEmployeeId === emp.id ? 'bg-blue-500/10' : ''}
-                `}
-              >
-                <div>
-                  <div className={`text-sm font-medium ${currentEmployeeId === emp.id ? 'text-blue-500' : 'text-[var(--text-primary)]'}`}>
-                    {emp.name}
-                  </div>
-                  <div className="text-[10px] text-[var(--text-secondary)]">
-                    {emp.employeeCode}
-                  </div>
-                </div>
-                {currentEmployeeId === emp.id && (
-                  <span className="material-symbols-rounded text-blue-500 text-[16px]">check</span>
-                )}
-              </button>
-            ))}
-          </div>
+  const handleContextMenu = (e: React.MouseEvent) => {
+      if (!currentEmployeeId || !onSelectEmployee) return;
+      e.preventDefault();
+      
+      showMenu(e.clientX, e.clientY, [
+          {
+              label: language === 'AR' ? 'تسجيل الخروج' : 'Sign Out',
+              icon: 'logout',
+              danger: true,
+              action: () => {
+                  onSelectEmployee(null); // Sign Out
+                  setStep('idle');
+              }
+          }
+      ]);
+  };
+
+  return (
+    <div className="relative flex items-center h-full" ref={containerRef}>
+      {step === 'idle' ? (
+        <div onContextMenu={handleContextMenu} className="h-full">
+            <StatusBarItem
+            icon="person"
+            label={currentEmployeeId ? userName : (language === 'AR' ? 'تسجيل الدخول' : 'Login')} // Show "Login" if no user
+            tooltip={displayRole}
+            onClick={handleStartLogin}
+            variant={currentEmployeeId ? 'info' : 'warning'}
+            className="min-w-[120px] cursor-pointer hover:bg-white/10"
+            />
+        </div>
+      ) : (
+        <div className="flex items-center h-full px-2 bg-gray-900/50 border-l border-r border-gray-700/50 min-w-[150px]">
+           <span className={`material-symbols-rounded text-[16px] mr-2 ${isError ? 'text-red-500' : 'text-blue-400'}`}>
+              {step === 'username' ? 'badge' : 'lock'}
+           </span>
+           <input
+              ref={inputRef}
+              type={step === 'password' ? 'password' : 'text'}
+              value={inputVal}
+              onChange={(e) => {
+                  setInputVal(e.target.value);
+                  if (isError) setIsError(false);
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={
+                  step === 'username' 
+                    ? (language === 'AR' ? 'اسم المستخدم...' : 'Username...') 
+                    : (language === 'AR' ? 'كلمة المرور...' : 'Password...')
+              }
+              className={`bg-transparent border-none outline-none text-[11px] font-bold text-white placeholder-gray-500 w-24 focus:ring-0 ${isError ? 'text-red-400' : ''}`}
+              autoComplete="off"
+           />
+           {step === 'username' && isError && (
+             <span className="text-[9px] text-red-500 ml-1 font-normal">
+               {language === 'AR' ? 'غير موجود' : 'Not found'}
+             </span>
+           )}
         </div>
       )}
     </div>

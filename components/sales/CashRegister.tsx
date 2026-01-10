@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Shift, CashTransaction, CashTransactionType, Language } from '../../types';
+import { Shift, CashTransaction, CashTransactionType, Language, Employee } from '../../types';
 import { CARD_BASE, TABLE_HEADER_BASE, TABLE_ROW_BASE, BUTTON_BASE, INPUT_BASE, THEME_COLORS } from '../../utils/themeStyles';
 import { useSmartDirection } from '../common/SmartInputs';
 import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
@@ -12,9 +12,11 @@ interface CashRegisterProps {
   color: string;
   t: any;
   language?: Language;
+  employees?: Employee[];
+  currentEmployeeId?: string;
 }
 
-export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language = 'EN' }) => {
+export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language = 'EN', employees, currentEmployeeId }) => {
   const { getVerifiedDate } = useStatusBar();
   // Get help instructions based on language
   const helpContent = CASH_REGISTER_HELP[language];
@@ -89,11 +91,20 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       return;
     }
 
+    // CHECK AUTH
+    if (!currentEmployeeId) {
+        setValidationError(language === 'AR' ? 'يجب تسجيل الدخول لفتح المناوبة' : 'You must login to open a shift');
+        return;
+    }
+
+    const startUser = employees?.find(e => e.id === currentEmployeeId);
+    const userName = startUser ? startUser.name : 'Pharmacist';
+
     const newShift: Shift = {
       id: getVerifiedDate().getTime().toString(),
       status: 'open',
       openTime: getVerifiedDate().toISOString(),
-      openedBy: 'Pharmacist', // Mock User
+      openedBy: userName,
       openingBalance: amount,
       cashIn: 0,
       cashOut: 0,
@@ -107,7 +118,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
         type: 'opening',
         amount: amount,
         reason: reasonInput || 'Start of shift',
-        userId: 'Pharmacist'
+        userId: userName
       }]
     };
 

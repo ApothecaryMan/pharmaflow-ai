@@ -1363,6 +1363,10 @@ export const TRANSLATIONS = {
       status: 'Status',
       salary: 'Salary',
       notes: 'Notes',
+      username: 'Username',
+      usernamePlaceholder: 'Login Username',
+      password: 'Password',
+      passwordPlaceholder: 'Login Password',
       table: {
         code: 'Code',
         name: 'Name',
@@ -1429,6 +1433,10 @@ export const TRANSLATIONS = {
       status: 'الحالة',
       salary: 'الراتب',
       notes: 'ملاحظات',
+      username: 'اسم المستخدم',
+      usernamePlaceholder: 'اسم المستخدم للدخول',
+      password: 'كلمة المرور',
+      passwordPlaceholder: 'كلمة المرور للدخول',
       table: {
         code: 'الكود',
         name: 'الاسم',

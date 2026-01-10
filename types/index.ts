@@ -295,4 +295,8 @@ export interface Employee {
   
   // --- Additional ---
   notes?: string;          // Free text notes
+  
+  // --- Auth ---
+  username?: string;       // Login Username
+  password?: string;       // Login Password (hashed in real app, plain for now)
 }

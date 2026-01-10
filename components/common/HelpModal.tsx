@@ -163,9 +163,9 @@ interface HelpButtonProps {
 export const HelpButton: React.FC<HelpButtonProps> = ({ onClick, title, color, isRTL = false }) => (
   <button
     onClick={onClick}
-    className={`fixed ${isRTL ? 'left-6' : 'right-6'} bottom-6 w-10 h-10 rounded-full bg-${color}-600 text-white shadow-md transition-colors flex items-center justify-center z-40 hover:bg-${color}-700`}
+    className={`fixed ${isRTL ? 'left-6' : 'right-6'} bottom-12 p-1 text-black/80 dark:text-white/80 hover:text-black dark:hover:text-white z-40`}
     title={title}
   >
-    <span className="material-symbols-rounded text-lg">help</span>
+    <span className="material-symbols-rounded text-3xl">help</span>
   </button>
 );

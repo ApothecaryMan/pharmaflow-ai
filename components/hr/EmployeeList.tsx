@@ -20,9 +20,10 @@ interface EmployeeListProps {
   color: string;
   t: any;
   language: string;
+  onUpdateEmployees?: (employees: Employee[]) => void;
 }
 
-export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language }) => {
+export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, onUpdateEmployees }) => {
   // --- State ---
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -53,6 +54,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language }
   const saveToStorage = (newEmployees: Employee[]) => {
     setEmployees(newEmployees);
     localStorage.setItem('pharma_employees', JSON.stringify(newEmployees));
+    if (onUpdateEmployees) onUpdateEmployees(newEmployees);
   };
 
   // --- Actions ---
@@ -182,17 +184,35 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language }
   };
 
   // --- Form Logic ---
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name || !formData.phone) {
         playError();
         return; // Validation failed
     }
+  
+    // Secure Password Hashing
+    let hashedPassword = formData.password;
+    
+    // Only hash if a password is provided (and not already hashed, basic check)
+    // In edit mode: if password field is empty, keep existing hash. If not empty, hash it.
+    if (formData.password && formData.password.trim().length > 0) {
+        const { hashPassword } = await import('../../utils/auth');
+        hashedPassword = await hashPassword(formData.password);
+    } else if (editingEmployee) {
+        // Keep existing password if not changing
+        hashedPassword = editingEmployee.password;
+    }
+
+    const finalFormData = {
+        ...formData,
+        password: hashedPassword
+    };
 
     const isEdit = !!editingEmployee;
     let newEmployees = [...employees];
 
     if (isEdit) {
-        newEmployees = newEmployees.map(e => e.id === editingEmployee.id ? { ...e, ...formData } as Employee : e);
+        newEmployees = newEmployees.map(e => e.id === editingEmployee.id ? { ...e, ...finalFormData } as Employee : e);
     } else {
         // Generate ID and Code
         const maxSerial = employees.reduce((max, emp) => {
@@ -209,7 +229,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language }
             status: 'active',
             department: 'pharmacy',
             role: 'pharmacist',
-            ...formData as any
+            ...finalFormData as any
         };
         newEmployees.push(newEmp);
     }
@@ -383,6 +403,28 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language }
                         <option key={key} value={key}>{label as string}</option>
                      ))}
                   </select>
+               </div>
+            </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+               <div className="space-y-1">
+                   <label className="text-xs font-medium text-gray-500 uppercase">{t.employeeList.username || 'Username'}</label>
+                   <SmartInput
+                      value={formData.username || ''}
+                      onChange={e => setFormData({...formData, username: e.target.value})}
+                      placeholder={t.employeeList.usernamePlaceholder || "Login Username"}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                   />
+               </div>
+               <div className="space-y-1">
+                   <label className="text-xs font-medium text-gray-500 uppercase">{t.employeeList.password || 'Password'}</label>
+                   <SmartInput
+                      value={formData.password || ''}
+                      onChange={e => setFormData({...formData, password: e.target.value})}
+                      placeholder={editingEmployee ? "Unchanged" : (t.employeeList.passwordPlaceholder || "Login Password")}
+                      type="password"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                   />
                </div>
             </div>
 
