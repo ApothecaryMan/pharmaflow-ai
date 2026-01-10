@@ -95,6 +95,7 @@ export interface PurchaseItem {
 export interface Sale {
   id: string;
   date: string;
+  soldByEmployeeId?: string;  // الموظف اللي باع الفاتورة
   dailyOrderNumber?: number;  // Order number for the day (1, 2, 3...)
   items: CartItem[];
   total: number;

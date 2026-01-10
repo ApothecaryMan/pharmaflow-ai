@@ -25,6 +25,7 @@ import { PurchasesTest } from '../components/test/PurchasesTest';
 import { DashboardExperiments } from '../components/experiments/DashboardExperiments';
 import { AdvancedSmCard } from '../components/experiments/AdvancedSmCard';
 import { EmployeeList } from '../components/hr/EmployeeList';
+import { EmployeeProfile } from '../components/hr/EmployeeProfile';
 
 
 export interface PageConfig {
@@ -280,6 +281,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'badge',
     category: 'hr',
     requiredProps: ['color', 't', 'language']
+  },
+  'employee-profile': {
+    id: 'employee-profile',
+    component: EmployeeProfile,
+    menuLabel: 'Employee Profile',
+    menuLabelAr: 'ملف الموظف',
+    icon: 'id_card',
+    category: 'hr',
+    requiredProps: ['sales', 'employees', 'color', 't', 'language']
   },
 };
 

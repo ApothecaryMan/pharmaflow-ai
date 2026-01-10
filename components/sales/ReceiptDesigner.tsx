@@ -4,6 +4,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
 import { generateInvoiceHTML, InvoiceTemplateOptions } from '../sales/InvoiceTemplate';
 import { Sale } from '../../types';
+import { useStatusBar } from '../layout/StatusBar';
 
 interface ReceiptDesignerProps {
   color: string;
@@ -12,6 +13,7 @@ interface ReceiptDesignerProps {
 }
 
 export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, language }) => {
+  const { getVerifiedDate } = useStatusBar();
   // Track if component has mounted (to avoid overwriting localStorage on first render)
   const [hasMounted, setHasMounted] = useState(false);
 
@@ -110,7 +112,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   const handleCreateTemplate = () => {
     if (!newTemplateName.trim()) return;
     const newTemplate: SavedTemplate = {
-      id: Date.now().toString(),
+      id: getVerifiedDate().getTime().toString(),
       name: newTemplateName,
       isDefault: false,
       options: { ...options }
@@ -185,7 +187,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   // 2. Dummy Sale Data for Preview
   const DUMMY_SALE: Sale = {
     id: 'TRX-998877',
-    date: new Date().toISOString(),
+    date: getVerifiedDate().toISOString(),
     dailyOrderNumber: 42,
     status: 'completed',
     items: [

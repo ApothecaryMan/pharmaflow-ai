@@ -12,6 +12,7 @@ import { useExpandingDropdown } from "../../hooks/useExpandingDropdown";
 import { getCategories, getProductTypes, getLocalizedCategory, getLocalizedProductType } from "../../data/productCategories";
 import { getLocationName } from "../../data/locations";
 import { usePOSTabs } from "../../hooks/usePOSTabs";
+import { useStatusBar } from "../layout/StatusBar";
 
 import { useSmartDirection, SmartAutocomplete } from "../common/SmartInputs";
 import { SearchInput } from "../common/SearchInput";
@@ -89,6 +90,7 @@ export const POS: React.FC<POSProps> = ({
   darkMode,
 }) => {
   const { showMenu } = useContextMenu();
+  const { getVerifiedDate } = useStatusBar();
   const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
   const currentLang = isRTL ? 'ar' : 'en';
 
@@ -860,9 +862,11 @@ export const POS: React.FC<POSProps> = ({
             // Construct a temporary Sale object for printing
             // Since onCompleteSale is an event, we don't have the final DB ID yet.
             // We'll use a placeholder or handle it gracefully.
+            // Use verified time for receipt
+            const verifiedDate = getVerifiedDate();
             const mockSale: Sale = {
-              id: "TRX-" + Date.now().toString().slice(-6),
-              date: new Date().toISOString(),
+              id: "TRX-" + verifiedDate.getTime().toString().slice(-6),
+              date: verifiedDate.toISOString(),
               dailyOrderNumber: 0, // Placeholder
               items: cart,
               subtotal,

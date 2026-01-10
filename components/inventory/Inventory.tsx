@@ -11,6 +11,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { formatStock, validateStock } from '../../utils/inventory';
 import { Modal } from '../common/Modal';
 import { getCategories, getProductTypes, isMedicineCategory, getLocalizedCategory, getLocalizedProductType } from '../../data/productCategories';
+import { useStatusBar } from '../layout/StatusBar';
 
 interface InventoryProps {
   inventory: Drug[];
@@ -22,6 +23,7 @@ interface InventoryProps {
 }
 
 export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUpdateDrug, onDeleteDrug, color, t }) => {
+  const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
 
   // Detect language direction/locale
@@ -160,7 +162,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       setIsModalOpen(false);
     } else {
       const newDrug: Drug = {
-        id: Date.now().toString(),
+        id: getVerifiedDate().getTime().toString(),
         ...submissionData as Omit<Drug, 'id'>
       };
       onAddDrug(newDrug);

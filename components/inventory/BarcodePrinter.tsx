@@ -6,6 +6,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { useContextMenu } from '../common/ContextMenu';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
+import { useStatusBar } from '../layout/StatusBar';
 
 interface BarcodePrinterProps {
   inventory: Drug[];
@@ -20,6 +21,7 @@ interface QueueItem extends PrintLabelItem {
 }
 
 export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color, t, language, textTransform }) => {
+  const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
   const { playBeep } = usePosSounds();
   const [search, setSearch] = useState('');
@@ -193,7 +195,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
       }
 
       // Add new item
-      const newId = Date.now().toString();
+      const newId = getVerifiedDate().getTime().toString();
       const newItem: QueueItem = {
           id: newId,
           drug,

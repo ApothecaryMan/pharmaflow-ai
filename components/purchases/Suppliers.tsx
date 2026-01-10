@@ -4,6 +4,7 @@ import { Supplier } from '../../types';
 import { useSmartDirection, SmartEmailInput } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { Modal } from '../common/Modal';
+import { useStatusBar } from '../../components/layout/StatusBar';
 
 interface SuppliersProps {
   suppliers: Supplier[];
@@ -15,6 +16,7 @@ interface SuppliersProps {
 }
 
 export const Suppliers: React.FC<SuppliersProps> = ({ suppliers, onAddSupplier, onUpdateSupplier, onDeleteSupplier, color, t }) => {
+  const { getVerifiedDate } = useStatusBar();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
@@ -42,7 +44,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({ suppliers, onAddSupplier, 
       onUpdateSupplier({ ...editingSupplier, ...formData } as Supplier);
     } else {
       const newSupplier: Supplier = {
-        id: Date.now().toString(),
+        id: getVerifiedDate().getTime().toString(),
         ...formData as Omit<Supplier, 'id'>
       };
       onAddSupplier(newSupplier);

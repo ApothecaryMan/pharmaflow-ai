@@ -3,6 +3,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { Drug } from '../../types';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
 import { getCategories, getProductTypes, getLocalizedCategory, getLocalizedProductType } from '../../data/productCategories';
+import { useStatusBar } from '../../components/layout/StatusBar';
 
 interface AddProductProps {
   inventory: Drug[];
@@ -13,6 +14,7 @@ interface AddProductProps {
 }
 
 export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, color, t, onNavigate }) => {
+  const { getVerifiedDate } = useStatusBar();
   // Detect language direction/locale
   const isRTL = t.direction === 'rtl' || t.lang === 'ar' || (t.addProduct && /[\u0600-\u06FF]/.test(t.addProduct.title || ''));
   const currentLang = isRTL ? 'ar' : 'en';
@@ -63,7 +65,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
     e.preventDefault();
     
     const newDrug: Drug = {
-      id: Date.now().toString(),
+      id: getVerifiedDate().getTime().toString(),
       name: formData.name || '',
       genericName: formData.genericName || '',
       category: formData.category || 'General',

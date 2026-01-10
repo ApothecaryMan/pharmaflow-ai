@@ -6,6 +6,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
+import { useStatusBar } from '../../components/layout/StatusBar';
 
 interface CashRegisterProps {
   color: string;
@@ -14,6 +15,7 @@ interface CashRegisterProps {
 }
 
 export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language = 'EN' }) => {
+  const { getVerifiedDate } = useStatusBar();
   // Get help instructions based on language
   const helpContent = CASH_REGISTER_HELP[language];
   // State
@@ -88,9 +90,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
     }
 
     const newShift: Shift = {
-      id: Date.now().toString(),
+      id: getVerifiedDate().getTime().toString(),
       status: 'open',
-      openTime: new Date().toISOString(),
+      openTime: getVerifiedDate().toISOString(),
       openedBy: 'Pharmacist', // Mock User
       openingBalance: amount,
       cashIn: 0,
@@ -99,9 +101,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       cardSales: 0,
       returns: 0,  // Initialize returns counter
       transactions: [{
-        id: Date.now().toString() + '-init',
-        shiftId: Date.now().toString(),
-        time: new Date().toISOString(),
+        id: getVerifiedDate().getTime().toString() + '-init',
+        shiftId: getVerifiedDate().getTime().toString(),
+        time: getVerifiedDate().toISOString(),
         type: 'opening',
         amount: amount,
         reason: reasonInput || 'Start of shift',
@@ -131,15 +133,15 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
     const closedShift: Shift = {
       ...currentShift,
       status: 'closed',
-      closeTime: new Date().toISOString(),
+      closeTime: getVerifiedDate().toISOString(),
       closedBy: 'Pharmacist',
       closingBalance: amount,
       expectedBalance: currentBalance,
       notes: reasonInput,
       transactions: [...currentShift.transactions, {
-        id: Date.now().toString() + '-close',
+        id: getVerifiedDate().getTime().toString() + '-close',
         shiftId: currentShift.id,
-        time: new Date().toISOString(),
+        time: getVerifiedDate().toISOString(),
         type: 'closing',
         amount: amount,
         reason: 'End of shift',
@@ -180,9 +182,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
 
     const type: CashTransactionType = modalMode === 'in' ? 'in' : 'out';
     const transaction: CashTransaction = {
-      id: Date.now().toString(),
+      id: getVerifiedDate().getTime().toString(),
       shiftId: currentShift.id,
-      time: new Date().toISOString(),
+      time: getVerifiedDate().toISOString(),
       type: type,
       amount: amount,
       reason: reasonInput,

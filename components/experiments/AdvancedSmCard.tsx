@@ -44,7 +44,21 @@ const barData2 = [
 // --- Sub-Components ---
 
 // 1. Metric Card
-const StatCard = ({ title, value, icon, iconColor, trend, trendValue, trendLabel }: any) => (
+export interface StatCardProps {
+  title: string;
+  value: string | number;
+  icon: string;
+  iconColor: string;
+  trend?: 'up' | 'down' | 'neutral';
+  trendValue?: string;
+  trendLabel?: string;
+  subValue?: string; // Added to support EmployeeProfile usage
+  showTrend?: boolean; // Added to support EmployeeProfile usage
+  graphToken?: string; // Added to support EmployeeProfile usage
+  type?: string; 
+}
+
+export const StatCard = ({ title, value, icon, iconColor, trend, trendValue, trendLabel, subValue }: StatCardProps) => (
   <div className={`p-4 rounded-3xl ${CARD_BASE} ${CARD_HOVER} flex flex-col justify-between h-36`}>
     <div className="flex justify-between items-start">
       <div>
@@ -75,7 +89,7 @@ const StatCard = ({ title, value, icon, iconColor, trend, trendValue, trendLabel
 );
 
 // 2. Sparkline Card (Area Chart)
-const SparklineCard = ({ title, value, data, color, onClick }: any) => (
+export const SparklineCard = ({ title, value, data, color, onClick }: any) => (
   <div 
     onClick={onClick}
     className={`p-0 rounded-3xl ${CARD_BASE} ${CARD_HOVER} h-36 relative overflow-hidden flex flex-col cursor-pointer transition-transform active:scale-[0.98] group`}
@@ -111,7 +125,7 @@ const SparklineCard = ({ title, value, data, color, onClick }: any) => (
 );
 
 // 3. ProgressCard
-const ProgressCard = ({ title, value, max, progressColor, icon, onClick }: any) => {
+export const ProgressCard = ({ title, value, max, progressColor, icon, onClick }: any) => {
   const percentage = Math.min(100, Math.max(0, (value / max) * 100));
   
   return (
@@ -142,7 +156,7 @@ const ProgressCard = ({ title, value, max, progressColor, icon, onClick }: any) 
 };
 
 // 4. Bar Chart Card (New)
-const BarChartCard = ({ title, value, data, color }: any) => (
+export const BarChartCard = ({ title, value, data, color }: any) => (
   <div className={`p-5 rounded-3xl ${CARD_BASE} ${CARD_HOVER} h-36 flex flex-col`}>
     <div className="flex justify-between items-end mb-2">
        <div>
@@ -165,7 +179,7 @@ const BarChartCard = ({ title, value, data, color }: any) => (
 );
 
 // 5. Action Card
-const ActionCard = ({ title, icon, color, actionLabel }: any) => (
+export const ActionCard = ({ title, icon, color, actionLabel }: any) => (
   <div className={`p-4 rounded-3xl ${CARD_BASE} ${CARD_HOVER} h-36 flex flex-col items-center justify-center text-center group cursor-pointer border border-transparent hover:border-${color}-200 dark:hover:border-${color}-800`}>
     <div className={`w-12 h-12 rounded-2xl bg-${color}-50 dark:bg-${color}-900/10 text-${color}-500 dark:text-${color}-400 flex items-center justify-center mb-3`}>
       <span className="material-symbols-rounded text-3xl">{icon}</span>

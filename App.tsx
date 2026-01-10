@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, PurchaseReturn, Return, Customer, Shift, CashTransaction, CashTransactionType } from './types';
+import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, PurchaseReturn, Return, Customer, Shift, CashTransaction, CashTransactionType, Employee } from './types';
 import { Toast } from './components/common/Toast';
 import { TRANSLATIONS } from './i18n/translations';
 import { PHARMACY_MENU } from './config/menuData';
 import { SidebarMenu } from './components/layout/SidebarMenu';
 import { SidebarContent } from './components/layout/SidebarContent';
 import { Navbar } from './components/layout/Navbar';
+import { StatusBar, useStatusBar } from './components/layout/StatusBar';
 import { PAGE_REGISTRY } from './config/pageRegistry';
 import { useTheme } from './hooks/useTheme';
 import { CSV_INVENTORY } from './data/sample-inventory';
@@ -240,6 +241,23 @@ const App: React.FC = () => {
     return null;
   });
 
+  // الموظف الحالي المسجل في البروفايل
+  const [currentEmployeeId, setCurrentEmployeeId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('pharma_currentEmployeeId');
+    }
+    return null;
+  });
+
+  // قائمة الموظفين
+  const [employees, setEmployees] = useState<Employee[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pharma_employees');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
   const [textTransform, setTextTransform] = useState<'normal' | 'uppercase'>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pharma_textTransform');
@@ -433,6 +451,14 @@ const App: React.FC = () => {
   }, [profileImage]);
 
   useEffect(() => {
+    if (currentEmployeeId) {
+      localStorage.setItem('pharma_currentEmployeeId', currentEmployeeId);
+    } else {
+      localStorage.removeItem('pharma_currentEmployeeId');
+    }
+  }, [currentEmployeeId]);
+
+  useEffect(() => {
     localStorage.setItem('pharma_inventory', JSON.stringify(inventory));
   }, [inventory]);
 
@@ -474,6 +500,9 @@ const App: React.FC = () => {
     ];
     setTip(tips[Math.floor(Math.random() * tips.length)]);
   }, []);
+
+  // Get verified time from StatusBar context
+  const { getVerifiedDate, validateTransactionTime, updateLastTransactionTime } = useStatusBar();
 
   // MIGRATION: Update Legacy Internal Codes to 6-Digit Format AND Convert to Unit-Based Inventory
   useEffect(() => {
@@ -578,6 +607,8 @@ const App: React.FC = () => {
             setPurchaseReturns(JSON.parse(e.newValue));
         } else if (e.key === 'pharma_suppliers' && e.newValue) {
             setSuppliers(JSON.parse(e.newValue));
+        } else if (e.key === 'pharma_employees' && e.newValue) {
+            setEmployees(JSON.parse(e.newValue));
         }
     };
 
@@ -695,21 +726,38 @@ const App: React.FC = () => {
   };
 
   const handleCompleteSale = (saleData: { items: CartItem[], customerName: string, customerCode?: string, customerPhone?: string, customerAddress?: string, customerStreetAddress?: string, paymentMethod: 'cash' | 'visa', saleType?: 'walk-in' | 'delivery', deliveryFee?: number, globalDiscount: number, subtotal: number, total: number }) => {
+    // Get verified date
+    const saleDate = getVerifiedDate();
+    
+    // Validate transaction time (Monotonic Check)
+    const validation = validateTransactionTime(saleDate);
+    if (!validation.valid) {
+      setToast({
+        message: `⚠️ ${validation.message || 'Invalid transaction time'}`,
+        type: 'error'
+      });
+      return;
+    }
+
     // Generate Serial ID (simple increment based on count)
     const serialId = (100001 + sales.length).toString();
     
     // Calculate daily order number
-    const today = new Date().toDateString();
+    const today = saleDate.toDateString();
     const todaysSales = sales.filter(s => new Date(s.date).toDateString() === today);
     const dailyOrderNumber = todaysSales.length + 1;
 
     const newSale: Sale = {
       id: serialId,
-      date: new Date().toISOString(),
+      date: saleDate.toISOString(),
+      soldByEmployeeId: currentEmployeeId || undefined,
       dailyOrderNumber,
       status: 'completed',
       ...saleData
     };
+    
+    // Update last transaction time
+    updateLastTransactionTime(saleDate.getTime());
     
     // Update inventory with pack/unit logic (INTEGER UNITS)
     setInventory(prev => prev.map(drug => {
@@ -816,9 +864,9 @@ const App: React.FC = () => {
            const isCash = saleData.paymentMethod === 'cash';
            
            const newTransaction: CashTransaction = {
-              id: Date.now().toString(),
+              id: getVerifiedDate().getTime().toString(),
               shiftId: openShift.id,
-              time: new Date().toISOString(),
+              time: getVerifiedDate().toISOString(),
               type: isCash ? 'sale' : 'card_sale',
               amount: saleData.total,
               reason: `Sale #${serialId}`,
@@ -849,8 +897,23 @@ const App: React.FC = () => {
   };
 
   const handleProcessReturn = (returnData: Return) => {
+    // Validate return time (Monotonic Check)
+    // We assume returnData.date is the time of return processing
+    const returnDate = new Date(returnData.date);
+    const validation = validateTransactionTime(returnDate);
+    if (!validation.valid) {
+      setToast({
+        message: `⚠️ ${validation.message || 'Invalid return time'}`,
+        type: 'error'
+      });
+      return;
+    }
+
     // Add return record
     setReturns(prev => [returnData, ...prev]);
+
+    // Update last transaction time
+    updateLastTransactionTime(returnDate.getTime());
     
     // Update sale record
     setSales(prev => prev.map(sale => {
@@ -927,9 +990,9 @@ const App: React.FC = () => {
           const isCashReturn = originalSale?.paymentMethod === 'cash';
           
           const newTransaction: CashTransaction = {
-            id: Date.now().toString(),
+            id: getVerifiedDate().getTime().toString(),
             shiftId: openShift.id,
-            time: new Date().toISOString(),
+            time: getVerifiedDate().toISOString(),
             type: 'return',
             amount: returnData.totalRefund,
             reason: `Return for Sale #${returnData.saleId}`,
@@ -1028,8 +1091,8 @@ const App: React.FC = () => {
             }
         }}
     >
-    <div 
-      className="min-h-screen transition-colors duration-200 select-none"
+     <div 
+      className="h-screen flex flex-col transition-colors duration-200 select-none"
       style={{ 
         backgroundColor: 'var(--bg-primary)',
         color: 'var(--text-primary)'
@@ -1086,10 +1149,13 @@ const App: React.FC = () => {
         setDeveloperMode={setDeveloperMode}
         currentView={activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view}
         onNavigate={handleNavigate}
+        employees={employees.map(e => ({ id: e.id, name: e.name, employeeCode: e.employeeCode }))}
+        currentEmployeeId={currentEmployeeId}
+        setCurrentEmployeeId={setCurrentEmployeeId}
       />
 
       {/* Main Layout: Sidebar + Content */}
-      <div className="flex h-[calc(100vh-64px)] overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <div className="flex flex-1 overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
         {/* Desktop Sidebar */}
         <aside 
           className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col w-72 backdrop-blur-xl transition-all duration-300 ease-in-out`}
@@ -1282,7 +1348,15 @@ const App: React.FC = () => {
             return <PageComponent {...props} />;
           })()}
           </div>
-        </main>
+         </main>
+      </div>
+
+      {/* StatusBar - Desktop Only */}
+      <StatusBar 
+        theme={theme.primary}
+        language={language}
+        t={t.statusBar}
+      />
 
        {/* Mobile Bottom Nav */}
        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex justify-around p-3 z-50 overflow-x-auto">
@@ -1291,9 +1365,8 @@ const App: React.FC = () => {
           <button onClick={() => setView('inventory')} className={`p-2 rounded-xl shrink-0 ${view === 'inventory' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}><span className="material-symbols-rounded">inventory_2</span></button>
           <button onClick={() => setView('purchases')} className={`p-2 rounded-xl shrink-0 ${view === 'purchases' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}><span className="material-symbols-rounded">shopping_cart_checkout</span></button>
         </div>
-      </div>
     </div>
-
+    
     {/* Toast Notifications */}
     {toast && (
       <Toast

@@ -64,6 +64,15 @@ export const TRANSLATIONS = {
         minute: 'Minute'
       }
     },
+    statusBar: {
+      ready: 'Ready',
+      online: 'Online',
+      offline: 'Offline',
+      notifications: 'Notifications',
+      noNotifications: 'No notifications',
+      clearAll: 'Clear all',
+      version: 'v1.0.0'
+    },
     inventory: {
       title: 'Inventory',
       subtitle: 'Manage your pharmaceutical stock',
@@ -1334,6 +1343,16 @@ export const TRANSLATIONS = {
       addEmployee: 'Add Employee',
       editEmployee: 'Edit Employee',
       viewDetails: 'Employee Details',
+      employeeProfile: 'Employee Profile',
+      stats: {
+        totalSales: 'Total Sales',
+        netProfit: 'Net Profit',
+        itemsSold: 'Units Sold',
+        transactions: 'Transactions',
+        topProduct: 'Top Product',
+        performanceInsight: 'Performance Insight',
+        salesAnalytics: 'Sales Analytics'
+      },
       deleteConfirm: 'Delete this employee?',
       name: 'Full Name',
       phone: 'Phone Number',
@@ -1390,6 +1409,16 @@ export const TRANSLATIONS = {
       addEmployee: 'إضافة موظف',
       editEmployee: 'تعديل موظف',
       viewDetails: 'تفاصيل الموظف',
+      employeeProfile: 'ملف الموظف',
+      stats: {
+        totalSales: 'إجمالي المبيعات',
+        netProfit: 'صافي الربح',
+        itemsSold: 'القطع المباعة',
+        transactions: 'عدد الفواتير',
+        topProduct: 'المنتج الأكثر مبيعاً',
+        performanceInsight: 'تحليل الأداء',
+        salesAnalytics: 'تحليل المبيعات'
+      },
       deleteConfirm: 'حذف هذا الموظف؟',
       name: 'الاسم بالكامل',
       phone: 'رقم الهاتف',
@@ -1509,6 +1538,15 @@ export const TRANSLATIONS = {
         hour: 'ساعة',
         minute: 'دقيقة'
       }
+    },
+    statusBar: {
+      ready: 'جاهز',
+      online: 'متصل',
+      offline: 'غير متصل',
+      notifications: 'الإشعارات',
+      noNotifications: 'لا توجد إشعارات',
+      clearAll: 'مسح الكل',
+      version: 'v1.0.0'
     },
     inventory: {
       title: 'المخزون',

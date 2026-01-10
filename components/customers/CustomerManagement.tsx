@@ -11,6 +11,7 @@ import { COUNTRY_CODES } from '../../data/countryCodes';
 import { useLongPress } from '../../hooks/useLongPress';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
+import { useStatusBar } from '../../components/layout/StatusBar';
 
 interface CustomerManagementProps {
   customers: Customer[];
@@ -33,6 +34,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   language,
   darkMode
 }) => {
+  const { getVerifiedDate } = useStatusBar();
   const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -171,7 +173,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         status: 'active',
         points: 0,
         totalPurchases: 0,
-        lastVisit: new Date().toISOString(),
+        lastVisit: getVerifiedDate().toISOString(),
         preferredContact: 'phone',
         chronicConditions: []
       });
@@ -199,7 +201,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         status: 'active',
         points: 0,
         totalPurchases: 0,
-        lastVisit: new Date().toISOString(),
+        lastVisit: getVerifiedDate().toISOString(),
         preferredContact: 'phone',
         chronicConditions: []
       });
@@ -230,7 +232,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       handleCloseModal();
     } else {
       onAddCustomer({
-        id: Date.now().toString(),
+        id: getVerifiedDate().getTime().toString(),
         ...formData,
         serialId: formData.serialId || getNextSerialId()
       } as Customer);

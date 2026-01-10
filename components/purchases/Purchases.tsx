@@ -15,6 +15,7 @@ import { FloatingInput } from '../common/FloatingInput';
 import { checkExpiryStatus, sanitizeExpiryInput, formatExpiryDisplay, parseExpiryDisplay, getExpiryStatusStyle } from '../../utils/expiryUtils';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
+import { useStatusBar } from '../../components/layout/StatusBar';
 
 
 interface PurchasesProps {
@@ -28,6 +29,7 @@ interface PurchasesProps {
 }
 
 export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purchases, purchaseReturns, onPurchaseComplete, color, t }) => {
+  const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
@@ -814,8 +816,8 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     const uniqueOrderId = getUniqueOrderId();
     
     const purchase: Purchase = {
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
+      id: getVerifiedDate().getTime().toString(),
+      date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',
       items: cart,
@@ -879,8 +881,8 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
     const uniqueOrderId = getUniqueOrderId();
     
     const purchase: Purchase = {
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
+      id: getVerifiedDate().getTime().toString(),
+      date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',
       items: cart,

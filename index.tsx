@@ -7,9 +7,13 @@ if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
+import { StatusBarProvider } from './components/layout/StatusBar';
+
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <StatusBarProvider>
+      <App />
+    </StatusBarProvider>
   </React.StrictMode>
 );

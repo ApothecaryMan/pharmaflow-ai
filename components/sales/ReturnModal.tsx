@@ -3,6 +3,7 @@ import { Sale, Return, ReturnReason, ReturnItem, Shift } from '../../types';
 import { useSmartDirection } from '../common/SmartInputs';
 import { Modal } from '../common/Modal';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { useStatusBar } from '../../components/layout/StatusBar';
 
 interface ReturnModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   color,
   t 
 }) => {
+  const { getVerifiedDate } = useStatusBar();
   const [step, setStep] = useState(1);
   const [selectedItems, setSelectedItems] = useState<Map<string, number>>(new Map());
   const [returnReason, setReturnReason] = useState<ReturnReason>('customer_request');
@@ -187,9 +189,9 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
     });
 
     const returnData: Return = {
-      id: `ret_${Date.now()}`,
+      id: `ret_${getVerifiedDate().getTime()}`,
       saleId: sale.id,
-      date: new Date().toISOString(),
+      date: getVerifiedDate().toISOString(),
       returnType: isAllSelected ? 'full' : 'partial',
       items: returnItems,
       totalRefund: calculateRefund,

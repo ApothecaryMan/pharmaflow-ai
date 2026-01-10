@@ -40,6 +40,10 @@ interface NavbarProps {
   onNavigate?: (view: string) => void;
   developerMode?: boolean;
   setDeveloperMode?: (mode: boolean) => void;
+  // Employee linking
+  employees?: Array<{ id: string; name: string; employeeCode: string }>;
+  currentEmployeeId?: string | null;
+  setCurrentEmployeeId?: (id: string | null) => void;
 }
 
 const NavbarComponent: React.FC<NavbarProps> = ({
@@ -70,7 +74,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   currentView,
   onNavigate,
   developerMode = false,
-  setDeveloperMode
+  setDeveloperMode,
+  employees = [],
+  currentEmployeeId,
+  setCurrentEmployeeId
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showPrinterSettings, setShowPrinterSettings] = useState(false);
@@ -446,6 +453,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   />
                 </div>
               </div>
+
+
 
               {/* Settings */}
               <div className="p-4 space-y-4">

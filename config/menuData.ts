@@ -820,7 +820,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         items: [
           { label: "Employee List", view: "employee-list" },
           "Add Employee",
-          "Employee Profile",
+          { label: "Employee Profile", view: "employee-profile" },
           "Employee Documents",
           "Employee Contracts",
           "Department Management",

@@ -13,6 +13,7 @@ import { generateLabelHTML, LabelDesign, getLabelElementContent, generateTemplat
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useDebounce } from '../../hooks/useDebounce';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { useStatusBar } from '../layout/StatusBar';
 
 
 // Reusable Sidebar Section Component
@@ -89,6 +90,7 @@ interface SavedTemplate {
 }
 
 export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, t }) => {
+  const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -399,7 +401,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
   const saveNewTemplate = () => {
       if (!newTemplateName.trim()) return;
-      const newId = Date.now().toString();
+      const newId = getVerifiedDate().getTime().toString();
       const design = getDesignState();
       design.activeTemplateId = newId;
 
@@ -457,7 +459,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
 
   const addElement = (type: 'text' | 'image' | 'qrcode') => {
-      const id = `custom-${Date.now()}`;
+      const id = `custom-${getVerifiedDate().getTime()}`;
       const newEl: LabelElement = {
           id,
           type,
@@ -482,7 +484,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           const reader = new FileReader();
           reader.onload = (event) => {
               const result = event.target?.result as string;
-              const id = `img-${Date.now()}`;
+              const id = `img-${getVerifiedDate().getTime()}`;
               const newEl: LabelElement = {
                   id,
                   type: 'image',
@@ -659,7 +661,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     { separator: true },
     { label: t.inspector.duplicate, icon: 'content_copy', action: () => {
       saveToHistory();
-      const newEl = { ...el, id: Date.now().toString(), x: el.x + 2, y: el.y + 2 };
+      const newEl = { ...el, id: getVerifiedDate().getTime().toString(), x: el.x + 2, y: el.y + 2 };
       setElements(prev => [...prev, newEl]);
     }},
     { label: el.locked ? t.inspector.unlock : t.inspector.lock, icon: el.locked ? 'lock_open' : 'lock', action: () => {
