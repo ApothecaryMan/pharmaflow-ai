@@ -113,6 +113,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [activeAnchor, setActiveAnchor] = useState<HTMLElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -157,6 +158,26 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     }
   };
 
+  const handleMouseEnter = (moduleId: string, event: React.MouseEvent) => {
+    if (navStyle === 2 && typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+       if (closeTimeoutRef.current) {
+         clearTimeout(closeTimeoutRef.current);
+         closeTimeoutRef.current = null;
+       }
+       setActiveDropdown(moduleId);
+       setActiveAnchor(event.currentTarget as HTMLElement);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (navStyle === 2 && typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+       closeTimeoutRef.current = setTimeout(() => {
+         setActiveDropdown(null);
+         setActiveAnchor(null);
+       }, 200);
+    }
+  };
+
   const getInitials = (name: string) => {
     if (!name) return '';
     // Remove titles like Dr, Dr., Doctor, Phd, match Arabic titles too
@@ -165,6 +186,13 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     if (words.length === 0) return '';
     // Get first letter of every word, cap at 3 chars
     return words.map(word => word[0]).join('').toUpperCase().substring(0, 3);
+  };
+
+  const cancelClose = () => {
+    if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = null;
+    }
   };
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -211,8 +239,9 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 : !hasPage);
 
           return (
-            <div key={module.id} className="relative group/item">
+            <div key={module.id} className="relative group/item" onMouseLeave={handleMouseLeave}>
                 <button
+                onMouseEnter={(e) => handleMouseEnter(module.id, e)}
                 onClick={(e) => handleModuleClick(module.id, hasPage, e)}
                 disabled={isEffectivelyDisabled}
                 className={`main-nav-tab flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap relative type-interactive
@@ -277,6 +306,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         language={language}
                         hideInactiveModules={hideInactiveModules && !developerMode}
                         anchorEl={activeAnchor}
+                        onMouseEnter={cancelClose}
+                        onMouseLeave={handleMouseLeave}
                     />
                 )}
             </div>
@@ -294,11 +325,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
       {/* Right Side Actions (Desktop) */}
       <div className="hidden md:flex items-center gap-2 ltr:ml-4 rtl:mr-4">
-        {/* Notifications */}
-        <button className="w-10 h-10 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors relative">
-          <span className="material-symbols-rounded text-[22px]">notifications</span>
-          <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-gray-900"></div>
-        </button>
+
 
         {/* Settings Module (Relocated) */}
         {menuItems.find(m => m.id === 'settings') && (() => {
@@ -315,8 +342,9 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 : !hasPage);
 
             return (
-                <div className="relative group/settings">
+                <div className="relative group/settings" onMouseLeave={handleMouseLeave}>
                     <button
+                        onMouseEnter={(e) => handleMouseEnter(settingsModule.id, e)}
                         onClick={(e) => handleModuleClick(settingsModule.id, hasPage, e)}
                         disabled={isEffectivelyDisabled}
                         className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors relative
@@ -353,6 +381,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                             language={language}
                             hideInactiveModules={hideInactiveModules && !developerMode}
                             anchorEl={activeAnchor}
+                            onMouseEnter={cancelClose}
+                            onMouseLeave={handleMouseLeave}
                         />
                     )}
                 </div>

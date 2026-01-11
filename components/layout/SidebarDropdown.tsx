@@ -11,6 +11,8 @@ interface SidebarDropdownProps {
   hideInactiveModules?: boolean;
   anchorEl: HTMLElement | null;
   language: 'EN' | 'AR';
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
@@ -21,7 +23,9 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
   theme,
   language,
   hideInactiveModules,
-  anchorEl
+  anchorEl,
+  onMouseEnter,
+  onMouseLeave
 }) => {
   const [position, setPosition] = React.useState<{ top: number; left?: number; right?: number } | null>(null);
 
@@ -87,6 +91,8 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
         left: position.left,
         right: position.right
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       <div className="max-h-[60vh] overflow-y-auto py-2">
         {submenusToRender!.map((submenu, submenuIdx) => (
