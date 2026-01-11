@@ -4,6 +4,8 @@ import { useContextMenu } from '../../../common/ContextMenu';
 
 import { Employee } from '../../../../types';
 
+import { useSmartDirection } from '../../../common/SmartInputs';
+
 interface UserInfoProps {
   userName?: string;
   userRole?: string;
@@ -30,6 +32,9 @@ export const UserInfo: React.FC<UserInfoProps> = ({
   
   const containerRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Auto-detect direction
+  const dir = useSmartDirection(inputVal, language === 'AR' ? 'كلمة المرور...' : 'Password...');
 
   // Focus input on step change
   React.useEffect(() => {
@@ -135,7 +140,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({
       <StatusBarItem
         icon="person"
         label={userRole ? `${userName} (${userRole})` : userName}
-        tooltip={userRole}
+        tooltip={userRole || userName}
         variant="default"
       />
     );
@@ -163,6 +168,15 @@ export const UserInfo: React.FC<UserInfoProps> = ({
       ]);
   };
 
+  // Improved Tooltip Construction
+  let tooltipText = '';
+  if (currentEmployeeId) {
+      const roleText = userRole ? ` (${userRole})` : '';
+      tooltipText = `${userName}${roleText}`;
+  } else {
+      tooltipText = language === 'AR' ? 'تسجيل الدخول' : 'Login';
+  }
+
   return (
     <div className="relative flex items-center h-full" ref={containerRef}>
       {step === 'idle' ? (
@@ -170,15 +184,15 @@ export const UserInfo: React.FC<UserInfoProps> = ({
             <StatusBarItem
             icon="person"
             label={currentEmployeeId ? userName : (language === 'AR' ? 'تسجيل الدخول' : 'Login')} // Show "Login" if no user
-            tooltip={displayRole}
+            tooltip={tooltipText}
             onClick={handleStartLogin}
             variant={currentEmployeeId ? 'info' : 'warning'}
             className="min-w-[120px] cursor-pointer hover:bg-white/10"
             />
         </div>
       ) : (
-        <div className="flex items-center h-full px-2 bg-gray-900/50 border-l border-r border-gray-700/50 min-w-[150px]">
-           <span className={`material-symbols-rounded text-[16px] mr-2 ${isError ? 'text-red-500' : 'text-blue-400'}`}>
+        <div className="flex items-center h-full px-2 gap-2 bg-gray-900/50 border-l border-r border-gray-700/50 min-w-[150px]">
+           <span className={`material-symbols-rounded text-[16px] ${isError ? 'text-red-500' : 'text-blue-400'}`}>
               {step === 'username' ? 'badge' : 'lock'}
            </span>
            <input
@@ -189,6 +203,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({
                   setInputVal(e.target.value);
                   if (isError) setIsError(false);
               }}
+              dir={dir}
               onKeyDown={handleKeyDown}
               placeholder={
                   step === 'username' 

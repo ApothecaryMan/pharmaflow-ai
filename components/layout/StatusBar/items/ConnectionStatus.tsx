@@ -16,7 +16,6 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   return (
     <StatusBarItem
       icon={state.isOnline ? 'wifi' : 'wifi_off'}
-      label={state.isOnline ? onlineText : offlineText}
       variant={state.isOnline ? 'success' : 'error'}
       tooltip={state.isOnline ? onlineText : offlineText}
     />

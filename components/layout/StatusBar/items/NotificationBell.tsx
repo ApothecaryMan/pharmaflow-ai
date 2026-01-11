@@ -71,14 +71,14 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
         icon="notifications"
         badge={unreadCount > 0 ? unreadCount : undefined}
         tooltip={t.notifications}
-        variant={unreadCount > 0 ? 'info' : 'default'}
+        variant={isOpen || unreadCount > 0 ? 'info' : 'default'}
         onClick={handleToggle}
       />
 
       {/* Dropdown */}
       {isOpen && (
         <div 
-          className="absolute bottom-full right-0 mb-1 w-72 max-h-80 overflow-y-auto rounded-lg shadow-xl border"
+          className="absolute bottom-full right-0 mb-1 w-72 max-h-80 overflow-y-auto rounded-lg shadow-xl border z-50"
           style={{
             backgroundColor: 'var(--bg-primary)',
             borderColor: 'var(--border-primary)',

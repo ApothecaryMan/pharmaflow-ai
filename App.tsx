@@ -1364,6 +1364,22 @@ const App: React.FC = () => {
         employees={employees}
         currentEmployeeId={currentEmployeeId}
         onSelectEmployee={setCurrentEmployeeId}
+        // Settings Props
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        currentTheme={theme}
+        setTheme={setTheme}
+        availableThemes={THEMES}
+        setLanguage={setLanguage}
+        availableLanguages={LANGUAGES}
+        textTransform={textTransform}
+        setTextTransform={setTextTransform}
+        hideInactiveModules={hideInactiveModules}
+        setHideInactiveModules={setHideInactiveModules}
+        navStyle={navStyle}
+        setNavStyle={setNavStyle}
+        developerMode={developerMode}
+        setDeveloperMode={setDeveloperMode}
       />
 
        {/* Mobile Bottom Nav */}

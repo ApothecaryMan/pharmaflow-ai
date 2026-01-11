@@ -11,6 +11,8 @@ interface DateTimeProps {
   use24Hour?: boolean;
   /** Locale for formatting */
   locale?: string;
+  /** Whether to hide the icon */
+  hideIcon?: boolean;
 }
 
 /*
@@ -27,6 +29,7 @@ export const DateTime: React.FC<DateTimeProps> = ({
   showSeconds = false,
   use24Hour = false,
   locale = 'en-US',
+  hideIcon = false,
 }) => {
   const { getVerifiedDate, state } = useStatusBar();
   const [now, setNow] = useState(getVerifiedDate());
@@ -96,7 +99,7 @@ export const DateTime: React.FC<DateTimeProps> = ({
 
   return (
     <StatusBarItem
-      icon={getIcon()}
+      icon={hideIcon ? undefined : getIcon()}
       label={formatDate()}
       variant={getStatusColor()}
       tooltip={getTooltip()}

@@ -28,7 +28,7 @@ export const Switch: React.FC<SwitchProps> = ({
         height: '24px',
         minHeight: '24px'
       }}
-      className={`w-12 h-6 rounded-full relative transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-${theme}-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+      className={`w-12 h-6 rounded-full relative transition-colors duration-200 ease-in-out focus:outline-none ${
         checked 
           ? `bg-${theme}-600` 
           : 'bg-gray-200 dark:bg-gray-700'

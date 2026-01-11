@@ -403,18 +403,19 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         bgcolor: currentTheme.hex,
                         width: 32, 
                         height: 32,
-                        fontSize: '0.75rem',
-                        fontWeight: 'bold',
-                        color: 'white',
                         border: '1px solid rgba(255,255,255,0.2)'
                     }}
                 >
-                    {getInitials("Dr Mohamed Rezk")}
+                    <span className="material-symbols-rounded text-white text-[18px]">store</span>
                 </Avatar>
             )}
             <div className="hidden md:flex flex-col items-start">
-                <span className="text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5">Dr Mohamed Rezk</span>
-                <span className="text-[10px] text-gray-400 leading-none">{t.profile.role}</span>
+                <span className="text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5">
+                    {language === 'AR' ? 'فارما فلو' : 'PharmaFlow'}
+                </span>
+                <span className="text-[10px] text-gray-400 leading-none">
+                    {language === 'AR' ? 'الفرع الرئيسي' : 'Main Branch'}
+                </span>
             </div>
             <span className="hidden md:block material-symbols-rounded text-gray-400 text-[16px]">expand_more</span>
           </button>
@@ -434,13 +435,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                                 bgcolor: currentTheme.hex,
                                 width: 48, 
                                 height: 48,
-                                fontSize: '1.25rem',
-                                fontWeight: 'bold',
-                                color: 'white',
                                 border: '1px solid rgba(255,255,255,0.2)'
                             }}
                         >
-                            {getInitials("Dr Mohamed Rezk")}
+                            <span className="material-symbols-rounded text-white text-[24px]">store</span>
                         </Avatar>
                     )}
                     <button 
@@ -460,9 +458,13 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     </button>
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white">Dr Mohamed Rezk</h3>
+                    <h3 className="font-bold text-gray-900 dark:text-white">
+                        {language === 'AR' ? 'فارما فلو' : 'PharmaFlow'}
+                    </h3>
                     <div className="flex items-center gap-2">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{t.profile.role}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {language === 'AR' ? 'الفرع الرئيسي' : 'Main Branch'}
+                        </p>
                         {profileImage && (
                         <button 
                             onClick={() => setProfileImage(null)} 
@@ -486,123 +488,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
 
 
-              {/* Settings */}
-              <div className="p-4 space-y-4">
-                {/* Theme Selector */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase">{t.settings.theme}</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {availableThemes.map((t) => (
-                      <button
-                        key={t.name}
-                        onClick={() => setTheme(t)}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${currentTheme.name === t.name ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-600 scale-110' : ''}`}
-                        style={{ backgroundColor: t.hex }}
-                        title={t.name}
-                      >
-                        {currentTheme.name === t.name && (
-                          <span className="material-symbols-rounded text-white text-[16px] drop-shadow-md">check</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Dark Mode Toggle */}
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <span className="material-symbols-rounded text-gray-400">dark_mode</span>
-                    {t.settings.darkMode}
-                  </label>
-                  <Switch 
-                    checked={darkMode}
-                    onChange={setDarkMode}
-                    theme={theme}
-                  />
-                </div>
-
-                {/* Language Selector */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase">{t.settings.language}</label>
-                  <SegmentedControl
-                    value={language}
-                    onChange={(val) => setLanguage(val as Language)}
-                    color={currentTheme.name}
-                    size="xs"
-                    options={availableLanguages.map(lang => ({
-                      label: lang.label,
-                      value: lang.code
-                    }))}
-                  />
-                </div>
-
-                {/* Text Transform Toggle */}
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <span className="material-symbols-rounded text-gray-400">text_fields</span>
-                    {t.settings.textTransform}
-                  </label>
-                  <Switch 
-                    checked={textTransform === 'uppercase'}
-                    onChange={() => setTextTransform(textTransform === 'normal' ? 'uppercase' : 'normal')}
-                    theme={theme}
-                  />
-                </div>
-
-                {/* Hide Inactive Tabs Toggle (Renamed to Focus Mode) */}
-                {setHideInactiveModules && (
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <span className="material-symbols-rounded text-gray-400">filter_center_focus</span>
-                    {t.settings.focusMode}
-                  </label>
-                  <Switch 
-                    checked={hideInactiveModules}
-                    onChange={(val) => setHideInactiveModules && setHideInactiveModules(val)}
-                    theme={theme}
-                  />
-                </div>
-                )}
-
-                {/* Navbar/Sidebar Style Switch */}
-                {setNavStyle && (
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-400 uppercase">
-                      {t.settings.designStyle}
-                    </label>
-                    <SegmentedControl
-                      value={navStyle}
-                      onChange={(val) => setNavStyle && setNavStyle(val as 1 | 2 | 3)}
-                      color={currentTheme.name}
-                      size="xs"
-                      options={[
-                        { label: t.settings.designStyleFull, value: 1 },
-                        { label: t.settings.designStyleNavbar, value: 2 }
-                      ]}
-                    />
-                  </div>
-                )}
-
-                {/* Developer Mode Toggle */}
-                {setDeveloperMode && (
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <span className="material-symbols-rounded text-gray-400">science</span>
-                    {t.settings.developerMode}
-                  </label>
-                  <Switch 
-                    checked={developerMode}
-                    onChange={(newMode) => {
-                      setDeveloperMode(newMode);
-                      if (!newMode && activeModule === 'test') {
-                        onModuleChange('dashboard');
-                      }
-                    }}
-                    theme={theme}
-                  />
-                </div>
-                )}
-              </div>
+              {/* Settings have been moved to StatusBar Settings Menu */}
 
               {/* Printer Settings Button */}
               <div className="p-2 border-t border-gray-100 dark:border-gray-800">
