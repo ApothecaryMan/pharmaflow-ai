@@ -1,17 +1,16 @@
-import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
+import React, { useState, useMemo, memo, useEffect } from 'react';
 import { Employee, Sale, ThemeColor } from '../../types';
 import { getEmployeeSalesStats, getDateRange, getPreviousDateRange, DateRangeFilter } from '../../utils/employeeStats';
 import { StatCard } from '../experiments/AdvancedSmCard';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
 import { Modal } from '../common/Modal';
-import { SegmentedControl } from '../common/SegmentedControl';
+import { ExpandedChartModal } from '../experiments/ExpandedChartModal';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  Legend, AreaChart, Area, PieChart, Pie, Cell, Brush 
+  Legend, AreaChart, Area, PieChart, Pie, Cell 
 } from 'recharts';
 import { analyzeEmployeePerformance } from '../../services/geminiService';
 import { EmployeeSalesStats } from '../../utils/employeeStats';
-import { ExpandedChartModal } from '../experiments/ExpandedChartModal';
 
 // AI Performance Summary Sub-Component
 const AIPerformanceSummary: React.FC<{
@@ -242,6 +241,22 @@ const AIPerformanceSummary: React.FC<{
   );
 };
 
+// Custom Tooltip for Charts - Shows data on hover
+const CustomTooltipContent = memo(({ active, payload, label, color, unit }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
+        <p className="text-lg font-bold text-gray-900 dark:text-white" style={{ color }}>
+          {unit}{payload[0].value.toLocaleString()}
+        </p>
+      </div>
+    );
+  }
+  return null;
+});
+CustomTooltipContent.displayName = 'CustomTooltipContent';
+
 // Theme color mapping for Recharts (since CSS variables don't always resolve inside SVG defs)
 const THEME_COLOR_HEX: Record<string, string> = {
   blue: '#3b82f6',
@@ -282,6 +297,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
   const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
   const [dateFilterMode, setDateFilterMode] = useState<'today' | 'week' | 'month' | 'year' | 'all'>('month');
+  const [isExpandedChartOpen, setIsExpandedChartOpen] = useState(false);
 
   // Load employees if not passed (fallback)
   const allEmployees = useMemo(() => {
@@ -392,7 +408,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
 
         <div className="flex items-center gap-3">
              {/* Employee Selector */}
-             <div className="w-56 h-9 relative z-50">
+             <div className="w-56 h-9 relative z-10">
                 <ExpandingDropdown
                     className="absolute top-0 left-0 w-full text-sm"
                     minHeight="36px"
@@ -519,15 +535,24 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sales Chart */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
-                <span className="material-symbols-rounded text-blue-500">bar_chart</span>
-                {language === 'AR' ? 'تحليل المبيعات' : 'Sales Analytics'}
-            </h3>
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                    <span className="material-symbols-rounded text-blue-500">bar_chart</span>
+                    {language === 'AR' ? 'تحليل المبيعات' : 'Sales Analytics'}
+                </h3>
+                <button 
+                  onClick={() => setIsExpandedChartOpen(true)}
+                  className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95"
+                  title={language === 'AR' ? 'توسيع الرسم البياني' : 'Expand Chart'}
+                >
+                  <span className="material-symbols-rounded text-xl">open_in_full</span>
+                </button>
+            </div>
             <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
+                    <AreaChart data={chartData} margin={{ top: 20, right: 0, left: 0, bottom: 20 }}>
                         <defs>
-                            <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                            <linearGradient id="expandedGradient" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor={chartColor} stopOpacity={0.3}/>
                                 <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
                             </linearGradient>
@@ -536,14 +561,17 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                         <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: 'var(--text-secondary)', fontSize: 12}} />
                         <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--text-secondary)', fontSize: 12}} />
                         <Tooltip 
-                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}
+                            content={<CustomTooltipContent color={chartColor} unit={language === 'AR' ? 'ج.م ' : 'L.E '} />} 
+                            cursor={false}
                         />
                         <Area 
                             type="monotone" 
                             dataKey="sales" 
-                            stroke={chartColor} 
+                            stroke={chartColor}
+                            strokeWidth={2}
                             fillOpacity={1} 
-                            fill="url(#colorSales)" 
+                            fill="url(#expandedGradient)"
+                            animationDuration={500} 
                         />
                     </AreaChart>
                 </ResponsiveContainer>
@@ -585,6 +613,27 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
              />
         </div>
       </div>
+
+       {/* Expanded Chart Modal */}
+       <ExpandedChartModal
+         isOpen={isExpandedChartOpen}
+         onClose={() => setIsExpandedChartOpen(false)}
+         title={language === 'AR' ? 'تحليل المبيعات المفصل' : 'Detailed Sales Analytics'}
+         data={chartData.map(d => ({ ...d, value: d.sales }))}
+         color={chartColor}
+         unit={language === 'AR' ? ' ج.م' : ' L.E'}
+         language={language}
+         features={{
+            showStats: true,
+            showChartTypeToggle: true,
+            showLineStyleToggle: true,
+            showPeriodSelector: true,
+            showBrush: true,
+            showExportButtons: true,
+            showTableView: true,
+            showDateRange: true
+         }}
+       />
     </div>
   );
 };
