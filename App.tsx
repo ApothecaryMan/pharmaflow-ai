@@ -1263,7 +1263,7 @@ const App: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 h-full overflow-hidden relative rounded-tl-3xl rounded-tr-3xl border-t border-l border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 shadow-inner">
-        <div className={`h-full overflow-y-auto scrollbar-hide ${(view === 'pos' || view === 'purchases' || view === 'pos-test'|| view === 'purchases-test') ? 'w-full px-[30px] pt-px pb-[3px]' : 'max-w-[90rem] mx-auto px-px pt-px pb-[3px]'}`}>
+        <div className={`h-full overflow-y-auto scrollbar-hide ${(view === 'pos' || view === 'purchases' || view === 'pos-test'|| view === 'purchases-test') ? 'w-full px-[50px] pt-8 pb-[2px]' : 'max-w-[90rem] mx-auto px-[50px] pt-5 pb-[3px]'}`}>
           {/* Dynamic Page Rendering - Automatically handles all pages from registry */}
           {(() => {
             const pageConfig = PAGE_REGISTRY[view];

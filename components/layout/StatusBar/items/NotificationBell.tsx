@@ -133,7 +133,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                   </div>
                   <button
                     onClick={() => removeNotification(notification.id)}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className="text-gray-400 hover:text-black dark:hover:text-white transition-colors"
                   >
                     <span className="material-symbols-rounded text-[14px]">close</span>
                   </button>
