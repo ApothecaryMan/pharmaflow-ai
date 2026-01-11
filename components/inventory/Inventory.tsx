@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SmartDateInput, SmartInput } from '../common/SmartInputs';
 import { ExpandingDropdown, SegmentedControl } from '../common';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
-import { useColumnReorder } from '../../hooks/useColumnReorder';
-import { useLongPress } from '../../hooks/useLongPress';
 import { SearchInput } from '../common/SearchInput';
+import { TanStackTable } from '../common/TanStackTable';
+import { ColumnDef } from '@tanstack/react-table';
 import { Drug } from '../../types';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
@@ -49,25 +49,11 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     additionalBarcodes: [], dosageForm: '', activeIngredients: []
   });
 
-
-
-  // Use column reorder hook
-  const {
-    columnOrder,
-    hiddenColumns,
-    draggedColumn,
-    dragOverColumn,
-    toggleColumnVisibility,
-    handleColumnDragStart,
-    handleColumnDragOver,
-    handleColumnTouchMove,
-    handleColumnDrop,
-    handleColumnTouchEnd,
-    handleColumnDragEnd,
-  } = useColumnReorder({
-    defaultColumns: ['name', 'codes', 'category', 'stock', 'price', 'cost', 'expiry', 'actions'],
-    storageKey: 'inventory_columns'
-  });
+  // Dropdown States
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+  const [isAddDosageOpen, setIsAddDosageOpen] = useState(false);
+  const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
+  const [isEditDosageOpen, setIsEditDosageOpen] = useState(false);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -187,12 +173,6 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     });
   };
   
-  // Dropdown States
-  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
-  const [isAddDosageOpen, setIsAddDosageOpen] = useState(false);
-  const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
-  const [isEditDosageOpen, setIsEditDosageOpen] = useState(false);
-
   const generateInternalCode = () => {
     // Find highest existing 6-digit numeric code
     const existingCodes = inventory
@@ -228,105 +208,6 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     });
   }, [inventory, searchTerm]);
 
-  // Column definitions
-  const columns = {
-    name: { label: t.headers.name, className: 'p-4 text-start' },
-    codes: { label: t.headers.codes, className: 'p-4 text-start' },
-    category: { label: t.headers.category, className: 'p-4 text-start' },
-    stock: { label: t.headers.stock, className: 'p-4 text-start' },
-    price: { label: t.headers.price, className: 'p-4 text-start' },
-    cost: { label: t.headers.cost, className: 'p-4 text-start hidden lg:table-cell' },
-    expiry: { label: t.headers.expiry, className: 'p-4 text-start' },
-    actions: { label: t.headers.actions, className: 'p-4 text-end' }
-  };
-
-  const renderCellContent = (drug: Drug, columnId: string) => {
-    switch (columnId) {
-      case 'name':
-        return (
-          <>
-            <div className="font-medium text-gray-900 dark:text-gray-100 text-sm drug-name">
-              {drug.name} {drug.dosageForm ? <span className="text-gray-500 font-normal">({getLocalizedProductType(drug.dosageForm, currentLang)})</span> : ''}
-            </div>
-            <div className="text-xs text-gray-500 flex items-center gap-1">
-              <span>{drug.genericName}</span>
-              {/* {drug.class && <span className="opacity-50">•</span>}
-              {drug.class && <span className="opacity-70 italic">{drug.class}</span>} */}
-            </div>
-          </>
-        );
-      case 'codes':
-        return (
-          <>
-            {drug.barcode && <div className="text-gray-600 dark:text-gray-400 text-xs"><span className="opacity-50">BC:</span> {drug.barcode}</div>}
-            {drug.internalCode && <div className="text-gray-600 dark:text-gray-400 text-xs"><span className="opacity-50">INT:</span> {drug.internalCode}</div>}
-            {!drug.barcode && !drug.internalCode && <span className="text-gray-300">-</span>}
-          </>
-        );
-      case 'category':
-        return (
-          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${color}-50 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300`}>
-            {getLocalizedCategory(drug.category || 'General', currentLang)}
-          </span>
-        );
-      case 'stock':
-        return (
-          <div className={`font-medium text-sm ${drug.stock < (drug.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
-            {formatStock(drug.stock, drug.unitsPerPack)}
-          </div>
-        );
-      case 'price':
-        return <span className="text-gray-700 dark:text-gray-300 text-sm font-bold">${drug.price.toFixed(2)}</span>;
-      case 'cost':
-        return <span className="text-gray-500 text-xs hidden lg:table-cell">${drug.costPrice ? drug.costPrice.toFixed(2) : '-'}</span>;
-      case 'expiry':
-        // Show MM/YY instead of full date
-        const date = new Date(drug.expiryDate);
-        const formatted = date.toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' });
-        return <span className="text-gray-500 text-sm">{formatted}</span>;
-      case 'actions':
-        return (
-          <div className="relative">
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveMenuId(activeMenuId === drug.id ? null : drug.id);
-              }}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <span className="material-symbols-rounded text-[20px]">more_vert</span>
-            </button>
-            {activeMenuId === drug.id && (
-              <div 
-                ref={menuRef}
-                className="absolute right-8 top-10 z-20 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 py-1 rtl:right-auto rtl:left-8 text-start animate-fade-in"
-              >
-                <button onClick={() => handleOpenEdit(drug)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
-                  <span className="material-symbols-rounded text-lg text-gray-400">edit</span>
-                  {t.actionsMenu.edit}
-                </button>
-                <button onClick={() => handleViewDetails(drug.id)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
-                  <span className="material-symbols-rounded text-lg text-gray-400">visibility</span>
-                  {t.actionsMenu.view}
-                </button>
-                <button onClick={() => handlePrintBarcode(drug)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
-                  <span className="material-symbols-rounded text-lg text-gray-400">qr_code_2</span>
-                  {t.actionsMenu.printBarcode}
-                </button>
-                <div className="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
-                <button onClick={() => handleDelete(drug.id)} className="w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-3 transition-colors">
-                  <span className="material-symbols-rounded text-lg">delete</span>
-                  {t.actionsMenu.delete}
-                </button>
-              </div>
-            )}
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
   // Helper: Get row context menu actions
   const getRowActions = (drug: Drug) => [
     { label: t.actionsMenu.edit, icon: 'edit', action: () => handleOpenEdit(drug) },
@@ -340,39 +221,121 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     { label: t.actionsMenu.delete, icon: 'delete', action: () => handleDelete(drug.id), danger: true }
   ];
 
-  // Helper: Get header context menu actions
-  const getHeaderActions = () => [
-    { label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', icon: 'visibility', action: () => {} },
-    { separator: true },
-    ...Object.keys(columns).map(colId => ({
-      label: columns[colId as keyof typeof columns].label || 'Icon',
-      icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
-      action: () => toggleColumnVisibility(colId)
-    }))
-  ];
-
-  // Header context menu trigger
-  const { triggerProps: headerTriggerProps } = useContextMenuTrigger({
-    actions: getHeaderActions
-  });
-
-  // Row touch/long-press support
-  const currentTouchItem = useRef<Drug | null>(null);
-  
-  const { 
-    onTouchStart: onRowTouchStart, 
-    onTouchEnd: onRowTouchEnd, 
-    onTouchMove: onRowTouchMove
-  } = useLongPress({
-    onLongPress: (e) => {
-      if (currentTouchItem.current) {
-        const touch = e.touches[0];
-        showMenu(touch.clientX, touch.clientY, getRowActions(currentTouchItem.current));
-      }
+  const tableColumns = useMemo<ColumnDef<Drug>[]>(() => [
+    {
+      id: 'codes',
+      header: t.headers.codes,
+      cell: ({ row }) => {
+        const drug = row.original;
+        return (
+          <div className="flex flex-col gap-0.5">
+            {drug.barcode && <div className="text-gray-600 dark:text-gray-400 text-xs"><span className="opacity-50">BC:</span> {drug.barcode}</div>}
+            {drug.internalCode && <div className="text-gray-600 dark:text-gray-400 text-xs"><span className="opacity-50">INT:</span> {drug.internalCode}</div>}
+            {!drug.barcode && !drug.internalCode && <span className="text-gray-300">-</span>}
+          </div>
+        );
+      },
+      size: 150,
+    },
+    {
+      accessorKey: 'name',
+      header: t.headers.name,
+      cell: ({ row }) => {
+        const drug = row.original;
+        return (
+          <div className="flex flex-col">
+            <div className="font-medium text-gray-900 dark:text-gray-100 text-sm drug-name">
+              {drug.name} {drug.dosageForm ? <span className="text-gray-500 font-normal">({getLocalizedProductType(drug.dosageForm, currentLang)})</span> : ''}
+            </div>
+            <div className="text-xs text-gray-500 flex items-center gap-1">
+              <span>{drug.genericName}</span>
+            </div>
+          </div>
+        );
+      },
+      size: 250,
+    },
+    {
+      accessorKey: 'category',
+      header: t.headers.category,
+      cell: ({ row }) => (
+        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${color}-50 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300`}>
+          {getLocalizedCategory(row.original.category || 'General', currentLang)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'stock',
+      header: t.headers.stock,
+      cell: ({ row }) => (
+        <div className={`font-medium text-sm ${row.original.stock < (row.original.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
+          {formatStock(row.original.stock, row.original.unitsPerPack)}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'price',
+      header: t.headers.price,
+      cell: ({ row }) => <span className="text-gray-700 dark:text-gray-300 text-sm font-bold">${row.original.price.toFixed(2)}</span>,
+    },
+    {
+      accessorKey: 'costPrice',
+      header: t.headers.cost,
+      cell: ({ row }) => <span className="text-gray-500 text-xs">${row.original.costPrice ? row.original.costPrice.toFixed(2) : '-'}</span>,
+    },
+    {
+      accessorKey: 'expiryDate',
+      header: t.headers.expiry,
+      cell: ({ row }) => {
+        const date = new Date(row.original.expiryDate);
+        const formatted = date.toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' });
+        return <span className="text-gray-500 text-sm">{formatted}</span>;
+      },
+    },
+    {
+      id: 'actions',
+      header: t.headers.actions,
+      cell: ({ row }) => (
+        <div className="relative flex justify-end">
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveMenuId(activeMenuId === row.original.id ? null : row.original.id);
+              }}
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <span className="material-symbols-rounded text-[20px]">more_vert</span>
+            </button>
+            {activeMenuId === row.original.id && (
+              <div 
+                ref={menuRef}
+                className="absolute right-8 top-0 z-50 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 py-1 rtl:right-auto rtl:left-8 text-start animate-fade-in"
+                onClick={(e) => e.stopPropagation()} // Prevent row click
+              >
+                <button onClick={() => handleOpenEdit(row.original)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
+                  <span className="material-symbols-rounded text-lg text-gray-400">edit</span>
+                  {t.actionsMenu.edit}
+                </button>
+                <button onClick={() => handleViewDetails(row.original.id)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
+                  <span className="material-symbols-rounded text-lg text-gray-400">visibility</span>
+                  {t.actionsMenu.view}
+                </button>
+                <button onClick={() => handlePrintBarcode(row.original)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
+                  <span className="material-symbols-rounded text-lg text-gray-400">qr_code_2</span>
+                  {t.actionsMenu.printBarcode}
+                </button>
+                <div className="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
+                <button onClick={() => handleDelete(row.original.id)} className="w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-3 transition-colors">
+                  <span className="material-symbols-rounded text-lg">delete</span>
+                  {t.actionsMenu.delete}
+                </button>
+              </div>
+            )}
+          </div>
+      ),
     }
-  });
-
-
+  ], [activeMenuId, color, currentLang, t]);
 
   return (
     <div className="h-full flex flex-col space-y-4 animate-fade-in">
@@ -425,78 +388,20 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
       {/* Table Card */}
       <div className={`flex-1 ${CARD_BASE} rounded-3xl overflow-hidden flex flex-col`}>
-        <div className="overflow-x-auto flex-1 pb-20 lg:pb-0"> {/* Extra padding for dropdown visibility */}
-          <table className="w-full text-start border-collapse type-functional">
-            <thead className={`bg-${color}-50 dark:bg-gray-900 sticky top-0 z-10 shadow-sm`}>
-              <tr>
-              {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
-                  <th
-                    key={columnId}
-                    data-column-id={columnId}
-                    className={`${columns[columnId as keyof typeof columns].className} cursor-move select-none transition-all ${
-                      draggedColumn === columnId ? 'opacity-50' : ''
-                    } ${dragOverColumn === columnId ? `bg-${color}-100 dark:bg-${color}-900/50` : ''}`}
-                    draggable
-                    onDragStart={(e) => handleColumnDragStart(e, columnId)}
-                    onDragOver={(e) => handleColumnDragOver(e, columnId)}
-                    onDrop={(e) => handleColumnDrop(e, columnId)}
-                    onDragEnd={handleColumnDragEnd}
-                    onTouchStart={(e) => {
-                      e.stopPropagation();
-                      handleColumnDragStart(e, columnId);
-                    }}
-                    onTouchMove={(e) => {
-                        handleColumnTouchMove(e);
-                    }}
-                    onTouchEnd={(e) => {
-                        handleColumnTouchEnd(e);
-                    }}
-                    {...headerTriggerProps}
-                    title="Drag to reorder | Right-click for options"
-                  >
-                    {columns[columnId as keyof typeof columns].label}
-                  </th>
-                ))}              
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {filteredInventory.slice(0, 100).map((drug, index) => (
-                <tr
-                    key={drug.id}
-                    className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${
-                        drug.stock <= (drug.minStock || 0) ? 'bg-red-50/50 dark:bg-red-900/10' : (index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : '')
-                    }`}
-                    onContextMenu={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        showMenu(e.clientX, e.clientY, getRowActions(drug));
-                    }}
-                    onTouchStart={(e) => {
-                        currentTouchItem.current = drug;
-                        onRowTouchStart(e);
-                    }}
-                    onTouchEnd={onRowTouchEnd}
-                    onTouchMove={onRowTouchMove}
-                >
-                  {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
-                    <td key={columnId} className={columns[columnId as keyof typeof columns].className}>
-                      {renderCellContent(drug, columnId)}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-              {filteredInventory.length === 0 && (
-                <tr>
-                  <td colSpan={columnOrder.length - hiddenColumns.size} className="p-12 text-center text-gray-400">
-                    {t.noResults}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {/* We use enableTopToolbar={false} because we have our own search bar above */}
+        <TanStackTable 
+            data={filteredInventory} 
+            columns={tableColumns}
+            tableId="inventory_table"
+            color={color}
+            enableTopToolbar={false}
+            enableSearch={false}
+            onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
+            emptyMessage={t.noResults}
+        />
       </div>
       </>
+
       ) : (
         /* ADD PRODUCT FORM VIEW - COMPACT LAYOUT */
         <div className="flex-1 overflow-y-auto">
