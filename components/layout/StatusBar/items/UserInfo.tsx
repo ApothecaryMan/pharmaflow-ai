@@ -191,8 +191,8 @@ export const UserInfo: React.FC<UserInfoProps> = ({
             />
         </div>
       ) : (
-        <div className="flex items-center h-full px-2 gap-2 bg-gray-900/50 border-l border-r border-gray-700/50 min-w-[150px]">
-           <span className={`material-symbols-rounded text-[16px] ${isError ? 'text-red-500' : 'text-blue-400'}`}>
+        <div className="flex items-center h-full px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-l border-r border-gray-200/50 dark:border-gray-700/50 min-w-[150px]">
+           <span className={`material-symbols-rounded text-[16px] ${isError ? 'text-red-500' : 'text-blue-500 dark:text-blue-400'}`}>
               {step === 'username' ? 'badge' : 'lock'}
            </span>
            <input
@@ -210,7 +210,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({
                     ? (language === 'AR' ? 'اسم المستخدم...' : 'Username...') 
                     : (language === 'AR' ? 'كلمة المرور...' : 'Password...')
               }
-              className={`bg-transparent border-none outline-none text-[11px] font-bold text-white placeholder-gray-500 w-24 focus:ring-0 ${isError ? 'text-red-400' : ''}`}
+              className={`bg-transparent border-none outline-none text-[11px] font-bold text-gray-800 dark:text-white placeholder-gray-500 w-24 focus:ring-0 ${isError ? 'text-red-500 dark:text-red-400' : ''}`}
               autoComplete="off"
            />
            {step === 'username' && isError && (

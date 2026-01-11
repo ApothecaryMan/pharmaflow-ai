@@ -6,6 +6,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
+import { SegmentedControl } from '../common/SegmentedControl';
 import { useStatusBar } from '../../components/layout/StatusBar';
 
 interface CashRegisterProps {
@@ -29,6 +30,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
   const [isLoading, setIsLoading] = useState(true);
   const [showHelp, setShowHelp] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState('all');
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -75,6 +77,28 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
   const currentBalance = useMemo(() => {
     if (!currentShift) return 0;
     return currentShift.openingBalance + currentShift.cashSales + currentShift.cashIn - currentShift.cashOut - (currentShift.returns || 0);
+  }, [currentShift]);
+
+  // Filter Logic
+  const filteredTransactions = useMemo(() => {
+    if (!currentShift) return [];
+    return currentShift.transactions.filter(tx => {
+      if (filterType === 'all') return true;
+      if (filterType === 'sales') return tx.type === 'sale' || tx.type === 'card_sale';
+      if (filterType === 'returns') return tx.type === 'return';
+      if (filterType === 'operations') return ['in', 'out', 'opening', 'closing'].includes(tx.type);
+      return true;
+    });
+  }, [currentShift, filterType]);
+
+  const counts = useMemo(() => {
+    if (!currentShift) return { all: 0, sales: 0, returns: 0, operations: 0 };
+    return {
+      all: currentShift.transactions.length,
+      sales: currentShift.transactions.filter(tx => tx.type === 'sale' || tx.type === 'card_sale').length,
+      returns: currentShift.transactions.filter(tx => tx.type === 'return').length,
+      operations: currentShift.transactions.filter(tx => ['in', 'out', 'opening', 'closing'].includes(tx.type)).length
+    };
   }, [currentShift]);
 
   // Actions
@@ -141,11 +165,20 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       return;
     }
 
+    // CHECK AUTH
+    if (!currentEmployeeId) {
+        setValidationError(language === 'AR' ? 'يجب تسجيل الدخول لإغلاق المناوبة' : 'You must login to close a shift');
+        return;
+    }
+
+    const startUser = employees?.find(e => e.id === currentEmployeeId);
+    const userName = startUser ? startUser.name : 'Pharmacist';
+
     const closedShift: Shift = {
       ...currentShift,
       status: 'closed',
       closeTime: getVerifiedDate().toISOString(),
-      closedBy: 'Pharmacist',
+      closedBy: userName,
       closingBalance: amount,
       expectedBalance: currentBalance,
       notes: reasonInput,
@@ -156,7 +189,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
         type: 'closing',
         amount: amount,
         reason: 'End of shift',
-        userId: 'Pharmacist'
+        userId: userName
       }]
     };
 
@@ -293,7 +326,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
             </div>
             {currentShift && (
                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300">
-                  <p>{t.cashRegister.messages.started}: <span dir="ltr">{new Date(currentShift.openTime).toLocaleTimeString()}</span></p>
+                  <p>{t.cashRegister.messages.started}: <span dir="ltr" className="font-mono">
+                      {new Date(currentShift.openTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                      <span className="mx-1 text-gray-400">|</span>
+                      {new Date(currentShift.openTime).toLocaleDateString('en-GB')}
+                  </span></p>
                   <p>{t.cashRegister.messages.by}: {currentShift.openedBy}</p>
                   <p>{t.cashRegister.messages.id}: <span dir="ltr">#{currentShift.id.slice(-6)}</span></p>
                </div>
@@ -350,28 +387,39 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
         </div>
 
         {/* Right Column: Transaction Log */}
-        <div className="md:col-span-2 space-y-4">
-             <div className={`rounded-3xl ${CARD_BASE} h-[570px] flex flex-col`}>
-                <div className="p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+        <div className="md:col-span-2 flex flex-col md:h-0 md:min-h-full">
+             <div className={`rounded-3xl ${CARD_BASE} flex-1 flex flex-col h-full overflow-hidden`}>
+                <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0">
                    <h3 className="font-bold text-lg">{t.cashRegister.transactions.title}</h3>
-                   <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-500">
-                      {currentShift ? currentShift.transactions.length : 0} items
-                   </span>
+                   <SegmentedControl
+                      variant="onPage"
+                      size="xs"
+                      fullWidth={false}
+                      value={filterType}
+                      onChange={(val) => setFilterType(val as string)}
+                      options={[
+                        { label: t.cashRegister?.filters?.all || 'All', value: 'all', count: counts.all },
+                        { label: t.cashRegister?.filters?.sales || 'Sales', value: 'sales', count: counts.sales, activeColor: 'green' },
+                        { label: t.cashRegister?.filters?.returns || 'Returns', value: 'returns', count: counts.returns, activeColor: 'orange' },
+                        { label: t.cashRegister?.filters?.operations || 'Ops', value: 'operations', count: counts.operations, activeColor: 'blue' },
+                      ]}
+                   />
                 </div>
                 
-                <div className="flex-1 overflow-y-auto">
-                   {currentShift && currentShift.transactions.length > 0 ? (
+                <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+                   {currentShift && filteredTransactions.length > 0 ? (
                       <table className="w-full text-left border-collapse">
                          <thead className="sticky top-0 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm z-10">
                             <tr>
                                <th className={TABLE_HEADER_BASE}>{t.cashRegister.transactions.time}</th>
                                <th className={TABLE_HEADER_BASE}>{t.cashRegister.transactions.type}</th>
+                               <th className={TABLE_HEADER_BASE}>{t.cashRegister.transactions.user || 'User'}</th>
                                <th className={TABLE_HEADER_BASE}>{t.cashRegister.transactions.reason}</th>
                                <th className={`${TABLE_HEADER_BASE} text-end`}>{t.cashRegister.transactions.amount}</th>
                             </tr>
                          </thead>
                          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                            {currentShift.transactions.map((tx) => (
+                            {filteredTransactions.map((tx) => (
                                <tr key={tx.id} className={TABLE_ROW_BASE}>
                                   <td className="py-3 px-4 text-sm text-gray-500 font-mono" dir="ltr">
                                      {new Date(tx.time).toLocaleTimeString()}
@@ -387,6 +435,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                                         {t.cashRegister.types[tx.type]}
                                      </span>
                                   </td>
+                                  <td className="py-3 px-4 text-xs font-bold text-gray-500">
+                                     {tx.userId || '-'}
+                                  </td>
                                   <td className="py-3 px-4 text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate">
                                      {tx.reason || '-'}
                                   </td>
@@ -400,7 +451,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                          </tbody>
                       </table>
                    ) : (
-                      <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                      <div className="flex flex-col items-center justify-center h-full text-gray-400">
                          <span className="material-symbols-rounded text-4xl mb-2 opacity-50">receipt_long</span>
                          <p>{t.cashRegister.messages.noTransactions}</p>
                       </div>

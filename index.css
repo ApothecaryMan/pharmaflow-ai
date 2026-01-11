@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Define structural variables for Recharts/SVG usage */
+:root {
+  --border-color: #e5e7eb; /* gray-200 */
+  --text-secondary: #6b7280; /* gray-500 */
+}
+
+.dark {
+  --border-color: #374151; /* gray-700 */
+  --text-secondary: #9ca3af; /* gray-400 */
+}
+
 /* PWA Styles - iOS/iPad Safe Areas & Standalone Mode */
 @supports (padding: env(safe-area-inset-top)) {
   body {
@@ -38,6 +49,14 @@ body {
 }
 
 @layer utilities {
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.300') transparent;
+  }
+  .dark .custom-scrollbar {
+    scrollbar-color: theme('colors.gray.700') transparent;
+  }
+
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -54,6 +73,10 @@ body {
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400 dark:bg-gray-600;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-button {
+  display: none;
   }
 }
 

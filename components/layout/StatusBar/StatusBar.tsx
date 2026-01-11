@@ -17,6 +17,12 @@ export interface StatusBarTranslations {
   notifications?: string;
   noNotifications?: string;
   clearAll?: string;
+  dismiss?: string;
+  messages?: {
+    outOfStock?: string;
+    saleComplete?: string;
+    [key: string]: string | undefined;
+  };
 }
 
 import { Employee, ThemeColor, Language } from '../../../types';
@@ -56,6 +62,11 @@ const defaultTranslations: StatusBarTranslations = {
   notifications: 'Notifications',
   noNotifications: 'No notifications',
   clearAll: 'Clear all',
+  dismiss: 'Dismiss',
+  messages: {
+    outOfStock: 'Out of Stock: {{name}} {{form}}',
+    saleComplete: 'Sale completed: {{total}} L.E',
+  },
 };
 
 export const StatusBar: React.FC<StatusBarProps> = ({
@@ -185,10 +196,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
         {/* Notifications - Moved to end (Rightmost) */}
         <NotificationBell
+          language={language}
           t={{
             notifications: t.notifications || 'Notifications',
             noNotifications: t.noNotifications || 'No notifications',
             clearAll: t.clearAll || 'Clear all',
+            dismiss: t.dismiss || 'Dismiss',
+            messages: t.messages,
           }}
         />
       </div>

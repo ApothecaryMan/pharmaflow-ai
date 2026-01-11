@@ -63,7 +63,8 @@ export const TRANSLATIONS = {
         ok: 'OK',
         hour: 'Hour',
         minute: 'Minute'
-      }
+      },
+      currency: 'L.E'
     },
     statusBar: {
       ready: 'Ready',
@@ -72,7 +73,12 @@ export const TRANSLATIONS = {
       notifications: 'Notifications',
       noNotifications: 'No notifications',
       clearAll: 'Clear all',
-      version: 'v1.0.0'
+      dismiss: 'Dismiss',
+      version: 'v1.0.0',
+      messages: {
+        outOfStock: 'Out of Stock: {{name}} {{form}}',
+        saleComplete: 'Sale completed: {{total}} L.E'
+      }
     },
     inventory: {
       title: 'Inventory',
@@ -1547,7 +1553,8 @@ export const TRANSLATIONS = {
         ok: 'موافق',
         hour: 'ساعة',
         minute: 'دقيقة'
-      }
+      },
+      currency: 'ج.م'
     },
     statusBar: {
       ready: 'جاهز',
@@ -1556,7 +1563,12 @@ export const TRANSLATIONS = {
       notifications: 'الإشعارات',
       noNotifications: 'لا توجد إشعارات',
       clearAll: 'مسح الكل',
-      version: 'v1.0.0'
+      dismiss: 'تجاهل',
+      version: 'v1.0.0',
+      messages: {
+        outOfStock: 'نفذت الكمية: {{name}} {{form}}',
+        saleComplete: 'تمت عملية بيع: {{total}} ج.م'
+      }
     },
     inventory: {
       title: 'المخزون',

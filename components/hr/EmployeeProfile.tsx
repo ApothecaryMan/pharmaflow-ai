@@ -1,15 +1,17 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import { Employee, Sale, ThemeColor } from '../../types';
 import { getEmployeeSalesStats, getDateRange, getPreviousDateRange, DateRangeFilter } from '../../utils/employeeStats';
 import { StatCard } from '../experiments/AdvancedSmCard';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
 import { Modal } from '../common/Modal';
+import { SegmentedControl } from '../common/SegmentedControl';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  Legend, AreaChart, Area, PieChart, Pie, Cell 
+  Legend, AreaChart, Area, PieChart, Pie, Cell, Brush 
 } from 'recharts';
 import { analyzeEmployeePerformance } from '../../services/geminiService';
 import { EmployeeSalesStats } from '../../utils/employeeStats';
+import { ExpandedChartModal } from '../experiments/ExpandedChartModal';
 
 // AI Performance Summary Sub-Component
 const AIPerformanceSummary: React.FC<{
@@ -240,6 +242,26 @@ const AIPerformanceSummary: React.FC<{
   );
 };
 
+// Theme color mapping for Recharts (since CSS variables don't always resolve inside SVG defs)
+const THEME_COLOR_HEX: Record<string, string> = {
+  blue: '#3b82f6',
+  purple: '#a855f7',
+  green: '#22c55e',
+  orange: '#f97316',
+  red: '#ef4444',
+  pink: '#ec4899',
+  cyan: '#06b6d4',
+  teal: '#14b8a6',
+  indigo: '#6366f1',
+  violet: '#8b5cf6',
+  amber: '#f59e0b',
+  emerald: '#10b981',
+  rose: '#f43f5e',
+  fuchsia: '#d946ef',
+  sky: '#0ea5e9',
+  lime: '#84cc16'
+};
+
 interface EmployeeProfileProps {
   sales: Sale[];
   employees?: Employee[]; // Optional if we load from localStorage within component, but better passed as prop
@@ -279,6 +301,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   }, [allEmployees, selectedEmployeeId]);
 
   const selectedEmployee = allEmployees.find(e => e.id === selectedEmployeeId);
+  const chartColor = THEME_COLOR_HEX[color.name] || THEME_COLOR_HEX['blue'];
 
   // Date Filter Logic
   const dateRange = useMemo<DateRangeFilter | undefined>(() => {
@@ -433,6 +456,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                     icon="payments"
                     iconColor="blue"
                     graphToken="sales"
+                    currencyLabel={t.global?.currency || (language === 'AR' ? 'ج.م' : 'L.E')}
                  />
                 );
              })()}
@@ -451,6 +475,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                     icon="trending_up"
                     iconColor="emerald"
                     graphToken="profit"
+                    currencyLabel={t.global?.currency || (language === 'AR' ? 'ج.م' : 'L.E')}
                  />
                 );
              })()}
@@ -503,8 +528,8 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                     <AreaChart data={chartData}>
                         <defs>
                             <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor={`var(--color-${color.name}-500)`} stopOpacity={0.3}/>
-                                <stop offset="95%" stopColor={`var(--color-${color.name}-500)`} stopOpacity={0}/>
+                                <stop offset="5%" stopColor={chartColor} stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
                             </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
@@ -516,7 +541,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                         <Area 
                             type="monotone" 
                             dataKey="sales" 
-                            stroke={`var(--color-${color.name}-500)`} 
+                            stroke={chartColor} 
                             fillOpacity={1} 
                             fill="url(#colorSales)" 
                         />

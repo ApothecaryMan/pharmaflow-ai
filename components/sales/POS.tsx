@@ -235,6 +235,30 @@ export const POS: React.FC<POSProps> = ({
   const { playBeep, playError, playSuccess, playClick } = usePosSounds();
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
+  // Track previous stock levels to detect "Out of Stock" events
+  const prevStockRef = useRef<Map<string, number>>(new Map());
+
+  // Check for Out of Stock events
+  useEffect(() => {
+    inventory.forEach(drug => {
+      const prevStock = prevStockRef.current.get(drug.id);
+      
+      // If we had stock before (or it's the first run but we want to track it)
+      // Actually, only notify if we TRANSITION from > 0 to <= 0.
+      if (prevStock !== undefined && prevStock > 0 && drug.stock <= 0) {
+        addNotification({
+          messageKey: 'outOfStock',
+          messageParams: { name: drug.name, form: drug.dosageForm || '' },
+          type: 'out_of_stock'
+        });
+        playError(); // Use error sound for attention
+      }
+
+      // Update ref
+      prevStockRef.current.set(drug.id, drug.stock);
+    });
+  }, [inventory, addNotification, language, playError]);
+
   // Reset highlight when items change
   useEffect(() => {
     if (mergedCartItems.length > 0 && highlightedIndex === -1) {
@@ -800,9 +824,8 @@ export const POS: React.FC<POSProps> = ({
 
     // Notify StatusBar
     addNotification({
-      message: language === 'AR' 
-        ? `تمت عملية بيع ناجحة بقيمة ${cartTotal.toFixed(2)} ج.م` 
-        : `Sale completed successfully: ${cartTotal.toFixed(2)} L.E`,
+      messageKey: 'saleComplete',
+      messageParams: { total: cartTotal.toFixed(2) },
       type: 'success'
     });
 
@@ -1375,8 +1398,8 @@ export const POS: React.FC<POSProps> = ({
           
           if (info.getValue() <= 0) {
             return (
-              <span className="text-xs font-bold text-red-500">
-                {t.outOfStock}
+              <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-lg border border-red-200 dark:border-red-800">
+                {t.outOfStock || "Out of Stock"}
               </span>
             );
           }
@@ -1473,7 +1496,7 @@ export const POS: React.FC<POSProps> = ({
                             year: "2-digit",
                           })
                         : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
-                    : t.noStock}
+                    : <span className="inline-flex items-center px-2 py-0.5 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 rounded border border-red-100 dark:border-red-800/50">{t.noStock}</span>}
                 </div>
               </div>
             );
@@ -1509,7 +1532,7 @@ export const POS: React.FC<POSProps> = ({
                                 { month: "2-digit", year: "2-digit" }
                               )
                             : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
-                        : t.noStock}
+                        : <span className="text-red-500">{t.noStock}</span>}
                     </div>
                   );
                 }}

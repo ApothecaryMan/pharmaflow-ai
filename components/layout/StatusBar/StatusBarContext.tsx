@@ -4,8 +4,10 @@ import { timeService } from '../../../services/timeService';
 // Types
 export interface Notification {
   id: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  message?: string; // Legacy: direct message string
+  messageKey?: string; // Translation key (e.g., 'outOfStock')
+  messageParams?: Record<string, string>; // Params for interpolation (e.g., { name: 'Panadol' })
+  type: 'info' | 'success' | 'warning' | 'error' | 'out_of_stock';
   timestamp: Date;
   read?: boolean;
 }
@@ -42,6 +44,7 @@ export interface StatusBarContextType {
 }
 
 const LAST_TRANSACTION_KEY = 'pharmaflow_last_transaction';
+const NOTIFICATIONS_KEY = 'pharmaflow_notifications';
 
 const loadLastTransaction = (): number => {
   try {
@@ -49,6 +52,21 @@ const loadLastTransaction = (): number => {
     return stored ? parseInt(stored, 10) : 0;
   } catch {
     return 0;
+  }
+};
+
+const loadNotifications = (): Notification[] => {
+  try {
+    const stored = localStorage.getItem(NOTIFICATIONS_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    // Convert timestamp strings back to Date objects
+    return parsed.map((n: any) => ({
+      ...n,
+      timestamp: new Date(n.timestamp),
+    }));
+  } catch {
+    return [];
   }
 };
 
@@ -68,7 +86,7 @@ const loadLastTransaction = (): number => {
  *    - Keeps track of `lastTransactionTime` in localStorage.
  */
 const defaultState: StatusBarState = {
-  notifications: [],
+  notifications: loadNotifications(),
   announcement: null,
   isOnline: navigator.onLine,
   customItems: new Map(),
@@ -81,6 +99,15 @@ const StatusBarContext = createContext<StatusBarContextType | undefined>(undefin
 
 export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<StatusBarState>(defaultState);
+
+  // Persist notifications to localStorage
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(state.notifications));
+    } catch (e) {
+      console.warn('Failed to save notifications to localStorage:', e);
+    }
+  }, [state.notifications]);
 
   // Notification handlers
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {

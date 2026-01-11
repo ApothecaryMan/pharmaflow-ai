@@ -14,6 +14,7 @@ interface TimeResponse {
 }
 
 const TIME_PROVIDERS = [
+  '/.netlify/functions/time', // Our own Netlify Function (most reliable)
   'https://timeapi.io/api/Time/current/zone?timeZone=UTC',
   'https://worldtimeapi.org/api/timezone/Etc/UTC',
 ];

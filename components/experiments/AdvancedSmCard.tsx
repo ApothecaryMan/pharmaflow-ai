@@ -56,14 +56,17 @@ export interface StatCardProps {
   showTrend?: boolean; // Added to support EmployeeProfile usage
   graphToken?: string; // Added to support EmployeeProfile usage
   type?: string; 
+  currencyLabel?: string;
 }
 
-export const StatCard = ({ title, value, icon, iconColor, trend, trendValue, trendLabel, subValue }: StatCardProps) => (
+export const StatCard = ({ title, value, icon, iconColor, trend, trendValue, trendLabel, subValue, type, currencyLabel }: StatCardProps) => (
   <div className={`p-4 rounded-3xl ${CARD_BASE} ${CARD_HOVER} flex flex-col justify-between h-36`}>
     <div className="flex justify-between items-start">
       <div>
         <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">{title}</p>
-        <h4 className="text-2xl font-bold text-gray-900 dark:text-white">{value}</h4>
+        <h4 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          {value}{type === 'currency' && <span className="text-base font-medium text-gray-500 dark:text-gray-400 ms-1">{currencyLabel || 'L.E'}</span>}
+        </h4>
       </div>
       <div className={`w-12 h-12 flex items-center justify-center rounded-2xl bg-${iconColor}-100 dark:bg-${iconColor}-900/30 text-${iconColor}-600 dark:text-${iconColor}-400`}>
         <span className="material-symbols-rounded text-3xl">{icon}</span>

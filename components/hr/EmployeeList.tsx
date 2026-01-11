@@ -266,10 +266,10 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
              variant="onPage"
              size="sm"
              options={[
-               { label: `${t.employeeList.statusOptions.all} (${counts.all})`, value: 'all' },
-               { label: `${t.employeeList.statusOptions.active} (${counts.active})`, value: 'active', activeColor: 'green' },
-               { label: `${t.employeeList.statusOptions.inactive} (${counts.inactive})`, value: 'inactive', activeColor: 'gray' },
-               { label: `${t.employeeList.statusOptions.holiday} (${counts.holiday})`, value: 'holiday', activeColor: 'amber' },
+               { label: t.employeeList.statusOptions.all, count: counts.all, value: 'all' },
+               { label: t.employeeList.statusOptions.active, count: counts.active, value: 'active', activeColor: 'green' },
+               { label: t.employeeList.statusOptions.inactive, count: counts.inactive, value: 'inactive', activeColor: 'gray' },
+               { label: t.employeeList.statusOptions.holiday, count: counts.holiday, value: 'holiday', activeColor: 'amber' },
              ]}
            />
 

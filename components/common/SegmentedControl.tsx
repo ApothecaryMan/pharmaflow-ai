@@ -38,6 +38,7 @@ interface SegmentedControlOption<T> {
   value: T;
   icon?: string;
   activeColor?: string;
+  count?: number | string;
 }
 
 type SegmentedControlSize = 'xs' | 'sm' | 'md' | 'lg';
@@ -195,6 +196,17 @@ export function SegmentedControl<T extends string | number | boolean>({
               <span className={`material-symbols-rounded ${sizeClasses.icon}`}>{option.icon}</span>
             )}
             {option.label}
+            {option.count !== undefined && (
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] leading-none ${
+                isActive 
+                  ? isPill 
+                    ? 'bg-white/20 text-white' 
+                    : 'bg-white/50 text-gray-900 dark:bg-black/20 dark:text-white'
+                  : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+              }`}>
+                {option.count}
+              </span>
+            )}
           </button>
         );
       })}
