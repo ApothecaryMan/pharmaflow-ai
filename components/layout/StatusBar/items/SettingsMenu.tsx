@@ -27,6 +27,9 @@ export interface SettingsMenuProps {
   // Developer Mode
   developerMode?: boolean;
   setDeveloperMode?: (mode: boolean) => void;
+  // Dropdown Blur
+  dropdownBlur?: boolean;
+  setDropdownBlur?: (blur: boolean) => void;
 }
 
 export const SettingsMenu: React.FC<SettingsMenuProps> = ({
@@ -46,6 +49,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   setNavStyle,
   developerMode,
   setDeveloperMode,
+  dropdownBlur,
+  setDropdownBlur,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -62,6 +67,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     designStyleFull: language === 'AR' ? 'كامل' : 'Full',
     designStyleNavbar: language === 'AR' ? 'شريط' : 'Navbar',
     developerMode: language === 'AR' ? 'وضع المطور' : 'Developer Mode',
+    dropdownBlur: language === 'AR' ? 'خلفية ضبابية للقوائم' : 'Blur Dropdown Background',
   };
 
   // Close dropdown when clicking outside
@@ -94,12 +100,21 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
       {/* Dropdown */}
       {isOpen && (
         <div 
-          className="absolute bottom-full right-0 mb-1 w-72 rounded-lg shadow-xl border overflow-hidden z-50"
+          className="absolute bottom-full left-0 mb-1 w-72 rounded-lg shadow-xl border z-50 ml-1"
           style={{
             backgroundColor: 'var(--bg-primary)',
             borderColor: 'var(--border-primary)',
           }}
         >
+          {/* Arrow Indicator */}
+          <div 
+            className="absolute bottom-[-5px] left-3 w-2.5 h-2.5 rotate-45 border-b border-r z-50"
+            style={{
+              backgroundColor: 'var(--bg-primary)',
+              borderColor: 'var(--border-primary)',
+            }}
+          />
+
           {/* Header */}
           <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-primary)' }}>
             <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -215,6 +230,21 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 <Switch 
                   checked={developerMode || false}
                   onChange={(val) => setDeveloperMode(val)}
+                  theme={currentTheme.name.toLowerCase()}
+                />
+              </div>
+            )}
+
+            {/* Dropdown Blur Toggle */}
+            {setDropdownBlur && (
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
+                  <span className="material-symbols-rounded text-[14px]" style={{ color: 'var(--text-secondary)' }}>blur_on</span>
+                  {t.dropdownBlur}
+                </label>
+                <Switch 
+                  checked={dropdownBlur || false}
+                  onChange={(val) => setDropdownBlur(val)}
                   theme={currentTheme.name.toLowerCase()}
                 />
               </div>

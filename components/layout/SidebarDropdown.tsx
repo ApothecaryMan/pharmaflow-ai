@@ -11,6 +11,7 @@ interface SidebarDropdownProps {
   hideInactiveModules?: boolean;
   anchorEl: HTMLElement | null;
   language: 'EN' | 'AR';
+  blur?: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 }
@@ -24,6 +25,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
   language,
   hideInactiveModules,
   anchorEl,
+  blur = false,
   onMouseEnter,
   onMouseLeave
 }) => {
@@ -33,7 +35,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
     if (anchorEl) {
       const updatePosition = () => {
         const rect = anchorEl.getBoundingClientRect();
-        const top = rect.bottom; // No extra offset, stick to bottom of button
+        const top = rect.bottom + 9; // Add 9px offset to align with navbar border (6px gap + 4px extra)
         
         if (language === 'AR') {
            // RTL: Align right edge of dropdown with right edge of button (or window)
@@ -85,7 +87,11 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
 
   return (
     <div 
-      className="fixed mt-1 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[9999] animate-fade-in origin-top"
+      className={`fixed w-64 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[9999] animate-fade-in origin-top ${
+        blur 
+          ? 'backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30' 
+          : 'bg-white dark:bg-gray-800'
+      }`}
       style={{
         top: position.top,
         left: position.left,
@@ -107,6 +113,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                     {submenu.items.map((item, idx) => {
                         const itemLabel = typeof item === 'string' ? item : item.label;
                         const itemView = typeof item === 'object' && item.view ? item.view : null;
+                        const itemIcon = typeof item === 'object' && item.icon ? item.icon : null;
                         const isImplemented = !!itemView;
                         const isActive = itemView === currentView;
 
@@ -125,10 +132,17 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                                         ? 'opacity-50 cursor-not-allowed text-gray-400' 
                                         : isActive
                                             ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold`
-                                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-700'
                                 }`}
                             >
-                                <span>{getMenuTranslation(itemLabel, language)}</span>
+                                <div className="flex items-center gap-2.5">
+                                    {itemIcon && (
+                                        <span className={`material-symbols-rounded text-[18px] ${isActive ? '' : 'opacity-70 group-hover:opacity-100'}`}>
+                                            {itemIcon}
+                                        </span>
+                                    )}
+                                    <span>{getMenuTranslation(itemLabel, language)}</span>
+                                </div>
                                 {!isImplemented && (
                                     <span className="text-[10px] items-center px-1.5 py-0.5 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-400">
                                         Soon

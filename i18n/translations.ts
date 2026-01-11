@@ -40,6 +40,7 @@ export const TRANSLATIONS = {
       designStyleFull: 'Full',
       designStyleNavbar: 'Navbar',
       developerMode: 'Developer Mode',
+      dropdownBlur: 'Blur Dropdown Background',
       comingSoon: 'Coming Soon'
     },
 
@@ -1511,6 +1512,7 @@ export const TRANSLATIONS = {
       designStyleFull: 'كامل',
       designStyleNavbar: 'علوي',
       developerMode: 'وضع المطور',
+      dropdownBlur: 'خلفية ضبابية للقوائم',
       comingSoon: 'قريباً'
     },
 

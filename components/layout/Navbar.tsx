@@ -8,7 +8,7 @@ import { ThemeColor, Language } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { SidebarDropdown } from './SidebarDropdown';
 import { Switch } from '../common/Switch';
-import { DashboardIcon } from './DashboardIcon';
+
 import { PrinterSettings } from '../settings/PrinterSettings';
 
 interface NavbarProps {
@@ -40,6 +40,8 @@ interface NavbarProps {
   onNavigate?: (view: string) => void;
   developerMode?: boolean;
   setDeveloperMode?: (mode: boolean) => void;
+  dropdownBlur?: boolean;
+  setDropdownBlur?: (blur: boolean) => void;
   // Employee linking
   employees?: Array<{ id: string; name: string; employeeCode: string }>;
   currentEmployeeId?: string | null;
@@ -75,6 +77,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   onNavigate,
   developerMode = false,
   setDeveloperMode,
+  dropdownBlur = false,
+  setDropdownBlur,
   employees = [],
   currentEmployeeId,
   setCurrentEmployeeId
@@ -88,9 +92,46 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // 1. Check file size first (limit to 5MB initially to avoid browser crash on memory)
+      if (file.size > 5 * 1024 * 1024) {
+          alert('File is too large. Please select an image under 5MB.');
+          return;
+      }
+
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+             // 2. Resize Logic
+             const MAX_WIDTH = 300;
+             const MAX_HEIGHT = 300;
+             let width = img.width;
+             let height = img.height;
+
+             if (width > height) {
+                 if (width > MAX_WIDTH) {
+                     height *= MAX_WIDTH / width;
+                     width = MAX_WIDTH;
+                 }
+             } else {
+                 if (height > MAX_HEIGHT) {
+                     width *= MAX_HEIGHT / height;
+                     height = MAX_HEIGHT;
+                 }
+             }
+
+             const canvas = document.createElement('canvas');
+             canvas.width = width;
+             canvas.height = height;
+             const ctx = canvas.getContext('2d');
+             if (ctx) {
+                 ctx.drawImage(img, 0, 0, width, height);
+                 // 3. Compress to JPEG with 0.7 quality
+                 const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                 setProfileImage(dataUrl);
+             }
+        };
+        img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -203,7 +244,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
   return (
     <nav 
-      className="h-16 flex items-center px-4 sticky top-0 z-50"
+      className="h-12 flex items-center px-4 sticky top-0 z-50"
       style={{
         backgroundColor: 'var(--bg-primary)'
       }}
@@ -222,7 +263,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
       {/* Desktop: Horizontal Module Tabs */}
       <div 
-        className={`hidden md:flex items-center gap-1 flex-1 scrollbar-hide ${activeDropdown && navStyle === 2 ? 'overflow-hidden' : 'overflow-x-auto'}`} 
+        className={`hidden md:flex items-center gap-0.5 flex-1 scrollbar-hide ${activeDropdown && navStyle === 2 ? 'overflow-hidden' : 'overflow-x-auto'}`} 
         ref={dropdownRef}
         onWheel={handleWheel}
       >
@@ -244,7 +285,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 onMouseEnter={(e) => handleMouseEnter(module.id, e)}
                 onClick={(e) => handleModuleClick(module.id, hasPage, e)}
                 disabled={isEffectivelyDisabled}
-                className={`main-nav-tab flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap relative type-interactive
+                className={`main-nav-tab flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all duration-200 whitespace-nowrap relative type-interactive
                     ${isEffectivelyDisabled
                             ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
                             : isActive 
@@ -256,26 +297,17 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 `}
                 title={!hasPage && navStyle !== 2 ? t.settings.comingSoon : ''}
                 >
-            <span className={`transition-transform flex items-center justify-center ${(isActive || isDropdownOpen) && hasPage ? 'icon-filled scale-110' : hasPage ? 'group-hover/item:scale-105' : ''}`}>
-                {module.id === 'dashboard' ? (
-                  <DashboardIcon className="w-5 h-5" />
-                ) : (
-                  <span className="material-symbols-rounded text-[20px]">
+            <span className={`flex items-center justify-center ${(isActive || isDropdownOpen) && hasPage ? 'icon-filled' : ''}`}>
+                <span className={`material-symbols-rounded text-[20px] ${module.id === 'dashboard' ? 'text-[22px]' : ''}`}>
                     {module.icon}
-                  </span>
-                )}
+                </span>
             </span>
 
                 <span className="text-sm font-medium">
                     {getMenuTranslation(module.label, language)}
                 </span>
                 
-                {/* Chevron for Dropdown Style */}
-                {navStyle === 2 && module.submenus && module.submenus.length > 0 && (
-                     <span className={`material-symbols-rounded text-[16px] transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}>
-                        expand_more
-                     </span>
-                )}
+
 
                 {isActive && hasPage && navStyle !== 2 && (
                     <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-${theme}-600 rounded-full`}></div>
@@ -305,6 +337,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         theme={theme}
                         language={language}
                         hideInactiveModules={hideInactiveModules && !developerMode}
+                        blur={dropdownBlur}
                         anchorEl={activeAnchor}
                         onMouseEnter={cancelClose}
                         onMouseLeave={handleMouseLeave}
@@ -380,6 +413,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                             theme={theme}
                             language={language}
                             hideInactiveModules={hideInactiveModules && !developerMode}
+                            blur={dropdownBlur}
                             anchorEl={activeAnchor}
                             onMouseEnter={cancelClose}
                             onMouseLeave={handleMouseLeave}
@@ -451,7 +485,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         minWidth: '20px',
                         minHeight: '20px'
                       }}
-                      className="absolute bottom-0 right-0 w-5 h-5 bg-gray-800 text-white rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors shadow-sm"
+                      className="absolute bottom-0 right-0 w-5 h-5 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition-colors shadow-sm"
                       title="Change Photo"
                     >
                       <span className="material-symbols-rounded text-[12px]">edit</span>

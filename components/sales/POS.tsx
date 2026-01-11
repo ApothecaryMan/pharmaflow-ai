@@ -90,7 +90,7 @@ export const POS: React.FC<POSProps> = ({
   darkMode,
 }) => {
   const { showMenu } = useContextMenu();
-  const { getVerifiedDate } = useStatusBar();
+  const { getVerifiedDate, addNotification } = useStatusBar();
   const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
   const currentLang = isRTL ? 'ar' : 'en';
 
@@ -794,6 +794,18 @@ export const POS: React.FC<POSProps> = ({
       deliveryFee = 5;
     }
 
+    if (saleType === "delivery") {
+      deliveryFee = 5;
+    }
+
+    // Notify StatusBar
+    addNotification({
+      message: language === 'AR' 
+        ? `تمت عملية بيع ناجحة بقيمة ${cartTotal.toFixed(2)} ج.م` 
+        : `Sale completed successfully: ${cartTotal.toFixed(2)} L.E`,
+      type: 'success'
+    });
+
     onCompleteSale({
       items: cart,
       customerName: customerName || "Guest Customer",
@@ -1323,8 +1335,10 @@ export const POS: React.FC<POSProps> = ({
                 ""
               )}
             </span>
-            <span className="text-xs text-gray-500 truncate">
-              {info.row.original.genericName}
+            <span className="text-xs text-gray-500 whitespace-normal break-words">
+              {info.row.original.genericName && info.row.original.genericName.length > 35 
+                ? `${info.row.original.genericName.slice(0, 35)}...`
+                : info.row.original.genericName}
             </span>
           </div>
         ),
@@ -1458,7 +1472,7 @@ export const POS: React.FC<POSProps> = ({
                             month: "2-digit",
                             year: "2-digit",
                           })
-                        : "-") + ` â€¢ ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
+                        : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                     : t.noStock}
                 </div>
               </div>
@@ -1494,7 +1508,7 @@ export const POS: React.FC<POSProps> = ({
                                 "en-US",
                                 { month: "2-digit", year: "2-digit" }
                               )
-                            : "-") + ` â€¢ ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
+                            : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                         : t.noStock}
                     </div>
                   );
@@ -1508,7 +1522,7 @@ export const POS: React.FC<POSProps> = ({
                             month: "2-digit",
                             year: "2-digit",
                           })
-                        : "-") + ` â€¢ ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
+                        : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
                     </div>
                   );
                 }}

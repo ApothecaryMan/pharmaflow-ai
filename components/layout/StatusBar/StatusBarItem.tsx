@@ -77,7 +77,13 @@ export const StatusBarItem: React.FC<StatusBarItemProps> = ({
       {label && <span className="pt-[1px]">{label}</span>}
       {children}
       {badge !== undefined && badge !== 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full px-1">
+        <span 
+          className={`absolute top-0.5 right-1.5 flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full leading-none pt-[1px] ${
+            (typeof badge === 'number' && badge > 9) || (typeof badge === 'string' && badge.length > 1)
+              ? 'px-0.5 h-[10px] min-w-[10px]' 
+              : 'w-[10px] h-[10px] aspect-square'
+          }`}
+        >
           {typeof badge === 'number' && badge > 99 ? '99+' : badge}
         </span>
       )}

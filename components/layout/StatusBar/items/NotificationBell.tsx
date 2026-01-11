@@ -78,12 +78,21 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
       {/* Dropdown */}
       {isOpen && (
         <div 
-          className="absolute bottom-full right-0 mb-1 w-72 max-h-80 overflow-y-auto rounded-lg shadow-xl border z-50"
+          className="absolute bottom-full right-0 mb-1 w-72 rounded-lg shadow-xl border z-50"
           style={{
             backgroundColor: 'var(--bg-primary)',
             borderColor: 'var(--border-primary)',
           }}
         >
+          {/* Arrow Indicator */}
+          <div 
+            className="absolute bottom-[-5px] right-3 w-2.5 h-2.5 rotate-45 border-b border-r z-50"
+            style={{
+              backgroundColor: 'var(--bg-primary)',
+              borderColor: 'var(--border-primary)',
+            }}
+          />
+
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-primary)' }}>
             <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -100,7 +109,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
           </div>
 
           {/* Notifications List */}
-          <div className="divide-y" style={{ borderColor: 'var(--border-primary)' }}>
+          <div className="divide-y divide-gray-200/50 dark:divide-gray-700/50 max-h-80 overflow-y-auto rounded-b-lg">
             {state.notifications.length === 0 ? (
               <div className="px-3 py-4 text-center text-sm" style={{ color: 'var(--text-tertiary)' }}>
                 {t.noNotifications}
@@ -124,7 +133,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                   </div>
                   <button
                     onClick={() => removeNotification(notification.id)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-gray-400 hover:text-white transition-colors"
                   >
                     <span className="material-symbols-rounded text-[14px]">close</span>
                   </button>

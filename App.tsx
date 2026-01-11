@@ -298,6 +298,14 @@ const App: React.FC = () => {
     return 1;
   });
 
+  const [dropdownBlur, setDropdownBlur] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pharma_dropdownBlur');
+      return saved ? JSON.parse(saved) : false;
+    }
+    return false;
+  });
+
   // Apply theme system - updates CSS variables
   useTheme(theme.primary, darkMode);
 
@@ -323,6 +331,10 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('pharma_navStyle', navStyle.toString());
   }, [navStyle]);
+
+  useEffect(() => {
+    localStorage.setItem('pharma_dropdownBlur', JSON.stringify(dropdownBlur));
+  }, [dropdownBlur]);
 
   const [inventory, setInventory] = useState<Drug[]>(() => {
     if (typeof window !== 'undefined') {
@@ -444,7 +456,18 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (profileImage) {
-      localStorage.setItem('pharma_profileImage', profileImage);
+      try {
+        localStorage.setItem('pharma_profileImage', profileImage);
+      } catch (error) {
+        console.error('Failed to save profile image:', error);
+        // If quota exceeded, we can't do much but maybe warn if it's critical, 
+        // but since we are handling compression in Navbar now, this is just a safety net.
+        // We could verify if it's a QuotaExceededError but generic catch is safer for now.
+        if (typeof window !== 'undefined' && (error as any).name === 'QuotaExceededError') {
+             // alert('Storage is full. Image could not be saved.'); // Optional: Use toast instead if available context
+             console.warn('LocalStorage limit reached. Profile image not persisted.');
+        }
+      }
     } else {
       localStorage.removeItem('pharma_profileImage');
     }
@@ -1147,6 +1170,8 @@ const App: React.FC = () => {
         setNavStyle={setNavStyle}
         developerMode={developerMode}
         setDeveloperMode={setDeveloperMode}
+        dropdownBlur={dropdownBlur}
+        setDropdownBlur={setDropdownBlur}
         currentView={activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view}
         onNavigate={handleNavigate}
         employees={employees.map(e => ({ id: e.id, name: e.name, employeeCode: e.employeeCode }))}
@@ -1238,7 +1263,7 @@ const App: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 h-full overflow-hidden relative rounded-tl-3xl rounded-tr-3xl border-t border-l border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 shadow-inner">
-        <div className={`h-full overflow-y-auto scrollbar-hide ${(view === 'pos' || view === 'purchases' || view === 'pos-test'|| view === 'purchases-test') ? 'w-full px-[30px] py-4' : 'max-w-[90rem] mx-auto p-4 md:p-8'}`}>
+        <div className={`h-full overflow-y-auto scrollbar-hide ${(view === 'pos' || view === 'purchases' || view === 'pos-test'|| view === 'purchases-test') ? 'w-full px-[30px] pt-px pb-[3px]' : 'max-w-[90rem] mx-auto px-px pt-px pb-[3px]'}`}>
           {/* Dynamic Page Rendering - Automatically handles all pages from registry */}
           {(() => {
             const pageConfig = PAGE_REGISTRY[view];
@@ -1380,6 +1405,8 @@ const App: React.FC = () => {
         setNavStyle={setNavStyle}
         developerMode={developerMode}
         setDeveloperMode={setDeveloperMode}
+        dropdownBlur={dropdownBlur}
+        setDropdownBlur={setDropdownBlur}
       />
 
        {/* Mobile Bottom Nav */}

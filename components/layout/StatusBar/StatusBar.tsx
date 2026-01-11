@@ -44,6 +44,8 @@ export interface StatusBarProps {
   setNavStyle?: (style: 1 | 2 | 3) => void;
   developerMode?: boolean;
   setDeveloperMode?: (mode: boolean) => void;
+  dropdownBlur?: boolean;
+  setDropdownBlur?: (blur: boolean) => void;
 }
 
 const defaultTranslations: StatusBarTranslations = {
@@ -79,6 +81,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   setNavStyle,
   developerMode,
   setDeveloperMode,
+  dropdownBlur,
+  setDropdownBlur,
 }) => {
   /* 
    * STATUS BAR ARCHITECTURE GUIDE
@@ -113,6 +117,30 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       <div className="flex items-center h-full">
         {/* Version - Moved to start */}
         <VersionInfo version={t.version} />
+
+        {/* Settings - Moved here after Version Info */}
+        {currentTheme && setTheme && setDarkMode && setLanguage && setTextTransform && (
+          <SettingsMenu 
+            language={language}
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            currentTheme={currentTheme}
+            setTheme={setTheme}
+            availableThemes={availableThemes}
+            setLanguage={setLanguage}
+            availableLanguages={availableLanguages}
+            textTransform={textTransform}
+            setTextTransform={setTextTransform}
+            hideInactiveModules={hideInactiveModules}
+            setHideInactiveModules={setHideInactiveModules}
+            navStyle={navStyle}
+            setNavStyle={setNavStyle}
+            developerMode={developerMode}
+            setDeveloperMode={setDeveloperMode}
+            dropdownBlur={dropdownBlur}
+            setDropdownBlur={setDropdownBlur}
+          />
+        )}
 
         {/* Connection Status */}
         <ConnectionStatus
@@ -153,26 +181,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         />
 
         {/* Settings - Added as requested, distinct icon from Navbar */}
-        {currentTheme && setTheme && setDarkMode && setLanguage && setTextTransform && (
-          <SettingsMenu 
-            language={language}
-            darkMode={darkMode}
-            setDarkMode={setDarkMode}
-            currentTheme={currentTheme}
-            setTheme={setTheme}
-            availableThemes={availableThemes}
-            setLanguage={setLanguage}
-            availableLanguages={availableLanguages}
-            textTransform={textTransform}
-            setTextTransform={setTextTransform}
-            hideInactiveModules={hideInactiveModules}
-            setHideInactiveModules={setHideInactiveModules}
-            navStyle={navStyle}
-            setNavStyle={setNavStyle}
-            developerMode={developerMode}
-            setDeveloperMode={setDeveloperMode}
-          />
-        )}
+        {/* Settings - Moved to left section */}
 
         {/* Notifications - Moved to end (Rightmost) */}
         <NotificationBell
