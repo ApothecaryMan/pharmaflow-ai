@@ -193,6 +193,15 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
     });
   };
 
+  const getInitials = (name: string) => {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
+
   // --- Form Logic ---
   const handleSave = async () => {
     if (!formData.name || !formData.phone) {
@@ -359,7 +368,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                 />
               ) : (
                 <div className={`w-32 h-32 rounded-3xl bg-${color}-50 dark:bg-${color}-900/20 flex items-center justify-center text-${color}-600 dark:text-${color}-400 text-4xl font-bold border border-${color}-100 dark:border-${color}-900/30`}>
-                  {formData.name ? formData.name.charAt(0).toUpperCase() : '?'}
+                  {getInitials(formData.name || '')}
                 </div>
               )}
               <label 
@@ -906,7 +915,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                   />
                                 ) : (
                                   <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 text-xl font-bold`}>
-                                    {viewingEmployee.name.charAt(0).toUpperCase()}
+                                    {getInitials(viewingEmployee.name)}
                                   </div>
                                 )}
                                 <div>

@@ -167,7 +167,7 @@ export const Modal: React.FC<ModalProps> = ({
        
        {/* Modal Content Wrapper */}
        <div 
-         className={`relative w-full ${maxWidthClass} bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-in max-h-[95vh] ${className}`}
+         className={`relative w-full ${maxWidthClass} bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-in max-h-[95vh] dark:border dark:border-gray-700 ${className}`}
          onClick={e => e.stopPropagation()}
        >
          {title ? (
