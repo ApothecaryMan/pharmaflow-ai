@@ -1076,7 +1076,8 @@ export const PHARMACY_MENU: MenuItem[] = [
           { label: "Service Layer Test", view: "test-services", icon: "layers" },
           { label: "POS Test", view: "pos-test", icon: "point_of_sale" },
           { label: "Create PO (Test)", view: "purchases-test", icon: "add_shopping_cart" },
-          { label: "Theme Preview", view: "test-theme", icon: "palette" }
+          { label: "Theme Preview", view: "test-theme", icon: "palette" },
+          { label: "Modal Tests", view: "modal-tests", icon: "dialogs" }
         ]
       }
     ]

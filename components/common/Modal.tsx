@@ -1,5 +1,39 @@
 import React, { useEffect } from 'react';
+import { SegmentedControl, SegmentedControlOption } from './SegmentedControl';
 
+/**
+ * Modal Component Props
+ * 
+ * @example Basic Modal
+ * ```tsx
+ * <Modal
+ *   isOpen={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   title="My Modal"
+ *   subtitle="Optional subtitle"
+ *   icon="info"
+ * >
+ *   <p>Modal content here</p>
+ * </Modal>
+ * ```
+ * 
+ * @example Modal with Tabs (Multi-page Modal)
+ * ```tsx
+ * <Modal
+ *   isOpen={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   title="Settings"
+ *   tabs={[
+ *     { label: 'General', value: 'general', icon: 'settings' },
+ *     { label: 'Privacy', value: 'privacy', icon: 'lock' }
+ *   ]}
+ *   activeTab={currentTab}
+ *   onTabChange={setCurrentTab}
+ * >
+ *   {currentTab === 'general' ? <GeneralSettings /> : <PrivacySettings />}
+ * </Modal>
+ * ```
+ */
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,6 +52,37 @@ interface ModalProps {
   subtitle?: string;
   icon?: string;
   headerActions?: React.ReactNode;
+  
+  /**
+   * Tab options for multi-page modals.
+   * When provided with activeTab and onTabChange, renders a SegmentedControl
+   * in the modal header (centered between title and close button).
+   * 
+   * PLACEMENT: Tabs appear in the center of the modal header
+   * LAYOUT: [Title/Subtitle] --- [Tabs] --- [Header Actions + Close Button]
+   */
+  tabs?: SegmentedControlOption<any>[];
+  
+  /**
+   * Current active tab value.
+   * Required when using tabs. Should match one of the tab values.
+   */
+  activeTab?: any;
+  
+  /**
+   * Callback when tab is changed.
+   * Required when using tabs. Updates the activeTab state.
+   */
+  onTabChange?: (value: any) => void;
+
+  /**
+   * Whether to hide the close button in the header.
+   * Default: false
+   * 
+   * @recommendation When using tabs, set this to true and provide a cancel button
+   * at the bottom of the modal for better UX.
+   */
+  hideCloseButton?: boolean;
 }
 
 const SIZE_MAP = {
@@ -49,7 +114,11 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   subtitle,
   icon,
-  headerActions
+  headerActions,
+  tabs,
+  activeTab,
+  onTabChange,
+  hideCloseButton = false
 }) => {
   
   // Handle ESC key and Body Scroll Lock
@@ -104,7 +173,7 @@ export const Modal: React.FC<ModalProps> = ({
          {title ? (
            <div className="p-6 h-full flex flex-col overflow-hidden">
              {/* Standard Header */}
-             <div className="flex items-center justify-between mb-6 shrink-0">
+             <div className="flex items-center justify-between mb-6 shrink-0 gap-4">
                <div>
                  <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
                    {icon && <span className="material-symbols-rounded text-[24px]">{icon}</span>}
@@ -116,14 +185,31 @@ export const Modal: React.FC<ModalProps> = ({
                    </p>
                  )}
                </div>
+
+               {/* Tabs Section - Renders in the center of header when tabs are provided */}
+               {tabs && activeTab && onTabChange && (
+                 <div className="flex-1 flex justify-center max-w-md mx-4">
+                    <SegmentedControl
+                      options={tabs}
+                      value={activeTab}
+                      onChange={onTabChange}
+                      size="sm"
+                      variant="onCard"
+                    />
+                 </div>
+               )}
+
+               {/* Right Section - Header Actions + Close Button */}
                <div className="flex items-center gap-2">
                  {headerActions}
-                 <button
-                   onClick={onClose}
-                   className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                 >
-                   <span className="material-symbols-rounded">close</span>
-                 </button>
+                 {!hideCloseButton && (
+                   <button
+                     onClick={onClose}
+                     className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                   >
+                     <span className="material-symbols-rounded">close</span>
+                   </button>
+                 )}
                </div>
              </div>
              

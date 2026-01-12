@@ -299,4 +299,13 @@ export interface Employee {
   // --- Auth ---
   username?: string;       // Login Username
   password?: string;       // Login Password (hashed in real app, plain for now)
+  
+  // --- Profile ---
+  image?: string;          // Base64 encoded profile image
+  
+  // --- Documents ---
+  nationalIdCard?: string;      // Base64 encoded National ID Card (البطاقة الشخصية)
+  nationalIdCardBack?: string;  // Base64 encoded National ID Card Back Side
+  mainSyndicateCard?: string;   // Base64 encoded Main Syndicate Card (كارنية النقابة الرئيسية)
+  subSyndicateCard?: string;    // Base64 encoded Sub Syndicate Card (كارنية النقابة الفرعية)
 }

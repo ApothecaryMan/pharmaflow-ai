@@ -13,7 +13,7 @@ import { TanStackTable } from '../common/TanStackTable';
 import { SmartInput, SmartPhoneInput, SmartEmailInput } from '../common/SmartInputs';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { useExpandingDropdown } from '../../hooks/useExpandingDropdown';
+import { ExpandingDropdown } from '../common/ExpandingDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 
 interface EmployeeListProps {
@@ -34,6 +34,14 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
   
   // Form State
   const [formData, setFormData] = useState<Partial<Employee>>({});
+  
+  // Dropdown open states for ExpandingDropdown
+  const [isDepartmentOpen, setIsDepartmentOpen] = useState(false);
+  const [isRoleOpen, setIsRoleOpen] = useState(false);
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
+  
+  // Tab state for modal
+  const [activeTab, setActiveTab] = useState<'general' | 'credentials' | 'documents'>('general');
 
   // Sounds
   const { playSuccess, playError, playBeep } = usePosSounds();
@@ -245,6 +253,10 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
     setIsModalOpen(false);
     setEditingEmployee(null);
     setFormData({});
+    setIsDepartmentOpen(false);
+    setIsRoleOpen(false);
+    setIsStatusOpen(false);
+    setActiveTab('general');
   };
 
   // --- Render ---
@@ -311,153 +323,549 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
          />
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* Add/Edit Modal - Wide Layout with Tabs */}
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
         title={editingEmployee ? t.employeeList.editEmployee : t.employeeList.addEmployee}
         icon="badge"
+        size="4xl"
+        // Hide header close button when using tabs; ensure a cancel button exists in footer
+        hideCloseButton={true}
+        headerActions={
+          <SegmentedControl
+            options={[
+              { value: 'general', label: language === 'AR' ? 'معلومات عامة' : 'General', icon: 'person' },
+              { value: 'credentials', label: language === 'AR' ? 'بيانات الدخول' : 'Credentials', icon: 'lock' },
+              { value: 'documents', label: language === 'AR' ? 'المستندات' : 'Documents', icon: 'description' }
+            ]}
+            value={activeTab}
+            onChange={(value) => setActiveTab(value as 'general' | 'credentials' | 'documents')}
+            color={color}
+          />
+        }
       >
-        <div className="p-5 space-y-4">
-            <div className="grid grid-cols-1 gap-3">
-                <div className="space-y-1">
-                   <label className="text-xs font-medium text-gray-500 uppercase">{t.employeeList.name}</label>
-                   <SmartInput
-                      value={formData.name || ''}
-                      onChange={e => setFormData({...formData, name: e.target.value})}
-                      placeholder={t.employeeList.name}
-                      autoFocus
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                      required
-                   />
+        <div className="flex gap-8 p-1">
+          {/* Left Side - Image Upload (Fixed Width) */}
+          <div className="flex flex-col items-center gap-3 shrink-0 pt-2">
+            <div className="relative group">
+              {formData.image ? (
+                <img 
+                  src={formData.image} 
+                  alt="Employee" 
+                  className="w-32 h-32 rounded-3xl object-cover shadow-sm border border-gray-100 dark:border-gray-700"
+                />
+              ) : (
+                <div className={`w-32 h-32 rounded-3xl bg-${color}-50 dark:bg-${color}-900/20 flex items-center justify-center text-${color}-600 dark:text-${color}-400 text-4xl font-bold border border-${color}-100 dark:border-${color}-900/30`}>
+                  {formData.name ? formData.name.charAt(0).toUpperCase() : '?'}
                 </div>
+              )}
+              <label 
+                className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-[2px]"
+                title={language === 'AR' ? 'تغيير الصورة' : 'Change Image'}
+              >
+                <span className="material-symbols-rounded text-white text-3xl drop-shadow-md">photo_camera</span>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (file.size > 500 * 1024) {
+                        playError();
+                        alert(language === 'AR' ? 'حجم الصورة كبير جداً (الحد الأقصى 500KB)' : 'Image too large (max 500KB)');
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setFormData({ ...formData, image: reader.result as string });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </label>
+              {formData.image && (
+                <button 
+                  type="button"
+                  onClick={() => setFormData({ ...formData, image: undefined })}
+                  className="absolute -top-2 -right-2 w-7 h-7 bg-white dark:bg-gray-800 text-red-500 hover:text-red-600 rounded-full flex items-center justify-center shadow-md border border-gray-100 dark:border-gray-700 transition-transform active:scale-95"
+                  title={language === 'AR' ? 'إزالة الصورة' : 'Remove Image'}
+                >
+                  <span className="material-symbols-rounded text-[18px]">close</span>
+                </button>
+              )}
             </div>
+            <div className="text-center">
+                <p className="text-xs font-medium text-gray-500 mb-0.5">{language === 'AR' ? 'صورة شخصية' : 'Profile Photo'}</p>
+                <p className="text-[10px] text-gray-400">Max 500KB</p>
+            </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                   <label className="text-xs font-medium text-gray-500 uppercase">{t.employeeList.phone}</label>
-                   <SmartPhoneInput
-                      value={formData.phone || ''}
-                      onChange={val => setFormData({...formData, phone: val})}
-                      placeholder={t.employeeList.phone}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                   />
+          {/* Right Side - Form Fields */}
+          <div className="flex-1 space-y-6">
+
+            {/* Tab Content */}
+            {activeTab === 'general' ? (
+              <>
+                {/* Section 1: Basic Info */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+                        <span className={`material-symbols-rounded text-${color}-500 text-lg`}>person</span>
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">{t.employeeList.personalInfo || "Personal Info"}</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.name}</label>
+                            <SmartInput
+                            value={formData.name || ''}
+                            onChange={e => setFormData({...formData, name: e.target.value})}
+                            placeholder={t.employeeList.name}
+                            autoFocus
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                            required
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.position}</label>
+                            <SmartInput
+                            value={formData.position || ''}
+                            onChange={e => setFormData({...formData, position: e.target.value})}
+                            placeholder={t.employeeList.position}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.department}</label>
+                            <div className="relative h-[42px]">
+                            <ExpandingDropdown
+                                className="absolute top-0 left-0 w-full z-30"
+                                minHeight="42px"
+                                items={Object.entries(t.employeeList.departments).map(([key, label]) => ({ key, label: label as string }))}
+                                selectedItem={Object.entries(t.employeeList.departments).map(([key, label]) => ({ key, label: label as string })).find(d => d.key === (formData.department || 'pharmacy'))}
+                                isOpen={isDepartmentOpen}
+                                onToggle={() => { setIsDepartmentOpen(!isDepartmentOpen); setIsRoleOpen(false); setIsStatusOpen(false); }}
+                                onSelect={(item) => { setFormData({...formData, department: item.key as any}); setIsDepartmentOpen(false); }}
+                                renderItem={(item) => <span className="text-sm">{item.label}</span>}
+                                renderSelected={(item) => <span className="text-sm">{item?.label || t.employeeList.department}</span>}
+                                keyExtractor={(item) => item.key}
+                                variant="input"
+                                color={color}
+                            />
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.role}</label>
+                            <div className="relative h-[42px]">
+                            <ExpandingDropdown
+                                className="absolute top-0 left-0 w-full z-30"
+                                minHeight="42px"
+                                items={Object.entries(t.employeeList.roles).map(([key, label]) => ({ key, label: label as string }))}
+                                selectedItem={Object.entries(t.employeeList.roles).map(([key, label]) => ({ key, label: label as string })).find(r => r.key === (formData.role || 'pharmacist'))}
+                                isOpen={isRoleOpen}
+                                onToggle={() => { setIsRoleOpen(!isRoleOpen); setIsDepartmentOpen(false); setIsStatusOpen(false); }}
+                                onSelect={(item) => { setFormData({...formData, role: item.key as any}); setIsRoleOpen(false); }}
+                                renderItem={(item) => <span className="text-sm">{item.label}</span>}
+                                renderSelected={(item) => <span className="text-sm">{item?.label || t.employeeList.role}</span>}
+                                keyExtractor={(item) => item.key}
+                                variant="input"
+                                color={color}
+                            />
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.status}</label>
+                            <div className="relative h-[42px]">
+                            <ExpandingDropdown
+                                className="absolute top-0 left-0 w-full z-30"
+                                minHeight="42px"
+                                items={Object.entries(t.employeeList.statusOptions).filter(([key]) => key !== 'all').map(([key, label]) => ({ key, label: label as string }))}
+                                selectedItem={Object.entries(t.employeeList.statusOptions).map(([key, label]) => ({ key, label: label as string })).find(s => s.key === (formData.status || 'active'))}
+                                isOpen={isStatusOpen}
+                                onToggle={() => { setIsStatusOpen(!isStatusOpen); setIsDepartmentOpen(false); setIsRoleOpen(false); }}
+                                onSelect={(item) => { setFormData({...formData, status: item.key as any}); setIsStatusOpen(false); }}
+                                renderItem={(item) => <span className="text-sm">{item.label}</span>}
+                                renderSelected={(item) => <span className="text-sm">{item?.label || t.employeeList.status}</span>}
+                                keyExtractor={(item) => item.key}
+                                variant="input"
+                                color={color}
+                            />
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div className="space-y-1">
-                   <label className="text-xs font-medium text-gray-500 uppercase">{t.employeeList.email}</label>
-                   <SmartEmailInput
-                      value={formData.email || ''}
-                      onChange={val => setFormData({...formData, email: val})}
-                      placeholder={t.employeeList.email}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                   />
+
+                {/* Section 2: Contact Info */}
+                <div className="space-y-4 pt-2">
+                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+                        <span className={`material-symbols-rounded text-${color}-500 text-lg`}>contact_phone</span>
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">{t.employeeList.contactInfo || "Contact Info"}</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.phone}</label>
+                            <SmartPhoneInput
+                            value={formData.phone || ''}
+                            onChange={val => setFormData({...formData, phone: val})}
+                            placeholder={t.employeeList.phone}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.email}</label>
+                            <SmartEmailInput
+                            value={formData.email || ''}
+                            onChange={val => setFormData({...formData, email: val})}
+                            placeholder={t.employeeList.email}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                            />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-               <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-500 uppercase">{t.employeeList.department}</label>
-                  <select 
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 outline-none"
-                    value={formData.department || 'pharmacy'}
-                    onChange={e => setFormData({...formData, department: e.target.value as any})}
-                  >
-                     {Object.entries(t.employeeList.departments).map(([key, label]) => (
-                        <option key={key} value={key}>{label as string}</option>
-                     ))}
-                  </select>
-               </div>
-               
-               <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-500 uppercase">{t.employeeList.role}</label>
-                  <select 
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 outline-none"
-                    value={formData.role || 'pharmacist'}
-                    onChange={e => setFormData({...formData, role: e.target.value as any})}
-                  >
-                     {Object.entries(t.employeeList.roles).map(([key, label]) => (
-                        <option key={key} value={key}>{label as string}</option>
-                     ))}
-                  </select>
-               </div>
-            </div>
+                {/* Section 3: Additional */}
+                <div className="space-y-4 pt-2">
+                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+                        <span className={`material-symbols-rounded text-${color}-500 text-lg`}>more_horiz</span>
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">{t.employeeList.additionalInfo || "Additional"}</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.salary}</label>
+                            <SmartInput
+                            value={formData.salary || ''}
+                            onChange={e => setFormData({...formData, salary: Number(e.target.value)})}
+                            placeholder="0.00"
+                            type="number"
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.notes}</label>
+                            <SmartInput
+                            value={formData.notes || ''}
+                            onChange={e => setFormData({...formData, notes: e.target.value})}
+                            placeholder="..."
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                            />
+                        </div>
+                    </div>
+                </div>
+              </>
+            ) : activeTab === 'credentials' ? (
+              <>
+                {/* Credentials Tab */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+                        <span className={`material-symbols-rounded text-${color}-500 text-lg`}>lock</span>
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">{t.employeeList.credentials || "Login Credentials"}</h3>
+                    </div>
+                    
+                    <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30 rounded-xl p-4">
+                        <div className="flex items-start gap-3">
+                            <span className="material-symbols-rounded text-blue-600 dark:text-blue-400 text-xl mt-0.5">info</span>
+                            <div className="flex-1">
+                                <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                                    {language === 'AR' ? 'معلومات الدخول للنظام' : 'System Login Information'}
+                                </p>
+                                <p className="text-xs text-blue-700 dark:text-blue-300">
+                                    {language === 'AR' 
+                                        ? 'استخدم هذه البيانات للدخول إلى النظام. تأكد من استخدام كلمة مرور قوية.'
+                                        : 'Use these credentials to login to the system. Make sure to use a strong password.'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-               <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-500 uppercase">{t.employeeList.position}</label>
-                  <SmartInput
-                      value={formData.position || ''}
-                      onChange={e => setFormData({...formData, position: e.target.value})}
-                      placeholder={t.employeeList.position}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                   />
-               </div>
-               <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-500 uppercase">{t.employeeList.status}</label>
-                  <select 
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 outline-none"
-                    value={formData.status || 'active'}
-                    onChange={e => setFormData({...formData, status: e.target.value as any})}
-                  >
-                     {Object.entries(t.employeeList.statusOptions).map(([key, label]) => (
-                        <option key={key} value={key}>{label as string}</option>
-                     ))}
-                  </select>
-               </div>
-            </div>
+                    <div className="grid grid-cols-2 gap-4 pt-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.username || 'Username'}</label>
+                            <SmartInput
+                            value={formData.username || ''}
+                            onChange={e => setFormData({...formData, username: e.target.value})}
+                            placeholder={t.employeeList.usernamePlaceholder || "Login Username"}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.password || 'Password'}</label>
+                            <SmartInput
+                            value={formData.password || ''}
+                            onChange={e => setFormData({...formData, password: e.target.value})}
+                            placeholder={editingEmployee ? "Unchanged" : (t.employeeList.passwordPlaceholder || "Login Password")}
+                            type="password"
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                            />
+                        </div>
+                    </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-               <div className="space-y-1">
-                   <label className="text-xs font-medium text-gray-500 uppercase">{t.employeeList.username || 'Username'}</label>
-                   <SmartInput
-                      value={formData.username || ''}
-                      onChange={e => setFormData({...formData, username: e.target.value})}
-                      placeholder={t.employeeList.usernamePlaceholder || "Login Username"}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                   />
-               </div>
-               <div className="space-y-1">
-                   <label className="text-xs font-medium text-gray-500 uppercase">{t.employeeList.password || 'Password'}</label>
-                   <SmartInput
-                      value={formData.password || ''}
-                      onChange={e => setFormData({...formData, password: e.target.value})}
-                      placeholder={editingEmployee ? "Unchanged" : (t.employeeList.passwordPlaceholder || "Login Password")}
-                      type="password"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                   />
-               </div>
-            </div>
+                    {editingEmployee && (
+                        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3">
+                            <p className="text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                                <span className="material-symbols-rounded text-sm">warning</span>
+                                {language === 'AR' 
+                                    ? 'اترك حقل كلمة المرور فارغاً إذا كنت لا تريد تغييرها'
+                                    : 'Leave password field empty if you don\'t want to change it'}
+                            </p>
+                        </div>
+                    )}
+                </div>
+              </>
+            ) : activeTab === 'documents' ? (
+              <>
+                {/* Documents Tab */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+                        <span className={`material-symbols-rounded text-${color}-500 text-lg`}>description</span>
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">{language === 'AR' ? 'المستندات الرسمية' : 'Official Documents'}</h3>
+                    </div>
+                    
+                    <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30 rounded-xl p-4">
+                        <div className="flex items-start gap-3">
+                            <span className="material-symbols-rounded text-blue-600 dark:text-blue-400 text-xl mt-0.5">info</span>
+                            <div className="flex-1">
+                                <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                                    {language === 'AR' ? 'رفع المستندات المطلوبة' : 'Upload Required Documents'}
+                                </p>
+                                <p className="text-xs text-blue-700 dark:text-blue-300">
+                                    {language === 'AR' 
+                                        ? 'الحجم الأقصى للملف: 500 كيلوبايت | الصيغ المدعومة: JPG, PNG, PDF'
+                                        : 'Max file size: 500KB | Supported formats: JPG, PNG, PDF'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-               <div className="space-y-1">
-                   <label className="text-xs font-medium text-gray-500 uppercase">{t.employeeList.salary}</label>
-                   <SmartInput
-                      value={formData.salary || ''}
-                      onChange={e => setFormData({...formData, salary: Number(e.target.value)})}
-                      placeholder="0.00"
-                      type="number"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                   />
-               </div>
-               <div className="space-y-1">
-                   <label className="text-xs font-medium text-gray-500 uppercase">{t.employeeList.notes}</label>
-                   <SmartInput
-                      value={formData.notes || ''}
-                      onChange={e => setFormData({...formData, notes: e.target.value})}
-                      placeholder="..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                   />
-               </div>
-            </div>
-            
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
-               <button onClick={closeModal} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                  {t.employeeList.modal.cancel}
-               </button>
-               <button onClick={handleSave} className={`px-6 py-2 bg-${color}-500 hover:bg-${color}-600 text-white rounded-lg shadow-md transition-all active:scale-95`}>
-                  {t.employeeList.modal.save}
-               </button>
-            </div>
+                    <div className="space-y-6 pt-4">
+                        {/* National ID Card - Both Faces */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold text-gray-500 uppercase px-1 flex items-center gap-2">
+                                <span className="material-symbols-rounded text-sm">badge</span>
+                                {language === 'AR' ? 'البطاقة الشخصية' : 'National ID Card'}
+                            </label>
+                            <div className="flex items-center gap-4">
+                                {/* Front Face */}
+                                {formData.nationalIdCard ? (
+                                    <div className="relative group">
+                                        <img 
+                                            src={formData.nationalIdCard} 
+                                            alt="National ID Front" 
+                                            className="h-24 w-auto rounded-xl object-contain"
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, nationalIdCard: undefined })}
+                                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <span className="material-symbols-rounded text-[14px]">close</span>
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex-1">
+                                        <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer bg-gray-50 dark:bg-gray-800/50">
+                                            <span className="material-symbols-rounded text-gray-400">upload</span>
+                                            <span className="text-sm text-gray-600 dark:text-gray-300">{language === 'AR' ? 'اضغط لرفع الوجه الأمامي' : 'Upload Front'}</span>
+                                            <input 
+                                                type="file" 
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        if (file.size > 500 * 1024) {
+                                                            playError();
+                                                            alert(language === 'AR' ? 'حجم الملف كبير جداً (الحد الأقصى 500KB)' : 'File too large (max 500KB)');
+                                                            return;
+                                                        }
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            setFormData({ ...formData, nationalIdCard: reader.result as string });
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                    </div>
+                                )}
+                                
+                                {/* Plus Icon / Back Face */}
+                                {formData.nationalIdCard && (
+                                    <>
+                                        {formData.nationalIdCardBack ? (
+                                            <div className="relative group">
+                                                <img 
+                                                    src={formData.nationalIdCardBack} 
+                                                    alt="National ID Back" 
+                                                    className="h-24 w-auto rounded-xl object-contain"
+                                                />
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, nationalIdCardBack: undefined })}
+                                                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <span className="material-symbols-rounded text-[14px]">close</span>
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <label className={`flex items-center justify-center w-24 h-24 border-2 border-dashed border-${color}-300 dark:border-${color}-600 rounded-xl hover:border-${color}-400 dark:hover:border-${color}-500 transition-colors cursor-pointer bg-${color}-50/50 dark:bg-${color}-900/10`}>
+                                                <span className={`material-symbols-rounded text-${color}-500 text-2xl`}>add</span>
+                                                <input 
+                                                    type="file" 
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            if (file.size > 500 * 1024) {
+                                                                playError();
+                                                                alert(language === 'AR' ? 'حجم الملف كبير جداً (الحد الأقصى 500KB)' : 'File too large (max 500KB)');
+                                                                return;
+                                                            }
+                                                            const reader = new FileReader();
+                                                            reader.onloadend = () => {
+                                                                setFormData({ ...formData, nationalIdCardBack: reader.result as string });
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Syndicate Cards - Side by Side */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Main Syndicate Card */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-gray-500 uppercase px-1 flex items-center gap-2">
+                                    <span className="material-symbols-rounded text-sm">card_membership</span>
+                                    {language === 'AR' ? 'كارنية النقابة الرئيسية' : 'Main Syndicate Card'}
+                                </label>
+                                <div className="flex items-center gap-4">
+                                    {formData.mainSyndicateCard ? (
+                                        <div className="relative group">
+                                            <img 
+                                                src={formData.mainSyndicateCard} 
+                                                alt="Main Syndicate Card" 
+                                                className="h-24 w-auto rounded-xl object-contain"
+                                            />
+                                            <button 
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, mainSyndicateCard: undefined })}
+                                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <span className="material-symbols-rounded text-[14px]">close</span>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex-1">
+                                            <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer bg-gray-50 dark:bg-gray-800/50">
+                                                <span className="material-symbols-rounded text-gray-400">upload</span>
+                                                <span className="text-sm text-gray-600 dark:text-gray-300">{language === 'AR' ? 'رفع' : 'Upload'}</span>
+                                                <input 
+                                                    type="file" 
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            if (file.size > 500 * 1024) {
+                                                                playError();
+                                                                alert(language === 'AR' ? 'حجم الملف كبير جداً (الحد الأقصى 500KB)' : 'File too large (max 500KB)');
+                                                                return;
+                                                            }
+                                                            const reader = new FileReader();
+                                                            reader.onloadend = () => {
+                                                                setFormData({ ...formData, mainSyndicateCard: reader.result as string });
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Sub Syndicate Card */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-gray-500 uppercase px-1 flex items-center gap-2">
+                                    <span className="material-symbols-rounded text-sm">workspace_premium</span>
+                                    {language === 'AR' ? 'كارنية النقابة الفرعية' : 'Sub Syndicate Card'}
+                                </label>
+                                <div className="flex items-center gap-4">
+                                    {formData.subSyndicateCard ? (
+                                        <div className="relative group">
+                                            <img 
+                                                src={formData.subSyndicateCard} 
+                                                alt="Sub Syndicate Card" 
+                                                className="h-24 w-auto rounded-xl object-contain"
+                                            />
+                                            <button 
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, subSyndicateCard: undefined })}
+                                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <span className="material-symbols-rounded text-[14px]">close</span>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex-1">
+                                            <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer bg-gray-50 dark:bg-gray-800/50">
+                                                <span className="material-symbols-rounded text-gray-400">upload</span>
+                                                <span className="text-sm text-gray-600 dark:text-gray-300">{language === 'AR' ? 'رفع' : 'Upload'}</span>
+                                                <input 
+                                                    type="file" 
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            if (file.size > 500 * 1024) {
+                                                                playError();
+                                                                alert(language === 'AR' ? 'حجم الملف كبير جداً (الحد الأقصى 500KB)' : 'File too large (max 500KB)');
+                                                                return;
+                                                            }
+                                                            const reader = new FileReader();
+                                                            reader.onloadend = () => {
+                                                                setFormData({ ...formData, subSyndicateCard: reader.result as string });
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+              </>
+            ) : null}
+
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-gray-100 dark:border-gray-800">
+          <button onClick={closeModal} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors font-medium">
+            {t.employeeList.modal.cancel}
+          </button>
+          <button onClick={handleSave} className={`px-8 py-2.5 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all active:scale-95 font-bold`}>
+            {t.employeeList.modal.save}
+          </button>
         </div>
       </Modal>
 
@@ -472,9 +880,17 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
             {viewingEmployee && (
                 <>
                     <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 text-xl font-bold`}>
+                        {viewingEmployee.image ? (
+                          <img 
+                            src={viewingEmployee.image} 
+                            alt={viewingEmployee.name}
+                            className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+                          />
+                        ) : (
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 text-xl font-bold`}>
                             {viewingEmployee.name.charAt(0).toUpperCase()}
-                        </div>
+                          </div>
+                        )}
                         <div>
                             <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">{viewingEmployee.name}</h3>
                             <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">

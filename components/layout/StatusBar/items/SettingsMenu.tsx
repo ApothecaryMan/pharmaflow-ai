@@ -125,6 +125,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
           {/* Settings Content */}
           <div className="p-3 space-y-3 max-h-[600px] overflow-y-auto" style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}>
             
+            {/* --- Group 1: Appearance --- */}
             {/* Theme Selector */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>{t.theme}</label>
@@ -155,9 +156,49 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 checked={darkMode}
                 onChange={setDarkMode}
                 theme={currentTheme.name.toLowerCase()}
+                activeColor={currentTheme.hex}
               />
             </div>
 
+            {/* Dropdown Blur Toggle */}
+            {setDropdownBlur && (
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
+                  <span className="material-symbols-rounded text-[14px]" style={{ color: 'var(--text-secondary)' }}>blur_on</span>
+                  {t.dropdownBlur}
+                </label>
+                <Switch 
+                  checked={dropdownBlur || false}
+                  onChange={(val) => setDropdownBlur(val)}
+                  theme={currentTheme.name.toLowerCase()}
+                  activeColor={currentTheme.hex}
+                />
+              </div>
+            )}
+
+            {/* Nav Style Switch */}
+            {setNavStyle && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                  {t.designStyle}
+                </label>
+                <SegmentedControl
+                  value={navStyle || 1}
+                  onChange={(val) => setNavStyle(val as 1 | 2 | 3)}
+                  color={currentTheme.name.toLowerCase()}
+                  size="xs"
+                  options={[
+                    { label: t.designStyleFull, value: 1 },
+                    { label: t.designStyleNavbar, value: 2 }
+                  ]}
+                />
+              </div>
+            )}
+
+            {/* Separator */}
+            <div className="border-t border-gray-100 dark:border-gray-800 my-1 opacity-50" />
+
+            {/* --- Group 2: Language & Text --- */}
             {/* Language Selector */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>{t.language}</label>
@@ -183,9 +224,16 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 checked={textTransform === 'uppercase'}
                 onChange={() => setTextTransform(textTransform === 'normal' ? 'uppercase' : 'normal')}
                 theme={currentTheme.name.toLowerCase()}
+                activeColor={currentTheme.hex}
               />
             </div>
 
+            {/* Separator */}
+            {(setHideInactiveModules || setDeveloperMode) && (
+                <div className="border-t border-gray-100 dark:border-gray-800 my-1 opacity-50" />
+            )}
+
+            {/* --- Group 3: Workspace --- */}
             {/* Focus Mode Toggle */}
             {setHideInactiveModules && (
               <div className="flex items-center justify-between">
@@ -197,25 +245,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   checked={hideInactiveModules || false}
                   onChange={(val) => setHideInactiveModules(val)}
                   theme={currentTheme.name.toLowerCase()}
-                />
-              </div>
-            )}
-
-            {/* Nav Style Switch */}
-            {setNavStyle && (
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                  {t.designStyle}
-                </label>
-                <SegmentedControl
-                  value={navStyle || 1}
-                  onChange={(val) => setNavStyle(val as 1 | 2 | 3)}
-                  color={currentTheme.name.toLowerCase()}
-                  size="xs"
-                  options={[
-                    { label: t.designStyleFull, value: 1 },
-                    { label: t.designStyleNavbar, value: 2 }
-                  ]}
+                  activeColor={currentTheme.hex}
                 />
               </div>
             )}
@@ -231,21 +261,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   checked={developerMode || false}
                   onChange={(val) => setDeveloperMode(val)}
                   theme={currentTheme.name.toLowerCase()}
-                />
-              </div>
-            )}
-
-            {/* Dropdown Blur Toggle */}
-            {setDropdownBlur && (
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                  <span className="material-symbols-rounded text-[14px]" style={{ color: 'var(--text-secondary)' }}>blur_on</span>
-                  {t.dropdownBlur}
-                </label>
-                <Switch 
-                  checked={dropdownBlur || false}
-                  onChange={(val) => setDropdownBlur(val)}
-                  theme={currentTheme.name.toLowerCase()}
+                  activeColor={currentTheme.hex}
                 />
               </div>
             )}

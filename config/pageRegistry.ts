@@ -24,6 +24,7 @@ import { POSTest } from '../components/test/POSTest';
 import { PurchasesTest } from '../components/test/PurchasesTest';
 import { DashboardExperiments } from '../components/experiments/DashboardExperiments';
 import { AdvancedSmCard } from '../components/experiments/AdvancedSmCard';
+import { ModalTests } from '../components/test/ModalTests';
 import { EmployeeList } from '../components/hr/EmployeeList';
 import { EmployeeProfile } from '../components/hr/EmployeeProfile';
 
@@ -270,6 +271,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabel: 'Advanced Sm Card',
     menuLabelAr: 'بطاقات صغيرة متطورة',
     icon: 'dashboard_customize',
+    category: 'test',
+    requiredProps: ['color', 't', 'language']
+  },
+  'modal-tests': {
+    id: 'modal-tests',
+    component: ModalTests,
+    menuLabel: 'Modal Tests',
+    menuLabelAr: 'اختبار النوافذ',
+    icon: 'dialogs',
     category: 'test',
     requiredProps: ['color', 't', 'language']
   },

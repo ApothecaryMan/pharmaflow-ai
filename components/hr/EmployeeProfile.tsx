@@ -395,14 +395,38 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                     ? `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`
                     : selectedEmployee.name.slice(0, 2);
                 return (
-                    <div className={`w-16 h-16 rounded-full bg-${color.name}-100 dark:bg-${color.name}-900/30 flex items-center justify-center text-${color.name}-600 dark:text-${color.name}-400 text-xl font-bold uppercase ring-4 ring-${color.name}-200/50 dark:ring-${color.name}-800/30`}>
-                        {initials}
+                    <div className="relative">
+                        {selectedEmployee.image ? (
+                          <img 
+                            src={selectedEmployee.image} 
+                            alt={selectedEmployee.name}
+                            className={`w-16 h-16 rounded-2xl object-cover shadow-sm border border-${color.name}-200 dark:border-${color.name}-700/50`}
+                          />
+                        ) : (
+                          <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br from-${color.name}-100 to-${color.name}-50 dark:from-${color.name}-900/40 dark:to-${color.name}-800/20 flex items-center justify-center text-${color.name}-600 dark:text-${color.name}-400 text-xl font-bold uppercase shadow-sm border border-${color.name}-200 dark:border-${color.name}-700/50`}>
+                            {initials}
+                          </div>
+                        )}
+                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center`}>
+                           <div className={`w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-gray-800`}></div>
+                        </div>
                     </div>
                 );
             })()}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedEmployee.name}</h1>
-                <p className="text-gray-500 dark:text-gray-400">{selectedEmployee.role} • {selectedEmployee.employeeCode}</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-none mb-1.5">
+                    {selectedEmployee.name}
+                </h1>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <div className={`px-2.5 py-0.5 rounded-lg bg-${color.name}-50 dark:bg-${color.name}-900/20 text-${color.name}-700 dark:text-${color.name}-300 text-xs font-semibold border border-${color.name}-100 dark:border-${color.name}-700/30 flex items-center gap-1`}>
+                        <span className="material-symbols-rounded text-[14px]">badge</span>
+                        {selectedEmployee.role}
+                    </div>
+                    <div className="px-2 py-0.5 rounded-lg bg-gray-50 dark:bg-gray-700/30 text-gray-500 dark:text-gray-400 text-xs font-medium border border-gray-100 dark:border-gray-600/30 flex items-center gap-1 font-mono">
+                        <span className="opacity-50">#</span>
+                        {selectedEmployee.employeeCode}
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -578,28 +602,84 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
             </div>
         </div>
 
-        {/* Top Product & Insights */}
+        {/* Achievements & Insights */}
         <div className="space-y-6">
-             {/* Most Sold Product */}
+             {/* Best Achievements Card */}
              <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                     <span className="material-symbols-rounded text-yellow-500">trophy</span>
-                    {language === 'AR' ? 'المنتج الأكثر مبيعاً' : 'Top Performing Product'}
+                    {language === 'AR' ? 'الأفضل' : 'Best Achievements'}
                 </h3>
-                {stats?.mostSoldProduct ? (
-                    <div className="flex flex-col items-center text-center p-4 bg-yellow-50 dark:bg-yellow-900/10 rounded-xl border border-yellow-100 dark:border-yellow-900/30">
-                        <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm mb-3 text-3xl">
-                             💊
-                        </div>
-                        <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-1">{stats.mostSoldProduct.name}</h4>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">{stats.mostSoldProduct.id}</p>
-                        <div className="badge bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-3 py-1 rounded-full text-sm font-semibold">
-                            {stats.mostSoldProduct.quantity} {language === 'AR' ? 'قطعة مباعة' : 'Units Sold'}
-                        </div>
+                
+                <div className="space-y-4">
+                  {/* Most Sold Product */}
+                  <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-gray-700/20 rounded-xl border border-amber-100 dark:border-gray-600/30">
+                    <div className="w-10 h-10 bg-amber-100 dark:bg-gray-600/30 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="material-symbols-rounded text-amber-600 dark:text-amber-400">local_fire_department</span>
                     </div>
-                ) : (
-                    <p className="text-gray-500 text-center py-8">{language === 'AR' ? 'لا توجد بيانات' : 'No data available'}</p>
-                )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mb-0.5">
+                        {language === 'AR' ? 'الأكثر مبيعاً' : 'Most Sold Product'}
+                      </p>
+                      {stats?.mostSoldProduct ? (
+                        <>
+                          <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{stats.mostSoldProduct.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {stats.mostSoldProduct.quantity} {language === 'AR' ? 'قطعة' : 'units'}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-gray-400 text-sm">{language === 'AR' ? 'لا توجد بيانات' : 'No data'}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Highest Invoice */}
+                  <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-gray-700/20 rounded-xl border border-emerald-100 dark:border-gray-600/30">
+                    <div className="w-10 h-10 bg-emerald-100 dark:bg-gray-600/30 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="material-symbols-rounded text-emerald-600 dark:text-emerald-400">receipt_long</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mb-0.5">
+                        {language === 'AR' ? 'أغلى فاتورة' : 'Highest Invoice'}
+                      </p>
+                      {stats?.highestInvoice ? (
+                        <>
+                          <p className="font-bold text-gray-900 dark:text-white text-sm">
+                            {Math.round(stats.highestInvoice.total).toLocaleString()} {t.global?.currency || (language === 'AR' ? 'ج.م' : 'L.E')}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            #{stats.highestInvoice.id.slice(-6)}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-gray-400 text-sm">{language === 'AR' ? 'لا توجد بيانات' : 'No data'}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Highest Priced Item Sold */}
+                  <div className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-gray-700/20 rounded-xl border border-purple-100 dark:border-gray-600/30">
+                    <div className="w-10 h-10 bg-purple-100 dark:bg-gray-600/30 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="material-symbols-rounded text-purple-600 dark:text-purple-400">diamond</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-purple-600 dark:text-purple-400 font-medium mb-0.5">
+                        {language === 'AR' ? 'أغلى صنف اتباع' : 'Highest Priced Item'}
+                      </p>
+                      {stats?.highestPricedItemSold ? (
+                        <>
+                          <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{stats.highestPricedItemSold.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {Math.round(stats.highestPricedItemSold.price).toLocaleString()} {t.global?.currency || (language === 'AR' ? 'ج.م' : 'L.E')}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-gray-400 text-sm">{language === 'AR' ? 'لا توجد بيانات' : 'No data'}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
              </div>
              
              {/* AI Performance Summary */}

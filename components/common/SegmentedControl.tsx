@@ -33,7 +33,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 
-interface SegmentedControlOption<T> {
+export interface SegmentedControlOption<T> {
   label: string;
   value: T;
   icon?: string;

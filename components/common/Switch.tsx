@@ -6,6 +6,7 @@ interface SwitchProps {
   className?: string;
   theme?: string;
   disabled?: boolean;
+  activeColor?: string; // Hex color for checked state (bypasses tailwind safelist issues)
 }
 
 export const Switch: React.FC<SwitchProps> = ({ 
@@ -13,7 +14,8 @@ export const Switch: React.FC<SwitchProps> = ({
   onChange, 
   className = '', 
   theme = 'emerald',
-  disabled = false
+  disabled = false,
+  activeColor
 }) => {
   return (
     <button
@@ -26,11 +28,12 @@ export const Switch: React.FC<SwitchProps> = ({
         width: '48px',
         minWidth: '48px',
         height: '24px',
-        minHeight: '24px'
+        minHeight: '24px',
+        backgroundColor: checked && activeColor ? activeColor : undefined
       }}
       className={`w-12 h-6 rounded-full relative transition-colors duration-200 ease-in-out focus:outline-none ${
         checked 
-          ? `bg-${theme}-600` 
+          ? (!activeColor ? `bg-${theme}-600` : '') 
           : 'bg-gray-200 dark:bg-gray-700'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
     >
@@ -42,7 +45,13 @@ export const Switch: React.FC<SwitchProps> = ({
         }`}
       >
         {checked ? (
-           <svg className={`w-3 h-3 text-${theme}-600`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           <svg 
+             className={`w-3 h-3 ${!activeColor ? `text-${theme}-600` : ''}`} 
+             style={{ color: activeColor }}
+             fill="none" 
+             viewBox="0 0 24 24" 
+             stroke="currentColor"
+           >
              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
            </svg>
         ) : (

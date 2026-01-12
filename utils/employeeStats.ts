@@ -25,6 +25,19 @@ export interface EmployeeSalesStats {
     name: string;
     quantity: number;
   };
+  
+  // Best Performance Metrics
+  highestInvoice?: {
+    id: string;
+    total: number;
+    date: string;
+  };
+  
+  highestPricedItemSold?: {
+    id: string;
+    name: string;
+    price: number;
+  };
 }
 
 /**
@@ -122,7 +135,40 @@ export function getEmployeeSalesStats(
     }
   });
   
-  // 7. Calculate Averages and Margins
+  // 7. Find Highest Invoice
+  let highestInvoice: EmployeeSalesStats['highestInvoice'] = undefined;
+  let maxInvoiceTotal = 0;
+  
+  employeeSales.forEach(sale => {
+    const saleTotal = sale.netTotal ?? sale.total;
+    if (saleTotal > maxInvoiceTotal) {
+      maxInvoiceTotal = saleTotal;
+      highestInvoice = {
+        id: sale.id,
+        total: saleTotal,
+        date: sale.date
+      };
+    }
+  });
+  
+  // 8. Find Highest Priced Item Sold
+  let highestPricedItemSold: EmployeeSalesStats['highestPricedItemSold'] = undefined;
+  let maxItemPrice = 0;
+  
+  employeeSales.forEach(sale => {
+    sale.items.forEach(item => {
+      if (item.price > maxItemPrice) {
+        maxItemPrice = item.price;
+        highestPricedItemSold = {
+          id: item.id,
+          name: item.name,
+          price: item.price
+        };
+      }
+    });
+  });
+  
+  // 9. Calculate Averages and Margins
   const salesCount = employeeSales.length;
   const avgProfitPerSale = salesCount > 0 ? totalProfit / salesCount : 0;
   const profitMargin = netSales > 0 ? (totalProfit / netSales) * 100 : 0;
@@ -136,7 +182,9 @@ export function getEmployeeSalesStats(
     totalProfit,
     avgProfitPerSale,
     profitMargin: parseFloat(profitMargin.toFixed(2)),
-    mostSoldProduct
+    mostSoldProduct,
+    highestInvoice,
+    highestPricedItemSold
   };
 }
 
