@@ -613,7 +613,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   return (
     <div className="h-full space-y-6 animate-fade-in overflow-y-auto">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-transparent">
         <div className="flex items-center gap-4">
             {(() => {
                 const nameParts = selectedEmployee.name.trim().split(/\s+/);
@@ -784,7 +784,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sales Chart */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-transparent">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
                     <span className="material-symbols-rounded text-blue-500">bar_chart</span>
@@ -982,7 +982,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
         {/* Achievements & Insights */}
         <div className="space-y-6">
              {/* Best Achievements Card */}
-             <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm">
+             <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-transparent">
                 <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                     <span className="material-symbols-rounded text-yellow-500">trophy</span>
                     {language === 'AR' ? 'الأفضل' : 'Best Achievements'}
