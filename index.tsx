@@ -8,12 +8,15 @@ if (!rootElement) {
 }
 
 import { StatusBarProvider } from './components/layout/StatusBar';
+import { ShiftProvider } from './hooks/useShift';
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <StatusBarProvider>
-      <App />
+      <ShiftProvider>
+        <App />
+      </ShiftProvider>
     </StatusBarProvider>
   </React.StrictMode>
 );

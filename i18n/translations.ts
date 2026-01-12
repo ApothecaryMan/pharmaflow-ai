@@ -75,6 +75,9 @@ export const TRANSLATIONS = {
       clearAll: 'Clear all',
       dismiss: 'Dismiss',
       version: 'v1.0.0',
+      shiftOpen: 'Shift Open',
+      shiftClosed: 'Shift Closed',
+      shiftSince: 'Since',
       messages: {
         outOfStock: 'Out of Stock: {{name}} {{form}}',
         saleComplete: 'Sale completed: {{total}} L.E'
@@ -1565,6 +1568,9 @@ export const TRANSLATIONS = {
       clearAll: 'مسح الكل',
       dismiss: 'تجاهل',
       version: 'v1.0.0',
+      shiftOpen: 'المناوبة مفتوحة',
+      shiftClosed: 'المناوبة مغلقة',
+      shiftSince: 'منذ',
       messages: {
         outOfStock: 'نفذت الكمية: {{name}} {{form}}',
         saleComplete: 'تمت عملية بيع: {{total}} ج.م'

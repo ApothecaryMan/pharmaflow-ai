@@ -378,10 +378,10 @@ StatsCard.displayName = 'StatsCard';
 const CustomTooltipContent = memo(({ active, payload, label, color, unit }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+      <div className="backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 p-3 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
         <p className="text-lg font-bold text-gray-900 dark:text-white" style={{ color }}>
-          {payload[0].value.toLocaleString()}{unit}
+          <span dir="ltr">{payload[0].value.toLocaleString()}</span> <span className="text-sm">{unit}</span>
         </p>
       </div>
     );

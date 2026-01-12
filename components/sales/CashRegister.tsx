@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Shift, CashTransaction, CashTransactionType, Language, Employee } from '../../types';
 import { CARD_BASE, TABLE_HEADER_BASE, TABLE_ROW_BASE, BUTTON_BASE, INPUT_BASE, THEME_COLORS } from '../../utils/themeStyles';
 import { useSmartDirection } from '../common/SmartInputs';
@@ -8,6 +8,7 @@ import { HelpModal, HelpButton } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useStatusBar } from '../../components/layout/StatusBar';
+import { useShift } from '../../hooks/useShift';
 
 interface CashRegisterProps {
   color: string;
@@ -21,56 +22,17 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
   const { getVerifiedDate } = useStatusBar();
   // Get help instructions based on language
   const helpContent = CASH_REGISTER_HELP[language];
-  // State
-  const [currentShift, setCurrentShift] = useState<Shift | null>(null);
-  const [shifts, setShifts] = useState<Shift[]>([]);
+  
+  // Use the shared shift hook
+  const { currentShift, shifts, isLoading, startShift, endShift, addTransaction } = useShift();
+  
+  // Local UI State
   const [modalMode, setModalMode] = useState<'open' | 'close' | 'in' | 'out' | null>(null);
   const [amountInput, setAmountInput] = useState<string>('');
   const [reasonInput, setReasonInput] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(true);
   const [showHelp, setShowHelp] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState('all');
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    const savedShifts = localStorage.getItem('pharma_shifts');
-    if (savedShifts) {
-      // Migrate old shifts: ensure cardSales and returns exist
-      const parsedShifts: Shift[] = JSON.parse(savedShifts).map((s: any) => ({
-        ...s,
-        cardSales: s.cardSales ?? 0,
-        returns: s.returns ?? 0
-      }));
-      setShifts(parsedShifts);
-      // Find active open shift
-      const active = parsedShifts.find(s => s.status === 'open');
-      if (active) setCurrentShift(active);
-    }
-    setIsLoading(false);
-  }, []);
-
-  // Listen for external localStorage changes (from App.tsx sales/returns)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'pharma_shifts' && e.newValue) {
-        const parsedShifts: Shift[] = JSON.parse(e.newValue);
-        setShifts(parsedShifts);
-        const active = parsedShifts.find(s => s.status === 'open');
-        setCurrentShift(active || null);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  // Save to localStorage on change
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem('pharma_shifts', JSON.stringify(shifts));
-    }
-  }, [shifts, isLoading]);
 
   // Current balance calculation
   // Expected balance = opening + sales + deposits - withdrawals - returns
@@ -146,8 +108,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       }]
     };
 
-    setShifts(prev => [newShift, ...prev]);
-    setCurrentShift(newShift);
+    startShift(newShift);
     closeModal();
   };
 
@@ -193,8 +154,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       }]
     };
 
-    setShifts(prev => prev.map(s => s.id === closedShift.id ? closedShift : s));
-    setCurrentShift(null);
+    endShift(closedShift);
     closeModal();
   };
 
@@ -235,15 +195,10 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       userId: 'Pharmacist'
     };
 
-    const updatedShift: Shift = {
-      ...currentShift,
+    addTransaction(currentShift.id, transaction, {
       cashIn: type === 'in' ? currentShift.cashIn + amount : currentShift.cashIn,
       cashOut: type === 'out' ? currentShift.cashOut + amount : currentShift.cashOut,
-      transactions: [transaction, ...currentShift.transactions] // Newest first
-    };
-
-    setShifts(prev => prev.map(s => s.id === updatedShift.id ? updatedShift : s));
-    setCurrentShift(updatedShift);
+    });
     closeModal();
   };
 

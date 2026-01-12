@@ -54,7 +54,7 @@ const callAI = async (action: string, data: any, language: 'AR' | 'EN' = 'EN'): 
 3. إذا كان معدل القطع لكل فاتورة أقل من 3 → ركز على ضعف البيع الإضافي
 4. غير ذلك → قيّم الأداء الإجمالي
 
-التنسيق: نص عادي، بدون رموز، بدون نجوم، لغة مهنية مباشرة.`
+التنسيق: نص عادي، بدون رموز، بدون نجوم، لغة مهنية مباشرة. لا تذكر اسم الموظف في الجملة.`
                     : `You are a seasoned pharmacy manager with 15+ years in financial performance analysis.
 
 Financial Data:
@@ -73,7 +73,7 @@ Required: ONE evaluative sentence (15-25 words) focusing on the most critical KP
 3. If items per transaction < 3 → Focus on weak upselling
 4. Otherwise → Evaluate overall performance
 
-Format: Plain text, no emojis, no asterisks, professional direct language.`;
+Format: Plain text, no emojis, no asterisks, professional direct language. Do not mention the employee name.`;
                     
                 } else {
                     // DETAILED MODE - تحليل احترافي متعمق

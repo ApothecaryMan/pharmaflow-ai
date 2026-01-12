@@ -8,6 +8,7 @@ import { StatusBarItem } from './StatusBarItem';
 import { DateTime } from './items/DateTime';
 import { UserInfo } from './items/UserInfo';
 import { SettingsMenu } from './items/SettingsMenu';
+import { useShift } from '../../../hooks/useShift';
 
 export interface StatusBarTranslations {
   ready: string;
@@ -18,6 +19,9 @@ export interface StatusBarTranslations {
   noNotifications?: string;
   clearAll?: string;
   dismiss?: string;
+  shiftOpen?: string;
+  shiftClosed?: string;
+  shiftSince?: string;
   messages?: {
     outOfStock?: string;
     saleComplete?: string;
@@ -63,6 +67,9 @@ const defaultTranslations: StatusBarTranslations = {
   noNotifications: 'No notifications',
   clearAll: 'Clear all',
   dismiss: 'Dismiss',
+  shiftOpen: 'Shift Open',
+  shiftClosed: 'Shift Closed',
+  shiftSince: 'Since',
   messages: {
     outOfStock: 'Out of Stock: {{name}} {{form}}',
     saleComplete: 'Sale completed: {{total}} L.E',
@@ -114,6 +121,35 @@ export const StatusBar: React.FC<StatusBarProps> = ({
    */
   const { state } = useStatusBar();
 
+  // --- Shift Status Logic ---
+  const { currentShift } = useShift();
+  
+  const getShiftTooltip = (): string => {
+    if (!currentShift) {
+      return t.shiftClosed || 'Shift Closed';
+    }
+    
+    const openTime = new Date(currentShift.openTime);
+    const now = new Date();
+    const isSameDay = openTime.toDateString() === now.toDateString();
+    
+    const timeStr = openTime.toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+    
+    if (isSameDay) {
+      return `${t.shiftOpen || 'Shift Open'} ${t.shiftSince || 'Since'} ${timeStr}`;
+    } else {
+      const dateStr = openTime.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-GB', {
+        day: 'numeric',
+        month: 'short',
+      });
+      return `${t.shiftOpen || 'Shift Open'} ${t.shiftSince || 'Since'} ${dateStr} ${timeStr}`;
+    }
+  };
+
   return (
     <div
       dir="ltr"
@@ -159,11 +195,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           offlineText={t.offline}
         />
 
-        {/* Ready Status */}
+        {/* Shift Status */}
         <StatusBarItem
-          icon="check_circle"
-          tooltip={t.ready}
-          variant="success"
+          icon={currentShift ? 'check_circle' : 'lock'}
+          tooltip={getShiftTooltip()}
+          variant={currentShift ? 'success' : 'error'}
         />
 
         {/* Date Time - Moved here */}

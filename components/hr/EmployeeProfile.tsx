@@ -1,4 +1,4 @@
-import React, { useState, useMemo, memo, useEffect } from 'react';
+import React, { useState, useMemo, memo, useEffect, useRef } from 'react';
 import { Employee, Sale, ThemeColor, Shift } from '../../types';
 import { getEmployeeSalesStats, getDateRange, getPreviousDateRange, DateRangeFilter } from '../../utils/employeeStats';
 import { StatCard } from '../experiments/AdvancedSmCard';
@@ -7,10 +7,11 @@ import { Modal } from '../common/Modal';
 import { ExpandedChartModal } from '../experiments/ExpandedChartModal';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  Legend, AreaChart, Area, PieChart, Pie, Cell 
+  Legend, AreaChart, Area, PieChart, Pie, Cell, ComposedChart 
 } from 'recharts';
 import { analyzeEmployeePerformance } from '../../services/geminiService';
 import { EmployeeSalesStats } from '../../utils/employeeStats';
+import { SegmentedControl } from '../common/SegmentedControl';
 
 // AI Performance Summary Sub-Component
 const AIPerformanceSummary: React.FC<{
@@ -38,8 +39,8 @@ const AIPerformanceSummary: React.FC<{
   // Generate static summary
   const staticSummary = stats?.salesCount && stats.salesCount > 0 
     ? (language === 'AR' 
-        ? `حقق ${employee.name.split(' ')[0]} أداءً جيداً بإجمالي ${stats.salesCount} فاتورة وهامش ربح ${stats.profitMargin}%.` 
-        : `${employee.name.split(' ')[0]} performed well with ${stats.salesCount} transactions and ${stats.profitMargin}% profit margin.`)
+        ? `أداء جيد بإجمالي ${stats.salesCount} فاتورة وهامش ربح ${stats.profitMargin}%.` 
+        : `Performed well with ${stats.salesCount} transactions and ${stats.profitMargin}% profit margin.`)
     : (language === 'AR' ? 'لا توجد بيانات كافية.' : 'Not enough data.');
 
   // Fetch quick 1-line summary
@@ -114,10 +115,7 @@ const AIPerformanceSummary: React.FC<{
             )}
             {aiError && (
               <div className="group relative cursor-help">
-                <span className="text-xs bg-red-500/50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <span className="material-symbols-rounded text-sm">warning</span>
-                  {language === 'AR' ? 'خطأ' : 'Error'}
-                </span>
+                <span className="material-symbols-rounded text-red-300 text-lg animate-pulse">warning</span>
                 {/* Tooltip for error message */}
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max max-w-[200px] p-2 bg-gray-900 text-white text-xs rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 text-center border border-white/10">
                   {aiError}
@@ -242,14 +240,46 @@ const AIPerformanceSummary: React.FC<{
 };
 
 // Custom Tooltip for Charts - Shows data on hover
-const CustomTooltipContent = memo(({ active, payload, label, color, unit }: any) => {
+const CustomTooltipContent = memo(({ active, payload, label, color, unit, employees, selectedEmployeeId }: any) => {
   if (active && payload && payload.length) {
+    // Find the main employee's data (sales)
+    const mainData = payload.find((p: any) => p.dataKey === 'sales');
+    const otherEmployees = payload.filter((p: any) => p.dataKey !== 'sales' && p.dataKey !== 'profit');
+    
     return (
-      <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
-        <p className="text-lg font-bold text-gray-900 dark:text-white" style={{ color }}>
-          {unit}{payload[0].value.toLocaleString()}
-        </p>
+      <div className="backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 p-3 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 min-w-[180px]">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{label}</p>
+        
+        {/* Main Employee */}
+        {mainData && (
+          <div className="mb-2">
+            <p className="text-xs text-gray-400 mb-0.5">
+              {employees?.find((e: any) => e.id === selectedEmployeeId)?.name || 'You'}
+            </p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white" style={{ color }}>
+              <span dir="ltr">{mainData.value.toLocaleString()}</span> <span className="text-sm">{unit}</span>
+            </p>
+          </div>
+        )}
+        
+        {/* Other Employees (Comparison) */}
+        {otherEmployees.length > 0 && (
+          <div className="pt-2 border-t border-gray-200 dark:border-gray-700 space-y-1">
+            {otherEmployees.map((emp: any, idx: number) => {
+              const employee = employees?.find((e: any) => e.id === emp.dataKey);
+              const name = employee?.name || emp.dataKey;
+              
+              return (
+                <div key={idx} className="flex items-center justify-between text-xs">
+                  <span className="text-gray-600 dark:text-gray-400">{name}</span>
+                  <span className="font-bold text-gray-700 dark:text-gray-300" dir="ltr">
+                    {emp.value.toLocaleString()} {unit}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   }
@@ -298,6 +328,25 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
   const [dateFilterMode, setDateFilterMode] = useState<'today' | 'week' | 'month' | 'year' | 'all'>('month');
   const [isExpandedChartOpen, setIsExpandedChartOpen] = useState(false);
+  const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
+  const [showComparison, setShowComparison] = useState(false);
+  const [chartType, setChartType] = useState<'area' | 'bar'>('area');
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Add scroll listener for shift badges
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      const handleWheel = (e: WheelEvent) => {
+        if (e.deltaY !== 0) {
+          e.preventDefault();
+          container.scrollLeft += e.deltaY;
+        }
+      };
+      container.addEventListener('wheel', handleWheel, { passive: false });
+      return () => container.removeEventListener('wheel', handleWheel);
+    }
+  }, [dateFilterMode, employees]); // Re-attach when view might change logic
 
   // Load employees if not passed (fallback)
   const [localEmployees, setLocalEmployees] = useState<Employee[]>([]);
@@ -369,6 +418,8 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
     };
   };
 
+
+
   // Chart Data Preparation (Last 7 periods based on filter)
   // For simplicity MVP, let's just show daily sales for the current filtered range or last 7 days
   const chartDataResult = useMemo(() => {
@@ -404,31 +455,122 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
             
             return startedToday || isActiveOpen;
         });
-        
-        const hours = Array.from({ length: 24 }, (_, i) => {
-            const date = new Date();
-            date.setHours(i, 0, 0, 0);
-            return {
-                hour: i,
-                sales: 0,
-                profit: 0,
-                date: date
-            };
-        });
 
-        relevantSales.forEach(sale => {
-            const saleDate = new Date(sale.date);
-            const hour = saleDate.getHours();
-            if (hours[hour]) {
-                hours[hour].sales += sale.netTotal ?? sale.total;
+        // Determine chart data points based on selection
+        let dataPoints: any[] = [];
+        let activeEmployees: string[] = []; // IDs of employees active in this shift (excluding main user)
+        
+        if (selectedShiftId) {
+            // ZOOM MODE: Detailed view for specific shift
+            const selectedShift = todayShifts.find(s => s.id === selectedShiftId);
+            if (selectedShift) {
+                const startTime = new Date(selectedShift.openTime);
+                const endTime = selectedShift.closeTime ? new Date(selectedShift.closeTime) : new Date();
+                
+                // Ensure we don't go beyond "now" if open, or weird future dates
+                const safeEndTime = endTime > new Date() ? new Date() : endTime;
+                // If closed, strictly use closeTime. If open, use current time.
+                const effectiveEndTime = selectedShift.closeTime ? new Date(selectedShift.closeTime) : new Date();
+
+                // Generate points every 15 minutes
+                const timeSpan = effectiveEndTime.getTime() - startTime.getTime();
+                const totalMinutes = timeSpan / (1000 * 60);
+                
+                // Determine interval based on duration
+                // If short shift (< 2 hours), 5 min interval
+                // If medium (2-6 hours), 15 min interval
+                // If long (> 6 hours), 30 min interval
+                let intervalMinutes = 15;
+                if (totalMinutes < 120) intervalMinutes = 5;
+                else if (totalMinutes > 360) intervalMinutes = 30;
+
+                let currentTime = new Date(startTime);
+                // Align start time to nearest interval
+                currentTime.setMinutes(Math.floor(currentTime.getMinutes() / intervalMinutes) * intervalMinutes, 0, 0);
+
+                while (currentTime <= effectiveEndTime) {
+                    dataPoints.push({
+                        date: new Date(currentTime),
+                        label: currentTime.toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+                        sales: 0,
+                        profit: 0,
+                        timestamp: currentTime.getTime()
+                    });
+                    currentTime = new Date(currentTime.getTime() + intervalMinutes * 60000);
+                }
+
+                // Aggregate sales into these buckets - FOR ALL EMPLOYEES (comparison mode)
+                // Get all employees who made sales in this shift
+                const employeeSalesMap = new Map<string, number>();
+                
+                sales.forEach(sale => {
+                    const saleTime = new Date(sale.date).getTime();
+                    if (saleTime >= startTime.getTime() && saleTime <= effectiveEndTime.getTime()) {
+                        const empId = sale.soldByEmployeeId || 'unknown';
+                        if (!employeeSalesMap.has(empId)) {
+                            employeeSalesMap.set(empId, 0);
+                        }
+                        
+                        // Find closest bucket
+                        const bucket = dataPoints.find(p => Math.abs(p.timestamp - saleTime) < (intervalMinutes * 60000) / 2);
+                        if (bucket) {
+                            const saleValue = sale.netTotal ?? sale.total;
+                            employeeSalesMap.set(empId, employeeSalesMap.get(empId)! + saleValue);
+                            
+                            // If this is the selected employee, add to main 'sales'
+                            if (empId === selectedEmployeeId) {
+                                bucket.sales += saleValue;
+                            } else {
+                                // For other employees, create a keyed entry
+                                if (!bucket[empId]) bucket[empId] = 0;
+                                bucket[empId] += saleValue;
+                            }
+                        }
+                    }
+                });
+                
+                // Store active employees for rendering (assign to outer scope)
+                activeEmployees = Array.from(employeeSalesMap.keys()).filter(id => id !== selectedEmployeeId && id !== 'unknown');
+                
+                // CRITICAL: Ensure all data points have values for all active employees to prevent broken lines
+                dataPoints.forEach(point => {
+                    activeEmployees.forEach(empId => {
+                        if (point[empId] === undefined) {
+                            point[empId] = 0;
+                        }
+                    });
+                });
             }
-        });
+        } else {
+            // DEFAULT MODE: Hourly view for full day
+            dataPoints = Array.from({ length: 24 }, (_, i) => {
+                const date = new Date();
+                date.setHours(i, 0, 0, 0);
+                return {
+                    hour: i,
+                    label: date.toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: 'numeric', hour12: true }),
+                    sales: 0,
+                    profit: 0,
+                    date: date
+                };
+            });
+
+            relevantSales.forEach(sale => {
+                const saleDate = new Date(sale.date);
+                const hour = saleDate.getHours();
+                if (dataPoints[hour]) {
+                    dataPoints[hour].sales += sale.netTotal ?? sale.total;
+                }
+            });
+        }
 
         return {
-            chartData: hours.map(h => ({
-                date: h.date.toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: 'numeric', hour12: true }),
-                sales: h.sales,
-                profit: h.profit
+            chartData: dataPoints.map(p => ({
+                date: p.label,
+                sales: p.sales,
+                profit: p.profit,
+                ...Object.keys(p).filter(k => !['label', 'sales', 'profit', 'timestamp', 'date', 'hour'].includes(k))
+                    .reduce((acc, empId) => ({ ...acc, [empId]: p[empId] }), {})
             })),
             shiftsData: todayShifts.map(shift => ({
                 shiftId: shift.id,
@@ -437,7 +579,8 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                 closeTime: shift.closeTime,
                 closedBy: shift.closedBy,
                 status: shift.status
-            }))
+            })),
+            activeEmployees // List of employee IDs for comparison charts
         };
      }
 
@@ -453,12 +596,14 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
 
      return {
         chartData: Object.values(data).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
-        shiftsData: []
+        shiftsData: [],
+        activeEmployees: [] // No comparison in other modes
      };
-  }, [selectedEmployeeId, sales, dateRange, language, dateFilterMode]);
+  }, [selectedEmployeeId, sales, dateRange, language, dateFilterMode, selectedShiftId]);
 
   const chartData = chartDataResult.chartData;
   const shiftsData = chartDataResult.shiftsData;
+  const activeEmployees = chartDataResult.activeEmployees || [];
 
 
   if (!selectedEmployee) {
@@ -468,7 +613,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   return (
     <div className="h-full space-y-6 animate-fade-in overflow-y-auto">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm">
         <div className="flex items-center gap-4">
             {(() => {
                 const nameParts = selectedEmployee.name.trim().split(/\s+/);
@@ -488,8 +633,8 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                             {initials}
                           </div>
                         )}
-                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center`}>
-                           <div className={`w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-gray-800`}></div>
+                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center`}>
+                           <div className={`w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-gray-900`}></div>
                         </div>
                     </div>
                 );
@@ -639,23 +784,57 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sales Chart */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-6">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm">
+            <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
                     <span className="material-symbols-rounded text-blue-500">bar_chart</span>
                     {language === 'AR' ? 'تحليل المبيعات' : 'Sales Analytics'}
                 </h3>
-                <button 
-                  onClick={() => setIsExpandedChartOpen(true)}
-                  className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95"
-                  title={language === 'AR' ? 'توسيع الرسم البياني' : 'Expand Chart'}
-                >
-                  <span className="material-symbols-rounded text-xl">open_in_full</span>
-                </button>
+                
+                <div className="flex items-center gap-2">
+                  {/* Comparison Toggle - Only show when zoomed into a shift with other active employees AND in Area chart mode */}
+                  {selectedShiftId && activeEmployees.length > 0 && chartType === 'area' && (
+                      <div className="ltr:mr-2 rtl:ml-2 scale-90 origin-right rtl:origin-left">
+                        <SegmentedControl
+                            options={[
+                            { label: '', value: 'single', icon: 'person' },
+                            { label: '', value: 'group', icon: 'group', count: `+${activeEmployees.length}` }
+                            ]}
+                            value={showComparison ? 'group' : 'single'}
+                            onChange={(val) => setShowComparison(val === 'group')}
+                            size="sm"
+                            fullWidth={false}
+                        />
+                      </div>
+                  )}
+
+                   {/* Chart Type Toggle */}
+                   <div className="w-24">
+                       <SegmentedControl
+                           options={[
+                               { label: '', value: 'area', icon: 'area_chart' },
+                               { label: '', value: 'bar', icon: 'bar_chart' }
+                           ]}
+                           value={chartType}
+                           onChange={(val) => setChartType(val as 'area' | 'bar')}
+                           size="sm"
+                           fullWidth={false}
+                           shape="pill"
+                       />
+                   </div>
+
+                  <button 
+                    onClick={() => setIsExpandedChartOpen(true)}
+                    className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95"
+                    title={language === 'AR' ? 'توسيع الرسم البياني' : 'Expand Chart'}
+                  >
+                    <span className="material-symbols-rounded text-xl">open_in_full</span>
+                  </button>
+                </div>
             </div>
-            <div className="h-[300px] w-full">
+            <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 20, right: 0, left: language === 'AR' ? 30 : 0, bottom: 20 }}>
+                    <ComposedChart data={chartData} margin={{ top: 15, right: 0, left: language === 'AR' ? 30 : 0, bottom: 5 }}>
                         <defs>
                             <linearGradient id="expandedGradient" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor={chartColor} stopOpacity={0.3}/>
@@ -663,37 +842,88 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                             </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: 'var(--text-secondary)', fontSize: 12}} />
-                        <YAxis axisLine={false} tickLine={false} width={45} tick={{fill: 'var(--text-secondary)', fontSize: 12, dx: language === 'AR' ? -50 : 0, textAnchor: 'end'}} />
+                        <XAxis 
+                            dataKey="date" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{fill: 'var(--text-secondary)', fontSize: 12}}
+                            interval={selectedShiftId ? 'preserveStartEnd' : (dateFilterMode === 'today' ? 3 : 'preserveStartEnd')}
+                            padding={{ left: 10, right: 10 }}
+                            dy={10}
+                        />
+                        <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            width={45} 
+                            tickFormatter={(value) => 
+                                language === 'AR' 
+                                    ? value.toLocaleString('ar-EG') 
+                                    : value
+                            }
+                            tick={{fill: 'var(--text-secondary)', fontSize: 12, dx: language === 'AR' ? -50 : 0, textAnchor: 'end'}} 
+                        />
                         <Tooltip 
-                            content={<CustomTooltipContent color={chartColor} unit={language === 'AR' ? 'ج.م ' : 'L.E '} />} 
+                            content={<CustomTooltipContent color={chartColor} unit={language === 'AR' ? 'ج.م ' : 'L.E '} employees={employees} selectedEmployeeId={selectedEmployeeId} showComparison={showComparison} />} 
                             cursor={false}
                         />
-                        <Area 
-                            type="monotone" 
-                            dataKey="sales" 
-                            stroke={chartColor}
-                            strokeWidth={2}
-                            fillOpacity={1} 
-                            fill="url(#expandedGradient)"
-                            animationDuration={500} 
-                        />
-                    </AreaChart>
+
+                        {/* Comparison Lines - Other Employees (Gray Dashed) - Render FIRST (Background) - Only for Area Chart */}
+                        {showComparison && chartType === 'area' && activeEmployees.map(empId => (
+                            <Area 
+                                key={empId}
+                                type="monotone" 
+                                dataKey={empId}
+                                stroke="#9ca3af"
+                                strokeWidth={1.5}
+                                strokeOpacity={0.5}
+                                strokeDasharray="5 5"
+                                fill="none"
+                                animationDuration={500} 
+                                activeDot={false}
+                            />
+                        ))}
+
+                        {/* Main Employee Chart - Render LAST (On Top) */}
+                        {chartType === 'area' ? (
+                            <Area 
+                                type="monotone" 
+                                dataKey="sales" 
+                                stroke={chartColor}
+                                strokeWidth={2}
+                                fillOpacity={1} 
+                                fill="url(#expandedGradient)"
+                                animationDuration={500} 
+                            />
+                        ) : (
+                            <Bar 
+                                dataKey="sales" 
+                                fill={chartColor}
+                                radius={[20, 20, 20, 20]}
+                                animationDuration={500} 
+                            />
+                        )}
+                    </ComposedChart>
                 </ResponsiveContainer>
             </div>
             
             {/* Shift Events Indicators - Only for Today view */}
             {dateFilterMode === 'today' && shiftsData.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <p className="text-xs font-bold uppercase text-gray-500 mb-2 flex items-center gap-1">
-                  <span className="material-symbols-rounded text-sm">schedule</span>
+              <div className="mt-2 pt-3 border-t border-gray-100 dark:border-gray-700">
+                <p className="text-[10px] font-bold uppercase text-gray-400 mb-1.5 flex items-center gap-1">
+                  <span className="material-symbols-rounded text-base">schedule</span>
                   {language === 'AR' ? 'أحداث المناوبات اليوم' : 'Today\'s Shift Events'}
                 </p>
-                <div className="flex flex-row gap-2 overflow-x-auto custom-scrollbar pb-2">
-                  {shiftsData.map((shift: any, idx: number) => (
+                <div 
+                  ref={scrollContainerRef}
+                  className="flex flex-row gap-2 overflow-x-auto custom-scrollbar pb-2"
+                >
+                  {shiftsData.map((shift: any, idx: number) => {
+                    const isSelected = selectedShiftId === shift.shiftId;
+                    return (
                     <div 
                       key={shift.shiftId} 
-                      className={`flex items-center gap-1.5 flex-shrink-0 ${
+                      onClick={() => setSelectedShiftId(isSelected ? null : shift.shiftId)}
+                      className={`flex items-center gap-1.5 flex-shrink-0 cursor-pointer ${
                         idx > 0 
                           ? language === 'AR' 
                             ? 'pr-2 border-r border-gray-200 dark:border-gray-700' 
@@ -701,7 +931,11 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                           : ''
                       }`}
                     >
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 text-xs font-medium whitespace-nowrap">
+                      <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-medium whitespace-nowrap transition-colors duration-200 ${
+                        isSelected 
+                            ? 'bg-blue-100 dark:bg-blue-900/60 border-blue-200 dark:border-blue-800' // Simple colored background
+                            : 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      }`}>
                         {/* Open Time */}
                         <div className="flex items-center gap-1 text-green-700 dark:text-green-400">
                             <span className="material-symbols-rounded text-[14px]">lock_open</span>
@@ -726,9 +960,8 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                                 <span className="material-symbols-rounded text-[14px]">lock</span>
                             </div>
                         ) : (
-                             <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20">
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                                <span className="font-bold text-[10px] uppercase">{language === 'AR' ? 'مفتوحة' : 'Open'}</span>
+                             <div className="flex items-center justify-center px-1" title={language === 'AR' ? 'مفتوحة' : 'Open'}>
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse ring-2 ring-green-200 dark:ring-green-900/30"></span>
                              </div>
                         )}
 
@@ -739,7 +972,8 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </div>
             )}
@@ -748,7 +982,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
         {/* Achievements & Insights */}
         <div className="space-y-6">
              {/* Best Achievements Card */}
-             <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+             <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm">
                 <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                     <span className="material-symbols-rounded text-yellow-500">trophy</span>
                     {language === 'AR' ? 'الأفضل' : 'Best Achievements'}
