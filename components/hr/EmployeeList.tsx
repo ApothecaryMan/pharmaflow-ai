@@ -42,6 +42,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
   
   // Tab state for modal
   const [activeTab, setActiveTab] = useState<'general' | 'credentials' | 'documents'>('general');
+  const [activeViewTab, setActiveViewTab] = useState<'general' | 'credentials' | 'documents'>('general');
 
   // Sounds
   const { playSuccess, playError, playBeep } = usePosSounds();
@@ -62,6 +63,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
   const saveToStorage = (newEmployees: Employee[]) => {
     setEmployees(newEmployees);
     localStorage.setItem('pharma_employees', JSON.stringify(newEmployees));
+    window.dispatchEvent(new Event('pharma_employees_updated'));
     if (onUpdateEmployees) onUpdateEmployees(newEmployees);
   };
 
@@ -111,7 +113,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
       accessorKey: 'employeeCode',
       header: t.employeeList.table.code,
       cell: ({ row }) => (
-        <span className="font-mono font-bold text-gray-700 dark:text-gray-300">
+        <span className="font-bold text-gray-700 dark:text-gray-300">
           {row.original.employeeCode}
         </span>
       )
@@ -316,7 +318,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
             tableId="employee-list"
             color={color}
             emptyMessage="No employees found"
-            onRowClick={handleEdit}
+            onRowClick={handleView}
             globalFilter={searchQuery}
             enableSearch={false}
             enableTopToolbar={false}
@@ -345,7 +347,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
           />
         }
       >
-        <div className="flex gap-8 p-1">
+        <div className="flex gap-8 p-4">
           {/* Left Side - Image Upload (Fixed Width) */}
           <div className="flex flex-col items-center gap-3 shrink-0 pt-2">
             <div className="relative group">
@@ -390,7 +392,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                 <button 
                   type="button"
                   onClick={() => setFormData({ ...formData, image: undefined })}
-                  className="absolute -top-2 -right-2 w-7 h-7 bg-white dark:bg-gray-800 text-red-500 hover:text-red-600 rounded-full flex items-center justify-center shadow-md border border-gray-100 dark:border-gray-700 transition-transform active:scale-95"
+                  className={`absolute -top-2 ${language === 'AR' ? '-left-2' : '-right-2'} w-7 h-7 backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30 text-red-500 hover:bg-white/80 dark:hover:bg-gray-800/80 rounded-full flex items-center justify-center shadow-lg border border-white/20 transition-transform active:scale-95`}
                   title={language === 'AR' ? 'إزالة الصورة' : 'Remove Image'}
                 >
                   <span className="material-symbols-rounded text-[18px]">close</span>
@@ -660,7 +662,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                         <button 
                                             type="button"
                                             onClick={() => setFormData({ ...formData, nationalIdCard: undefined })}
-                                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className={`absolute -top-2 ${language === 'AR' ? '-left-2' : '-right-2'} w-6 h-6 backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30 text-red-500 hover:bg-white/80 dark:hover:bg-gray-800/80 rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity`}
                                         >
                                             <span className="material-symbols-rounded text-[14px]">close</span>
                                         </button>
@@ -707,7 +709,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                                 <button 
                                                     type="button"
                                                     onClick={() => setFormData({ ...formData, nationalIdCardBack: undefined })}
-                                                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className={`absolute -top-2 ${language === 'AR' ? '-left-2' : '-right-2'} w-6 h-6 backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30 text-red-500 hover:bg-white/80 dark:hover:bg-gray-800/80 rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity`}
                                                 >
                                                     <span className="material-symbols-rounded text-[14px]">close</span>
                                                 </button>
@@ -761,7 +763,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                             <button 
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, mainSyndicateCard: undefined })}
-                                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className={`absolute -top-2 ${language === 'AR' ? '-left-2' : '-right-2'} w-6 h-6 backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30 text-red-500 hover:bg-white/80 dark:hover:bg-gray-800/80 rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity`}
                                             >
                                                 <span className="material-symbols-rounded text-[14px]">close</span>
                                             </button>
@@ -814,7 +816,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                             <button 
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, subSyndicateCard: undefined })}
-                                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className={`absolute -top-2 ${language === 'AR' ? '-left-2' : '-right-2'} w-6 h-6 backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30 text-red-500 hover:bg-white/80 dark:hover:bg-gray-800/80 rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity`}
                                             >
                                                 <span className="material-symbols-rounded text-[14px]">close</span>
                                             </button>
@@ -872,89 +874,222 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
       {/* View Details Modal */}
       <Modal
         isOpen={!!viewingEmployee}
-        onClose={() => setViewingEmployee(null)}
+        onClose={() => { setViewingEmployee(null); setActiveViewTab('general'); }}
         title={t.employeeList.viewDetails}
-        icon="badge"
+        size="3xl"
+        hideCloseButton={true}
+        headerActions={
+            <SegmentedControl
+              options={[
+                { value: 'general', label: language === 'AR' ? 'معلومات عامة' : 'General', icon: 'person' },
+                { value: 'credentials', label: language === 'AR' ? 'بيانات الدخول' : 'Credentials', icon: 'lock' },
+                { value: 'documents', label: language === 'AR' ? 'المستندات' : 'Documents', icon: 'description' }
+              ]}
+              value={activeViewTab}
+              onChange={(value) => setActiveViewTab(value as 'general' | 'credentials' | 'documents')}
+              color={color}
+              size="sm"
+            />
+        }
       >
         <div className="p-5 space-y-5">
             {viewingEmployee && (
                 <>
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">
-                        {viewingEmployee.image ? (
-                          <img 
-                            src={viewingEmployee.image} 
-                            alt={viewingEmployee.name}
-                            className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
-                          />
-                        ) : (
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 text-xl font-bold`}>
-                            {viewingEmployee.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div>
-                            <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">{viewingEmployee.name}</h3>
-                            <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
-                                <span className="font-mono">{viewingEmployee.employeeCode}</span>
-                                <span>•</span>
-                                <span>{t.employeeList.departments[viewingEmployee.department]}</span>
+                    {activeViewTab === 'general' ? (
+                        <>
+                             <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">
+                                {viewingEmployee.image ? (
+                                  <img 
+                                    src={viewingEmployee.image} 
+                                    alt={viewingEmployee.name}
+                                    className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+                                  />
+                                ) : (
+                                  <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 text-xl font-bold`}>
+                                    {viewingEmployee.name.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <div>
+                                    <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">{viewingEmployee.name}</h3>
+                                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                                        <span>{viewingEmployee.employeeCode}</span>
+                                        <span>•</span>
+                                        <span>{t.employeeList.departments[viewingEmployee.department]}</span>
+                                    </div>
+                                </div>
+                                <div className="ml-auto">
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                        viewingEmployee.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                                        viewingEmployee.status === 'holiday' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                                        'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+                                    }`}>
+                                        {t.employeeList.statusOptions[viewingEmployee.status]}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.position}</label>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{viewingEmployee.position}</p>
+                                </div>
+                                
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.role}</label>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{t.employeeList.roles[viewingEmployee.role]}</p>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.phone}</label>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{viewingEmployee.phone}</p>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.email}</label>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug truncate">{viewingEmployee.email || '-'}</p>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.salary}</label>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">
+                                        {viewingEmployee.salary ? viewingEmployee.salary.toLocaleString() : '-'}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.notes}</label>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-snug">{viewingEmployee.notes || '-'}</p>
+                                </div>
+                            </div>
+                        </>
+                    ) : activeViewTab === 'credentials' ? (
+                        <div className="space-y-4">
+                            <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30 rounded-xl p-4">
+                                <div className="flex items-start gap-3">
+                                    <span className="material-symbols-rounded text-blue-600 dark:text-blue-400 text-xl mt-0.5">lock_person</span>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                                            {language === 'AR' ? 'بيانات الدخول المسجلة' : 'Registered Login Credentials'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.username || 'Username'}</label>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                                        {viewingEmployee.username || '-'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.password || 'Password'}</label>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                                        ••••••••
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                        <div className="ml-auto">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                viewingEmployee.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                viewingEmployee.status === 'holiday' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
-                                'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                            }`}>
-                                {t.employeeList.statusOptions[viewingEmployee.status]}
-                            </span>
-                        </div>
-                    </div>
+                    ) : (
+                        <div className="space-y-6">
 
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                        <div>
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.position}</label>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{viewingEmployee.position}</p>
-                        </div>
-                        
-                        <div>
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.role}</label>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{t.employeeList.roles[viewingEmployee.role]}</p>
-                        </div>
+                            {/* National ID Section */}
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+                                    <span className="material-symbols-rounded text-gray-400 text-lg">badge</span>
+                                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        {language === 'AR' ? 'البطاقة الشخصية' : 'National ID Card'}
+                                    </h3>
+                                </div>
+                                {(viewingEmployee.nationalIdCard || viewingEmployee.nationalIdCardBack) ? (
+                                    <div className="flex items-center gap-4">
+                                        {viewingEmployee.nationalIdCard && (
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] text-gray-400 uppercase px-1">{language === 'AR' ? 'الوجه الأمامي' : 'Front Face'}</span>
+                                                <img 
+                                                    src={viewingEmployee.nationalIdCard} 
+                                                    alt="National ID Front" 
+                                                    className="h-24 w-auto rounded-xl object-contain"
+                                                />
+                                            </div>
+                                        )}
+                                        {viewingEmployee.nationalIdCardBack && (
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] text-gray-400 uppercase px-1">{language === 'AR' ? 'الوجه الخلفي' : 'Back Face'}</span>
+                                                <img 
+                                                    src={viewingEmployee.nationalIdCardBack} 
+                                                    alt="National ID Back" 
+                                                    className="h-24 w-auto rounded-xl object-contain"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                                        <p className="text-sm text-gray-400">
+                                            {language === 'AR' ? 'لا يوجد صور للبطاقة' : 'No ID card images uploaded'}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
 
-                        <div>
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.phone}</label>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white font-mono leading-snug">{viewingEmployee.phone}</p>
+                            {/* Syndicate Cards Section */}
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+                                    <span className="material-symbols-rounded text-gray-400 text-lg">card_membership</span>
+                                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        {language === 'AR' ? 'كارنيهات النقابة' : 'Syndicate Cards'}
+                                    </h3>
+                                </div>
+                                {(viewingEmployee.mainSyndicateCard || viewingEmployee.subSyndicateCard) ? (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {viewingEmployee.mainSyndicateCard && (
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] text-gray-400 uppercase px-1">{language === 'AR' ? 'النقابة الرئيسية' : 'Main Syndicate'}</span>
+                                                <img 
+                                                    src={viewingEmployee.mainSyndicateCard} 
+                                                    alt="Main Syndicate" 
+                                                    className="h-24 w-auto rounded-xl object-contain"
+                                                />
+                                            </div>
+                                        )}
+                                        {viewingEmployee.subSyndicateCard && (
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] text-gray-400 uppercase px-1">{language === 'AR' ? 'النقابة الفرعية' : 'Sub Syndicate'}</span>
+                                                <img 
+                                                    src={viewingEmployee.subSyndicateCard} 
+                                                    alt="Sub Syndicate" 
+                                                    className="h-24 w-auto rounded-xl object-contain"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                                        <p className="text-sm text-gray-400">
+                                            {language === 'AR' ? 'لا يوجد صور للكارنيهات' : 'No syndicate cards uploaded'}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
+                    )}
 
-                        <div>
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.email}</label>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug truncate">{viewingEmployee.email || '-'}</p>
-                        </div>
 
-                        <div>
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.salary}</label>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white font-mono leading-snug">
-                                {viewingEmployee.salary ? viewingEmployee.salary.toLocaleString() : '-'}
-                            </p>
-                        </div>
-
-                        <div>
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.employeeList.notes}</label>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 leading-snug">{viewingEmployee.notes || '-'}</p>
-                        </div>
-                    </div>
-
-                     <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800">
-                        <button 
-                            onClick={() => setViewingEmployee(null)}
-                            className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                        >
-                            {t.global.actions.close}
-                        </button>
-                    </div>
                 </>
             )}
         </div>
+        
+        {viewingEmployee && (
+            <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-gray-100 dark:border-gray-800">
+                <button 
+                    onClick={() => { setViewingEmployee(null); setActiveViewTab('general'); }}
+                    className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors font-medium"
+                >
+                    {t.employeeList.modal.cancel}
+                </button>
+            </div>
+        )}
       </Modal>
 
     </div>

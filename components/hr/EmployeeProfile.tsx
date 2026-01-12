@@ -300,14 +300,32 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   const [isExpandedChartOpen, setIsExpandedChartOpen] = useState(false);
 
   // Load employees if not passed (fallback)
-  const allEmployees = useMemo(() => {
-    if (employees.length > 0) return employees;
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_employees');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  }, [employees]);
+  const [localEmployees, setLocalEmployees] = useState<Employee[]>([]);
+
+  // Load employees from local storage and listen for updates
+  useEffect(() => {
+    if (employees.length > 0) return;
+
+    const loadEmployees = () => {
+      try {
+        const saved = localStorage.getItem('pharma_employees');
+        if (saved) {
+          setLocalEmployees(JSON.parse(saved));
+        }
+      } catch (e) {
+        console.error('Failed to load employees', e);
+      }
+    };
+
+    loadEmployees();
+    window.addEventListener('pharma_employees_updated', loadEmployees);
+    
+    return () => {
+      window.removeEventListener('pharma_employees_updated', loadEmployees);
+    };
+  }, [employees.length]);
+
+  const allEmployees = employees.length > 0 ? employees : localEmployees;
 
   // Set default employee if not set
   React.useEffect(() => {
