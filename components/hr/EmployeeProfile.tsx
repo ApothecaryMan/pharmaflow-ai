@@ -1,5 +1,5 @@
 import React, { useState, useMemo, memo, useEffect } from 'react';
-import { Employee, Sale, ThemeColor } from '../../types';
+import { Employee, Sale, ThemeColor, Shift } from '../../types';
 import { getEmployeeSalesStats, getDateRange, getPreviousDateRange, DateRangeFilter } from '../../utils/employeeStats';
 import { StatCard } from '../experiments/AdvancedSmCard';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
@@ -371,12 +371,8 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
 
   // Chart Data Preparation (Last 7 periods based on filter)
   // For simplicity MVP, let's just show daily sales for the current filtered range or last 7 days
-  const chartData = useMemo(() => {
-     if (!selectedEmployeeId) return [];
-     
-     // Simple aggregation: Sales by Day for the selected period
-     // If period is 'today', show by hour? (Too complex for MVP, stick to daily)
-     const data: Record<string, { date: string; sales: number; profit: number }> = {};
+  const chartDataResult = useMemo(() => {
+     if (!selectedEmployeeId) return { chartData: [], shiftsData: [] };
      
      const relevantSales = sales.filter(s => 
         s.soldByEmployeeId === selectedEmployeeId &&
@@ -384,18 +380,85 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
         (!dateRange?.endDate || new Date(s.date) <= dateRange.endDate)
      );
 
+     if (dateFilterMode === 'today') {
+        // Load shifts to track shift events
+        const savedShifts = localStorage.getItem('pharma_shifts');
+        const shifts: Shift[] = savedShifts ? JSON.parse(savedShifts) : [];
+        
+        // Get today's date range
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        // Filter shifts that occurred today OR are currently open
+        const todayShifts = shifts.filter(shift => {
+            const shiftOpenDate = new Date(shift.openTime);
+            
+            // Case 1: Shift started today
+            const startedToday = shiftOpenDate >= today && shiftOpenDate < tomorrow;
+            
+            // Case 2: Shift is currently OPEN (status is open and no close time)
+            // We want to show the active shift even if it started yesterday
+            const isActiveOpen = shift.status === 'open' && !shift.closeTime;
+            
+            return startedToday || isActiveOpen;
+        });
+        
+        const hours = Array.from({ length: 24 }, (_, i) => {
+            const date = new Date();
+            date.setHours(i, 0, 0, 0);
+            return {
+                hour: i,
+                sales: 0,
+                profit: 0,
+                date: date
+            };
+        });
+
+        relevantSales.forEach(sale => {
+            const saleDate = new Date(sale.date);
+            const hour = saleDate.getHours();
+            if (hours[hour]) {
+                hours[hour].sales += sale.netTotal ?? sale.total;
+            }
+        });
+
+        return {
+            chartData: hours.map(h => ({
+                date: h.date.toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: 'numeric', hour12: true }),
+                sales: h.sales,
+                profit: h.profit
+            })),
+            shiftsData: todayShifts.map(shift => ({
+                shiftId: shift.id,
+                openTime: shift.openTime,
+                openedBy: shift.openedBy,
+                closeTime: shift.closeTime,
+                closedBy: shift.closedBy,
+                status: shift.status
+            }))
+        };
+     }
+
+     const data: Record<string, { date: string; sales: number; profit: number }> = {};
+     
      relevantSales.forEach(sale => {
         const dateKey = new Date(sale.date).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' });
         if (!data[dateKey]) {
             data[dateKey] = { date: dateKey, sales: 0, profit: 0 };
         }
         data[dateKey].sales += sale.netTotal ?? sale.total;
-        // Estimate profit for chart (complex logic duplicated here or we simplify)
-        // Let's rely on total sales for chart visual now
      });
 
-     return Object.values(data).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [selectedEmployeeId, sales, dateRange, language]);
+     return {
+        chartData: Object.values(data).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+        shiftsData: []
+     };
+  }, [selectedEmployeeId, sales, dateRange, language, dateFilterMode]);
+
+  const chartData = chartDataResult.chartData;
+  const shiftsData = chartDataResult.shiftsData;
 
 
   if (!selectedEmployee) {
@@ -592,7 +655,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
             </div>
             <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 20, right: 0, left: 0, bottom: 20 }}>
+                    <AreaChart data={chartData} margin={{ top: 20, right: 0, left: language === 'AR' ? 30 : 0, bottom: 20 }}>
                         <defs>
                             <linearGradient id="expandedGradient" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor={chartColor} stopOpacity={0.3}/>
@@ -601,7 +664,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
                         <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: 'var(--text-secondary)', fontSize: 12}} />
-                        <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--text-secondary)', fontSize: 12}} />
+                        <YAxis axisLine={false} tickLine={false} width={45} tick={{fill: 'var(--text-secondary)', fontSize: 12, dx: language === 'AR' ? -50 : 0, textAnchor: 'end'}} />
                         <Tooltip 
                             content={<CustomTooltipContent color={chartColor} unit={language === 'AR' ? 'ج.م ' : 'L.E '} />} 
                             cursor={false}
@@ -618,6 +681,68 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
+            
+            {/* Shift Events Indicators - Only for Today view */}
+            {dateFilterMode === 'today' && shiftsData.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <p className="text-xs font-bold uppercase text-gray-500 mb-2 flex items-center gap-1">
+                  <span className="material-symbols-rounded text-sm">schedule</span>
+                  {language === 'AR' ? 'أحداث المناوبات اليوم' : 'Today\'s Shift Events'}
+                </p>
+                <div className="flex flex-row gap-2 overflow-x-auto custom-scrollbar pb-2">
+                  {shiftsData.map((shift: any, idx: number) => (
+                    <div 
+                      key={shift.shiftId} 
+                      className={`flex items-center gap-1.5 flex-shrink-0 ${
+                        idx > 0 
+                          ? language === 'AR' 
+                            ? 'pr-2 border-r border-gray-200 dark:border-gray-700' 
+                            : 'pl-2 border-l border-gray-200 dark:border-gray-700'
+                          : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 text-xs font-medium whitespace-nowrap">
+                        {/* Open Time */}
+                        <div className="flex items-center gap-1 text-green-700 dark:text-green-400">
+                            <span className="material-symbols-rounded text-[14px]">lock_open</span>
+                            <span className="font-mono font-bold" dir="ltr">
+                                {new Date(shift.openTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                            </span>
+                        </div>
+
+                        {/* Arrow or Separator */}
+                        {shift.closeTime ? (
+                            <span className="material-symbols-rounded text-[12px] text-gray-400 transform rtl:rotate-180">arrow_forward</span>
+                        ) : (
+                            <div className="h-3 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5"></div>
+                        )}
+
+                        {/* Close Time or Status */}
+                        {shift.closeTime ? (
+                            <div className="flex items-center gap-1 text-red-700 dark:text-red-400">
+                                <span className="font-mono font-bold" dir="ltr">
+                                    {new Date(shift.closeTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                </span>
+                                <span className="material-symbols-rounded text-[14px]">lock</span>
+                            </div>
+                        ) : (
+                             <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                                <span className="font-bold text-[10px] uppercase">{language === 'AR' ? 'مفتوحة' : 'Open'}</span>
+                             </div>
+                        )}
+
+                        {/* User Name */}
+                        <div className="flex items-center gap-1 pl-1.5 ltr:border-l rtl:border-r border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300">
+                            <span className="material-symbols-rounded text-[14px] opacity-60">person</span>
+                            <span className="font-bold">{shift.openedBy}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
         </div>
 
         {/* Achievements & Insights */}

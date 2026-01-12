@@ -325,14 +325,38 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                <h3 className="text-2xl font-bold">{currentShift ? t.cashRegister.status.open : t.cashRegister.status.closed}</h3>
             </div>
             {currentShift && (
-               <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300">
-                  <p>{t.cashRegister.messages.started}: <span dir="ltr" className="font-mono">
-                      {new Date(currentShift.openTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                      <span className="mx-1 text-gray-400">|</span>
-                      {new Date(currentShift.openTime).toLocaleDateString('en-GB')}
-                  </span></p>
-                  <p>{t.cashRegister.messages.by}: {currentShift.openedBy}</p>
-                  <p>{t.cashRegister.messages.id}: <span dir="ltr">#{currentShift.id.slice(-6)}</span></p>
+               <div className="space-y-2">
+                  {/* Time Badge */}
+                  <div className="flex items-center gap-2">
+                     <span className="material-symbols-rounded text-base text-gray-400">schedule</span>
+                     <span className="text-sm text-gray-600 dark:text-gray-400">{t.cashRegister.messages.started}:</span>
+                     <span className="px-2.5 py-1 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-mono font-bold text-sm">
+                        {new Date(currentShift.openTime).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { 
+                           hour: '2-digit', 
+                           minute: '2-digit', 
+                           hour12: true 
+                        })}
+                     </span>
+                     <span className="text-xs text-gray-400">
+                        {new Date(currentShift.openTime).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' })}
+                     </span>
+                  </div>
+                  
+                  {/* User Badge */}
+                  <div className="flex items-center gap-2">
+                     <span className="material-symbols-rounded text-base text-gray-400">person</span>
+                     <span className="text-sm text-gray-600 dark:text-gray-400">{t.cashRegister.messages.by}:</span>
+                     <span className="px-2.5 py-1 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-bold text-sm">
+                        {currentShift.openedBy}
+                     </span>
+                  </div>
+                  
+                  {/* Shift ID */}
+                  <div className="flex items-center gap-2">
+                     <span className="material-symbols-rounded text-base text-gray-400">tag</span>
+                     <span className="text-sm text-gray-600 dark:text-gray-400">{t.cashRegister.messages.id}:</span>
+                     <span className="font-mono text-sm font-bold text-gray-700 dark:text-gray-300" dir="ltr">#{currentShift.id.slice(-6)}</span>
+                  </div>
                </div>
             )}
           </div>

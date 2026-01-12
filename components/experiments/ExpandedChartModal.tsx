@@ -316,7 +316,7 @@ const generateDetailedData = (inputData: any[]) => {
     return detailed;
   }
   // Data is already dense / البيانات كثيفة بالفعل
-  return inputData.map((d, i) => ({ ...d, date: `Day ${i + 1}` }));
+  return inputData.map((d, i) => ({ ...d, date: d.date || `Day ${i + 1}` }));
 };
 
 /**
@@ -894,7 +894,7 @@ export const ExpandedChartModal: React.FC<ExpandedChartModalProps> = ({
               <div className="flex-1 w-full min-h-0 [&_*]:outline-none [&_*]:ring-0 [&_*]:focus:outline-none">
                 <ResponsiveContainer width="100%" height="100%">
                   {chartType === 'area' ? (
-                    <AreaChart data={filteredData} margin={{ top: 20, right: 0, left: 0, bottom: 20 }}>
+                    <AreaChart data={filteredData} margin={{ top: 20, right: 0, left: language === 'AR' ? 50 : 0, bottom: 20 }}>
                       <defs>
                         <linearGradient id="expandedGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
@@ -906,7 +906,7 @@ export const ExpandedChartModal: React.FC<ExpandedChartModalProps> = ({
                       <YAxis 
                         tickLine={false} 
                         axisLine={false} 
-                        tick={{ fontSize: 11, fill: '#6B7280' }} 
+                        tick={{ fontSize: 11, fill: '#6B7280', dx: language === 'AR' ? -40 : 0, textAnchor: 'end' }} 
                         tickFormatter={(value) => `${value}${unit}`}
                         domain={['auto', 'auto']}
                       />
@@ -939,10 +939,10 @@ export const ExpandedChartModal: React.FC<ExpandedChartModalProps> = ({
                       )}
                     </AreaChart>
                   ) : (
-                    <BarChart data={filteredData} margin={{ top: 20, right: 0, left: 0, bottom: 20 }}>
+                    <BarChart data={filteredData} margin={{ top: 20, right: 0, left: language === 'AR' ? 50 : 0, bottom: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                       <XAxis dataKey="date" hide padding={{ left: 0, right: 0 }} />
-                      <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} tickFormatter={(value) => `${value}${unit}`} />
+                      <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#6B7280', dx: language === 'AR' ? -40 : 0, textAnchor: 'end' }} tickFormatter={(value) => `${value}${unit}`} />
                       <Tooltip content={tooltipContent} cursor={{ fill: 'transparent' }} />
                       <Bar 
                         dataKey="value" 
