@@ -9,18 +9,20 @@ if (!rootElement) {
 
 import { StatusBarProvider } from './components/layout/StatusBar';
 import { ShiftProvider } from './hooks/useShift';
-
 import { DataProvider } from './services';
+import { SettingsProvider } from './context';
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <StatusBarProvider>
-      <ShiftProvider>
-        <DataProvider>
-          <App />
-        </DataProvider>
-      </ShiftProvider>
-    </StatusBarProvider>
+    <SettingsProvider>
+      <StatusBarProvider>
+        <ShiftProvider>
+          <DataProvider>
+            <App />
+          </DataProvider>
+        </ShiftProvider>
+      </StatusBarProvider>
+    </SettingsProvider>
   </React.StrictMode>
 );
