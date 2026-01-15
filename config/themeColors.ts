@@ -16,6 +16,7 @@ export const COLOR_HEX_MAP: Record<string, string> = {
   indigo: '#6366f1',
   violet: '#8b5cf6',
   purple: '#a855f7',
+  fuchsia: '#d946ef',
   pink: '#ec4899',
   rose: '#f43f5e',
   red: '#ef4444',

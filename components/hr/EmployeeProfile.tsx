@@ -287,25 +287,8 @@ const CustomTooltipContent = memo(({ active, payload, label, color, unit, employ
 });
 CustomTooltipContent.displayName = 'CustomTooltipContent';
 
-// Theme color mapping for Recharts (since CSS variables don't always resolve inside SVG defs)
-const THEME_COLOR_HEX: Record<string, string> = {
-  blue: '#3b82f6',
-  purple: '#a855f7',
-  green: '#22c55e',
-  orange: '#f97316',
-  red: '#ef4444',
-  pink: '#ec4899',
-  cyan: '#06b6d4',
-  teal: '#14b8a6',
-  indigo: '#6366f1',
-  violet: '#8b5cf6',
-  amber: '#f59e0b',
-  emerald: '#10b981',
-  rose: '#f43f5e',
-  fuchsia: '#d946ef',
-  sky: '#0ea5e9',
-  lime: '#84cc16'
-};
+// Use centralized color map from config/themeColors.ts
+import { COLOR_HEX_MAP } from '../../config/themeColors';
 
 interface EmployeeProfileProps {
   sales: Sale[];
@@ -384,7 +367,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   }, [allEmployees, selectedEmployeeId]);
 
   const selectedEmployee = allEmployees.find(e => e.id === selectedEmployeeId);
-  const chartColor = THEME_COLOR_HEX[color.name] || THEME_COLOR_HEX['blue'];
+  const chartColor = COLOR_HEX_MAP[color.name] || COLOR_HEX_MAP['blue'];
 
   // Date Filter Logic
   const dateRange = useMemo<DateRangeFilter | undefined>(() => {
