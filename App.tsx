@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, PurchaseReturn, Return, Customer, Shift, CashTransaction, CashTransactionType, Employee } from './types';
+import { ThemeColor, ViewState, Drug, Sale, CartItem, Language, Supplier, Purchase, PurchaseReturn, Return, Customer, Employee, Shift, CashTransaction } from './types';
 import { Toast } from './components/common/Toast';
 import { TRANSLATIONS } from './i18n/translations';
 import { PHARMACY_MENU } from './config/menuData';
@@ -11,6 +11,7 @@ import { PAGE_REGISTRY } from './config/pageRegistry';
 import { useTheme } from './hooks/useTheme';
 import { CSV_INVENTORY } from './data/sample-inventory';
 import { useData } from './services';
+import { useSettings } from './context';
 
 // Inventory Generator
 
@@ -210,30 +211,29 @@ const App: React.FC = () => {
     return 'dashboard';
   });
 
-  // Initialize State from LocalStorage
-  const [theme, setTheme] = useState<ThemeColor>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_theme');
-      return saved ? JSON.parse(saved) : THEMES[0];
-    }
-    return THEMES[0];
-  });
-
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_darkMode');
-      return saved ? JSON.parse(saved) : false;
-    }
-    return false;
-  });
-
-  const [language, setLanguage] = useState<Language>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_language');
-      return (saved as Language) || 'AR';
-    }
-    return 'EN';
-  });
+  // --- Settings from Context (centralized) ---
+  const {
+    theme,
+    setTheme,
+    darkMode,
+    setDarkMode,
+    language,
+    setLanguage,
+    textTransform,
+    setTextTransform,
+    sidebarVisible,
+    setSidebarVisible,
+    hideInactiveModules,
+    setHideInactiveModules,
+    developerMode,
+    setDeveloperMode,
+    navStyle,
+    setNavStyle,
+    dropdownBlur,
+    setDropdownBlur,
+    availableThemes,
+    availableLanguages,
+  } = useSettings();
 
   const [profileImage, setProfileImage] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
@@ -253,83 +253,8 @@ const App: React.FC = () => {
   // قائمة الموظفين
   const { employees } = useData();
 
-  const [textTransform, setTextTransform] = useState<'normal' | 'uppercase'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_textTransform');
-      return (saved as 'normal' | 'uppercase') || 'uppercase';
-    }
-    return 'normal';
-  });
-
-  const [sidebarVisible, setSidebarVisible] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_sidebarVisible');
-      return saved ? JSON.parse(saved) : false;
-    }
-    return true;
-  });
-
-  const [hideInactiveModules, setHideInactiveModules] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_hideInactiveModules');
-      return saved ? JSON.parse(saved) : true;
-    }
-    return false;
-  });
-
-  const [developerMode, setDeveloperMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_developerMode');
-      return saved ? JSON.parse(saved) : false;
-    }
-    return false;
-  });
-
-  const [navStyle, setNavStyle] = useState<1 | 2 | 3>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_navStyle');
-      return (Number(saved) as 1 | 2 | 3) || 2;
-    }
-    return 1;
-  });
-
-  const [dropdownBlur, setDropdownBlur] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_dropdownBlur');
-      return saved ? JSON.parse(saved) : false;
-    }
-    return false;
-  });
-
   // Apply theme system - updates CSS variables
   useTheme(theme.primary, darkMode);
-
-  // Apply text transform globally
-  useEffect(() => {
-    document.documentElement.style.setProperty('--text-transform', textTransform === 'uppercase' ? 'uppercase' : 'none');
-    if (textTransform === 'uppercase') {
-        document.body.classList.add('uppercase-mode');
-    } else {
-        document.body.classList.remove('uppercase-mode');
-    }
-    localStorage.setItem('pharma_textTransform', textTransform);
-  }, [textTransform]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_hideInactiveModules', JSON.stringify(hideInactiveModules));
-  }, [hideInactiveModules]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_developerMode', JSON.stringify(developerMode));
-  }, [developerMode]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_navStyle', navStyle.toString());
-  }, [navStyle]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_dropdownBlur', JSON.stringify(dropdownBlur));
-  }, [dropdownBlur]);
 
   const [inventory, setInventory] = useState<Drug[]>(() => {
     if (typeof window !== 'undefined') {
@@ -417,34 +342,13 @@ const App: React.FC = () => {
 
   const t = TRANSLATIONS[language];
 
-  // Persist & Apply Effects
-  useEffect(() => {
-    localStorage.setItem('pharma_theme', JSON.stringify(theme));
-  }, [theme]);
-
+  // Persist view to localStorage
   useEffect(() => {
     localStorage.setItem('pharma_view', view);
   }, [view]);
 
+  // Apply language direction
   useEffect(() => {
-    localStorage.setItem('pharma_darkMode', JSON.stringify(darkMode));
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_activeModule', activeModule);
-  }, [activeModule]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_sidebarVisible', JSON.stringify(sidebarVisible));
-  }, [sidebarVisible]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_language', language);
     document.documentElement.lang = language.toLowerCase();
     document.documentElement.dir = language === 'AR' ? 'rtl' : 'ltr';
   }, [language]);
@@ -1376,29 +1280,9 @@ const App: React.FC = () => {
 
       {/* StatusBar - Desktop Only */}
       <StatusBar 
-        theme={theme.primary}
-        language={language}
         t={t.statusBar}
         currentEmployeeId={currentEmployeeId}
         onSelectEmployee={setCurrentEmployeeId}
-        // Settings Props
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
-        currentTheme={theme}
-        setTheme={setTheme}
-        availableThemes={THEMES}
-        setLanguage={setLanguage}
-        availableLanguages={LANGUAGES}
-        textTransform={textTransform}
-        setTextTransform={setTextTransform}
-        hideInactiveModules={hideInactiveModules}
-        setHideInactiveModules={setHideInactiveModules}
-        navStyle={navStyle}
-        setNavStyle={setNavStyle}
-        developerMode={developerMode}
-        setDeveloperMode={setDeveloperMode}
-        dropdownBlur={dropdownBlur}
-        setDropdownBlur={setDropdownBlur}
       />
 
        {/* Mobile Bottom Nav */}

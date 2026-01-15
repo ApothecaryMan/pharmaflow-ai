@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useStatusBar } from './StatusBarContext';
 import { ConnectionStatus } from './items/ConnectionStatus';
 import { NotificationBell } from './items/NotificationBell';
@@ -12,6 +12,7 @@ import { DynamicTicker } from './items/DynamicTicker';
 import { useShift } from '../../../hooks/useShift';
 import { useDynamicTickerData } from '../../../hooks/useDynamicTickerData';
 import { useData } from '../../../services';
+import { useSettings } from '../../../context';
 
 export interface StatusBarTranslations {
   ready: string;
@@ -45,29 +46,9 @@ export interface StatusBarTranslations {
 import { ThemeColor, Language } from '../../../types';
 
 export interface StatusBarProps {
-  theme?: string;
-  language?: 'EN' | 'AR';
   t?: StatusBarTranslations;
   currentEmployeeId?: string | null;
   onSelectEmployee?: (id: string) => void;
-  // Settings Props (migrated from Navbar)
-  darkMode?: boolean;
-  setDarkMode?: (mode: boolean) => void;
-  currentTheme?: ThemeColor;
-  setTheme?: (theme: ThemeColor) => void;
-  availableThemes?: ThemeColor[];
-  setLanguage?: (lang: Language) => void;
-  availableLanguages?: { code: Language; label: string }[];
-  textTransform?: 'normal' | 'uppercase';
-  setTextTransform?: (transform: 'normal' | 'uppercase') => void;
-  hideInactiveModules?: boolean;
-  setHideInactiveModules?: (hide: boolean) => void;
-  navStyle?: 1 | 2 | 3;
-  setNavStyle?: (style: 1 | 2 | 3) => void;
-  developerMode?: boolean;
-  setDeveloperMode?: (mode: boolean) => void;
-  dropdownBlur?: boolean;
-  setDropdownBlur?: (blur: boolean) => void;
 }
 
 const defaultTranslations: StatusBarTranslations = {
@@ -89,29 +70,9 @@ const defaultTranslations: StatusBarTranslations = {
 };
 
 export const StatusBar: React.FC<StatusBarProps> = React.memo(({
-  theme = 'blue',
-  language = 'EN',
   t = defaultTranslations,
   currentEmployeeId,
   onSelectEmployee,
-  // Settings Props
-  darkMode = false,
-  setDarkMode,
-  currentTheme,
-  setTheme,
-  availableThemes = [],
-  setLanguage,
-  availableLanguages = [],
-  textTransform = 'normal',
-  setTextTransform,
-  hideInactiveModules,
-  setHideInactiveModules,
-  navStyle,
-  setNavStyle,
-  developerMode,
-  setDeveloperMode,
-  dropdownBlur,
-  setDropdownBlur,
 }) => {
   /* 
    * STATUS BAR ARCHITECTURE GUIDE
@@ -132,19 +93,44 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
    */
   const { state } = useStatusBar();
 
+  // --- Settings from Context ---
+  const {
+    language,
+    theme: currentTheme,
+    setTheme,
+    darkMode,
+    setDarkMode,
+    setLanguage,
+    availableThemes,
+    availableLanguages,
+    textTransform,
+    setTextTransform,
+    hideInactiveModules,
+    setHideInactiveModules,
+    navStyle,
+    setNavStyle,
+    developerMode,
+    setDeveloperMode,
+    dropdownBlur,
+    setDropdownBlur,
+    showTicker,
+    setShowTicker,
+    showTickerSales,
+    setShowTickerSales,
+    showTickerInventory,
+    setShowTickerInventory,
+    showTickerCustomers,
+    setShowTickerCustomers,
+    showTickerTopSeller,
+    setShowTickerTopSeller,
+  } = useSettings();
+
   // --- Real-time Data ---
   const tickerData = useDynamicTickerData();
   const { employees } = useData();
 
   // --- Shift Status Logic ---
   const { currentShift } = useShift();
-
-  // --- Ticker Visibility Settings ---
-  const [showTicker, setShowTicker] = useState(true);
-  const [showTickerSales, setShowTickerSales] = useState(true);
-  const [showTickerInventory, setShowTickerInventory] = useState(true);
-  const [showTickerCustomers, setShowTickerCustomers] = useState(true);
-  const [showTickerTopSeller, setShowTickerTopSeller] = useState(true);
   
   const getShiftTooltip = (): string => {
     if (!currentShift) {
@@ -186,39 +172,37 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
         {/* Version Info */}
         <VersionInfo version={t.version} />
 
-        {currentTheme && setTheme && setDarkMode && setLanguage && setTextTransform && (
-          <SettingsMenu 
-            language={language}
-            darkMode={darkMode}
-            setDarkMode={setDarkMode}
-            currentTheme={currentTheme}
-            setTheme={setTheme}
-            availableThemes={availableThemes}
-            setLanguage={setLanguage}
-            availableLanguages={availableLanguages}
-            textTransform={textTransform}
-            setTextTransform={setTextTransform}
-            hideInactiveModules={hideInactiveModules}
-            setHideInactiveModules={setHideInactiveModules}
-            navStyle={navStyle}
-            setNavStyle={setNavStyle}
-            developerMode={developerMode}
-            setDeveloperMode={setDeveloperMode}
-            dropdownBlur={dropdownBlur}
-            setDropdownBlur={setDropdownBlur}
-            // Status Bar Settings
-            showTicker={showTicker}
-            setShowTicker={setShowTicker}
-            showTickerSales={showTickerSales}
-            setShowTickerSales={setShowTickerSales}
-            showTickerInventory={showTickerInventory}
-            setShowTickerInventory={setShowTickerInventory}
-            showTickerCustomers={showTickerCustomers}
-            setShowTickerCustomers={setShowTickerCustomers}
-            showTickerTopSeller={showTickerTopSeller}
-            setShowTickerTopSeller={setShowTickerTopSeller}
-          />
-        )}
+        {/* Settings Menu */}
+        <SettingsMenu 
+          language={language}
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          currentTheme={currentTheme}
+          setTheme={setTheme}
+          availableThemes={availableThemes}
+          setLanguage={setLanguage}
+          availableLanguages={availableLanguages}
+          textTransform={textTransform}
+          setTextTransform={setTextTransform}
+          hideInactiveModules={hideInactiveModules}
+          setHideInactiveModules={setHideInactiveModules}
+          navStyle={navStyle}
+          setNavStyle={setNavStyle}
+          developerMode={developerMode}
+          setDeveloperMode={setDeveloperMode}
+          dropdownBlur={dropdownBlur}
+          setDropdownBlur={setDropdownBlur}
+          showTicker={showTicker}
+          setShowTicker={setShowTicker}
+          showTickerSales={showTickerSales}
+          setShowTickerSales={setShowTickerSales}
+          showTickerInventory={showTickerInventory}
+          setShowTickerInventory={setShowTickerInventory}
+          showTickerCustomers={showTickerCustomers}
+          setShowTickerCustomers={setShowTickerCustomers}
+          showTickerTopSeller={showTickerTopSeller}
+          setShowTickerTopSeller={setShowTickerTopSeller}
+        />
 
         {/* Connection Status */}
         <ConnectionStatus
