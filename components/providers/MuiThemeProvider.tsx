@@ -3,30 +3,9 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import type {} from '@mui/x-data-grid/themeAugmentation';
 import { prefix } from 'stylis';
+import { COLOR_HEX_MAP } from '../../config/themeColors';
 
-// Map Tailwind colors to MUI Palette compatible strings
-// This is a simplified map. For a full production app you might import your tailwind config.
-const COLOR_MAP: Record<string, string> = {
-  blue: '#3b82f6',
-  indigo: '#6366f1',
-  purple: '#a855f7',
-  pink: '#ec4899',
-  red: '#ef4444',
-  orange: '#f97316',
-  amber: '#f59e0b',
-  yellow: '#eab308',
-  lime: '#84cc16',
-  green: '#22c55e',
-  emerald: '#10b981',
-  teal: '#14b8a6',
-  cyan: '#06b6d4',
-  sky: '#0ea5e9',
-  gray: '#6b7280',
-  slate: '#64748b',
-  zinc: '#71717a',
-  neutral: '#737373',
-  stone: '#78716c',
-};
+// Use centralized color map from config/themeColors.ts
 
 interface MuiThemeProviderProps {
   children: React.ReactNode;
@@ -43,7 +22,7 @@ export const MuiThemeProvider: React.FC<MuiThemeProviderProps> = ({
 }) => {
   
   const theme = useMemo(() => {
-      const primaryColor = COLOR_MAP[themeColor] || COLOR_MAP.blue;
+      const primaryColor = COLOR_HEX_MAP[themeColor] || COLOR_HEX_MAP.blue;
       
       return createTheme({
         direction: language === 'AR' ? 'rtl' : 'ltr',

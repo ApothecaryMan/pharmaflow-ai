@@ -11,7 +11,7 @@ import { PAGE_REGISTRY } from './config/pageRegistry';
 import { useTheme } from './hooks/useTheme';
 import { CSV_INVENTORY } from './data/sample-inventory';
 import { useData } from './services';
-import { useSettings } from './context';
+import { useSettings, THEMES, LANGUAGES } from './context';
 
 // --- Initial Data ---
 // Helper: Ensure stock is always a valid integer
@@ -28,18 +28,7 @@ const INITIAL_SUPPLIERS: Supplier[] = [
   { id: '3', name: 'MediCare Supplies', contactPerson: 'Dr. House', phone: '+1122334455', email: 'house@medicare.com', address: '789 Clinic Rd, Hospital Area' },
 ];
 
-const THEMES: ThemeColor[] = [
-  { name: 'Ocean', primary: 'cyan', hex: '#06b6d4' },
-  { name: 'Royal', primary: 'violet', hex: '#8b5cf6' },
-  { name: 'Emerald', primary: 'emerald', hex: '#10b981' },
-  { name: 'Rose', primary: 'rose', hex: '#f43f5e' },
-  { name: 'Amber', primary: 'amber', hex: '#f59e0b' },
-];
 
-const LANGUAGES: { code: Language; label: string }[] = [
-  { code: 'EN', label: 'English' },
-  { code: 'AR', label: 'Arabic' },
-];
 
 import { ContextMenuProvider, useContextMenu } from './components/common/ContextMenu';
 

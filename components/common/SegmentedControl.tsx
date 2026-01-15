@@ -81,23 +81,8 @@ const SIZE_CLASSES = {
   }
 };
 
-// Color map for pill indicator since Tailwind doesn't support dynamic class names
-const PILL_COLOR_MAP: Record<string, string> = {
-  emerald: '#059669',
-  green: '#16a34a',
-  blue: '#2563eb',
-  indigo: '#4f46e5',
-  purple: '#9333ea',
-  pink: '#db2777',
-  red: '#dc2626',
-  orange: '#ea580c',
-  amber: '#d97706',
-  yellow: '#ca8a04',
-  teal: '#0d9488',
-  cyan: '#0891b2',
-  sky: '#0284c7',
-  gray: '#4b5563'
-};
+// Use centralized color map from config/themeColors.ts
+import { COLOR_HEX_MAP } from '../../config/themeColors';
 
 export function SegmentedControl<T extends string | number | boolean>({
   options,
@@ -163,7 +148,7 @@ export function SegmentedControl<T extends string | number | boolean>({
           style={{
             ...indicatorStyle,
             boxShadow: isPill ? '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)' : 'rgba(0, 0, 0, 0.09) 0px 3px 12px',
-            backgroundColor: isPill ? (PILL_COLOR_MAP[color] || '#059669') : undefined
+            backgroundColor: isPill ? (COLOR_HEX_MAP[color] || '#059669') : undefined
           }}
         />
       )}

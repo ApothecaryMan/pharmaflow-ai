@@ -10,30 +10,13 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { ThemeColor, Language } from '../types';
+import { Language } from '../types';
+import { THEMES, COLOR_HEX_MAP } from '../config/themeColors';
+import type { ThemeColor } from '../types';
 
-// Available Themes
-export const THEMES: ThemeColor[] = [
-  { name: 'Blue', primary: 'blue', hex: '#3b82f6' },
-  { name: 'Indigo', primary: 'indigo', hex: '#6366f1' },
-  { name: 'Purple', primary: 'purple', hex: '#a855f7' },
-  { name: 'Pink', primary: 'pink', hex: '#ec4899' },
-  { name: 'Red', primary: 'red', hex: '#ef4444' },
-  { name: 'Orange', primary: 'orange', hex: '#f97316' },
-  { name: 'Amber', primary: 'amber', hex: '#f59e0b' },
-  { name: 'Yellow', primary: 'yellow', hex: '#eab308' },
-  { name: 'Lime', primary: 'lime', hex: '#84cc16' },
-  { name: 'Green', primary: 'green', hex: '#22c55e' },
-  { name: 'Emerald', primary: 'emerald', hex: '#10b981' },
-  { name: 'Teal', primary: 'teal', hex: '#14b8a6' },
-  { name: 'Cyan', primary: 'cyan', hex: '#06b6d4' },
-  { name: 'Sky', primary: 'sky', hex: '#0ea5e9' },
-  { name: 'Gray', primary: 'gray', hex: '#6b7280' },
-  { name: 'Slate', primary: 'slate', hex: '#64748b' },
-  { name: 'Zinc', primary: 'zinc', hex: '#71717a' },
-  { name: 'Neutral', primary: 'neutral', hex: '#737373' },
-  { name: 'Stone', primary: 'stone', hex: '#78716c' },
-];
+// Re-export for convenience
+export { THEMES } from '../config/themeColors';
+
 
 // Available Languages
 export const LANGUAGES: { code: Language; label: string }[] = [
