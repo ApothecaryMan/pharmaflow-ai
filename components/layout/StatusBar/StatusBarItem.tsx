@@ -41,7 +41,7 @@ export interface StatusBarItemProps {
  *    - Gap: gap-1.5 (Space between icon and text)
  */
 const variantStyles: Record<string, string> = {
-  default: 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/10',
+  default: 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/10',
   success: 'text-emerald-500 hover:bg-emerald-500/10',
   warning: 'text-amber-500 hover:bg-amber-500/10',
   error: 'text-red-500 hover:bg-red-500/10',

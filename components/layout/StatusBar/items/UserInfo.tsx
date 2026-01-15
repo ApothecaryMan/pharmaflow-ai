@@ -6,6 +6,15 @@ import { Employee } from '../../../../types';
 
 import { useSmartDirection } from '../../../common/SmartInputs';
 
+/*
+ * RTL SUPPORT REMINDER
+ * ====================
+ * When creating StatusBar components, always add RTL support:
+ *   dir={language === 'AR' ? 'rtl' : 'ltr'}
+ * 
+ * This ensures proper text direction for Arabic language.
+ */
+
 interface UserInfoProps {
   userName?: string;
   userRole?: string;
@@ -178,7 +187,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({
   }
 
   return (
-    <div className="relative flex items-center h-full" ref={containerRef}>
+    <div className="relative flex items-center h-full" ref={containerRef} dir={language === 'AR' ? 'rtl' : 'ltr'}>
       {step === 'idle' ? (
         <div onContextMenu={handleContextMenu} className="h-full">
             <StatusBarItem
@@ -187,11 +196,11 @@ export const UserInfo: React.FC<UserInfoProps> = ({
             tooltip={tooltipText}
             onClick={handleStartLogin}
             variant={currentEmployeeId ? 'info' : 'warning'}
-            className="min-w-[120px] cursor-pointer hover:bg-white/10"
+            className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/10"
             />
         </div>
       ) : (
-        <div className="flex items-center h-full px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-l border-r border-gray-200/50 dark:border-gray-700/50 min-w-[150px]">
+        <div className="flex items-center h-full px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-l border-r border-gray-300 dark:border-gray-700 min-w-[150px]">
            <span className={`material-symbols-rounded text-[16px] ${isError ? 'text-red-500' : 'text-blue-500 dark:text-blue-400'}`}>
               {step === 'username' ? 'badge' : 'lock'}
            </span>

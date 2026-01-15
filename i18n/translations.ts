@@ -81,6 +81,16 @@ export const TRANSLATIONS = {
       messages: {
         outOfStock: 'Out of Stock: {{name}} {{form}}',
         saleComplete: 'Sale completed: {{total}} L.E'
+      },
+      ticker: {
+        todaySales: 'Today',
+        invoices: 'Invoices',
+        completed: 'Done',
+        pending: 'Pending',
+        lowStock: 'Low Stock',
+        shortages: 'Shortages',
+        newCustomers: 'New Customers',
+        topSeller: 'Top Seller'
       }
     },
     inventory: {
@@ -1574,6 +1584,16 @@ export const TRANSLATIONS = {
       messages: {
         outOfStock: 'نفذت الكمية: {{name}} {{form}}',
         saleComplete: 'تمت عملية بيع: {{total}} ج.م'
+      },
+      ticker: {
+        todaySales: 'اليوم',
+        invoices: 'فواتير',
+        completed: 'مكتمل',
+        pending: 'معلق',
+        lowStock: 'مخزون منخفض',
+        shortages: 'نواقص',
+        newCustomers: 'عملاء جدد',
+        topSeller: 'أفضل بائع'
       }
     },
     inventory: {

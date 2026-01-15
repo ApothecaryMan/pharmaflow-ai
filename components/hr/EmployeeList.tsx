@@ -9,6 +9,7 @@ import {
   flexRender
 } from '@tanstack/react-table';
 import { Employee } from '../../types';
+import { useData } from '../../services';
 import { TanStackTable } from '../common/TanStackTable';
 import { SmartInput, SmartPhoneInput, SmartEmailInput } from '../common/SmartInputs';
 import { Modal } from '../common/Modal';
@@ -24,8 +25,10 @@ interface EmployeeListProps {
 }
 
 export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, onUpdateEmployees }) => {
+  // --- Data Context ---
+  const { employees, addEmployee, updateEmployee, deleteEmployee } = useData();
+
   // --- State ---
-  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
@@ -47,25 +50,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
   // Sounds
   const { playSuccess, playError, playBeep } = usePosSounds();
 
-  // --- Data Persistence ---
-  useEffect(() => {
-    // Load data
-    try {
-      const stored = localStorage.getItem('pharma_employees');
-      if (stored) {
-        setEmployees(JSON.parse(stored));
-      }
-    } catch (e) {
-      console.error('Failed to load employees', e);
-    }
-  }, []);
-
-  const saveToStorage = (newEmployees: Employee[]) => {
-    setEmployees(newEmployees);
-    localStorage.setItem('pharma_employees', JSON.stringify(newEmployees));
-    window.dispatchEvent(new Event('pharma_employees_updated'));
-    if (onUpdateEmployees) onUpdateEmployees(newEmployees);
-  };
 
   // --- Actions ---
   const handleEdit = (emp: Employee) => {
@@ -74,10 +58,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
     setIsModalOpen(true);
   };
 
-  const handleDelete = (emp: Employee) => {
+  const handleDelete = async (emp: Employee) => {
     if (confirm(t.employeeList.deleteConfirm)) {
-      const newEmployees = employees.filter(e => e.id !== emp.id);
-      saveToStorage(newEmployees);
+      await deleteEmployee(emp.id);
       playBeep();
     }
   };
@@ -228,36 +211,42 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
     };
 
     const isEdit = !!editingEmployee;
-    let newEmployees = [...employees];
 
-    if (isEdit) {
-        newEmployees = newEmployees.map(e => e.id === editingEmployee.id ? { ...e, ...finalFormData } as Employee : e);
-    } else {
-        // Generate ID and Code
-        const maxSerial = employees.reduce((max, emp) => {
-            const num = parseInt(emp.employeeCode.replace('EMP-', '') || '0');
-            return Math.max(max, isNaN(num) ? 0 : num);
-        }, 0);
-        
-        const newCode = `EMP-${String(maxSerial + 1).padStart(3, '0')}`;
-        
-        const newEmp: Employee = {
-            id: generateUUID(),
-            employeeCode: newCode,
-            startDate: new Date().toISOString().split('T')[0],
-            status: 'active',
-            department: 'pharmacy',
-            role: 'pharmacist',
-            ...finalFormData as any
-        };
-        newEmployees.push(newEmp);
+    try {
+      if (isEdit) {
+          await updateEmployee(editingEmployee.id, finalFormData);
+      } else {
+          // Generate ID and Code
+          const maxSerial = employees.reduce((max, emp) => {
+              const num = parseInt(emp.employeeCode.replace('EMP-', '') || '0');
+              return Math.max(max, isNaN(num) ? 0 : num);
+          }, 0);
+          
+          const newCode = `EMP-${String(maxSerial + 1).padStart(3, '0')}`;
+          
+          const newEmp: Employee = {
+              id: generateUUID(),
+              employeeCode: newCode,
+              startDate: new Date().toISOString().split('T')[0],
+              status: 'active',
+              department: 'pharmacy',
+              role: 'pharmacist',
+              ...finalFormData as any
+          };
+          await addEmployee(newEmp);
+      }
+
+      playSuccess();
+      setIsModalOpen(false);
+      setEditingEmployee(null);
+      setFormData({});
+      
+      // Legacy callback support if needed
+      if (onUpdateEmployees) onUpdateEmployees(employees); // Note: this might pass old state, but context listeners should update
+    } catch (error) {
+      console.error('Failed to save employee', error);
+      playError();
     }
-
-    saveToStorage(newEmployees);
-    playSuccess();
-    setIsModalOpen(false);
-    setEditingEmployee(null);
-    setFormData({});
   };
 
   const closeModal = () => {

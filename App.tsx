@@ -10,6 +10,7 @@ import { StatusBar, useStatusBar } from './components/layout/StatusBar';
 import { PAGE_REGISTRY } from './config/pageRegistry';
 import { useTheme } from './hooks/useTheme';
 import { CSV_INVENTORY } from './data/sample-inventory';
+import { useData } from './services';
 
 // Inventory Generator
 
@@ -250,13 +251,7 @@ const App: React.FC = () => {
   });
 
   // قائمة الموظفين
-  const [employees, setEmployees] = useState<Employee[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_employees');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
+  const { employees } = useData();
 
   const [textTransform, setTextTransform] = useState<'normal' | 'uppercase'>(() => {
     if (typeof window !== 'undefined') {
@@ -630,8 +625,6 @@ const App: React.FC = () => {
             setPurchaseReturns(JSON.parse(e.newValue));
         } else if (e.key === 'pharma_suppliers' && e.newValue) {
             setSuppliers(JSON.parse(e.newValue));
-        } else if (e.key === 'pharma_employees' && e.newValue) {
-            setEmployees(JSON.parse(e.newValue));
         }
     };
 
@@ -1363,7 +1356,7 @@ const App: React.FC = () => {
               props.t = t.customerOverview;
             } else if (view === 'employees') {
                 props.t = t.employeeList;
-                props.onUpdateEmployees = (newEmp: Employee[]) => setEmployees(newEmp);
+                // props.onUpdateEmployees = (newEmp: Employee[]) => setEmployees(newEmp); // Removed as using DataContext
             } else if (view === 'add-product') {
               props.t = t.inventory;
               props.initialMode = 'add';
@@ -1386,7 +1379,6 @@ const App: React.FC = () => {
         theme={theme.primary}
         language={language}
         t={t.statusBar}
-        employees={employees}
         currentEmployeeId={currentEmployeeId}
         onSelectEmployee={setCurrentEmployeeId}
         // Settings Props

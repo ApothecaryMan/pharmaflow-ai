@@ -236,7 +236,7 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   }, [state.isOnline, syncTime]);
 
-  const value: StatusBarContextType = {
+  const value = React.useMemo<StatusBarContextType>(() => ({
     state,
     addNotification,
     removeNotification,
@@ -250,7 +250,21 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
     updateLastTransactionTime,
     validateTransactionTime,
     syncTime,
-  };
+  }), [
+    state,
+    addNotification,
+    removeNotification,
+    clearNotifications,
+    markAsRead,
+    setAnnouncement,
+    setOnlineStatus,
+    registerItem,
+    unregisterItem,
+    getVerifiedDate,
+    updateLastTransactionTime,
+    validateTransactionTime,
+    syncTime,
+  ]);
 
   return (
     <StatusBarContext.Provider value={value}>

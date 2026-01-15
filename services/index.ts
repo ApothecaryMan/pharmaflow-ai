@@ -16,6 +16,7 @@ export * from './suppliers';
 export * from './purchases';
 export * from './returns';
 export * from './cash';
+export * from './hr';
 
 // Data Context (Unified State Management)
 export { DataProvider, useData } from './DataContext';
@@ -31,3 +32,4 @@ export { supplierService } from './suppliers/supplierService';
 export { purchaseService } from './purchases/purchaseService';
 export { returnService } from './returns/returnService';
 export { cashService } from './cash/cashService';
+export { employeeService } from './hr/employeeService';

@@ -56,6 +56,7 @@ export const createCustomerService = (): CustomerService => ({
     const newCustomer: Customer = { 
       ...customer, 
       id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
       points: customer.points || 0,
       totalPurchases: customer.totalPurchases || 0
     } as Customer;

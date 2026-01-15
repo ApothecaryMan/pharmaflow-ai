@@ -3,6 +3,7 @@ import { StatusBarItem } from '../StatusBarItem';
 import { Switch } from '../../../common/Switch';
 import { SegmentedControl } from '../../../common/SegmentedControl';
 import { ThemeColor, Language } from '../../../../types';
+import { useSmartPosition } from '../../../../hooks/useSmartPosition';
 
 export interface SettingsMenuProps {
   language: 'EN' | 'AR';
@@ -30,6 +31,17 @@ export interface SettingsMenuProps {
   // Dropdown Blur
   dropdownBlur?: boolean;
   setDropdownBlur?: (blur: boolean) => void;
+  // Status Bar Settings
+  showTicker?: boolean;
+  setShowTicker?: (show: boolean) => void;
+  showTickerSales?: boolean;
+  setShowTickerSales?: (show: boolean) => void;
+  showTickerInventory?: boolean;
+  setShowTickerInventory?: (show: boolean) => void;
+  showTickerCustomers?: boolean;
+  setShowTickerCustomers?: (show: boolean) => void;
+  showTickerTopSeller?: boolean;
+  setShowTickerTopSeller?: (show: boolean) => void;
 }
 
 export const SettingsMenu: React.FC<SettingsMenuProps> = ({
@@ -51,13 +63,26 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   setDeveloperMode,
   dropdownBlur,
   setDropdownBlur,
+  // Status Bar Settings
+  showTicker,
+  setShowTicker,
+  showTickerSales,
+  setShowTickerSales,
+  showTickerInventory,
+  setShowTickerInventory,
+  showTickerCustomers,
+  setShowTickerCustomers,
+  showTickerTopSeller,
+  setShowTickerTopSeller,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [statusBarExpanded, setStatusBarExpanded] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Translations
   const t = {
     settings: language === 'AR' ? 'الإعدادات' : 'Settings',
+    themesMenu: language === 'AR' ? 'المظاهر' : 'Themes', // New Translation
     theme: language === 'AR' ? 'اللون' : 'Theme',
     darkMode: language === 'AR' ? 'الوضع الداكن' : 'Dark Mode',
     language: language === 'AR' ? 'اللغة' : 'Language',
@@ -68,7 +93,42 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     designStyleNavbar: language === 'AR' ? 'شريط' : 'Navbar',
     developerMode: language === 'AR' ? 'وضع المطور' : 'Developer Mode',
     dropdownBlur: language === 'AR' ? 'خلفية ضبابية للقوائم' : 'Blur Dropdown Background',
+    // Status Bar translations
+    statusBarSettings: language === 'AR' ? 'إعدادات شريط الحالة' : 'Status Bar Settings',
+    quickStatuses: language === 'AR' ? 'الحالات السريعة' : 'Quick Statuses',
+    showSales: language === 'AR' ? 'المبيعات' : 'Sales',
+    showInventory: language === 'AR' ? 'المخزون' : 'Inventory',
+    showCustomers: language === 'AR' ? 'العملاء الجدد' : 'New Customers',
+    showTopSeller: language === 'AR' ? 'أفضل بائع' : 'Top Seller',
   };
+
+  const [themeExpanded, setThemeExpanded] = useState(false);
+  
+  // Use Custom Hook for Themes Position
+  const { 
+    ref: themesRef, 
+    position: themesPos, 
+    checkPosition: checkThemesPos,
+    resetPosition: resetThemesPos
+  } = useSmartPosition({ defaultAlign: 'top' });
+
+  // Use Custom Hook for Quick Statuses Position
+  const { 
+    ref: quickStatusesRef, 
+    position: quickStatusesPos, 
+    checkPosition: checkInfoPos,
+    resetPosition: resetInfoPos
+  } = useSmartPosition({ defaultAlign: 'bottom' });
+
+  // Reset submenu when main menu is closed
+  useEffect(() => {
+    if (!isOpen) {
+      setStatusBarExpanded(false);
+      setThemeExpanded(false);
+      resetThemesPos();
+      resetInfoPos();
+    }
+  }, [isOpen, resetThemesPos, resetInfoPos]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -78,43 +138,35 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
   };
 
   return (
-    <div className="relative flex items-center h-full" ref={dropdownRef}>
+    <div className="relative font-cairo" ref={dropdownRef}>
+      {/* Settings Button */}
       <StatusBarItem
-        icon="tune"
+        icon="settings"
         tooltip={t.settings}
         variant={isOpen ? 'info' : 'default'}
-        onClick={handleToggle}
+        onClick={() => setIsOpen(!isOpen)}
       />
 
-      {/* Dropdown */}
+      {/* Settings Dropdown */}
       {isOpen && (
         <div 
-          className="absolute bottom-full left-0 mb-1 w-72 rounded-lg shadow-xl border z-50 ml-1"
-          style={{
+          className="absolute bottom-full start-0 mb-2 w-64 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-800 backdrop-blur-sm z-50 animate-fade-in origin-bottom-start"
+          style={{ 
             backgroundColor: 'var(--bg-primary)',
             borderColor: 'var(--border-primary)',
           }}
         >
-          {/* Arrow Indicator */}
-          <div 
-            className="absolute bottom-[-5px] left-3 w-2.5 h-2.5 rotate-45 border-b border-r z-50"
-            style={{
-              backgroundColor: 'var(--bg-primary)',
-              borderColor: 'var(--border-primary)',
-            }}
-          />
-
           {/* Header */}
           <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-primary)' }}>
             <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -123,41 +175,88 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
           </div>
 
           {/* Settings Content */}
-          <div className="p-3 space-y-3 max-h-[600px] overflow-y-auto" style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}>
+          <div className="p-3 space-y-3" style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}>
             
             {/* --- Group 1: Appearance --- */}
-            {/* Theme Selector */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>{t.theme}</label>
-              <div className="flex gap-1.5 flex-wrap">
-                {availableThemes.map((themeOption) => (
-                  <button
-                    key={themeOption.name}
-                    onClick={() => setTheme(themeOption)}
-                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${currentTheme.name === themeOption.name ? 'ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-600 scale-110' : ''}`}
-                    style={{ backgroundColor: themeOption.hex }}
-                    title={themeOption.name}
-                  >
-                    {currentTheme.name === themeOption.name && (
-                      <span className="material-symbols-rounded text-white text-[12px] drop-shadow-md">check</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
+            
+            {/* Themes Nested Menu (Replaces old selector) */}
+            <div className="space-y-1 relative" ref={themesRef}>
+                {/* Main Row */}
+                <div className="w-full flex items-center justify-between py-1 transition-colors">
+                {/* Left Side: Icon + Label */}
+                <div className="flex items-center gap-2">
+                    <span className="material-symbols-rounded text-[16px]" style={{ color: 'var(--text-secondary)' }}>palette</span>
+                    <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{t.themesMenu}</span>
+                </div>
 
-            {/* Dark Mode Toggle */}
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                <span className="material-symbols-rounded text-[14px]" style={{ color: 'var(--text-secondary)' }}>dark_mode</span>
-                {t.darkMode}
-              </label>
-              <Switch 
-                checked={darkMode}
-                onChange={setDarkMode}
-                theme={currentTheme.name.toLowerCase()}
-                activeColor={currentTheme.hex}
-              />
+                {/* Right Side: Arrow */}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => {
+                          checkThemesPos(); // Check position
+                          setThemeExpanded(!themeExpanded);
+                          if (!themeExpanded) setStatusBarExpanded(false);
+                        }}
+                        className="transition-colors"
+                        type="button"
+                    >
+                    <span 
+                        className={`material-symbols-rounded text-[16px] transition-transform ${themeExpanded ? 'rotate-180' : ''}`}
+                        style={{ color: 'var(--text-tertiary)' }}
+                    >
+                        {themesPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
+                    </span>
+                    </button>
+                </div>
+                </div>
+
+                {/* Submenu (Side Pop-out) */}
+                {themeExpanded && (
+                <div 
+                    className={`absolute w-48 rounded-lg shadow-xl border z-50 p-3 space-y-3 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
+                    style={{
+                        backgroundColor: 'var(--bg-primary)',
+                        borderColor: 'var(--border-primary)',
+                        // Dynamic Horizontal
+                        [themesPos.side === 'left' ? 'right' : 'left']: '100%',
+                        [themesPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
+                    }}
+                >
+                    {/* Theme Selector */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>{t.theme}</label>
+                        <div className="flex gap-1.5 flex-wrap">
+                            {availableThemes.map((themeOption) => (
+                            <button
+                                key={themeOption.name}
+                                onClick={() => setTheme(themeOption)}
+                                className={`w-6 h-6 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${currentTheme.name === themeOption.name ? 'ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-600 scale-110' : ''}`}
+                                style={{ backgroundColor: themeOption.hex }}
+                                title={themeOption.name}
+                            >
+                                {currentTheme.name === themeOption.name && (
+                                <span className="material-symbols-rounded text-white text-[12px] drop-shadow-md">check</span>
+                                )}
+                            </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Dark Mode Toggle */}
+                    <div className="flex items-center justify-between">
+                        <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
+                            <span className="material-symbols-rounded text-[14px]" style={{ color: 'var(--text-secondary)' }}>dark_mode</span>
+                            {t.darkMode}
+                        </label>
+                        <Switch 
+                            checked={darkMode}
+                            onChange={setDarkMode}
+                            theme={currentTheme.name.toLowerCase()}
+                            activeColor={currentTheme.hex}
+                        />
+                    </div>
+                </div>
+                )}
             </div>
 
             {/* Dropdown Blur Toggle */}
@@ -263,6 +362,130 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   theme={currentTheme.name.toLowerCase()}
                   activeColor={currentTheme.hex}
                 />
+              </div>
+            )}
+
+            {/* Separator */}
+            {setShowTicker && (
+              <div className="border-t border-gray-100 dark:border-gray-800 my-1 opacity-50" />
+            )}
+
+            {/* --- Status Bar Settings (Collapsible) --- */}
+            {setShowTicker && (
+              <div className="space-y-1">
+                {/* Section Header */}
+                <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                  {t.statusBarSettings}
+                </label>
+
+                {/* Quick Statuses Row with Arrow */}
+                <div className="space-y-1 relative" ref={quickStatusesRef}>
+                   {/* Main Row */}
+                  <div className="w-full flex items-center justify-between py-1 transition-colors">
+                    {/* Left Side: Icon + Label */}
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-rounded text-[16px]" style={{ color: 'var(--text-secondary)' }}>speed</span>
+                      <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{t.quickStatuses}</span>
+                    </div>
+
+                    {/* Right Side: Switch + Arrow */}
+                    <div className="flex items-center gap-2">
+                      <Switch 
+                        checked={showTicker || false}
+                        onChange={(val) => setShowTicker(val)}
+                        theme={currentTheme.name.toLowerCase()}
+                        activeColor={currentTheme.hex}
+                      />
+                      <button
+                        onClick={() => {
+                          checkInfoPos();
+                          setStatusBarExpanded(!statusBarExpanded);
+                          if (!statusBarExpanded) setThemeExpanded(false);
+                        }}
+                        className="transition-colors"
+                        type="button"
+                      >
+                        <span 
+                          className={`material-symbols-rounded text-[16px] transition-transform ${statusBarExpanded ? 'rotate-180' : ''}`}
+                          style={{ color: 'var(--text-tertiary)' }}
+                        >
+                          {quickStatusesPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submenu (Side Pop-out) */}
+                  {statusBarExpanded && showTicker && (
+                    <div 
+                        className={`absolute w-48 rounded-lg shadow-xl border z-50 p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
+                        style={{
+                            backgroundColor: 'var(--bg-primary)',
+                            borderColor: 'var(--border-primary)',
+                            // Dynamic Horizontal
+                            [quickStatusesPos.side === 'left' ? 'right' : 'left']: '100%',
+                            [quickStatusesPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
+                        }}
+                    >
+                      {/* Sales */}
+                      {setShowTickerSales && (
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                          <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+                            {t.showSales}
+                          </span>
+                          <Switch 
+                            checked={showTickerSales ?? true}
+                            onChange={(val) => setShowTickerSales(val)}
+                            theme={currentTheme.name.toLowerCase()}
+                            activeColor={currentTheme.hex}
+                          />
+                        </div>
+                      )}
+                      {/* Inventory */}
+                      {setShowTickerInventory && (
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                          <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+                            {t.showInventory}
+                          </span>
+                          <Switch 
+                            checked={showTickerInventory ?? true}
+                            onChange={(val) => setShowTickerInventory(val)}
+                            theme={currentTheme.name.toLowerCase()}
+                            activeColor={currentTheme.hex}
+                          />
+                        </div>
+                      )}
+                      {/* Customers */}
+                      {setShowTickerCustomers && (
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                          <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+                            {t.showCustomers}
+                          </span>
+                          <Switch 
+                            checked={showTickerCustomers ?? true}
+                            onChange={(val) => setShowTickerCustomers(val)}
+                            theme={currentTheme.name.toLowerCase()}
+                            activeColor={currentTheme.hex}
+                          />
+                        </div>
+                      )}
+                      {/* Top Seller */}
+                      {setShowTickerTopSeller && (
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                          <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+                            {t.showTopSeller}
+                          </span>
+                          <Switch 
+                            checked={showTickerTopSeller ?? true}
+                            onChange={(val) => setShowTickerTopSeller(val)}
+                            theme={currentTheme.name.toLowerCase()}
+                            activeColor={currentTheme.hex}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

@@ -101,7 +101,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   };
 
   const getNotificationStyle = (type: Notification['type']) => {
-    return 'hover:bg-white/5';
+    return 'hover:bg-black/5 dark:hover:bg-white/5';
   };
 
   return (

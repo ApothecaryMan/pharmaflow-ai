@@ -145,8 +145,10 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setAdjustedPos({ top: y, left: x });
   }, [menu.isVisible, menu.x, menu.y]);
 
+  const value = React.useMemo(() => ({ showMenu, hideMenu }), [showMenu, hideMenu]);
+
   return (
-    <ContextMenuContext.Provider value={{ showMenu, hideMenu }}>
+    <ContextMenuContext.Provider value={value}>
       {children}
       
       {menu.isVisible && (

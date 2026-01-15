@@ -59,6 +59,7 @@ export interface Customer {
   lastVisit: string;
   notes?: string;
   status: 'active' | 'inactive';
+  createdAt?: string; // ISO Date of creation
   vip?: boolean;
 }
 

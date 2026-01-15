@@ -5,14 +5,15 @@
  * syncing between React state and the service layer.
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { Drug, Sale, Supplier, Purchase, PurchaseReturn, Return, Customer } from '../types';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import { Drug, Sale, Supplier, Purchase, PurchaseReturn, Return, Customer, Employee } from '../types';
 import { inventoryService } from './inventory';
 import { salesService } from './sales';
 import { supplierService } from './suppliers';
 import { purchaseService } from './purchases';
 import { returnService } from './returns';
 import { customerService } from './customers';
+import { employeeService } from './hr';
 
 export interface DataState {
   inventory: Drug[];
@@ -22,6 +23,7 @@ export interface DataState {
   purchaseReturns: PurchaseReturn[];
   returns: Return[];
   customers: Customer[];
+  employees: Employee[];
   isLoading: boolean;
 }
 
@@ -57,6 +59,12 @@ export interface DataActions {
   addCustomer: (customer: Omit<Customer, 'id'>) => Promise<Customer>;
   updateCustomer: (id: string, updates: Partial<Customer>) => Promise<Customer>;
   deleteCustomer: (id: string) => Promise<void>;
+
+  // Employees
+  setEmployees: (employees: Employee[]) => void;
+  addEmployee: (employee: Employee) => Promise<Employee>;
+  updateEmployee: (id: string, updates: Partial<Employee>) => Promise<Employee>;
+  deleteEmployee: (id: string) => Promise<void>;
   
   // Refresh all data from storage
   refreshAll: () => Promise<void>;
@@ -93,30 +101,34 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   const [purchaseReturns, setPurchaseReturnsState] = useState<PurchaseReturn[]>([]);
   const [returns, setReturnsState] = useState<Return[]>([]);
   const [customers, setCustomersState] = useState<Customer[]>([]);
+  const [employees, setEmployeesState] = useState<Employee[]>([]);
 
   // Load initial data
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const [inv, sal, sup, pur, pRet, ret, cust] = await Promise.all([
+        const [inv, sal, sup, pur, pRet, ret, cust, emp] = await Promise.all([
           inventoryService.getAll(),
           salesService.getAll(),
           supplierService.getAll(),
           purchaseService.getAll(),
           returnService.getAllPurchaseReturns(),
           returnService.getAllSalesReturns(),
-          customerService.getAll()
+          customerService.getAll(),
+          employeeService.getAll()
         ]);
         
-        // Use initial data if localStorage is empty
-        setInventoryState(inv.length > 0 ? inv : initialInventory);
+        // Use initial data if fetched data is empty and initial data is provided
+        // We use a stable check here instead of depending on the array reference
+        setInventoryState(inv.length > 0 ? inv : (initialInventory.length > 0 ? initialInventory : []));
         setSalesState(sal);
-        setSuppliersState(sup.length > 0 ? sup : initialSuppliers);
+        setSuppliersState(sup.length > 0 ? sup : (initialSuppliers.length > 0 ? initialSuppliers : []));
         setPurchasesState(pur);
         setPurchaseReturnsState(pRet);
         setReturnsState(ret);
         setCustomersState(cust);
+        setEmployeesState(emp);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -124,7 +136,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       }
     };
     loadData();
-  }, [initialInventory, initialSuppliers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount
 
   // Sync to localStorage when state changes
   useEffect(() => { inventoryService.save(inventory); }, [inventory]);
@@ -134,6 +147,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   useEffect(() => { returnService.savePurchaseReturns(purchaseReturns); }, [purchaseReturns]);
   useEffect(() => { returnService.saveSalesReturns(returns); }, [returns]);
   useEffect(() => { customerService.save(customers); }, [customers]);
+  useEffect(() => { employeeService.save(employees); }, [employees]);
 
   // Actions
   const setInventory = useCallback((data: Drug[]) => setInventoryState(data), []);
@@ -143,6 +157,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   const setReturns = useCallback((data: Return[]) => setReturnsState(data), []);
   const setPurchaseReturns = useCallback((data: PurchaseReturn[]) => setPurchaseReturnsState(data), []);
   const setCustomers = useCallback((data: Customer[]) => setCustomersState(data), []);
+  const setEmployees = useCallback((data: Employee[]) => setEmployeesState(data), []);
 
   const addProduct = useCallback(async (product: Omit<Drug, 'id'>) => {
     const newProduct = await inventoryService.create(product);
@@ -224,15 +239,33 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     setCustomersState(prev => prev.filter(c => c.id !== id));
   }, []);
 
+  const addEmployee = useCallback(async (employee: Employee) => {
+    const newEmployee = await employeeService.create(employee);
+    setEmployeesState(prev => [...prev, newEmployee]);
+    return newEmployee;
+  }, []);
+
+  const updateEmployee = useCallback(async (id: string, updates: Partial<Employee>) => {
+    const updated = await employeeService.update(id, updates);
+    setEmployeesState(prev => prev.map(e => e.id === id ? updated : e));
+    return updated;
+  }, []);
+
+  const deleteEmployee = useCallback(async (id: string) => {
+    await employeeService.delete(id);
+    setEmployeesState(prev => prev.filter(e => e.id !== id));
+  }, []);
+
   const refreshAll = useCallback(async () => {
-    const [inv, sal, sup, pur, pRet, ret, cust] = await Promise.all([
+    const [inv, sal, sup, pur, pRet, ret, cust, emp] = await Promise.all([
       inventoryService.getAll(),
       salesService.getAll(),
       supplierService.getAll(),
       purchaseService.getAll(),
       returnService.getAllPurchaseReturns(),
       returnService.getAllSalesReturns(),
-      customerService.getAll()
+      customerService.getAll(),
+      employeeService.getAll()
     ]);
     setInventoryState(inv);
     setSalesState(sal);
@@ -241,9 +274,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     setPurchaseReturnsState(pRet);
     setReturnsState(ret);
     setCustomersState(cust);
+    setEmployeesState(emp);
   }, []);
 
-  const value: DataContextType = {
+  const value = useMemo<DataContextType>(() => ({
     // State
     inventory,
     sales,
@@ -252,6 +286,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     purchaseReturns,
     returns,
     customers,
+    employees,
     isLoading,
     // Actions
     setInventory,
@@ -274,8 +309,20 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     addCustomer,
     updateCustomer,
     deleteCustomer,
+    
+    setEmployees,
+    addEmployee,
+    updateEmployee,
+    deleteEmployee,
+
     refreshAll
-  };
+  }), [
+    inventory, sales, suppliers, purchases, purchaseReturns, returns, customers, employees, isLoading,
+    setInventory, addProduct, updateProduct, updateStock, setSales, addSale, setSuppliers, addSupplier,
+    updateSupplier, setPurchases, addPurchase, approvePurchase, rejectPurchase, setReturns, setPurchaseReturns,
+    addReturn, setCustomers, addCustomer, updateCustomer, deleteCustomer, setEmployees, addEmployee,
+    updateEmployee, deleteEmployee, refreshAll
+  ]);
 
   return (
     <DataContext.Provider value={value}>

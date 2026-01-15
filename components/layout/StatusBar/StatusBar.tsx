@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStatusBar } from './StatusBarContext';
 import { ConnectionStatus } from './items/ConnectionStatus';
 import { NotificationBell } from './items/NotificationBell';
@@ -8,7 +8,10 @@ import { StatusBarItem } from './StatusBarItem';
 import { DateTime } from './items/DateTime';
 import { UserInfo } from './items/UserInfo';
 import { SettingsMenu } from './items/SettingsMenu';
+import { DynamicTicker } from './items/DynamicTicker';
 import { useShift } from '../../../hooks/useShift';
+import { useDynamicTickerData } from '../../../hooks/useDynamicTickerData';
+import { useData } from '../../../services';
 
 export interface StatusBarTranslations {
   ready: string;
@@ -27,15 +30,24 @@ export interface StatusBarTranslations {
     saleComplete?: string;
     [key: string]: string | undefined;
   };
+  ticker?: {
+    todaySales?: string;
+    invoices?: string;
+    completed?: string;
+    pending?: string;
+    lowStock?: string;
+    shortages?: string;
+    newCustomers?: string;
+    topSeller?: string;
+  };
 }
 
-import { Employee, ThemeColor, Language } from '../../../types';
+import { ThemeColor, Language } from '../../../types';
 
 export interface StatusBarProps {
   theme?: string;
   language?: 'EN' | 'AR';
   t?: StatusBarTranslations;
-  employees?: Employee[];
   currentEmployeeId?: string | null;
   onSelectEmployee?: (id: string) => void;
   // Settings Props (migrated from Navbar)
@@ -76,11 +88,10 @@ const defaultTranslations: StatusBarTranslations = {
   },
 };
 
-export const StatusBar: React.FC<StatusBarProps> = ({
+export const StatusBar: React.FC<StatusBarProps> = React.memo(({
   theme = 'blue',
   language = 'EN',
   t = defaultTranslations,
-  employees = [],
   currentEmployeeId,
   onSelectEmployee,
   // Settings Props
@@ -111,7 +122,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
    *    All chidren must inherit this height to ensure perfect vertical alignment.
    * 
    * 2. NO GAPS STRATEGY:
-   *    We removed `gap-2` from sections to allow items to flush against each other.
+   *    We removed `gap-2` from items to allow items to flush against each other.
    *    Spacing is strictly handled by the internal padding of `StatusBarItem` (px-2.5).
    * 
    * 3. THREE-SECTION LAYOUT:
@@ -121,8 +132,19 @@ export const StatusBar: React.FC<StatusBarProps> = ({
    */
   const { state } = useStatusBar();
 
+  // --- Real-time Data ---
+  const tickerData = useDynamicTickerData();
+  const { employees } = useData();
+
   // --- Shift Status Logic ---
   const { currentShift } = useShift();
+
+  // --- Ticker Visibility Settings ---
+  const [showTicker, setShowTicker] = useState(true);
+  const [showTickerSales, setShowTickerSales] = useState(true);
+  const [showTickerInventory, setShowTickerInventory] = useState(true);
+  const [showTickerCustomers, setShowTickerCustomers] = useState(true);
+  const [showTickerTopSeller, setShowTickerTopSeller] = useState(true);
   
   const getShiftTooltip = (): string => {
     if (!currentShift) {
@@ -153,7 +175,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   return (
     <div
       dir="ltr"
-      // [CONTAINER]: Fixed h-6 (24px), Flexbox for layout, No padding (items handle their own)
       className="hidden md:flex items-center justify-between h-6 border-t shrink-0 select-none shadow-sm"
       style={{
         backgroundColor: 'var(--bg-secondary)',
@@ -162,10 +183,9 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     >
       {/* Left Section */}
       <div className="flex items-center h-full">
-        {/* Version - Moved to start */}
+        {/* Version Info */}
         <VersionInfo version={t.version} />
 
-        {/* Settings - Moved here after Version Info */}
         {currentTheme && setTheme && setDarkMode && setLanguage && setTextTransform && (
           <SettingsMenu 
             language={language}
@@ -186,6 +206,17 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             setDeveloperMode={setDeveloperMode}
             dropdownBlur={dropdownBlur}
             setDropdownBlur={setDropdownBlur}
+            // Status Bar Settings
+            showTicker={showTicker}
+            setShowTicker={setShowTicker}
+            showTickerSales={showTickerSales}
+            setShowTickerSales={setShowTickerSales}
+            showTickerInventory={showTickerInventory}
+            setShowTickerInventory={setShowTickerInventory}
+            showTickerCustomers={showTickerCustomers}
+            setShowTickerCustomers={setShowTickerCustomers}
+            showTickerTopSeller={showTickerTopSeller}
+            setShowTickerTopSeller={setShowTickerTopSeller}
           />
         )}
 
@@ -202,7 +233,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           variant={currentShift ? 'success' : 'error'}
         />
 
-        {/* Date Time - Moved here */}
+        {/* Date Time */}
         <DateTime hideIcon={true} />
       </div>
 
@@ -211,26 +242,39 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
       {/* Right Section */}
       <div className="flex items-center h-full">
+        {/* Dynamic Ticker - Rotating Stats */}
+        {showTicker && (
+          <DynamicTicker
+            language={language}
+            data={tickerData}
+            showSales={showTickerSales}
+            showInventory={showTickerInventory}
+            showCustomers={showTickerCustomers}
+            showTopSeller={showTickerTopSeller}
+            t={t.ticker ? {
+              todaySales: t.ticker.todaySales || 'Today',
+              invoices: t.ticker.invoices || 'Invoices',
+              completed: t.ticker.completed || 'Done',
+              pending: t.ticker.pending || 'Pending',
+              lowStock: t.ticker.lowStock || 'Low Stock',
+              shortages: t.ticker.shortages || 'Shortages',
+              newCustomers: t.ticker.newCustomers || 'New Customers',
+              topSeller: t.ticker.topSeller || 'Top Seller',
+            } : undefined}
+          />
+        )}
+
         {/* User Info (Employee Selector) */}
-        <UserInfo // Keep static user info for now, but enabled selection
+        <UserInfo
             userName={employees.find(e => e.id === currentEmployeeId)?.name || (language === 'AR' ? 'المستخدم' : 'User')}
-            userRole={(() => {
-              const emp = employees.find(e => e.id === currentEmployeeId);
-              if (!emp) return undefined;
-              // Simple translation map for roles could be here or handled in UserInfo. 
-              // For now passing the role value. UserInfo seems to display it directly.
-              return emp.role; 
-            })()}
+            userRole={employees.find(e => e.id === currentEmployeeId)?.role}
             employees={employees}
             currentEmployeeId={currentEmployeeId}
             onSelectEmployee={onSelectEmployee}
             language={language}
         />
 
-        {/* Settings - Added as requested, distinct icon from Navbar */}
-        {/* Settings - Moved to left section */}
-
-        {/* Notifications - Moved to end (Rightmost) */}
+        {/* Notifications */}
         <NotificationBell
           language={language}
           t={{
@@ -244,6 +288,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default StatusBar;
