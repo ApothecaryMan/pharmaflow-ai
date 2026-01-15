@@ -200,6 +200,11 @@ const App: React.FC = () => {
     localStorage.setItem('pharma_view', view);
   }, [view]);
 
+  // Persist activeModule to localStorage
+  useEffect(() => {
+    localStorage.setItem('pharma_activeModule', activeModule);
+  }, [activeModule]);
+
   // Apply language direction
   useEffect(() => {
     document.documentElement.lang = language.toLowerCase();
