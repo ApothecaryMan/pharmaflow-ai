@@ -12,11 +12,11 @@ export default {
   ],
   safelist: [
     {
-      pattern: /(bg|text|border|ring)-(blue|emerald|violet|amber|cyan|rose|gray)-(50|100|200|300|400|500|600|700|800|900|950)/,
+      pattern: /(bg|text|border|ring)-(blue|emerald|violet|red|zinc)-(50|100|200|300|400|500|600|700|800|900|950)/,
       variants: ['hover', 'focus', 'dark', 'dark:hover', 'group-hover'],
     },
     {
-      pattern: /(bg|text|border|ring)-(blue|emerald|violet|amber|cyan|rose|gray)-(900|950)\/(10|20|30|50)/,
+      pattern: /(bg|text|border|ring)-(blue|emerald|violet|red|zinc)-(900|950)\/(10|20|30|50)/,
       variants: ['hover', 'focus', 'dark', 'dark:hover', 'group-hover'],
     },
   ],
@@ -32,7 +32,7 @@ export default {
       },
       colors: {
         surface: {
-          50: '#f9fafb',
+          50:  '#f9fafb',
           100: '#f3f4f6',
           200: '#e5e7eb',
           800: '#1f2937',
