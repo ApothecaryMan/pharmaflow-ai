@@ -372,6 +372,31 @@ Tailwind is configured locally (not CDN). See `tailwind.config.js`.
 
 ---
 
+### 5. ID Generation (Prefix Strategy)
+
+**RULE:** Do NOT use `Date.now()` or `UUID` for entity IDs.
+Use the `idGenerator` utility to ensure unique, readable, and scalable IDs (e.g., `B1-1001`).
+
+#### Why?
+
+- **Multi-Branch Support:** Prevents collisions between branches.
+- **Readability:** Easier to reference `B1-0042` than a long timestamp.
+- **Self-Healing:** Automatically recovers sequence if storage is cleared.
+
+#### Usage
+
+```typescript
+import { idGenerator } from "../../utils/idGenerator";
+
+// ✅ Correct
+const newId = idGenerator.generate("sales"); // Returns "B1-0001"
+
+// ❌ Forbidden
+const newId = Date.now().toString();
+```
+
+---
+
 ## 🛠️ Workflow: Adding a New Page
 
 1.  **Create Component**: Build your page in `components/[module]/MyPage.tsx`.

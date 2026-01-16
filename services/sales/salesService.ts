@@ -8,6 +8,8 @@ import { SalesService, SalesFilters, SalesStats } from './types';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 
+import { idGenerator } from '../../utils/idGenerator';
+
 export const createSalesService = (): SalesService => ({
   getAll: async (): Promise<Sale[]> => {
     return storage.get<Sale[]>(StorageKeys.SALES, []);
@@ -41,7 +43,7 @@ export const createSalesService = (): SalesService => ({
 
   create: async (sale: Omit<Sale, 'id'>): Promise<Sale> => {
     const all = await salesService.getAll();
-    const newSale: Sale = { ...sale, id: Date.now().toString() } as Sale;
+    const newSale: Sale = { ...sale, id: idGenerator.generate('sales') } as Sale;
     all.push(newSale);
     storage.set(StorageKeys.SALES, all);
     return newSale;

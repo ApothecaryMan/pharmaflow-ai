@@ -2,7 +2,7 @@
  * Settings Types - User preferences and app configuration
  */
 
-import { ThemeColor, Language } from '../../types';
+import type { ThemeColor, Language } from '../../types/index';
 
 export interface AppSettings {
   theme: ThemeColor;
@@ -15,6 +15,7 @@ export interface AppSettings {
   profileImage: string | null;
   activeModule: string;
   purchaseTaxRate: number; // Tax rate percentage for purchases (e.g., 14 for 14%)
+  branchCode: string; // Branch identifier for ID generation (e.g., 'B1')
 }
 
 export interface SettingsService {

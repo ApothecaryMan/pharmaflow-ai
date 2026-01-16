@@ -6,6 +6,7 @@ import { Employee } from '../../types';
 
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
+import { idGenerator } from '../../utils/idGenerator';
 
 // Export interface so it can be used if needed
 export interface EmployeeService {
@@ -29,6 +30,10 @@ export const createEmployeeService = (): EmployeeService => ({
 
   create: async (employee: Employee): Promise<Employee> => {
     const all = await employeeService.getAll();
+    // Assign ID if missing
+    if (!employee.id) {
+       employee.id = idGenerator.generate('employees');
+    }
     all.push(employee);
     storage.set(StorageKeys.EMPLOYEES, all);
     return employee;

@@ -248,10 +248,10 @@ export function getDateRange(period: 'today' | 'week' | 'month' | 'year'): DateR
       startDate.setHours(0, 0, 0, 0);
       break;
     case 'week':
-      startDate.setDate(now.getDate() - 7);
+      startDate.setDate(now.getDate() - 7); // Last 7 days
       break;
     case 'month':
-      startDate.setMonth(now.getMonth() - 1);
+      startDate.setDate(now.getDate() - 30); // Last 30 days
       break;
     case 'year':
       startDate.setFullYear(now.getFullYear() - 1);

@@ -7,6 +7,7 @@ import { ReturnService } from './types';
 
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
+import { idGenerator } from '../../utils/idGenerator';
 
 export const createReturnService = (): ReturnService => ({
   // Sales Returns
@@ -23,7 +24,7 @@ export const createReturnService = (): ReturnService => ({
     const all = await returnService.getAllSalesReturns();
     const newReturn: Return = { 
       ...ret, 
-      id: Date.now().toString()
+      id: idGenerator.generate('returns')
     } as Return;
     all.push(newReturn);
     storage.set(StorageKeys.RETURNS, all);
@@ -44,7 +45,7 @@ export const createReturnService = (): ReturnService => ({
     const all = await returnService.getAllPurchaseReturns();
     const newReturn: PurchaseReturn = { 
       ...ret, 
-      id: Date.now().toString()
+      id: idGenerator.generate('returns')
     } as PurchaseReturn;
     all.push(newReturn);
     storage.set(StorageKeys.PURCHASE_RETURNS, all);

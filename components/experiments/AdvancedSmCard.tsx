@@ -43,53 +43,14 @@ const barData2 = [
 
 // --- Sub-Components ---
 
-// 1. Metric Card
-export interface StatCardProps {
-  title: string;
-  value: string | number;
-  icon: string;
-  iconColor: string;
-  trend?: 'up' | 'down' | 'neutral';
-  trendValue?: string;
-  trendLabel?: string;
-  subValue?: string; // Added to support EmployeeProfile usage
-  showTrend?: boolean; // Added to support EmployeeProfile usage
-  graphToken?: string; // Added to support EmployeeProfile usage
-  type?: string; 
-  currencyLabel?: string;
-}
+import { SmallCard } from '../common/SmallCard';
 
-export const StatCard = ({ title, value, icon, iconColor, trend, trendValue, trendLabel, subValue, type, currencyLabel }: StatCardProps) => (
-  <div className={`p-4 rounded-3xl ${CARD_BASE} ${CARD_HOVER} flex flex-col justify-between h-36`}>
-    <div className="flex justify-between items-start">
-      <div>
-        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">{title}</p>
-        <h4 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          {value}{type === 'currency' && <span className="text-base font-medium text-gray-500 dark:text-gray-400 ms-1">{currencyLabel || 'L.E'}</span>}
-        </h4>
-      </div>
-      <div className={`w-12 h-12 flex items-center justify-center rounded-2xl bg-${iconColor}-100 dark:bg-${iconColor}-900/30 text-${iconColor}-600 dark:text-${iconColor}-400`}>
-        <span className="material-symbols-rounded text-3xl">{icon}</span>
-      </div>
-    </div>
-    
-    {trend && (
-      <div className="flex items-center gap-2 mt-2">
-        <span className={`flex items-center text-xs font-bold px-2 py-0.5 rounded-full ${
-          trend === 'up' 
-            ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' 
-            : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
-        }`}>
-          <span className="material-symbols-rounded text-[14px] mr-1">
-            {trend === 'up' ? 'trending_up' : 'trending_down'}
-          </span>
-          {trendValue}
-        </span>
-        <span className="text-xs text-gray-400 dark:text-gray-500">{trendLabel}</span>
-      </div>
-    )}
-  </div>
-);
+// ... (keep props interface if needed but StatCardProps is moving)
+// ...
+
+// 2. Sparkline Card (moving StatCard removal to next step or doing it here if safe)
+// I will just remove the StatCard definition block.
+
 
 // 2. Sparkline Card (Area Chart)
 export const SparklineCard = ({ title, value, data, color, onClick }: any) => (
@@ -264,10 +225,10 @@ export const AdvancedSmCard: React.FC<AdvancedSmCardProps> = ({ color, t, langua
       <section>
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 px-1">1. Metrics</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard title="Total Revenue" value="$45,231" icon="payments" iconColor="emerald" trend="up" trendValue="12.5%" trendLabel="vs last month" />
-          <StatCard title="Active Users" value="1,240" icon="group" iconColor="blue" trend="up" trendValue="3.2%" trendLabel="vs last week" />
-          <StatCard title="Bounce Rate" value="42.3%" icon="analytics" iconColor="rose" trend="down" trendValue="0.8%" trendLabel="vs yesterday" />
-          <StatCard title="Pending Orders" value="18" icon="shopping_cart_checkout" iconColor="amber" trend="up" trendValue="5" trendLabel="new today" />
+          <SmallCard title="Total Revenue" value="$45,231" icon="payments" iconColor="emerald" trend="up" trendValue="12.5%" trendLabel="vs last month" />
+          <SmallCard title="Active Users" value="1,240" icon="group" iconColor="blue" trend="up" trendValue="3.2%" trendLabel="vs last week" />
+          <SmallCard title="Bounce Rate" value="42.3%" icon="analytics" iconColor="rose" trend="down" trendValue="0.8%" trendLabel="vs yesterday" />
+          <SmallCard title="Pending Orders" value="18" icon="shopping_cart_checkout" iconColor="amber" trend="up" trendValue="5" trendLabel="new today" />
         </div>
       </section>
 

@@ -2,11 +2,13 @@
  * Purchase Service - Purchase order operations
  */
 
-import { Purchase } from '../../types';
+import { Purchase, PurchaseStatus } from '../../types';
 import { PurchaseService, PurchaseFilters, PurchaseStats } from './types';
 
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
+
+import { idGenerator } from '../../utils/idGenerator';
 
 export const createPurchaseService = (): PurchaseService => ({
   getAll: async (): Promise<Purchase[]> => {
@@ -21,6 +23,11 @@ export const createPurchaseService = (): PurchaseService => ({
   getBySupplier: async (supplierId: string): Promise<Purchase[]> => {
     const all = await purchaseService.getAll();
     return all.filter(p => p.supplierId === supplierId);
+  },
+
+  getByStatus: async (status: PurchaseStatus): Promise<Purchase[]> => {
+    const all = await purchaseService.getAll();
+    return all.filter(p => p.status === status);
   },
 
   getPending: async (): Promise<Purchase[]> => {

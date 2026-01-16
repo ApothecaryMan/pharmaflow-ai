@@ -29,6 +29,7 @@ export interface CashServiceInterface {
 
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
+import { idGenerator } from '../../utils/idGenerator';
 
 // ... (interface remains same)
 
@@ -57,7 +58,7 @@ export const createCashService = (): CashServiceInterface => ({
     
     const all = await cashService.getAllShifts();
     const newShift: Shift = {
-      id: Date.now().toString(),
+      id: idGenerator.generate('shifts'),
       status: 'open',
       openTime: new Date().toISOString(),
       openedBy,
@@ -104,7 +105,7 @@ export const createCashService = (): CashServiceInterface => ({
     if (shiftIndex === -1) throw new Error('Shift not found');
     
     const newTx: CashTransaction = {
-      id: Date.now().toString(),
+      id: idGenerator.generate('transactions'),
       ...transaction,
     };
     

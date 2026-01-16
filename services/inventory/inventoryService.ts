@@ -8,6 +8,8 @@ import { InventoryService, InventoryFilters, InventoryStats } from './types';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 
+import { idGenerator } from '../../utils/idGenerator';
+
 export const createInventoryService = (): InventoryService => ({
   getAll: async (): Promise<Drug[]> => {
     return storage.get<Drug[]>(StorageKeys.INVENTORY, []);
@@ -60,7 +62,7 @@ export const createInventoryService = (): InventoryService => ({
 
   create: async (drug: Omit<Drug, 'id'>): Promise<Drug> => {
     const all = await inventoryService.getAll();
-    const newDrug: Drug = { ...drug, id: Date.now().toString() } as Drug;
+    const newDrug: Drug = { ...drug, id: idGenerator.generate('inventory') } as Drug;
     all.push(newDrug);
     storage.set(StorageKeys.INVENTORY, all);
     return newDrug;

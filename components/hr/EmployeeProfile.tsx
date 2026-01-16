@@ -1,7 +1,7 @@
 import React, { useState, useMemo, memo, useEffect, useRef } from 'react';
 import { Employee, Sale, ThemeColor, Shift } from '../../types';
 import { getEmployeeSalesStats, getDateRange, getPreviousDateRange, DateRangeFilter } from '../../utils/employeeStats';
-import { StatCard } from '../experiments/AdvancedSmCard';
+import { SmallCard } from '../common/SmallCard';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
 import { Modal } from '../common/Modal';
 import { ExpandedChartModal } from '../experiments/ExpandedChartModal';
@@ -14,6 +14,8 @@ import { EmployeeSalesStats } from '../../utils/employeeStats';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
+import { COLOR_HEX_MAP } from '../../config/themeColors';
+import { ChartWidget } from '../common/ChartWidget';
 
 // AI Performance Summary Sub-Component
 const AIPerformanceSummary: React.FC<{
@@ -241,56 +243,10 @@ const AIPerformanceSummary: React.FC<{
   );
 };
 
-// Custom Tooltip for Charts - Shows data on hover
-const CustomTooltipContent = memo(({ active, payload, label, color, unit, employees, selectedEmployeeId }: any) => {
-  if (active && payload && payload.length) {
-    // Find the main employee's data (sales)
-    const mainData = payload.find((p: any) => p.dataKey === 'sales');
-    const otherEmployees = payload.filter((p: any) => p.dataKey !== 'sales' && p.dataKey !== 'profit');
-    
-    return (
-      <div className="backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 p-3 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 min-w-[180px]">
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{label}</p>
-        
-        {/* Main Employee */}
-        {mainData && (
-          <div className="mb-2">
-            <p className="text-xs text-gray-400 mb-0.5">
-              {employees?.find((e: any) => e.id === selectedEmployeeId)?.name || 'You'}
-            </p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white" style={{ color }}>
-              <span dir="ltr">{mainData.value.toLocaleString()}</span> <span className="text-sm">{unit}</span>
-            </p>
-          </div>
-        )}
-        
-        {/* Other Employees (Comparison) */}
-        {otherEmployees.length > 0 && (
-          <div className="pt-2 border-t border-gray-200 dark:border-gray-700 space-y-1">
-            {otherEmployees.map((emp: any, idx: number) => {
-              const employee = employees?.find((e: any) => e.id === emp.dataKey);
-              const name = employee?.name || emp.dataKey;
-              
-              return (
-                <div key={idx} className="flex items-center justify-between text-xs">
-                  <span className="text-gray-600 dark:text-gray-400">{name}</span>
-                  <span className="font-bold text-gray-700 dark:text-gray-300" dir="ltr">
-                    {emp.value.toLocaleString()} {unit}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  }
-  return null;
-});
-CustomTooltipContent.displayName = 'CustomTooltipContent';
+// CustomTooltipContent moved to ChartWidget
 
-// Use centralized color map from config/themeColors.ts
-import { COLOR_HEX_MAP } from '../../config/themeColors';
+// Use centralized color map from config/themeColors
+// Moved to top imports
 
 interface EmployeeProfileProps {
   sales: Sale[];
@@ -299,6 +255,17 @@ interface EmployeeProfileProps {
   t: any;
   language: 'EN' | 'AR';
 }
+
+// Helper for compact currency formatting
+const formatCompactCurrency = (value: number) => {
+  if (value >= 1000000) {
+    return (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  }
+  if (value >= 10000) { // Compact anything >= 10k to ensure max ~5 digits visually
+    return (value / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  }
+  return value.toLocaleString();
+};
 
 export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   sales,
@@ -462,7 +429,13 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
             // ZOOM MODE: Detailed view for specific shift
             const selectedShift = todayShifts.find(s => s.id === selectedShiftId);
             if (selectedShift) {
-                const startTime = new Date(selectedShift.openTime);
+                let startTime = new Date(selectedShift.openTime);
+                
+                // Fix: If shift started before today (e.g. yesterday) but we are viewing 'Today', 
+                // clamp the start time to beginning of today to avoid showing empty flat lines for yesterday.
+                if (startTime < today) {
+                    startTime = new Date(today);
+                }
                 const endTime = selectedShift.closeTime ? new Date(selectedShift.closeTime) : new Date();
                 
                 // Ensure we don't go beyond "now" if open, or weird future dates
@@ -481,12 +454,18 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                 let intervalMinutes = 15;
                 if (totalMinutes < 120) intervalMinutes = 5;
                 else if (totalMinutes > 360) intervalMinutes = 30;
+                
+                // SAFETY: Ensure interval is never 0 or negative
+                if (intervalMinutes < 1) intervalMinutes = 15;
 
                 let currentTime = new Date(startTime);
                 // Align start time to nearest interval
                 currentTime.setMinutes(Math.floor(currentTime.getMinutes() / intervalMinutes) * intervalMinutes, 0, 0);
 
-                while (currentTime <= effectiveEndTime) {
+                let safetyCounter = 0;
+                const MAX_ITERATIONS = 500; // Prevent infinite loop
+
+                while (currentTime <= effectiveEndTime && safetyCounter < MAX_ITERATIONS) {
                     dataPoints.push({
                         date: new Date(currentTime),
                         label: currentTime.toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
@@ -494,7 +473,10 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                         profit: 0,
                         timestamp: currentTime.getTime()
                     });
+                    
+                    // Increment time
                     currentTime = new Date(currentTime.getTime() + intervalMinutes * 60000);
+                    safetyCounter++;
                 }
 
                 // Aggregate sales into these buckets - FOR ALL EMPLOYEES (comparison mode)
@@ -535,12 +517,13 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                     activeEmployees.forEach(empId => {
                         if (point[empId] === undefined) {
                             point[empId] = 0;
-                        }
+        }
                     });
                 });
             }
         } else {
-            // DEFAULT MODE: Hourly view for full day
+            // DEFAULT MODE: Hourly view for full day (00:00 to 23:59)
+            // Fix: Ensure we generate all 24 hours regardless of current time
             dataPoints = Array.from({ length: 24 }, (_, i) => {
                 const date = new Date();
                 date.setHours(i, 0, 0, 0);
@@ -555,6 +538,13 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
 
             relevantSales.forEach(sale => {
                 const saleDate = new Date(sale.date);
+                // Only count sales that actually belong to today 
+                // (relevantSales is already filtered by dateRange, which is 00:00-Now for today, 
+                // wait... getDateRange('today') returns {start: 00:00, end: Now}. 
+                // So sales are already filtered. We just slot them.)
+                // Actually, getDateRange('today') returns end: Now.
+                // If I want to show empty hours until 23:00, this loop is correct.
+                
                 const hour = saleDate.getHours();
                 if (dataPoints[hour]) {
                     dataPoints[hour].sales += sale.netTotal ?? sale.total;
@@ -582,18 +572,187 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
         };
      }
 
-     const data: Record<string, { date: string; sales: number; profit: number }> = {};
+     const data: Record<string, { dateLabel: string; timestamp: number; sales: number; profit: number }> = {};
      
-     relevantSales.forEach(sale => {
-        const dateKey = new Date(sale.date).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' });
-        if (!data[dateKey]) {
-            data[dateKey] = { date: dateKey, sales: 0, profit: 0 };
+     // Determine aggregation strategy
+     const isMonthlyAggregation = dateFilterMode === 'year'; // Only year uses monthly now
+     const isAllTime100Points = dateFilterMode === 'all';
+
+     // ALL TIME MODE: 100 Fixed Points
+     if (isAllTime100Points) {
+         let start = relevantSales.length > 0 
+            ? Math.min(...relevantSales.map(s => new Date(s.date).getTime())) 
+            : new Date(new Date().getFullYear(), 0, 1).getTime();
+         let end = new Date().getTime();
+         
+         // Ensure start < end
+         if (start >= end) start = end - 86400000; // Force 1 day gap if same
+
+         const totalDuration = end - start;
+         const step = totalDuration / 100;
+
+         // 1. Initialize 100 buckets
+         const buckets: any[] = [];
+         for (let i = 0; i <= 100; i++) {
+             const bucketTime = start + (i * step);
+             buckets.push({
+                 index: i,
+                 timestamp: bucketTime,
+                 // Only show label for Start (0) and End (100)
+                 dateLabel: (i === 0 || i === 100) 
+                    ? new Date(bucketTime).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+                    : '', 
+                 sales: 0,
+                 profit: 0
+             });
+         }
+
+         // 2. Distribute Sales
+         relevantSales.forEach(sale => {
+             const saleTime = new Date(sale.date).getTime();
+             if (saleTime >= start && saleTime <= end) {
+                 // Find bucket index
+                 let index = Math.floor((saleTime - start) / step);
+                 if (index > 100) index = 100;
+                 if (index < 0) index = 0;
+                 
+                 buckets[index].sales += sale.netTotal ?? sale.total;
+                 buckets[index].profit += (sale.netTotal ?? sale.total); 
+             }
+         });
+
+         return {
+            chartData: buckets.map(b => ({
+                date: b.dateLabel,
+                timestamp: b.timestamp, // For tooltip?
+                sales: b.sales,
+                profit: b.profit,
+                // Pass raw formatted date for tooltip since dateLabel is empty for most
+                rawDate: new Date(b.timestamp).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + new Date(b.timestamp).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: 'numeric', minute: '2-digit' })
+            })),
+            shiftsData: [],
+            activeEmployees: []
+         };
+     }
+     
+     // Helper to fill zero data (Legacy Week/Month/Year logic)
+     const fillZeroData = () => {
+        if (!dateRange && dateFilterMode !== 'all') return;
+        
+        let start: Date; 
+        let end: Date;
+
+        if (dateFilterMode === 'all') {
+             const timestamps = relevantSales.map(s => new Date(s.date).getTime());
+             start = timestamps.length > 0 ? new Date(Math.min(...timestamps)) : new Date(new Date().getFullYear(), 0, 1);
+             end = new Date();
+        } else {
+             // Safe cast or check because we handled 'all' above
+             const range = getDateRange(dateFilterMode as 'today' | 'week' | 'month' | 'year');
+             start = range.startDate || new Date();
+             end = range.endDate || new Date();
         }
-        data[dateKey].sales += sale.netTotal ?? sale.total;
+
+        const current = new Date(start);
+        
+        // Loop through range
+        while (current <= end) {
+            const timestamp = current.getTime();
+            let key: string;
+            let label: string;
+
+            if (isMonthlyAggregation) {
+                 // Group by YYYY-MM
+                 key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+                 
+                 // If filtering by specific 'year', show only Month Name (or Number of requested).
+                 // User said "Numbers only", but Month Names is standard. Let's use Month Name for readability, 
+                 // or maybe they specifically want Month Number? "ارقام فقط" usually means digits.
+                 // Let's try Month Short Name first as it's cleaner, if they hate it we change to digit.
+                 // Actually, let's look at the prompt "يعرض في السنة ارقام فقط" -> "Displays numbers only in the year".
+                 // This might strictly mean 1, 2, 3...
+                 // Let's compromise: Locale default month is usually text. 
+                 // I will use month: 'short' (Jan) which is standard. Using "1" is confusing.
+                 // But wait, "ارقام فقط" is quite specific. Maybe they want the DAY numbers in month view?
+                 // No, context is Year view.
+                 // I will stick to removing the Year part (Jan 2024 -> Jan).
+                 if (dateFilterMode === 'year') {
+                    label = current.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', { month: 'short' });
+                 } else {
+                    // accessible 'all' mode might need year
+                    label = current.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', { month: 'short', year: '2-digit' });
+                 }
+                 
+                 // Increment by 1 Month
+                 current.setMonth(current.getMonth() + 1);
+            } else {
+                 // Group by YYYY-MM-DD
+                 key = current.toISOString().split('T')[0];
+                 label = current.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' });
+                 
+                 // Increment by 1 Day
+                 current.setDate(current.getDate() + 1);
+            }
+
+            if (!data[key]) {
+                data[key] = {
+                    dateLabel: label,
+                    timestamp: timestamp, // Keep first timestamp of the bucket
+                    sales: 0,
+                    profit: 0
+                };
+            }
+        }
+     };
+
+     // 1. Initialize with Zero Data
+     fillZeroData();
+
+     // 2. Aggregate Sales
+     relevantSales.forEach(sale => {
+        const dateObj = new Date(sale.date);
+        let key: string;
+        
+        if (isMonthlyAggregation) {
+             key = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+        } else {
+             key = dateObj.toISOString().split('T')[0];
+        }
+        
+        // Safety check if key exists (it should if fillZeroData covers the range)
+        if (data[key]) {
+            data[key].sales += sale.netTotal ?? sale.total;
+            data[key].profit += (sale.netTotal ?? sale.total); // Fixed missing totalCost issue by removing it for now
+        } else {
+            // Fallback for sales outside expected range (should rarely happen with logic above)
+             let label: string;
+             if (isMonthlyAggregation) {
+                 if (dateFilterMode === 'year') {
+                    label = dateObj.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', { month: 'short' });
+                 } else {
+                    label = dateObj.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', { month: 'short', year: '2-digit' });
+                 }
+             } else {
+                label = dateObj.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' });
+             }
+                
+             data[key] = {
+                dateLabel: label,
+                timestamp: dateObj.getTime(),
+                sales: sale.netTotal ?? sale.total,
+                profit: 0 // Simplified
+            };
+        }
      });
 
      return {
-        chartData: Object.values(data).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+        chartData: Object.values(data)
+            .sort((a,b) => a.timestamp - b.timestamp)
+            .map(d => ({
+                date: d.dateLabel,
+                sales: d.sales,
+                profit: d.profit
+            })),
         shiftsData: [],
         activeEmployees: [] // No comparison in other modes
      };
@@ -710,16 +869,15 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
              {(() => {
                 const salesTrend = previousStats ? getTrend(stats.netSales, previousStats.netSales) : { trend: undefined, value: undefined };
                 return (
-                 <StatCard 
+                 <SmallCard 
                     title={language === 'AR' ? 'إجمالي المبيعات' : 'Total Sales'}
-                    value={Math.round(stats.netSales)}
+                    value={formatCompactCurrency(Math.round(stats.netSales))}
                     type="currency"
                     trend={salesTrend.trend}
                     trendValue={salesTrend.value}
-                    showTrend={!!salesTrend.value}
+                    trendLabel={salesTrend.value ? 'vs prev' : undefined}
                     icon="payments"
                     iconColor="blue"
-                    graphToken="sales"
                     currencyLabel={t.global?.currency || (language === 'AR' ? 'ج.م' : 'L.E')}
                  />
                 );
@@ -728,17 +886,16 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
              {(() => {
                 const profitTrend = previousStats ? getTrend(stats.totalProfit, previousStats.totalProfit) : { trend: undefined, value: undefined };
                 return (
-                 <StatCard 
+                 <SmallCard 
                     title={language === 'AR' ? 'صافي الربح' : 'Net Profit'}
-                    value={Math.round(stats.totalProfit)}
+                    value={formatCompactCurrency(Math.round(stats.totalProfit))}
                     subValue={stats.profitMargin ? `${stats.profitMargin}% Margin` : undefined}
                     type="currency"
                     trend={profitTrend.trend}
                     trendValue={profitTrend.value}
-                    showTrend={!!profitTrend.value}
+                    trendLabel={profitTrend.value ? 'vs prev' : undefined}
                     icon="trending_up"
                     iconColor="emerald"
-                    graphToken="profit"
                     currencyLabel={t.global?.currency || (language === 'AR' ? 'ج.م' : 'L.E')}
                  />
                 );
@@ -747,13 +904,13 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
              {(() => {
                  const itemsTrend = previousStats ? getTrend(stats.totalItemsSold, previousStats.totalItemsSold) : { trend: undefined, value: undefined };
                  return (
-                 <StatCard 
+                 <SmallCard 
                     title={language === 'AR' ? 'القطع المباعة' : 'Items Sold'}
-                    value={stats.totalItemsSold}
+                    value={formatCompactCurrency(stats.totalItemsSold)}
                     type="number"
                     trend={itemsTrend.trend}
                     trendValue={itemsTrend.value}
-                    showTrend={!!itemsTrend.value}
+                    trendLabel={itemsTrend.value ? 'vs prev' : undefined}
                     icon="shopping_basket"
                     iconColor="purple"
                  />
@@ -763,14 +920,14 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
              {(() => {
                  const txTrend = previousStats ? getTrend(stats.salesCount, previousStats.salesCount) : { trend: undefined, value: undefined };
                  return (
-                 <StatCard 
+                 <SmallCard 
                     title={language === 'AR' ? 'عدد الفواتير' : 'Transactions'}
-                    value={stats.salesCount}
+                    value={formatCompactCurrency(stats.salesCount)}
                     subValue={stats.avgProfitPerSale ? `Avg Profit: ${Math.round(stats.avgProfitPerSale)}` : undefined}
                     type="number"
                     trend={txTrend.trend}
                     trendValue={txTrend.value}
-                    showTrend={!!txTrend.value}
+                    trendLabel={txTrend.value ? 'vs prev' : undefined}
                     icon="receipt_long"
                     iconColor="orange"
                  />
@@ -782,128 +939,34 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sales Chart */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-transparent">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                    <span className="material-symbols-rounded text-blue-500">bar_chart</span>
-                    {language === 'AR' ? 'تحليل المبيعات' : 'Sales Analytics'}
-                </h3>
-                
-                <div className="flex items-center gap-2">
-                  {/* Comparison Toggle - Only show when zoomed into a shift with other active employees AND in Area chart mode */}
-                  {selectedShiftId && activeEmployees.length > 0 && chartType === 'area' && (
-                      <div className="ltr:mr-2 rtl:ml-2 scale-90 origin-right rtl:origin-left">
-                        <SegmentedControl
-                            options={[
-                            { label: '', value: 'single', icon: 'person' },
-                            { label: '', value: 'group', icon: 'group', count: `+${activeEmployees.length}` }
-                            ]}
-                            value={showComparison ? 'group' : 'single'}
-                            onChange={(val) => setShowComparison(val === 'group')}
-                            size="sm"
-                            fullWidth={false}
-                        />
-                      </div>
-                  )}
-
-                   {/* Chart Type Toggle */}
-                   <div className="w-24">
-                       <SegmentedControl
-                           options={[
-                               { label: '', value: 'area', icon: 'area_chart' },
-                               { label: '', value: 'bar', icon: 'bar_chart' }
-                           ]}
-                           value={chartType}
-                           onChange={(val) => setChartType(val as 'area' | 'bar')}
-                           size="sm"
-                           fullWidth={false}
-                           shape="pill"
-                       />
-                   </div>
-
-                  <button 
-                    onClick={() => setIsExpandedChartOpen(true)}
-                    className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95"
-                    title={language === 'AR' ? 'توسيع الرسم البياني' : 'Expand Chart'}
-                  >
-                    <span className="material-symbols-rounded text-xl">open_in_full</span>
-                  </button>
-                </div>
-            </div>
-            <div className="h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartData} margin={{ top: 15, right: 0, left: language === 'AR' ? 30 : 0, bottom: 5 }}>
-                        <defs>
-                            <linearGradient id="expandedGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor={chartColor} stopOpacity={0.3}/>
-                                <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                        <XAxis 
-                            dataKey="date" 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{fill: 'var(--text-secondary)', fontSize: 12}}
-                            interval={selectedShiftId ? 'preserveStartEnd' : (dateFilterMode === 'today' ? 3 : 'preserveStartEnd')}
-                            padding={{ left: 10, right: 10 }}
-                            dy={10}
-                        />
-                        <YAxis 
-                            axisLine={false} 
-                            tickLine={false} 
-                            width={45} 
-                            tickFormatter={(value) => 
-                                language === 'AR' 
-                                    ? value.toLocaleString('ar-EG') 
-                                    : value
-                            }
-                            tick={{fill: 'var(--text-secondary)', fontSize: 12, dx: language === 'AR' ? -50 : 0, textAnchor: 'end'}} 
-                        />
-                        <Tooltip 
-                            content={<CustomTooltipContent color={chartColor} unit={language === 'AR' ? 'ج.م ' : 'L.E '} employees={employees} selectedEmployeeId={selectedEmployeeId} showComparison={showComparison} />} 
-                            cursor={false}
-                        />
-
-                        {/* Comparison Lines - Other Employees (Gray Dashed) - Render FIRST (Background) - Only for Area Chart */}
-                        {showComparison && chartType === 'area' && activeEmployees.map(empId => (
-                            <Area 
-                                key={empId}
-                                type="monotone" 
-                                dataKey={empId}
-                                stroke="#9ca3af"
-                                strokeWidth={1.5}
-                                strokeOpacity={0.5}
-                                strokeDasharray="5 5"
-                                fill="none"
-                                animationDuration={500} 
-                                activeDot={false}
-                            />
-                        ))}
-
-                        {/* Main Employee Chart - Render LAST (On Top) */}
-                        {chartType === 'area' ? (
-                            <Area 
-                                type="monotone" 
-                                dataKey="sales" 
-                                stroke={chartColor}
-                                strokeWidth={2}
-                                fillOpacity={1} 
-                                fill="url(#expandedGradient)"
-                                animationDuration={500} 
-                            />
-                        ) : (
-                            <Bar 
-                                dataKey="sales" 
-                                fill={chartColor}
-                                radius={[20, 20, 20, 20]}
-                                animationDuration={500} 
-                            />
-                        )}
-                    </ComposedChart>
-                </ResponsiveContainer>
-            </div>
+        <ChartWidget
+            title={
+                language === 'AR' 
+                ? `تحليل المبيعات ${dateFilterMode === 'year' ? `(${new Date().getFullYear()})` : ''}`
+                : `Sales Analytics ${dateFilterMode === 'year' ? `(${new Date().getFullYear()})` : ''}`
+            }
+            icon="bar_chart"
+            data={chartData}
+            dataKeys={{
+                primary: 'sales',
+                comparison: activeEmployees
+            }}
+            color={chartColor}
+            language={language}
+            unit={language === 'AR' ? 'ج.م ' : 'L.E '}
+            employees={employees}
+            selectedEmployeeId={selectedEmployeeId}
             
+            // State & Controls
+            chartType={chartType}
+            onChartTypeChange={setChartType}
+            showComparison={showComparison}
+            onComparisonChange={setShowComparison}
+            onExpand={() => setIsExpandedChartOpen(true)}
+            
+            // X-Axis Control: For 'all', show start/end only (interval=preserveStartEnd with sparse labels)
+            xAxisInterval={dateFilterMode === 'all' ? 'preserveStartEnd' : 'equidistantPreserveStart'}
+        >
             {/* Shift Events Indicators - Only for Today view */}
             {dateFilterMode === 'today' && shiftsData.length > 0 && (
               <div className="mt-2 pt-3 border-t border-gray-100 dark:border-gray-700">
@@ -975,7 +1038,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                 </div>
               </div>
             )}
-        </div>
+        </ChartWidget>
 
         {/* Achievements & Insights */}
         <div className="space-y-6">

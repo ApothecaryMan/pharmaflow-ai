@@ -164,6 +164,8 @@ export interface Return {
 }
 
 
+export type PurchaseStatus = 'completed' | 'pending' | 'rejected';
+
 export interface Purchase {
   id: string;
   date: string;
@@ -172,7 +174,7 @@ export interface Purchase {
   items: PurchaseItem[];
   totalCost: number;
   totalTax?: number; // Total tax amount for the purchase
-  status: 'completed' | 'pending' | 'rejected';
+  status: PurchaseStatus;
   paymentType?: 'cash' | 'credit';
   invoiceId?: string;
   externalInvoiceId?: string;

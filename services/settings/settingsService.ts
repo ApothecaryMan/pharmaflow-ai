@@ -20,7 +20,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   navStyle: 1,
   profileImage: null,
   activeModule: 'dashboard',
-  purchaseTaxRate: 14 // Default 14% tax rate
+  purchaseTaxRate: 14, // Default 14% tax rate
+  branchCode: 'B1' // Default Branch Code
 };
 
 export const createSettingsService = (): SettingsService => ({

@@ -5,9 +5,13 @@ import { StorageKeys } from '../config/storageKeys';
 
 const MAX_TABS = 10;
 
+import { idGenerator } from '../utils/idGenerator';
+
+// ...
+
 // Create new tab helper function (defined before use)
 const createNewTab = (index: number): SaleTab => ({
-  id: `tab-${Date.now()}-${Math.random()}`,
+  id: idGenerator.generate('tabs'),
   name: `Tab ${index}`,
   cart: [],
   customerName: '',

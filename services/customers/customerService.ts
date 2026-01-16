@@ -8,6 +8,8 @@ import { CustomerService, CustomerFilters, CustomerStats } from './types';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 
+import { idGenerator } from '../../utils/idGenerator';
+
 export const createCustomerService = (): CustomerService => ({
   getAll: async (): Promise<Customer[]> => {
     return storage.get<Customer[]>(StorageKeys.CUSTOMERS, []);
@@ -55,7 +57,7 @@ export const createCustomerService = (): CustomerService => ({
     const all = await customerService.getAll();
     const newCustomer: Customer = { 
       ...customer, 
-      id: Date.now().toString(),
+      id: idGenerator.generate('customers'),
       createdAt: new Date().toISOString(),
       points: customer.points || 0,
       totalPurchases: customer.totalPurchases || 0

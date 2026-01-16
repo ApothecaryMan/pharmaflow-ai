@@ -8,6 +8,8 @@ import { SupplierService } from './types';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 
+import { idGenerator } from '../../utils/idGenerator';
+
 export const createSupplierService = (): SupplierService => ({
   getAll: async (): Promise<Supplier[]> => {
     return storage.get<Supplier[]>(StorageKeys.SUPPLIERS, []);
@@ -23,14 +25,15 @@ export const createSupplierService = (): SupplierService => ({
     const q = query.toLowerCase();
     return all.filter(s => 
       s.name.toLowerCase().includes(q) ||
-      s.email?.toLowerCase().includes(q) ||
-      s.phone?.includes(q)
+      s.contactPerson?.toLowerCase().includes(q) ||
+      s.phone?.includes(q) ||
+      s.email?.toLowerCase().includes(q)
     );
   },
 
   create: async (supplier: Omit<Supplier, 'id'>): Promise<Supplier> => {
     const all = await supplierService.getAll();
-    const newSupplier: Supplier = { ...supplier, id: Date.now().toString() } as Supplier;
+    const newSupplier: Supplier = { ...supplier, id: idGenerator.generate('suppliers') } as Supplier;
     all.push(newSupplier);
     storage.set(StorageKeys.SUPPLIERS, all);
     return newSupplier;

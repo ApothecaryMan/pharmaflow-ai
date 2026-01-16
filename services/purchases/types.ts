@@ -23,6 +23,7 @@ export interface PurchaseService {
   getAll(): Promise<Purchase[]>;
   getById(id: string): Promise<Purchase | null>;
   getBySupplier(supplierId: string): Promise<Purchase[]>;
+  getByStatus(status: 'pending' | 'completed' | 'rejected'): Promise<Purchase[]>;
   getPending(): Promise<Purchase[]>;
   filter(filters: PurchaseFilters): Promise<Purchase[]>;
   create(purchase: Omit<Purchase, 'id'>): Promise<Purchase>;

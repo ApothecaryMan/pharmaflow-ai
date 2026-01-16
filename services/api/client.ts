@@ -5,6 +5,7 @@
  */
 
 import { storage } from '../../utils/storage';
+import { idGenerator } from '../../utils/idGenerator';
 
 export interface ApiConfig {
   baseUrl: string;
@@ -49,7 +50,7 @@ export const createMockApiClient = (): ApiClient => ({
     await new Promise(resolve => setTimeout(resolve, 50));
     const key = `pharma_${endpoint.replace(/^\//, '').replace(/\//g, '_')}`;
     const items = storage.get<any[]>(key, []);
-    const newItem = { ...(data as object), id: Date.now().toString() };
+    const newItem = { ...(data as object), id: idGenerator.generate('generic') };
     items.push(newItem);
     storage.set(key, items);
     return { data: newItem as T, status: 201 };
