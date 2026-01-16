@@ -34,6 +34,8 @@ pharmaflow-ai/
 │   │   ├── ExpandingDropdown.tsx
 │   │   │   └── ExpandingDropdown       # Animated dropdown
 │   │   │
+│   │   ├── FloatingInput.tsx           # Input with floating label
+│   │   ├── ExpandedModal.tsx           # Full screen modal wrapper
 │   │   ├── ContextMenu.tsx
 │   │   │   ├── useContextMenu()         # Hook for manual trigger
 │   │   │   ├── useContextMenuTrigger()  # Event handlers hook
@@ -49,8 +51,10 @@ pharmaflow-ai/
 │   │   ├── SearchInput.tsx
 │   │   │   └── SearchInput             # Search with clear button
 │   │   │
-│   │   ├── Toast.tsx                    # Notification toasts
-│   │   ├── HelpModal.tsx                # Help modal
+│   │   ├── ScreenCalibration.tsx       # Screen sizing helper
+│   │   ├── TableAlignment.tsx          # Table content alignment
+│   │   ├── Toast.tsx                   # Notification toasts
+│   │   ├── HelpModal.tsx               # Help modal
 │   │   └── hooks/
 │   │
 │   ├── layout/
@@ -66,6 +70,21 @@ pharmaflow-ai/
 │   │   │   └── TabBar                  # Multi-tab manager
 │   │   │
 │   │   └── DashboardIcon.tsx            # Custom icon component
+│   │
+│   ├── services/
+│   │   ├── api/                         # API Clean Clients
+│   │   ├── sales/                       # Sales & POS Logic
+│   │   ├── inventory/                   # Stock & Product Logic
+│   │   ├── hr/                          # Employee Management
+│   │   ├── finance/                     # Financial Transactions
+│   │   ├── customers/                   # Customer CRM
+│   │   ├── suppliers/                   # Supplier Relations
+│   │   ├── purchases/                   # Procurement Logic
+│   │   ├── returns/                     # Return Handling
+│   │   ├── settings/                    # App Configuration
+│   │   ├── DataContext.tsx              # Unifying Data Provider
+│   │   ├── timeService.ts               # NTP Time Sync
+│   │   └── geminiService.ts             # AI Integration
 │   │
 │   ├── dashboard/
 │   │   ├── Dashboard.tsx                # Main dashboard
@@ -105,52 +124,83 @@ pharmaflow-ai/
 │   │   ├── CustomerLoyaltyOverview.tsx  # Loyalty stats
 │   │   └── CustomerLoyaltyLookup.tsx    # Lookup by phone
 │   │
+│   ├── hr/
+│   │   ├── EmployeeList.tsx             # Employee directory
+│   │   └── EmployeeProfile.tsx          # Employee details & stats
+│   │
+│   ├── settings/
+│   │   └── PrinterSettings.tsx          # Printer configuration
+│   │
+│   ├── experiments/                     # Experimental features
+│   │   ├── DashboardExperiments.tsx
+│   │   └── ExpandedChartModal.tsx
+│   │
+│   ├── providers/
+│   │   └── MuiThemeProvider.tsx         # MUI Theme Context
+│   │
 │   ├── ai/
 │   │   └── AIAssistant.tsx              # Chat interface
 │   │
 │   └── test/
 │       └── POSTest.tsx                  # POS variant
-│
-├── hooks/
-│   ├── useExpandingDropdown.ts
-│   │   └── useExpandingDropdown()       # Keyboard nav for dropdowns
+│   ├── hooks/
+│   │   ├── useExpandingDropdown.ts
+│   │   │   └── useExpandingDropdown()       # Keyboard nav for dropdowns
+│   │   │
+│   │   ├── useLongPress.ts
+│   │   │   └── useLongPress()               # Touch long-press detection
+│   │   │
+│   │   ├── usePOSTabs.ts
+│   │   │   └── usePOSTabs()                 # Multi-tab POS state
+│   │   │
+│   │   ├── useColumnReorder.ts
+│   │   │   └── useColumnReorder()           # Table column DnD
+│   │   │
+│   │   ├── useDebounce.ts
+│   │   │   └── useDebounce()                # Debounce values
+│   │   │
+│   │   ├── useTheme.ts
+│   │   │   └── useTheme()                   # Apply theme CSS vars
+│   │   │
+│   │   ├── useShift.tsx
+│   │   │   └── useShift()                   # Shift management
+│   │   │
+│   │   ├── usePersistedState.ts
+│   │   │   └── usePersistedState()          # Trusted storage hook
+│   │   │
+│   │   ├── useSmartPosition.ts              # Popover positioning
+│   │   ├── usePrinter.ts                    # Printer hook
+│   │   └── useDynamicTickerData.ts          # Ticker data hook
 │   │
-│   ├── useLongPress.ts
-│   │   └── useLongPress()               # Touch long-press detection
+│   ├── utils/
+│   │   ├── searchUtils.ts                   # Search helpers
+│   │   ├── expiryUtils.ts                   # Expiry calculations
+│   │   ├── themeStyles.ts                   # Style constants
+│   │   ├── barcodeEncoders.ts               # Barcode encoding
+│   │   ├── storage.ts                       # TYPE-SAFE STORAGE SERVICE
+│   │   ├── qzPrinter.ts                     # QZ Tray printer utilities
+│   │   ├── auth.ts                          # Auth utilities
+│   │   ├── inventory.ts                     # Inventory formatters
+│   │   └── printing/                        # Print utilities
 │   │
-│   ├── usePOSTabs.ts
-│   │   └── usePOSTabs()                 # Multi-tab POS state
+│   ├── data/
+│   │   ├── locations.ts                     # Egypt governorates
+│   │   ├── areas.ts                         # Area codes
+│   │   ├── countryCodes.ts                  # Phone codes
+│   │   ├── productCategories.ts             # Categories + types
+│   │   └── sample-inventory.ts            # Initial seed data
 │   │
-│   ├── useColumnReorder.ts
-│   │   └── useColumnReorder()           # Table column DnD
+│   ├── config/
+│   │   ├── menuData.ts                      # Menu structure
+│   │   ├── pageRegistry.ts                  # Page → Props map
+│   │   ├── storageKeys.ts                   # STORAGE KEY CONSTANTS
+│   │   └── themeColors.ts                   # Theme palettes
 │   │
-│   ├── useDebounce.ts
-│   │   └── useDebounce()                # Debounce values
-│   │
-│   └── useTheme.ts
-│       └── useTheme()                   # Apply theme CSS vars
-│
-├── utils/
-│   ├── searchUtils.ts                   # Search helpers
-│   ├── expiryUtils.ts                   # Expiry calculations
-│   ├── themeStyles.ts                   # Style constants
-│   ├── barcodeEncoders.ts               # Barcode encoding
-│   └── printing/                        # Print utilities
-│
-├── data/
-│   ├── locations.ts                     # Egypt governorates
-│   ├── areas.ts                         # Area codes
-│   ├── countryCodes.ts                  # Phone codes
-│   └── productCategories.ts             # Categories + types
-│
-├── config/
-│   ├── menuData.ts                      # Menu structure
-│   └── pageRegistry.ts                  # Page → Props map
-│
 ├── i18n/
 │   ├── translations.ts                  # UI text (EN + AR)
 │   ├── menuTranslations.ts              # Menu text
-│   └── helpInstructions.ts              # Help content
+│   ├── helpInstructions.ts              # Help content
+│   └── index.ts                         # i18n Exports
 │
 ├── types/
 │   └── index.ts                         # Type exports
@@ -169,20 +219,34 @@ pharmaflow-ai/
 
 ## 🏗️ Architecture & Data Flow
 
-### 1. State Management (Current)
+### 1. State Management
 
-Currently, **`App.tsx`** acts as the central store for the application.
+The application uses a **Hybrid State Management** approach:
 
-- **State**: Held in `App.tsx` (`inventory`, `sales`, `customers`, etc.).
-- **Access**: Data is passed down to pages via **Props** defined in `config/pageRegistry.ts`.
-- **Updates**: Handler functions (e.g., `onAddDrug`, `onCompleteSale`) are passed down as props.
+1.  **Global UI State** (`App.tsx` & `SettingsContext`):
+
+    - Managed via `usePersistedState` hook (auto-syncs to `localStorage`).
+    - Includes: `view`, `activeModule`, `theme`, `language`.
+
+2.  **Domain Data** (`DataContext.tsx` & Services):
+    - Complex entities (`inventory`, `sales`, `customers`) are transitioning to `DataContext`.
+    - Data flows: `Service` (Fetch) → `Context` (Store) → `Component` (View).
+
+- **Access**: Data is provided via `useData()` hook or passed as props.
+- **Updates**: Use service methods (e.g., `inventoryService.update()`) which sync to storage.
 
 ### 2. Service Layer
 
-While state is in `App.tsx`, complex business logic and data persistence should be handled by **Services** (`services/*`).
+**Services (`services/*`) are the designated place for:**
 
-- **Do not** write complex calculations inside UI components. Move them to services.
-- **Do not** access `localStorage` directly in components.
+- Business Logic & Calculations.
+- Data Persistence (CRUD).
+- API / Storage interactions.
+
+**Rules:**
+
+- ❌ **Do not** write complex calculations inside components.
+- ❌ **Do not** access `localStorage` directly (Use `StorageService`).
 
 ---
 
@@ -220,21 +284,28 @@ All UI elements must look professional. Avoid basic browser defaults.
 
 #### Standard Components (MUST USE)
 
-| Component           | Use Case            | File                           |
-| ------------------- | ------------------- | ------------------------------ |
-| `SmartInput`        | Standard text input | `common/SmartInputs.tsx`       |
-| `SmartPhoneInput`   | Phone number input  | `common/SmartInputs.tsx`       |
-| `SmartEmailInput`   | Email input         | `common/SmartInputs.tsx`       |
-| `SmartDateInput`    | Date picker         | `common/SmartInputs.tsx`       |
-| `ExpandingDropdown` | Dropdown selection  | `common/ExpandingDropdown.tsx` |
-| `SegmentedControl`  | Segmented buttons   | `common/SegmentedControl.tsx`  |
-| `Switch`            | Toggle switch       | `common/Switch.tsx`            |
-| `SearchInput`       | Search bar          | `common/SearchInput.tsx`       |
-| `Modal`             | Dialog/popup        | `common/Modal.tsx`             |
-| `TanStackTable`     | Data tables         | `common/TanStackTable.tsx`     |
-| `ContextMenu`       | Right-click menus   | `common/ContextMenu.tsx`       |
-| `Navbar`            | Top Navigation      | `layout/Navbar.tsx`            |
-| `Sidebar`           | Side Navigation     | `layout/Sidebar.tsx`           |
+| Component           | Use Case             | File                             |
+| ------------------- | -------------------- | -------------------------------- |
+| `SmartInput`        | Standard text input  | `common/SmartInputs.tsx`         |
+| `SmartPhoneInput`   | Phone number input   | `common/SmartInputs.tsx`         |
+| `SmartEmailInput`   | Email input          | `common/SmartInputs.tsx`         |
+| `SmartDateInput`    | Date input (Masked)  | `common/SmartInputs.tsx`         |
+| `FloatingInput`     | Floating label input | `common/FloatingInput.tsx`       |
+| `DatePicker`        | Calendar picker      | `common/DatePicker.tsx`          |
+| `ExpandingDropdown` | Dropdown selection   | `common/ExpandingDropdown.tsx`   |
+| `ExpandedModal`     | Full screen modal    | `common/ExpandedModal.tsx`       |
+| `SegmentedControl`  | Segmented buttons    | `common/SegmentedControl.tsx`    |
+| `Switch`            | Toggle switch        | `common/Switch.tsx`              |
+| `SearchInput`       | Search bar           | `common/SearchInput.tsx`         |
+| `Modal`             | Dialog/popup         | `common/Modal.tsx`               |
+| `HelpModal`         | Help dialog          | `common/HelpModal.tsx`           |
+| `Toast`             | Notifications        | `common/Toast.tsx`               |
+| `TanStackTable`     | Data tables          | `common/TanStackTable.tsx`       |
+| `ContextMenu`       | Right-click menus    | `common/ContextMenu.tsx`         |
+| `Navbar`            | Top Navigation       | `layout/Navbar.tsx`              |
+| `SidebarMenu`       | Side Navigation      | `layout/SidebarMenu.tsx`         |
+| `TabBar`            | Tabbed Interface     | `layout/TabBar.tsx`              |
+| `StatusBar`         | System Status        | `layout/StatusBar/StatusBar.tsx` |
 
 **Forbidden:** Never use HTML `<select>`, raw `<input>`, or `<table>` directly.
 
@@ -261,7 +332,35 @@ Use the `variant` prop based on parent background:
 
 ---
 
-### 3. Tailwind CSS Configuration
+### 3. Storage & Persistence
+
+**RULE:** NEVER access `localStorage` directly.
+Use the type-safe `StorageService` for all local storage operations.
+
+**Why?**
+
+- Prevents key collisions (via central `StorageKeys` enum).
+- Ensures safe JSON parsing & stringifying.
+- Provides consistent error handling (try-catch).
+
+#### Usage
+
+```typescript
+import { storage } from "../../utils/storage";
+import { StorageKeys } from "../../config/storageKeys";
+
+// ✅ Correct: Type-safe and failsafe
+const items = storage.get<Item[]>(StorageKeys.INVENTORY, []);
+storage.set(StorageKeys.INVENTORY, newItems);
+
+// ❌ Forbidden
+localStorage.getItem("inventory");
+localStorage.setItem("data", JSON.stringify(data));
+```
+
+---
+
+### 4. Tailwind CSS Configuration
 
 Tailwind is configured locally (not CDN). See `tailwind.config.js`.
 
@@ -300,6 +399,7 @@ Before submitting:
 - [ ] **Dropdowns**: Using `ExpandingDropdown`?
 - [ ] **Segmented Controls**: Using `SegmentedControl` with correct `variant`?
 - [ ] **Switches**: Using `Switch` component?
+- [ ] **Storage**: Using `StorageService`? (No `localStorage`)
 - [ ] **Tables**: Using `TanStackTable`?
 - [ ] **Translations**: 100% covered (EN + AR)?
 - [ ] **RTL Support**: Tested in Arabic mode?
@@ -313,6 +413,7 @@ Before submitting:
 
 - **SmartInputs**: See `components/common/SmartInputs.tsx` for docs.
 - **SegmentedControl**: See `components/common/SegmentedControl.tsx` for variant usage.
+- **StorageService**: See `utils/storage.ts` for persistence.
 - **Services**: See `services/` for business logic.
 - **Page Registry**: See `config/pageRegistry.ts` for props injection.
 - **Tailwind Config**: See `tailwind.config.js` for safelist and theme.
