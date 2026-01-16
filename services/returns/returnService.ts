@@ -5,14 +5,13 @@
 import { Return, PurchaseReturn } from '../../types';
 import { ReturnService } from './types';
 
-const SALES_RETURNS_KEY = 'pharma_returns';
-const PURCHASE_RETURNS_KEY = 'pharma_purchase_returns';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 export const createReturnService = (): ReturnService => ({
   // Sales Returns
   getAllSalesReturns: async (): Promise<Return[]> => {
-    const data = localStorage.getItem(SALES_RETURNS_KEY);
-    return data ? JSON.parse(data) : [];
+    return storage.get<Return[]>(StorageKeys.RETURNS, []);
   },
 
   getSalesReturnById: async (id: string): Promise<Return | null> => {
@@ -27,14 +26,13 @@ export const createReturnService = (): ReturnService => ({
       id: Date.now().toString()
     } as Return;
     all.push(newReturn);
-    localStorage.setItem(SALES_RETURNS_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.RETURNS, all);
     return newReturn;
   },
 
   // Purchase Returns
   getAllPurchaseReturns: async (): Promise<PurchaseReturn[]> => {
-    const data = localStorage.getItem(PURCHASE_RETURNS_KEY);
-    return data ? JSON.parse(data) : [];
+    return storage.get<PurchaseReturn[]>(StorageKeys.PURCHASE_RETURNS, []);
   },
 
   getPurchaseReturnById: async (id: string): Promise<PurchaseReturn | null> => {
@@ -49,17 +47,17 @@ export const createReturnService = (): ReturnService => ({
       id: Date.now().toString()
     } as PurchaseReturn;
     all.push(newReturn);
-    localStorage.setItem(PURCHASE_RETURNS_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.PURCHASE_RETURNS, all);
     return newReturn;
   },
 
   // Save
   saveSalesReturns: async (returns: Return[]): Promise<void> => {
-    localStorage.setItem(SALES_RETURNS_KEY, JSON.stringify(returns));
+    storage.set(StorageKeys.RETURNS, returns);
   },
 
   savePurchaseReturns: async (returns: PurchaseReturn[]): Promise<void> => {
-    localStorage.setItem(PURCHASE_RETURNS_KEY, JSON.stringify(returns));
+    storage.set(StorageKeys.PURCHASE_RETURNS, returns);
   }
 });
 

@@ -28,6 +28,8 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   return itemString.includes(searchString);
 };
 
+const EMPTY_ALIGNMENT = {};
+
 interface TanStackTableProps<TData, TValue> {
   data: TData[];
   columns: ColumnDef<TData, TValue>[];
@@ -88,7 +90,7 @@ export function TanStackTable<TData, TValue>({
   defaultHiddenColumns = [],
   activeIndex,
   enableTopToolbar = true,
-  defaultColumnAlignment = {},
+  defaultColumnAlignment = EMPTY_ALIGNMENT,
   globalFilter: externalGlobalFilter,
   enableSearch = true,
   customEmptyState,

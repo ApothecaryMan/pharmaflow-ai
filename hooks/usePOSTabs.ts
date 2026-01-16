@@ -24,12 +24,21 @@ export const usePOSTabs = () => {
     return saved.length > 0 ? saved : [createNewTab(1)];
   });
 
-  const [activeTabId, setActiveTabId] = useState<string>(() => tabs[0]?.id || '');
+  const [activeTabId, setActiveTabId] = useState<string>(() => {
+    const savedId = storage.get<string>(StorageKeys.POS_ACTIVE_TAB_ID, '');
+    if (savedId && tabs.some(t => t.id === savedId)) return savedId;
+    return tabs[0]?.id || '';
+  });
 
   // Save to storage whenever tabs change
   useEffect(() => {
     storage.set(StorageKeys.POS_TABS, tabs);
   }, [tabs]);
+
+  // Save active tab ID whenever it changes
+  useEffect(() => {
+    storage.set(StorageKeys.POS_ACTIVE_TAB_ID, activeTabId);
+  }, [activeTabId]);
 
   // Add new tab
   const addTab = useCallback(() => {

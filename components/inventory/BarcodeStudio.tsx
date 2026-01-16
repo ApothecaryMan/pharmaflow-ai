@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ScreenCalibration } from '../common/ScreenCalibration';
+import { BarcodePreview } from './BarcodePreview';
 import { useContextMenu } from '../common/ContextMenu';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 import { Drug } from '../../types';
 import * as QRCode from 'qrcode';
 import { useSmartDirection } from '../common/SmartInputs';
@@ -14,6 +18,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { useDebounce } from '../../hooks/useDebounce';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
 import { useStatusBar } from '../layout/StatusBar';
+
 
 
 // Reusable Sidebar Section Component
@@ -57,8 +62,7 @@ interface BarcodeStudioProps {
   t: typeof TRANSLATIONS.EN.barcodeStudio;
 }
 
-import { ScreenCalibration } from '../common/ScreenCalibration';
-import { BarcodePreview } from './BarcodePreview';
+
 
 // Default: 1mm approx 3.78px at 96 DPI
 const DEFAULT_MM_TO_PX = 3.78;
@@ -121,7 +125,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false);
 
   useEffect(() => {
-      const savedRatio = localStorage.getItem('pharma_screen_calibration_ratio');
+      const savedRatio = storage.get<string | null>(StorageKeys.SCREEN_CALIBRATION_RATIO, null);
       if (savedRatio) {
           setMmToPx(parseFloat(savedRatio));
       }
@@ -146,8 +150,9 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const [tempTemplateName, setTempTemplateName] = useState('');
   const [showHitboxCalibration, setShowHitboxCalibration] = useState(false);
   
-  // Data State - Dynamically synced from ReceiptDesigner localStorage
+  // Data State - Dynamically synced from ReceiptDesigner storage
   const [receiptSettings, setLocalReceiptSettings] = useState(getReceiptSettings);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // --- Receipt Settings Polling (Optimized) ---
   useEffect(() => {
@@ -197,6 +202,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   
   // --- Autosave Effect (Performance Optimized) ---
   useEffect(() => {
+    if (!isLoaded) return; // Guard: Don't save before initial load
+
     const designState = {
         elements: debouncedElements,
         selectedPreset: debouncedSelectedPreset,
@@ -209,11 +216,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
         printOffsetX: debouncedPrintOffsets.x,
         printOffsetY: debouncedPrintOffsets.y
     };
-    try {
-        localStorage.setItem('pharma_label_design', JSON.stringify(designState));
-    } catch (e) {
-        console.error('Autosave failed', e);
-    }
+    storage.set(StorageKeys.LABEL_DESIGN, designState);
   }, [
     debouncedElements, 
     debouncedSelectedPreset, 
@@ -222,7 +225,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     debouncedBarcodeSource, 
     activeTemplateId, 
     debouncedShowPrintBorders, 
-    debouncedPrintOffsets
+    debouncedPrintOffsets,
+    isLoaded
   ]);
 
   // Dragging Refs
@@ -237,28 +241,23 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   // Load Templates & Last State
   useEffect(() => {
     // Load Templates
-    const savedTemplates = localStorage.getItem('pharma_label_templates');
-    let loadedTemplates: SavedTemplate[] = [];
-    if (savedTemplates) {
-        try {
-            loadedTemplates = JSON.parse(savedTemplates);
-            setTemplates(loadedTemplates);
-        } catch (e) { console.error("Error loading templates", e); }
-    }
+    const loadedTemplates = storage.get<SavedTemplate[]>(StorageKeys.LABEL_TEMPLATES, []);
+    setTemplates(loadedTemplates);
 
     // Load Default Template ID
-    const savedDefaultId = localStorage.getItem('pharma_label_default_template');
+    const savedDefaultId = storage.get<string | null>(StorageKeys.LABEL_DEFAULT_TEMPLATE, null);
     if (savedDefaultId) {
         setDefaultTemplateId(savedDefaultId);
     }
 
     // Load Last Session (Autosave) or Default Template
-    const savedDesign = localStorage.getItem('pharma_label_design');
+    const savedDesign = storage.get<any | null>(StorageKeys.LABEL_DESIGN, null);
+    
     if (savedDesign) {
         try {
-            const parsed = JSON.parse(savedDesign);
-            if (parsed.elements && parsed.elements.length > 0) {
-                applyDesignState(parsed);
+             // savedDesign is already parsed by storage.get
+            if (savedDesign.elements && savedDesign.elements.length > 0) {
+                applyDesignState(savedDesign);
             } else if (savedDefaultId && loadedTemplates.length > 0) {
                 const defaultTemplate = loadedTemplates.find(t => t.id === savedDefaultId);
                 if (defaultTemplate) {
@@ -285,6 +284,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     } else {
         initializeLayout('38x12');
     }
+    
+    setIsLoaded(true); // Enable autosave
   }, []);
 
   // Auto-select first drug if none selected
@@ -326,7 +327,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           setElements([...state.elements, ...missingElements]);
       }
       if (state.borderStyle) setBorderStyle(state.borderStyle);
-      // storeName and hotline are now read from ReceiptDesigner localStorage
+      // storeName and hotline are now read from ReceiptDesigner storage
       if (state.uploadedLogo) setUploadedLogo(state.uploadedLogo);
       if (state.barcodeSource) setBarcodeSource(state.barcodeSource);
       if (state.activeTemplateId) setActiveTemplateId(state.activeTemplateId);
@@ -413,7 +414,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
       const updatedTemplates = [...templates, newTemplate];
       setTemplates(updatedTemplates);
-      localStorage.setItem('pharma_label_templates', JSON.stringify(updatedTemplates));
+      storage.set(StorageKeys.LABEL_TEMPLATES, updatedTemplates);
       
       
       setActiveTemplateId(newId);
@@ -429,7 +430,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           t.id === id ? { ...t, design } : t
       );
       setTemplates(updatedTemplates);
-      localStorage.setItem('pharma_label_templates', JSON.stringify(updatedTemplates));
+      storage.set(StorageKeys.LABEL_TEMPLATES, updatedTemplates);
       justLoaded.current = true;
       setSaveStatus(t.templateSaved);
       setTimeout(() => setSaveStatus(''), 2000);
@@ -451,7 +452,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const deleteTemplate = (id: string) => {
       const updated = templates.filter(t => t.id !== id);
       setTemplates(updated);
-      localStorage.setItem('pharma_label_templates', JSON.stringify(updated));
+      storage.set(StorageKeys.LABEL_TEMPLATES, updated);
       if (activeTemplateId === id) {
           initializeLayout(selectedPreset);
       }

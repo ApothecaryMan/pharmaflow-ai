@@ -5,12 +5,12 @@
 import { Drug } from '../../types';
 import { InventoryService, InventoryFilters, InventoryStats } from './types';
 
-const STORAGE_KEY = 'pharma_inventory';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 export const createInventoryService = (): InventoryService => ({
   getAll: async (): Promise<Drug[]> => {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    return storage.get<Drug[]>(StorageKeys.INVENTORY, []);
   },
 
   getById: async (id: string): Promise<Drug | null> => {
@@ -62,7 +62,7 @@ export const createInventoryService = (): InventoryService => ({
     const all = await inventoryService.getAll();
     const newDrug: Drug = { ...drug, id: Date.now().toString() } as Drug;
     all.push(newDrug);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.INVENTORY, all);
     return newDrug;
   },
 
@@ -71,14 +71,14 @@ export const createInventoryService = (): InventoryService => ({
     const index = all.findIndex(d => d.id === id);
     if (index === -1) throw new Error('Drug not found');
     all[index] = { ...all[index], ...updates };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.INVENTORY, all);
     return all[index];
   },
 
   delete: async (id: string): Promise<boolean> => {
     const all = await inventoryService.getAll();
     const filtered = all.filter(d => d.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    storage.set(StorageKeys.INVENTORY, filtered);
     return true;
   },
 
@@ -87,7 +87,7 @@ export const createInventoryService = (): InventoryService => ({
     const index = all.findIndex(d => d.id === id);
     if (index === -1) throw new Error('Drug not found');
     all[index].stock += quantity;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.INVENTORY, all);
     return all[index];
   },
 
@@ -118,7 +118,7 @@ export const createInventoryService = (): InventoryService => ({
   },
 
   save: async (inventory: Drug[]): Promise<void> => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+    storage.set(StorageKeys.INVENTORY, inventory);
   }
 });
 

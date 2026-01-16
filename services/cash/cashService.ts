@@ -27,6 +27,11 @@ export interface CashServiceInterface {
   saveShifts(shifts: Shift[]): Promise<void>;
 }
 
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
+
+// ... (interface remains same)
+
 export const createCashService = (): CashServiceInterface => ({
   getCurrentShift: async (): Promise<Shift | null> => {
     const all = await cashService.getAllShifts();
@@ -34,18 +39,16 @@ export const createCashService = (): CashServiceInterface => ({
   },
 
   getAllShifts: async (): Promise<Shift[]> => {
-    const data = localStorage.getItem(SHIFTS_KEY);
-    if (!data) return [];
+    const shifts = storage.get<Shift[]>(StorageKeys.SHIFTS, []);
     
     // Parse and ensure all fields have defaults
-    const shifts: Shift[] = JSON.parse(data).map((s: any) => ({
+    return shifts.map((s: any) => ({
       ...s,
       cashSales: s.cashSales ?? 0,
       cardSales: s.cardSales ?? 0,
       returns: s.returns ?? 0,
       transactions: s.transactions ?? [],
     }));
-    return shifts;
   },
 
   openShift: async (openingBalance: number, openedBy: string): Promise<Shift> => {
@@ -69,7 +72,7 @@ export const createCashService = (): CashServiceInterface => ({
     
     // Add to beginning (newest first)
     all.unshift(newShift);
-    localStorage.setItem(SHIFTS_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.SHIFTS, all);
     return newShift;
   },
 
@@ -91,7 +94,7 @@ export const createCashService = (): CashServiceInterface => ({
       notes,
     };
     
-    localStorage.setItem(SHIFTS_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.SHIFTS, all);
     return all[index];
   },
 
@@ -127,7 +130,7 @@ export const createCashService = (): CashServiceInterface => ({
         break;
     }
     
-    localStorage.setItem(SHIFTS_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.SHIFTS, all);
     return newTx;
   },
 
@@ -144,7 +147,7 @@ export const createCashService = (): CashServiceInterface => ({
   },
 
   saveShifts: async (shifts: Shift[]): Promise<void> => {
-    localStorage.setItem(SHIFTS_KEY, JSON.stringify(shifts));
+    storage.set(StorageKeys.SHIFTS, shifts);
   },
 });
 

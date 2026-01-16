@@ -9,7 +9,6 @@ import { Navbar } from './components/layout/Navbar';
 import { StatusBar, useStatusBar } from './components/layout/StatusBar';
 import { PAGE_REGISTRY } from './config/pageRegistry';
 import { useTheme } from './hooks/useTheme';
-import { CSV_INVENTORY } from './data/sample-inventory';
 import { useData } from './services';
 import { useSettings, THEMES, LANGUAGES } from './context';
 
@@ -19,16 +18,6 @@ const validateStock = (stock: number): number => {
   if (isNaN(stock) || stock < 0) return 0;
   return Math.round(stock);
 };
-
-const INITIAL_INVENTORY = CSV_INVENTORY;
-
-const INITIAL_SUPPLIERS: Supplier[] = [
-  { id: '1', name: 'PharmaDist Co', contactPerson: 'John Smith', phone: '+1234567890', email: 'john@pharmadist.com', address: '123 Supply St, Medical City' },
-  { id: '2', name: 'Global Health', contactPerson: 'Sarah Connor', phone: '+0987654321', email: 'sarah@globalhealth.com', address: '456 Wellness Blvd, Tech Park' },
-  { id: '3', name: 'MediCare Supplies', contactPerson: 'Dr. House', phone: '+1122334455', email: 'house@medicare.com', address: '789 Clinic Rd, Hospital Area' },
-];
-
-
 
 import { ContextMenuProvider, useContextMenu } from './components/common/ContextMenu';
 
@@ -55,14 +44,14 @@ const GlobalContextMenuWrapper: React.FC<{ children: React.ReactNode, t: any, to
     );
 };
 
+// Import new storage utilities
+import { usePersistedState } from './hooks/usePersistedState';
+import { StorageKeys } from './config/storageKeys';
+
 const App: React.FC = () => {
-  const [view, setView] = useState<ViewState>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_view');
-      return (saved as ViewState) || 'dashboard';
-    }
-    return 'dashboard';
-  });
+  // --- View State ---
+  const [view, setView] = usePersistedState<ViewState>(StorageKeys.VIEW, 'dashboard');
+  const [activeModule, setActiveModule] = usePersistedState<string>(StorageKeys.ACTIVE_MODULE, 'dashboard');
 
   // --- Settings from Context (centralized) ---
   const {
@@ -88,105 +77,34 @@ const App: React.FC = () => {
     availableLanguages,
   } = useSettings();
 
-  const [profileImage, setProfileImage] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('pharma_profileImage');
-    }
-    return null;
-  });
+  // --- User/Session State ---
+  const [profileImage, setProfileImage] = usePersistedState<string | null>(StorageKeys.PROFILE_IMAGE, null);
+  const [currentEmployeeId, setCurrentEmployeeId] = usePersistedState<string | null>(StorageKeys.CURRENT_EMPLOYEE_ID, null);
 
-  // الموظف الحالي المسجل في البروفايل
-  const [currentEmployeeId, setCurrentEmployeeId] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('pharma_currentEmployeeId');
-    }
-    return null;
-  });
-
-  // قائمة الموظفين
-  const { employees } = useData();
 
   // Apply theme system - updates CSS variables
   useTheme(theme.primary, darkMode);
 
-  const [inventory, setInventory] = useState<Drug[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_inventory');
-      
-      // One-time override to load CSV data if not already done (v5 for dosage fix)
-      const isCsvLoaded = localStorage.getItem('pharma_csv_loaded_v5');
-      if (!isCsvLoaded) {
-          localStorage.setItem('pharma_csv_loaded_v5', 'true');
-          return INITIAL_INVENTORY;
-      }
+  // --- Data State ---
+  // Note: For inventory, we still need the initialization logic for migrations, so we might wrap it or handle it in useEffect.
+  // However, usePersistedState handles initialization from storage. 
+  // We can keep the data hooks simple for now or Refactor them later in Phase 3.
+  // For App.tsx cleaning, let's switch these to usePersistedState as well.
 
-      if (saved) {
-         const parsed = JSON.parse(saved);
-         // If saved inventory is old or missing new fields like 'class', we refresh it.
-         if (parsed.length > 0 && parsed[0].class) return parsed;
-         return INITIAL_INVENTORY;
-      }
-      return INITIAL_INVENTORY;
-    }
-    return INITIAL_INVENTORY;
-  });
-
-  const [sales, setSales] = useState<Sale[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_sales');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
-
-  const [suppliers, setSuppliers] = useState<Supplier[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_suppliers');
-      return saved ? JSON.parse(saved) : INITIAL_SUPPLIERS;
-    }
-    return INITIAL_SUPPLIERS;
-  });
-
-  const [purchases, setPurchases] = useState<Purchase[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_purchases');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
-
-  const [purchaseReturns, setPurchaseReturns] = useState<PurchaseReturn[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_purchase_returns');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
-
-  const [returns, setReturns] = useState<Return[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_returns');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
-
-  const [customers, setCustomers] = useState<Customer[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pharma_customers');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
+  const { 
+    inventory, setInventory, 
+    sales, setSales,
+    suppliers, setSuppliers,
+    purchases, setPurchases,
+    purchaseReturns, setPurchaseReturns,
+    returns, setReturns,
+    customers, setCustomers,
+    employees, setEmployees,
+    isLoading
+  } = useData();
 
   const [tip, setTip] = useState<string>("Loading tip...");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeModule, setActiveModule] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('pharma_activeModule') || 'dashboard';
-    }
-    return 'dashboard';
-  });
   
   const [toast, setToast] = useState<{
     message: string;
@@ -195,76 +113,13 @@ const App: React.FC = () => {
 
   const t = TRANSLATIONS[language];
 
-  // Persist view to localStorage
-  useEffect(() => {
-    localStorage.setItem('pharma_view', view);
-  }, [view]);
-
-  // Persist activeModule to localStorage
-  useEffect(() => {
-    localStorage.setItem('pharma_activeModule', activeModule);
-  }, [activeModule]);
-
   // Apply language direction
   useEffect(() => {
     document.documentElement.lang = language.toLowerCase();
     document.documentElement.dir = language === 'AR' ? 'rtl' : 'ltr';
   }, [language]);
 
-  useEffect(() => {
-    if (profileImage) {
-      try {
-        localStorage.setItem('pharma_profileImage', profileImage);
-      } catch (error) {
-        console.error('Failed to save profile image:', error);
-        // If quota exceeded, we can't do much but maybe warn if it's critical, 
-        // but since we are handling compression in Navbar now, this is just a safety net.
-        // We could verify if it's a QuotaExceededError but generic catch is safer for now.
-        if (typeof window !== 'undefined' && (error as any).name === 'QuotaExceededError') {
-             // alert('Storage is full. Image could not be saved.'); // Optional: Use toast instead if available context
-             console.warn('LocalStorage limit reached. Profile image not persisted.');
-        }
-      }
-    } else {
-      localStorage.removeItem('pharma_profileImage');
-    }
-  }, [profileImage]);
 
-  useEffect(() => {
-    if (currentEmployeeId) {
-      localStorage.setItem('pharma_currentEmployeeId', currentEmployeeId);
-    } else {
-      localStorage.removeItem('pharma_currentEmployeeId');
-    }
-  }, [currentEmployeeId]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_inventory', JSON.stringify(inventory));
-  }, [inventory]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_sales', JSON.stringify(sales));
-  }, [sales]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_suppliers', JSON.stringify(suppliers));
-  }, [suppliers]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_purchases', JSON.stringify(purchases));
-  }, [purchases]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_purchase_returns', JSON.stringify(purchaseReturns));
-  }, [purchaseReturns]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_returns', JSON.stringify(returns));
-  }, [returns]);
-
-  useEffect(() => {
-    localStorage.setItem('pharma_customers', JSON.stringify(customers));
-  }, [customers]);
 
   useEffect(() => {
     // Static tips generator
@@ -284,8 +139,15 @@ const App: React.FC = () => {
   // Get verified time from StatusBar context
   const { getVerifiedDate, validateTransactionTime, updateLastTransactionTime } = useStatusBar();
 
+  const migrationAttempted = useRef(false);
+
   // MIGRATION: Update Legacy Internal Codes to 6-Digit Format AND Convert to Unit-Based Inventory
   useEffect(() => {
+     if (isLoading || migrationAttempted.current) return;
+     if (!inventory || inventory.length === 0) return;
+
+     migrationAttempted.current = true;
+
      // 1. Code Migration (Keep existing logic)
      const needsCodeMigration = inventory.some(d => d.internalCode && (!/^\d{6}$/.test(d.internalCode) || d.internalCode.includes('-') || d.internalCode.includes('REAL') || d.internalCode.includes('INT')));
      
@@ -319,8 +181,6 @@ const App: React.FC = () => {
              console.log('Backup created: pharma_backup_pre_migration_v1');
          } catch (error) {
              console.warn('Backup failed: Storage Quota Exceeded. Proceeding without backup.');
-             // Optional: Alert user
-             // alert('Warning: Could not create backup due to storage limits. Migration continuing.');
          }
 
          // B. ROLLBACK MECHANISM
@@ -338,20 +198,11 @@ const App: React.FC = () => {
 
          // C. MIGRATE LOGIC
          migratedInventory = migratedInventory.map(d => {
-             // Heuristic: If stock is float OR small number (< 1000), assume it is PACKS
-             // If stock is huge (> 1000) and integer, it MIGHT be units already, but to be safe for 
-             // this specific app (where stock was packs), we assume ALL are packs unless explicitly flagged (which we don't have).
-             // Given the generator used max 150 packs, stock < 1000 is a safe bet for "Packs".
-             // If a user had 5000 packs, this might misinterpret, but typical pharmacy stock is < 1000 packs per item.
-             
              const isLikelyPacks = (d.stock < 1000) || !Number.isInteger(d.stock);
              
              if (isLikelyPacks) {
                  const units = d.unitsPerPack || 1;
                  const newStock = Math.round(d.stock * units); // Convert to Total Units
-                 
-                 // console.log(`Migrating ${d.name}: ${d.stock} Packs -> ${newStock} Units (PackSize: ${units})`);
-                 
                  return { ...d, stock: validateStock(newStock) };
              }
              return { ...d, stock: validateStock(d.stock) };
@@ -368,31 +219,8 @@ const App: React.FC = () => {
      if (hasUpdates) {
          setInventory(migratedInventory);
      }
-  }, []); // Run on mount only
+  }, [isLoading, inventory.length]); // Check when loading finishes or inventory size changes
 
-  // --- Cross-Tab Synchronization ---
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'pharma_inventory' && e.newValue) {
-            setInventory(JSON.parse(e.newValue));
-        } else if (e.key === 'pharma_sales' && e.newValue) {
-            setSales(JSON.parse(e.newValue));
-        } else if (e.key === 'pharma_customers' && e.newValue) {
-            setCustomers(JSON.parse(e.newValue));
-        } else if (e.key === 'pharma_returns' && e.newValue) {
-            setReturns(JSON.parse(e.newValue));
-        } else if (e.key === 'pharma_purchases' && e.newValue) {
-            setPurchases(JSON.parse(e.newValue));
-        } else if (e.key === 'pharma_purchase_returns' && e.newValue) {
-            setPurchaseReturns(JSON.parse(e.newValue));
-        } else if (e.key === 'pharma_suppliers' && e.newValue) {
-            setSuppliers(JSON.parse(e.newValue));
-        }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
 
   // Drug Management
   const handleAddDrug = (drug: Drug) => {

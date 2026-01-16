@@ -5,12 +5,12 @@
 import { Customer } from '../../types';
 import { CustomerService, CustomerFilters, CustomerStats } from './types';
 
-const STORAGE_KEY = 'pharma_customers';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 export const createCustomerService = (): CustomerService => ({
   getAll: async (): Promise<Customer[]> => {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    return storage.get<Customer[]>(StorageKeys.CUSTOMERS, []);
   },
 
   getById: async (id: string): Promise<Customer | null> => {
@@ -61,7 +61,7 @@ export const createCustomerService = (): CustomerService => ({
       totalPurchases: customer.totalPurchases || 0
     } as Customer;
     all.push(newCustomer);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.CUSTOMERS, all);
     return newCustomer;
   },
 
@@ -70,14 +70,14 @@ export const createCustomerService = (): CustomerService => ({
     const index = all.findIndex(c => c.id === id);
     if (index === -1) throw new Error('Customer not found');
     all[index] = { ...all[index], ...updates };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.CUSTOMERS, all);
     return all[index];
   },
 
   delete: async (id: string): Promise<boolean> => {
     const all = await customerService.getAll();
     const filtered = all.filter(c => c.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    storage.set(StorageKeys.CUSTOMERS, filtered);
     return true;
   },
 
@@ -86,7 +86,7 @@ export const createCustomerService = (): CustomerService => ({
     const index = all.findIndex(c => c.id === id);
     if (index === -1) throw new Error('Customer not found');
     all[index].points = (all[index].points || 0) + points;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.CUSTOMERS, all);
     return all[index];
   },
 
@@ -97,7 +97,7 @@ export const createCustomerService = (): CustomerService => ({
     const current = all[index].points || 0;
     if (current < points) throw new Error('Insufficient points');
     all[index].points = current - points;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.CUSTOMERS, all);
     return all[index];
   },
 
@@ -117,7 +117,7 @@ export const createCustomerService = (): CustomerService => ({
   },
 
   save: async (customers: Customer[]): Promise<void> => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
+    storage.set(StorageKeys.CUSTOMERS, customers);
   }
 });
 

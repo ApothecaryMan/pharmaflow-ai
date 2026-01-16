@@ -29,39 +29,39 @@ export interface DataState {
 
 export interface DataActions {
   // Inventory
-  setInventory: (inventory: Drug[]) => void;
+  setInventory: (inventory: Drug[] | ((prev: Drug[]) => Drug[])) => void;
   addProduct: (product: Omit<Drug, 'id'>) => Promise<Drug>;
   updateProduct: (id: string, updates: Partial<Drug>) => Promise<Drug>;
   updateStock: (id: string, quantity: number) => Promise<void>;
   
   // Sales
-  setSales: (sales: Sale[]) => void;
+  setSales: (sales: Sale[] | ((prev: Sale[]) => Sale[])) => void;
   addSale: (sale: Omit<Sale, 'id'>) => Promise<Sale>;
   
   // Suppliers
-  setSuppliers: (suppliers: Supplier[]) => void;
+  setSuppliers: (suppliers: Supplier[] | ((prev: Supplier[]) => Supplier[])) => void;
   addSupplier: (supplier: Omit<Supplier, 'id'>) => Promise<Supplier>;
   updateSupplier: (id: string, updates: Partial<Supplier>) => Promise<Supplier>;
   
   // Purchases
-  setPurchases: (purchases: Purchase[]) => void;
+  setPurchases: (purchases: Purchase[] | ((prev: Purchase[]) => Purchase[])) => void;
   addPurchase: (purchase: Omit<Purchase, 'id'>) => Promise<Purchase>;
   approvePurchase: (id: string, approver: string) => Promise<void>;
   rejectPurchase: (id: string) => Promise<void>;
   
   // Returns
-  setReturns: (returns: Return[]) => void;
-  setPurchaseReturns: (returns: PurchaseReturn[]) => void;
+  setReturns: (returns: Return[] | ((prev: Return[]) => Return[])) => void;
+  setPurchaseReturns: (returns: PurchaseReturn[] | ((prev: PurchaseReturn[]) => PurchaseReturn[])) => void;
   addReturn: (ret: Omit<Return, 'id'>) => Promise<Return>;
   
   // Customers
-  setCustomers: (customers: Customer[]) => void;
+  setCustomers: (customers: Customer[] | ((prev: Customer[]) => Customer[])) => void;
   addCustomer: (customer: Omit<Customer, 'id'>) => Promise<Customer>;
   updateCustomer: (id: string, updates: Partial<Customer>) => Promise<Customer>;
   deleteCustomer: (id: string) => Promise<void>;
 
   // Employees
-  setEmployees: (employees: Employee[]) => void;
+  setEmployees: (employees: Employee[] | ((prev: Employee[]) => Employee[])) => void;
   addEmployee: (employee: Employee) => Promise<Employee>;
   updateEmployee: (id: string, updates: Partial<Employee>) => Promise<Employee>;
   deleteEmployee: (id: string) => Promise<void>;
@@ -139,25 +139,25 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount
 
-  // Sync to localStorage when state changes
-  useEffect(() => { inventoryService.save(inventory); }, [inventory]);
-  useEffect(() => { salesService.save(sales); }, [sales]);
-  useEffect(() => { supplierService.save(suppliers); }, [suppliers]);
-  useEffect(() => { purchaseService.save(purchases); }, [purchases]);
-  useEffect(() => { returnService.savePurchaseReturns(purchaseReturns); }, [purchaseReturns]);
-  useEffect(() => { returnService.saveSalesReturns(returns); }, [returns]);
-  useEffect(() => { customerService.save(customers); }, [customers]);
-  useEffect(() => { employeeService.save(employees); }, [employees]);
+ // Sync to localStorage when state changes (only after initial load)
+  useEffect(() => { if (!isLoading) inventoryService.save(inventory); }, [inventory, isLoading]);
+  useEffect(() => { if (!isLoading) salesService.save(sales); }, [sales, isLoading]);
+  useEffect(() => { if (!isLoading) supplierService.save(suppliers); }, [suppliers, isLoading]);
+  useEffect(() => { if (!isLoading) purchaseService.save(purchases); }, [purchases, isLoading]);
+  useEffect(() => { if (!isLoading) returnService.savePurchaseReturns(purchaseReturns); }, [purchaseReturns, isLoading]);
+  useEffect(() => { if (!isLoading) returnService.saveSalesReturns(returns); }, [returns, isLoading]);
+  useEffect(() => { if (!isLoading) customerService.save(customers); }, [customers, isLoading]);
+  useEffect(() => { if (!isLoading) employeeService.save(employees); }, [employees, isLoading]);
 
   // Actions
-  const setInventory = useCallback((data: Drug[]) => setInventoryState(data), []);
-  const setSales = useCallback((data: Sale[]) => setSalesState(data), []);
-  const setSuppliers = useCallback((data: Supplier[]) => setSuppliersState(data), []);
-  const setPurchases = useCallback((data: Purchase[]) => setPurchasesState(data), []);
-  const setReturns = useCallback((data: Return[]) => setReturnsState(data), []);
-  const setPurchaseReturns = useCallback((data: PurchaseReturn[]) => setPurchaseReturnsState(data), []);
-  const setCustomers = useCallback((data: Customer[]) => setCustomersState(data), []);
-  const setEmployees = useCallback((data: Employee[]) => setEmployeesState(data), []);
+  const setInventory = useCallback((data: Drug[] | ((prev: Drug[]) => Drug[])) => setInventoryState(data), []);
+  const setSales = useCallback((data: Sale[] | ((prev: Sale[]) => Sale[])) => setSalesState(data), []);
+  const setSuppliers = useCallback((data: Supplier[] | ((prev: Supplier[]) => Supplier[])) => setSuppliersState(data), []);
+  const setPurchases = useCallback((data: Purchase[] | ((prev: Purchase[]) => Purchase[])) => setPurchasesState(data), []);
+  const setReturns = useCallback((data: Return[] | ((prev: Return[]) => Return[])) => setReturnsState(data), []);
+  const setPurchaseReturns = useCallback((data: PurchaseReturn[] | ((prev: PurchaseReturn[]) => PurchaseReturn[])) => setPurchaseReturnsState(data), []);
+  const setCustomers = useCallback((data: Customer[] | ((prev: Customer[]) => Customer[])) => setCustomersState(data), []);
+  const setEmployees = useCallback((data: Employee[] | ((prev: Employee[]) => Employee[])) => setEmployeesState(data), []);
 
   const addProduct = useCallback(async (product: Omit<Drug, 'id'>) => {
     const newProduct = await inventoryService.create(product);

@@ -5,12 +5,12 @@
 import { Purchase } from '../../types';
 import { PurchaseService, PurchaseFilters, PurchaseStats } from './types';
 
-const STORAGE_KEY = 'pharma_purchases';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 export const createPurchaseService = (): PurchaseService => ({
   getAll: async (): Promise<Purchase[]> => {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    return storage.get<Purchase[]>(StorageKeys.PURCHASES, []);
   },
 
   getById: async (id: string): Promise<Purchase | null> => {
@@ -56,7 +56,7 @@ export const createPurchaseService = (): PurchaseService => ({
       status: 'pending'
     } as Purchase;
     all.push(newPurchase);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.PURCHASES, all);
     return newPurchase;
   },
 
@@ -65,7 +65,7 @@ export const createPurchaseService = (): PurchaseService => ({
     const index = all.findIndex(p => p.id === id);
     if (index === -1) throw new Error('Purchase not found');
     all[index] = { ...all[index], ...updates };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.PURCHASES, all);
     return all[index];
   },
 
@@ -79,7 +79,7 @@ export const createPurchaseService = (): PurchaseService => ({
       approvedBy: approverName,
       approvalDate: new Date().toISOString()
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.PURCHASES, all);
     return all[index];
   },
 
@@ -92,7 +92,7 @@ export const createPurchaseService = (): PurchaseService => ({
       status: 'rejected'
       // Note: reason stored in service layer only, not in Purchase type
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.PURCHASES, all);
     return all[index];
   },
 
@@ -105,14 +105,14 @@ export const createPurchaseService = (): PurchaseService => ({
       status: 'completed'
       // Note: receivedAt stored in service layer only, not in Purchase type
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.PURCHASES, all);
     return all[index];
   },
 
   delete: async (id: string): Promise<boolean> => {
     const all = await purchaseService.getAll();
     const filtered = all.filter(p => p.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    storage.set(StorageKeys.PURCHASES, filtered);
     return true;
   },
 
@@ -126,7 +126,7 @@ export const createPurchaseService = (): PurchaseService => ({
   },
 
   save: async (purchases: Purchase[]): Promise<void> => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(purchases));
+    storage.set(StorageKeys.PURCHASES, purchases);
   }
 });
 

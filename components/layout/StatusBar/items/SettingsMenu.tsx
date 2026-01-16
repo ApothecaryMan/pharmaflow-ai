@@ -149,7 +149,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   };
 
   return (
-    <div className="relative font-cairo" ref={dropdownRef}>
+    <div className="relative font-cairo h-full flex items-center" ref={dropdownRef}>
       {/* Settings Button */}
       <StatusBarItem
         icon="settings"

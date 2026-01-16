@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { Shift, CashTransaction } from '../types';
 
-const SHIFTS_KEY = 'pharma_shifts';
+import { storage } from '../utils/storage';
+import { StorageKeys } from '../config/storageKeys';
 
 /**
  * ShiftContext
@@ -26,12 +27,12 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- Load from localStorage on mount ---
+  // --- Load from storage on mount ---
   useEffect(() => {
     const loadShifts = () => {
-      const savedShifts = localStorage.getItem(SHIFTS_KEY);
-      if (savedShifts) {
-        const parsed: Shift[] = JSON.parse(savedShifts).map((s: any) => ({
+      const savedShifts = storage.get<Shift[]>(StorageKeys.SHIFTS, []);
+      if (savedShifts.length > 0) {
+        const parsed: Shift[] = savedShifts.map((s: any) => ({
           ...s,
           cardSales: s.cardSales ?? 0,
           returns: s.returns ?? 0,
@@ -45,21 +46,34 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // --- Cross-tab sync via storage event ---
   useEffect(() => {
+    // Note: 'storage' event listener in usePersistedState handles this generally,
+    // but here we have specific parsing logic.
+    // The storage utility dispatches 'local-storage' event for same-tab updates,
+    // and we can listen to window 'storage' for other tabs.
+    
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === SHIFTS_KEY && e.newValue) {
-        const parsed: Shift[] = JSON.parse(e.newValue);
-        setShifts(parsed);
+      if (e.key === StorageKeys.SHIFTS && e.newValue) {
+        // Deep equality check to prevent loops
+        const currentJSON = JSON.stringify(shifts);
+        if (e.newValue === currentJSON) return;
+
+        try {
+          const parsed: Shift[] = JSON.parse(e.newValue);
+          setShifts(parsed);
+        } catch (err) {
+          console.error("Failed to parse shift update", err);
+        }
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [shifts]);
 
-  // --- Persist to localStorage on change ---
+  // --- Persist to storage on change ---
   useEffect(() => {
     if (!isLoading) {
-      localStorage.setItem(SHIFTS_KEY, JSON.stringify(shifts));
+      storage.set(StorageKeys.SHIFTS, shifts);
     }
   }, [shifts, isLoading]);
 
@@ -98,9 +112,9 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   );
 
   const refreshShifts = useCallback(() => {
-    const savedShifts = localStorage.getItem(SHIFTS_KEY);
-    if (savedShifts) {
-      const parsed: Shift[] = JSON.parse(savedShifts).map((s: any) => ({
+    const savedShifts = storage.get<Shift[]>(StorageKeys.SHIFTS, []);
+    if (savedShifts.length > 0) {
+      const parsed: Shift[] = savedShifts.map((s: any) => ({
         ...s,
         cardSales: s.cardSales ?? 0,
         returns: s.returns ?? 0,

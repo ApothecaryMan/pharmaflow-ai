@@ -12,6 +12,8 @@ import {
 import { analyzeEmployeePerformance } from '../../services/geminiService';
 import { EmployeeSalesStats } from '../../utils/employeeStats';
 import { SegmentedControl } from '../common/SegmentedControl';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 // AI Performance Summary Sub-Component
 const AIPerformanceSummary: React.FC<{
@@ -340,20 +342,34 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
 
     const loadEmployees = () => {
       try {
-        const saved = localStorage.getItem('pharma_employees');
-        if (saved) {
-          setLocalEmployees(JSON.parse(saved));
-        }
+        const saved = storage.get<Employee[]>(StorageKeys.EMPLOYEES, []);
+        setLocalEmployees(saved);
       } catch (e) {
         console.error('Failed to load employees', e);
       }
     };
 
     loadEmployees();
-    window.addEventListener('pharma_employees_updated', loadEmployees);
+    
+    // Original listener was 'pharma_employees_updated'
+    // We can also listen to standard storage event for cross-tab updates
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === StorageKeys.EMPLOYEES) {
+        loadEmployees();
+      }
+    };
+    
+    // Also keep the custom listener in case it's still dispatched by legacy code (though we should have refactored it)
+    // But since we are moving away, let's stick to storage event which is triggered by our new StorageService if we dispatched it
+    // Wait, StorageService dispatches 'local-storage' to window on set.
+    const handleLocalStorageEvent = () => loadEmployees();
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('local-storage', handleLocalStorageEvent); // For same-tab updates
     
     return () => {
-      window.removeEventListener('pharma_employees_updated', loadEmployees);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('local-storage', handleLocalStorageEvent);
     };
   }, [employees.length]);
 
@@ -416,8 +432,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
 
      if (dateFilterMode === 'today') {
         // Load shifts to track shift events
-        const savedShifts = localStorage.getItem('pharma_shifts');
-        const shifts: Shift[] = savedShifts ? JSON.parse(savedShifts) : [];
+        const shifts = storage.get<Shift[]>(StorageKeys.SHIFTS, []);
         
         // Get today's date range
         const today = new Date();

@@ -5,12 +5,12 @@
 import { Supplier } from '../../types';
 import { SupplierService } from './types';
 
-const STORAGE_KEY = 'pharma_suppliers';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 export const createSupplierService = (): SupplierService => ({
   getAll: async (): Promise<Supplier[]> => {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    return storage.get<Supplier[]>(StorageKeys.SUPPLIERS, []);
   },
 
   getById: async (id: string): Promise<Supplier | null> => {
@@ -32,7 +32,7 @@ export const createSupplierService = (): SupplierService => ({
     const all = await supplierService.getAll();
     const newSupplier: Supplier = { ...supplier, id: Date.now().toString() } as Supplier;
     all.push(newSupplier);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.SUPPLIERS, all);
     return newSupplier;
   },
 
@@ -41,19 +41,19 @@ export const createSupplierService = (): SupplierService => ({
     const index = all.findIndex(s => s.id === id);
     if (index === -1) throw new Error('Supplier not found');
     all[index] = { ...all[index], ...updates };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.SUPPLIERS, all);
     return all[index];
   },
 
   delete: async (id: string): Promise<boolean> => {
     const all = await supplierService.getAll();
     const filtered = all.filter(s => s.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    storage.set(StorageKeys.SUPPLIERS, filtered);
     return true;
   },
 
   save: async (suppliers: Supplier[]): Promise<void> => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(suppliers));
+    storage.set(StorageKeys.SUPPLIERS, suppliers);
   }
 });
 

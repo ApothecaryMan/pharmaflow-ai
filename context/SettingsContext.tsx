@@ -12,6 +12,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { Language } from '../types';
 import { THEMES, COLOR_HEX_MAP } from '../config/themeColors';
+import { storage } from '../utils/storage';
 import type { ThemeColor } from '../types';
 
 // Re-export for convenience
@@ -94,43 +95,39 @@ const defaultSettings: SettingsState = {
   showTickerTopSeller: true,
 };
 
-// Load settings from localStorage
+// Load settings from storage
 const loadSettings = (): SettingsState => {
   if (typeof window === 'undefined') return defaultSettings;
   
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return { ...defaultSettings, ...parsed };
-    }
-  } catch (e) {
-    console.warn('Failed to load settings:', e);
+  // Try loading unified settings object first
+  const saved = storage.get<SettingsState | null>(STORAGE_KEY, null);
+  if (saved) {
+    return { ...defaultSettings, ...saved };
   }
   
-  // Migrate from old individual keys if new unified key doesn't exist
+  // Backward compatibility: Migrate from old individual keys
   try {
-    const theme = localStorage.getItem('pharma_theme');
-    const darkMode = localStorage.getItem('pharma_darkMode');
-    const language = localStorage.getItem('pharma_language');
-    const textTransform = localStorage.getItem('pharma_textTransform');
-    const navStyle = localStorage.getItem('pharma_navStyle');
-    const dropdownBlur = localStorage.getItem('pharma_dropdownBlur');
-    const sidebarVisible = localStorage.getItem('pharma_sidebarVisible');
-    const hideInactiveModules = localStorage.getItem('pharma_hideInactiveModules');
-    const developerMode = localStorage.getItem('pharma_developerMode');
+    const theme = storage.get('pharma_theme', null);
+    const darkMode = storage.get('pharma_darkMode', null);
+    const language = storage.get('pharma_language', null);
+    const textTransform = storage.get('pharma_textTransform', null);
+    const navStyle = storage.get('pharma_navStyle', null);
+    const dropdownBlur = storage.get('pharma_dropdownBlur', null);
+    const sidebarVisible = storage.get('pharma_sidebarVisible', null);
+    const hideInactiveModules = storage.get('pharma_hideInactiveModules', null);
+    const developerMode = storage.get('pharma_developerMode', null);
     
     return {
       ...defaultSettings,
-      theme: theme ? JSON.parse(theme) : defaultSettings.theme,
-      darkMode: darkMode ? JSON.parse(darkMode) : defaultSettings.darkMode,
+      theme: theme ? (typeof theme === 'string' ? JSON.parse(theme) : theme) : defaultSettings.theme,
+      darkMode: darkMode ?? defaultSettings.darkMode,
       language: (language as Language) || defaultSettings.language,
       textTransform: (textTransform as 'normal' | 'uppercase') || defaultSettings.textTransform,
       navStyle: navStyle ? (Number(navStyle) as 1 | 2 | 3) : defaultSettings.navStyle,
-      dropdownBlur: dropdownBlur ? JSON.parse(dropdownBlur) : defaultSettings.dropdownBlur,
-      sidebarVisible: sidebarVisible ? JSON.parse(sidebarVisible) : defaultSettings.sidebarVisible,
-      hideInactiveModules: hideInactiveModules ? JSON.parse(hideInactiveModules) : defaultSettings.hideInactiveModules,
-      developerMode: developerMode ? JSON.parse(developerMode) : defaultSettings.developerMode,
+      dropdownBlur: dropdownBlur ?? defaultSettings.dropdownBlur,
+      sidebarVisible: sidebarVisible ?? defaultSettings.sidebarVisible,
+      hideInactiveModules: hideInactiveModules ?? defaultSettings.hideInactiveModules,
+      developerMode: developerMode ?? defaultSettings.developerMode,
     };
   } catch (e) {
     console.warn('Failed to migrate old settings:', e);
@@ -146,9 +143,9 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<SettingsState>(loadSettings);
 
-  // Persist to localStorage
+  // Persist to storage
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    storage.set(STORAGE_KEY, settings);
   }, [settings]);
 
   // Apply dark mode to document

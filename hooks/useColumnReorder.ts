@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { storage } from '../utils/storage';
 
 interface UseColumnReorderProps {
   defaultColumns: string[];
@@ -7,43 +8,28 @@ interface UseColumnReorderProps {
 }
 
 export const useColumnReorder = ({ defaultColumns, storageKey, defaultHidden = [] }: UseColumnReorderProps) => {
-  // Column Order State with lazy initialization from localStorage
+  // Column Order State with lazy initialization from storage
   const [columnOrder, setColumnOrder] = useState<string[]>(() => {
-    const saved = localStorage.getItem(`${storageKey}_order`);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to load column order', e);
-      }
-    }
-    return defaultColumns;
+    return storage.get<string[]>(`${storageKey}_order`, defaultColumns);
   });
 
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
-  // Column Visibility State with lazy initialization from localStorage
+  // Column Visibility State with lazy initialization from storage
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(() => {
-    const saved = localStorage.getItem(`${storageKey}_hidden`);
-    if (saved) {
-      try {
-        return new Set(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to load hidden columns', e);
-      }
-    }
-    return new Set(defaultHidden);
+    const saved = storage.get<string[]>(`${storageKey}_hidden`, defaultHidden);
+    return new Set(saved);
   });
 
-  // Save column order to localStorage whenever it changes
+  // Save column order to storage whenever it changes
   useEffect(() => {
-    localStorage.setItem(`${storageKey}_order`, JSON.stringify(columnOrder));
+    storage.set(`${storageKey}_order`, columnOrder);
   }, [columnOrder, storageKey]);
 
-  // Save hidden columns to localStorage whenever it changes
+  // Save hidden columns to storage whenever it changes
   useEffect(() => {
-    localStorage.setItem(`${storageKey}_hidden`, JSON.stringify(Array.from(hiddenColumns)));
+    storage.set(`${storageKey}_hidden`, Array.from(hiddenColumns));
   }, [hiddenColumns, storageKey]);
 
   const toggleColumnVisibility = (columnId: string) => {

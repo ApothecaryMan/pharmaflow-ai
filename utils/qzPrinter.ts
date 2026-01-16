@@ -42,7 +42,8 @@ export interface PrintConfig {
 
 // --- Constants ---
 
-const STORAGE_KEY = 'pharma_printer_settings';
+import { storage } from './storage';
+import { StorageKeys } from '../config/storageKeys';
 
 const DEFAULT_SETTINGS: PrinterSettings = {
   enabled: false,
@@ -265,33 +266,21 @@ export const printRaw = async (
 // --- Settings Management ---
 
 /**
- * Retrieves saved printer settings from localStorage
+ * Retrieves saved printer settings from storage
  */
 export const getPrinterSettings = (): PrinterSettings => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return { ...DEFAULT_SETTINGS, ...parsed };
-    }
-  } catch (err) {
-    console.error('Failed to load printer settings:', err);
-  }
-  return { ...DEFAULT_SETTINGS };
+  const saved = storage.get<Partial<PrinterSettings>>(StorageKeys.PRINTER_SETTINGS, {});
+  return { ...DEFAULT_SETTINGS, ...saved };
 };
 
 /**
- * Saves printer settings to localStorage
+ * Saves printer settings to storage
  */
 export const savePrinterSettings = (settings: Partial<PrinterSettings>): PrinterSettings => {
   const current = getPrinterSettings();
   const updated = { ...current, ...settings };
   
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  } catch (err) {
-    console.error('Failed to save printer settings:', err);
-  }
+  storage.set(StorageKeys.PRINTER_SETTINGS, updated);
   
   return updated;
 };

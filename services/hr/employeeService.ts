@@ -4,8 +4,10 @@
 
 import { Employee } from '../../types';
 
-const STORAGE_KEY = 'pharma_employees';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
+// Export interface so it can be used if needed
 export interface EmployeeService {
   getAll(): Promise<Employee[]>;
   getById(id: string): Promise<Employee | null>;
@@ -17,8 +19,7 @@ export interface EmployeeService {
 
 export const createEmployeeService = (): EmployeeService => ({
   getAll: async (): Promise<Employee[]> => {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    return storage.get<Employee[]>(StorageKeys.EMPLOYEES, []);
   },
 
   getById: async (id: string): Promise<Employee | null> => {
@@ -29,7 +30,7 @@ export const createEmployeeService = (): EmployeeService => ({
   create: async (employee: Employee): Promise<Employee> => {
     const all = await employeeService.getAll();
     all.push(employee);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.EMPLOYEES, all);
     return employee;
   },
 
@@ -42,7 +43,7 @@ export const createEmployeeService = (): EmployeeService => ({
     const updated = { ...all[index], ...updates };
     all[index] = updated;
     
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.EMPLOYEES, all);
     return updated;
   },
 
@@ -51,12 +52,12 @@ export const createEmployeeService = (): EmployeeService => ({
     const filtered = all.filter(e => e.id !== id);
     if (filtered.length === all.length) return false;
     
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    storage.set(StorageKeys.EMPLOYEES, filtered);
     return true;
   },
 
   save: async (employees: Employee[]): Promise<void> => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(employees));
+    storage.set(StorageKeys.EMPLOYEES, employees);
   }
 });
 

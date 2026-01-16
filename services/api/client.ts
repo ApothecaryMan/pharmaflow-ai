@@ -1,8 +1,10 @@
 /**
  * API Client - Base HTTP client for backend communication
  * 
- * Currently uses localStorage mock, can be swapped for real API calls
+ * Currently uses storage utility, can be swapped for real API calls
  */
+
+import { storage } from '../../utils/storage';
 
 export interface ApiConfig {
   baseUrl: string;
@@ -30,15 +32,15 @@ export interface ApiClient {
   delete<T>(endpoint: string): Promise<ApiResponse<T>>;
 }
 
-// Mock API client using localStorage
+// Mock API client using storage utility
 export const createMockApiClient = (): ApiClient => ({
   get: async <T>(endpoint: string): Promise<ApiResponse<T>> => {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 50));
     const key = `pharma_${endpoint.replace(/^\//, '').replace(/\//g, '_')}`;
-    const data = localStorage.getItem(key);
+    const data = storage.get<T>(key, [] as unknown as T);
     return {
-      data: data ? JSON.parse(data) : ([] as unknown as T),
+      data: data,
       status: 200
     };
   },
@@ -46,11 +48,10 @@ export const createMockApiClient = (): ApiClient => ({
   post: async <T>(endpoint: string, data: unknown): Promise<ApiResponse<T>> => {
     await new Promise(resolve => setTimeout(resolve, 50));
     const key = `pharma_${endpoint.replace(/^\//, '').replace(/\//g, '_')}`;
-    const existing = localStorage.getItem(key);
-    const items = existing ? JSON.parse(existing) : [];
+    const items = storage.get<any[]>(key, []);
     const newItem = { ...(data as object), id: Date.now().toString() };
     items.push(newItem);
-    localStorage.setItem(key, JSON.stringify(items));
+    storage.set(key, items);
     return { data: newItem as T, status: 201 };
   },
 
@@ -58,12 +59,11 @@ export const createMockApiClient = (): ApiClient => ({
     await new Promise(resolve => setTimeout(resolve, 50));
     const [resource, id] = endpoint.replace(/^\//, '').split('/');
     const key = `pharma_${resource}`;
-    const existing = localStorage.getItem(key);
-    const items = existing ? JSON.parse(existing) : [];
+    const items = storage.get<any[]>(key, []);
     const index = items.findIndex((item: { id: string }) => item.id === id);
     if (index !== -1) {
       items[index] = { ...items[index], ...(data as object) };
-      localStorage.setItem(key, JSON.stringify(items));
+      storage.set(key, items);
       return { data: items[index] as T, status: 200 };
     }
     throw { status: 404, message: 'Not found' } as ApiError;
@@ -74,12 +74,11 @@ export const createMockApiClient = (): ApiClient => ({
     await new Promise(resolve => setTimeout(resolve, 50));
     const [resource, id] = endpoint.replace(/^\//, '').split('/');
     const key = `pharma_${resource}`;
-    const existing = localStorage.getItem(key);
-    const items = existing ? JSON.parse(existing) : [];
+    const items = storage.get<any[]>(key, []);
     const index = items.findIndex((item: { id: string }) => item.id === id);
     if (index !== -1) {
       items[index] = { ...items[index], ...(data as object) };
-      localStorage.setItem(key, JSON.stringify(items));
+      storage.set(key, items);
       return { data: items[index] as T, status: 200 };
     }
     throw { status: 404, message: 'Not found' } as ApiError;
@@ -89,10 +88,9 @@ export const createMockApiClient = (): ApiClient => ({
     await new Promise(resolve => setTimeout(resolve, 50));
     const [resource, id] = endpoint.replace(/^\//, '').split('/');
     const key = `pharma_${resource}`;
-    const existing = localStorage.getItem(key);
-    const items = existing ? JSON.parse(existing) : [];
+    const items = storage.get<any[]>(key, []);
     const filtered = items.filter((item: { id: string }) => item.id !== id);
-    localStorage.setItem(key, JSON.stringify(filtered));
+    storage.set(key, filtered);
     return { data: { success: true } as unknown as T, status: 200 };
   }
 });

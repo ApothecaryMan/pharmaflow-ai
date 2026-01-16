@@ -5,12 +5,12 @@
 import { Sale } from '../../types';
 import { SalesService, SalesFilters, SalesStats } from './types';
 
-const STORAGE_KEY = 'pharma_sales';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 export const createSalesService = (): SalesService => ({
   getAll: async (): Promise<Sale[]> => {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    return storage.get<Sale[]>(StorageKeys.SALES, []);
   },
 
   getById: async (id: string): Promise<Sale | null> => {
@@ -43,7 +43,7 @@ export const createSalesService = (): SalesService => ({
     const all = await salesService.getAll();
     const newSale: Sale = { ...sale, id: Date.now().toString() } as Sale;
     all.push(newSale);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.SALES, all);
     return newSale;
   },
 
@@ -52,14 +52,14 @@ export const createSalesService = (): SalesService => ({
     const index = all.findIndex(s => s.id === id);
     if (index === -1) throw new Error('Sale not found');
     all[index] = { ...all[index], ...updates };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    storage.set(StorageKeys.SALES, all);
     return all[index];
   },
 
   delete: async (id: string): Promise<boolean> => {
     const all = await salesService.getAll();
     const filtered = all.filter(s => s.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    storage.set(StorageKeys.SALES, filtered);
     return true;
   },
 
@@ -104,7 +104,7 @@ export const createSalesService = (): SalesService => ({
   },
 
   save: async (sales: Sale[]): Promise<void> => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sales));
+    storage.set(StorageKeys.SALES, sales);
   }
 });
 

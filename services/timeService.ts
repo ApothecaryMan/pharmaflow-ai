@@ -8,6 +8,9 @@
  * 4. Provide verified date by applying offset to system time
  */
 
+import { storage } from '../utils/storage';
+import { StorageKeys } from '../config/storageKeys';
+
 interface TimeResponse {
   datetime: string;
   unixtime: number;
@@ -18,8 +21,6 @@ const TIME_PROVIDERS = [
   'https://timeapi.io/api/Time/current/zone?timeZone=UTC',
   'https://worldtimeapi.org/api/timezone/Etc/UTC',
 ];
-const STORAGE_KEY = 'pharmaflow_time_offset';
-const LAST_SYNC_KEY = 'pharmaflow_last_sync';
 
 class TimeService {
   private offset: number = 0;
@@ -35,15 +36,16 @@ class TimeService {
    */
   private loadStoredOffset(): void {
     try {
-      const storedOffset = localStorage.getItem(STORAGE_KEY);
-      const storedSync = localStorage.getItem(LAST_SYNC_KEY);
+      // Use storage utility but handle numbers as strings or numbers safely
+      const storedOffset = storage.get<string | number | null>(StorageKeys.TIME_OFFSET, null);
+      const storedSync = storage.get<string | number | null>(StorageKeys.LAST_SYNC, null);
       
       if (storedOffset !== null) {
-        this.offset = parseInt(storedOffset, 10);
+        this.offset = typeof storedOffset === 'number' ? storedOffset : parseInt(storedOffset, 10);
       }
       
       if (storedSync !== null) {
-        this.lastSyncTime = parseInt(storedSync, 10);
+        this.lastSyncTime = typeof storedSync === 'number' ? storedSync : parseInt(storedSync, 10);
       }
     } catch (error) {
       console.warn('Failed to load time offset from storage:', error);
@@ -95,8 +97,8 @@ class TimeService {
         this.offset = serverTime - endTime;
         this.lastSyncTime = endTime;
 
-        localStorage.setItem(STORAGE_KEY, this.offset.toString());
-        localStorage.setItem(LAST_SYNC_KEY, this.lastSyncTime.toString());
+        storage.set(StorageKeys.TIME_OFFSET, this.offset.toString());
+        storage.set(StorageKeys.LAST_SYNC, this.lastSyncTime.toString());
 
         console.log(`Time synced via ${provider}. Offset: ${this.offset}ms`);
         return true;

@@ -8,6 +8,8 @@
 import { Drug } from '../../types';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
 import { getPrinterSettings, printLabelSilently } from '../../utils/qzPrinter';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 // --- Types ---
 
@@ -214,8 +216,10 @@ export const getLabelElementContent = (
     }
 };
 
+
+
 /**
- * Retrieves global store branding from LocalStorage (receipt module shared settings).
+ * Retrieves global store branding from Storage (receipt module shared settings).
  * Used to populate 'store' and 'hotline' fields on labels.
  * @returns Object with storeName and hotline
  */
@@ -223,15 +227,12 @@ export const getReceiptSettings = (): { storeName: string; hotline: string } => 
     const defaultSettings = { storeName: 'PharmaFlow', hotline: '19099' };
     
     try {
-        const templatesJson = localStorage.getItem('receipt_templates');
-        if (!templatesJson) return defaultSettings;
-        
-        const templates = JSON.parse(templatesJson);
-        if (!Array.isArray(templates) || templates.length === 0) {
+        const templates = storage.get<any[]>(StorageKeys.RECEIPT_TEMPLATES, []);
+        if (templates.length === 0) {
             return defaultSettings;
         }
         
-        const activeId = localStorage.getItem('receipt_active_template_id');
+        const activeId = storage.get<string | null>(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, null);
         const activeTemplate = templates.find((t: any) => t?.id === activeId) ||
             templates.find((t: any) => t?.isDefault) ||
             templates[0];
@@ -250,29 +251,28 @@ export const getReceiptSettings = (): { storeName: string; hotline: string } => 
 };
 
 /**
- * Resolves the preferred label design from LocalStorage.
+ * Resolves the preferred label design from Storage.
  * Prioritizes: Default Template ID > Autosaved Studio Design.
  * @returns The saved design or null if no custom design is found
  */
 const getDefaultTemplate = (): { design: LabelDesign } | null => {
     try {
-        const defaultTemplateId = localStorage.getItem('pharma_label_default_template');
-        const savedTemplates = localStorage.getItem('pharma_label_templates');
+        const defaultTemplateId = storage.get<string | null>(StorageKeys.LABEL_DEFAULT_TEMPLATE, null);
+        const savedTemplates = storage.get<any[]>(StorageKeys.LABEL_TEMPLATES, []);
         
-        if (defaultTemplateId && savedTemplates) {
-            const templates = JSON.parse(savedTemplates);
-            const defaultTemplate = templates.find((t: any) => t.id === defaultTemplateId);
+        if (defaultTemplateId && savedTemplates.length > 0) {
+            const defaultTemplate = savedTemplates.find((t: any) => t.id === defaultTemplateId);
             if (defaultTemplate?.design) {
                 return defaultTemplate;
             }
         }
         
         // Fallback to autosaved design
-        const savedDesign = localStorage.getItem('pharma_label_design');
+        const savedDesign = storage.get<any | null>(StorageKeys.LABEL_DESIGN, null);
         if (savedDesign) {
-            const parsed = JSON.parse(savedDesign);
-            if (parsed.elements && parsed.elements.length > 0) {
-                return { design: parsed };
+             // parsed is already an object because storage.get parses JSON
+            if (savedDesign.elements && savedDesign.elements.length > 0) {
+                return { design: savedDesign };
             }
         }
     } catch (e) {
@@ -287,12 +287,11 @@ const getDefaultTemplate = (): { design: LabelDesign } | null => {
  */
 const getPrintOffsets = (): { x: number; y: number } => {
     try {
-        const savedDesign = localStorage.getItem('pharma_label_design');
+        const savedDesign = storage.get<any | null>(StorageKeys.LABEL_DESIGN, null);
         if (savedDesign) {
-            const parsed = JSON.parse(savedDesign);
             return {
-                x: parsed.printOffsetX || 0,
-                y: parsed.printOffsetY || 0
+                x: savedDesign.printOffsetX || 0,
+                y: savedDesign.printOffsetY || 0
             };
         }
     } catch (e) {}
