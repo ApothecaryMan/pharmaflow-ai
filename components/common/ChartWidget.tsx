@@ -6,7 +6,7 @@ import { SegmentedControl } from './SegmentedControl'; // Adjust path if needed
 import { ThemeColor } from '../../types';
 
 // --- Custom Tooltip Component ---
-export const CustomTooltipContent = memo(({ active, payload, label, unit, employees, selectedEmployeeId, showComparison }: any) => {
+export const CustomTooltipContent = memo(({ active, payload, label, unit, employees, selectedEmployeeId, showComparison, primaryLabel }: any) => {
   if (active && payload && payload.length) {
     // Find the main employee's data (sales)
     const mainData = payload.find((p: any) => p.dataKey === 'sales');
@@ -20,7 +20,7 @@ export const CustomTooltipContent = memo(({ active, payload, label, unit, employ
         {mainData && (
           <div className="mb-2">
             <p className="text-xs text-gray-400 mb-0.5">
-              {employees?.find((e: any) => e.id === selectedEmployeeId)?.name || 'You'}
+              {primaryLabel || (employees?.find((e: any) => e.id === selectedEmployeeId)?.name || 'You')}
             </p>
             <p className="text-lg font-bold text-gray-900 dark:text-white" style={{ color: mainData.color || mainData.fill }}>
               <span dir="ltr">{mainData.value.toLocaleString()}</span> <span className="text-sm">{unit}</span>
@@ -85,6 +85,13 @@ interface ChartWidgetProps {
   chartType?: 'area' | 'bar';
   compareMode?: boolean;
 
+  // Labels
+  primaryLabel?: string;
+
+  // Styling
+  className?: string;
+  chartClassName?: string;
+
   children?: React.ReactNode;
 }
 
@@ -105,6 +112,9 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
   onComparisonChange,
   chartType: externalChartType,
   xAxisInterval,
+  primaryLabel,
+  className,
+  chartClassName,
   children
 }) => {
   const [internalChartType, setInternalChartType] = useState<'area' | 'bar'>('area');
@@ -118,7 +128,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
   };
 
   return (
-    <div className="lg:col-span-2 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-transparent">
+    <div className={`lg:col-span-2 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-transparent ${className || ''}`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
@@ -173,9 +183,9 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
         </div>
 
         {/* Chart Area */}
-        <div className="h-[250px] w-full">
+        <div className={`w-full ${chartClassName || 'h-[250px]'}`}>
             <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={data} margin={{ top: 15, right: 0, left: language === 'AR' ? 30 : 0, bottom: 5 }}>
+                <ComposedChart data={data} margin={{ top: 15, right: 0, left: language === 'AR' ? 30 : 0, bottom: 20 }}>
                     <defs>
                         <linearGradient id={`gradient-${title.replace(/[^a-zA-Z0-9]/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
@@ -204,7 +214,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                         tick={{fill: 'var(--text-secondary)', fontSize: 12, dx: language === 'AR' ? -50 : 0, textAnchor: 'end'}} 
                     />
                     <Tooltip 
-                        content={<CustomTooltipContent color={color} unit={unit} employees={employees} selectedEmployeeId={selectedEmployeeId} showComparison={showComparison} />} 
+                        content={<CustomTooltipContent color={color} unit={unit} employees={employees} selectedEmployeeId={selectedEmployeeId} showComparison={showComparison} primaryLabel={primaryLabel} />} 
                         cursor={false}
                     />
 

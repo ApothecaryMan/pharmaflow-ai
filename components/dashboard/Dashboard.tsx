@@ -5,6 +5,7 @@ import { Drug, Sale, Purchase, ExpandedView } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 import { ExpandedModal } from '../common/ExpandedModal';
+import { ChartWidget } from '../common/ChartWidget';
 import { DASHBOARD_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
@@ -401,36 +402,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       {/* Row 2: Chart & Top Selling */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Sales Chart (2 Cols) */}
-        <div className={`lg:col-span-2 p-5 rounded-3xl ${CARD_BASE} h-80 relative group`}>
-          <div className="flex justify-between items-center mb-2">
-              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 type-expressive">{t.trend}</h3>
-              <ExpandButton onClick={() => setExpandedView('salesChart')} />
-          </div>
-          <div className="w-full h-[90%]" dir="ltr">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={salesData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={chartColors.main} stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor={chartColors.main} stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="strokeSales" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor={chartColors.start} stopOpacity={1}/>
-                    <stop offset="100%" stopColor={chartColors.end} stopOpacity={1}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} />
-                <Tooltip 
-                  content={<CustomTooltip />}
-                  cursor={{ stroke: chartColors.start, strokeWidth: 2 }}
-                />
-                <Area type="monotone" dataKey="sales" stroke="url(#strokeSales)" fillOpacity={1} fill="url(#colorSales)" strokeWidth={3} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <ChartWidget
+            title={t.trend}
+            data={salesData.map(d => ({ date: d.name, sales: d.sales }))}
+            dataKeys={{ primary: 'sales' }}
+            color={chartColors.main}
+            language={language as 'AR' | 'EN'}
+            onExpand={() => setExpandedView('salesChart')}
+            unit="$"
+            allowChartTypeSelection={true}
+            primaryLabel={t.totalSales || 'Sales'}
+            className="h-80"
+            chartClassName="h-[90%]"
+        />
 
         {/* Top Selling Products (1 Col) */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-80 flex flex-col group`}>
