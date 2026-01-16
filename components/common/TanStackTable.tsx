@@ -15,6 +15,7 @@ import {
 import { SearchInput } from './SearchInput';
 import { useContextMenu, ContextMenuTrigger } from './ContextMenu';
 import { useLongPress } from '../../hooks/useLongPress';
+import { AlignButton, getHeaderJustifyClass, getTextAlignClass } from './TableAlignment';
 
 // Define a fuzzy filter function
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
@@ -40,9 +41,27 @@ interface TanStackTableProps<TData, TValue> {
   color?: string; // e.g., 'blue', 'emerald'
   defaultHiddenColumns?: string[]; // Column IDs to hide by default
   activeIndex?: number; // For keyboard navigation highlight
-  defaultColumnAlignment?: Record<string, 'left' | 'center' | 'right'>; // Default alignment for specific columns
+  /**
+   * Default alignment for specific columns (Header & Content).
+   * 
+   * Usage:
+   * Pass an object mapping column IDs to alignment values ('left', 'center', 'right').
+   * This sets the *initial* alignment for BOTH the Header and the Cell content.
+   * 
+   * @example
+   * defaultColumnAlignment={{ 
+   *   name: 'left',   // Force Name column to be physical Left
+   *   price: 'right', // Force Price column to be physical Right
+   *   status: 'center' 
+   * }}
+   * 
+   * Note: Directions are absolute (Physical). 
+   * 'left' = Left side of screen, 'right' = Right side of screen, regardless of Language/RTL.
+   */
+  defaultColumnAlignment?: Record<string, 'left' | 'center' | 'right'>;
   globalFilter?: string; // External global filter value
   enableSearch?: boolean; // Whether to show the internal search input
+  customEmptyState?: React.ReactNode;
 }
 
 // Helper to get stored settings
@@ -72,6 +91,7 @@ export function TanStackTable<TData, TValue>({
   defaultColumnAlignment = {},
   globalFilter: externalGlobalFilter,
   enableSearch = true,
+  customEmptyState,
 }: TanStackTableProps<TData, TValue> & { enableTopToolbar?: boolean }) {
   
   // Long-press support for rows
@@ -122,20 +142,60 @@ export function TanStackTable<TData, TValue>({
     ...(storedSettings?.contentAlignment || {})
   });
   
-  // Save settings to localStorage whenever they change
-  React.useEffect(() => {
+  // Helper to extract only the overrides (values different from defaults)
+  const getDiff = React.useCallback((
+    current: Record<string, 'left' | 'center' | 'right'>, 
+    defaults: Record<string, 'left' | 'center' | 'right'>
+  ) => {
+    const diff: Record<string, 'left' | 'center' | 'right'> = {};
+    Object.keys(current).forEach(key => {
+      if (current[key] !== defaults[key]) {
+        diff[key] = current[key];
+      }
+    });
+    return diff;
+  }, []);
+
+  const persistSettings = React.useCallback((
+    newColVis: VisibilityState,
+    newHeaderAlign: Record<string, 'left' | 'center' | 'right'>,
+    newContentAlign: Record<string, 'left' | 'center' | 'right'>
+  ) => {
     const settings = {
-      columnVisibility,
-      headerAlignment,
-      contentAlignment,
+      columnVisibility: newColVis,
+      headerAlignment: getDiff(newHeaderAlign, defaultColumnAlignment),
+      contentAlignment: getDiff(newContentAlign, defaultColumnAlignment),
     };
     localStorage.setItem(`table-settings-${tableId}`, JSON.stringify(settings));
-  }, [tableId, columnVisibility, headerAlignment, contentAlignment]);
+  }, [tableId, defaultColumnAlignment, getDiff]);
+
+  // React to default prop changes (e.g. Language switch)
+  React.useEffect(() => {
+     const stored = getStoredSettings(tableId);
+     
+     // Re-initialize state by merging new defaults with stored overrides
+     setHeaderAlignment({
+         ...defaultColumnAlignment,
+         ...(stored?.headerAlignment || {})
+     });
+     setContentAlignment({
+         ...defaultColumnAlignment,
+         ...(stored?.contentAlignment || {})
+     });
+  }, [defaultColumnAlignment, tableId]);
   
   const { showMenu } = useContextMenu();
   
   // Detect RTL direction
   const isRtl = typeof document !== 'undefined' && document.dir === 'rtl';
+
+  const handleColumnVisibilityChange = React.useCallback((updaterOrValue: any) => {
+     setColumnVisibility(old => {
+        const newVal = typeof updaterOrValue === 'function' ? updaterOrValue(old) : updaterOrValue;
+        persistSettings(newVal, headerAlignment, contentAlignment);
+        return newVal;
+     });
+  }, [persistSettings, headerAlignment, contentAlignment]);
 
   const table = useReactTable({
     data,
@@ -147,7 +207,7 @@ export function TanStackTable<TData, TValue>({
     },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibilityChange: handleColumnVisibilityChange,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -157,50 +217,6 @@ export function TanStackTable<TData, TValue>({
 
   /* State specific for Context Menu tracking to enable live updates */
   const menuPosRef = React.useRef<{x: number, y: number, columnId?: string} | null>(null);
-
-  const AlignButton = ({ align, isHeader, isActive }: { align: 'left' | 'center' | 'right', isHeader: boolean, isActive: boolean }) => (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        
-        const currentColumnId = menuPosRef.current?.columnId;
-        if (!currentColumnId) return;
-
-        // Compute new alignment state and update
-        if (isHeader) {
-          const newHeaderAlign = { ...headerAlignment, [currentColumnId]: align };
-          setHeaderAlignment(newHeaderAlign);
-          // Pass new values directly to bypass stale closure
-          if (menuPosRef.current) {
-            showMenu(
-              menuPosRef.current.x,
-              menuPosRef.current.y,
-              getMenuContent(currentColumnId, newHeaderAlign, undefined)
-            );
-          }
-        } else {
-          const newContentAlign = { ...contentAlignment, [currentColumnId]: align };
-          setContentAlignment(newContentAlign);
-          if (menuPosRef.current) {
-            showMenu(
-              menuPosRef.current.x,
-              menuPosRef.current.y,
-              getMenuContent(currentColumnId, undefined, newContentAlign)
-            );
-          }
-        }
-      }}
-      className={`w-8 h-8 flex items-center justify-center rounded-md transition-all ${
-        isActive 
-          ? 'bg-emerald-500 text-white shadow-sm ring-1 ring-emerald-400' 
-          : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-      }`}
-    >
-      <span className="material-symbols-rounded text-[18px]">
-        {align === 'left' ? 'format_align_left' : align === 'center' ? 'format_align_center' : 'format_align_right'}
-      </span>
-    </button>
-  );
 
   const getMenuContent = (
     columnId?: string,
@@ -215,6 +231,37 @@ export function TanStackTable<TData, TValue>({
       
       const currentHeaderAlign = columnId ? (effectiveHeaderAlign[columnId] || 'left') : 'left';
       const currentContentAlign = columnId ? (effectiveContentAlign[columnId] || 'left') : 'left';
+
+      // Handlers (re-create handlers that use the state/props)
+      const handleHeaderAlign = (align: 'left' | 'center' | 'right') => {
+        if (!columnId) return;
+        const newHeaderAlign = { ...headerAlignment, [columnId]: align };
+        setHeaderAlignment(newHeaderAlign);
+        persistSettings(columnVisibility, newHeaderAlign, contentAlignment);
+        
+        if (menuPosRef.current) {
+          showMenu(
+            menuPosRef.current.x,
+            menuPosRef.current.y,
+            getMenuContent(columnId, newHeaderAlign, undefined)
+          );
+        }
+      };
+
+      const handleContentAlign = (align: 'left' | 'center' | 'right') => {
+        if (!columnId) return;
+        const newContentAlign = { ...contentAlignment, [columnId]: align };
+        setContentAlignment(newContentAlign);
+        persistSettings(columnVisibility, headerAlignment, newContentAlign);
+
+        if (menuPosRef.current) {
+          showMenu(
+            menuPosRef.current.x,
+            menuPosRef.current.y,
+            getMenuContent(columnId, undefined, newContentAlign)
+          );
+        }
+      };
 
       return (
         <div className="w-[220px] p-1 font-sans">
@@ -274,20 +321,26 @@ export function TanStackTable<TData, TValue>({
             
             {/* Header Alignment */}
             <div className="flex items-center justify-between">
-              <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
-                <AlignButton align="left" isHeader={true} isActive={currentHeaderAlign === 'left'} />
-                <AlignButton align="center" isHeader={true} isActive={currentHeaderAlign === 'center'} />
-                <AlignButton align="right" isHeader={true} isActive={currentHeaderAlign === 'right'} />
+              <div 
+                className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700"
+                dir="ltr"
+              >
+                <AlignButton align="left" isActive={currentHeaderAlign === 'left'} onClick={() => handleHeaderAlign('left')} />
+                <AlignButton align="center" isActive={currentHeaderAlign === 'center'} onClick={() => handleHeaderAlign('center')} />
+                <AlignButton align="right" isActive={currentHeaderAlign === 'right'} onClick={() => handleHeaderAlign('right')} />
               </div>
               <span className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase ml-3">Header</span>
             </div>
 
             {/* Content Alignment */}
             <div className="flex items-center justify-between">
-              <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
-                <AlignButton align="left" isHeader={false} isActive={currentContentAlign === 'left'} />
-                <AlignButton align="center" isHeader={false} isActive={currentContentAlign === 'center'} />
-                <AlignButton align="right" isHeader={false} isActive={currentContentAlign === 'right'} />
+              <div 
+                className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700"
+                dir="ltr"
+              >
+                <AlignButton align="left" isActive={currentContentAlign === 'left'} onClick={() => handleContentAlign('left')} />
+                <AlignButton align="center" isActive={currentContentAlign === 'center'} onClick={() => handleContentAlign('center')} />
+                <AlignButton align="right" isActive={currentContentAlign === 'right'} onClick={() => handleContentAlign('right')} />
               </div>
               <span className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase ml-3">Content</span>
             </div>
@@ -355,12 +408,13 @@ export function TanStackTable<TData, TValue>({
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id} className="border-b border-gray-200 dark:border-gray-800">
                 {headerGroup.headers.map(header => {
-                  const align = headerAlignment[header.column.id] || 'left';
-                  const justifyClass = align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start';
+                const align = headerAlignment[header.column.id] || 'left';
+                  const justifyClass = getHeaderJustifyClass(align, isRtl);
                   
                   return (
                   <th
                     key={header.id}
+                    style={{ width: header.getSize() }}
                     className="p-0 text-xs font-semibold text-gray-500 uppercase tracking-wider select-none relative group"
                   >
                     <ContextMenuTrigger 
@@ -420,15 +474,11 @@ export function TanStackTable<TData, TValue>({
                   >
                     {row.getVisibleCells().map(cell => {
                       const align = contentAlignment[cell.column.id] || 'left';
-                      const isRtl = document.dir === 'rtl';
-                      const textAlignClass = align === 'center' 
-                        ? 'text-center' 
-                        : isRtl 
-                          ? (align === 'left' ? 'text-right' : 'text-left')
-                          : (align === 'left' ? 'text-left' : 'text-right');
+                      const textAlignClass = getTextAlignClass(align);
                       return (
                         <td 
                           key={cell.id} 
+                          style={{ width: cell.column.getSize() }}
                           className={`py-2 px-4 text-sm text-gray-700 dark:text-gray-300 whitespace-normal overflow-visible align-middle ${textAlignClass}`}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -440,10 +490,14 @@ export function TanStackTable<TData, TValue>({
             ) : (
                 <tr>
                     <td colSpan={columns.length} className="py-12 text-center text-gray-500 dark:text-gray-400">
-                         <div className="flex flex-col items-center justify-center">
-                            <span className="material-symbols-rounded text-4xl mb-2 opacity-30">inbox</span>
-                            <p>{emptyMessage}</p>
-                         </div>
+                         {customEmptyState ? (
+                             customEmptyState
+                         ) : (
+                             <div className="flex flex-col items-center justify-center">
+                                <span className="material-symbols-rounded text-4xl mb-2 opacity-30">inbox</span>
+                                <p>{emptyMessage}</p>
+                             </div>
+                         )}
                     </td>
                 </tr>
             )}

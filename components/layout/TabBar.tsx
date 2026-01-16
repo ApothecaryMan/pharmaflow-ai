@@ -132,7 +132,7 @@ const SortableTab = ({
         group relative flex items-center gap-2 pl-3 pr-8 py-2 rounded-xl transition-all duration-200 ease-out cursor-pointer
         min-w-[100px] max-w-[180px] touch-manipulation
         ${isActive 
-          ? `bg-gray-100 dark:bg-gray-800 shadow-sm border-2 border-gray-400` 
+          ? `bg-white dark:bg-gray-800 shadow-[0_0_0_1px_rgba(0,0,0,0.06)]` 
           : 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 text-gray-600 dark:text-gray-400'
         }
         ${isDragging ? 'shadow-xl scale-105 ring-2 ring-blue-500 z-50 bg-white dark:bg-gray-800' : ''}
@@ -220,9 +220,8 @@ const SortableTab = ({
           className={`
             absolute right-1.5 top-1/2 -translate-y-1/2
             w-5 h-5 flex items-center justify-center rounded-full transition-all 
-            opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100
-            hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-600
-            bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm
+            ${isActive ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100'}
+            hover:text-gray-600 dark:hover:text-gray-300
             ${isActive ? 'text-gray-400' : 'text-gray-400'}
           `}
         >

@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SaleTab, CartItem } from '../types';
+import { storage } from '../utils/storage';
+import { StorageKeys } from '../config/storageKeys';
 
 const MAX_TABS = 10;
-const STORAGE_KEY = 'pharma_pos_tabs';
 
 // Create new tab helper function (defined before use)
 const createNewTab = (index: number): SaleTab => ({
@@ -18,28 +19,16 @@ const createNewTab = (index: number): SaleTab => ({
 
 export const usePOSTabs = () => {
   const [tabs, setTabs] = useState<SaleTab[]>(() => {
-    // Load from localStorage
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          return parsed.length > 0 ? parsed : [createNewTab(1)];
-        } catch {
-          return [createNewTab(1)];
-        }
-      }
-    }
-    return [createNewTab(1)];
+    // Load from storage
+    const saved = storage.get<SaleTab[]>(StorageKeys.POS_TABS, []);
+    return saved.length > 0 ? saved : [createNewTab(1)];
   });
 
   const [activeTabId, setActiveTabId] = useState<string>(() => tabs[0]?.id || '');
 
-  // Save to localStorage whenever tabs change
+  // Save to storage whenever tabs change
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(tabs));
-    }
+    storage.set(StorageKeys.POS_TABS, tabs);
   }, [tabs]);
 
   // Add new tab
@@ -70,10 +59,16 @@ export const usePOSTabs = () => {
 
     setTabs(newTabs);
 
-    // If active tab was removed, switch to first tab
+    // If active tab was removed, switch to previous tab
     // We check against the current activeTabId
     if (activeTabId === tabId) {
-      setActiveTabId(newTabs[0].id);
+      const removedIndex = tabs.findIndex(t => t.id === tabId);
+      // If we are closing the first tab (index 0), we go to the new first (which was second) -> index 0
+      // If we are closing any other tab (index > 0), we go to the previous one -> index - 1
+      const newActiveIndex = Math.max(0, removedIndex - 1);
+      // Ensure index is within bounds of newTabs
+      const safeIndex = Math.min(newActiveIndex, newTabs.length - 1);
+      setActiveTabId(newTabs[safeIndex].id);
     }
   }, [tabs, activeTabId]);
 

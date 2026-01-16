@@ -55,6 +55,8 @@ import { TRANSLATIONS } from "../../i18n/translations";
 import { usePosSounds } from "../../components/common/hooks/usePosSounds";
 import { usePosShortcuts } from "../../components/common/hooks/usePosShortcuts";
 import { SortableCartItem, calculateItemTotal } from "../sales/SortableCartItem";
+import { storage } from "../../utils/storage";
+import { StorageKeys } from "../../config/storageKeys";
 
 // --- Main POS Component ---
 interface POSProps {
@@ -303,13 +305,12 @@ export const POS: React.FC<POSProps> = ({
   useEffect(() => {
     const checkShiftStatus = () => {
       try {
-        const savedShifts = localStorage.getItem("pharma_shifts");
-        if (!savedShifts) {
+        const savedShifts = storage.get<Shift[]>(StorageKeys.SHIFTS, []);
+        if (savedShifts.length === 0) {
           setHasOpenShift(false);
           return;
         }
-        const allShifts: Shift[] = JSON.parse(savedShifts);
-        const openShift = allShifts.find((s) => s.status === "open");
+        const openShift = savedShifts.find((s) => s.status === "open");
         setHasOpenShift(!!openShift);
       } catch {
         setHasOpenShift(false);
@@ -321,7 +322,7 @@ export const POS: React.FC<POSProps> = ({
 
     // Listen for storage changes (when shift is opened/closed from CashRegister)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "pharma_shifts") {
+      if (e.key === StorageKeys.SHIFTS) {
         checkShiftStatus();
       }
     };
@@ -336,14 +337,16 @@ export const POS: React.FC<POSProps> = ({
   // Sidebar Resize Logic
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("pos_sidebar_width");
-      return saved ? parseInt(saved) : 350;
+      const saved = storage.get<number | null>(StorageKeys.POS_SIDEBAR_WIDTH, null);
+      // Handle the case where the saved value might be a string in localStorage if not using storage.set previously
+      // But storage.get handles JSON parse. If it's a raw string '350', JSON.parse('350') is 350.
+      return saved ? Number(saved) : 350;
     }
     return 350;
   });
 
   useEffect(() => {
-    localStorage.setItem("pos_sidebar_width", sidebarWidth.toString());
+    storage.set(StorageKeys.POS_SIDEBAR_WIDTH, sidebarWidth);
   }, [sidebarWidth]);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef(false);
@@ -872,11 +875,10 @@ export const POS: React.FC<POSProps> = ({
 
     // Auto-Print Receipt Logic
     try {
-      const activeId = localStorage.getItem("receipt_active_template_id");
-      const templatesStr = localStorage.getItem("receipt_templates");
+      const activeId = storage.get<string | null>(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, null);
+      const templates = storage.get<any[]>(StorageKeys.RECEIPT_TEMPLATES, []);
 
-      if (activeId && templatesStr) {
-        const templates = JSON.parse(templatesStr);
+      if (activeId && templates.length > 0) {
         const activeTemplate = templates.find((t: any) => t.id === activeId);
 
         if (activeTemplate) {
@@ -1122,9 +1124,9 @@ export const POS: React.FC<POSProps> = ({
 
       let matchesSearch = false;
 
-      // If search is empty, show all
+      // If search is empty, show nothing
       if (!trimmedSearch) {
-        matchesSearch = true;
+        matchesSearch = false;
       }
       // Exact code match (barcode or internal code) - no minimum length
       else if (d.barcode === trimmedSearch || d.internalCode === trimmedSearch) {
@@ -1173,8 +1175,8 @@ export const POS: React.FC<POSProps> = ({
     if (searchTermLength < 2) return [];
     
     // Check if uppercase mode is enabled
-    const isUppercase = typeof window !== 'undefined' && 
-      localStorage.getItem('pharma_textTransform') === 'uppercase';
+    const settings = storage.get<any>(StorageKeys.SETTINGS, {});
+    const isUppercase = settings.textTransform === 'uppercase';
     
     let suggestions: string[];
     if (isIngredientMode) {
@@ -1330,10 +1332,10 @@ export const POS: React.FC<POSProps> = ({
 
       columnHelper.accessor("barcode", {
         header: t.code,
-        size: 140,
+        size: 95,
         cell: (info) => (
           <span
-            className="text-xs font-mono text-gray-600 dark:text-gray-400"
+            className="text-sm font-bold text-gray-700 dark:text-gray-300"
             dir={language === "AR" ? "rtl" : "ltr"}
           >
             {info.row.original.internalCode || info.row.original.barcode}
@@ -1342,11 +1344,10 @@ export const POS: React.FC<POSProps> = ({
       }),
       columnHelper.accessor("name", {
         header: t.name,
-        size: 250,
+        size: 400,
         cell: (info) => (
           <div
             className="flex flex-col w-full"
-            dir={language === "AR" ? "rtl" : "ltr"}
           >
             <span className="font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate">
               {info.row.original.name}{" "}
@@ -1832,7 +1833,7 @@ export const POS: React.FC<POSProps> = ({
                 }}
                 suggestions={searchSuggestions}
                 placeholder={t.searchPlaceholder}
-                className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 transition-all text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                className={`w-full px-3 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:border-${color}-500 text-gray-900 dark:text-gray-100 placeholder-gray-400`}
                 style={
                   { "--tw-ring-color": `var(--color-${color}-500)` } as any
                 }
@@ -1996,34 +1997,8 @@ export const POS: React.FC<POSProps> = ({
 
           {/* Grid */}
           <div className="flex-1 flex flex-col overflow-hidden pe-1 pb-24 lg:pb-0">
-            {search.trim() === "" ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-3 p-8">
-                <span className="material-symbols-rounded text-6xl opacity-20">
-                  search
-                </span>
-                <h2 className="text-2xl font-bold tracking-tight type-expressive">
-                  {t.searchPlaceholder}
-                </h2>
-                <p className="text-xs text-center max-w-xs opacity-70">
-                  {t.startSearching ||
-                    "Start searching for products to add them to cart"}
-                </p>
-              </div>
-            ) : groupedDrugs.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-3 p-8">
-                <span className="material-symbols-rounded text-6xl opacity-20">
-                  search_off
-                </span>
-                <p className="text-sm font-medium">
-                  {t.noResults || "No results found"}
-                </p>
-                <p className="text-xs text-center max-w-xs opacity-70">
-                  {t.tryDifferentKeywords ||
-                    "Try searching with different keywords"}
-                </p>
-              </div>
-            ) : (
               <TanStackTable
+                tableId="pos-products-table-v2"
                 data={tableData}
                 columns={tableColumns}
                 color={color}
@@ -2060,12 +2035,35 @@ export const POS: React.FC<POSProps> = ({
                 }}
                 searchPlaceholder={t.searchPlaceholder}
                 emptyMessage={t.noResults}
+                customEmptyState={
+                  search.trim() === "" ? (
+                    <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-3 p-8 select-none">
+                      <span className="material-symbols-rounded text-6xl opacity-20">
+                        search
+                      </span>
+                      <h2 className="text-2xl font-bold tracking-tight type-expressive">
+                        {t.searchPlaceholder}
+                      </h2>
+                      <p className="text-xs text-center max-w-xs opacity-70">
+                        {t.startSearching ||
+                          "Start searching for products to add them to cart"}
+                      </p>
+                    </div>
+                  ) : undefined
+                }
                 defaultHiddenColumns={["category", "inCart"]}
-                defaultColumnAlignment={{ unit: 'center', batches: 'center', stock: 'center' }}
+                defaultColumnAlignment={{ 
+                  barcode: language === "AR" ? 'right' : 'left',
+                  name: 'left', 
+                  category: 'center', 
+                  price: 'center', 
+                  stock: 'center', 
+                  unit: 'center', 
+                  batches: 'center' 
+                }}
                 activeIndex={activeIndex}
                 enableTopToolbar={false}
               />
-            )}
           </div>
         </div>
 
