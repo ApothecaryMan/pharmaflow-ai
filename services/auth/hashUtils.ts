@@ -1,6 +1,5 @@
-
 /**
- * Authentication Utilities
+ * Password Hashing Utilities
  * Uses Web Crypto API for secure hashing, with fallback for non-secure contexts
  */
 
@@ -107,7 +106,9 @@ export async function hashPassword(password: string): Promise<string> {
         const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         return hashHex;
       } catch (e) {
-          console.warn("Crypto API failed, falling back to JS implementation", e);
+          if (import.meta.env.DEV) {
+            console.warn('[Auth] Crypto API failed, falling back to JS implementation', e);
+          }
       }
   }
 
@@ -115,7 +116,9 @@ export async function hashPassword(password: string): Promise<string> {
   try {
      return sha256_fallback(password);
   } catch (e) {
-      console.error("Hash fallback failed", e);
+      if (import.meta.env.DEV) {
+        console.error('[Auth] Hash fallback failed', e);
+      }
       // Last resort: simple insecure hash just to prevent crash (NOT FOR PRODUCTION)
       return btoa(password).split('').reverse().join('');
   }

@@ -41,6 +41,7 @@ export const StorageKeys = {
 
   // Misc
   MIGRATION_V1_UNITS: 'pharma_migration_v1_units',
+  MIGRATION_BACKUP: 'pharma_backup_pre_migration_v1',
   CSV_LOADED_V5: 'pharma_csv_loaded_v5',
   
   // Time Service

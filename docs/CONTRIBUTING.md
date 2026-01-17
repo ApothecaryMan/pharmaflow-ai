@@ -78,6 +78,10 @@ pharmaflow-ai/
 │   │
 │   ├── services/
 │   │   ├── api/                         # API Clean Clients
+│   │   ├── auth/                        # Authentication & Session
+│   │   │   ├── authService.ts           # Login/Logout/Session
+│   │   │   ├── hashUtils.ts             # SHA-256 hashing
+│   │   │   └── index.ts                 # Barrel export
 │   │   ├── sales/                       # Sales & POS Logic
 │   │   ├── inventory/                   # Stock & Product Logic
 │   │   ├── hr/                          # Employee Management
@@ -87,6 +91,9 @@ pharmaflow-ai/
 │   │   ├── purchases/                   # Procurement Logic
 │   │   ├── returns/                     # Return Handling
 │   │   ├── settings/                    # App Configuration
+│   │   ├── migration/                   # Data Migration & Upgrades
+│   │   │   ├── migrationService.ts      # Migration logic
+│   │   │   └── index.ts                 # Barrel export
 │   │   ├── DataContext.tsx              # Unifying Data Provider
 │   │   ├── timeService.ts               # NTP Time Sync
 │   │   └── geminiService.ts             # AI Integration
@@ -147,8 +154,21 @@ pharmaflow-ai/
 │   │   └── AIAssistant.tsx              # Chat interface
 │   │
 │   └── test/
-│       └── POSTest.tsx                  # POS variant
+│       ├── POSTest.tsx                  # POS variant
+│       └── LoginTest.tsx                # Testing authentication
 │   ├── hooks/
+│   │   ├── useAppState.ts
+│   │   │   └── useAppState()                # View & UI state management
+│   │   │
+│   │   ├── useAuth.ts
+│   │   │   └── useAuth()                    # Authentication & route guards
+│   │   │
+│   │   ├── useNavigation.ts
+│   │   │   └── useNavigation()              # Navigation handlers & menu filtering
+│   │   │
+│   │   ├── useEntityHandlers.ts
+│   │   │   └── useEntityHandlers()          # CRUD handlers for all entities
+│   │   │
 │   │   ├── useExpandingDropdown.ts
 │   │   │   └── useExpandingDropdown()       # Keyboard nav for dropdowns
 │   │   │
@@ -184,8 +204,12 @@ pharmaflow-ai/
 │   │   ├── barcodeEncoders.ts               # Barcode encoding
 │   │   ├── storage.ts                       # TYPE-SAFE STORAGE SERVICE
 │   │   ├── qzPrinter.ts                     # QZ Tray printer utilities
-│   │   ├── auth.ts                          # Auth utilities
-│   │   ├── inventory.ts                     # Inventory formatters
+│   │   ├── inventory.ts                     # Inventory formatters & validators
+│   │   │   └── validateStock()              # Stock validation
+│   │   ├── shiftHelpers.ts                  # Shift transaction utilities
+│   │   │   └── addTransactionToOpenShift()  # Update shift with transaction
+│   │   ├── loyaltyPoints.ts                 # Loyalty points calculator
+│   │   │   └── calculateLoyaltyPoints()     # Tiered points calculation
 │   │   └── printing/                        # Print utilities
 │   │
 │   ├── data/
@@ -199,7 +223,8 @@ pharmaflow-ai/
 │   │   ├── menuData.ts                      # Menu structure
 │   │   ├── pageRegistry.ts                  # Page → Props map
 │   │   ├── storageKeys.ts                   # STORAGE KEY CONSTANTS
-│   │   └── themeColors.ts                   # Theme palettes
+│   │   ├── themeColors.ts                   # Theme palettes
+│   │   └── routes.ts                        # Route constants & test routes
 │   │
 ├── i18n/
 │   ├── translations.ts                  # UI text (EN + AR)

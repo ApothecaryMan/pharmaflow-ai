@@ -64,7 +64,30 @@ export const TRANSLATIONS = {
         hour: 'Hour',
         minute: 'Minute'
       },
-      currency: 'L.E'
+      currency: 'L.E',
+      loading: 'Loading...',
+      checkingAuth: 'Checking authentication...',
+      pageNotFound: 'Page not found'
+    },
+    login: {
+      title: 'Welcome back!',
+      subtitle: 'Enter your credentials to access the account.',
+      username: 'Username',
+      usernamePlaceholder: 'Enter username',
+      password: 'Password',
+      passwordPlaceholder: '••••••••',
+      rememberMe: 'Remember for 30 days',
+      forgotPassword: 'Forgot password?',
+      submit: 'Continue',
+      signingIn: 'Signing in...',
+      successTitle: 'Login Successful!',
+      redirecting: 'Redirecting to dashboard...',
+      errorInvalidCredentials: 'Invalid username or password',
+      errorGeneric: 'An unexpected error occurred. Please try again.',
+      validationUsernameRequired: 'Username is required',
+      validationPasswordRequired: 'Password is required',
+      validationPasswordLength: 'Password must be at least 4 characters',
+      authorizedUserNotice: 'By continuing, you verify that you are an authorized user.'
     },
     statusBar: {
       ready: 'Ready',
@@ -1581,7 +1604,30 @@ export const TRANSLATIONS = {
         hour: 'ساعة',
         minute: 'دقيقة'
       },
-      currency: 'ج.م'
+      currency: 'ج.م',
+      loading: 'جاري التحميل...',
+      checkingAuth: 'جاري التحقق من تسجيل الدخول...',
+      pageNotFound: 'الصفحة غير موجودة'
+    },
+    login: {
+      title: 'مرحباً بعودتك!',
+      subtitle: 'أدخل بيانات الدخول للوصول إلى حسابك.',
+      username: 'اسم المستخدم',
+      usernamePlaceholder: 'أدخل اسم المستخدم',
+      password: 'كلمة المرور',
+      passwordPlaceholder: '••••••••',
+      rememberMe: 'تذكرني لمدة 30 يوم',
+      forgotPassword: 'نسيت كلمة المرور؟',
+      submit: 'متابعة',
+      signingIn: 'جاري تسجيل الدخول...',
+      successTitle: 'تم تسجيل الدخول بنجاح!',
+      redirecting: 'جاري التوجيه للوحة التحكم...',
+      errorInvalidCredentials: 'اسم المستخدم أو كلمة المرور غير صحيحة',
+      errorGeneric: 'حدث خطأ غير متوقع. حاول مرة أخرى.',
+      validationUsernameRequired: 'اسم المستخدم مطلوب',
+      validationPasswordRequired: 'كلمة المرور مطلوبة',
+      validationPasswordLength: 'كلمة المرور يجب أن تكون 4 أحرف على الأقل',
+      authorizedUserNotice: 'بالمتابعة، أنت تؤكد أنك مستخدم مُصرح له.'
     },
     statusBar: {
       ready: 'جاهز',
