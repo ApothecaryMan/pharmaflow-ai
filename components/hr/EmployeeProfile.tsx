@@ -637,21 +637,12 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
      
      // Helper to fill zero data (Legacy Week/Month/Year logic)
      const fillZeroData = () => {
-        if (!dateRange && dateFilterMode !== 'all') return;
+        if (!dateRange) return;
         
-        let start: Date; 
-        let end: Date;
-
-        if (dateFilterMode === 'all') {
-             const timestamps = relevantSales.map(s => new Date(s.date).getTime());
-             start = timestamps.length > 0 ? new Date(Math.min(...timestamps)) : new Date(new Date().getFullYear(), 0, 1);
-             end = new Date();
-        } else {
-             // Safe cast or check because we handled 'all' above
-             const range = getDateRange(dateFilterMode as 'today' | 'week' | 'month' | 'year');
-             start = range.startDate || new Date();
-             end = range.endDate || new Date();
-        }
+        // Pre-calculated range is sufficient since 'all' is handled separately
+        const range = getDateRange(dateFilterMode as 'today' | 'week' | 'month' | 'year');
+        const start = range.startDate || new Date();
+        const end = range.endDate || new Date();
 
         const current = new Date(start);
         
