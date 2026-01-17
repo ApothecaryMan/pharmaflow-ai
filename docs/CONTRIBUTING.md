@@ -55,6 +55,11 @@ pharmaflow-ai/
 │   │   ├── TableAlignment.tsx          # Table content alignment
 │   │   ├── Toast.tsx                   # Notification toasts
 │   │   ├── HelpModal.tsx               # Help modal
+│   │   ├── AnimatedCounter.tsx         # Numbers with roll animation
+│   │   ├── ChartWidget.tsx             # Standard Area/Bar chart
+│   │   ├── SmallCard.tsx               # Simple stat card
+│   │   ├── ProgressCard.tsx            # Multi-goal progress bar
+│   │   ├── CompactProgressCard.tsx     # Half-height stacking card
 │   │   └── hooks/
 │   │
 │   ├── layout/
@@ -224,7 +229,6 @@ pharmaflow-ai/
 The application uses a **Hybrid State Management** approach:
 
 1.  **Global UI State** (`App.tsx` & `SettingsContext`):
-
     - Managed via `usePersistedState` hook (auto-syncs to `localStorage`).
     - Includes: `view`, `activeModule`, `theme`, `language`.
 
@@ -284,28 +288,34 @@ All UI elements must look professional. Avoid basic browser defaults.
 
 #### Standard Components (MUST USE)
 
-| Component           | Use Case             | File                             |
-| ------------------- | -------------------- | -------------------------------- |
-| `SmartInput`        | Standard text input  | `common/SmartInputs.tsx`         |
-| `SmartPhoneInput`   | Phone number input   | `common/SmartInputs.tsx`         |
-| `SmartEmailInput`   | Email input          | `common/SmartInputs.tsx`         |
-| `SmartDateInput`    | Date input (Masked)  | `common/SmartInputs.tsx`         |
-| `FloatingInput`     | Floating label input | `common/FloatingInput.tsx`       |
-| `DatePicker`        | Calendar picker      | `common/DatePicker.tsx`          |
-| `ExpandingDropdown` | Dropdown selection   | `common/ExpandingDropdown.tsx`   |
-| `ExpandedModal`     | Full screen modal    | `common/ExpandedModal.tsx`       |
-| `SegmentedControl`  | Segmented buttons    | `common/SegmentedControl.tsx`    |
-| `Switch`            | Toggle switch        | `common/Switch.tsx`              |
-| `SearchInput`       | Search bar           | `common/SearchInput.tsx`         |
-| `Modal`             | Dialog/popup         | `common/Modal.tsx`               |
-| `HelpModal`         | Help dialog          | `common/HelpModal.tsx`           |
-| `Toast`             | Notifications        | `common/Toast.tsx`               |
-| `TanStackTable`     | Data tables          | `common/TanStackTable.tsx`       |
-| `ContextMenu`       | Right-click menus    | `common/ContextMenu.tsx`         |
-| `Navbar`            | Top Navigation       | `layout/Navbar.tsx`              |
-| `SidebarMenu`       | Side Navigation      | `layout/SidebarMenu.tsx`         |
-| `TabBar`            | Tabbed Interface     | `layout/TabBar.tsx`              |
-| `StatusBar`         | System Status        | `layout/StatusBar/StatusBar.tsx` |
+| Component             | Use Case             | File                             |
+| --------------------- | -------------------- | -------------------------------- |
+| `SmartInput`          | Standard text input  | `common/SmartInputs.tsx`         |
+| `SmartPhoneInput`     | Phone number input   | `common/SmartInputs.tsx`         |
+| `SmartEmailInput`     | Email input          | `common/SmartInputs.tsx`         |
+| `SmartDateInput`      | Date input (Masked)  | `common/SmartInputs.tsx`         |
+| `FloatingInput`       | Floating label input | `common/FloatingInput.tsx`       |
+| `DatePicker`          | Calendar picker      | `common/DatePicker.tsx`          |
+| `ExpandingDropdown`   | Dropdown selection   | `common/ExpandingDropdown.tsx`   |
+| `ExpandedModal`       | Full screen modal    | `common/ExpandedModal.tsx`       |
+| `SegmentedControl`    | Segmented buttons    | `common/SegmentedControl.tsx`    |
+| `Switch`              | Toggle switch        | `common/Switch.tsx`              |
+| `SearchInput`         | Search bar           | `common/SearchInput.tsx`         |
+| `Modal`               | Dialog/popup         | `common/Modal.tsx`               |
+| `HelpModal`           | Help dialog          | `common/HelpModal.tsx`           |
+| `Toast`               | Notifications        | `common/Toast.tsx`               |
+| `TanStackTable`       | Data tables          | `common/TanStackTable.tsx`       |
+| `ContextMenu`         | Right-click menus    | `common/ContextMenu.tsx`         |
+| `Navbar`              | Top Navigation       | `layout/Navbar.tsx`              |
+| `SidebarMenu`         | Side Navigation      | `layout/SidebarMenu.tsx`         |
+| `TabBar`              | Tabbed Interface     | `layout/TabBar.tsx`              |
+| `StatusBar`           | System Status        | `layout/StatusBar/StatusBar.tsx` |
+| `AnimatedCounter`     | Value animation      | `common/AnimatedCounter.tsx`     |
+| `ChartWidget`         | Data visualization   | `common/ChartWidget.tsx`         |
+| `SmallCard`           | KPI/Stat cards       | `common/SmallCard.tsx`           |
+| `ProgressCard`        | Task progress        | `common/ProgressCard.tsx`        |
+| `FlexDataCard`        | Distribution data    | `common/ProgressCard.tsx`        |
+| `CompactProgressCard` | Multi-stacking stats | `common/CompactProgressCard.tsx` |
 
 **Forbidden:** Never use HTML `<select>`, raw `<input>`, or `<table>` directly.
 
