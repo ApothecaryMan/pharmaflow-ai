@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const AnimatedCounter = ({ value, prefix = '', suffix = '', fractionDigits = 0 }: { value: number, prefix?: string, suffix?: string, fractionDigits?: number }) => {
+export const AnimatedCounter = ({ value, prefix = '', suffix = '', fractionDigits = 0, className = '' }: { value: number, prefix?: string, suffix?: string, fractionDigits?: number, className?: string }) => {
     // Format number with commas and specified decimals
     const formatted = value.toLocaleString('en-US', { 
         minimumFractionDigits: fractionDigits, 
@@ -11,8 +11,8 @@ export const AnimatedCounter = ({ value, prefix = '', suffix = '', fractionDigit
     const characters = formatted.split('');
 
     return (
-        <div className="flex items-baseline overflow-hidden">
-            {prefix && <span className="mr-0.5">{prefix}</span>}
+        <div className={`flex items-baseline overflow-hidden ${className}`} dir="ltr">
+            {prefix && <span className="ltr:mr-0.5 rtl:ml-0.5 text-gray-400">{prefix}</span>}
             {characters.map((char, index) => {
                 if (!/[0-9]/.test(char)) {
                     return <span key={index} className="mx-[1px]">{char}</span>;
@@ -34,7 +34,7 @@ export const AnimatedCounter = ({ value, prefix = '', suffix = '', fractionDigit
                     </div>
                 );
             })}
-            {suffix && <span className="ml-0.5">{suffix}</span>}
+            {suffix && <span className="ltr:ml-0.5 rtl:mr-0.5">{suffix}</span>}
         </div>
     );
 };

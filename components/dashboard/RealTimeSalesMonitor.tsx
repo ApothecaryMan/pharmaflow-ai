@@ -7,6 +7,8 @@ import { HelpModal, HelpButton } from '../common/HelpModal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { AnimatedCounter } from '../common/AnimatedCounter';
 import { SmallCard } from '../common/SmallCard';
+import { FlexDataCard } from '../common/ProgressCard';
+import { ChartWidget } from '../common/ChartWidget';
 
 interface RealTimeSalesMonitorProps {
   sales: Sale[];
@@ -244,11 +246,23 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
   // --- Hourly Revenue Data for Chart ---
   const hourlyData = useMemo(() => {
-    const hours = Array(24).fill(0).map((_, i) => ({ 
-      hour: i.toString().padStart(2, '0') + ':00', 
-      revenue: 0,
-      sales: 0
-    }));
+    const hours = Array(24).fill(0).map((_, i) => {
+        // Format time: English numbers, but localized AM/PM
+        let period = i >= 12 ? 'PM' : 'AM';
+        let hour12 = i % 12 || 12; // 0 becomes 12
+        
+        // Localize PM/AM if needed, but KEEP NUMBERS in English
+        if (language === 'AR') {
+           period = i >= 12 ? 'م' : 'ص';
+        }
+
+        return { 
+            hour: i.toString().padStart(2, '0') + ':00', 
+            date: `${hour12} ${period}`, 
+            revenue: 0,
+            sales: 0
+        };
+    });
     
     todayStats.todaysSales.forEach(s => {
       const h = new Date(s.date).getHours();
@@ -397,7 +411,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* Left Column: Transactions + Insight Cards */}
         <div className="lg:col-span-3 flex flex-col gap-4">
             {/* Recent Transactions Feed */}
-            <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow flex flex-col h-[400px] overflow-hidden">
+            <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow flex flex-col h-[437px] overflow-hidden">
            <div className="flex items-center justify-between mb-4">
                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2 type-expressive">
                  <span className="material-symbols-rounded text-gray-400 text-xl">history</span>
@@ -531,102 +545,83 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 </div>
 
                 {/* Order Distribution (Simple) */}
-                <div className="md:col-span-3 p-4 rounded-2xl bg-white dark:bg-gray-900 card-shadow flex flex-row items-center justify-between gap-4">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0">Orders</p>
-                    <div className="flex-1 flex items-center gap-4 text-[10px]">
-                        <div className="flex-1">
-                            <div className="flex justify-between mb-1"><span className="text-gray-500">Walk-in</span> <span className="font-bold">{todayStats.walkInRate.toFixed(0)}%</span></div>
-                            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5"><div className="bg-indigo-500 h-1.5 rounded-full" style={{ width: `${todayStats.walkInRate}%` }}></div></div>
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex justify-between mb-1"><span className="text-gray-500">Delivery</span> <span className="font-bold">{todayStats.deliveryRate.toFixed(0)}%</span></div>
-                            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5"><div className="bg-orange-500 h-1.5 rounded-full" style={{ width: `${todayStats.deliveryRate}%` }}></div></div>
-                        </div>
-                    </div>
+                <div className="md:col-span-3">
+                    <FlexDataCard 
+                        category="Orders"
+                        items={[
+                            { label: "Walk-in", value: `${todayStats.walkInRate.toFixed(0)}%`, percentage: todayStats.walkInRate, color: "indigo" },
+                            { label: "Delivery", value: `${todayStats.deliveryRate.toFixed(0)}%`, percentage: todayStats.deliveryRate, color: "orange" }
+                        ]}
+                    />
                 </div>
 
                 {/* Customer Loyalty (Simple) */}
-                <div className="md:col-span-3 p-4 rounded-2xl bg-white dark:bg-gray-900 card-shadow flex flex-row items-center justify-between gap-4">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0">Customers</p>
-                    <div className="flex-1 flex items-center gap-4 text-[10px]">
-                        <div className="flex-1">
-                            <div className="flex justify-between mb-1"><span className="text-gray-500">Reg.</span> <span className="font-bold">{todayStats.registeredRate.toFixed(0)}%</span></div>
-                            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5"><div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${todayStats.registeredRate}%` }}></div></div>
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex justify-between mb-1"><span className="text-gray-500">Anon.</span> <span className="font-bold">{todayStats.anonymousRate.toFixed(0)}%</span></div>
-                            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5"><div className="bg-gray-400 h-1.5 rounded-full" style={{ width: `${todayStats.anonymousRate}%` }}></div></div>
-                        </div>
-                    </div>
+                <div className="md:col-span-3">
+                    <FlexDataCard 
+                        category="Customers"
+                        items={[
+                            { label: "Reg.", value: `${todayStats.registeredRate.toFixed(0)}%`, percentage: todayStats.registeredRate, color: "blue" },
+                            { label: "Anon.", value: `${todayStats.anonymousRate.toFixed(0)}%`, percentage: todayStats.anonymousRate, color: "gray" }
+                        ]}
+                    />
                 </div>
             </div>
         </div>
 
         {/* Right: Top Products & Hourly Chart */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 flex flex-col gap-4">
              {/* Hourly Chart (Compact) */}
-             <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow min-h-[220px]">
-                <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase mb-4 type-expressive">Hourly Trend</h3>
-                <div className="h-[180px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                         <AreaChart data={hourlyData}>
-                            <defs>
-                                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
-                            <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} interval={2} />
-                            <Tooltip 
-                                cursor={{ stroke: '#3b82f6', strokeWidth: 1 }}
-                                content={({ active, payload, label }) => {
-                                    if (active && payload && payload.length) {
-                                    return (
-                                        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-100 dark:border-gray-700 shadow-xl rounded-xl">
-                                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">{label}</p>
-                                            <p className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1">
-                                                ${Number(payload[0].value).toFixed(2)}
-                                            </p>
-                                        </div>
-                                    );
-                                    }
-                                    return null;
-                                }}
-                            />
-                            <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={2} />
-                        </AreaChart>
-                    </ResponsiveContainer>
-                </div>
-             </div>
+                <ChartWidget
+                    title="Hourly Trend"
+                    icon="trending_up"
+                    data={hourlyData}
+                    dataKeys={{ primary: 'sales' }}
+                    color="#3b82f6"
+                    language={language}
+                    unit=""
+                    allowChartTypeSelection={false}
+                    className="card-shadow !rounded-3xl border-0 flex flex-col justify-between !p-0"
+                    headerClassName="px-6 pt-5"
+                    chartClassName="h-[200px] w-full px-2"
+                    xAxisInterval={2}
+                    chartMargin={{ top: 15, right: 10, left: -30, bottom: 20 }}
+                />
 
              {/* Top Products List */}
-             <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow flex-1">
+             <div className="p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow flex-1 flex flex-col">
                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 type-expressive">Top Products</h3>
+                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 type-expressive flex items-center gap-2">
+                        <span className="material-symbols-rounded text-yellow-500 text-[20px]">hotel_class</span>
+                        Top Products
+                    </h3>
                     <span className="text-xs text-gray-400">by Qty</span>
                  </div>
                  <div className="space-y-3">
                      {topProducts.map((p, idx) => (
-                         <div key={idx} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors group">
+                         <div key={idx} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl transition-colors group">
                              <div className="flex items-center gap-3 overflow-hidden">
-                                 <div className={`w-8 h-8 rounded-lg bg-${color.name}-50 dark:bg-${color.name}-900/20 text-${color.name}-600 dark:text-${color.name}-400 flex items-center justify-center font-bold text-xs shrink-0`}>
+                                 <div className={`w-6 h-6 rounded-full bg-${color.name}-100 dark:bg-${color.name}-900/50 text-${color.name}-600 dark:text-${color.name}-300 flex items-center justify-center font-bold text-xs shrink-0`}>
                                      {idx + 1}
                                  </div>
                                  <div className="truncate">
-                                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate group-hover:text-amber-600 transition-colors">{p.name}</p>
-                                     <p className="text-xs text-gray-400">{p.qty} sold</p>
+                                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate item-name">{p.name}</p>
                                  </div>
                              </div>
                              <div className="text-right shrink-0">
-                                 <div className="text-sm font-bold text-gray-900 dark:text-gray-100 flex justify-end">
-                                      <AnimatedCounter value={p.revenue} prefix="$" fractionDigits={0} />
+                                 <div className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center justify-end gap-2">
+                                      <AnimatedCounter 
+                                        value={p.revenue} 
+                                        prefix={language === 'EN' ? "$" : ""} 
+                                        suffix={language === 'AR' ? "$" : ""} 
+                                        fractionDigits={0} 
+                                      />
+                                      <span className="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md whitespace-nowrap">{p.qty}</span>
                                  </div>
                              </div>
                          </div>
                      ))}
                      {topProducts.length === 0 && (
-                         <div className="text-center py-4 text-gray-400 text-sm">No data yet</div>
+                         <div className="flex-1 flex items-center justify-center py-4 text-gray-400 text-sm">No data yet</div>
                      )}
                  </div>
              </div>

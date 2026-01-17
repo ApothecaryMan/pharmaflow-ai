@@ -3,7 +3,6 @@ import {
   ComposedChart, Area, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 import { SegmentedControl } from './SegmentedControl'; // Adjust path if needed
-import { ThemeColor } from '../../types';
 
 // --- Custom Tooltip Component ---
 export const CustomTooltipContent = memo(({ active, payload, label, unit, employees, selectedEmployeeId, showComparison, primaryLabel }: any) => {
@@ -91,6 +90,8 @@ interface ChartWidgetProps {
   // Styling
   className?: string;
   chartClassName?: string;
+  headerClassName?: string;
+  chartMargin?: { top?: number; right?: number; bottom?: number; left?: number };
 
   children?: React.ReactNode;
 }
@@ -114,7 +115,9 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
   xAxisInterval,
   primaryLabel,
   className,
+  headerClassName,
   chartClassName,
+  chartMargin,
   children
 }) => {
   const [internalChartType, setInternalChartType] = useState<'area' | 'bar'>('area');
@@ -130,7 +133,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
   return (
     <div className={`lg:col-span-2 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-transparent ${className || ''}`}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className={`flex items-center justify-between mb-4 ${headerClassName || ''}`}>
             <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
                 <span className={`material-symbols-rounded text-${color}-500`} style={{ color }}>{icon}</span>
                 {title}
@@ -185,7 +188,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
         {/* Chart Area */}
         <div className={`w-full ${chartClassName || 'h-[250px]'}`}>
             <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={data} margin={{ top: 15, right: 0, left: language === 'AR' ? 30 : 0, bottom: 20 }}>
+                <ComposedChart data={data} margin={chartMargin || { top: 15, right: 0, left: language === 'AR' ? 30 : 0, bottom: 20 }}>
                     <defs>
                         <linearGradient id={`gradient-${title.replace(/[^a-zA-Z0-9]/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
@@ -199,19 +202,16 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                         tickLine={false} 
                         tick={{fill: 'var(--text-secondary)', fontSize: 12}}
                         interval={xAxisInterval ?? "equidistantPreserveStart"}
-                        padding={{ left: 10, right: 10 }}
+                        padding={{ left: 1, right: 3 }}
                         dy={10}
                     />
                     <YAxis 
                         axisLine={false} 
                         tickLine={false} 
-                        width={45} 
                         tickFormatter={(value) => 
-                            language === 'AR' 
-                                ? value.toLocaleString('ar-EG') 
-                                : value
+                            value.toLocaleString('en-US')
                         }
-                        tick={{fill: 'var(--text-secondary)', fontSize: 12, dx: language === 'AR' ? -50 : 0, textAnchor: 'end'}} 
+                        tick={{fill: 'var(--text-secondary)', fontSize: 12, textAnchor: 'end', direction: 'ltr'}}  
                     />
                     <Tooltip 
                         content={<CustomTooltipContent color={color} unit={unit} employees={employees} selectedEmployeeId={selectedEmployeeId} showComparison={showComparison} primaryLabel={primaryLabel} />} 

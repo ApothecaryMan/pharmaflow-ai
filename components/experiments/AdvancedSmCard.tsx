@@ -44,6 +44,9 @@ const barData2 = [
 // --- Sub-Components ---
 
 import { SmallCard } from '../common/SmallCard';
+import { ProgressCard, FlexDataCard } from '../common/ProgressCard';
+import { CompactProgressCard } from '../common/CompactProgressCard';
+
 
 // ... (keep props interface if needed but StatCardProps is moving)
 // ...
@@ -88,36 +91,7 @@ export const SparklineCard = ({ title, value, data, color, onClick }: any) => (
   </div>
 );
 
-// 3. ProgressCard
-export const ProgressCard = ({ title, value, max, progressColor, icon, onClick }: any) => {
-  const percentage = Math.min(100, Math.max(0, (value / max) * 100));
-  
-  return (
-    <div 
-        onClick={onClick}
-        className={`p-5 rounded-3xl ${CARD_BASE} ${CARD_HOVER} h-36 flex flex-col justify-center cursor-pointer transition-transform active:scale-[0.98]`}
-    >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-${progressColor}-100 dark:bg-${progressColor}-900/20 text-${progressColor}-600 dark:text-${progressColor}-400`}>
-            <span className="material-symbols-rounded text-xl">{icon}</span>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{title}</p>
-            <h4 className="text-xl font-bold text-gray-900 dark:text-white">{value} <span className="text-xs text-gray-400 font-normal">/ {max}</span></h4>
-          </div>
-        </div>
-      </div>
-      <div className="relative w-full h-2.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden mt-3">
-        <div 
-          className={`absolute left-0 top-0 h-full rounded-full bg-${progressColor}-500`}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-      <p className="text-right text-xs font-medium text-gray-500 mt-1.5">{percentage.toFixed(0)}% Complete</p>
-    </div>
-  );
-};
+
 
 // 4. Bar Chart Card (New)
 export const BarChartCard = ({ title, value, data, color }: any) => (
@@ -145,8 +119,8 @@ export const BarChartCard = ({ title, value, data, color }: any) => (
 // 5. Action Card
 export const ActionCard = ({ title, icon, color, actionLabel }: any) => (
   <div className={`p-4 rounded-3xl ${CARD_BASE} ${CARD_HOVER} h-36 flex flex-col items-center justify-center text-center group cursor-pointer border border-transparent hover:border-${color}-200 dark:hover:border-${color}-800`}>
-    <div className={`w-12 h-12 rounded-2xl bg-${color}-50 dark:bg-${color}-900/10 text-${color}-500 dark:text-${color}-400 flex items-center justify-center mb-3`}>
-      <span className="material-symbols-rounded text-3xl">{icon}</span>
+    <div className={`text-${color}-500 dark:text-${color}-400 flex items-center justify-center mb-2`}>
+        <span className="material-symbols-rounded text-4xl">{icon}</span>
     </div>
     <h4 className="font-semibold text-gray-900 dark:text-white mb-0.5">{title}</h4>
     <p className="text-xs text-blue-500 font-medium group-hover:underline">{actionLabel}</p>
@@ -271,7 +245,19 @@ export const AdvancedSmCard: React.FC<AdvancedSmCardProps> = ({ color, t, langua
       <section>
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 px-1">3. Progress</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-            <ProgressCard title="Monthly Target" value={7500} max={10000} progressColor="blue" icon="target" onClick={() => handleProgressClick("Monthly Target", 7500, 10000, "blue", "target")} />
+            <ProgressCard 
+                title="Monthly Target" 
+                value={7500} 
+                max={10000} 
+                progressColor="blue" 
+                icon="target" 
+                onClick={() => handleProgressClick("Monthly Target", 7500, 10000, "blue", "target")}
+                // Double Bar Props
+                value2={6200}
+                max2={8000}
+                progressColor2="indigo"
+                label2="Projected"
+            />
             <ProgressCard title="Stock Capacity" value={820} max={1000} progressColor="amber" icon="warehouse" onClick={() => handleProgressClick("Stock Capacity", 820, 1000, "amber", "warehouse")} />
             <ProgressCard title="Goal A" value={45} max={100} progressColor="emerald" icon="flag" onClick={() => handleProgressClick("Goal A", 45, 100, "emerald", "flag")} />
             <ProgressCard title="Goal B" value={90} max={100} progressColor="purple" icon="star" onClick={() => handleProgressClick("Goal B", 90, 100, "purple", "star")} />
@@ -318,6 +304,120 @@ export const AdvancedSmCard: React.FC<AdvancedSmCardProps> = ({ color, t, langua
                 />
             </div>
         </div>
+      </section>
+
+      {/* 7. Compact Stacking Test */}
+      <section>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 px-1">7. Compact Stacking Test</h3>
+        <p className="text-sm text-gray-500 mb-4 px-1">Two compact cards (gap-2) should equal the height of one standard card.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            
+            {/* Standard Height Reference */}
+            <ProgressCard 
+                title="Reference Card" 
+                value={50} 
+                max={100} 
+                progressColor="gray" 
+                icon="aspect_ratio" 
+            />
+
+            {/* Stacked Compact Cards */}
+            <div className="flex flex-col gap-2 h-36">
+                <CompactProgressCard 
+                    title="Compact Top" 
+                    value={350} 
+                    max={500} 
+                    progressColor="emerald" 
+                    icon="arrow_upward" 
+                />
+                <CompactProgressCard 
+                    title="Compact Bottom" 
+                    value={120} 
+                    max={200} 
+                    progressColor="amber" 
+                    icon="arrow_downward" 
+                />
+            </div>
+
+            {/* Another Stack for visual check */}
+            <div className="flex flex-col gap-2 h-36">
+                 <CompactProgressCard 
+                    title="Server CPU" 
+                    value="45%" 
+                    max={100} 
+                    progressColor="rose" 
+                    icon="memory" 
+                />
+                 <CompactProgressCard 
+                    title="Server RAM" 
+                    value="2.4GB" 
+                    max={8} 
+                    progressColor="blue" 
+                    icon="dns" 
+                />
+            </div>
+
+        </div>
+      </section>
+
+
+
+      {/* 8. Flexible Data Card Tests */}
+      <section>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 px-1">8. Flexible Data Card Tests</h3>
+          
+          <div className="flex flex-col gap-6">
+              
+              {/* Scenario A: Compact Container (Mobile/Sidebar style) */}
+              <div>
+                  <h4 className="text-xs font-bold text-gray-400 uppercase mb-2 px-1">Standard Card Width</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                      <FlexDataCard 
+                          category="ORDERS"
+                          items={[
+                              { label: "Delivery", value: "20%", percentage: 20, color: "orange" },
+                              { label: "Walk-in", value: "80%", percentage: 80, color: "indigo" }
+                          ]}
+                      />
+                  </div>
+              </div>
+
+              {/* Scenario B: Grid Layout (Responsive) */}
+              <div>
+                  <h4 className="text-xs font-bold text-gray-400 uppercase mb-2 px-1">Grid Layout (2 Cols)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FlexDataCard 
+                          category="SALES"
+                          items={[
+                              { label: "Online", value: "1.2k", percentage: 65, color: "blue" },
+                              { label: "In-Store", value: "850", percentage: 35, color: "teal" }
+                          ]}
+                      />
+                       <FlexDataCard 
+                          category="STOCK"
+                          items={[
+                              { label: "In Stock", value: "95%", percentage: 95, color: "emerald" },
+                              { label: "Low", value: "5%", percentage: 5, color: "rose" }
+                          ]}
+                      />
+                  </div>
+              </div>
+
+              {/* Scenario C: Full Width with Long Text */}
+              <div>
+                  <h4 className="text-xs font-bold text-gray-400 uppercase mb-2 px-1">Full Width & Long Labels</h4>
+                  <div className="w-full">
+                      <FlexDataCard 
+                          category="PERFORMANCE"
+                          items={[
+                              { label: "Customer Satisfaction Score", value: "4.8/5", percentage: 96, color: "amber" },
+                              { label: "Average Resolution Time", value: "2m", percentage: 80, color: "cyan" }
+                          ]}
+                      />
+                  </div>
+              </div>
+
+          </div>
       </section>
 
       {/* Modal */}
