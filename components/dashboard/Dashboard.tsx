@@ -348,11 +348,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         >
           <SmallCard
             title={t.revenue}
-            value={totalRevenue.toFixed(2)}
+            value={totalRevenue}
             icon="payments"
             iconColor={color}
             type="currency"
             currencyLabel="$"
+            fractionDigits={2}
           />
         </div>
 
@@ -363,11 +364,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         >
           <SmallCard
             title={t.expenses}
-            value={totalExpenses.toFixed(2)}
+            value={totalExpenses}
             icon="shopping_cart_checkout"
             iconColor="red"
             type="currency"
             currencyLabel="$"
+            fractionDigits={2}
           />
         </div>
 
@@ -378,11 +380,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         >
           <SmallCard
             title={t.profit}
-            value={netProfit.toFixed(2)}
+            value={netProfit}
             icon="trending_up"
             iconColor="emerald"
             type="currency"
             currencyLabel="$"
+            fractionDigits={2}
           />
         </div>
 
@@ -396,6 +399,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             value={lowStockItems.length}
             icon="warning"
             iconColor="orange"
+            fractionDigits={0}
           />
         </div>
       </div>

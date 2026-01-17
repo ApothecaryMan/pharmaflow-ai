@@ -5,6 +5,8 @@ import { ExpandedModal } from '../common/ExpandedModal';
 import { REALTIME_SALES_MONITOR_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
 import { SegmentedControl } from '../common/SegmentedControl';
+import { AnimatedCounter } from '../common/AnimatedCounter';
+import { SmallCard } from '../common/SmallCard';
 
 interface RealTimeSalesMonitorProps {
   sales: Sale[];
@@ -14,46 +16,6 @@ interface RealTimeSalesMonitorProps {
   t: any;
   language: 'AR' | 'EN';
 }
-
-// --- Animated Counter Component ---
-const AnimatedCounter = ({ value, prefix = '', suffix = '', fractionDigits = 0 }: { value: number, prefix?: string, suffix?: string, fractionDigits?: number }) => {
-    // Format number with commas and specified decimals
-    const formatted = value.toLocaleString('en-US', { 
-        minimumFractionDigits: fractionDigits, 
-        maximumFractionDigits: fractionDigits 
-    });
-    
-    // Split into characters
-    const characters = formatted.split('');
-
-    return (
-        <div className="flex items-baseline overflow-hidden">
-            {prefix && <span className="mr-0.5">{prefix}</span>}
-            {characters.map((char, index) => {
-                if (!/[0-9]/.test(char)) {
-                    return <span key={index} className="mx-[1px]">{char}</span>;
-                }
-
-                const digit = parseInt(char, 10);
-                return (
-                    <div key={index} className="relative h-[1.1em] w-[0.65em] overflow-hidden inline-block" style={{ verticalAlign: 'text-bottom' }}>
-                        <div 
-                            className="absolute top-0 left-0 flex flex-col transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-                            style={{ transform: `translateY(-${digit * 10}%)` }}
-                        >
-                            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                                <span key={num} className="h-[100%] flex items-center justify-center">
-                                    {num}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                );
-            })}
-            {suffix && <span className="ml-0.5">{suffix}</span>}
-        </div>
-    );
-};
 
 export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   sales = [],
@@ -360,97 +322,72 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* 1. Revenue Card */}
         <div 
             onClick={() => setExpandedView('revenue')}
-            className={`p-4 rounded-2xl bg-white dark:bg-gray-900 card-shadow flex items-center gap-4 cursor-pointer hover:border-${color.name}-300 transition-colors group relative`}
+            className="cursor-pointer transition-transform active:scale-95 touch-manipulation relative group"
         >
-             <span className="material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2">open_in_full</span>
-          <div className={`text-${color.name}-600 dark:text-${color.name}-400`}>
-            <span className="material-symbols-rounded text-4xl">payments</span>
-          </div>
-          <div className="flex-1">
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">{t.realTimeSales?.todayRevenue || "Today's Revenue"}</p>
-            <div className="flex items-center gap-2">
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                  <AnimatedCounter value={todayStats.revenue} prefix="$" fractionDigits={2} />
-              </div>
-              <div className={`flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
-                  todayStats.revenueChange > 0 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                  'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-              }`}>
-                 {todayStats.revenueChange > 0 ? '+' : ''}{Math.abs(todayStats.revenueChange).toFixed(1)}%
-              </div>
-            </div>
-          </div>
+             <span className="material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10">open_in_full</span>
+             <SmallCard
+                title={t.realTimeSales?.todayRevenue || "Today's Revenue"}
+                value={todayStats.revenue}
+                fractionDigits={2}
+                icon="payments"
+                iconColor={color.name}
+                type="currency"
+                currencyLabel="$"
+                trend={todayStats.revenueChange > 0 ? 'up' : 'neutral'}
+                trendValue={`${todayStats.revenueChange > 0 ? '+' : ''}${Math.abs(todayStats.revenueChange).toFixed(1)}%`}
+             />
         </div>
 
         {/* 2. Transactions Card */}
         <div 
             onClick={() => setExpandedView('transactions')}
-            className="p-4 rounded-2xl bg-white dark:bg-gray-900 card-shadow flex items-center gap-4 cursor-pointer hover:border-blue-300 transition-colors group relative"
+            className="cursor-pointer transition-transform active:scale-95 touch-manipulation relative group"
         >
-             <span className="material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2">open_in_full</span>
-          <div className="text-blue-600 dark:text-blue-400">
-            <span className="material-symbols-rounded text-4xl">receipt_long</span>
-          </div>
-          <div className="flex-1">
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">{t.realTimeSales?.totalTransactions || 'Total Transactions'}</p>
-            <div className="flex items-baseline gap-2">
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                <AnimatedCounter value={todayStats.transactions} />
-              </div>
-              <p className="text-[10px] text-gray-400">
-                ${todayStats.avgTransactionValue.toFixed(0)} avg
-              </p>
-            </div>
-          </div>
+             <span className="material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10">open_in_full</span>
+             <SmallCard
+                title={t.realTimeSales?.totalTransactions || 'Total Transactions'}
+                value={todayStats.transactions}
+                icon="receipt_long"
+                iconColor="blue"
+                subValue={`$${todayStats.avgTransactionValue.toFixed(0)} avg`}
+             />
         </div>
 
         {/* 3. Items Sold Card */}
         <div 
             onClick={() => setExpandedView('items')}
-            className="p-4 rounded-2xl bg-white dark:bg-gray-900 card-shadow flex items-center gap-4 cursor-pointer hover:border-purple-300 transition-colors group relative"
+            className="cursor-pointer transition-transform active:scale-95 touch-manipulation relative group"
         >
-            <span className="material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2">open_in_full</span>
-          <div className="text-purple-600 dark:text-purple-400">
-            <span className="material-symbols-rounded text-4xl">inventory_2</span>
-          </div>
-          <div className="flex-1">
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">{t.realTimeSales?.itemsSold || 'Items Sold'}</p>
-             <div className="flex items-baseline gap-2">
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                  <AnimatedCounter value={todayStats.itemsSold} />
-              </div>
-              <p className="text-[10px] text-gray-400 truncate max-w-[80px]" title={todayStats.topCategory}>
-                {todayStats.topCategory}
-              </p>
-            </div>
-          </div>
+            <span className="material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10">open_in_full</span>
+            <SmallCard
+                title={t.realTimeSales?.itemsSold || 'Items Sold'}
+                value={todayStats.itemsSold}
+                icon="inventory_2"
+                iconColor="purple"
+                subValue={todayStats.topCategory}
+            />
         </div>
 
         {/* 4. Active Counters Card */}
         <div 
             onClick={() => setExpandedView('counters')}
-             className="p-4 rounded-2xl bg-white dark:bg-gray-900 card-shadow flex items-center gap-4 cursor-pointer hover:border-amber-300 transition-colors group relative"
+             className="cursor-pointer transition-transform active:scale-95 touch-manipulation relative group"
         >
-            <span className="material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2">open_in_full</span>
-          <div className="text-amber-600 dark:text-amber-400 relative">
-            <span className="material-symbols-rounded text-4xl">point_of_sale</span>
-            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-            </span>
-          </div>
-          <div className="flex-1">
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-0.5">{t.realTimeSales?.activeCounters || 'Active Counters'}</p>
-            <div className="flex items-baseline gap-2">
-              <div className="flex items-center text-2xl font-bold text-gray-900 dark:text-gray-100">
-                   <AnimatedCounter value={todayStats.activeCounters} />
-                   <span className="text-sm font-normal text-gray-400 ms-1">/{todayStats.totalCounters}</span>
-              </div>
-               <p className="text-[10px] text-gray-400">
-                {todayStats.onHoldCount} hold
-              </p>
-            </div>
-          </div>
+            <span className="material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10">open_in_full</span>
+            <SmallCard
+                title={t.realTimeSales?.activeCounters || 'Active Counters'}
+                value={todayStats.activeCounters}
+                icon="point_of_sale"
+                iconColor="amber"
+                valueSuffix={`/${todayStats.totalCounters}`}
+                subValue={`${todayStats.onHoldCount} hold`}
+                iconOverlay={
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </span>
+                }
+            />
         </div>
       </div>
 

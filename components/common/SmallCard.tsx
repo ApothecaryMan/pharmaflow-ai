@@ -1,5 +1,6 @@
 import React from 'react';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { AnimatedCounter } from './AnimatedCounter';
 
 const CARD_HOVER = ""; // No animations
 
@@ -14,15 +15,19 @@ export interface SmallCardProps {
   subValue?: string;
   type?: string; 
   currencyLabel?: string;
+  fractionDigits?: number;
+  iconOverlay?: React.ReactNode;
+  valueSuffix?: React.ReactNode;
 }
 
-export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, trendLabel, subValue, type, currencyLabel }: SmallCardProps) => (
+export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, trendLabel, subValue, type, currencyLabel, fractionDigits, iconOverlay, valueSuffix }: SmallCardProps) => (
   // Compact design: h-[84px], p-3
   <div className={`p-3 rounded-2xl ${CARD_BASE} ${CARD_HOVER} h-[84px] flex items-center gap-3`}>
     
     {/* Icon - Left Side */}
-    <div className={`flex-shrink-0 text-${iconColor}-600 dark:text-${iconColor}-400`}>
+    <div className={`flex-shrink-0 text-${iconColor}-600 dark:text-${iconColor}-400 relative`}>
       <span className="material-symbols-rounded text-[38px] leading-none">{icon}</span>
+      {iconOverlay}
     </div>
 
     {/* Content - Right Side */}
@@ -31,9 +36,16 @@ export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, tr
       
       <div className="flex items-center gap-2">
         <h4 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-baseline">
-          {value}
+          {typeof value === 'number' ? (
+              <AnimatedCounter value={value} fractionDigits={fractionDigits ?? (type === 'currency' ? 2 : 0)} />
+          ) : (
+             value
+          )}
           {type === 'currency' && (
             <span className="text-sm font-medium text-gray-500 dark:text-gray-400 ms-1">{currencyLabel || 'L.E'}</span>
+          )}
+          {valueSuffix && (
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 ms-1">{valueSuffix}</span>
           )}
         </h4>
 
