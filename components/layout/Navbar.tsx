@@ -255,7 +255,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
         onClick={onLogoClick}
       >
         <img 
-          src={darkMode ? "/logo_full_dark.svg" : "/logo_full.svg"} 
+          src="/app_icon.svg" 
           alt={appTitle} 
           className="h-10 w-auto" 
         />
