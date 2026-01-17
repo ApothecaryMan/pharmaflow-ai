@@ -46,10 +46,10 @@ import { storage } from './storage';
 import { StorageKeys } from '../config/storageKeys';
 
 const DEFAULT_SETTINGS: PrinterSettings = {
-  enabled: false,
+  enabled: true,         // Enable by default - will fallback to browser if QZ not available
   labelPrinter: null,
   receiptPrinter: null,
-  silentMode: 'fallback'
+  silentMode: 'fallback' // Try silent first, fallback to browser if fails
 };
 
 // QZ Tray script URL (CDN)
@@ -147,7 +147,9 @@ export const disconnect = async (): Promise<void> => {
   try {
     await qz.websocket.disconnect();
   } catch (err) {
-    console.warn('QZ disconnect error:', err);
+    if (import.meta.env.DEV) {
+      console.warn('[QZ] Disconnect error:', err);
+    }
   }
 };
 
@@ -181,7 +183,9 @@ export const getPrinters = async (): Promise<string[]> => {
     const printers = await qz.printers.find();
     return Array.isArray(printers) ? printers : [];
   } catch (err) {
-    console.error('Failed to get printers:', err);
+    if (import.meta.env.DEV) {
+      console.error('[QZ] Failed to get printers:', err);
+    }
     return [];
   }
 };
@@ -199,7 +203,9 @@ export const getDefaultPrinter = async (): Promise<string | null> => {
     const printer = await qz.printers.getDefault();
     return printer || null;
   } catch (err) {
-    console.error('Failed to get default printer:', err);
+    if (import.meta.env.DEV) {
+      console.error('[QZ] Failed to get default printer:', err);
+    }
     return null;
   }
 };
@@ -303,7 +309,9 @@ export const printLabelSilently = async (
   }
   
   if (!settings.labelPrinter) {
-    console.warn('No label printer configured');
+    if (import.meta.env.DEV) {
+      console.warn('[QZ] No label printer configured');
+    }
     return false;
   }
   
@@ -314,7 +322,9 @@ export const printLabelSilently = async (
     });
     return true;
   } catch (err) {
-    console.error('QZ label print failed:', err);
+    if (import.meta.env.DEV) {
+      console.error('[QZ] Label print failed:', err);
+    }
     
     if (settings.silentMode === 'fallback') {
       return false; // Signal to use browser print
@@ -337,7 +347,9 @@ export const printReceiptSilently = async (html: string): Promise<boolean> => {
   }
   
   if (!settings.receiptPrinter) {
-    console.warn('No receipt printer configured');
+    if (import.meta.env.DEV) {
+      console.warn('[QZ] No receipt printer configured');
+    }
     return false;
   }
   
@@ -348,7 +360,9 @@ export const printReceiptSilently = async (html: string): Promise<boolean> => {
     });
     return true;
   } catch (err) {
-    console.error('QZ receipt print failed:', err);
+    if (import.meta.env.DEV) {
+      console.error('[QZ] Receipt print failed:', err);
+    }
     
     if (settings.silentMode === 'fallback') {
       return false; // Signal to use browser print

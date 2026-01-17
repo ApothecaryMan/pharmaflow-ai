@@ -182,7 +182,7 @@ export function ExpandingDropdown<T>({
                 >
                     <div className="min-h-0 overflow-hidden">
                         <div 
-                            className={`expanding-dropdown-scroll mb-2 border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto ${isOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-150`}
+                            className={`expanding-dropdown-scroll border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto ${isOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-150`}
                             style={{
                                 scrollbarWidth: 'thin',
                                 scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
