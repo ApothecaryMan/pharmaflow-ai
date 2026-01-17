@@ -67,6 +67,13 @@ export const authService = {
   },
 
   /**
+   * Synchronous check for session existence (Fast UI init)
+   */
+  hasSession: (): boolean => {
+    return !!sessionStorage.getItem(SESSION_KEY);
+  },
+
+  /**
    * Logout and clear session
    */
   logout: async (): Promise<void> => {

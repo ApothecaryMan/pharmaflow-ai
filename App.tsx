@@ -11,6 +11,8 @@ import { PAGE_REGISTRY } from './config/pageRegistry';
 import { useTheme } from './hooks/useTheme';
 import { useData } from './services';
 import { useSettings, THEMES, LANGUAGES } from './context';
+import { authService } from './services/auth/authService';
+import { ROUTES, TEST_ROUTES } from './config/routes';
 
 // --- Initial Data ---
 // Helper: Ensure stock is always a valid integer
@@ -48,10 +50,12 @@ const GlobalContextMenuWrapper: React.FC<{ children: React.ReactNode, t: any, to
 import { usePersistedState } from './hooks/usePersistedState';
 import { StorageKeys } from './config/storageKeys';
 
+const STANDALONE_VIEWS = [ROUTES.LOGIN];
+
 const App: React.FC = () => {
   // --- View State ---
-  const [view, setView] = usePersistedState<ViewState>(StorageKeys.VIEW, 'dashboard');
-  const [activeModule, setActiveModule] = usePersistedState<string>(StorageKeys.ACTIVE_MODULE, 'dashboard');
+  const [view, setView] = usePersistedState<ViewState>(StorageKeys.VIEW, ROUTES.DASHBOARD);
+  const [activeModule, setActiveModule] = usePersistedState<string>(StorageKeys.ACTIVE_MODULE, ROUTES.DASHBOARD);
 
   // --- Settings from Context (centralized) ---
   const {
@@ -138,6 +142,94 @@ const App: React.FC = () => {
 
   // Get verified time from StatusBar context
   const { getVerifiedDate, validateTransactionTime, updateLastTransactionTime } = useStatusBar();
+
+  // ROUTE GUARD: Definitions
+  
+  // ROUTE GUARD: Enforce Login on First Visit / Unauthenticated Access
+  // Optimistic Init: Check session synchronous to prevent "flash of loading"
+  const [isAuthenticated, setIsAuthenticated] = useState(() => authService.hasSession());
+  const [isAuthChecking, setIsAuthChecking] = useState(false); // Assume done since we checked sync
+
+  const handleLogout = useCallback(async () => {
+    try {
+        await authService.logout();
+        setIsAuthenticated(false);
+        // We set view directly to skip route guard checks for this specific action
+        setView(ROUTES.LOGIN);
+    } catch (e) {
+        console.error('Logout failed:', e);
+    }
+  }, []);
+
+  // ✅ Centralized Guard Function
+  const resolveView = useCallback((targetView: ViewState): ViewState => {
+    // A. Production Guard
+    if (import.meta.env.PROD && TEST_ROUTES.includes(targetView)) {
+        if (targetView !== ROUTES.LOGIN) return ROUTES.DASHBOARD;
+    }
+
+    // B. Auth Guard
+    if (!isAuthenticated && targetView !== ROUTES.LOGIN) {
+        return ROUTES.LOGIN;
+    }
+
+    // C. Already Logged In Guard (Prevent seeing login page)
+    if (isAuthenticated && targetView === ROUTES.LOGIN) {
+        return ROUTES.DASHBOARD;
+    }
+
+    return targetView;
+  }, [isAuthenticated]);
+
+  // ✅ STEP 1: Single source of truth for auth
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        const isUserAuth = !!user;
+        setIsAuthenticated(isUserAuth);
+        
+        // Redirect logic happens ONCE after check is done
+        if (!isUserAuth) {
+           // We rely on the initial render with isAuthChecking=true to block access,
+           // then once this completes, the regular render flow with resolveView will kick in if we were to force update,
+           // but since we are modifying state (isAuthenticated), a re-render will happen.
+           // However, 'view' state is separate. We need to sync them if needed.
+           // The persisted 'view' might be 'dashboard' but we need 'login'.
+           if (view !== ROUTES.LOGIN) {
+               setView(ROUTES.LOGIN);
+           }
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setIsAuthenticated(false);
+        setView(ROUTES.LOGIN);
+      } finally {
+        setIsAuthChecking(false);
+      }
+    };
+    
+    checkAuth();
+  }, []); // ← ONLY on mount!
+
+  // Guard Effect: Watch for view changes and redirect if needed based on resolveView results
+  // We prefer "Declarative" but since 'view' is an atom/state, we need an effect or event interceptor.
+  // The 'resolveView' is used effectively in event handlers, but we also need to guard "current" state.
+  useEffect(() => {
+     if (isAuthChecking) return;
+     
+     const correctView = resolveView(view);
+     if (correctView !== view) {
+         console.warn(`Redirecting from ${view} to ${correctView}`);
+         if (import.meta.env.PROD && TEST_ROUTES.includes(view)) {
+             setToast({ 
+                message: 'Access Denied: Developer routes are disabled.', 
+                type: 'error' 
+             });
+         }
+         setView(correctView);
+     }
+  }, [view, isAuthChecking, resolveView]);
 
   const migrationAttempted = useRef(false);
 
@@ -678,25 +770,94 @@ const App: React.FC = () => {
   const [dashboardSubView, setDashboardSubView] = useState<string>('dashboard');
 
   const handleViewChange = useCallback((viewId: string) => {
+    const targetView = viewId as ViewState;
+    const resolvedView = resolveView(targetView);
+    
+    if (resolvedView !== targetView) {
+        setToast({ 
+            message: 'Access denied. Please login first.', 
+            type: 'error' 
+        });
+        setView(resolvedView);
+        return;
+    }
+
     if (activeModule === 'dashboard') {
       // Check if this viewId exists in PAGE_REGISTRY (meaning it's a real page)
       // If yes, navigate to it. If no, it's a dashboard sub-view.
       if (PAGE_REGISTRY[viewId]) {
-        setView(viewId as ViewState);
+        setView(targetView);
       } else {
         setDashboardSubView(viewId);
         setView('dashboard');
       }
     } else {
-      setView(viewId as ViewState);
+      setView(targetView);
     }
     setMobileMenuOpen(false);
-  }, [activeModule]);
+  }, [activeModule, resolveView]);
 
   const handleNavigate = useCallback((viewId: string) => {
-    setView(viewId as ViewState);
+    const targetView = viewId as ViewState;
+    const resolvedView = resolveView(targetView);
+    
+    if (resolvedView !== targetView) {
+        setToast({ 
+             message: 'Access denied.', 
+             type: 'error' 
+        });
+        setView(resolvedView);
+    } else {
+         setView(targetView);
+    }
     setMobileMenuOpen(false);
+  }, [resolveView]);
+
+  const handleModuleChange = useCallback((moduleId: string) => {
+    setActiveModule(moduleId);
+    // Map module IDs to ViewState
+    const viewMapping: Record<string, ViewState> = {
+      'dashboard': 'dashboard',
+      'inventory': 'inventory',
+      'sales': 'pos',
+      'purchase': 'purchases',
+      'customers': 'customers',
+      'customer-overview': 'customer-overview',
+      'prescriptions': 'dashboard',
+      'finance': 'dashboard',
+      'reports': 'dashboard',
+      'hr': 'dashboard',
+      'compliance': 'dashboard',
+      'settings': 'dashboard',
+      'return-history': 'return-history',
+    };
+    const newView = viewMapping[moduleId] || 'dashboard';
+    setView(newView);
   }, []);
+
+  // Filter menu items based on settings
+  const filteredMenuItems = useMemo(() => 
+    (!hideInactiveModules || developerMode) 
+      ? PHARMACY_MENU 
+      : PHARMACY_MENU.filter(m => m.hasPage !== false || m.submenus?.some(s => s.items.some(i => typeof i === 'object' && !!i.view))), 
+    [hideInactiveModules, developerMode]
+  );
+
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+        <div className="text-white">
+          <svg className="animate-spin h-8 w-8 mx-auto" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" 
+                    stroke="currentColor" strokeWidth="4" fill="none"/>
+            <path className="opacity-75" fill="currentColor" 
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          <p className="mt-2 text-sm text-zinc-400">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ContextMenuProvider>
@@ -727,30 +888,11 @@ const App: React.FC = () => {
     >
       
       {/* Navbar */}
+      {!STANDALONE_VIEWS.includes(view) && (
       <Navbar 
-        menuItems={useMemo(() => (!hideInactiveModules || developerMode) ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false || m.submenus?.some(s => s.items.some(i => typeof i === 'object' && !!i.view))), [hideInactiveModules, developerMode])}
+        menuItems={filteredMenuItems}
         activeModule={activeModule}
-        onModuleChange={React.useCallback((moduleId: string) => {
-          setActiveModule(moduleId);
-          // Map module IDs to ViewState
-          const viewMapping: Record<string, ViewState> = {
-            'dashboard': 'dashboard',
-            'inventory': 'inventory',
-            'sales': 'pos',
-            'purchase': 'purchases',
-            'customers': 'customers',
-            'customer-overview': 'customer-overview',
-            'prescriptions': 'dashboard',
-            'finance': 'dashboard',
-            'reports': 'dashboard',
-            'hr': 'dashboard',
-            'compliance': 'dashboard',
-            'settings': 'dashboard',
-            'return-history': 'return-history',
-          };
-          const newView = viewMapping[moduleId] || 'dashboard';
-          setView(newView);
-        }, [])}
+        onModuleChange={handleModuleChange}
         theme={theme.primary}
         darkMode={darkMode}
         appTitle={t.appTitle}
@@ -780,11 +922,14 @@ const App: React.FC = () => {
         employees={employees.map(e => ({ id: e.id, name: e.name, employeeCode: e.employeeCode }))}
         currentEmployeeId={currentEmployeeId}
         setCurrentEmployeeId={setCurrentEmployeeId}
+        onLogout={handleLogout}
       />
+      )}
 
       {/* Main Layout: Sidebar + Content */}
       <div className="flex flex-1 overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
         {/* Desktop Sidebar */}
+        {!STANDALONE_VIEWS.includes(view) && (
         <aside 
           className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col w-72 backdrop-blur-xl transition-all duration-300 ease-in-out`}
           style={{
@@ -792,7 +937,7 @@ const App: React.FC = () => {
           }}
         >
           <SidebarContent 
-            menuItems={useMemo(() => (!hideInactiveModules || developerMode) ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false || m.submenus?.some(s => s.items.some(i => typeof i === 'object' && !!i.view))), [hideInactiveModules, developerMode])}
+            menuItems={filteredMenuItems}
             activeModule={activeModule}
             view={view}
             dashboardSubView={dashboardSubView}
@@ -805,9 +950,10 @@ const App: React.FC = () => {
             hideInactiveModules={hideInactiveModules}
           />
         </aside>
+        )}
 
         {/* Mobile Drawer */}
-        {mobileMenuOpen && (
+        {mobileMenuOpen && !STANDALONE_VIEWS.includes(view) && (
           <div className="fixed inset-0 z-[60] flex md:hidden">
             {/* Backdrop */}
             <div 
@@ -828,7 +974,7 @@ const App: React.FC = () => {
                   </button>
                 </div>
                  <div className="grid grid-cols-2 gap-2">
-                  {((!hideInactiveModules || developerMode) ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false || m.submenus?.some(s => s.items.some(i => typeof i === 'object' && !!i.view)))).map(module => (
+                  {filteredMenuItems.map(module => (
                     <button
                       key={module.id}
                       onClick={() => {
@@ -847,7 +993,7 @@ const App: React.FC = () => {
                 </div>
               </div>
               <SidebarContent 
-                menuItems={(!hideInactiveModules || developerMode) ? PHARMACY_MENU : PHARMACY_MENU.filter(m => m.hasPage !== false || m.submenus?.some(s => s.items.some(i => typeof i === 'object' && !!i.view)))}
+                menuItems={filteredMenuItems}
                 activeModule={activeModule}
                 view={view}
                 dashboardSubView={dashboardSubView}
@@ -865,8 +1011,8 @@ const App: React.FC = () => {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 h-full overflow-hidden relative rounded-tl-3xl rounded-tr-3xl border-t border-l border-r border-gray-200 dark:border-gray-800 bg-[#f3f4f6] dark:bg-black shadow-inner">
-        <div className={`h-full overflow-y-auto scrollbar-hide ${(view === 'pos' || view === 'purchases' || view === 'pos-test'|| view === 'purchases-test') ? 'w-full px-[50px] pt-8 pb-[2px]' : 'max-w-[90rem] mx-auto px-[50px] pt-5 pb-[3px]'}`}>
+        <main className={`flex-1 h-full overflow-hidden relative ${STANDALONE_VIEWS.includes(view) ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r border-gray-200 dark:border-gray-800 bg-[#f3f4f6] dark:bg-black shadow-inner'}`}>
+        <div className={`h-full overflow-y-auto scrollbar-hide ${STANDALONE_VIEWS.includes(view) ? 'w-full' : (view === 'pos' || view === 'purchases' || view === 'pos-test'|| view === 'purchases-test') ? 'w-full px-[50px] pt-8 pb-[2px]' : 'max-w-[90rem] mx-auto px-[50px] pt-5 pb-[3px]'}`}>
           {/* Dynamic Page Rendering - Automatically handles all pages from registry */}
           {(() => {
             const pageConfig = PAGE_REGISTRY[view];
@@ -929,9 +1075,18 @@ const App: React.FC = () => {
             if (requiredProps.includes('onCompletePurchase')) props.onPurchaseComplete = handlePurchaseComplete;
             if (requiredProps.includes('onApprovePurchase')) props.onApprovePurchase = handleApprovePurchase;
             if (requiredProps.includes('onRejectPurchase')) props.onRejectPurchase = handleRejectPurchase;
-            if (requiredProps.includes('onViewChange')) props.onViewChange = handleViewChange;
             if (requiredProps.includes('onAddProduct')) props.onAddProduct = () => setView('add-product');
             if (requiredProps.includes('onRestock')) props.onRestock = handleRestock;
+            
+            // Navigation Handlers
+            if (requiredProps.includes('onViewChange')) props.onViewChange = handleNavigate;
+            if (requiredProps.includes('onLoginSuccess')) {
+                props.onLoginSuccess = () => {
+                    setIsAuthenticated(true); // Update Auth State
+                    setActiveModule(ROUTES.DASHBOARD);
+                    setView(ROUTES.DASHBOARD);
+                };
+            }
             
             // Allow all components to receive theme props by default
             props.darkMode = darkMode;
@@ -987,11 +1142,13 @@ const App: React.FC = () => {
       </div>
 
       {/* StatusBar - Desktop Only */}
+      {!STANDALONE_VIEWS.includes(view) && (
       <StatusBar 
         t={t.statusBar}
         currentEmployeeId={currentEmployeeId}
         onSelectEmployee={setCurrentEmployeeId}
       />
+      )}
 
        {/* Mobile Bottom Nav */}
        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex justify-around p-3 z-50 overflow-x-auto">

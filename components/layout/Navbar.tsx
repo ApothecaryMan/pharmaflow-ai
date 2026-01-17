@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { authService } from '../../services/auth/authService';
 import { MenuItem } from '../../config/menuData';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -42,10 +43,10 @@ interface NavbarProps {
   setDeveloperMode?: (mode: boolean) => void;
   dropdownBlur?: boolean;
   setDropdownBlur?: (blur: boolean) => void;
-  // Employee linking
   employees?: Array<{ id: string; name: string; employeeCode: string }>;
   currentEmployeeId?: string | null;
   setCurrentEmployeeId?: (id: string | null) => void;
+  onLogout?: () => void;
 }
 
 const NavbarComponent: React.FC<NavbarProps> = ({
@@ -81,10 +82,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   setDropdownBlur,
   employees = [],
   currentEmployeeId,
-  setCurrentEmployeeId
+  setCurrentEmployeeId,
+  onLogout
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showPrinterSettings, setShowPrinterSettings] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const t = TRANSLATIONS[language];
@@ -540,9 +543,43 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
               {/* Sign Out */}
               <div className="p-2 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/50">
-                <button className="w-full p-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center justify-center gap-2">
-                  <span className="material-symbols-rounded text-[18px]">logout</span>
-                  {t.profile.signOut}
+                <button 
+                  onClick={async () => {
+                     if (isLoggingOut) return;
+                     setIsLoggingOut(true);
+                     try {
+                         if (onLogout) {
+                             await onLogout();
+                         } else {
+                             await authService.logout();
+                             if (onNavigate) {
+                                 onNavigate('login-test');
+                             } else {
+                                 window.location.reload();
+                             }
+                         }
+                         setShowProfileMenu(false);
+                     } catch (error) {
+                         console.error('Logout failed', error);
+                     } finally {
+                         // We might unmount, so this is just for safety if we don't navigate
+                         setIsLoggingOut(false);
+                     }
+                  }}
+                  disabled={isLoggingOut}
+                  className="w-full p-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoggingOut ? (
+                      <>
+                        <span className="material-symbols-rounded text-[18px] animate-spin">progress_activity</span>
+                        {t.profile.signOut}...
+                      </>
+                  ) : (
+                      <>
+                        <span className="material-symbols-rounded text-[18px]">logout</span>
+                        {t.profile.signOut}
+                      </>
+                  )}
                 </button>
               </div>
             </div>

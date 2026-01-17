@@ -309,7 +309,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'اختبار تسجيل الدخول',
     icon: 'lock',
     category: 'test',
-    requiredProps: ['color', 't', 'language']
+    requiredProps: ['color', 't', 'language', 'onViewChange', 'onLoginSuccess']
   },
 };
 

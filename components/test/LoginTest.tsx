@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { authService } from '../../services/auth/authService';
+import { authService, UserSession } from '../../services/auth/authService';
 
 interface LoginState {
   username: string;
@@ -8,6 +8,7 @@ interface LoginState {
   isLoading: boolean;
   error: string | null;
   success: boolean;
+  user: UserSession | null;
   showPassword: boolean;
   validationErrors: {
     username?: string;
@@ -15,7 +16,12 @@ interface LoginState {
   };
 }
 
-export const LoginTest: React.FC = () => {
+interface LoginTestProps {
+  onViewChange?: (view: string) => void;
+  onLoginSuccess?: () => void;
+}
+
+export const LoginTest: React.FC<LoginTestProps> = ({ onViewChange, onLoginSuccess }) => {
   const [state, setState] = useState<LoginState>({
     username: '',
     password: '',
@@ -23,9 +29,12 @@ export const LoginTest: React.FC = () => {
     isLoading: false,
     error: null,
     success: false,
+    user: null,
     showPassword: false,
     validationErrors: {}
   });
+
+  // ... (keep validate function as is) ...
 
   const validate = (): boolean => {
     const errors: { username?: string; password?: string } = {};
@@ -52,13 +61,21 @@ export const LoginTest: React.FC = () => {
     e.preventDefault();
     if (!validate()) return;
 
-    setState(prev => ({ ...prev, isLoading: true, error: null, success: false }));
+    setState(prev => ({ ...prev, isLoading: true, error: null, success: false, user: null }));
 
     try {
       const user = await authService.login(state.username, state.password);
       
       if (user) {
-        setState(prev => ({ ...prev, isLoading: false, error: null, success: true }));
+        setState(prev => ({ ...prev, isLoading: false, error: null, success: true, user: user }));
+        // Redirect to dashboard after short delay
+        setTimeout(() => {
+            if (onLoginSuccess) {
+                onLoginSuccess();
+            } else if (onViewChange) {
+                onViewChange('dashboard');
+            }
+        }, 1500);
       } else {
         setState(prev => ({ 
           ...prev, 
@@ -68,10 +85,11 @@ export const LoginTest: React.FC = () => {
         }));
       }
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.';
       setState(prev => ({ 
         ...prev, 
         isLoading: false, 
-        error: 'An unexpected error occurred. Please try again.', 
+        error: errorMessage, 
         success: false 
       }));
     }
@@ -81,7 +99,7 @@ export const LoginTest: React.FC = () => {
   const toggleRememberMe = () => setState(prev => ({ ...prev, rememberMe: !prev.rememberMe }));
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-zinc-950 text-white p-4">
+    <div className="min-h-screen w-full flex items-center justify-center bg-zinc-950 text-white p-4 sm:p-6">
       <div className="w-full max-w-[400px] space-y-8">
         
         {/* Header Section */}
@@ -103,36 +121,15 @@ export const LoginTest: React.FC = () => {
         {state.success ? (
              <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-6 rounded-xl flex flex-col items-center animate-in fade-in zoom-in duration-300">
                 <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-3">
-                    {/* User Icon */}
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 </div>
                 <h3 className="font-semibold text-lg mb-1">Login Successful!</h3>
-                <p className="text-sm text-green-500/80 text-center">
-                    Session created for user: <span className="font-mono text-white">{state.username}</span>
+                <p className="text-sm text-green-500/80 text-center mb-4">
+                    Redirecting to dashboard...
                 </p>
-                <div className="mt-4 p-3 bg-black/30 rounded-lg text-xs font-mono w-full">
-                    <pre className="whitespace-pre-wrap overflow-auto max-h-[150px]">
-                        {/* authService getCurrentUser is async, but we can just show success for now */}
-                        {"{\n  \"status\": \"authenticated\",\n  \"user\": \"" + state.username + "\",\n  \"role\": \"admin\",\n  \"branch\": \"B1\"\n}"}
-                    </pre>
+                <div className="w-full bg-zinc-800/50 rounded-full h-1 overflow-hidden">
+                    <div className="h-full bg-green-500 animate-[loading_1.5s_ease-in-out_forwards]" style={{ width: '0%' }}></div>
                 </div>
-                <button 
-                    onClick={() => {
-                        setState({
-                            username: '',
-                            password: '',
-                            rememberMe: false,
-                            isLoading: false,
-                            error: null,
-                            success: false,
-                            showPassword: false,
-                            validationErrors: {}
-                        });
-                    }}
-                    className="mt-6 text-sm text-white hover:underline"
-                >
-                    Sign out & try again
-                </button>
              </div>
         ) : (
             /* Login Form */
@@ -140,13 +137,13 @@ export const LoginTest: React.FC = () => {
             
             {/* Error Alert */}
             {state.error && (
-                <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-3 text-red-400 text-sm">
+                <div role="alert" aria-live="polite" className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-3 text-red-400 text-sm animate-in slide-in-from-top-2 duration-300">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
                 <span>{state.error}</span>
                 </div>
             )}
 
-            <div className="space-y-4">
+            <fieldset disabled={state.isLoading} className="space-y-4">
                 {/* Username Input */}
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-zinc-300" htmlFor="username">
@@ -157,7 +154,6 @@ export const LoginTest: React.FC = () => {
                         type="text"
                         placeholder="Enter username"
                         autoComplete="username"
-                        disabled={state.isLoading}
                         value={state.username}
                         onChange={(e) => {
                             setState(prev => ({ ...prev, username: e.target.value, validationErrors: { ...prev.validationErrors, username: undefined } }));
@@ -183,7 +179,6 @@ export const LoginTest: React.FC = () => {
                             type={state.showPassword ? 'text' : 'password'}
                             placeholder="••••••••"
                             autoComplete="current-password"
-                            disabled={state.isLoading}
                             value={state.password}
                             onChange={(e) => {
                                 setState(prev => ({ ...prev, password: e.target.value, validationErrors: { ...prev.validationErrors, password: undefined } }));
@@ -193,7 +188,8 @@ export const LoginTest: React.FC = () => {
                          <button
                             type="button"
                             onClick={toggleShowPassword}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                            aria-label={state.showPassword ? "Hide password" : "Show password"}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors focus:outline-none focus:text-green-500"
                         >
                             {state.showPassword ? (
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7c.44 0 .87-.03 1.28-.08"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
@@ -206,13 +202,13 @@ export const LoginTest: React.FC = () => {
                         <p className="text-xs text-red-500 mt-1 pl-1">{state.validationErrors.password}</p>
                     )}
                 </div>
-            </div>
+            </fieldset>
 
             <div className="flex items-center justify-between">
                  <button 
                     type="button"
                     onClick={toggleRememberMe}
-                    className="flex items-center gap-2 cursor-pointer group outline-none"
+                    className="flex items-center gap-2 cursor-pointer group outline-none focus:underline"
                  >
                     <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${state.rememberMe ? 'bg-green-600 border-green-600' : 'bg-zinc-900 border-zinc-700 group-hover:border-zinc-500'}`}>
                         {state.rememberMe && (
@@ -227,7 +223,7 @@ export const LoginTest: React.FC = () => {
             <button
                 type="submit"
                 disabled={state.isLoading}
-                className="w-full bg-green-600 hover:bg-green-500 disabled:bg-green-600/50 text-white font-medium py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                className="w-full bg-green-600 hover:bg-green-500 disabled:bg-green-600/50 text-white font-medium py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 focus:ring-offset-zinc-950"
             >
                 {state.isLoading ? (
                     <>
@@ -239,7 +235,13 @@ export const LoginTest: React.FC = () => {
                 )}
             </button>
             
-            <p className="text-center text-xs text-zinc-600 pt-4">
+            {!state.error && (
+                <div className="text-xs text-zinc-600 text-center p-2 bg-zinc-900/50 rounded border border-zinc-800">
+                    💡 Test credentials: <code className="text-green-500">test / test</code>
+                </div>
+            )}
+            
+            <p className="text-center text-xs text-zinc-600 pt-2">
                 By continuing, you verify that you are an authorized user.
             </p>
         </form>
