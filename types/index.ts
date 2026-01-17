@@ -2,6 +2,7 @@
 
 export interface Drug {
   id: string;
+  branchId?: string; // Branch Identifier
   dbId?: string; // New: DB-ID from CSV
   name: string;
   nameArabic?: string; // New: الاسم عربي
@@ -30,6 +31,7 @@ export interface Drug {
 
 export interface Supplier {
   id: string;
+  branchId?: string;
   name: string;
   contactPerson: string;
   phone: string;
@@ -39,6 +41,7 @@ export interface Supplier {
 
 export interface Customer {
   id: string;
+  branchId?: string;
   serialId: number; // Auto-generated serial ID (1, 2, 3...)
   code: string; // Unique, Not Null
   name: string;
@@ -95,6 +98,7 @@ export interface PurchaseItem {
 
 export interface Sale {
   id: string;
+  branchId?: string;
   date: string;
   soldByEmployeeId?: string;  // الموظف اللي باع الفاتورة
   dailyOrderNumber?: number;  // Order number for the day (1, 2, 3...)
@@ -154,6 +158,7 @@ export interface ReturnItem {
 
 export interface Return {
   id: string;
+  branchId?: string;
   saleId: string;
   date: string;
   returnType: ReturnType;
@@ -169,6 +174,7 @@ export type PurchaseStatus = 'completed' | 'pending' | 'rejected';
 
 export interface Purchase {
   id: string;
+  branchId?: string;
   date: string;
   supplierId: string;
   supplierName: string;
@@ -196,6 +202,7 @@ export interface PurchaseReturnItem {
 
 export interface PurchaseReturn {
   id: string;
+  branchId?: string;
   purchaseId: string;
   supplierId: string;
   supplierName: string;
@@ -260,6 +267,7 @@ export interface CashTransaction {
 
 export interface Shift {
   id: string;
+  branchId?: string;
   status: 'open' | 'closed';
   openTime: string;
   closeTime?: string;
@@ -280,6 +288,7 @@ export interface Shift {
 export interface Employee {
   // --- Identification ---
   id: string;              // Unique UUID
+  branchId?: string;
   employeeCode: string;    // Auto-generated: EMP-001, EMP-002, etc.
   
   // --- Personal Info ---

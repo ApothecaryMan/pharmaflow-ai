@@ -4,15 +4,23 @@
 
 import { Purchase, PurchaseStatus } from '../../types';
 import { PurchaseService, PurchaseFilters, PurchaseStats } from './types';
+import { settingsService } from '../settings/settingsService';
 
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 
 import { idGenerator } from '../../utils/idGenerator';
 
+const getRawAll = (): Purchase[] => {
+  return storage.get<Purchase[]>(StorageKeys.PURCHASES, []);
+};
+
 export const createPurchaseService = (): PurchaseService => ({
   getAll: async (): Promise<Purchase[]> => {
-    return storage.get<Purchase[]>(StorageKeys.PURCHASES, []);
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    return all.filter(p => !p.branchId || p.branchId === branchCode);
   },
 
   getById: async (id: string): Promise<Purchase | null> => {
@@ -56,11 +64,13 @@ export const createPurchaseService = (): PurchaseService => ({
   },
 
   create: async (purchase: Omit<Purchase, 'id'>): Promise<Purchase> => {
-    const all = await purchaseService.getAll();
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
     const newPurchase: Purchase = { 
       ...purchase, 
       id: Date.now().toString(),
-      status: 'pending'
+      status: 'pending',
+      branchId: settings.branchCode
     } as Purchase;
     all.push(newPurchase);
     storage.set(StorageKeys.PURCHASES, all);
@@ -68,7 +78,7 @@ export const createPurchaseService = (): PurchaseService => ({
   },
 
   update: async (id: string, updates: Partial<Purchase>): Promise<Purchase> => {
-    const all = await purchaseService.getAll();
+    const all = getRawAll();
     const index = all.findIndex(p => p.id === id);
     if (index === -1) throw new Error('Purchase not found');
     all[index] = { ...all[index], ...updates };
@@ -77,7 +87,7 @@ export const createPurchaseService = (): PurchaseService => ({
   },
 
   approve: async (id: string, approverName: string): Promise<Purchase> => {
-    const all = await purchaseService.getAll();
+    const all = getRawAll();
     const index = all.findIndex(p => p.id === id);
     if (index === -1) throw new Error('Purchase not found');
     all[index] = { 
@@ -91,7 +101,7 @@ export const createPurchaseService = (): PurchaseService => ({
   },
 
   reject: async (id: string, reason: string): Promise<Purchase> => {
-    const all = await purchaseService.getAll();
+    const all = getRawAll();
     const index = all.findIndex(p => p.id === id);
     if (index === -1) throw new Error('Purchase not found');
     all[index] = { 
@@ -104,7 +114,7 @@ export const createPurchaseService = (): PurchaseService => ({
   },
 
   receive: async (id: string): Promise<Purchase> => {
-    const all = await purchaseService.getAll();
+    const all = getRawAll();
     const index = all.findIndex(p => p.id === id);
     if (index === -1) throw new Error('Purchase not found');
     all[index] = { 
@@ -117,7 +127,7 @@ export const createPurchaseService = (): PurchaseService => ({
   },
 
   delete: async (id: string): Promise<boolean> => {
-    const all = await purchaseService.getAll();
+    const all = getRawAll();
     const filtered = all.filter(p => p.id !== id);
     storage.set(StorageKeys.PURCHASES, filtered);
     return true;
@@ -133,7 +143,12 @@ export const createPurchaseService = (): PurchaseService => ({
   },
 
   save: async (purchases: Purchase[]): Promise<void> => {
-    storage.set(StorageKeys.PURCHASES, purchases);
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    const otherBranchItems = all.filter(p => p.branchId && p.branchId !== branchCode);
+    const merged = [...otherBranchItems, ...purchases];
+    storage.set(StorageKeys.PURCHASES, merged);
   }
 });
 

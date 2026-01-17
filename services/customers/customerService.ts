@@ -4,15 +4,23 @@
 
 import { Customer } from '../../types';
 import { CustomerService, CustomerFilters, CustomerStats } from './types';
+import { settingsService } from '../settings/settingsService';
 
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 
 import { idGenerator } from '../../utils/idGenerator';
 
+const getRawAll = (): Customer[] => {
+  return storage.get<Customer[]>(StorageKeys.CUSTOMERS, []);
+};
+
 export const createCustomerService = (): CustomerService => ({
   getAll: async (): Promise<Customer[]> => {
-    return storage.get<Customer[]>(StorageKeys.CUSTOMERS, []);
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    return all.filter(c => !c.branchId || c.branchId === branchCode);
   },
 
   getById: async (id: string): Promise<Customer | null> => {
@@ -54,13 +62,15 @@ export const createCustomerService = (): CustomerService => ({
   },
 
   create: async (customer: Omit<Customer, 'id'>): Promise<Customer> => {
-    const all = await customerService.getAll();
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
     const newCustomer: Customer = { 
       ...customer, 
       id: idGenerator.generate('customers'),
       createdAt: new Date().toISOString(),
       points: customer.points || 0,
-      totalPurchases: customer.totalPurchases || 0
+      totalPurchases: customer.totalPurchases || 0,
+      branchId: settings.branchCode
     } as Customer;
     all.push(newCustomer);
     storage.set(StorageKeys.CUSTOMERS, all);
@@ -68,7 +78,7 @@ export const createCustomerService = (): CustomerService => ({
   },
 
   update: async (id: string, updates: Partial<Customer>): Promise<Customer> => {
-    const all = await customerService.getAll();
+    const all = getRawAll();
     const index = all.findIndex(c => c.id === id);
     if (index === -1) throw new Error('Customer not found');
     all[index] = { ...all[index], ...updates };
@@ -77,14 +87,14 @@ export const createCustomerService = (): CustomerService => ({
   },
 
   delete: async (id: string): Promise<boolean> => {
-    const all = await customerService.getAll();
+    const all = getRawAll();
     const filtered = all.filter(c => c.id !== id);
     storage.set(StorageKeys.CUSTOMERS, filtered);
     return true;
   },
 
   addLoyaltyPoints: async (id: string, points: number): Promise<Customer> => {
-    const all = await customerService.getAll();
+    const all = getRawAll();
     const index = all.findIndex(c => c.id === id);
     if (index === -1) throw new Error('Customer not found');
     all[index].points = (all[index].points || 0) + points;
@@ -93,7 +103,7 @@ export const createCustomerService = (): CustomerService => ({
   },
 
   redeemLoyaltyPoints: async (id: string, points: number): Promise<Customer> => {
-    const all = await customerService.getAll();
+    const all = getRawAll();
     const index = all.findIndex(c => c.id === id);
     if (index === -1) throw new Error('Customer not found');
     const current = all[index].points || 0;
@@ -119,7 +129,12 @@ export const createCustomerService = (): CustomerService => ({
   },
 
   save: async (customers: Customer[]): Promise<void> => {
-    storage.set(StorageKeys.CUSTOMERS, customers);
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    const otherBranchItems = all.filter(c => c.branchId && c.branchId !== branchCode);
+    const merged = [...otherBranchItems, ...customers];
+    storage.set(StorageKeys.CUSTOMERS, merged);
   }
 });
 

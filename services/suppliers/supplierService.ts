@@ -4,15 +4,23 @@
 
 import { Supplier } from '../../types';
 import { SupplierService } from './types';
+import { settingsService } from '../settings/settingsService';
 
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 
 import { idGenerator } from '../../utils/idGenerator';
 
+const getRawAll = (): Supplier[] => {
+  return storage.get<Supplier[]>(StorageKeys.SUPPLIERS, []);
+};
+
 export const createSupplierService = (): SupplierService => ({
   getAll: async (): Promise<Supplier[]> => {
-    return storage.get<Supplier[]>(StorageKeys.SUPPLIERS, []);
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    return all.filter(s => !s.branchId || s.branchId === branchCode);
   },
 
   getById: async (id: string): Promise<Supplier | null> => {
@@ -32,15 +40,20 @@ export const createSupplierService = (): SupplierService => ({
   },
 
   create: async (supplier: Omit<Supplier, 'id'>): Promise<Supplier> => {
-    const all = await supplierService.getAll();
-    const newSupplier: Supplier = { ...supplier, id: idGenerator.generate('suppliers') } as Supplier;
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const newSupplier: Supplier = { 
+      ...supplier, 
+      id: idGenerator.generate('suppliers'),
+      branchId: settings.branchCode
+    } as Supplier;
     all.push(newSupplier);
     storage.set(StorageKeys.SUPPLIERS, all);
     return newSupplier;
   },
 
   update: async (id: string, updates: Partial<Supplier>): Promise<Supplier> => {
-    const all = await supplierService.getAll();
+    const all = getRawAll();
     const index = all.findIndex(s => s.id === id);
     if (index === -1) throw new Error('Supplier not found');
     all[index] = { ...all[index], ...updates };
@@ -49,14 +62,19 @@ export const createSupplierService = (): SupplierService => ({
   },
 
   delete: async (id: string): Promise<boolean> => {
-    const all = await supplierService.getAll();
+    const all = getRawAll();
     const filtered = all.filter(s => s.id !== id);
     storage.set(StorageKeys.SUPPLIERS, filtered);
     return true;
   },
 
   save: async (suppliers: Supplier[]): Promise<void> => {
-    storage.set(StorageKeys.SUPPLIERS, suppliers);
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    const otherBranchItems = all.filter(s => s.branchId && s.branchId !== branchCode);
+    const merged = [...otherBranchItems, ...suppliers];
+    storage.set(StorageKeys.SUPPLIERS, merged);
   }
 });
 

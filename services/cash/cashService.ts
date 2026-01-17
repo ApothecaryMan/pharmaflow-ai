@@ -6,6 +6,7 @@
  */
 
 import { Shift, CashTransaction, CashTransactionType } from '../../types';
+import { settingsService } from '../settings/settingsService';
 
 const SHIFTS_KEY = 'pharma_shifts';
 
@@ -31,6 +32,10 @@ import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 import { idGenerator } from '../../utils/idGenerator';
 
+const getRawAll = (): Shift[] => {
+  return storage.get<Shift[]>(StorageKeys.SHIFTS, []);
+};
+
 // ... (interface remains same)
 
 export const createCashService = (): CashServiceInterface => ({
@@ -40,8 +45,13 @@ export const createCashService = (): CashServiceInterface => ({
   },
 
   getAllShifts: async (): Promise<Shift[]> => {
-    const shifts = storage.get<Shift[]>(StorageKeys.SHIFTS, []);
+    const rawShifts = getRawAll();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
     
+    // Filter and transform
+    const shifts = rawShifts.filter(s => !s.branchId || s.branchId === branchCode);
+
     // Parse and ensure all fields have defaults
     return shifts.map((s: any) => ({
       ...s,
@@ -56,7 +66,9 @@ export const createCashService = (): CashServiceInterface => ({
     const current = await cashService.getCurrentShift();
     if (current) throw new Error('A shift is already open');
     
-    const all = await cashService.getAllShifts();
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    
     const newShift: Shift = {
       id: idGenerator.generate('shifts'),
       status: 'open',
@@ -69,6 +81,7 @@ export const createCashService = (): CashServiceInterface => ({
       cardSales: 0,
       returns: 0,
       transactions: [],
+      branchId: settings.branchCode
     };
     
     // Add to beginning (newest first)
@@ -78,8 +91,12 @@ export const createCashService = (): CashServiceInterface => ({
   },
 
   closeShift: async (closingBalance: number, closedBy: string, notes?: string): Promise<Shift> => {
-    const all = await cashService.getAllShifts();
-    const index = all.findIndex(s => s.status === 'open');
+    const all = getRawAll();
+    // Re-filter to find open shift for current branch
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    
+    const index = all.findIndex(s => s.status === 'open' && (!s.branchId || s.branchId === branchCode));
     if (index === -1) throw new Error('No open shift found');
     
     const shift = all[index];
@@ -100,7 +117,7 @@ export const createCashService = (): CashServiceInterface => ({
   },
 
   addTransaction: async (shiftId: string, transaction: Omit<CashTransaction, 'id'>): Promise<CashTransaction> => {
-    const all = await cashService.getAllShifts();
+    const all = getRawAll();
     const shiftIndex = all.findIndex(s => s.id === shiftId);
     if (shiftIndex === -1) throw new Error('Shift not found');
     
@@ -148,7 +165,12 @@ export const createCashService = (): CashServiceInterface => ({
   },
 
   saveShifts: async (shifts: Shift[]): Promise<void> => {
-    storage.set(StorageKeys.SHIFTS, shifts);
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    const otherBranchItems = all.filter(s => s.branchId && s.branchId !== branchCode);
+    const merged = [...otherBranchItems, ...shifts];
+    storage.set(StorageKeys.SHIFTS, merged);
   },
 });
 

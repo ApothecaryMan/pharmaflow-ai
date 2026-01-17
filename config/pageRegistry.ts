@@ -27,6 +27,7 @@ import { AdvancedSmCard } from '../components/experiments/AdvancedSmCard';
 import { ModalTests } from '../components/test/ModalTests';
 import { EmployeeList } from '../components/hr/EmployeeList';
 import { EmployeeProfile } from '../components/hr/EmployeeProfile';
+import { LoginTest } from '../components/test/LoginTest';
 
 
 export interface PageConfig {
@@ -300,6 +301,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'id_card',
     category: 'hr',
     requiredProps: ['sales', 'employees', 'color', 't', 'language']
+  },
+  'login-test': {
+    id: 'login-test',
+    component: LoginTest,
+    menuLabel: 'Login Test',
+    menuLabelAr: 'اختبار تسجيل الدخول',
+    icon: 'lock',
+    category: 'test',
+    requiredProps: ['color', 't', 'language']
   },
 };
 

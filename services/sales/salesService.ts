@@ -4,15 +4,23 @@
 
 import { Sale } from '../../types';
 import { SalesService, SalesFilters, SalesStats } from './types';
+import { settingsService } from '../settings/settingsService';
 
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 
 import { idGenerator } from '../../utils/idGenerator';
 
+const getRawAll = (): Sale[] => {
+  return storage.get<Sale[]>(StorageKeys.SALES, []);
+};
+
 export const createSalesService = (): SalesService => ({
   getAll: async (): Promise<Sale[]> => {
-    return storage.get<Sale[]>(StorageKeys.SALES, []);
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    return all.filter(s => !s.branchId || s.branchId === branchCode);
   },
 
   getById: async (id: string): Promise<Sale | null> => {
@@ -42,15 +50,20 @@ export const createSalesService = (): SalesService => ({
   },
 
   create: async (sale: Omit<Sale, 'id'>): Promise<Sale> => {
-    const all = await salesService.getAll();
-    const newSale: Sale = { ...sale, id: idGenerator.generate('sales') } as Sale;
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const newSale: Sale = { 
+      ...sale, 
+      id: idGenerator.generate('sales'),
+      branchId: settings.branchCode 
+    } as Sale;
     all.push(newSale);
     storage.set(StorageKeys.SALES, all);
     return newSale;
   },
 
   update: async (id: string, updates: Partial<Sale>): Promise<Sale> => {
-    const all = await salesService.getAll();
+    const all = getRawAll();
     const index = all.findIndex(s => s.id === id);
     if (index === -1) throw new Error('Sale not found');
     all[index] = { ...all[index], ...updates };
@@ -59,7 +72,7 @@ export const createSalesService = (): SalesService => ({
   },
 
   delete: async (id: string): Promise<boolean> => {
-    const all = await salesService.getAll();
+    const all = getRawAll();
     const filtered = all.filter(s => s.id !== id);
     storage.set(StorageKeys.SALES, filtered);
     return true;
@@ -106,7 +119,22 @@ export const createSalesService = (): SalesService => ({
   },
 
   save: async (sales: Sale[]): Promise<void> => {
-    storage.set(StorageKeys.SALES, sales);
+    // Merge Logic: Keep other branches, replace current branch/global
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    
+    // Items that belong to OTHER branches (strict check)
+    const otherBranchSales = all.filter(s => s.branchId && s.branchId !== branchCode);
+    
+    // Determine which items in 'sales' (the new state) should be saved
+    // Assuming 'sales' contains ALL items for the current branch (including legacy ones)
+    
+    // Ensure legacy items get adopted if needed? Or just save as they are.
+    // Optimization: If sales doesn't contain legacy items anymore (deleted), they are gone.
+    
+    const merged = [...otherBranchSales, ...sales];
+    storage.set(StorageKeys.SALES, merged);
   }
 });
 

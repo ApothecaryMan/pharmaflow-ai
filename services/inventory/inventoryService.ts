@@ -4,15 +4,23 @@
 
 import { Drug } from '../../types';
 import { InventoryService, InventoryFilters, InventoryStats } from './types';
+import { settingsService } from '../settings/settingsService';
 
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 
 import { idGenerator } from '../../utils/idGenerator';
 
+const getRawAll = (): Drug[] => {
+  return storage.get<Drug[]>(StorageKeys.INVENTORY, []);
+};
+
 export const createInventoryService = (): InventoryService => ({
   getAll: async (): Promise<Drug[]> => {
-    return storage.get<Drug[]>(StorageKeys.INVENTORY, []);
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    return all.filter(d => !d.branchId || d.branchId === branchCode);
   },
 
   getById: async (id: string): Promise<Drug | null> => {
@@ -61,15 +69,20 @@ export const createInventoryService = (): InventoryService => ({
   },
 
   create: async (drug: Omit<Drug, 'id'>): Promise<Drug> => {
-    const all = await inventoryService.getAll();
-    const newDrug: Drug = { ...drug, id: idGenerator.generate('inventory') } as Drug;
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const newDrug: Drug = { 
+      ...drug, 
+      id: idGenerator.generate('inventory'),
+      branchId: settings.branchCode
+    } as Drug;
     all.push(newDrug);
     storage.set(StorageKeys.INVENTORY, all);
     return newDrug;
   },
 
   update: async (id: string, updates: Partial<Drug>): Promise<Drug> => {
-    const all = await inventoryService.getAll();
+    const all = getRawAll();
     const index = all.findIndex(d => d.id === id);
     if (index === -1) throw new Error('Drug not found');
     all[index] = { ...all[index], ...updates };
@@ -78,14 +91,14 @@ export const createInventoryService = (): InventoryService => ({
   },
 
   delete: async (id: string): Promise<boolean> => {
-    const all = await inventoryService.getAll();
+    const all = getRawAll();
     const filtered = all.filter(d => d.id !== id);
     storage.set(StorageKeys.INVENTORY, filtered);
     return true;
   },
 
   updateStock: async (id: string, quantity: number): Promise<Drug> => {
-    const all = await inventoryService.getAll();
+    const all = getRawAll();
     const index = all.findIndex(d => d.id === id);
     if (index === -1) throw new Error('Drug not found');
     all[index].stock += quantity;
@@ -120,7 +133,13 @@ export const createInventoryService = (): InventoryService => ({
   },
 
   save: async (inventory: Drug[]): Promise<void> => {
-    storage.set(StorageKeys.INVENTORY, inventory);
+    const all = getRawAll();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    const otherBranchItems = all.filter(d => d.branchId && d.branchId !== branchCode);
+    
+    const merged = [...otherBranchItems, ...inventory];
+    storage.set(StorageKeys.INVENTORY, merged);
   }
 });
 

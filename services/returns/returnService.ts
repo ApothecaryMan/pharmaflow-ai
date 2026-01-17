@@ -4,15 +4,27 @@
 
 import { Return, PurchaseReturn } from '../../types';
 import { ReturnService } from './types';
+import { settingsService } from '../settings/settingsService';
 
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 import { idGenerator } from '../../utils/idGenerator';
 
+const getRawSalesReturns = (): Return[] => {
+  return storage.get<Return[]>(StorageKeys.RETURNS, []);
+};
+
+const getRawPurchaseReturns = (): PurchaseReturn[] => {
+  return storage.get<PurchaseReturn[]>(StorageKeys.PURCHASE_RETURNS, []);
+};
+
 export const createReturnService = (): ReturnService => ({
   // Sales Returns
   getAllSalesReturns: async (): Promise<Return[]> => {
-    return storage.get<Return[]>(StorageKeys.RETURNS, []);
+    const all = getRawSalesReturns();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    return all.filter(r => !r.branchId || r.branchId === branchCode);
   },
 
   getSalesReturnById: async (id: string): Promise<Return | null> => {
@@ -21,10 +33,12 @@ export const createReturnService = (): ReturnService => ({
   },
 
   createSalesReturn: async (ret: Omit<Return, 'id'>): Promise<Return> => {
-    const all = await returnService.getAllSalesReturns();
+    const all = getRawSalesReturns();
+    const settings = await settingsService.getAll();
     const newReturn: Return = { 
       ...ret, 
-      id: idGenerator.generate('returns')
+      id: idGenerator.generate('returns'),
+      branchId: settings.branchCode
     } as Return;
     all.push(newReturn);
     storage.set(StorageKeys.RETURNS, all);
@@ -33,7 +47,10 @@ export const createReturnService = (): ReturnService => ({
 
   // Purchase Returns
   getAllPurchaseReturns: async (): Promise<PurchaseReturn[]> => {
-    return storage.get<PurchaseReturn[]>(StorageKeys.PURCHASE_RETURNS, []);
+    const all = getRawPurchaseReturns();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    return all.filter(r => !r.branchId || r.branchId === branchCode);
   },
 
   getPurchaseReturnById: async (id: string): Promise<PurchaseReturn | null> => {
@@ -42,10 +59,12 @@ export const createReturnService = (): ReturnService => ({
   },
 
   createPurchaseReturn: async (ret: Omit<PurchaseReturn, 'id'>): Promise<PurchaseReturn> => {
-    const all = await returnService.getAllPurchaseReturns();
+    const all = getRawPurchaseReturns();
+    const settings = await settingsService.getAll();
     const newReturn: PurchaseReturn = { 
       ...ret, 
-      id: idGenerator.generate('returns')
+      id: idGenerator.generate('returns'),
+      branchId: settings.branchCode
     } as PurchaseReturn;
     all.push(newReturn);
     storage.set(StorageKeys.PURCHASE_RETURNS, all);
@@ -53,12 +72,23 @@ export const createReturnService = (): ReturnService => ({
   },
 
   // Save
+  // Save
   saveSalesReturns: async (returns: Return[]): Promise<void> => {
-    storage.set(StorageKeys.RETURNS, returns);
+    const all = getRawSalesReturns();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    const otherBranchItems = all.filter(r => r.branchId && r.branchId !== branchCode);
+    const merged = [...otherBranchItems, ...returns];
+    storage.set(StorageKeys.RETURNS, merged);
   },
 
   savePurchaseReturns: async (returns: PurchaseReturn[]): Promise<void> => {
-    storage.set(StorageKeys.PURCHASE_RETURNS, returns);
+    const all = getRawPurchaseReturns();
+    const settings = await settingsService.getAll();
+    const branchCode = settings.branchCode;
+    const otherBranchItems = all.filter(r => r.branchId && r.branchId !== branchCode);
+    const merged = [...otherBranchItems, ...returns];
+    storage.set(StorageKeys.PURCHASE_RETURNS, merged);
   }
 });
 
