@@ -502,6 +502,26 @@ const App: React.FC = () => {
     });
   };
 
+   const handleUpdateSale = (saleId: string, updates: Partial<Sale>) => {
+    // Logic for restoring stock if order is cancelled
+    if (updates.status === 'cancelled') {
+        const sale = sales.find(s => s.id === saleId);
+        if (sale && sale.status !== 'cancelled') {
+             // Restore inventory
+             setInventory(prev => prev.map(drug => {
+                 const item = sale.items.find(i => i.id === drug.id);
+                 if (item) {
+                     const unitsToRestore = item.isUnit ? item.quantity : item.quantity * (drug.unitsPerPack || 1);
+                     return { ...drug, stock: validateStock(drug.stock + unitsToRestore) };
+                 }
+                 return drug;
+             }));
+        }
+    }
+
+    setSales(prev => prev.map(s => s.id === saleId ? { ...s, ...updates } : s));
+  };
+
   const handleProcessReturn = (returnData: Return) => {
     // Validate return time (Monotonic Check)
     // We assume returnData.date is the time of return processing
@@ -896,6 +916,8 @@ const App: React.FC = () => {
             if (requiredProps.includes('onDeleteDrug')) props.onDeleteDrug = handleDeleteDrug;
             if (requiredProps.includes('onUpdateInventory')) props.onUpdateInventory = setInventory;
             if (requiredProps.includes('onCompleteSale')) props.onCompleteSale = handleCompleteSale;
+            if (requiredProps.includes('onUpdateSale')) props.onUpdateSale = handleUpdateSale;
+            if (requiredProps.includes('employees')) props.employees = employees;
             if (requiredProps.includes('onProcessReturn')) props.onProcessReturn = handleProcessReturn;
             if (requiredProps.includes('onAddCustomer')) props.onAddCustomer = handleAddCustomer;
             if (requiredProps.includes('onUpdateCustomer')) props.onUpdateCustomer = handleUpdateCustomer;

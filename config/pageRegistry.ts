@@ -74,7 +74,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'نقطة البيع',
     icon: 'point_of_sale',
     category: 'sales',
-    requiredProps: ['inventory', 'customers', 'onCompleteSale', 'color', 't', 'language', 'onAddCustomer']
+    requiredProps: ['inventory', 'customers', 'onCompleteSale', 'color', 't', 'language', 'onAddCustomer', 'sales', 'employees', 'onUpdateSale']
   },
   'sales-history': {
     id: 'sales-history',

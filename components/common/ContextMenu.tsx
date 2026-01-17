@@ -87,7 +87,7 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
       hideMenu(); 
     };
 
-    const handleClick = (e: MouseEvent) => {
+    const handleOutsideClick = (e: MouseEvent) => {
       if (menu.isVisible && menuRef.current && !menuRef.current.contains(e.target as Node)) {
         hideMenu();
       }
@@ -101,13 +101,13 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
 
     document.addEventListener('contextmenu', handleGlobalContextMenu);
-    window.addEventListener('click', handleClick);
+    window.addEventListener('mousedown', handleOutsideClick, true);
     window.addEventListener('scroll', handleScroll, true);
     window.addEventListener('resize', hideMenu);
 
     return () => {
       document.removeEventListener('contextmenu', handleGlobalContextMenu);
-      window.removeEventListener('click', handleClick);
+      window.removeEventListener('mousedown', handleOutsideClick, true);
       window.removeEventListener('scroll', handleScroll, true);
       window.removeEventListener('resize', hideMenu);
     };

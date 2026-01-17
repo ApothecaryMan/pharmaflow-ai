@@ -3,6 +3,7 @@ import { Sale, Return, ReturnReason, ReturnItem, Shift } from '../../types';
 import { useSmartDirection } from '../common/SmartInputs';
 import { Modal } from '../common/Modal';
 import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { MaterialTabs } from '../common/MaterialTabs';
 import { useStatusBar } from '../../components/layout/StatusBar';
 
 interface ReturnModalProps {
@@ -277,31 +278,16 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                 {availableItems.map((item, index) => {
                   const isSelected = selectedItems.has(item.lineKey);
                   const selectedQty = selectedItems.get(item.lineKey) || item.availableQty;
-                  const isFirst = index === 0;
-                  const isLast = index === availableItems.length - 1;
-                  
-                  // Calculate border radius class based on position
-                  let roundedClass = 'rounded-lg';
-                  if (availableItems.length === 1) {
-                    roundedClass = 'rounded-3xl';
-                  } else if (isFirst) {
-                    roundedClass = 'rounded-t-3xl rounded-b-lg';
-                  } else if (isLast) {
-                    roundedClass = 'rounded-b-3xl rounded-t-lg';
-                  }
-
                   return (
-                    <div
+                    <MaterialTabs
                       key={item.lineKey}
-                      dir="ltr"
+                      index={index}
+                      total={availableItems.length}
+                      color={color}
+                      isSelected={isSelected}
                       onClick={() => toggleItemSelection(item.lineKey, item.availableQty)}
-                      className={`group relative h-[72px] px-4 flex items-center transition-all cursor-pointer overflow-hidden outline-none focus:outline-none ring-0 focus:ring-0 ${roundedClass} ${
-                        isSelected
-                          ? `bg-${color}-50 dark:bg-${color}-950/20`
-                          : 'bg-gray-50 dark:bg-white/5'
-                      }`}
                     >
-                      <div className="w-full flex items-center justify-between gap-4">
+                      <div className="w-full flex items-center justify-between gap-4" dir="ltr">
                         <div className="flex-1 min-w-0 flex items-center gap-2">
                           <h4 
                             className="font-bold text-gray-900 dark:text-gray-100 truncate text-base"
@@ -369,7 +355,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           )}
                         </div>
                       </div>
-                    </div>
+                    </MaterialTabs>
                   );
                 })}
                 </div>
@@ -466,22 +452,14 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                   const item = availableItems.find(i => i.lineKey === lineKey);
                   if (!item) return null;
                   
-                  const isFirst = index === 0;
-                  const isLast = index === selectedItems.size - 1;
-                  const isSingle = selectedItems.size === 1;
-
-                  let roundedClass = 'rounded-md';
-                  if (isSingle) roundedClass = 'rounded-3xl';
-                  else if (isFirst) roundedClass = 'rounded-t-3xl rounded-b-lg';
-                  else if (isLast) roundedClass = 'rounded-t-lg rounded-b-3xl';
-                  else roundedClass = 'rounded-lg';
-
                   return (
-                    <div 
-                      key={lineKey} 
-                      dir="ltr"
-                      className={`h-[72px] px-4 flex items-center justify-between transition-all bg-gray-50 dark:bg-gray-800/50 ${roundedClass}`}
+                    <MaterialTabs
+                      key={lineKey}
+                      index={index}
+                      total={selectedItems.size}
+                      className="bg-gray-50 dark:bg-gray-800/50"
                     >
+                      <div className="w-full flex items-center justify-between gap-4 px-4" dir="ltr">
                       <div className="flex-1 min-w-0 flex items-center gap-2">
                         <h4 
                           className="font-bold text-gray-900 dark:text-gray-100 truncate text-base"
@@ -503,7 +481,8 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                              </span>
                         </div>
                       </div>
-                    </div>
+                      </div>
+                    </MaterialTabs>
                   );
                 })}
                 </div>

@@ -125,7 +125,8 @@ export interface Sale {
   }>;
   netTotal?: number; // Total after returns
   itemReturnedQuantities?: Record<string, number>; // drugId -> quantity returned
-  status: 'completed' | 'cancelled' | 'pending';
+  status: 'completed' | 'cancelled' | 'pending' | 'with_delivery' | 'on_way';
+  deliveryEmployeeId?: string;
 }
 
 // Return/Refund System Types

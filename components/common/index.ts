@@ -9,3 +9,4 @@ export { SmartInput, SmartDateInput, useSmartDirection, isValidEmail, isValidPho
 export { ExpandingDropdown, type ExpandingDropdownProps } from './ExpandingDropdown';
 export { ContextMenuProvider, useContextMenu, useContextMenuTrigger, ContextMenuTrigger } from './ContextMenu';
 export { SegmentedControl } from './SegmentedControl';
+export { MaterialTabs } from './MaterialTabs';

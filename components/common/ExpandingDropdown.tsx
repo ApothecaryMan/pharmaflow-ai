@@ -21,6 +21,7 @@ export interface ExpandingDropdownProps<T> {
     disabled?: boolean;
     centered?: boolean;
     rounded?: 'xl' | 'full';
+    zIndexHigh?: string;
 }
 
 /**
@@ -64,10 +65,36 @@ export function ExpandingDropdown<T>({
     style,
     disabled = false,
     centered = false,
-    rounded = 'xl'
+    rounded = 'xl',
+    zIndexHigh = 'z-50'
 }: ExpandingDropdownProps<T>) {
     
     const containerRef = useRef<HTMLDivElement>(null);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const isClickingRef = useRef(false);
+
+    // Sync isAnimating with isOpen but with a delay on close
+    useEffect(() => {
+        if (isOpen) {
+            setIsAnimating(true);
+        } else {
+            const timer = setTimeout(() => setIsAnimating(false), 300); // Slightly longer than 200ms transition
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen]);
+
+    const handleFocus = (e: React.FocusEvent) => {
+        // Only open on focus if NOT clicking (keyboard navigation)
+        if (!isClickingRef.current && !isOpen && !disabled) {
+            onToggle();
+        }
+    };
+
+    const handleMouseDown = () => {
+        isClickingRef.current = true;
+        // Reset after short delay to ensure focus event sees it as true
+        setTimeout(() => { isClickingRef.current = false; }, 200);
+    };
     
     const { handleKeyDown, handleBlur, handleClick, handleOptionClick } = useExpandingDropdown({
         items,
@@ -106,11 +133,13 @@ export function ExpandingDropdown<T>({
                 tabIndex={disabled ? -1 : 0}
                 onKeyDown={disabled ? undefined : handleKeyDown}
                 onBlur={handleBlur}
+                onFocus={handleFocus}
+                onMouseDown={handleMouseDown}
                 className={`relative w-full flex flex-col overflow-hidden border transition-all outline-none
                     ${rounded === 'full' ? 'rounded-[20px]' : 'rounded-xl'}
                     ${disabled ? 'cursor-not-allowed bg-gray-100 dark:bg-gray-800' : 'cursor-pointer'}
-                    ${isOpen 
-                        ? (isInput ? 'z-50 shadow-xl' : 'z-[5] shadow-xl') 
+                    ${(isOpen || isAnimating)
+                        ? (isInput ? `${zIndexHigh}` : `${zIndexHigh}`) 
                         : 'z-0'}
                     ${isOpen 
                         ? 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700' 

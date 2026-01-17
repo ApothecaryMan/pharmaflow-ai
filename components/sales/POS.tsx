@@ -6,7 +6,7 @@
   useCallback,
 } from "react";
 import { useContextMenu } from "../common/ContextMenu";
-import { Drug, CartItem, Customer, Language, Shift } from "../../types";
+import { Drug, CartItem, Sale, Customer, Language, Shift, Employee } from "../../types";
 
 import { useExpandingDropdown } from "../../hooks/useExpandingDropdown";
 import { getCategories, getProductTypes, getLocalizedCategory, getLocalizedProductType } from "../../data/productCategories";
@@ -24,7 +24,6 @@ import {
   InvoiceTemplateOptions,
 } from "../sales/InvoiceTemplate";
 import { formatStock } from "../../utils/inventory";
-import { Sale } from "../../types"; // Ensure Sale is imported
 import { getPrinterSettings, printReceiptSilently } from "../../utils/qzPrinter";
 import { ExpandingDropdown, ExpandingDropdownProps } from "../common/ExpandingDropdown";
 import {
@@ -57,6 +56,7 @@ import { usePosShortcuts } from "../../components/common/hooks/usePosShortcuts";
 import { SortableCartItem, calculateItemTotal } from "../sales/SortableCartItem";
 import { storage } from "../../utils/storage";
 import { StorageKeys } from "../../config/storageKeys";
+import { DeliveryOrdersModal } from "./DeliveryOrdersModal";
 
 // --- Main POS Component ---
 interface POSProps {
@@ -74,12 +74,18 @@ interface POSProps {
     globalDiscount: number;
     subtotal: number;
     total: number;
+    // Extended properties
+    deliveryEmployeeId?: string;
+    status?: 'completed' | 'pending' | 'with_delivery' | 'on_way' | 'cancelled';
   }) => void;
   color: string;
   t: typeof TRANSLATIONS.EN.pos;
   customers: Customer[];
   language?: Language;
-  darkMode: boolean; // Added
+  darkMode: boolean;
+  employees?: Employee[];
+  sales?: Sale[];
+  onUpdateSale?: (saleId: string, updates: Partial<Sale>) => void;
 }
 
 export const POS: React.FC<POSProps> = ({
@@ -90,6 +96,9 @@ export const POS: React.FC<POSProps> = ({
   customers,
   language = "EN",
   darkMode,
+  employees = [],
+  sales = [],
+  onUpdateSale,
 }) => {
   const { showMenu } = useContextMenu();
   const { getVerifiedDate, addNotification } = useStatusBar();
@@ -227,9 +236,14 @@ export const POS: React.FC<POSProps> = ({
   );
   const [activeIndex, setActiveIndex] = useState(0); // For grid navigation
   const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  // Delivery State
+  const [deliveryEmployeeId, setDeliveryEmployeeId] = useState<string>("");
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
 
   // checkout state for inline calculator
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
+  const [isDeliveryMode, setIsDeliveryMode] = useState(false);
   const [amountPaid, setAmountPaid] = useState("");
 
   // Global Keydown Listener for Scanner
@@ -813,7 +827,9 @@ export const POS: React.FC<POSProps> = ({
     (item) => (item.pack?.quantity || 0) + (item.unit?.quantity || 0) > 0
   ).length;
 
-  const handleCheckout = (saleType: "walk-in" | "delivery" = "walk-in") => {
+
+
+  const handleCheckout = (saleType: "walk-in" | "delivery" = "walk-in", isPending: boolean = false) => {
     if (!isValidOrder) return;
 
     let deliveryFee = 0;
@@ -821,8 +837,16 @@ export const POS: React.FC<POSProps> = ({
       deliveryFee = 5;
     }
 
-    if (saleType === "delivery") {
-      deliveryFee = 5;
+    // Validate Delivery Man if Delivery Type
+    if (saleType === "delivery" && !deliveryEmployeeId && !isPending) {
+         // Maybe allow pending without driver? Let's say yes for "Pending", but usually we assign driver.
+         // If "Send to Delivery" (Pending), maybe we don't need driver yet?
+         // User requirement: "delivery with employee then change order to them... status be pending"
+         // So likely select driver first.
+         if (!deliveryEmployeeId) {
+             alert(t.selectDriver || "Please select a delivery man");
+             return;
+         }
     }
 
     // Notify StatusBar
@@ -871,6 +895,9 @@ export const POS: React.FC<POSProps> = ({
       globalDiscount,
       subtotal,
       total: cartTotal + deliveryFee,
+      // @ts-ignore - Extended properties handled by parent
+      deliveryEmployeeId: saleType === 'delivery' ? deliveryEmployeeId : undefined,
+      status: isPending ? 'pending' : (saleType === 'delivery' ? (deliveryEmployeeId ? 'with_delivery' : 'pending') : 'completed')
     });
 
     // Auto-Print Receipt Logic
@@ -1598,6 +1625,14 @@ export const POS: React.FC<POSProps> = ({
         <h2 className="text-xl font-bold tracking-tight type-expressive shrink-0">
           {t.posTitle}
         </h2>
+        
+        <button
+            onClick={() => setShowDeliveryModal(true)}
+            className={`px-3 py-1.5 rounded-lg bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 text-sm font-bold flex items-center gap-2 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 transition-colors cursor-pointer`}
+        >
+            <span className="material-symbols-rounded text-[18px]">local_shipping</span>
+            {t.deliveryOrders || "Delivery Orders"}
+        </button>
 
         {/* Tab Bar - Takes remaining space */}
         <div className="flex-1 min-w-0">
@@ -1692,9 +1727,20 @@ export const POS: React.FC<POSProps> = ({
                 </div>
 
                 <div className="flex flex-col gap-2 min-w-[140px]">
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
-                    {t.paymentMethod}
-                  </label>
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="block text-xs font-bold text-gray-400 uppercase">
+                        {t.paymentMethod}
+                    </label>
+                    <button
+                        onClick={clearCustomerSelection}
+                        className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors flex items-center justify-center bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-5 h-5 rounded-md"
+                        title={t.changeCustomer}
+                    >
+                        <span className="material-symbols-rounded text-[16px]">
+                        close
+                        </span>
+                    </button>
+                  </div>
                   <SegmentedControl
                     value={paymentMethod}
                     onChange={(val) => setPaymentMethod(val as "cash" | "visa")}
@@ -1716,15 +1762,6 @@ export const POS: React.FC<POSProps> = ({
                       },
                     ]}
                   />
-                  <button
-                    onClick={clearCustomerSelection}
-                    className="w-full py-1.5 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center justify-center gap-1"
-                  >
-                    <span className="material-symbols-rounded text-[16px]">
-                      close
-                    </span>
-                    {t.changeCustomer}
-                  </button>
                 </div>
               </div>
             ) : (
@@ -2117,7 +2154,7 @@ export const POS: React.FC<POSProps> = ({
                 {t.cartTitle}
                 {totalItems > 0 && (
                   <span
-                    className={`bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 text-[10px] font-bold px-2 py-0.5 rounded-full`}
+                    className={`bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 text-[10px] font-bold px-1.5 rounded-full min-w-[30px] h-[18px] inline-flex justify-center items-center`}
                   >
                     {totalItems}
                   </span>
@@ -2239,22 +2276,22 @@ export const POS: React.FC<POSProps> = ({
             )}
           </div>
 
-          <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-3 shrink-0">
+          <div className="px-3 py-2 border-t border-gray-200 dark:border-gray-800 space-y-2 shrink-0">
             {/* Summary Row - Horizontal Layout like Purchases */}
             <div className="flex items-center justify-between gap-2">
               {/* Subtotal */}
-              <div className="flex flex-col ps-3">
-                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.subtotal}</span>
+              <div className="flex items-center gap-2 ps-3">
+                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.subtotal}:</span>
                 <span className="font-medium text-sm text-gray-700 dark:text-gray-300">${grossSubtotal.toFixed(2)}</span>
               </div>
 
               {/* Discount */}
-              <div className="flex flex-col border-s border-gray-200 dark:border-gray-700 ps-3">
-                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.orderDiscount}</span>
+              <div className="flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3">
+                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.orderDiscount}:</span>
                 
                 {/* Order Discount % */}
-                <div className="flex items-center gap-1 h-[26px]">
-                  <span className="text-sm font-bold text-green-600">
+                <div className="flex items-center gap-1">
+                  <span className="font-medium text-sm text-gray-700 dark:text-gray-300">
                     {orderDiscountPercent > 0 ? orderDiscountPercent.toFixed(1) : 0}%
                   </span>
                 </div>
@@ -2263,11 +2300,13 @@ export const POS: React.FC<POSProps> = ({
               {/* Total */}
               <div className="flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3">
                 <span className="text-xs text-gray-500 font-bold uppercase whitespace-nowrap">{t.total}:</span>
-                <span className={`text-2xl font-black text-${color}-600 dark:text-${color}-400`}>
+                <span className={`text-2xl font-black text-${color}-600 dark:text-${color}-400 h-8 flex items-center`}>
                   ${cartTotal.toFixed(2)}
                 </span>
               </div>
             </div>
+
+            {/* Driver Selection UI Removed from here and moved into animated block */}
 
             {/* Checkout Area Container */}
             {!hasOpenShift ? (
@@ -2284,105 +2323,157 @@ export const POS: React.FC<POSProps> = ({
             ) : (
             <div className="flex h-[42px] overflow-hidden">
               
-              {/* Standard Mode - Shrinks to 0 width when checkout active */}
-              <div 
-                className={`flex gap-2 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
-                  isCheckoutMode ? 'w-0 opacity-0 overflow-hidden' : 'w-full opacity-100'
-                }`}
-              >
-                <button
-                  onClick={() => {
-                    setIsCheckoutMode(true);
-                    setAmountPaid("");
-                  }}
-                  disabled={!isValidOrder || !hasOpenShift}
-                  className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
-                >
-                  <span className="material-symbols-rounded text-[18px]">
-                    payments
-                  </span>
-                  {t.completeOrder}
-                </button>
-                <button
-                  onClick={() => handleCheckout("delivery")}
-                  disabled={!isValidOrder || !hasOpenShift}
-                  className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex justify-center items-center shrink-0`}
-                  title={t.deliveryOrder}
-                >
-                  <span className="material-symbols-rounded text-[20px]">
-                    local_shipping
-                  </span>
-                </button>
-              </div>
-
-              {/* Checkout Mode - Expands from 0 to full width */}
-              <div 
-                 className={`flex gap-2 items-stretch transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
-                    isCheckoutMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
+               {/* Standard Mode - Shrinks to 0 width when checkout or delivery active */}
+               <div 
+                 className={`flex gap-2 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                   (isCheckoutMode || isDeliveryMode) ? 'w-0 opacity-0 overflow-hidden' : 'w-full opacity-100'
                  }`}
-              >
-                {/* Amount Input */}
-                <div className={`flex-1 bg-white dark:bg-gray-900 border-2 border-${color}-500 rounded-xl flex items-center px-2 gap-1 overflow-hidden whitespace-nowrap`}>
-                  <input
-                    ref={(el) => { if (el && isCheckoutMode) setTimeout(() => el.focus(), 50); }}
-                    type="number"
-                    value={amountPaid}
-                    onChange={(e) => setAmountPaid(e.target.value)}
-                    placeholder={cartTotal.toFixed(2)}
-                    className="flex-1 min-w-0 bg-transparent border-none focus:outline-none focus:ring-0 font-bold text-base text-gray-900 dark:text-white p-0 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleCheckout("walk-in");
-                        setIsCheckoutMode(false);
-                        setAmountPaid("");
-                      }
-                      if (e.key === 'Escape') {
-                        setIsCheckoutMode(false);
-                        setAmountPaid("");
-                      }
-                    }}
-                  />
-                </div>
+               >
+                 <button
+                   onClick={() => {
+                     setIsCheckoutMode(true);
+                     setIsDeliveryMode(false);
+                     setAmountPaid("");
+                   }}
+                   disabled={!isValidOrder || !hasOpenShift}
+                   className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
+                 >
+                   <span className="material-symbols-rounded text-[18px]">
+                     payments
+                   </span>
+                   {t.completeOrder}
+                 </button>
+                 <button
+                   onClick={() => {
+                     setIsDeliveryMode(true);
+                     setIsCheckoutMode(false);
+                   }}
+                   disabled={!isValidOrder || !hasOpenShift}
+                   className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex justify-center items-center shrink-0`}
+                   title={t.deliveryOrder}
+                 >
+                   <span className="material-symbols-rounded text-[20px]">
+                     local_shipping
+                   </span>
+                 </button>
+               </div>
 
-                {/* Change Display */}
-                <div className={`flex flex-col justify-center px-2 rounded-xl border min-w-[70px] transition-colors overflow-hidden whitespace-nowrap ${
-                  (parseFloat(amountPaid) || 0) >= cartTotal
-                    ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-700`
-                    : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-                }`}>
-                  <span className="text-[8px] text-gray-500 uppercase font-bold text-center">{t.change || "Change"}</span>
-                  <span className={`text-sm font-bold text-center tabular-nums ${
-                    (parseFloat(amountPaid) || 0) >= cartTotal
-                      ? `text-${color}-600 dark:text-${color}-400`
-                      : 'text-gray-400'
-                  }`}>
-                    ${Math.max(0, (parseFloat(amountPaid) || 0) - cartTotal).toFixed(2)}
-                  </span>
-                </div>
+               {/* Checkout Mode - Expands from 0 to full width */}
+               <div 
+                  className={`flex gap-2 items-stretch transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                     isCheckoutMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
+                  }`}
+               >
+                 {/* Amount Input */}
+                 <div className={`flex-1 bg-white dark:bg-gray-900 border-2 border-${color}-500 rounded-xl flex items-center px-2 gap-1 overflow-hidden whitespace-nowrap`}>
+                   <input
+                     ref={(el) => { if (el && isCheckoutMode) setTimeout(() => el.focus(), 50); }}
+                     type="number"
+                     value={amountPaid}
+                     onChange={(e) => setAmountPaid(e.target.value)}
+                     placeholder={cartTotal.toFixed(2)}
+                     className="flex-1 min-w-0 bg-transparent border-none focus:outline-none focus:ring-0 font-bold text-base text-gray-900 dark:text-white p-0 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                     onKeyDown={(e) => {
+                       if (e.key === 'Enter') {
+                         handleCheckout("walk-in");
+                         setIsCheckoutMode(false);
+                         setAmountPaid("");
+                       }
+                       if (e.key === 'Escape') {
+                         setIsCheckoutMode(false);
+                         setAmountPaid("");
+                       }
+                     }}
+                   />
+                 </div>
 
-                {/* Confirm Button */}
-                <button
-                  onClick={() => {
-                    handleCheckout("walk-in");
-                    setIsCheckoutMode(false);
-                    setAmountPaid("");
-                  }}
-                  className={`w-11 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white flex items-center justify-center transition-colors shrink-0`}
-                >
-                  <span className="material-symbols-rounded">check</span>
-                </button>
+                 {/* Change Display */}
+                 <div className={`flex flex-col justify-center px-2 rounded-xl border min-w-[70px] transition-colors overflow-hidden whitespace-nowrap ${
+                   (parseFloat(amountPaid) || 0) >= cartTotal
+                     ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-700`
+                     : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                 }`}>
+                   <span className="text-[8px] text-gray-500 uppercase font-bold text-center">{t.change || "Change"}</span>
+                   <span className={`text-sm font-bold text-center tabular-nums ${
+                     (parseFloat(amountPaid) || 0) >= cartTotal
+                       ? `text-${color}-600 dark:text-${color}-400`
+                       : 'text-gray-400'
+                   }`}>
+                     ${Math.max(0, (parseFloat(amountPaid) || 0) - cartTotal).toFixed(2)}
+                   </span>
+                 </div>
 
-                {/* Cancel Button */}
-                <button
-                  onClick={() => {
-                    setIsCheckoutMode(false);
-                    setAmountPaid("");
-                  }}
-                  className="w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0"
-                >
-                  <span className="material-symbols-rounded text-[18px]">close</span>
-                </button>
-              </div>
+                 {/* Confirm Button */}
+                 <button
+                   onClick={() => {
+                     handleCheckout("walk-in");
+                     setIsCheckoutMode(false);
+                     setAmountPaid("");
+                   }}
+                   className={`w-11 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white flex items-center justify-center transition-colors shrink-0`}
+                 >
+                   <span className="material-symbols-rounded">check</span>
+                 </button>
+
+                 {/* Cancel Button */}
+                 <button
+                   onClick={() => {
+                     setIsCheckoutMode(false);
+                     setAmountPaid("");
+                   }}
+                   className="w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0"
+                 >
+                   <span className="material-symbols-rounded text-[18px]">close</span>
+                 </button>
+               </div>
+
+               {/* Delivery Driver Mode - Expands from 0 to full width */}
+               <div 
+                  className={`flex gap-2 items-stretch transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                     isDeliveryMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
+                  }`}
+               >
+                 {/* Driver Select */}
+                 <div className={`flex-1 overflow-hidden relative`}>
+                    <select
+                        value={deliveryEmployeeId}
+                        onChange={(e) => setDeliveryEmployeeId(e.target.value)}
+                        className={`w-full h-full bg-white dark:bg-gray-900 border-2 border-${color}-500 rounded-xl text-sm px-3 focus:ring-0 focus:outline-none appearance-none cursor-pointer font-bold tabular-nums`}
+                        style={{
+                            backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: isRTL ? 'left .7em top 50%' : 'right .7em top 50%',
+                            backgroundSize: '.65em auto'
+                        }}
+                    >
+                        <option value="">{t.selectDriver || "Select Driver (Optional)"}</option>
+                        {employees.filter(e => e.role === 'delivery').map(e => (
+                            <option key={e.id} value={e.id}>{e.name}</option>
+                        ))}
+                    </select>
+                 </div>
+
+                 {/* Confirm Button */}
+                 <button
+                   onClick={() => {
+                     handleCheckout("delivery", true);
+                     setIsDeliveryMode(false);
+                   }}
+                   className={`w-11 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white flex items-center justify-center transition-colors shrink-0`}
+                 >
+                   <span className="material-symbols-rounded">check</span>
+                 </button>
+
+                 {/* Cancel Button */}
+                 <button
+                   onClick={() => {
+                     setIsDeliveryMode(false);
+                   }}
+                   className="w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0"
+                 >
+                   <span className="material-symbols-rounded text-[18px]">close</span>
+                 </button>
+               </div>
             </div>
             )}
           </div>
@@ -2489,6 +2580,21 @@ export const POS: React.FC<POSProps> = ({
             </div>
           </Modal>
         )}
+
+        {/* Delivery Orders Modal */}
+        <DeliveryOrdersModal
+          isOpen={showDeliveryModal}
+          onClose={() => setShowDeliveryModal(false)}
+          sales={sales}
+          employees={employees}
+          onUpdateSale={(saleId, updates) => {
+             if (onUpdateSale) {
+                 onUpdateSale(saleId, updates);
+             }
+          }}
+          color={color}
+          t={t}
+        />
 
         {/* Close Main POS Content div */}
       </div>
