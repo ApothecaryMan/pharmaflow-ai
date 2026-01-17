@@ -292,7 +292,7 @@ export const PHARMACY_MENU: MenuItem[] = [
           { label: "Product Kits", icon: "medical_services" },
           { label: "Product Variants", icon: "style" },
           { label: "Product Pricing Rules", icon: "price_change" },
-          { label: "Product Discounts", icon: "discount" },
+          { label: "Product Discounts", icon: "percent" },
           { label: "Product Tags", icon: "label" },
           { label: "Product Reviews", icon: "rate_review" },
           { label: "Product Warranty", icon: "verified" },

@@ -257,7 +257,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
         <img 
           src="/app_icon.svg" 
           alt={appTitle} 
-          className="h-10 w-auto" 
+          className="h-8 w-auto" 
         />
       </div>
 
