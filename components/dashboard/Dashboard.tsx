@@ -6,6 +6,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 import { ExpandedModal } from '../common/ExpandedModal';
 import { ChartWidget } from '../common/ChartWidget';
+import { SmallCard } from '../common/SmallCard';
 import { DASHBOARD_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
@@ -341,61 +342,61 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       {/* Stats Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         {/* Revenue */}
-        <div className={`p-5 rounded-3xl bg-${color}-50 dark:bg-${color}-950/20 ${CARD_BASE} flex flex-col justify-between min-h-[120px] group relative`}>
-          <div className="absolute top-3 right-3">
-            <ExpandButton onClick={() => setExpandedView('revenue')} />
-          </div>
-          <div className={`text-${color}-600 dark:text-${color}-400 mb-1`}>
-            <span className="material-symbols-rounded text-3xl">payments</span>
-          </div>
-          <div>
-            <p className={`text-xs font-bold text-${color}-800 dark:text-${color}-300 uppercase opacity-70`}>{t.revenue}</p>
-            <p className={`text-2xl font-bold text-${color}-900 dark:text-${color}-100 type-expressive`}>${totalRevenue.toFixed(2)}</p>
-          </div>
+        <div 
+          onClick={() => setExpandedView('revenue')}
+          className="cursor-pointer transition-transform active:scale-95 touch-manipulation"
+        >
+          <SmallCard
+            title={t.revenue}
+            value={totalRevenue.toFixed(2)}
+            icon="payments"
+            iconColor={color}
+            type="currency"
+            currencyLabel="$"
+          />
         </div>
 
         {/* Expenses */}
-        <div className={`p-5 rounded-3xl flex flex-col justify-between min-h-[120px] group relative ${CARD_BASE}`}>
-          <div className="absolute top-3 right-3">
-            <ExpandButton onClick={() => setExpandedView('expenses')} />
-          </div>
-           <div className="text-red-500 mb-1">
-            <span className="material-symbols-rounded text-3xl">shopping_cart_checkout</span>
-          </div>
-           <div>
-            <p className="text-xs font-bold text-gray-500 uppercase">{t.expenses}</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 type-expressive">${totalExpenses.toFixed(2)}</p>
-          </div>
+        <div 
+          onClick={() => setExpandedView('expenses')}
+          className="cursor-pointer transition-transform active:scale-95 touch-manipulation"
+        >
+          <SmallCard
+            title={t.expenses}
+            value={totalExpenses.toFixed(2)}
+            icon="shopping_cart_checkout"
+            iconColor="red"
+            type="currency"
+            currencyLabel="$"
+          />
         </div>
 
         {/* Net Profit */}
-         <div 
-          className={`p-5 rounded-3xl flex flex-col justify-between min-h-[120px] group relative ${CARD_BASE}`}
+        <div 
+          onClick={() => setExpandedView('profit')}
+          className="cursor-pointer transition-transform active:scale-95 touch-manipulation"
         >
-          <div className="absolute top-3 right-3">
-            <ExpandButton onClick={() => setExpandedView('profit')} />
-          </div>
-           <div className="text-emerald-500 mb-1">
-            <span className="material-symbols-rounded text-3xl">trending_up</span>
-          </div>
-           <div>
-            <p className="text-xs font-bold text-gray-500 uppercase">{t.profit}</p>
-            <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-500'} type-expressive`}>${netProfit.toFixed(2)}</p>
-          </div>
+          <SmallCard
+            title={t.profit}
+            value={netProfit.toFixed(2)}
+            icon="trending_up"
+            iconColor="emerald"
+            type="currency"
+            currencyLabel="$"
+          />
         </div>
 
         {/* Low Stock */}
-        <div className={`p-5 rounded-3xl flex flex-col justify-between min-h-[120px] group relative ${CARD_BASE}`}>
-          <div className="absolute top-3 right-3">
-            <ExpandButton onClick={() => setExpandedView('lowStock')} />
-          </div>
-          <div className="text-orange-500 mb-1">
-            <span className="material-symbols-rounded text-3xl">warning</span>
-          </div>
-           <div>
-            <p className="text-xs font-bold text-gray-500 uppercase">{t.lowStock}</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 type-expressive">{lowStockItems.length}</p>
-          </div>
+        <div 
+          onClick={() => setExpandedView('lowStock')}
+          className="cursor-pointer transition-transform active:scale-95 touch-manipulation"
+        >
+          <SmallCard
+            title={t.lowStock}
+            value={lowStockItems.length}
+            icon="warning"
+            iconColor="orange"
+          />
         </div>
       </div>
 
