@@ -36,7 +36,10 @@ export const useContextMenu = () => {
 };
 
 // --- Component ---
-export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Remove useSettings import if it was there and unused now
+// We'll clean up imports in a separate check if needed, but for now just removing usage.
+
+export const ContextMenuProvider: React.FC<{ children: React.ReactNode; enableGlassEffect?: boolean }> = ({ children, enableGlassEffect = false }) => {
   const [menu, setMenu] = useState<ContextMenuState>({
     isVisible: false,
     x: 0,
@@ -154,9 +157,13 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
       {menu.isVisible && (
         <div 
             ref={menuRef}
-            className="fixed z-[9999] min-w-[180px] bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 py-1.5 animate-scale-in origin-top-left overflow-hidden"
+            className={`fixed z-[9999] min-w-[180px] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 py-1.5 animate-scale-in origin-top-left overflow-hidden
+                ${enableGlassEffect
+                    ? 'backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30' 
+                    : 'bg-white dark:bg-gray-900'}
+            `}
             style={{ 
-              top: adjustedPos.top || menu.y, 
+              top: adjustedPos.top || menu.y,  
               left: adjustedPos.left || menu.x,
               visibility: adjustedPos.top === 0 && adjustedPos.left === 0 ? 'hidden' : 'visible' // Hide until position calculated
             }}

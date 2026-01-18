@@ -16,6 +16,8 @@ import { SearchInput } from './SearchInput';
 import { useContextMenu, ContextMenuTrigger } from './ContextMenu';
 import { useLongPress } from '../../hooks/useLongPress';
 import { AlignButton, getHeaderJustifyClass, getTextAlignClass } from './TableAlignment';
+import { useSettings } from '../../context/SettingsContext';
+import { TRANSLATIONS } from '../../i18n/translations';
 
 // Define a fuzzy filter function
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
@@ -109,6 +111,9 @@ export function TanStackTable<TData, TValue>({
       }
     }
   });
+
+  const { language } = useSettings();
+  const t = TRANSLATIONS[language];
   
   // Load initial state from localStorage
   const storedSettings = React.useMemo(() => getStoredSettings(tableId), [tableId]);
@@ -214,7 +219,7 @@ export function TanStackTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     globalFilterFn: fuzzyFilter,
-    enableSorting: false,
+    enableSorting: true,
   });
 
   /* State specific for Context Menu tracking to enable live updates */
@@ -265,9 +270,85 @@ export function TanStackTable<TData, TValue>({
         }
       };
 
+      // Sorting handlers
+      const handleSortAsc = () => {
+        if (!column) return;
+        if (column.getIsSorted() === 'asc') {
+            column.clearSorting();
+        } else {
+            column.toggleSorting(false); // false = ascending
+        }
+        // Refresh menu to show updated state
+        if (menuPosRef.current) {
+            setTimeout(() => {
+                showMenu(
+                    menuPosRef.current!.x,
+                    menuPosRef.current!.y,
+                    getMenuContent(columnId)
+                );
+            }, 0);
+        }
+      };
+
+      const handleSortDesc = () => {
+        if (!column) return;
+        if (column.getIsSorted() === 'desc') {
+            column.clearSorting();
+        } else {
+            column.toggleSorting(true); // true = descending
+        }
+        // Refresh menu to show updated state
+        if (menuPosRef.current) {
+            setTimeout(() => {
+                showMenu(
+                    menuPosRef.current!.x,
+                    menuPosRef.current!.y,
+                    getMenuContent(columnId)
+                );
+            }, 0);
+        }
+      };
+
+      const isSorted = column?.getIsSorted();
+
       return (
         <div className="w-[220px] p-1 font-sans">
           
+          {/* Sorting Controls - Only show for specific column */}
+          {column && (
+            <>
+              <div className="space-y-1 mb-3 px-1">
+                <div className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-2 px-1">
+                  Sort
+                </div>
+                <div className="flex gap-2">
+                  <div
+                    className={`flex-1 flex items-center justify-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all border group ${
+                      isSorted === 'asc' 
+                        ? 'bg-transparent border-blue-500 text-blue-600 dark:text-blue-400 font-bold shadow-sm' 
+                        : 'bg-transparent border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-600 dark:hover:text-gray-300'
+                    }`}
+                    onClick={handleSortAsc}
+                    title={t.global.actions.asc}
+                  >
+                    <span className="material-symbols-rounded text-[20px]">arrow_upward</span>
+                  </div>
+                  <div
+                    className={`flex-1 flex items-center justify-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all border group ${
+                      isSorted === 'desc' 
+                        ? 'bg-transparent border-blue-500 text-blue-600 dark:text-blue-400 font-bold shadow-sm' 
+                        : 'bg-transparent border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-600 dark:hover:text-gray-300'
+                    }`}
+                    onClick={handleSortDesc}
+                    title={t.global.actions.desc}
+                  >
+                    <span className="material-symbols-rounded text-[20px]">arrow_downward</span>
+                  </div>
+                </div>
+              </div>
+              <div className="h-px bg-gray-100 dark:bg-[#333] mb-3 mx-1" />
+            </>
+          )}
 
 
           {/* All Columns Visibility */}

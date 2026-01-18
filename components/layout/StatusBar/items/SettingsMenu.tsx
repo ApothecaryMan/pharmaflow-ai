@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { TRANSLATIONS } from '../../../../i18n/translations';
 import { StatusBarItem } from '../StatusBarItem';
 import { Switch } from '../../../common/Switch';
 import { SegmentedControl } from '../../../common/SegmentedControl';
@@ -80,27 +81,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Translations
-  const t = {
-    settings: language === 'AR' ? 'الإعدادات' : 'Settings',
-    themesMenu: language === 'AR' ? 'المظاهر' : 'Themes', // New Translation
-    theme: language === 'AR' ? 'اللون' : 'Theme',
-    darkMode: language === 'AR' ? 'الوضع الداكن' : 'Dark Mode',
-    language: language === 'AR' ? 'اللغة' : 'Language',
-    textTransform: language === 'AR' ? 'تحويل النص' : 'Text Transform',
-    focusMode: language === 'AR' ? 'وضع التركيز' : 'Focus Mode',
-    designStyle: language === 'AR' ? 'تصميم التنقل' : 'Nav Style',
-    designStyleFull: language === 'AR' ? 'كامل' : 'Full',
-    designStyleNavbar: language === 'AR' ? 'شريط' : 'Navbar',
-    developerMode: language === 'AR' ? 'وضع المطور' : 'Developer Mode',
-    dropdownBlur: language === 'AR' ? 'خلفية ضبابية للقوائم' : 'Blur Dropdown Background',
-    // Status Bar translations
-    statusBarSettings: language === 'AR' ? 'إعدادات شريط الحالة' : 'Status Bar Settings',
-    quickStatuses: language === 'AR' ? 'الحالات السريعة' : 'Quick Statuses',
-    showSales: language === 'AR' ? 'المبيعات' : 'Sales',
-    showInventory: language === 'AR' ? 'المخزون' : 'Inventory',
-    showCustomers: language === 'AR' ? 'العملاء الجدد' : 'New Customers',
-    showTopSeller: language === 'AR' ? 'أفضل بائع' : 'Top Seller',
-  };
+  const t = TRANSLATIONS[language].settings;
 
   const [themeExpanded, setThemeExpanded] = useState(false);
   

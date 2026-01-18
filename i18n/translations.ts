@@ -28,6 +28,7 @@ export const TRANSLATIONS = {
       pack: 'Pack'
     },
     settings: {
+      settings: 'Settings',
       theme: 'Theme',
       language: 'Language',
       darkMode: 'Dark Mode',
@@ -41,6 +42,13 @@ export const TRANSLATIONS = {
       designStyleNavbar: 'Navbar',
       developerMode: 'Developer Mode',
       dropdownBlur: 'Blur Dropdown Background',
+      themesMenu: 'Themes',
+      statusBarSettings: 'Status Bar Settings',
+      quickStatuses: 'Quick Statuses',
+      showSales: 'Sales',
+      showInventory: 'Inventory',
+      showCustomers: 'New Customers',
+      showTopSeller: 'Top Seller',
       comingSoon: 'Coming Soon'
     },
 
@@ -56,7 +64,9 @@ export const TRANSLATIONS = {
         fullscreen: 'Fullscreen',
         reload: 'Reload',
         help: 'Help & Support',
-        close: 'Close'
+        close: 'Close',
+        asc: 'Ascending',
+        desc: 'Descending'
       },
       datePicker: {
         cancel: 'Cancel',
@@ -1556,6 +1566,7 @@ export const TRANSLATIONS = {
       pack: 'عبوة'
     },
     settings: {
+      settings: 'الإعدادات',
       theme: 'السمة',
       language: 'اللغة',
       darkMode: 'الوضع الداكن',
@@ -1569,6 +1580,13 @@ export const TRANSLATIONS = {
       designStyleNavbar: 'علوي',
       developerMode: 'وضع المطور',
       dropdownBlur: 'خلفية ضبابية للقوائم',
+      themesMenu: 'المظاهر',
+      statusBarSettings: 'إعدادات شريط الحالة',
+      quickStatuses: 'الحالات السريعة',
+      showSales: 'المبيعات',
+      showInventory: 'المخزون',
+      showCustomers: 'العملاء الجدد',
+      showTopSeller: 'أفضل بائع',
       comingSoon: 'قريباً'
     },
 
@@ -1585,6 +1603,8 @@ export const TRANSLATIONS = {
         reload: 'إعادة تحميل',
         help: 'المساعدة والدعم',
         close: 'إغلاق',
+        asc: 'تصاعدي',
+        desc: 'تنازلي',
         cancel: 'إلغاء',
         save: 'حفظ',
         delete: 'حذف',

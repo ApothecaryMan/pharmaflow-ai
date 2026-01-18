@@ -173,7 +173,7 @@ const App: React.FC = () => {
   }, [setIsAuthenticated, setActiveModule, setView]);
 
   return (
-    <ContextMenuProvider>
+    <ContextMenuProvider enableGlassEffect={dropdownBlur}>
     <GlobalContextMenuWrapper 
       t={t} 
       toggleTheme={() => {
