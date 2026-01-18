@@ -109,7 +109,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({
              const inputPass = inputVal.trim();
              
              // Dynamic Import for security util
-             const { verifyPassword } = await import('../../../../utils/auth');
+             const { verifyPassword } = await import('../../../../services/auth/hashUtils');
 
              let isValid = false;
 

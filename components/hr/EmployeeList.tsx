@@ -35,8 +35,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   
-  // Form State
-  const [formData, setFormData] = useState<Partial<Employee>>({});
+  // Form State (extends Employee with form-only fields like oldPassword for verification)
+  const [formData, setFormData] = useState<Partial<Employee> & { oldPassword?: string }>({});
   
   // Dropdown open states for ExpandingDropdown
   const [isDepartmentOpen, setIsDepartmentOpen] = useState(false);
@@ -46,6 +46,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
   // Tab state for modal
   const [activeTab, setActiveTab] = useState<'general' | 'credentials' | 'documents'>('general');
   const [activeViewTab, setActiveViewTab] = useState<'general' | 'credentials' | 'documents'>('general');
+  const [isOldPasswordVerified, setIsOldPasswordVerified] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [wantsToChangePassword, setWantsToChangePassword] = useState(false);
 
   // Sounds
   const { playSuccess, playError, playBeep } = usePosSounds();
@@ -193,16 +196,23 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
     }
   
     // Secure Password Hashing
-    let hashedPassword = formData.password;
+    let hashedPassword = editingEmployee?.password; // Default: keep existing password
     
-    // Only hash if a password is provided (and not already hashed, basic check)
-    // In edit mode: if password field is empty, keep existing hash. If not empty, hash it.
-    if (formData.password && formData.password.trim().length > 0) {
-        const { hashPassword } = await import('../../utils/auth');
+    // Only process password if user explicitly wants to change it
+    if (wantsToChangePassword && formData.password && formData.password.trim().length > 0) {
+        const { hashPassword } = await import('../../services/auth/hashUtils');
+        
+        // Safety check: must have verified old password first
+        if (editingEmployee && editingEmployee.password && !isOldPasswordVerified) {
+            playError();
+            return; // Should not happen if UI is followed correctly
+        }
+        
         hashedPassword = await hashPassword(formData.password);
-    } else if (editingEmployee) {
-        // Keep existing password if not changing
-        hashedPassword = editingEmployee.password;
+    } else if (!editingEmployee && formData.password && formData.password.trim().length > 0) {
+        // New employee: hash the password directly
+        const { hashPassword } = await import('../../services/auth/hashUtils');
+        hashedPassword = await hashPassword(formData.password);
     }
 
     const finalFormData = {
@@ -257,6 +267,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
     setIsRoleOpen(false);
     setIsStatusOpen(false);
     setActiveTab('general');
+    setIsOldPasswordVerified(false);
+    setPasswordError('');
+    setWantsToChangePassword(false);
   };
 
   // --- Render ---
@@ -338,7 +351,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
               { value: 'general', label: language === 'AR' ? 'معلومات عامة' : 'General', icon: 'person' },
               { value: 'credentials', label: language === 'AR' ? 'بيانات الدخول' : 'Credentials', icon: 'lock' },
               { value: 'documents', label: language === 'AR' ? 'المستندات' : 'Documents', icon: 'description' }
-            ]}
+            ].filter(opt => opt.value !== 'credentials' || (formData.role || 'pharmacist') === 'pharmacist')}
             value={activeTab}
             onChange={(value) => setActiveTab(value as 'general' | 'credentials' | 'documents')}
             color={color}
@@ -390,10 +403,10 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                 <button 
                   type="button"
                   onClick={() => setFormData({ ...formData, image: undefined })}
-                  className={`absolute -top-2 ${language === 'AR' ? '-left-2' : '-right-2'} w-7 h-7 backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30 text-red-500 hover:bg-white/80 dark:hover:bg-gray-800/80 rounded-full flex items-center justify-center shadow-lg border border-white/20 transition-transform active:scale-95`}
+                  className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-7 h-7 bg-gray-100 dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-700 rounded-lg text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all active:scale-90 flex items-center justify-center shadow-inner`}
                   title={language === 'AR' ? 'إزالة الصورة' : 'Remove Image'}
                 >
-                  <span className="material-symbols-rounded text-[18px]">close</span>
+                  <span className="material-symbols-rounded text-[18px]" style={{ fontVariationSettings: "'wght' 700" }}>close</span>
                 </button>
               )}
             </div>
@@ -409,78 +422,24 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
             {/* Tab Content */}
             {activeTab === 'general' ? (
               <>
-                {/* Section 1: Basic Info */}
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
-                        <span className={`material-symbols-rounded text-${color}-500 text-lg`}>person</span>
-                        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">{t.employeeList.personalInfo || "Personal Info"}</h3>
-                    </div>
+                {/* Compact Grid Layout for General Info */}
+                <div className="grid grid-cols-12 gap-x-4 gap-y-5 pt-1">
                     
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.name}</label>
-                            <SmartInput
+                    {/* Row 1: Name (8) + Status (4) */}
+                    <div className="col-span-8 space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.name}</label>
+                        <SmartInput
                             value={formData.name || ''}
                             onChange={e => setFormData({...formData, name: e.target.value})}
                             placeholder={t.employeeList.name}
                             autoFocus
                             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
                             required
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.position}</label>
-                            <SmartInput
-                            value={formData.position || ''}
-                            onChange={e => setFormData({...formData, position: e.target.value})}
-                            placeholder={t.employeeList.position}
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                            />
-                        </div>
+                        />
                     </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.department}</label>
-                            <div className="relative h-[42px]">
-                            <ExpandingDropdown
-                                className="absolute top-0 left-0 w-full z-30"
-                                minHeight="42px"
-                                items={Object.entries(t.employeeList.departments).map(([key, label]) => ({ key, label: label as string }))}
-                                selectedItem={Object.entries(t.employeeList.departments).map(([key, label]) => ({ key, label: label as string })).find(d => d.key === (formData.department || 'pharmacy'))}
-                                isOpen={isDepartmentOpen}
-                                onToggle={() => { setIsDepartmentOpen(!isDepartmentOpen); setIsRoleOpen(false); setIsStatusOpen(false); }}
-                                onSelect={(item) => { setFormData({...formData, department: item.key as any}); setIsDepartmentOpen(false); }}
-                                renderItem={(item) => <span className="text-sm">{item.label}</span>}
-                                renderSelected={(item) => <span className="text-sm">{item?.label || t.employeeList.department}</span>}
-                                keyExtractor={(item) => item.key}
-                                variant="input"
-                                color={color}
-                            />
-                            </div>
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.role}</label>
-                            <div className="relative h-[42px]">
-                            <ExpandingDropdown
-                                className="absolute top-0 left-0 w-full z-30"
-                                minHeight="42px"
-                                items={Object.entries(t.employeeList.roles).map(([key, label]) => ({ key, label: label as string }))}
-                                selectedItem={Object.entries(t.employeeList.roles).map(([key, label]) => ({ key, label: label as string })).find(r => r.key === (formData.role || 'pharmacist'))}
-                                isOpen={isRoleOpen}
-                                onToggle={() => { setIsRoleOpen(!isRoleOpen); setIsDepartmentOpen(false); setIsStatusOpen(false); }}
-                                onSelect={(item) => { setFormData({...formData, role: item.key as any}); setIsRoleOpen(false); }}
-                                renderItem={(item) => <span className="text-sm">{item.label}</span>}
-                                renderSelected={(item) => <span className="text-sm">{item?.label || t.employeeList.role}</span>}
-                                keyExtractor={(item) => item.key}
-                                variant="input"
-                                color={color}
-                            />
-                            </div>
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.status}</label>
-                            <div className="relative h-[42px]">
+                    <div className="col-span-4 space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.status}</label>
+                        <div className="relative h-[42px]">
                             <ExpandingDropdown
                                 className="absolute top-0 left-0 w-full z-30"
                                 minHeight="42px"
@@ -495,65 +454,104 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                 variant="input"
                                 color={color}
                             />
-                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Section 2: Contact Info */}
-                <div className="space-y-4 pt-2">
-                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
-                        <span className={`material-symbols-rounded text-${color}-500 text-lg`}>contact_phone</span>
-                        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">{t.employeeList.contactInfo || "Contact Info"}</h3>
+                    {/* Row 2: Role (4) + Dept (4) + Position (4) */}
+                    <div className="col-span-4 space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.department}</label>
+                        <div className="relative h-[42px]">
+                            <ExpandingDropdown
+                                className="absolute top-0 left-0 w-full z-30"
+                                minHeight="42px"
+                                items={Object.entries(t.employeeList.departments).map(([key, label]) => ({ key, label: label as string }))}
+                                selectedItem={Object.entries(t.employeeList.departments).map(([key, label]) => ({ key, label: label as string })).find(d => d.key === (formData.department || 'pharmacy'))}
+                                isOpen={isDepartmentOpen}
+                                onToggle={() => { setIsDepartmentOpen(!isDepartmentOpen); setIsRoleOpen(false); setIsStatusOpen(false); }}
+                                onSelect={(item) => { setFormData({...formData, department: item.key as any}); setIsDepartmentOpen(false); }}
+                                renderItem={(item) => <span className="text-sm">{item.label}</span>}
+                                renderSelected={(item) => <span className="text-sm">{item?.label || t.employeeList.department}</span>}
+                                keyExtractor={(item) => item.key}
+                                variant="input"
+                                color={color}
+                            />
+                        </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.phone}</label>
-                            <SmartPhoneInput
+                    <div className="col-span-4 space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.role}</label>
+                        <div className="relative h-[42px]">
+                            <ExpandingDropdown
+                                className="absolute top-0 left-0 w-full z-30"
+                                minHeight="42px"
+                                items={Object.entries(t.employeeList.roles).map(([key, label]) => ({ key, label: label as string }))}
+                                selectedItem={Object.entries(t.employeeList.roles).map(([key, label]) => ({ key, label: label as string })).find(r => r.key === (formData.role || 'pharmacist'))}
+                                isOpen={isRoleOpen}
+                                onToggle={() => { setIsRoleOpen(!isRoleOpen); setIsDepartmentOpen(false); setIsStatusOpen(false); }}
+                                onSelect={(item) => { 
+                                    const newRole = item.key as any;
+                                    setFormData({...formData, role: newRole}); 
+                                    setIsRoleOpen(false);
+                                }}
+                                renderItem={(item) => <span className="text-sm">{item.label}</span>}
+                                renderSelected={(item) => <span className="text-sm">{item?.label || t.employeeList.role}</span>}
+                                keyExtractor={(item) => item.key}
+                                variant="input"
+                                color={color}
+                            />
+                        </div>
+                    </div>
+                    <div className="col-span-4 space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.position}</label>
+                        <SmartInput
+                            value={formData.position || ''}
+                            onChange={e => setFormData({...formData, position: e.target.value})}
+                            placeholder={t.employeeList.position}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                        />
+                    </div>
+
+                    {/* Row 3: Phone (6) + Email (6) */}
+                    <div className="col-span-6 space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.phone}</label>
+                        <SmartPhoneInput
                             value={formData.phone || ''}
                             onChange={val => setFormData({...formData, phone: val})}
                             placeholder={t.employeeList.phone}
                             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.email}</label>
-                            <SmartEmailInput
+                        />
+                    </div>
+                    <div className="col-span-6 space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.email}</label>
+                        <SmartEmailInput
                             value={formData.email || ''}
                             onChange={val => setFormData({...formData, email: val})}
                             placeholder={t.employeeList.email}
                             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                            />
-                        </div>
+                        />
                     </div>
-                </div>
 
-                {/* Section 3: Additional */}
-                <div className="space-y-4 pt-2">
-                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
-                        <span className={`material-symbols-rounded text-${color}-500 text-lg`}>more_horiz</span>
-                        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">{t.employeeList.additionalInfo || "Additional"}</h3>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.salary}</label>
+                    {/* Row 4: Salary (4) + Notes (8) */}
+                    <div className="col-span-4 space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.salary}</label>
+                        <div className="relative">
                             <SmartInput
-                            value={formData.salary || ''}
-                            onChange={e => setFormData({...formData, salary: Number(e.target.value)})}
-                            placeholder="0.00"
-                            type="number"
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                                value={formData.salary || ''}
+                                onChange={e => setFormData({...formData, salary: Number(e.target.value)})}
+                                placeholder="0.00"
+                                type="number"
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none pl-9"
                             />
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
                         </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.notes}</label>
-                            <SmartInput
+                    </div>
+                    <div className="col-span-8 space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.notes}</label>
+                        <SmartInput
                             value={formData.notes || ''}
                             onChange={e => setFormData({...formData, notes: e.target.value})}
-                            placeholder="..."
+                            placeholder={language === 'AR' ? 'ملاحظات إضافية...' : 'Additional notes...'}
                             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                            />
-                        </div>
+                        />
                     </div>
                 </div>
               </>
@@ -592,25 +590,156 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
                             />
                         </div>
+                        {/* Password field for NEW employees */}
+                        {!editingEmployee && (
                         <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.password || 'Password'}</label>
                             <SmartInput
                             value={formData.password || ''}
                             onChange={e => setFormData({...formData, password: e.target.value})}
-                            placeholder={editingEmployee ? "Unchanged" : (t.employeeList.passwordPlaceholder || "Login Password")}
+                            placeholder={t.employeeList.passwordPlaceholder || "Login Password"}
                             type="password"
                             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
                             />
                         </div>
+                        )}
                     </div>
 
-                    {editingEmployee && (
-                        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3">
+                    {/* Password Change Section - Only when EDITING and user WANTS to change */}
+                    {editingEmployee && editingEmployee.password && (
+                    <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+                        {!wantsToChangePassword ? (
+                            /* Button to initiate password change */
+                            <button
+                                type="button"
+                                onClick={() => setWantsToChangePassword(true)}
+                                className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                            >
+                                <span className="material-symbols-rounded text-lg">key</span>
+                                {language === 'AR' ? 'تغيير كلمة المرور' : 'Change Password'}
+                                <span className="material-symbols-rounded text-lg">chevron_right</span>
+                            </button>
+                        ) : (
+                            /* Password change form */
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`material-symbols-rounded text-${color}-500 text-lg`}>key</span>
+                                        <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+                                            {language === 'AR' ? 'تغيير كلمة المرور' : 'Change Password'}
+                                        </h4>
+                                        {isOldPasswordVerified && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                <span className="material-symbols-rounded text-sm">check_circle</span>
+                                                {language === 'AR' ? 'تم التحقق' : 'Verified'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setWantsToChangePassword(false); setIsOldPasswordVerified(false); setPasswordError(''); setFormData({...formData, oldPassword: '', password: ''}); }}
+                                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                    >
+                                        <span className="material-symbols-rounded">close</span>
+                                    </button>
+                                </div>
+
+                                {!isOldPasswordVerified ? (
+                                    /* Step 1: Verify Old Password */
+                                    <div className="space-y-3">
+                                        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3">
+                                            <p className="text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                                                <span className="material-symbols-rounded text-sm">info</span>
+                                                {language === 'AR' 
+                                                    ? 'أدخل كلمة المرور الحالية للتحقق من هويتك قبل تغييرها'
+                                                    : 'Enter current password to verify your identity before changing it'}
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <div className="flex-1 space-y-1.5">
+                                                <label className="text-xs font-semibold text-gray-500 uppercase px-1">
+                                                    {language === 'AR' ? 'كلمة المرور الحالية' : 'Current Password'}
+                                                </label>
+                                                <SmartInput
+                                                    value={formData.oldPassword || ''}
+                                                    onChange={e => { setFormData({...formData, oldPassword: e.target.value}); setPasswordError(''); }}
+                                                    placeholder={language === 'AR' ? 'أدخل كلمة المرور الحالية' : 'Enter current password'}
+                                                    type="password"
+                                                    className={`w-full px-4 py-2.5 rounded-xl border ${passwordError ? 'border-red-400 dark:border-red-500' : 'border-gray-200 dark:border-gray-700'} bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none`}
+                                                />
+                                                {passwordError && (
+                                                    <p className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1 px-1">
+                                                        <span className="material-symbols-rounded text-sm">error</span>
+                                                        {passwordError}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="flex items-end pb-0.5">
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        setPasswordError('');
+                                                        if (!formData.oldPassword || formData.oldPassword.trim().length === 0) {
+                                                            playError();
+                                                            setPasswordError(language === 'AR' ? 'أدخل كلمة المرور' : 'Enter password');
+                                                            return;
+                                                        }
+                                                        const { verifyPassword } = await import('../../services/auth/hashUtils');
+                                                        const isValid = await verifyPassword(formData.oldPassword, editingEmployee.password!);
+                                                        if (isValid) {
+                                                            playSuccess();
+                                                            setIsOldPasswordVerified(true);
+                                                            setPasswordError('');
+                                                        } else {
+                                                            playError();
+                                                            setPasswordError(language === 'AR' ? 'كلمة المرور غير صحيحة' : 'Incorrect password');
+                                                        }
+                                                    }}
+                                                    className={`px-4 py-2.5 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all active:scale-95 font-medium flex items-center gap-2`}
+                                                >
+                                                    <span className="material-symbols-rounded text-[18px]">verified_user</span>
+                                                    {language === 'AR' ? 'تحقق' : 'Verify'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Step 2: Enter New Password (only after verification) */
+                                    <div className="space-y-3">
+                                        <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800/30 rounded-xl p-3">
+                                            <p className="text-xs text-green-800 dark:text-green-200 flex items-center gap-2">
+                                                <span className="material-symbols-rounded text-sm">check_circle</span>
+                                                {language === 'AR' 
+                                                    ? 'تم التحقق! يمكنك الآن إدخال كلمة المرور الجديدة'
+                                                    : 'Verified! You can now enter the new password'}
+                                            </p>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">
+                                                {language === 'AR' ? 'كلمة المرور الجديدة' : 'New Password'}
+                                            </label>
+                                            <SmartInput
+                                                value={formData.password || ''}
+                                                onChange={e => setFormData({...formData, password: e.target.value})}
+                                                placeholder={language === 'AR' ? 'أدخل كلمة المرور الجديدة' : 'Enter new password'}
+                                                type="password"
+                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    )}
+
+                    {editingEmployee && !editingEmployee.password && (
+                        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3 mt-4">
                             <p className="text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
                                 <span className="material-symbols-rounded text-sm">warning</span>
                                 {language === 'AR' 
-                                    ? 'اترك حقل كلمة المرور فارغاً إذا كنت لا تريد تغييرها'
-                                    : 'Leave password field empty if you don\'t want to change it'}
+                                    ? 'هذا الموظف ليس لديه كلمة مرور. أضف كلمة مرور جديدة من الأعلى.'
+                                    : 'This employee has no password. Add a new password above.'}
                             </p>
                         </div>
                     )}
@@ -660,9 +789,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                         <button 
                                             type="button"
                                             onClick={() => setFormData({ ...formData, nationalIdCard: undefined })}
-                                            className={`absolute -top-2 ${language === 'AR' ? '-left-2' : '-right-2'} w-6 h-6 backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30 text-red-500 hover:bg-white/80 dark:hover:bg-gray-800/80 rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity`}
+                                            className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-700 rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
                                         >
-                                            <span className="material-symbols-rounded text-[14px]">close</span>
+                                            <span className="material-symbols-rounded text-[16px]" style={{ fontVariationSettings: "'wght' 700" }}>close</span>
                                         </button>
                                     </div>
                                 ) : (
@@ -707,9 +836,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                                 <button 
                                                     type="button"
                                                     onClick={() => setFormData({ ...formData, nationalIdCardBack: undefined })}
-                                                    className={`absolute -top-2 ${language === 'AR' ? '-left-2' : '-right-2'} w-6 h-6 backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30 text-red-500 hover:bg-white/80 dark:hover:bg-gray-800/80 rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity`}
+                                                    className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-700 rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
                                                 >
-                                                    <span className="material-symbols-rounded text-[14px]">close</span>
+                                                    <span className="material-symbols-rounded text-[16px]" style={{ fontVariationSettings: "'wght' 700" }}>close</span>
                                                 </button>
                                             </div>
                                         ) : (
@@ -742,7 +871,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                             </div>
                         </div>
 
-                        {/* Syndicate Cards - Side by Side */}
+                        {/* Syndicate Cards - Side by Side - Only for Pharmacists */}
+                        {(formData.role || 'pharmacist') === 'pharmacist' && (
                         <div className="grid grid-cols-2 gap-4">
                             {/* Main Syndicate Card */}
                             <div className="space-y-2">
@@ -761,9 +891,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                             <button 
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, mainSyndicateCard: undefined })}
-                                                className={`absolute -top-2 ${language === 'AR' ? '-left-2' : '-right-2'} w-6 h-6 backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30 text-red-500 hover:bg-white/80 dark:hover:bg-gray-800/80 rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity`}
+                                                className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-700 rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
                                             >
-                                                <span className="material-symbols-rounded text-[14px]">close</span>
+                                                <span className="material-symbols-rounded text-[16px]" style={{ fontVariationSettings: "'wght' 700" }}>close</span>
                                             </button>
                                         </div>
                                     ) : (
@@ -814,9 +944,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                             <button 
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, subSyndicateCard: undefined })}
-                                                className={`absolute -top-2 ${language === 'AR' ? '-left-2' : '-right-2'} w-6 h-6 backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30 text-red-500 hover:bg-white/80 dark:hover:bg-gray-800/80 rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity`}
+                                                className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-700 rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
                                             >
-                                                <span className="material-symbols-rounded text-[14px]">close</span>
+                                                <span className="material-symbols-rounded text-[16px]" style={{ fontVariationSettings: "'wght' 700" }}>close</span>
                                             </button>
                                         </div>
                                     ) : (
@@ -850,6 +980,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                 </div>
                             </div>
                         </div>
+                        )}
                     </div>
                 </div>
               </>
@@ -882,7 +1013,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                 { value: 'general', label: language === 'AR' ? 'معلومات عامة' : 'General', icon: 'person' },
                 { value: 'credentials', label: language === 'AR' ? 'بيانات الدخول' : 'Credentials', icon: 'lock' },
                 { value: 'documents', label: language === 'AR' ? 'المستندات' : 'Documents', icon: 'description' }
-              ]}
+              ].filter(opt => opt.value !== 'credentials' || viewingEmployee?.role === 'pharmacist')}
               value={activeViewTab}
               onChange={(value) => setActiveViewTab(value as 'general' | 'credentials' | 'documents')}
               color={color}
@@ -1031,7 +1162,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                 )}
                             </div>
 
-                            {/* Syndicate Cards Section */}
+                            {/* Syndicate Cards Section - Only for Pharmacists */}
+                            {viewingEmployee.role === 'pharmacist' && (
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
                                     <span className="material-symbols-rounded text-gray-400 text-lg">card_membership</span>
@@ -1070,6 +1202,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                     </div>
                                 )}
                             </div>
+                            )}
                         </div>
                     )}
 
