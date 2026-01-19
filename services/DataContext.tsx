@@ -14,6 +14,7 @@ import { purchaseService } from './purchases';
 import { returnService } from './returns';
 import { customerService } from './customers';
 import { employeeService } from './hr';
+import { settingsService } from './settings/settingsService';
 
 export interface DataState {
   inventory: Drug[];
@@ -68,6 +69,12 @@ export interface DataActions {
   
   // Refresh all data from storage
   refreshAll: () => Promise<void>;
+  
+  // Switch to a different branch and reload all data
+  switchBranch: (newBranchCode: string) => Promise<void>;
+  
+  // Get current branch code
+  currentBranchCode: string;
 }
 
 export type DataContextType = DataState & DataActions;
@@ -94,6 +101,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   initialSuppliers = [] 
 }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [currentBranchCode, setCurrentBranchCode] = useState('B1'); // Default branch
   const [inventory, setInventoryState] = useState<Drug[]>([]);
   const [sales, setSalesState] = useState<Sale[]>([]);
   const [suppliers, setSuppliersState] = useState<Supplier[]>([]);
@@ -277,6 +285,23 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     setEmployeesState(emp);
   }, []);
 
+  // Switch to a different branch and reload all data
+  const switchBranch = useCallback(async (newBranchCode: string) => {
+    try {
+      // Update settings with new branch code
+      await settingsService.setMultiple({ branchCode: newBranchCode });
+      
+      // Update local state
+      setCurrentBranchCode(newBranchCode);
+      
+      // Reload all data (services will now filter by new branchCode)
+      await refreshAll();
+    } catch (error) {
+      console.error('Error switching branch:', error);
+      throw error;
+    }
+  }, [refreshAll]);
+
   const value = useMemo<DataContextType>(() => ({
     // State
     inventory,
@@ -315,13 +340,15 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     updateEmployee,
     deleteEmployee,
 
-    refreshAll
+    refreshAll,
+    switchBranch,
+    currentBranchCode
   }), [
-    inventory, sales, suppliers, purchases, purchaseReturns, returns, customers, employees, isLoading,
+    inventory, sales, suppliers, purchases, purchaseReturns, returns, customers, employees, isLoading, currentBranchCode,
     setInventory, addProduct, updateProduct, updateStock, setSales, addSale, setSuppliers, addSupplier,
     updateSupplier, setPurchases, addPurchase, approvePurchase, rejectPurchase, setReturns, setPurchaseReturns,
     addReturn, setCustomers, addCustomer, updateCustomer, deleteCustomer, setEmployees, addEmployee,
-    updateEmployee, deleteEmployee, refreshAll
+    updateEmployee, deleteEmployee, refreshAll, switchBranch
   ]);
 
   return (

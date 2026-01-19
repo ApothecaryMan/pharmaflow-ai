@@ -7,6 +7,15 @@ import { addTransactionToOpenShift } from '../utils/shiftHelpers';
 import { calculateLoyaltyPoints } from '../utils/loyaltyPoints';
 import { batchService } from '../services/inventory/batchService';
 import { idGenerator } from '../utils/idGenerator';
+import { storage } from '../utils/storage';
+import { StorageKeys } from '../config/storageKeys';
+import type { AppSettings } from '../services/settings/types';
+
+// Helper to get current branchCode synchronously from storage
+const getBranchCode = (): string => {
+  const settings = storage.get<Partial<AppSettings>>(StorageKeys.SETTINGS, {});
+  return settings.branchCode || 'B1';
+};
 
 export interface EntityHandlers {
   // Drug/Inventory handlers
@@ -319,6 +328,7 @@ export function useEntityHandlers({
 
     const newSale: Sale = {
       id: serialId,
+      branchId: getBranchCode(), // Inject current branch
       date: saleDate.toISOString(),
       soldByEmployeeId: currentEmployeeId || undefined,
       dailyOrderNumber,
@@ -636,8 +646,12 @@ export function useEntityHandlers({
       return;
     }
 
-    // Add return record
-    setReturns(prev => [returnData, ...prev]);
+    // Add return record with branchId injected
+    const returnWithBranch: Return = {
+      ...returnData,
+      branchId: getBranchCode() // Inject current branch
+    };
+    setReturns(prev => [returnWithBranch, ...prev]);
 
     // Update last transaction time
     updateLastTransactionTime(returnDate.getTime());
