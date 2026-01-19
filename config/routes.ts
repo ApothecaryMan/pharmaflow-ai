@@ -2,7 +2,7 @@ import { ViewState } from '../types';
 
 export const ROUTES = {
   DASHBOARD: 'dashboard' as ViewState,
-  LOGIN: 'login-test' as ViewState,
+  LOGIN: 'login' as ViewState,
   MODAL_TESTS: 'modal-tests' as ViewState,
   TEST_THEME: 'test-theme' as ViewState,
   INVENTORY: 'inventory' as ViewState,

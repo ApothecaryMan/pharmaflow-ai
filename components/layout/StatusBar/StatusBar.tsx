@@ -19,7 +19,7 @@ export interface StatusBarTranslations {
   ready: string;
   online: string;
   offline: string;
-  version: string;
+  version?: string;
   notifications?: string;
   noNotifications?: string;
   clearAll?: string;

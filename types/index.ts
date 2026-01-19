@@ -45,7 +45,7 @@ export interface Drug {
   /** Earliest expiry date (ISO string) */
   expiryDate: string;
   /** Product description */
-  description: string;
+  description?: string;
   /** Primary barcode */
   barcode?: string;
   /** Internal reference code */

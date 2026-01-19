@@ -18,6 +18,17 @@ import { useAuth } from './hooks/useAuth';
 import { useNavigation } from './hooks/useNavigation';
 import { useEntityHandlers } from './hooks/useEntityHandlers';
 import { batchService } from './services/inventory/batchService';
+import { ShiftProvider } from './hooks/useShift';
+import { DataProvider } from './services';
+import { CSV_INVENTORY } from './data/sample-inventory';
+import { Supplier } from './types';
+import { Login } from './components/auth/Login';
+import { AppState } from './hooks/useAppState';
+import { AuthState } from './hooks/useAuth';
+
+const INITIAL_SUPPLIERS: Supplier[] = [
+  { id: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '' },
+];
 
 // --- Global Context Menu Wrapper ---
 const GlobalContextMenuWrapper: React.FC<{ 
@@ -50,9 +61,12 @@ const GlobalContextMenuWrapper: React.FC<{
 
 const STANDALONE_VIEWS = [ROUTES.LOGIN];
 
-const App: React.FC = () => {
-  // --- App State Hook ---
-  const {
+// Interface for the AuthenticatedContent props
+// It combines AppState and AuthState to pass everything down
+interface AuthenticatedContentProps extends AppState, AuthState {}
+
+const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
+    // App State
     view, setView,
     activeModule, setActiveModule,
     dashboardSubView, setDashboardSubView,
@@ -61,8 +75,10 @@ const App: React.FC = () => {
     tip,
     profileImage, setProfileImage,
     currentEmployeeId, setCurrentEmployeeId,
-  } = useAppState();
-
+    
+    // Auth State
+    isAuthenticated, isAuthChecking, handleLogout, resolveView, setIsAuthenticated
+}) => {
   // --- Settings from Context ---
   const {
     theme, setTheme,
@@ -91,13 +107,6 @@ const App: React.FC = () => {
 
   // --- StatusBar Utilities ---
   const { getVerifiedDate, validateTransactionTime, updateLastTransactionTime } = useStatusBar();
-
-  // --- Auth Hook ---
-  const { isAuthenticated, isAuthChecking, handleLogout, resolveView, setIsAuthenticated } = useAuth({
-    view,
-    setView,
-    setToast,
-  });
 
   // --- Navigation Hook ---
   const { handleViewChange, handleNavigate, handleModuleChange, filteredMenuItems } = useNavigation({
@@ -480,6 +489,69 @@ const App: React.FC = () => {
     </GlobalContextMenuWrapper>
     </ContextMenuProvider>
   );
+};
+
+const App: React.FC = () => {
+    // 1. Initialize App State (View, Toast, etc.)
+    const appState = useAppState();
+    
+    // 2. Initialize Auth State
+    const authState = useAuth({
+        view: appState.view,
+        setView: appState.setView,
+        setToast: appState.setToast
+    });
+    
+    // 3. Settings Hook (for Language)
+    const { language } = useSettings();
+
+    // 4. Loading State for Auth Check
+    if (authState.isAuthChecking) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+                <div className="text-white">
+                    <svg className="animate-spin h-8 w-8 mx-auto" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    <p className="mt-2 text-sm text-zinc-400">{TRANSLATIONS[language].global?.checkingAuth || 'Checking authentication...'}</p>
+                </div>
+            </div>
+        );
+    }
+
+    // 5. Not Authenticated -> Show Login
+    if (!authState.isAuthenticated) {
+        return (
+            <Login 
+                onLoginSuccess={() => {
+                    authState.setIsAuthenticated(true);
+                    appState.setActiveModule(ROUTES.DASHBOARD);
+                    appState.setView(ROUTES.DASHBOARD);
+                }}
+                language={language}
+                onViewChange={(view) => {
+                     // Handle view changes from Login if needed (usually just dashboard)
+                     if (view === 'dashboard') {
+                         authState.setIsAuthenticated(true);
+                         appState.setView(ROUTES.DASHBOARD);
+                     }
+                }}
+            />
+        );
+    }
+    
+    // 6. Authenticated -> Show Secure Content wrapped in Providers
+    return (
+        <ShiftProvider>
+            <DataProvider initialInventory={CSV_INVENTORY} initialSuppliers={INITIAL_SUPPLIERS}>
+                <AuthenticatedContent 
+                    {...appState}
+                    {...authState}
+                />
+            </DataProvider>
+        </ShiftProvider>
+    );
 };
 
 export default App;

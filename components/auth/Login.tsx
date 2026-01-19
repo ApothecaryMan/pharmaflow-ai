@@ -17,13 +17,13 @@ interface LoginState {
   };
 }
 
-interface LoginTestProps {
+interface LoginProps {
   onViewChange?: (view: string) => void;
   onLoginSuccess?: () => void;
   language?: 'EN' | 'AR';
 }
 
-export const LoginTest: React.FC<LoginTestProps> = ({ onViewChange, onLoginSuccess, language = 'EN' }) => {
+export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, language = 'EN' }) => {
   const t = TRANSLATIONS[language].login;
   
   const [state, setState] = useState<LoginState>({
