@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useRef, useLayoutEffect } from 'react';
 import { 
   ComposedChart, Area, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
@@ -121,6 +121,32 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
   children
 }) => {
   const [internalChartType, setInternalChartType] = useState<'area' | 'bar'>('area');
+  const [isReady, setIsReady] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Delay rendering until container has valid dimensions
+  useLayoutEffect(() => {
+    const checkDimensions = () => {
+      if (containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect();
+        if (width > 0 && height > 0) {
+          setIsReady(true);
+          return true;
+        }
+      }
+      return false;
+    };
+    
+    // Check immediately
+    if (checkDimensions()) return;
+    
+    // If not ready, use requestAnimationFrame to check after layout
+    const rafId = requestAnimationFrame(() => {
+      checkDimensions();
+    });
+    
+    return () => cancelAnimationFrame(rafId);
+  }, []);
   
   // Use external state if provided, otherwise internal
   const activeChartType = externalChartType || internalChartType;
@@ -186,7 +212,8 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
         </div>
 
         {/* Chart Area */}
-        <div className={`w-full ${chartClassName || 'h-[250px]'}`}>
+        <div ref={containerRef} className={`w-full ${chartClassName || 'h-[250px]'}`} style={{ minHeight: 200, minWidth: 100 }}>
+            {isReady && (
             <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={data} margin={chartMargin || { top: 15, right: 0, left: language === 'AR' ? 30 : 0, bottom: 20 }}>
                     <defs>
@@ -255,6 +282,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                     )}
                 </ComposedChart>
             </ResponsiveContainer>
+            )}
         </div>
         
         {/* Footer / Children (e.g. Shift Events) */}

@@ -63,11 +63,25 @@ class TimeService {
     const systemTime = Date.now();
 
     for (const provider of TIME_PROVIDERS) {
+      let url = provider;
+      if (provider.startsWith('/')) {
+          if (typeof window !== 'undefined' && window.location?.origin && window.location.origin !== 'null') {
+             try {
+                url = new URL(provider, window.location.origin).toString();
+             } catch {
+                continue;
+             }
+          } else {
+             // Node or invalid window env
+             continue;
+          }
+      }
+
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
 
-        const response = await fetch(provider, {
+        const response = await fetch(url, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           signal: controller.signal
@@ -109,8 +123,22 @@ class TimeService {
       }
     }
     
+    // All providers failed - use local time as fallback
+    console.warn(
+      '[TimeService] All external time sources failed. Using local system time as fallback.\n' +
+      'This is normal in development mode without Netlify Functions.\n' +
+      'In production, ensure at least one time API is accessible.'
+    );
+    
+    // Reset offset to 0 (trust local time) and mark as synced to prevent retry spam
+    this.offset = 0;
+    this.lastSyncTime = Date.now();
+    storage.set(StorageKeys.TIME_OFFSET, '0');
+    storage.set(StorageKeys.LAST_SYNC, this.lastSyncTime.toString());
+    
     this.isSyncing = false;
-    return false;
+    // Return true to signal "sync complete" and stop retry loop
+    return true;
   }
 
   /**
@@ -153,6 +181,12 @@ export const timeService = new TimeService();
 
 // Auto-sync on initialization (with retry)
 const attemptSync = async (retries = 3) => {
+  // Skip if already synced (e.g., from localStorage cache)
+  if (timeService.isSynced()) {
+    console.log('[TimeService] Already synced from cache, skipping network sync.');
+    return;
+  }
+  
   for (let i = 0; i < retries; i++) {
     const success = await timeService.syncTime();
     if (success) {
@@ -163,7 +197,9 @@ const attemptSync = async (retries = 3) => {
   }
 };
 
-// Start sync attempt
-attemptSync();
+// Start sync attempt (skip in test to prevent race conditions)
+if (process.env.NODE_ENV !== 'test') {
+  attemptSync();
+}
 
 export default timeService;

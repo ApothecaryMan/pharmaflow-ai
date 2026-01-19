@@ -229,9 +229,9 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
     return success;
   }, []);
 
-  // Auto-sync when going online
+  // Auto-sync when going online (only if not already synced)
   React.useEffect(() => {
-    if (state.isOnline) {
+    if (state.isOnline && !timeService.isSynced()) {
       syncTime();
     }
   }, [state.isOnline, syncTime]);

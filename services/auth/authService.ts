@@ -1,5 +1,34 @@
 /**
  * Auth Service - Mock authentication for branch pilot
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * ⚠️  SECURITY NOTE - FUTURE BACKEND MIGRATION
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * This is a **CLIENT-SIDE MOCK** for development/pilot purposes.
+ * When migrating to a real backend, implement the following:
+ * 
+ * 1. **HttpOnly Cookies** (Recommended for session tokens):
+ *    - Backend sets: `Set-Cookie: session_token=xxx; HttpOnly; Secure; SameSite=Strict`
+ *    - JavaScript CANNOT access HttpOnly cookies (XSS protection)
+ *    - Cookies are automatically sent with every request
+ * 
+ * 2. **Server-side Sessions**:
+ *    - Store session data in Redis/Database on the server
+ *    - Only send a session ID to the client (inside HttpOnly cookie)
+ *    - Validate session ID on every API request
+ * 
+ * 3. **JWT (Alternative)**:
+ *    - Short-lived Access Token (15 min) in memory/localStorage
+ *    - Long-lived Refresh Token in HttpOnly cookie
+ *    - Refresh endpoint to get new Access Token
+ * 
+ * 4. **Replace this file** with API calls:
+ *    - `login()` → POST /api/auth/login
+ *    - `logout()` → POST /api/auth/logout  
+ *    - `getCurrentUser()` → GET /api/auth/me
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 export interface UserSession {
@@ -23,11 +52,13 @@ const DEV_CREDENTIALS = {
 export const authService = {
   /**
    * Get the current user session from storage
+   * 
+   * TODO [Backend]: Replace with API call to GET /api/auth/me
+   * The server should validate the HttpOnly session cookie and return user data.
    */
   getCurrentUser: async (): Promise<UserSession | null> => {
     try {
-      // Check session storage first
-      const stored = sessionStorage.getItem(SESSION_KEY);
+      const stored = localStorage.getItem(SESSION_KEY);
       if (stored) {
         return JSON.parse(stored);
       }
@@ -40,6 +71,13 @@ export const authService = {
 
   /**
    * Login function (Mock implementation for Pilot)
+   * 
+   * TODO [Backend]: Replace with API call to POST /api/auth/login
+   * The server should:
+   * 1. Validate credentials against database
+   * 2. Create a server-side session
+   * 3. Set HttpOnly cookie with session ID
+   * 4. Return user data (without sensitive info)
    */
   login: async (username: string, password: string): Promise<UserSession | null> => {
     // Simulate API delay
@@ -57,7 +95,7 @@ export const authService = {
           role: DEV_CREDENTIALS.role
         };
         
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
         return session;
       }
     }
@@ -68,16 +106,22 @@ export const authService = {
 
   /**
    * Synchronous check for session existence (Fast UI init)
+   * 
+   * TODO [Backend]: This can remain for quick UI init, but should be
+   * followed by getCurrentUser() to validate with the server.
    */
   hasSession: (): boolean => {
-    return !!sessionStorage.getItem(SESSION_KEY);
+    return !!localStorage.getItem(SESSION_KEY);
   },
 
   /**
    * Logout and clear session
+   * 
+   * TODO [Backend]: Replace with API call to POST /api/auth/logout
+   * The server should invalidate the session and clear the HttpOnly cookie.
    */
   logout: async (): Promise<void> => {
-    sessionStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_KEY);
   }
 };
 
