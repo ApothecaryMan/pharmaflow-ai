@@ -1,10 +1,12 @@
 import { useCallback, useMemo, useRef, useEffect } from 'react';
-import { Drug, Sale, CartItem, Supplier, Purchase, Return, Customer } from '../types';
+import { Drug, Sale, CartItem, Supplier, Purchase, Return, Customer, OrderModificationRecord, OrderModification, BatchAllocation, Employee } from '../types';
 import { ToastState } from './useAppState';
 import { migrationService } from '../services/migration';
 import { validateStock } from '../utils/inventory';
 import { addTransactionToOpenShift } from '../utils/shiftHelpers';
 import { calculateLoyaltyPoints } from '../utils/loyaltyPoints';
+import { batchService } from '../services/inventory/batchService';
+import { idGenerator } from '../utils/idGenerator';
 
 export interface EntityHandlers {
   // Drug/Inventory handlers
@@ -70,6 +72,7 @@ interface UseEntityHandlersParams {
   // Utilities
   setToast: React.Dispatch<React.SetStateAction<ToastState | null>>;
   currentEmployeeId: string | null;
+  employees?: Employee[];
   isLoading: boolean;
   
   // Time utilities from StatusBar
@@ -97,6 +100,7 @@ export function useEntityHandlers({
   setCustomers,
   setToast,
   currentEmployeeId,
+  employees,
   isLoading,
   getVerifiedDate,
   validateTransactionTime,
@@ -183,10 +187,26 @@ export function useEntityHandlers({
         if (purchasedItem) {
           // Convert purchased packs to units
           const unitsToAdd = purchasedItem.quantity * (drug.unitsPerPack || 1);
+          
+          // Create a new batch for this purchase
+          batchService.createBatch({
+            drugId: drug.id,
+            quantity: unitsToAdd,
+            expiryDate: purchasedItem.expiryDate || drug.expiryDate,
+            costPrice: purchasedItem.costPrice,
+            purchaseId: purchase.id,
+            dateReceived: new Date().toISOString(),
+            batchNumber: purchase.invoiceId
+          });
+          
           return {
             ...drug,
             stock: validateStock(drug.stock + unitsToAdd),
-            costPrice: purchasedItem.costPrice
+            costPrice: purchasedItem.costPrice,
+            // Update expiry to earliest if new batch expires sooner
+            expiryDate: purchasedItem.expiryDate && new Date(purchasedItem.expiryDate) < new Date(drug.expiryDate)
+              ? purchasedItem.expiryDate
+              : drug.expiryDate
           };
         }
         return drug;
@@ -207,15 +227,30 @@ export function useEntityHandlers({
         : p
     ));
 
-    // 2. Update Inventory
+    // 2. Update Inventory and create batches
     setInventory(prev => prev.map(drug => {
       const purchasedItem = purchase.items.find(i => i.drugId === drug.id);
       if (purchasedItem) {
         const unitsToAdd = purchasedItem.quantity * (drug.unitsPerPack || 1);
+        
+        // Create a new batch for this purchase
+        batchService.createBatch({
+          drugId: drug.id,
+          quantity: unitsToAdd,
+          expiryDate: purchasedItem.expiryDate || drug.expiryDate,
+          costPrice: purchasedItem.costPrice,
+          purchaseId: purchase.id,
+          dateReceived: new Date().toISOString(),
+          batchNumber: purchase.invoiceId
+        });
+        
         return {
           ...drug,
           stock: validateStock(drug.stock + unitsToAdd),
-          costPrice: purchasedItem.costPrice
+          costPrice: purchasedItem.costPrice,
+          expiryDate: purchasedItem.expiryDate && new Date(purchasedItem.expiryDate) < new Date(drug.expiryDate)
+            ? purchasedItem.expiryDate
+            : drug.expiryDate
         };
       }
       return drug;
@@ -254,38 +289,70 @@ export function useEntityHandlers({
     const todaysSales = sales.filter(s => new Date(s.date).toDateString() === today);
     const dailyOrderNumber = todaysSales.length + 1;
 
+    // Process items with batch allocation
+    const processedItems: CartItem[] = [];
+    let allocationSuccess = true;
+
+    for (const item of saleData.items) {
+      const drug = inventory.find(d => d.id === item.id);
+      if (!drug) continue;
+
+      const quantityToDeduct = item.isUnit 
+        ? item.quantity 
+        : item.quantity * (drug.unitsPerPack || 1);
+
+      // Allocate from batches using FEFO
+      const allocations = batchService.allocateStock(drug.id, quantityToDeduct, true);
+      
+      if (allocations === null) {
+        // Insufficient stock - fallback to legacy behavior
+        console.warn(`Batch allocation failed for ${drug.name}, using legacy stock deduction`);
+        processedItems.push(item);
+      } else {
+        // Store batch allocations with the item
+        processedItems.push({
+          ...item,
+          batchAllocations: allocations
+        });
+      }
+    }
+
     const newSale: Sale = {
       id: serialId,
       date: saleDate.toISOString(),
       soldByEmployeeId: currentEmployeeId || undefined,
       dailyOrderNumber,
-      status: 'completed',
-      ...saleData
+      status: saleData.saleType === 'delivery' ? 'pending' : 'completed',
+      ...saleData,
+      items: processedItems
     };
     
     // Update last transaction time
     updateLastTransactionTime(saleDate.getTime());
     
-    // Update inventory with pack/unit logic (INTEGER UNITS)
+    // Update inventory (Drug.stock for display/legacy compatibility)
     setInventory(prev => prev.map(drug => {
       const soldItem = saleData.items.find(i => i.id === drug.id);
       if (soldItem) {
-        let quantityToDeduct = 0;
-        
-        if (soldItem.isUnit) {
-          quantityToDeduct = soldItem.quantity;
-        } else {
-          quantityToDeduct = soldItem.quantity * (drug.unitsPerPack || 1);
-        }
+        const quantityToDeduct = soldItem.isUnit 
+          ? soldItem.quantity 
+          : soldItem.quantity * (drug.unitsPerPack || 1);
 
         const newStock = drug.stock - quantityToDeduct;
         
         if (newStock < 0) {
-          console.error(`STOCK ERROR: Negative stock detected for ${drug.name}. Selling ${quantityToDeduct}, Available ${drug.stock}.`);
+          console.error(`STOCK ERROR: Negative stock for ${drug.name}.`);
           return { ...drug, stock: 0 };
         }
         
-        return { ...drug, stock: validateStock(newStock) };
+        // Update earliest expiry from batches
+        const earliestExpiry = batchService.getEarliestExpiry(drug.id);
+        
+        return { 
+          ...drug, 
+          stock: validateStock(newStock),
+          expiryDate: earliestExpiry || drug.expiryDate
+        };
       }
       return drug;
     }));
@@ -321,28 +388,241 @@ export function useEntityHandlers({
       message: `Order #${serialId} completed! ${pointsEarned > 0 ? `Earned ${pointsEarned} points.` : ''}`,
       type: 'success'
     });
-  }, [sales, currentEmployeeId, getVerifiedDate, validateTransactionTime, updateLastTransactionTime, 
+  }, [sales, inventory, currentEmployeeId, getVerifiedDate, validateTransactionTime, updateLastTransactionTime, 
       setInventory, setCustomers, setSales, setToast]);
 
   const handleUpdateSale = useCallback((saleId: string, updates: Partial<Sale>) => {
-    // Logic for restoring stock if order is cancelled
-    if (updates.status === 'cancelled') {
-      const sale = sales.find(s => s.id === saleId);
-      if (sale && sale.status !== 'cancelled') {
-        // Restore inventory
-        setInventory(prev => prev.map(drug => {
-          const item = sale.items.find(i => i.id === drug.id);
-          if (item) {
-            const unitsToRestore = item.isUnit ? item.quantity : item.quantity * (drug.unitsPerPack || 1);
-            return { ...drug, stock: validateStock(drug.stock + unitsToRestore) };
+    const sale = sales.find(s => s.id === saleId);
+    if (!sale) return;
+
+    // Handle order cancellation - return all items to batches
+    if (updates.status === 'cancelled' && sale.status !== 'cancelled') {
+      // Return stock to original batches
+      for (const item of sale.items) {
+        if (item.batchAllocations && item.batchAllocations.length > 0) {
+          batchService.returnStock(item.batchAllocations);
+        }
+      }
+      
+      // Update Drug.stock for display - aggregate ALL items per drug
+      setInventory(prev => prev.map(drug => {
+        // Find ALL items for this drug (both pack and unit)
+        const matchingItems = sale.items.filter(i => i.id === drug.id);
+        if (matchingItems.length > 0) {
+          // Sum up units to restore from ALL matching items
+          const totalUnitsToRestore = matchingItems.reduce((sum, item) => {
+            const units = item.isUnit ? item.quantity : item.quantity * (drug.unitsPerPack || 1);
+            return sum + units;
+          }, 0);
+          return { 
+            ...drug, 
+            stock: validateStock(drug.stock + totalUnitsToRestore),
+            expiryDate: batchService.getEarliestExpiry(drug.id) || drug.expiryDate
+          };
+        }
+        return drug;
+      }));
+    }
+
+    // Handle item modifications (for delivery orders)
+    if (updates.items && sale.saleType === 'delivery' && sale.status !== 'completed') {
+      // Security Check: Must be logged in to modify delivery orders
+      if (!currentEmployeeId) {
+        console.error('[handleUpdateSale] Security Alert: Attempted modification without logged-in user');
+        setToast({ message: 'Security Alert: You must be logged in to modify orders', type: 'error' });
+        return;
+      }
+
+      const modifications: OrderModification[] = [];
+      const timestamp = new Date().toISOString();
+      
+      // Compare old items with new items (MUST compare by id AND isUnit)
+      for (const oldItem of sale.items) {
+        const newItem = updates.items.find(i => i.id === oldItem.id && i.isUnit === oldItem.isUnit);
+        
+        if (!newItem) {
+          // Item was deleted - return all stock to batches
+          if (oldItem.batchAllocations) {
+            batchService.returnStock(oldItem.batchAllocations);
           }
-          return drug;
-        }));
+          
+          // Update Drug.stock
+          setInventory(prev => prev.map(drug => {
+            if (drug.id === oldItem.id) {
+              const unitsToRestore = oldItem.isUnit ? oldItem.quantity : oldItem.quantity * (drug.unitsPerPack || 1);
+              return { ...drug, stock: validateStock(drug.stock + unitsToRestore) };
+            }
+            return drug;
+          }));
+          
+          modifications.push({
+            type: 'item_removed',
+            itemId: oldItem.id,
+            itemName: oldItem.name,
+            dosageForm: oldItem.dosageForm,
+            previousQuantity: oldItem.quantity,
+            newQuantity: 0,
+            stockReturned: oldItem.isUnit ? oldItem.quantity : oldItem.quantity * (oldItem.unitsPerPack || 1)
+          });
+        } else {
+          // Check for quantity changes
+          if (newItem.quantity !== oldItem.quantity) {
+            // Quantity changed
+            const drug = inventory.find(d => d.id === oldItem.id);
+            if (!drug) continue;
+            
+            const oldUnits = oldItem.isUnit ? oldItem.quantity : oldItem.quantity * (drug.unitsPerPack || 1);
+            const newUnits = newItem.isUnit ? newItem.quantity : newItem.quantity * (drug.unitsPerPack || 1);
+            const diff = oldUnits - newUnits;
+            
+            if (diff > 0) {
+              // Quantity reduced - return partial stock
+              if (oldItem.batchAllocations && oldItem.batchAllocations.length > 0) {
+                // Return from last allocated batches first (LIFO for returns)
+                let remaining = diff;
+                const sortedAllocs = [...oldItem.batchAllocations].reverse();
+                const returnsToMake: BatchAllocation[] = [];
+                
+                for (const alloc of sortedAllocs) {
+                  if (remaining <= 0) break;
+                  const returnQty = Math.min(alloc.quantity, remaining);
+                  returnsToMake.push({ ...alloc, quantity: returnQty });
+                  remaining -= returnQty;
+                }
+                
+                batchService.returnStock(returnsToMake);
+              }
+              
+              setInventory(prev => prev.map(d => {
+                if (d.id === oldItem.id) {
+                  return { ...d, stock: validateStock(d.stock + diff) };
+                }
+                return d;
+              }));
+              
+              modifications.push({
+                type: 'quantity_update',
+                itemId: oldItem.id,
+                itemName: oldItem.name,
+                dosageForm: oldItem.dosageForm,
+                previousQuantity: oldItem.quantity,
+                newQuantity: newItem.quantity,
+                stockReturned: diff
+              });
+            } else if (diff < 0) {
+              // Quantity increased - allocate more from batches
+              const additionalNeeded = Math.abs(diff);
+              const newAllocations = batchService.allocateStock(drug.id, additionalNeeded, true);
+              
+              if (newAllocations) {
+                // Merge allocations
+                newItem.batchAllocations = [
+                  ...(oldItem.batchAllocations || []),
+                  ...newAllocations
+                ];
+                
+                setInventory(prev => prev.map(d => {
+                  if (d.id === oldItem.id) {
+                    return { ...d, stock: validateStock(d.stock - additionalNeeded) };
+                  }
+                  return d;
+                }));
+                
+                modifications.push({
+                  type: 'quantity_update',
+                  itemId: oldItem.id,
+                  itemName: oldItem.name,
+                  dosageForm: oldItem.dosageForm,
+                  previousQuantity: oldItem.quantity,
+                  newQuantity: newItem.quantity,
+                  stockDeducted: additionalNeeded
+                });
+              } else {
+                 console.error('[handleUpdateSale] Failed to allocate stock for item:', oldItem.name, 'Quantity:', additionalNeeded);
+              }
+            }
+          }
+          
+          // Check for discount changes (track but no stock impact)
+          if ((newItem.discount || 0) !== (oldItem.discount || 0)) {
+            modifications.push({
+              type: 'discount_update',
+              itemId: oldItem.id,
+              itemName: oldItem.name,
+              dosageForm: oldItem.dosageForm,
+              previousDiscount: oldItem.discount || 0,
+              newDiscount: newItem.discount || 0
+            });
+          }
+        }
+      }
+      
+      // Handle NEW items (items in updates.items that don't exist in sale.items)
+      for (const newItem of updates.items) {
+        const existsInOld = sale.items.some(old => old.id === newItem.id && old.isUnit === newItem.isUnit);
+        if (!existsInOld) {
+          // This is a NEW item - allocate stock for it
+          const drug = inventory.find(d => d.id === newItem.id);
+          if (drug) {
+            const unitsToAllocate = newItem.isUnit ? newItem.quantity : newItem.quantity * (drug.unitsPerPack || 1);
+            const allocations = batchService.allocateStock(drug.id, unitsToAllocate, true);
+            
+            if (allocations) {
+              newItem.batchAllocations = allocations;
+              
+              setInventory(prev => prev.map(d => {
+                if (d.id === newItem.id) {
+                  return { ...d, stock: validateStock(d.stock - unitsToAllocate) };
+                }
+                return d;
+              }));
+              
+              modifications.push({
+                type: 'item_added',
+                itemId: newItem.id,
+                itemName: newItem.name,
+                dosageForm: newItem.dosageForm,
+                previousQuantity: 0,
+                newQuantity: newItem.quantity,
+                stockDeducted: unitsToAllocate
+              });
+            } else {
+              console.error('[handleUpdateSale] Failed to allocate stock for NEW item:', newItem.name);
+            }
+          }
+        }
+      }
+      
+      // Add modification history
+      if (modifications.length > 0) {
+        console.log('[useEntityHandlers] Modifications detected:', modifications);
+        
+        // Resolve modifier name
+        let modifierName = 'System';
+        if (currentEmployeeId && employees) {
+          const emp = employees.find(e => e.id === currentEmployeeId);
+          if (emp) modifierName = emp.name;
+        }
+
+        const historyRecord: OrderModificationRecord = {
+          id: idGenerator.generate('generic'),
+          timestamp,
+          modifiedBy: modifierName,
+          modifications
+        };
+        
+        updates.modificationHistory = [
+          ...(sale.modificationHistory || []),
+          historyRecord
+        ];
+        console.log('[useEntityHandlers] Updated history:', updates.modificationHistory);
+      } else {
+        console.log('[useEntityHandlers] No modifications detected');
       }
     }
 
     setSales(prev => prev.map(s => s.id === saleId ? { ...s, ...updates } : s));
-  }, [sales, setInventory, setSales]);
+  }, [sales, inventory, currentEmployeeId, setInventory, setSales]);
 
   const handleProcessReturn = useCallback((returnData: Return) => {
     // Validate return time

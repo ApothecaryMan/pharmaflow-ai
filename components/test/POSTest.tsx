@@ -2328,7 +2328,7 @@ export const POSTest: React.FC<POSProps> = ({
                     ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-700`
                     : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                 }`}>
-                  <span className="text-[8px] text-gray-500 uppercase font-bold text-center">{t.change || "Change"}</span>
+                  <span className="text-[8px] text-gray-500 uppercase font-bold text-center">{t.remainder || "Change"}</span>
                   <span className={`text-sm font-bold text-center tabular-nums ${
                     (parseFloat(amountPaid) || 0) >= cartTotal
                       ? `text-${color}-600 dark:text-${color}-400`

@@ -82,7 +82,9 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
   // The cart item might be a stale copy.
   const staleItem = commonItem;
   const freshBatch = allBatches.find(b => b.id === staleItem.id) || staleItem;
-  const item = { ...staleItem, ...freshBatch }; // Merge to ensure we have latest props
+  // Merge to ensure we have latest props, and unify discount from pack/unit
+  const unifiedDiscount = Math.max(packItem?.discount || 0, unitItem?.discount || 0);
+  const item = { ...staleItem, ...freshBatch, discount: unifiedDiscount }; // Use unified discount for display
 
   const hasDualMode = item.unitsPerPack && item.unitsPerPack > 1;
 

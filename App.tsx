@@ -17,6 +17,7 @@ import { useAppState } from './hooks/useAppState';
 import { useAuth } from './hooks/useAuth';
 import { useNavigation } from './hooks/useNavigation';
 import { useEntityHandlers } from './hooks/useEntityHandlers';
+import { batchService } from './services/inventory/batchService';
 
 // --- Global Context Menu Wrapper ---
 const GlobalContextMenuWrapper: React.FC<{ 
@@ -130,6 +131,7 @@ const App: React.FC = () => {
     customers, setCustomers,
     setToast,
     currentEmployeeId,
+    employees,
     isLoading,
     getVerifiedDate,
     validateTransactionTime,
@@ -147,6 +149,16 @@ const App: React.FC = () => {
     document.documentElement.lang = language.toLowerCase();
     document.documentElement.dir = language === 'AR' ? 'rtl' : 'ltr';
   }, [language]);
+
+  // --- Inventory Migration to Batches ---
+  useEffect(() => {
+    if (!isLoading && inventory.length > 0) {
+      const count = batchService.migrateInventoryToBatches(inventory);
+      if (count > 0) {
+        console.log(`[Batch System] Migrated ${count} items to batches.`);
+      }
+    }
+  }, [isLoading, inventory]);
 
   // --- Auth Checking Loading State ---
   if (isAuthChecking) {

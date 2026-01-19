@@ -86,6 +86,7 @@ interface POSProps {
   employees?: Employee[];
   sales?: Sale[];
   onUpdateSale?: (saleId: string, updates: Partial<Sale>) => void;
+  currentEmployeeId?: string;
 }
 
 export const POS: React.FC<POSProps> = ({
@@ -99,6 +100,7 @@ export const POS: React.FC<POSProps> = ({
   employees = [],
   sales = [],
   onUpdateSale,
+  currentEmployeeId,
 }) => {
   const { showMenu } = useContextMenu();
   const { getVerifiedDate, addNotification } = useStatusBar();
@@ -476,7 +478,7 @@ export const POS: React.FC<POSProps> = ({
 
       return [
         ...prev,
-        { ...drug, quantity: initialQuantity, discount: 0, isUnit: isUnitMode },
+        { ...drug, quantity: initialQuantity, discount: prev.find(i => i.id === drug.id && !!i.isUnit !== isUnitMode)?.discount || 0, isUnit: isUnitMode },
       ];
     });
   };
@@ -2393,7 +2395,7 @@ export const POS: React.FC<POSProps> = ({
                      ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-700`
                      : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                  }`}>
-                   <span className="text-[8px] text-gray-500 uppercase font-bold text-center">{t.change || "Change"}</span>
+                   <span className="text-[8px] text-gray-500 uppercase font-bold text-center">{t.remainder || "Change"}</span>
                    <span className={`text-sm font-bold text-center tabular-nums ${
                      (parseFloat(amountPaid) || 0) >= cartTotal
                        ? `text-${color}-600 dark:text-${color}-400`
@@ -2587,6 +2589,7 @@ export const POS: React.FC<POSProps> = ({
           onClose={() => setShowDeliveryModal(false)}
           sales={sales}
           employees={employees}
+          inventory={inventory}
           onUpdateSale={(saleId, updates) => {
              if (onUpdateSale) {
                  onUpdateSale(saleId, updates);
@@ -2594,6 +2597,7 @@ export const POS: React.FC<POSProps> = ({
           }}
           color={color}
           t={t}
+          currentEmployeeId={currentEmployeeId}
         />
 
         {/* Close Main POS Content div */}

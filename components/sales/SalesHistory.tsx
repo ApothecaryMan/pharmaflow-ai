@@ -12,6 +12,7 @@ import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
 import { printInvoice, InvoiceTemplateOptions, defaultOptions } from './InvoiceTemplate';
+import { getDisplayName } from '../../utils/drugDisplayName';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -405,7 +406,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                                     </div>
                                                     <div className="min-w-0 flex-1">
                                                         <div className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate flex items-center gap-1">
-                                                            {item.name} {item.dosageForm ? `(${item.dosageForm})` : ''}
+                                                            {getDisplayName({ name: item.name, dosageForm: item.dosageForm })}
                                                             {item.isUnit && <span className="text-[8px] bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1 rounded font-bold">UNIT</span>}
                                                             {returnedQty > 0 && (
                                                                 <span className="text-[8px] bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300 px-1 rounded font-bold">
@@ -552,7 +553,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                               <div key={idx} className="flex justify-between items-center text-sm p-2 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                                   <div>
                                       <p className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1 item-name">
-                                        {item.name} {item.dosageForm ? `(${item.dosageForm})` : ''}
+                                        {getDisplayName({ name: item.name, dosageForm: item.dosageForm })}
                                         {item.isUnit && <span className="text-[9px] bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1 rounded font-bold">UNIT</span>}
                                       </p>
                                       <p className="text-xs text-gray-500">

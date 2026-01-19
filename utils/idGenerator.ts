@@ -26,6 +26,7 @@ export type EntityType =
   | 'shifts' 
   | 'transactions'
   | 'tabs'
+  | 'batch'
   | 'generic';
 
 // Sequence Map Interface

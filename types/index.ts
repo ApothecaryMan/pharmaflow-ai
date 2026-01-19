@@ -66,10 +66,51 @@ export interface Customer {
   vip?: boolean;
 }
 
+// Stock Batch System - tracks inventory by purchase batch with expiry dates
+export interface StockBatch {
+  id: string;
+  drugId: string;
+  quantity: number;           // Available quantity in this batch
+  expiryDate: string;         // ISO date string
+  costPrice: number;          // Cost per unit at time of purchase
+  purchaseId?: string;        // Reference to purchase order
+  dateReceived: string;       // When this batch was received
+  batchNumber?: string;       // Manufacturer batch number (optional)
+}
+
+// Tracks which batches were used for a sale item
+export interface BatchAllocation {
+  batchId: string;
+  quantity: number;
+  expiryDate: string;
+}
+
+// Order Modification Tracking
+export interface OrderModification {
+  type: 'quantity_update' | 'item_removed' | 'item_added' | 'discount_update';
+  itemId: string;
+  itemName: string;
+  dosageForm?: string;           // Dosage form for display (e.g., "Tablet", "Capsule")
+  previousQuantity?: number;
+  newQuantity?: number;          // 0 means item was deleted
+  stockReturned?: number;        // Units returned to inventory
+  stockDeducted?: number;        // Units deducted from inventory
+  previousDiscount?: number;     // For discount_update type
+  newDiscount?: number;          // For discount_update type
+}
+
+export interface OrderModificationRecord {
+  id: string;
+  timestamp: string;
+  modifiedBy?: string;
+  modifications: OrderModification[];
+}
+
 export interface CartItem extends Drug {
   quantity: number;
   discount?: number;
   isUnit?: boolean;
+  batchAllocations?: BatchAllocation[]; // Track which batches this quantity came from
 }
 
 export interface SaleTab {
@@ -131,6 +172,8 @@ export interface Sale {
   itemReturnedQuantities?: Record<string, number>; // drugId -> quantity returned
   status: 'completed' | 'cancelled' | 'pending' | 'with_delivery' | 'on_way';
   deliveryEmployeeId?: string;
+  // Order modification history (for delivery orders)
+  modificationHistory?: OrderModificationRecord[];
 }
 
 // Return/Refund System Types

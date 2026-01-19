@@ -182,7 +182,7 @@ export function SegmentedControl<T extends string | number | boolean>({
             )}
             {option.label}
             {option.count !== undefined && (
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] leading-none ${
+              <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold leading-none ${
                 isActive 
                   ? isPill 
                     ? 'bg-white/20 text-white' 
