@@ -1,5 +1,6 @@
 import React from 'react';
 import { StatusBarItem } from '../StatusBarItem';
+import packageJson from '../../../../package.json';
 
 interface VersionInfoProps {
   version?: string;
@@ -8,7 +9,7 @@ interface VersionInfoProps {
 }
 
 export const VersionInfo: React.FC<VersionInfoProps> = ({
-  version = 'v1.0.0',
+  version = `v${packageJson.version}`,
   onClick,
   tooltip,
 }) => {

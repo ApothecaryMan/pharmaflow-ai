@@ -13,6 +13,7 @@ import { useShift } from '../../../hooks/useShift';
 import { useDynamicTickerData } from '../../../hooks/useDynamicTickerData';
 import { useData } from '../../../services';
 import { useSettings } from '../../../context';
+import packageJson from '../../../package.json';
 
 export interface StatusBarTranslations {
   ready: string;
@@ -55,7 +56,7 @@ const defaultTranslations: StatusBarTranslations = {
   ready: 'Ready',
   online: 'Online',
   offline: 'Offline',
-  version: 'v1.0.0',
+  version: `v${packageJson.version}`,
   notifications: 'Notifications',
   noNotifications: 'No notifications',
   clearAll: 'Clear all',
