@@ -84,6 +84,7 @@ pharmaflow-ai/
 │   │   │   └── index.ts                 # Barrel export
 │   │   ├── sales/                       # Sales & POS Logic
 │   │   ├── inventory/                   # Stock & Product Logic
+│   │   │   └── batchService.ts          # FEFO batch stock management
 │   │   ├── hr/                          # Employee Management
 │   │   ├── finance/                     # Financial Transactions
 │   │   ├── customers/                   # Customer CRM
@@ -210,6 +211,9 @@ pharmaflow-ai/
 │   │   │   └── addTransactionToOpenShift()  # Update shift with transaction
 │   │   ├── loyaltyPoints.ts                 # Loyalty points calculator
 │   │   │   └── calculateLoyaltyPoints()     # Tiered points calculation
+│   │   ├── drugDisplayName.ts               # Drug name formatting utility
+│   │   │   ├── getDisplayName()             # Format drug name + dosage form
+│   │   │   └── getFullDisplayName()         # Include strength in display
 │   │   └── printing/                        # Print utilities
 │   │
 │   ├── data/
