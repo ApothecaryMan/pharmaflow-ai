@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { FilterDropdown } from '../common/FilterDropdown';
 import { generateInvoiceHTML, InvoiceTemplateOptions } from '../sales/InvoiceTemplate';
 import { Sale } from '../../types';
 import { useStatusBar } from '../layout/StatusBar';
@@ -261,7 +261,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                         ) : (
                              <>
                                  <div className="relative flex-1 h-10">
-                                     <ExpandingDropdown<SavedTemplate>
+                                     <FilterDropdown<SavedTemplate>
                                         items={templates}
                                         selectedItem={templates.find(t => t.id === activeTemplateId)}
                                         isOpen={isDropdownOpen}

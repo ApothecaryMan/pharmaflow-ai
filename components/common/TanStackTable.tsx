@@ -10,8 +10,19 @@ import {
   SortingState,
   FilterFn,
   VisibilityState,
-  ColumnSizingState
+  ColumnSizingState,
+  RowData
 } from '@tanstack/react-table';
+
+declare module '@tanstack/react-table' {
+    interface ColumnMeta<TData extends RowData, TValue> {
+        align?: 'left' | 'right' | 'center' | 'start' | 'end';
+        width?: number;
+        minWidth?: number;
+        flex?: boolean;
+        dir?: 'ltr' | 'rtl';
+    }
+}
 import { SearchInput } from './SearchInput';
 import { useContextMenu, ContextMenuTrigger } from './ContextMenu';
 import { useLongPress } from '../../hooks/useLongPress';
@@ -48,24 +59,28 @@ interface TanStackTableProps<TData, TValue> {
   /**
    * Default alignment for specific columns (Header & Content).
    * 
-   * Usage:
-   * Pass an object mapping column IDs to alignment values ('left', 'center', 'right').
-   * This sets the *initial* alignment for BOTH the Header and the Cell content.
+   * IMPORTANT:
+   * 1. Physical Directions: 'left' and 'right' are absolute (regardless of RTL).
+   * 2. Flex Alignment Rule: If your custom `cell` uses `flex`, it will ignore `text-align`. 
+   *    You MUST add `w-full` and `justify-[start|center|end]` to the flex container.
    * 
    * @example
-   * defaultColumnAlignment={{ 
-   *   name: 'left',   // Force Name column to be physical Left
-   *   price: 'right', // Force Price column to be physical Right
-   *   status: 'center' 
-   * }}
-   * 
-   * Note: Directions are absolute (Physical). 
-   * 'left' = Left side of screen, 'right' = Right side of screen, regardless of Language/RTL.
+   * // Inside columns definition:
+   * cell: info => <div className="flex w-full justify-end">...</div>
    */
   defaultColumnAlignment?: Record<string, 'left' | 'center' | 'right'>;
   globalFilter?: string; // External global filter value
+  onSearchChange?: (value: string) => void;
+  manualFiltering?: boolean; // If true, disables client-side filtering (useful when passing pre-filtered data)
   enableSearch?: boolean; // Whether to show the internal search input
   customEmptyState?: React.ReactNode;
+  /**
+   * If true, renders a simplified version of the table:
+   * - No outer border/shadow
+   * - Transparent background
+   * - No top toolbar by default
+   */
+  lite?: boolean;
 }
 
 // Helper to get stored settings
@@ -76,6 +91,24 @@ const getStoredSettings = (tableId: string) => {
   } catch {
     return null;
   }
+};
+
+// Heuristic for smart alignment
+const getSmartAlignment = (columnId: string): 'left' | 'right' | 'center' => {
+    const id = columnId.toLowerCase();
+    
+    // Numeric / Financial fields -> Right
+    if (['price', 'cost', 'revenue', 'profit', 'margin', 'qty', 'quantity', 'count', 'amount', 'total', 'balance', 'distribution'].some(key => id.includes(key))) {
+        return 'right';
+    }
+    
+    // Status / Actions -> Center
+    if (['status', 'active', 'is_', 'has_', 'action', 'check'].some(key => id.includes(key))) {
+        return 'center';
+    }
+    
+    // Default -> Left
+    return 'left';
 };
 
 export function TanStackTable<TData, TValue>({
@@ -91,9 +124,12 @@ export function TanStackTable<TData, TValue>({
   color = 'blue',
   defaultHiddenColumns = [],
   activeIndex,
-  enableTopToolbar = true,
+  lite = false,
+  enableTopToolbar = !lite,
   defaultColumnAlignment = EMPTY_ALIGNMENT,
   globalFilter: externalGlobalFilter,
+  onSearchChange,
+  manualFiltering = false,
   enableSearch = true,
   customEmptyState,
 }: TanStackTableProps<TData, TValue> & { enableTopToolbar?: boolean }) {
@@ -132,6 +168,9 @@ export function TanStackTable<TData, TValue>({
   
   const globalFilter = externalGlobalFilter !== undefined ? externalGlobalFilter : internalGlobalFilter;
   const setGlobalFilter = (val: string) => {
+      if (onSearchChange) {
+          onSearchChange(val);
+      }
       if (externalGlobalFilter === undefined) {
           setInternalGlobalFilter(val);
       }
@@ -140,13 +179,9 @@ export function TanStackTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(storedSettings?.columnVisibility || defaultVisibility);
   
   // Initialize alignment with defaults merged with stored settings
-  const [headerAlignment, setHeaderAlignment] = useState<Record<string, 'left' | 'center' | 'right'>>({
+  const [columnAlignment, setColumnAlignment] = useState<Record<string, 'left' | 'center' | 'right'>>({
     ...defaultColumnAlignment,
-    ...(storedSettings?.headerAlignment || {})
-  });
-  const [contentAlignment, setContentAlignment] = useState<Record<string, 'left' | 'center' | 'right'>>({
-    ...defaultColumnAlignment,
-    ...(storedSettings?.contentAlignment || {})
+    ...(storedSettings?.columnAlignment || {})
   });
   
   // Helper to extract only the overrides (values different from defaults)
@@ -165,13 +200,11 @@ export function TanStackTable<TData, TValue>({
 
   const persistSettings = React.useCallback((
     newColVis: VisibilityState,
-    newHeaderAlign: Record<string, 'left' | 'center' | 'right'>,
-    newContentAlign: Record<string, 'left' | 'center' | 'right'>
+    newAlign: Record<string, 'left' | 'center' | 'right'>
   ) => {
     const settings = {
       columnVisibility: newColVis,
-      headerAlignment: getDiff(newHeaderAlign, defaultColumnAlignment),
-      contentAlignment: getDiff(newContentAlign, defaultColumnAlignment),
+      columnAlignment: getDiff(newAlign, defaultColumnAlignment),
     };
     localStorage.setItem(`table-settings-${tableId}`, JSON.stringify(settings));
   }, [tableId, defaultColumnAlignment, getDiff]);
@@ -180,15 +213,11 @@ export function TanStackTable<TData, TValue>({
   React.useEffect(() => {
      const stored = getStoredSettings(tableId);
      
-     // Re-initialize state by merging new defaults with stored overrides
-     setHeaderAlignment({
-         ...defaultColumnAlignment,
-         ...(stored?.headerAlignment || {})
-     });
-     setContentAlignment({
-         ...defaultColumnAlignment,
-         ...(stored?.contentAlignment || {})
-     });
+      // Re-initialize state by merging new defaults with stored overrides
+      setColumnAlignment({
+          ...defaultColumnAlignment,
+          ...(stored?.columnAlignment || {})
+      });
   }, [defaultColumnAlignment, tableId]);
   
   const { showMenu } = useContextMenu();
@@ -199,10 +228,10 @@ export function TanStackTable<TData, TValue>({
   const handleColumnVisibilityChange = React.useCallback((updaterOrValue: any) => {
      setColumnVisibility(old => {
         const newVal = typeof updaterOrValue === 'function' ? updaterOrValue(old) : updaterOrValue;
-        persistSettings(newVal, headerAlignment, contentAlignment);
+        persistSettings(newVal, columnAlignment);
         return newVal;
      });
-  }, [persistSettings, headerAlignment, contentAlignment]);
+  }, [persistSettings, columnAlignment]);
 
   const table = useReactTable({
     data,
@@ -220,6 +249,7 @@ export function TanStackTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     globalFilterFn: fuzzyFilter,
     enableSorting: true,
+    manualFiltering, // Enable manual filtering if prop is true
   });
 
   /* State specific for Context Menu tracking to enable live updates */
@@ -227,45 +257,27 @@ export function TanStackTable<TData, TValue>({
 
   const getMenuContent = (
     columnId?: string,
-    overrideHeaderAlign?: Record<string, 'left' | 'center' | 'right'>,
-    overrideContentAlign?: Record<string, 'left' | 'center' | 'right'>
+    overrideAlign?: Record<string, 'left' | 'center' | 'right'>
   ) => {
       const column = columnId ? table.getColumn(columnId) : null;
       
       // Use override values if provided, otherwise fall back to state
-      const effectiveHeaderAlign = overrideHeaderAlign ?? headerAlignment;
-      const effectiveContentAlign = overrideContentAlign ?? contentAlignment;
+      const effectiveAlign = overrideAlign ?? columnAlignment;
       
-      const currentHeaderAlign = columnId ? (effectiveHeaderAlign[columnId] || 'left') : 'left';
-      const currentContentAlign = columnId ? (effectiveContentAlign[columnId] || 'left') : 'left';
+      const currentAlign = columnId ? (effectiveAlign[columnId] || 'left') : 'left';
 
       // Handlers (re-create handlers that use the state/props)
-      const handleHeaderAlign = (align: 'left' | 'center' | 'right') => {
+      const handleAlign = (align: 'left' | 'center' | 'right') => {
         if (!columnId) return;
-        const newHeaderAlign = { ...headerAlignment, [columnId]: align };
-        setHeaderAlignment(newHeaderAlign);
-        persistSettings(columnVisibility, newHeaderAlign, contentAlignment);
+        const newAlign = { ...columnAlignment, [columnId]: align };
+        setColumnAlignment(newAlign);
+        persistSettings(columnVisibility, newAlign);
         
         if (menuPosRef.current) {
           showMenu(
             menuPosRef.current.x,
             menuPosRef.current.y,
-            getMenuContent(columnId, newHeaderAlign, undefined)
-          );
-        }
-      };
-
-      const handleContentAlign = (align: 'left' | 'center' | 'right') => {
-        if (!columnId) return;
-        const newContentAlign = { ...contentAlignment, [columnId]: align };
-        setContentAlignment(newContentAlign);
-        persistSettings(columnVisibility, headerAlignment, newContentAlign);
-
-        if (menuPosRef.current) {
-          showMenu(
-            menuPosRef.current.x,
-            menuPosRef.current.y,
-            getMenuContent(columnId, undefined, newContentAlign)
+            getMenuContent(columnId, newAlign)
           );
         }
       };
@@ -315,40 +327,7 @@ export function TanStackTable<TData, TValue>({
         <div className="w-[220px] p-1 font-sans">
           
           {/* Sorting Controls - Only show for specific column */}
-          {column && (
-            <>
-              <div className="space-y-1 mb-3 px-1">
-                <div className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-2 px-1">
-                  Sort
-                </div>
-                <div className="flex gap-2">
-                  <div
-                    className={`flex-1 flex items-center justify-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all border group ${
-                      isSorted === 'asc' 
-                        ? 'bg-transparent border-blue-500 text-blue-600 dark:text-blue-400 font-bold shadow-sm' 
-                        : 'bg-transparent border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-600 dark:hover:text-gray-300'
-                    }`}
-                    onClick={handleSortAsc}
-                    title={t.global.actions.asc}
-                  >
-                    <span className="material-symbols-rounded text-[20px]">arrow_upward</span>
-                  </div>
-                  <div
-                    className={`flex-1 flex items-center justify-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all border group ${
-                      isSorted === 'desc' 
-                        ? 'bg-transparent border-blue-500 text-blue-600 dark:text-blue-400 font-bold shadow-sm' 
-                        : 'bg-transparent border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-600 dark:hover:text-gray-300'
-                    }`}
-                    onClick={handleSortDesc}
-                    title={t.global.actions.desc}
-                  >
-                    <span className="material-symbols-rounded text-[20px]">arrow_downward</span>
-                  </div>
-                </div>
-              </div>
-              <div className="h-px bg-gray-100 dark:bg-[#333] mb-3 mx-1" />
-            </>
-          )}
+
 
 
           {/* All Columns Visibility */}
@@ -402,30 +381,17 @@ export function TanStackTable<TData, TValue>({
           {/* Alignment Controls Container */}
           <div className="space-y-3 px-1">
             
-            {/* Header Alignment */}
+            {/* Unified Alignment */}
             <div className="flex items-center justify-between">
               <div 
                 className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700"
                 dir="ltr"
               >
-                <AlignButton align="left" isActive={currentHeaderAlign === 'left'} onClick={() => handleHeaderAlign('left')} />
-                <AlignButton align="center" isActive={currentHeaderAlign === 'center'} onClick={() => handleHeaderAlign('center')} />
-                <AlignButton align="right" isActive={currentHeaderAlign === 'right'} onClick={() => handleHeaderAlign('right')} />
+                <AlignButton align="left" isActive={currentAlign === 'left'} onClick={() => handleAlign('left')} />
+                <AlignButton align="center" isActive={currentAlign === 'center'} onClick={() => handleAlign('center')} />
+                <AlignButton align="right" isActive={currentAlign === 'right'} onClick={() => handleAlign('right')} />
               </div>
-              <span className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase ml-3">Header</span>
-            </div>
-
-            {/* Content Alignment */}
-            <div className="flex items-center justify-between">
-              <div 
-                className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700"
-                dir="ltr"
-              >
-                <AlignButton align="left" isActive={currentContentAlign === 'left'} onClick={() => handleContentAlign('left')} />
-                <AlignButton align="center" isActive={currentContentAlign === 'center'} onClick={() => handleContentAlign('center')} />
-                <AlignButton align="right" isActive={currentContentAlign === 'right'} onClick={() => handleContentAlign('right')} />
-              </div>
-              <span className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase ml-3">Content</span>
+              <span className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase ml-3">Alignment</span>
             </div>
 
           </div>
@@ -471,7 +437,11 @@ export function TanStackTable<TData, TValue>({
       {/* Table Container - Modified to support context menu on empty state */}
       {/* Table Container - Modified to support context menu on empty state */}
       <div 
-         className="flex-1 overflow-auto rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900 custom-scrollbar relative"
+         className={`flex-1 overflow-auto custom-scrollbar relative
+            ${lite 
+                ? 'bg-transparent' 
+                : 'rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900'
+            }`}
       >
         {table.getVisibleLeafColumns().length === 0 ? (
            <ContextMenuTrigger className="h-full w-full" onOpen={(x, y) => onContextMenuOpen(x, y)}>
@@ -484,21 +454,39 @@ export function TanStackTable<TData, TValue>({
            </div>
            </ContextMenuTrigger>
         ) : (
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-left border-separate border-spacing-0">
           <thead 
-            className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10"
+            className="sticky top-0 z-10 bg-white dark:bg-gray-900"
           >
             {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id} className="border-b border-gray-200 dark:border-gray-800">
+              <tr key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
-                const align = headerAlignment[header.column.id] || 'left';
-                  const justifyClass = getHeaderJustifyClass(align, isRtl);
+
+// ... inside TanStackTable ...
+
+                  const align = 
+                      header.column.columnDef.meta?.align || 
+                      columnAlignment[header.column.id] || 
+                      (lite ? getSmartAlignment(header.column.id) : null) ||
+                      'left';
+
+                  const textAlignClass = align === 'center' ? 'text-center' :
+                                       align === 'end' ? 'text-end' :
+                                       align === 'start' ? 'text-start' :
+                                       align === 'right' ? 'text-right' :
+                                       align === 'left' ? 'text-left' :
+                                       'text-start';
                   
                   return (
                   <th
                     key={header.id}
-                    style={{ width: header.getSize() }}
-                    className="p-0 text-xs font-semibold text-gray-500 uppercase tracking-wider select-none relative group"
+                    className={`p-0 text-xs font-semibold text-gray-500 uppercase tracking-wider select-none relative group border-b ${lite ? 'border-gray-200 dark:border-gray-700' : 'border-gray-200 dark:border-gray-800'}
+                        ${textAlignClass}
+                        ${header.column.columnDef.meta?.flex ? '' : 'w-[1%] whitespace-nowrap'}`}
+                    style={{
+                         width: header.column.columnDef.meta?.flex ? 'auto' : header.column.columnDef.meta?.width,
+                         minWidth: header.column.columnDef.meta?.minWidth
+                    }}
                   >
                     <ContextMenuTrigger 
                         className="py-3 px-4 w-full h-full block"
@@ -506,13 +494,27 @@ export function TanStackTable<TData, TValue>({
                     >
                     {header.isPlaceholder ? null : (
                       <div
-                        className={`flex items-center hover:text-gray-700 dark:hover:text-gray-300 ${justifyClass}`}
+                        className={`relative inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 ${align === 'center' ? 'mx-auto' : ''}`}
+                        onClick={header.column.getToggleSortingHandler()}
                       >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                        {/* Sort Icon Removed */}
+                         {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                         )}
+                         
+                         {/* Absolute Sort Indicators */}
+                         <span className={`absolute top-1/2 -translate-y-1/2 flex items-center
+                            ${align === 'left' ? 'left-full pl-1' :
+                              align === 'right' ? 'right-full pr-1 opacity-100' :
+                              isRtl && align === 'start' ? 'right-full pr-1' :
+                              !isRtl && align === 'start' ? 'left-full pl-1' :
+                              'left-full pl-1'}
+                         `}>
+                            {{
+                                asc: <span className="material-symbols-rounded text-xl leading-none text-current opacity-70">arrow_drop_up</span>,
+                                desc: <span className="material-symbols-rounded text-xl leading-none text-current opacity-70">arrow_drop_down</span>,
+                            }[header.column.getIsSorted() as string] ?? null}
+                         </span>
                       </div>
                     )}
                     </ContextMenuTrigger>
@@ -521,7 +523,7 @@ export function TanStackTable<TData, TValue>({
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+          <tbody className="">
             {isLoading ? (
                <tr>
                  <td colSpan={columns.length} className="h-32 text-center">
@@ -556,15 +558,29 @@ export function TanStackTable<TData, TValue>({
                     }`}
                   >
                     {row.getVisibleCells().map(cell => {
-                      const align = contentAlignment[cell.column.id] || 'left';
-                      const textAlignClass = getTextAlignClass(align);
+                      const align = 
+                          cell.column.columnDef.meta?.align || 
+                          columnAlignment[cell.column.id] || 
+                          (lite ? getSmartAlignment(cell.column.id) : null) ||
+                          'left';
+                      const justifyClass = align === 'center' ? 'justify-center text-center' :
+                                           align === 'end' || align === 'right' ? 'justify-end text-right' :
+                                           'justify-start text-left';
+                      
                       return (
                         <td 
                           key={cell.id} 
-                          style={{ width: cell.column.getSize() }}
-                          className={`py-2 px-4 text-sm text-gray-700 dark:text-gray-300 whitespace-normal overflow-visible align-middle ${textAlignClass}`}
+                          className={`py-2 px-4 text-sm text-gray-700 dark:text-gray-300 align-middle border-b border-gray-100 dark:border-gray-800
+                            ${cell.column.columnDef.meta?.flex ? '' : 'whitespace-nowrap'}`}
+                          style={{
+                                width: cell.column.columnDef.meta?.flex ? 'auto' : cell.column.columnDef.meta?.width,
+                                minWidth: cell.column.columnDef.meta?.minWidth
+                           }}
+                           dir={cell.column.columnDef.meta?.dir}
                         >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          <div className={`flex items-center w-full ${justifyClass}`}>
+                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </div>
                         </td>
                       );
                     })}

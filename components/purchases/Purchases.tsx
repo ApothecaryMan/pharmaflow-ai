@@ -1,10 +1,10 @@
-﻿import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { Drug, Supplier, Purchase, PurchaseItem, PurchaseReturn } from '../../types';
 import { formatStock } from '../../utils/inventory';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
-import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { FilterDropdown } from '../common/FilterDropdown';
 import { DatePicker } from '../common/DatePicker';
 import { useSmartDirection, DrugSearchInput } from '../common/SmartInputs';
 import { usePosSounds } from '../common/hooks/usePosSounds';
@@ -940,7 +940,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                   {mode === 'history' && (
                       <>
                           <span className="text-gray-300 text-2xl font-light">|</span>
-                          <ExpandingDropdown
+                          <FilterDropdown
                               items={[
                                   { id: 'all', label: t.status?.all || 'All Status' },
                                   { id: 'pending', label: t.status?.pending || 'Pending' },
@@ -1061,7 +1061,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                 <div className={`${CARD_BASE} p-4 rounded-3xl flex flex-col xl:flex-row gap-4 items-end flex-shrink-0`}>
                         {/* Drug Search & Filter */}
                         <div className="flex-[1.5] w-full flex gap-2">
-                             <ExpandingDropdown
+                             <FilterDropdown
                                  items={filterOptions}
                                  selectedItem={filterOptions.find(o => o.id === filter)}
                                  isOpen={isFilterOpen}
@@ -1543,7 +1543,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                             />
                                         </div>
 
-                                        {/* 7. Subtotal (Cost Ã— Qty) - Read Only */}
+                                        {/* 7. Subtotal (Cost × Qty) - Read Only */}
                                         <div className="w-16">
                                             <FloatingInput
                                                 label={t.cartFields?.subtotal || 'Subtotal'}
@@ -1764,7 +1764,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                 zIndex={50}
                 title={t.detailsModal?.title || 'Purchase Order Details'}
                 icon="receipt_long"
-                subtitle={`${selectedPurchase.invoiceId} â€¢ ${new Date(selectedPurchase.date).toLocaleDateString()} ${formatTime(new Date(selectedPurchase.date))}`}
+                subtitle={`${selectedPurchase.invoiceId} • ${new Date(selectedPurchase.date).toLocaleDateString()} ${formatTime(new Date(selectedPurchase.date))}`}
             >
                     {/* Info Bar */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-2 bg-white dark:bg-gray-900 text-sm mb-4">
@@ -1849,7 +1849,7 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                                                 <p key={ridx} className="text-[10px] text-orange-600 dark:text-orange-400 flex items-center gap-1">
                                                                     <span className="material-symbols-rounded text-[12px]">assignment_return</span>
                                                                     {ret.quantityReturned} {t.detailsModal?.returnedLabel || 'returned'} - {ret.reason} ({ret.condition})
-                                                                    {returnRecord && <span className="text-gray-500">â€¢ {new Date(returnRecord.date).toLocaleDateString()}</span>}
+                                                                    {returnRecord && <span className="text-gray-500">• {new Date(returnRecord.date).toLocaleDateString()}</span>}
                                                                 </p>
                                                             );
                                                         })}

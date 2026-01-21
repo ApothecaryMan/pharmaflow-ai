@@ -6,7 +6,7 @@ import { DataTable, Column } from '../common/DataTable';
 import { GOVERNORATES, CITIES, AREAS, getLocationName } from '../../data/locations';
 import { useSmartDirection, SmartPhoneInput, SmartEmailInput } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
-import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { FilterDropdown } from '../common/FilterDropdown';
 import { COUNTRY_CODES } from '../../data/countryCodes';
 import { useLongPress } from '../../hooks/useLongPress';
 import { Modal } from '../common/Modal';
@@ -475,7 +475,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             {/* Governorate */}
             <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">{t.modal.governorate}</label>
-                <ExpandingDropdown
+                <FilterDropdown
                     variant="input"
                     items={GOVERNORATES}
                     selectedItem={GOVERNORATES.find(g => g.id === formData.governorate)}
@@ -501,7 +501,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             {/* City */}
             <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">{t.modal.city}</label>
-                <ExpandingDropdown
+                <FilterDropdown
                     variant="input"
                     items={availableCities}
                     selectedItem={availableCities.find(c => c.id === formData.city)}
@@ -528,7 +528,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             {/* Area */}
             <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">{t.modal.area}</label>
-                <ExpandingDropdown
+                <FilterDropdown
                     variant="input"
                     items={availableAreas}
                     selectedItem={availableAreas.find(a => a.id === formData.area)}
@@ -917,7 +917,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       <div className="space-y-4">
                           <div>
                             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.contact}</label>
-                            <ExpandingDropdown
+                            <FilterDropdown
                                 variant="input"
                                 items={CONTACT_OPTIONS}
                                 selectedItem={CONTACT_OPTIONS.find(o => o.id === (formData.preferredContact || 'phone'))}
@@ -1085,7 +1085,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               <div className="grid grid-cols-2 gap-4">
                  <div>
                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.contact}</label>
-                     <ExpandingDropdown
+                     <FilterDropdown
                         variant="input"
                         items={CONTACT_OPTIONS}
                         selectedItem={CONTACT_OPTIONS.find(o => o.id === (formData.preferredContact || 'phone'))}

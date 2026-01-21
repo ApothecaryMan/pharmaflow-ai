@@ -5,7 +5,7 @@ import { TanStackTable } from '../common/TanStackTable';
 import { createColumnHelper } from '@tanstack/react-table';
 import { Sale, Employee, Language, CartItem, Drug, OrderModificationRecord } from '../../types';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { FilterDropdown } from '../common/FilterDropdown';
 import { formatCurrency } from '../../utils/currency';
 import { SearchInput } from '../common/SearchInput';
 import { batchService } from '../../services/inventory/batchService';
@@ -29,7 +29,7 @@ const DriverSelect = ({
 
   return (
     <div className="relative w-full h-10">
-       <ExpandingDropdown
+       <FilterDropdown
           items={drivers}
           selectedItem={selected}
           isOpen={isOpen}
@@ -427,7 +427,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
   const columns = useMemo(() => [
     // Order daily number (ID)
-    columnHelper.accessor('dailyOrderNumber', {
+    columnHelper.accessor('customerCode', {
       header: 'ID',
       size: 60,
       cell: info => {
@@ -435,7 +435,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         return (
             <div className="inline-flex items-center gap-1">
                 <span className={`font-mono font-bold ${hasHistory ? 'text-orange-600 dark:text-orange-400' : ''}`}>
-                    {info.getValue()}
+                    {info.getValue() || '-'}
                 </span>
                 {hasHistory && (
                     <span className="material-symbols-rounded text-[14px] text-orange-500 animate-pulse" title={t.modifications || 'Modified'}>
@@ -568,6 +568,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       id: 'actions',
       header: '',
       size: 220,
+      meta: {
+        align: 'right'
+      },
       cell: info => {
         const s = info.row.original;
         
@@ -695,7 +698,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                          </button>
                          <div className="flex flex-col gap-1">
                              <div className="flex items-center gap-2 flex-wrap">
-                                 <span className="text-2xl font-bold font-mono">#{selectedSale.dailyOrderNumber}</span>
+                                 <span className="text-2xl font-bold font-mono">#{selectedSale.customerCode || '-'}</span>
                                  <div className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide border ${
                                      selectedSale.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-900/50' :
                                      selectedSale.status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-900/50' :
@@ -1187,7 +1190,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
              </div>
          ) : (
              /* Table View */
-             <div className="flex-1 overflow-hidden border rounded-xl border-gray-200 dark:border-gray-800">
+             <div className="flex-1 overflow-hidden">
                 <TanStackTable
                    data={filteredSales}
                    columns={columns}
@@ -1197,6 +1200,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                    searchPlaceholder={t.searchOrder || "Search orders..."}
                    emptyMessage={t.noOrders || "No delivery orders found"}
                    onRowClick={(row) => setSelectedSaleId(row.id)}
+                   lite={true}
                 />
              </div>
          )}

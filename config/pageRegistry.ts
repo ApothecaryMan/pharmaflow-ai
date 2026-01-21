@@ -28,6 +28,7 @@ import { ModalTests } from '../components/test/ModalTests';
 import { EmployeeList } from '../components/hr/EmployeeList';
 import { EmployeeProfile } from '../components/hr/EmployeeProfile';
 import { Login } from '../components/auth/Login';
+import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
 
 
 export interface PageConfig {
@@ -310,6 +311,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'lock',
     category: 'system',
     requiredProps: ['color', 't', 'language', 'onViewChange', 'onLoginSuccess']
+  },
+  'intelligence': {
+    id: 'intelligence',
+    component: IntelligenceDashboard,
+    menuLabel: 'Business Intelligence',
+    menuLabelAr: 'ذكاء الأعمال',
+    icon: 'auto_graph',
+    category: 'reports',
+    requiredProps: ['color', 't', 'language']
   },
 };
 

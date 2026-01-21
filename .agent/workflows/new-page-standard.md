@@ -19,7 +19,7 @@ You **MUST** use the following components. Do not build custom alternatives.
 | :---------------- | :-------------------------- | :---------------------------------------- |
 | **Layout**        | `Navbar`, `Sidebar`         | `components/layout/`                      |
 | **Inputs**        | `SmartInput`, `SearchInput` | `components/common/`                      |
-| **Dropdowns**     | `ExpandingDropdown`         | `components/common/ExpandingDropdown.tsx` |
+| **Dropdowns**     | `FilterDropdown`         | `components/common/FilterDropdown.tsx` |
 | **Tabs/Segments** | `SegmentedControl`          | `components/common/SegmentedControl.tsx`  |
 | **Tables**        | `TanStackTable`             | `components/common/TanStackTable.tsx`     |
 | **Modals**        | `Modal`                     | `components/common/Modal.tsx`             |

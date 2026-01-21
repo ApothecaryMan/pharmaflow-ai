@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-// ExpandingDropdown Component
-import { useExpandingDropdown } from '../../hooks/useExpandingDropdown';
+// FilterDropdown Component
+import { useFilterDropdown } from '../../hooks/useFilterDropdown';
 
-export interface ExpandingDropdownProps<T> {
+export interface FilterDropdownProps<T> {
     items: T[];
     selectedItem: T | undefined;
-    isOpen: boolean;
-    onToggle: () => void;
+    isOpen?: boolean;
+    onToggle?: () => void;
     onSelect: (item: T) => void;
     renderItem: (item: T, isSelected: boolean) => React.ReactNode;
     renderSelected: (item: T | undefined) => React.ReactNode;
@@ -22,31 +22,25 @@ export interface ExpandingDropdownProps<T> {
     centered?: boolean;
     rounded?: 'xl' | 'full';
     zIndexHigh?: string;
+    /** 
+     * When true, wraps the dropdown in a fixed-height container with absolute positioning.
+     * This makes it float over content instead of pushing sibling elements down.
+     * Useful for toolbars and filter bars.
+     */
+    floating?: boolean;
 }
 
 /**
- * ExpandingDropdown - A generic dropdown component.
+ * FilterDropdown - A generic dropdown/combobox component.
  * 
  * @warning **LAYOUT BEHAVIOR NOTICE**
  * This component defaults to an **Accordion-style expansion**, meaning it naturally pushes sibling content down when opened.
+ * Use `floating={true}` prop to make it float over content instead.
  * 
- * **How to use for Floating/Overlay behavior (Standard Select):**
- * To make it float *over* content without pushing lines down:
- * 1. Wrap it in a relative container with fixed dimensions (e.g., `h-10 w-full`).
- * 2. Position the `ExpandingDropdown` itself as absolute.
- * 
- * @example
- * // Floating implementation
- * <div className="relative flex-1 h-10">
- *   <ExpandingDropdown 
- *      className="absolute top-0 left-0 w-full z-50" 
- *      ...props 
- *   />
- * </div>
- * 
- * @param {boolean} minHeight - Use minHeight={38} for standard 40px input alignment (approx 40px with borders).
+ * @param {boolean} floating - Set to true to make dropdown float over content.
+ * @param {boolean} minHeight - Use minHeight={38} for standard 40px input alignment.
  */
-export function ExpandingDropdown<T>({
+export function FilterDropdown<T>({
 
     items,
     selectedItem,
@@ -66,29 +60,13 @@ export function ExpandingDropdown<T>({
     disabled = false,
     centered = false,
     rounded = 'xl',
-    zIndexHigh = 'z-50'
-}: ExpandingDropdownProps<T>) {
+    zIndexHigh = 'z-40',
+    floating = false
+}: FilterDropdownProps<T>) {
     
     const containerRef = useRef<HTMLDivElement>(null);
     const [isAnimating, setIsAnimating] = useState(false);
     const isClickingRef = useRef(false);
-
-    // Sync isAnimating with isOpen but with a delay on close
-    useEffect(() => {
-        if (isOpen) {
-            setIsAnimating(true);
-        } else {
-            const timer = setTimeout(() => setIsAnimating(false), 300); // Slightly longer than 200ms transition
-            return () => clearTimeout(timer);
-        }
-    }, [isOpen]);
-
-    const handleFocus = (e: React.FocusEvent) => {
-        // Only open on focus if NOT clicking (keyboard navigation)
-        if (!isClickingRef.current && !isOpen && !disabled) {
-            onToggle();
-        }
-    };
 
     const handleMouseDown = () => {
         isClickingRef.current = true;
@@ -96,60 +74,103 @@ export function ExpandingDropdown<T>({
         setTimeout(() => { isClickingRef.current = false; }, 200);
     };
     
-    const { handleKeyDown, handleBlur, handleClick, handleOptionClick } = useExpandingDropdown({
-        items,
-        selectedItem,
-        isOpen,
-        onToggle,
-        onSelect,
-        keyExtractor,
-        onEnter
-    });
-
-    // Click outside to close
+    // State for uncontrolled mode
+    const [internalIsOpen, setInternalIsOpen] = useState(false);
+    
+    // Determine controlled vs uncontrolled state
+    const isControlled = isOpen !== undefined && onToggle !== undefined;
+    const effectiveIsOpen = isControlled ? isOpen : internalIsOpen;
+    const handleToggle = isControlled ? onToggle : () => setInternalIsOpen(prev => !prev);
+    
+    // Sync isAnimating with effectiveIsOpen
     useEffect(() => {
-        if (!isOpen) return;
+        if (effectiveIsOpen) {
+            setIsAnimating(true);
+        } else {
+            const timer = setTimeout(() => setIsAnimating(false), 300);
+            return () => clearTimeout(timer);
+        }
+    }, [effectiveIsOpen]);
+
+    const handleFocus = (e: React.FocusEvent) => {
+        if (!isClickingRef.current && !effectiveIsOpen && !disabled) {
+            handleToggle();
+        }
+    };
+    
+    // Click outside handler
+    useEffect(() => {
+        if (!effectiveIsOpen) return;
         
         const handleClickOutside = (event: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                onToggle();
+                if (isControlled) {
+                    onToggle(); // Call parent's toggle
+                } else {
+                    setInternalIsOpen(false);
+                }
             }
         };
         
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [isOpen, onToggle]);
+    }, [effectiveIsOpen, isControlled, onToggle]);
+
+    const { handleKeyDown, handleBlur, handleClick, handleOptionClick } = useFilterDropdown({
+        items,
+        selectedItem,
+        isOpen: effectiveIsOpen,
+        onToggle: handleToggle,
+        onSelect: (item) => {
+             onSelect(item);
+             if (!isControlled) setInternalIsOpen(false);
+        },
+        keyExtractor,
+        onEnter
+    });
 
     const isSingle = items.length <= 1;
     const isTransparent = transparentIfSingle && isSingle;
     const isInput = variant === 'input';
 
-    // 🔥 الحل: padding موحد لكل الحالات
+    // Padding settings
     const itemPaddingClasses = 'px-3 py-1';
 
-    return (
-        <div ref={containerRef} className={`relative inline-block ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} style={style}>
-             <div 
-                tabIndex={disabled ? -1 : 0}
-                onKeyDown={disabled ? undefined : handleKeyDown}
-                onBlur={handleBlur}
-                onFocus={handleFocus}
-                onMouseDown={handleMouseDown}
-                className={`relative w-full flex flex-col overflow-hidden border transition-all outline-none
+    // Floating styles
+    const outerClasses = floating 
+        ? `relative inline-block ${className}` 
+        : `relative inline-block ${className}`;
+        
+    const outerStyle = floating && minHeight 
+        ? { ...style, height: minHeight, minHeight } 
+        : style;
+
+    const innerClasses = `relative w-full flex flex-col overflow-hidden border transition-all outline-none
                     ${rounded === 'full' ? 'rounded-[20px]' : 'rounded-xl'}
                     ${disabled ? 'cursor-not-allowed bg-gray-100 dark:bg-gray-800' : 'cursor-pointer'}
-                    ${(isOpen || isAnimating)
+                    ${(effectiveIsOpen || isAnimating)
                         ? (isInput ? `${zIndexHigh}` : `${zIndexHigh}`) 
                         : 'z-0'}
-                    ${isOpen 
+                    ${effectiveIsOpen 
                         ? 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700' 
                         : (isInput 
                             ? (disabled ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600')
                             : (isTransparent ? 'bg-transparent border-transparent' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700')
                           )
                     }
-                `}
-                style={isOpen ? { borderColor: `var(--color-${color}-500)` } : {}}
+                    ${floating ? 'absolute top-0 left-0 hover:z-[60]' : ''}
+                `;
+
+    return (
+        <div ref={containerRef} className={outerClasses} style={outerStyle}>
+             <div 
+                tabIndex={disabled ? -1 : 0}
+                onKeyDown={disabled ? undefined : handleKeyDown}
+                onBlur={handleBlur}
+                onFocus={handleFocus}
+                onMouseDown={handleMouseDown}
+                className={innerClasses}
+                style={effectiveIsOpen ? { borderColor: `var(--color-${color}-500)` } : {}}
                 onClick={disabled ? undefined : handleClick}
             >
                 {/* Trigger Area - العنصر المحدد */}
@@ -176,33 +197,33 @@ export function ExpandingDropdown<T>({
                     className="w-full overflow-hidden bg-white dark:bg-gray-900 transition-all duration-200 ease-out"
                     style={{
                         display: 'grid',
-                        gridTemplateRows: isOpen ? '1fr' : '0fr',
+                        gridTemplateRows: effectiveIsOpen ? '1fr' : '0fr',
                         transition: 'grid-template-rows 200ms ease-out'
                     }}
                 >
                     <div className="min-h-0 overflow-hidden">
                         <div 
-                            className={`expanding-dropdown-scroll border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto ${isOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-150`}
+                            className={`filter-dropdown-scroll border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto ${effectiveIsOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-150`}
                             style={{
                                 scrollbarWidth: 'thin',
                                 scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
                             }}
                         >
                             <style>{`
-                                .expanding-dropdown-scroll::-webkit-scrollbar {
+                                .filter-dropdown-scroll::-webkit-scrollbar {
                                     width: 2px;
                                     background: transparent;
                                 }
-                                .expanding-dropdown-scroll::-webkit-scrollbar-track {
+                                .filter-dropdown-scroll::-webkit-scrollbar-track {
                                     background: transparent;
                                     border: none;
                                     box-shadow: none;
                                 }
-                                .expanding-dropdown-scroll::-webkit-scrollbar-thumb {
+                                .filter-dropdown-scroll::-webkit-scrollbar-thumb {
                                     background: rgba(156, 163, 175, 0.6);
                                     border-radius: 9999px;
                                 }
-                                .expanding-dropdown-scroll::-webkit-scrollbar-corner {
+                                .filter-dropdown-scroll::-webkit-scrollbar-corner {
                                     background: transparent;
                                 }
                             `}</style>

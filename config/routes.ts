@@ -11,6 +11,7 @@ export const ROUTES = {
   CUSTOMERS: 'customers' as ViewState,
   CUSTOMER_OVERVIEW: 'customer-overview' as ViewState,
   RETURN_HISTORY: 'return-history' as ViewState,
+  INTELLIGENCE: 'intelligence' as ViewState,
 } as const;
 
 export const TEST_ROUTES = [ROUTES.LOGIN, ROUTES.MODAL_TESTS, ROUTES.TEST_THEME];

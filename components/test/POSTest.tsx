@@ -8,7 +8,7 @@ import React, {
 import { useContextMenu } from "../common/ContextMenu";
 import { Drug, CartItem, Customer, Language, Shift } from "../../types";
 
-import { useExpandingDropdown } from "../../hooks/useExpandingDropdown";
+import { useFilterDropdown } from "../../hooks/useFilterDropdown";
 import { getCategories, getProductTypes, getLocalizedCategory, getLocalizedProductType } from "../../data/productCategories";
 import { getLocationName } from "../../data/locations";
 import { usePOSTabs } from "../../hooks/usePOSTabs";
@@ -26,7 +26,7 @@ import {
 import { formatStock } from "../../utils/inventory";
 import { Sale } from "../../types"; // Ensure Sale is imported
 import { getPrinterSettings, printReceiptSilently } from "../../utils/qzPrinter";
-import { ExpandingDropdown, ExpandingDropdownProps } from "../common/ExpandingDropdown";
+import { FilterDropdown, FilterDropdownProps } from "../common/FilterDropdown";
 import {
   createColumnHelper,
   ColumnDef,
@@ -174,7 +174,7 @@ export const POSTest: React.FC<POSProps> = ({
   const [highlightedCustomerIndex, setHighlightedCustomerIndex] = useState(0);
 
   // Hook for Customer Search Navigation
-  const customerDropdownHook = useExpandingDropdown<Customer>({
+  const customerDropdownHook = useFilterDropdown<Customer>({
     items: filteredCustomers,
     selectedItem: filteredCustomers[highlightedCustomerIndex],
     isOpen: showCustomerDropdown,
@@ -1405,7 +1405,7 @@ export const POSTest: React.FC<POSProps> = ({
           return (
             <div className="w-full h-full overflow-visible">
               {row.unitsPerPack && row.unitsPerPack > 1 ? (
-                <ExpandingDropdown
+                <FilterDropdown
                   items={["pack", "unit"]}
                   selectedItem={selectedUnits[row.id] || "pack"}
                   isOpen={openUnitDropdown === row.id}
@@ -1480,7 +1480,7 @@ export const POSTest: React.FC<POSProps> = ({
 
           return (
             <div className="w-full h-full overflow-visible">
-              <ExpandingDropdown
+              <FilterDropdown
                 items={row.group}
                 selectedItem={displayBatch}
                 isOpen={openBatchDropdown === row.id}
@@ -1919,7 +1919,7 @@ export const POSTest: React.FC<POSProps> = ({
               })()}
             </div>
             <div className="relative flex-1 h-[42px]">
-              <ExpandingDropdown
+              <FilterDropdown
                 variant="input"
                 items={categories}
                 selectedItem={categories.find((c) => c.id === selectedCategory)}
@@ -1938,7 +1938,7 @@ export const POSTest: React.FC<POSProps> = ({
               />
             </div>
             <div className="relative flex-1 h-[42px]">
-              <ExpandingDropdown
+              <FilterDropdown
                 variant="input"
                 items={["all", "in_stock", "out_of_stock"]}
                 selectedItem={stockFilter}

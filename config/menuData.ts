@@ -760,6 +760,13 @@ export const PHARMACY_MENU: MenuItem[] = [
         ]
       },
       {
+        id: "business-intelligence",
+        label: "Business Intelligence",
+        items: [
+           { label: "Sales by Product Analysis", view: "intelligence", icon: "auto_graph" },
+        ]
+      },
+      {
         id: "customer-reports",
         label: "Customer Reports",
         items: [

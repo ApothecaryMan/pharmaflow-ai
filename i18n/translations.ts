@@ -1496,6 +1496,169 @@ export const TRANSLATIONS = {
         successDelete: 'Employee deleted successfully'
       }
     },
+    intelligence: {
+      dashboard: {
+        title: 'Intelligence',
+        subtitle: 'Advanced inventory and sales analysis',
+        tabs: {
+          procurement: 'Procurement',
+          financials: 'Financials',
+          risk: 'Risk',
+          audit: 'Audit'
+        },
+        loading: 'Loading data...'
+      },
+      common: {
+        pagination: {
+          showing: 'Showing',
+          of: 'of',
+          prev: 'Previous',
+          next: 'Next'
+        }
+      },
+      audit: {
+        title: 'Audit Log',
+        searchPlaceholder: 'Search transactions...',
+        exportCSV: 'Export CSV',
+        emptyMessage: 'No transactions recorded yet',
+        columns: {
+          timestamp: 'Time',
+          type: 'Type',
+          product: 'Product',
+          quantity: 'Quantity',
+          amount: 'Amount',
+          employee: 'Employee',
+          notes: 'Notes'
+        },
+        types: {
+          sale: 'Sale',
+          return: 'Return',
+          void: 'Void',
+          adjustment: 'Adjustment'
+        },
+        alert: 'Alert'
+      },
+      financials: {
+        filters: {
+          period: 'Period',
+          select: 'Select',
+          export: 'Export Report',
+          periods: {
+            this_month: 'This Month',
+            last_month: 'Last Month',
+            last_3_months: 'Last 3 Months',
+            this_year: 'This Year'
+          }
+        },
+        kpis: {
+          revenue: 'Revenue',
+          grossProfit: 'Gross Profit',
+          margin: 'Margin %',
+          unitsSold: 'Units Sold',
+          compare: 'vs previous period',
+          points: 'points'
+        },
+        sections: {
+          productProfitability: 'Product Profitability Details',
+          categoryBreakdown: 'Profitability by Category',
+          noData: 'No sales data for this period'
+        },
+        productGrid: {
+          columns: {
+            product: 'Product',
+            quantitySold: 'Qty Sold',
+            revenue: 'Revenue',
+            cost: 'Cost',
+            profit: 'Profit',
+            margin: 'Margin %'
+          }
+        },
+        categoryGrid: {
+          columns: {
+            category: 'Category',
+            products: 'Products',
+            revenue: 'Revenue',
+            profit: 'Profit',
+            margin: 'Margin',
+            abcDistribution: 'ABC Dist.'
+          }
+        }
+      },
+      procurement: {
+        filters: {
+          supplier: 'Supplier',
+          category: 'Category',
+          select: 'Select',
+          all: 'All',
+        },
+        kpis: {
+            needingOrder: 'Needing Order',
+            outOfStock: 'Out Of Stock',
+            lostSales: 'Lost Sales (Est)',
+            pendingPO: 'Pending PO',
+            items: 'items',
+            vsLastWeek: 'vs last week',
+            improved: 'improved'
+        },
+        actions: {
+          generatePO: 'Generate PO'
+        },
+        empty: {
+          title: 'No Products',
+          subtitle: 'No products match the selected filters'
+        },
+        grid: {
+          columns: {
+            product: 'Product',
+            stockStatus: 'Status',
+            available: 'Available',
+            days: 'days',
+            dailySales: 'Daily Sales',
+            suggested: 'Suggested',
+            confidence: 'Confidence',
+            perDay: '/day'
+          },
+          skipped: 'Skipped'
+        }
+      },
+      risk: {
+        sections: {
+          expiryAnalysis: 'Stagnant & Expiring Stock Analysis'
+        },
+        kpis: {
+            valueAtRisk: 'Value at Risk',
+            batchesAtRisk: 'Batches at Risk',
+            total: 'Total',
+            batch: 'batch'
+        },
+        actions: {
+          createReturn: 'Create Return List',
+          applyDiscount: 'Apply Discount Policy'
+        },
+        empty: {
+          title: 'No At-Risk Batches',
+          subtitle: 'All inventory products are safe from expiry'
+        },
+        grid: {
+          columns: {
+            product: 'Product / Batch',
+            daysLeft: 'Days Left',
+            quantity: 'Quantity',
+            valueAtRisk: 'Value at Risk',
+            riskCategory: 'Risk Category',
+            recovery: 'Est. Recovery',
+            action: 'Action'
+          },
+          actions: {
+            discount50: '50% Off',
+            discount25: '25% Off',
+            return: 'Return',
+            action: 'Action'
+          },
+          day: 'day'
+        }
+      }
+    },
   },
   AR: {
     employeeList: {
@@ -1564,6 +1727,169 @@ export const TRANSLATIONS = {
         successAdd: 'تم إضافة الموظف بنجاح',
         successUpdate: 'تم تحديث بيانات الموظف بنجاح',
         successDelete: 'تم حذف الموظف بنجاح'
+      }
+    },
+    intelligence: {
+      dashboard: {
+        title: 'ذكاء الأعمال (Intelligence)',
+        subtitle: 'تحليل متقدم للمخزون والمبيعات لاتخاذ قرارات أذكى',
+        tabs: {
+          procurement: 'المشتريات',
+          financials: 'المالية',
+          risk: 'المخاطر',
+          audit: 'التدقيق'
+        },
+        loading: 'جاري تحميل البيانات...'
+      },
+      common: {
+        pagination: {
+          showing: 'عرض',
+          of: 'من',
+          prev: 'السابق',
+          next: 'التالي'
+        }
+      },
+      audit: {
+        title: 'سجل تدقيق العمليات (Audit Log)',
+        searchPlaceholder: 'بحث في العمليات...',
+        exportCSV: 'تصدير CSV',
+        emptyMessage: 'لا توجد عمليات مسجلة بعد',
+        columns: {
+          timestamp: 'التوقيت',
+          type: 'نوع العملية',
+          product: 'المنتج',
+          quantity: 'الكمية',
+          amount: 'القيمة',
+          employee: 'الموظف',
+          notes: 'ملاحظات'
+        },
+        types: {
+          sale: 'بيع',
+          return: 'إرجاع',
+          void: 'إلغاء',
+          adjustment: 'تعديل'
+        },
+        alert: 'تنبيه'
+      },
+      financials: {
+        filters: {
+          period: 'الفترة',
+          select: 'اختر',
+          export: 'تصدير تقرير',
+          periods: {
+            this_month: 'هذا الشهر',
+            last_month: 'الشهر الماضي',
+            last_3_months: 'آخر 3 شهور',
+            this_year: 'هذا العام'
+          }
+        },
+        kpis: {
+          revenue: 'الإيرادات',
+          grossProfit: 'مجمل الربح',
+          margin: 'نسبة الهامش',
+          unitsSold: 'الوحدات المباعة',
+          compare: 'مقارنة بالفترة السابقة',
+          points: 'نقاط'
+        },
+        sections: {
+          productProfitability: 'تفاصيل ربحية المنتجات',
+          categoryBreakdown: 'تحليل الربحية حسب التصنيف',
+          noData: 'لا توجد بيانات مبيعات لهذه الفترة'
+        },
+        productGrid: {
+          columns: {
+            product: 'المنتج',
+            quantitySold: 'الكمية المباعة',
+            revenue: 'الإيرادات',
+            cost: 'التكلفة',
+            profit: 'الربح',
+            margin: 'الهامش %'
+          }
+        },
+        categoryGrid: {
+          columns: {
+            category: 'التصنيف',
+            products: 'المنتجات',
+            revenue: 'الإيرادات',
+            profit: 'الربح',
+            margin: 'الهامش',
+            abcDistribution: 'ABC توزيع'
+          }
+        }
+      },
+      procurement: {
+        filters: {
+          supplier: 'المورد',
+          category: 'التصنيف',
+          select: 'اختر',
+          all: 'الكل',
+        },
+        kpis: {
+            needingOrder: 'أصناف بحاجة للطلب',
+            outOfStock: 'نواقص (Out of Stock)',
+            lostSales: 'مبيعات ضائعة (متوقع)',
+            pendingPO: 'طلبات معلقة (Pending)',
+            items: 'صنف',
+            vsLastWeek: 'مقارنة بالأسبوع الماضي',
+            improved: 'تحسن'
+        },
+        actions: {
+          generatePO: 'إنشاء طلب شراء'
+        },
+        empty: {
+          title: 'لا توجد منتجات',
+          subtitle: 'لا توجد منتجات تطابق الفلاتر المحددة'
+        },
+        grid: {
+          columns: {
+            product: 'المنتج',
+            stockStatus: 'حالة المخزون',
+            available: 'المتاح',
+            days: 'أيام',
+            dailySales: 'معدل البيع',
+            suggested: 'اقتراح الطلب',
+            confidence: 'الثقة',
+            perDay: '/يوم'
+          },
+          skipped: 'تم التخطي'
+        }
+      },
+      risk: {
+        sections: {
+          expiryAnalysis: 'تحليل المخزون الراكد والمنتهي الصلاحية'
+        },
+        kpis: {
+            valueAtRisk: 'قيمة معرضة للخطر',
+            batchesAtRisk: 'باتشات تنتهي قريباً',
+            total: 'إجمالي',
+            batch: 'باتش'
+        },
+        actions: {
+          createReturn: 'إنشاء قائمة إرجاع',
+          applyDiscount: 'تطبيق سياسة التخفيضات'
+        },
+        empty: {
+          title: 'لا توجد باتشات معرضة للخطر',
+          subtitle: 'جميع المنتجات في المخزون بعيدة عن تاريخ انتهاء الصلاحية'
+        },
+        grid: {
+          columns: {
+            product: 'المنتج / الباتش',
+            daysLeft: 'الأيام المتبقية',
+            quantity: 'الكمية',
+            valueAtRisk: 'قيمة المخاطرة',
+            riskCategory: 'درجة الخطورة',
+            recovery: 'استرداد متوقع',
+            action: 'إجراء مقترح'
+          },
+          actions: {
+            discount50: 'تخفيض 50%',
+            discount25: 'تخفيض 25%',
+            return: 'إرجاع للمورد',
+            action: 'إجراء'
+          },
+          day: 'يوم'
+        }
       }
     },
     appTitle: 'PharmaFlow',

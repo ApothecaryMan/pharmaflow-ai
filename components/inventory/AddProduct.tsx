@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSmartDirection } from '../common/SmartInputs';
 import { Drug } from '../../types';
-import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { FilterDropdown } from '../common/FilterDropdown';
 import { getCategories, getProductTypes, getLocalizedCategory, getLocalizedProductType } from '../../data/productCategories';
 import { useStatusBar } from '../../components/layout/StatusBar';
 
@@ -193,7 +193,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
               </div>
               <div className="space-y-2 md:col-span-1">
                 <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.category} *</label>
-                <ExpandingDropdown
+                <FilterDropdown
                   variant="input"
                   items={allCategories}
                   selectedItem={formData.category} // Stores English ID
@@ -213,7 +213,7 @@ export const AddProduct: React.FC<AddProductProps> = ({ inventory, onAddDrug, co
               </div>
                <div className="space-y-2 md:col-span-1">
                   <label className="text-xs font-bold text-gray-500 uppercase">{t.addProduct.fields.dosageForm || 'Product Type'}</label>
-                  <ExpandingDropdown
+                  <FilterDropdown
                     variant="input"
                     items={getProductTypes(formData.category || 'General', currentLang)} // Returns English IDs
                     selectedItem={formData.dosageForm || ''}

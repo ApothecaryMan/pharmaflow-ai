@@ -71,7 +71,7 @@ pharmaflow-ai/
 | Component | Use For |
 |-----------|---------|
 | `SmartInputs` | All text inputs (handles RTL) |
-| `ExpandingDropdown` | Dropdown selections |
+| `FilterDropdown` | Dropdown selections |
 | `SegmentedControl` | Segmented buttons |
 | `Switch` | Toggle switches |
 | `TanStackTable` | Data tables |

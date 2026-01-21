@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SmartDateInput, SmartInput } from '../common/SmartInputs';
-import { ExpandingDropdown, SegmentedControl } from '../common';
+import { FilterDropdown, SegmentedControl } from '../common';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { SearchInput } from '../common/SearchInput';
 import { TanStackTable } from '../common/TanStackTable';
@@ -372,32 +372,22 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
       {mode === 'list' ? (
         <>
-      {/* Search Bar */}
-      <div className={`${CARD_BASE} p-2.5 rounded-2xl flex gap-2 shrink-0 overflow-x-auto`}>
-        <div className="relative flex-1 min-w-[200px]">
-        <SearchInput
-          value={searchTerm}
-          onSearchChange={setSearchTerm}
-          placeholder={t.searchPlaceholder}
-          className="rounded-full border-gray-200 dark:border-gray-800 ps-12"
-          wrapperClassName="h-full"
-          style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-        />
-        </div>
-      </div>
-
-      {/* Table Card */}
-      <div className={`flex-1 ${CARD_BASE} rounded-3xl overflow-hidden flex flex-col`}>
-        {/* We use enableTopToolbar={false} because we have our own search bar above */}
+      {/* Table Card - Default Design */}
+      <div className="flex-1 overflow-hidden">
         <TanStackTable 
             data={filteredInventory} 
             columns={tableColumns}
             tableId="inventory_table"
             color={color}
-            enableTopToolbar={false}
-            enableSearch={false}
+            enableTopToolbar={true}
+            enableSearch={true}
+            searchPlaceholder={t.searchPlaceholder}
+            globalFilter={searchTerm} // Sync state
+            onSearchChange={setSearchTerm} // Update state
+            manualFiltering={true} // Prevent double filtering
             onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
             emptyMessage={t.noResults}
+            lite={false} // Use standard card design
         />
       </div>
       </>
@@ -442,7 +432,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   <div className="grid grid-cols-2 gap-4 md:col-span-2">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.category} *</label>
-                      <ExpandingDropdown
+                      <FilterDropdown
                         variant="input"
                         items={getCategories(currentLang)}
                         selectedItem={formData.category} // English ID
@@ -458,7 +448,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.addProduct?.fields?.dosageForm || 'Product Type'}</label>
-                      <ExpandingDropdown
+                      <FilterDropdown
                         variant="input"
                         items={getProductTypes(formData.category || 'General', currentLang)} // English IDs
                         selectedItem={formData.dosageForm || ''}
@@ -824,7 +814,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t.modal.category} *</label>
-                      <ExpandingDropdown
+                      <FilterDropdown
                         variant="input"
                         items={getCategories(currentLang)}
                         selectedItem={formData.category} // English ID
@@ -840,7 +830,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
-                      <ExpandingDropdown
+                      <FilterDropdown
                         variant="input"
                         items={getProductTypes(formData.category || 'General', currentLang)} // English IDs
                         selectedItem={formData.dosageForm || ''}

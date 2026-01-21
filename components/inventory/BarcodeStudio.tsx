@@ -16,7 +16,7 @@ import { TRANSLATIONS } from '../../i18n/translations';
 import { generateLabelHTML, LabelDesign, getLabelElementContent, generateTemplateCSS, getReceiptSettings, DEFAULT_LABEL_DESIGN, LABEL_PRESETS } from './LabelPrinter';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useDebounce } from '../../hooks/useDebounce';
-import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { FilterDropdown } from '../common/FilterDropdown';
 import { useStatusBar } from '../layout/StatusBar';
 
 
@@ -838,7 +838,7 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                         {/* Template Controls */}
                         {/* Template Controls */}
                         <div className="relative w-48 h-8 z-[20]">
-                            <ExpandingDropdown
+                            <FilterDropdown
                                 items={[{ id: '', name: t.createNew, design: null } as any, ...templates]}
                                 selectedItem={activeTemplateId ? templates.find(tmp => tmp.id === activeTemplateId) : { id: '', name: t.createNew, design: null } as any}
                                 isOpen={isTemplateDropdownOpen}

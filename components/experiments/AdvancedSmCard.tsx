@@ -44,7 +44,7 @@ const barData2 = [
 // --- Sub-Components ---
 
 import { SmallCard } from '../common/SmallCard';
-import { ProgressCard, FlexDataCard } from '../common/ProgressCard';
+import { ProgressCard, FlexDataCard, SegmentedProgressCard } from '../common/ProgressCard';
 import { CompactProgressCard } from '../common/CompactProgressCard';
 
 
@@ -413,6 +413,68 @@ export const AdvancedSmCard: React.FC<AdvancedSmCardProps> = ({ color, t, langua
                               { label: "Customer Satisfaction Score", value: "4.8/5", percentage: 96, color: "amber" },
                               { label: "Average Resolution Time", value: "2m", percentage: 80, color: "cyan" }
                           ]}
+                      />
+                  </div>
+              </div>
+
+          </div>
+      </section>
+
+      {/* 9. Segmented Progress (Risks) */}
+      <section>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 px-1">9. Segmented Progress (Risks)</h3>
+          
+          <div className="flex flex-col gap-6">
+              
+              {/* Default Version */}
+              <div>
+                  <h4 className="text-xs font-bold text-gray-400 uppercase mb-2 px-1">Default Version</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <SegmentedProgressCard
+                        title="Risk Distribution"
+                        segments={[
+                          { value: 12, color: 'bg-red-500', label: 'Critical' },
+                          { value: 25, color: 'bg-amber-500', label: 'High' },
+                          { value: 45, color: 'bg-blue-400', label: 'Medium' }
+                        ]}
+                        sideStat={{
+                          label: 'Potential Recovery',
+                          value: '$12,450',
+                          valueColor: 'text-emerald-600 dark:text-emerald-400'
+                        }}
+                      />
+                  </div>
+              </div>
+
+              {/* Compact Version */}
+              <div>
+                  <h4 className="text-xs font-bold text-gray-400 uppercase mb-2 px-1">Compact Version (New)</h4>
+                  <p className="text-sm text-gray-500 mb-4 px-1">Optimized for dense dashboards, aligns with standard Small Cards.</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {/* Compact Card */}
+                      <SegmentedProgressCard
+                        title="Urgency Level"
+                        compact={true}
+                        segments={[
+                          { value: 5, color: 'bg-red-500', label: 'Critical' },
+                          { value: 15, color: 'bg-amber-500', label: 'High' },
+                          { value: 80, color: 'bg-blue-400', label: 'Medium' }
+                        ]}
+                        sideStat={{
+                          label: 'Recovery',
+                          value: '$4.2k',
+                          valueColor: 'text-emerald-600 dark:text-emerald-400'
+                        }}
+                      />
+                      
+                      {/* Comparison Small Card */}
+                      <SmallCard 
+                        title="Reference Height" 
+                        value="$4.2k" 
+                        icon="height" 
+                        iconColor="gray" 
+                        trend="neutral"
                       />
                   </div>
               </div>

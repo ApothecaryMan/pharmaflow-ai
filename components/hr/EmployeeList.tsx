@@ -14,7 +14,7 @@ import { TanStackTable } from '../common/TanStackTable';
 import { SmartInput, SmartPhoneInput, SmartEmailInput } from '../common/SmartInputs';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 
 interface EmployeeListProps {
@@ -38,7 +38,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
   // Form State (extends Employee with form-only fields like oldPassword for verification)
   const [formData, setFormData] = useState<Partial<Employee> & { oldPassword?: string }>({});
   
-  // Dropdown open states for ExpandingDropdown
+  // Dropdown open states for FilterDropdown
   const [isDepartmentOpen, setIsDepartmentOpen] = useState(false);
   const [isRoleOpen, setIsRoleOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
@@ -440,7 +440,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                     <div className="col-span-4 space-y-1.5">
                         <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.status}</label>
                         <div className="relative h-[42px]">
-                            <ExpandingDropdown
+                            <FilterDropdown
                                 className="absolute top-0 left-0 w-full z-30"
                                 minHeight="42px"
                                 items={Object.entries(t.employeeList.statusOptions).filter(([key]) => key !== 'all').map(([key, label]) => ({ key, label: label as string }))}
@@ -461,7 +461,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                     <div className="col-span-4 space-y-1.5">
                         <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.department}</label>
                         <div className="relative h-[42px]">
-                            <ExpandingDropdown
+                            <FilterDropdown
                                 className="absolute top-0 left-0 w-full z-30"
                                 minHeight="42px"
                                 items={Object.entries(t.employeeList.departments).map(([key, label]) => ({ key, label: label as string }))}
@@ -480,7 +480,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                     <div className="col-span-4 space-y-1.5">
                         <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.role}</label>
                         <div className="relative h-[42px]">
-                            <ExpandingDropdown
+                            <FilterDropdown
                                 className="absolute top-0 left-0 w-full z-30"
                                 minHeight="42px"
                                 items={Object.entries(t.employeeList.roles).map(([key, label]) => ({ key, label: label as string }))}

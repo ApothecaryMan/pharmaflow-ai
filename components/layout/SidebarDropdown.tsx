@@ -87,7 +87,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
 
   return (
     <div 
-      className={`fixed w-64 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[9999] animate-fade-in origin-top ${
+      className={`fixed w-64 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[99999] animate-fade-in origin-top ${
         blur 
           ? 'backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30' 
           : 'bg-white dark:bg-gray-800'

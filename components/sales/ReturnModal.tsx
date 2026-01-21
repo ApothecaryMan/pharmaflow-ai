@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Sale, Return, ReturnReason, ReturnItem, Shift } from '../../types';
 import { useSmartDirection } from '../common/SmartInputs';
 import { Modal } from '../common/Modal';
-import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { FilterDropdown } from '../common/FilterDropdown';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { useStatusBar } from '../../components/layout/StatusBar';
 
@@ -370,7 +370,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 ml-1">
                   {t.returns.returnReason} <span className="text-red-500">*</span>
                 </label>
-                <ExpandingDropdown
+                <FilterDropdown
                   items={reasonOptions}
                   selectedItem={reasonOptions.find(r => r.id === returnReason)}
                   isOpen={isReasonDropdownOpen}

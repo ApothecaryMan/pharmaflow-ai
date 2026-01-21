@@ -1,8 +1,12 @@
 // Hooks
+export { useAudit } from './useAudit';
 export { useColumnReorder } from './useColumnReorder';
-export { useExpandingDropdown } from './useExpandingDropdown';
+export { useFilterDropdown } from './useFilterDropdown';
+export { useFinancials } from './useFinancials';
 export { useLongPress } from './useLongPress';
 export { usePOSTabs } from './usePOSTabs';
+export { useProcurement } from './useProcurement';
+export { useRisk } from './useRisk';
 export { useTheme } from './useTheme';
 
 // App State Hooks

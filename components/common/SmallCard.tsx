@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { AnimatedCounter } from './AnimatedCounter';
 
@@ -9,7 +9,7 @@ export interface SmallCardProps {
   value: string | number;
   icon: string;
   iconColor: string;
-  trend?: 'up' | 'down' | 'neutral';
+  trend?: 'up' | 'down' | 'neutral' | 'unchanged';
   trendValue?: string;
   trendLabel?: string;
   subValue?: string;
@@ -20,7 +20,35 @@ export interface SmallCardProps {
   valueSuffix?: React.ReactNode;
 }
 
-export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, trendLabel, subValue, type, currencyLabel, fractionDigits, iconOverlay, valueSuffix }: SmallCardProps) => (
+
+/**
+ * Formats a number with K/M suffixes
+ * e.g. 1500 -> 1.5k, 1500000 -> 1.5M
+ */
+const formatCompactNumber = (number: number) => {
+  return new Intl.NumberFormat('en-US', {
+    notation: "compact", 
+    maximumFractionDigits: 1
+  }).format(number);
+};
+
+export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, trendLabel, subValue, type, currencyLabel, fractionDigits, iconOverlay, valueSuffix }: SmallCardProps) => { // Render value logic
+  const formattedValue = useMemo(() => {
+    if (typeof value !== 'number') return value;
+    
+    // For specific small number formatting preference (optional)
+    // If it's a currency type, let's prioritize compact notation for readability of large sums
+    if (type === 'currency' || value > 10000) {
+       return formatCompactNumber(value);
+    }
+    
+    // Fallback/Default for smaller numbers or non-currency numbers if needed
+    // But since the user specifically asked for k/m for large prices, the above covers it.
+    // If we want to keep AnimatedCounter for small numbers we can.
+    return value; 
+  }, [value, type]);
+  
+  return (
   // Compact design: h-[84px], p-3
   <div className={`p-3 rounded-2xl ${CARD_BASE} ${CARD_HOVER} h-[84px] flex items-center gap-3`}>
     
@@ -36,10 +64,14 @@ export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, tr
       
       <div className="flex items-center gap-2">
         <h4 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-baseline">
-          {typeof value === 'number' ? (
-              <AnimatedCounter value={value} fractionDigits={fractionDigits ?? (type === 'currency' ? 2 : 0)} />
+          {typeof value === 'number' && type !== 'currency' && value <= 10000 ? ( 
+              // Keep AnimatedCounter for smaller non-currency numbers to show precision/change if needed, 
+              // or just use it for everything if it supported strings. 
+              // But AnimatedCounter usually takes a raw number. 
+              // Let's assume we use the static formatted string for large numbers to support '1.5M'
+              <AnimatedCounter value={value} fractionDigits={fractionDigits ?? 0} />
           ) : (
-             value
+             formattedValue
           )}
           {type === 'currency' && (
             <span className="text-sm font-medium text-gray-500 dark:text-gray-400 ms-1">{currencyLabel || 'L.E'}</span>
@@ -58,7 +90,7 @@ export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, tr
                ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' // Neutral for subValue only
            }`}>
-             {trend && (
+             {trend && trend !== 'unchanged' && (
                 <>
                     <span>{trend === 'up' ? '▲' : '▼'}</span>
                     <span>{trendValue}</span>
@@ -67,7 +99,7 @@ export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, tr
              
              {/* Small Text Inside Badge */}
              {(trendLabel || subValue) && (
-                 <span className={`font-medium ${trend ? 'opacity-80 ltr:border-l rtl:border-r border-current ltr:pl-1.5 rtl:pr-1.5' : ''}`}>
+                 <span className={`font-medium ${trend && trend !== 'unchanged' ? 'opacity-80 ltr:border-l rtl:border-r border-current ltr:pl-1.5 rtl:pr-1.5' : ''}`}>
                     {subValue || trendLabel}
                  </span>
              )}
@@ -76,4 +108,4 @@ export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, tr
       </div>
     </div>
   </div>
-);
+)};

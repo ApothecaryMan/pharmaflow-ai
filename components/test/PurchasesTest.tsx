@@ -4,7 +4,7 @@ import { Drug, Supplier, Purchase, PurchaseItem, PurchaseReturn } from '../../ty
 import { formatStock } from '../../utils/inventory';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
-import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { FilterDropdown } from '../common/FilterDropdown';
 import { DatePicker } from '../common/DatePicker';
 import { useSmartDirection, DrugSearchInput } from '../common/SmartInputs';
 import { usePosSounds } from '../common/hooks/usePosSounds';
@@ -940,7 +940,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                   {mode === 'history' && (
                       <>
                           <span className="text-gray-300 text-2xl font-light">|</span>
-                          <ExpandingDropdown
+                          <FilterDropdown
                               items={[
                                   { id: 'all', label: t.status?.all || 'All Status' },
                                   { id: 'pending', label: t.status?.pending || 'Pending' },
@@ -1061,7 +1061,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({ inventory, suppliers, 
                 <div className={`${CARD_BASE} p-4 rounded-3xl flex flex-col xl:flex-row gap-4 items-end flex-shrink-0`}>
                         {/* Drug Search & Filter */}
                         <div className="flex-[1.5] w-full flex gap-2">
-                             <ExpandingDropdown
+                             <FilterDropdown
                                  items={filterOptions}
                                  selectedItem={filterOptions.find(o => o.id === filter)}
                                  isOpen={isFilterOpen}

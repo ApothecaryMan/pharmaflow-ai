@@ -31,8 +31,8 @@ pharmaflow-ai/
 │   │   │   ├── fuzzyFilter()            # Fuzzy search filter
 │   │   │   └── TanStackTable           # Advanced data table
 │   │   │
-│   │   ├── ExpandingDropdown.tsx
-│   │   │   └── ExpandingDropdown       # Animated dropdown
+│   │   ├── FilterDropdown.tsx
+│   │   │   └── FilterDropdown       # Animated dropdown
 │   │   │
 │   │   ├── FloatingInput.tsx           # Input with floating label
 │   │   ├── ExpandedModal.tsx           # Full screen modal wrapper
@@ -170,8 +170,8 @@ pharmaflow-ai/
 │   │   ├── useEntityHandlers.ts
 │   │   │   └── useEntityHandlers()          # CRUD handlers for all entities
 │   │   │
-│   │   ├── useExpandingDropdown.ts
-│   │   │   └── useExpandingDropdown()       # Keyboard nav for dropdowns
+│   │   ├── useFilterDropdown.ts
+│   │   │   └── useFilterDropdown()       # Keyboard nav for dropdowns
 │   │   │
 │   │   ├── useLongPress.ts
 │   │   │   └── useLongPress()               # Touch long-press detection
@@ -325,7 +325,7 @@ All UI elements must look professional. Avoid basic browser defaults.
 | `SmartDateInput`      | Date input (Masked)  | `common/SmartInputs.tsx`         |
 | `FloatingInput`       | Floating label input | `common/FloatingInput.tsx`       |
 | `DatePicker`          | Calendar picker      | `common/DatePicker.tsx`          |
-| `ExpandingDropdown`   | Dropdown selection   | `common/ExpandingDropdown.tsx`   |
+| `FilterDropdown`   | Dropdown selection   | `common/FilterDropdown.tsx`   |
 | `ExpandedModal`       | Full screen modal    | `common/ExpandedModal.tsx`       |
 | `SegmentedControl`    | Segmented buttons    | `common/SegmentedControl.tsx`    |
 | `Switch`              | Toggle switch        | `common/Switch.tsx`              |
@@ -460,7 +460,7 @@ const newId = Date.now().toString();
 Before submitting:
 
 - [ ] **Inputs**: Using `SmartInputs`? (No raw `<input>`)
-- [ ] **Dropdowns**: Using `ExpandingDropdown`?
+- [ ] **Dropdowns**: Using `FilterDropdown`?
 - [ ] **Segmented Controls**: Using `SegmentedControl` with correct `variant`?
 - [ ] **Switches**: Using `Switch` component?
 - [ ] **Storage**: Using `StorageService`? (No `localStorage`)

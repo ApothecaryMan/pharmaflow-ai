@@ -1,4 +1,4 @@
-﻿import React, {
+import React, {
   useState,
   useMemo,
   useRef,
@@ -8,7 +8,7 @@
 import { useContextMenu } from "../common/ContextMenu";
 import { Drug, CartItem, Sale, Customer, Language, Shift, Employee } from "../../types";
 
-import { useExpandingDropdown } from "../../hooks/useExpandingDropdown";
+import { useFilterDropdown } from "../../hooks/useFilterDropdown";
 import { getCategories, getProductTypes, getLocalizedCategory, getLocalizedProductType } from "../../data/productCategories";
 import { getLocationName } from "../../data/locations";
 import { usePOSTabs } from "../../hooks/usePOSTabs";
@@ -25,7 +25,7 @@ import {
 } from "../sales/InvoiceTemplate";
 import { formatStock } from "../../utils/inventory";
 import { getPrinterSettings, printReceiptSilently } from "../../utils/qzPrinter";
-import { ExpandingDropdown, ExpandingDropdownProps } from "../common/ExpandingDropdown";
+import { FilterDropdown, FilterDropdownProps } from "../common/FilterDropdown";
 import {
   createColumnHelper,
   ColumnDef,
@@ -187,7 +187,7 @@ export const POS: React.FC<POSProps> = ({
   const [highlightedCustomerIndex, setHighlightedCustomerIndex] = useState(0);
 
   // Hook for Customer Search Navigation
-  const customerDropdownHook = useExpandingDropdown<Customer>({
+  const customerDropdownHook = useFilterDropdown<Customer>({
     items: filteredCustomers,
     selectedItem: filteredCustomers[highlightedCustomerIndex],
     isOpen: showCustomerDropdown,
@@ -1037,7 +1037,7 @@ export const POS: React.FC<POSProps> = ({
   // Alt+S: Save/Checkout invoice from anywhere on the page
   useEffect(() => {
     const handleAltS = (e: KeyboardEvent) => {
-      if (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'Ø³')) {
+      if (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'س')) {
         e.preventDefault();
         if (isValidOrder) {
           handleCheckout("walk-in");
@@ -1459,7 +1459,7 @@ export const POS: React.FC<POSProps> = ({
           return (
             <div className="w-full h-full overflow-visible">
               {row.unitsPerPack && row.unitsPerPack > 1 ? (
-                <ExpandingDropdown
+                <FilterDropdown
                   items={["pack", "unit"]}
                   selectedItem={selectedUnits[row.id] || "pack"}
                   isOpen={openUnitDropdown === row.id}
@@ -1525,7 +1525,7 @@ export const POS: React.FC<POSProps> = ({
                             month: "2-digit",
                             year: "2-digit",
                           })
-                        : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
+                        : "-") + ` � ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                     : <span className="inline-flex items-center px-2 py-0.5 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 rounded border border-red-100 dark:border-red-800/50">{t.noStock}</span>}
                 </div>
               </div>
@@ -1534,7 +1534,7 @@ export const POS: React.FC<POSProps> = ({
 
           return (
             <div className="w-full h-full overflow-visible">
-              <ExpandingDropdown
+              <FilterDropdown
                 items={row.group}
                 selectedItem={displayBatch}
                 isOpen={openBatchDropdown === row.id}
@@ -1561,7 +1561,7 @@ export const POS: React.FC<POSProps> = ({
                                 "en-US",
                                 { month: "2-digit", year: "2-digit" }
                               )
-                            : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
+                            : "-") + ` � ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                         : <span className="text-red-500">{t.noStock}</span>}
                     </div>
                   );
@@ -1575,7 +1575,7 @@ export const POS: React.FC<POSProps> = ({
                             month: "2-digit",
                             year: "2-digit",
                           })
-                        : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
+                        : "-") + ` � ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
                     </div>
                   );
                 }}
@@ -1822,7 +1822,7 @@ export const POS: React.FC<POSProps> = ({
                             dir="ltr"
                           >
                             <span>{customer.phone}</span>
-                            {customer.code && <span>â€¢ {customer.code}</span>}
+                            {customer.code && <span>• {customer.code}</span>}
                           </div>
                         </div>
                       ))}
@@ -1983,7 +1983,7 @@ export const POS: React.FC<POSProps> = ({
               })()}
             </div>
             <div className="relative flex-1 h-[42px]">
-              <ExpandingDropdown
+              <FilterDropdown
                 variant="input"
                 items={categories}
                 selectedItem={categories.find((c) => c.id === selectedCategory)}
@@ -2002,7 +2002,7 @@ export const POS: React.FC<POSProps> = ({
               />
             </div>
             <div className="relative flex-1 h-[42px]">
-              <ExpandingDropdown
+              <FilterDropdown
                 variant="input"
                 items={["all", "in_stock", "out_of_stock"]}
                 selectedItem={stockFilter}

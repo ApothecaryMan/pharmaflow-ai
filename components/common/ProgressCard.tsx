@@ -160,3 +160,88 @@ export const FlexDataCard: React.FC<FlexDataCardProps> = ({ items, category, cla
 };
 
 
+
+// --- SegmentedProgressCard (Risk Distribution Style) ---
+
+export interface ProgressSegment {
+  value: number;
+  color: string; // Tailwind color class, e.g., 'bg-red-500'
+  label: string;
+  tooltip?: string;
+}
+
+export interface SegmentedProgressCardProps {
+  title: string;
+  segments: ProgressSegment[];
+  sideStat?: {
+    label: string;
+    value: React.ReactNode;
+    valueColor?: string; // Text color class
+  };
+  className?: string; // For grid column spanning
+  compact?: boolean;
+}
+
+export const SegmentedProgressCard: React.FC<SegmentedProgressCardProps> = ({
+  title,
+  segments,
+  sideStat,
+  className = '',
+  compact = false,
+}) => {
+  return (
+    <div className={`${compact ? 'px-4 py-2 h-[84px] rounded-2xl' : 'p-6 rounded-3xl'} ${CARD_BASE} flex items-center ${compact ? 'gap-3' : 'gap-8'} ${className}`}>
+      {/* Main Content (Title + Progress Bar + Legend) */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center h-full">
+        {/* Header Row (Title + Legend in one row for compact) */}
+        <div className={`flex justify-between items-end ${compact ? 'mb-2' : 'mb-4'}`}>
+            
+            {/* Legend - Responsive (On Left in RTL) */}
+            <div className={`flex gap-3 text-xs text-gray-400 ${compact ? 'items-center' : 'justify-end'}`}>
+              {segments.map((segment, index) => (
+                <span key={index} className="flex items-center gap-1.5">
+                  <span className={`${compact ? 'text-sm font-bold text-gray-700 dark:text-gray-300' : 'font-bold opacity-70'}`}>
+                    {compact ? segment.value : `(${segment.value})`}
+                  </span>
+                  <span className={`${compact ? 'w-2.5 h-2.5' : 'w-2.5 h-2.5'} rounded-full ${segment.color}`} />
+                  {(!compact) && (
+                     <span className="font-semibold text-gray-600 dark:text-gray-300">
+                       {segment.label}
+                     </span>
+                  )}
+                </span>
+              ))}
+            </div>
+
+             <h4 className={`${compact ? 'text-xs font-bold' : 'text-sm font-bold'} text-gray-500 dark:text-gray-400 truncate ml-2`}>
+              {title}
+            </h4>
+        </div>
+        
+        {/* Progress Bar */}
+        <div className={`flex gap-1 ${compact ? 'h-3' : 'h-3'} rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 w-full`}>
+          {segments.map((segment, index) => (
+            <div
+              key={index}
+              style={{ flex: segment.value }}
+              className={`${segment.color} h-full transition-all duration-500`}
+              title={segment.tooltip || `${segment.label}: ${segment.value}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Side Statistic */}
+      {sideStat && (
+        <div className={`hidden sm:flex ltr:border-l rtl:border-r border-gray-200 dark:border-gray-700 flex-col items-end justify-center ${compact ? 'min-w-[90px] ltr:pl-5 rtl:pr-5' : 'min-w-[160px] ltr:pl-8 rtl:pr-8'} text-right h-full`}>
+          <div className={`${compact ? 'text-[11px]' : 'text-xs'} font-bold text-gray-500 dark:text-gray-400 mb-0.5 whitespace-nowrap`}>
+            {sideStat.label}
+          </div>
+          <div className={`${compact ? 'text-2xl' : 'text-3xl'} font-bold tracking-tight ${sideStat.valueColor || 'text-gray-900 dark:text-white'}`}>
+            {sideStat.value}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

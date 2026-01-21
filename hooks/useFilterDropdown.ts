@@ -1,6 +1,6 @@
 import { KeyboardEvent, FocusEvent, MouseEvent } from 'react';
 
-export interface UseExpandingDropdownProps<T> {
+export interface UseFilterDropdownProps<T> {
   items: T[];
   selectedItem: T | undefined;
   isOpen: boolean;
@@ -13,7 +13,7 @@ export interface UseExpandingDropdownProps<T> {
   onEscape?: () => void;
 }
 
-export function useExpandingDropdown<T>({
+export function useFilterDropdown<T>({
   items,
   selectedItem,
   isOpen,
@@ -23,7 +23,7 @@ export function useExpandingDropdown<T>({
   onEnter,
   preventDefaultOnSpace = true,
   onEscape,
-}: UseExpandingDropdownProps<T>) {
+}: UseFilterDropdownProps<T>) {
   
   const handleKeyDown = (e: KeyboardEvent) => {
     e.stopPropagation(); // Prevent row actions (like add to cart) from triggering on keydown

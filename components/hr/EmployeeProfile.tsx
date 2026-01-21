@@ -2,7 +2,7 @@ import React, { useState, useMemo, memo, useEffect, useRef } from 'react';
 import { Employee, Sale, ThemeColor, Shift } from '../../types';
 import { getEmployeeSalesStats, getDateRange, getPreviousDateRange, DateRangeFilter } from '../../utils/employeeStats';
 import { SmallCard } from '../common/SmallCard';
-import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { FilterDropdown } from '../common/FilterDropdown';
 import { Modal } from '../common/Modal';
 import { ExpandedChartModal } from '../experiments/ExpandedChartModal';
 import { 
@@ -807,7 +807,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
         <div className="flex items-center gap-3">
              {/* Employee Selector */}
              <div className="w-56 h-9 relative z-10">
-                <ExpandingDropdown
+                <FilterDropdown
                     className="absolute top-0 left-0 w-full text-sm"
                     minHeight="36px"
                     items={allEmployees}

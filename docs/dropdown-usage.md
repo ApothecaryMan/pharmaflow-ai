@@ -3,7 +3,7 @@
 ## ⚠️ MANDATORY COMPONENTS
 
 **ALL dropdown/combobox implementations MUST use:**
-- ✅ `useExpandingDropdown` hook from `hooks/useExpandingDropdown.ts`
+- ✅ `useFilterDropdown` hook from `hooks/useFilterDropdown.ts`
 - ✅ `PosDropdown` component from `components/PosDropdown.tsx`
 
 **FORBIDDEN:**
@@ -115,7 +115,7 @@ function MyComponent() {
 
 ## ⌨️ Keyboard Navigation
 
-The `useExpandingDropdown` hook provides full keyboard support:
+The `useFilterDropdown` hook provides full keyboard support:
 
 | Key | Action |
 |-----|--------|
@@ -272,4 +272,4 @@ For issues or questions:
 
 ---
 
-**Remember:** Using `PosDropdown` + `useExpandingDropdown` is **mandatory** for all dropdown/combobox needs! 🎯
+**Remember:** Using `PosDropdown` + `useFilterDropdown` is **mandatory** for all dropdown/combobox needs! 🎯

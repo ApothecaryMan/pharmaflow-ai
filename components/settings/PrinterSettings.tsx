@@ -10,7 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { Switch } from '../common/Switch';
-import { ExpandingDropdown } from '../common/ExpandingDropdown';
+import { FilterDropdown } from '../common/FilterDropdown';
 import { usePrinter } from '../../hooks/usePrinter';
 import { SilentMode } from '../../utils/qzPrinter';
 
@@ -183,7 +183,7 @@ export const PrinterSettings: React.FC<PrinterSettingsProps> = ({
                   </button>
                 </div>
                 <div className="relative h-10">
-                  <ExpandingDropdown<string>
+                  <FilterDropdown<string>
                     items={printers}
                     selectedItem={settings.labelPrinter || undefined}
                     isOpen={labelDropdownOpen}
@@ -236,7 +236,7 @@ export const PrinterSettings: React.FC<PrinterSettingsProps> = ({
                   </button>
                 </div>
                 <div className="relative h-10">
-                  <ExpandingDropdown<string>
+                  <FilterDropdown<string>
                     items={printers}
                     selectedItem={settings.receiptPrinter || undefined}
                     isOpen={receiptDropdownOpen}

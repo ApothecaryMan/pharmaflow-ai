@@ -142,7 +142,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
       {/* Settings Dropdown */}
       {isOpen && (
         <div 
-          className="absolute bottom-full start-0 mb-2 w-64 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-800 backdrop-blur-sm z-50 animate-fade-in origin-bottom-start"
+          className="absolute bottom-full start-0 mb-2 w-64 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-800 backdrop-blur-sm z-40 animate-fade-in origin-bottom-start"
           style={{ 
             backgroundColor: 'var(--bg-primary)',
             borderColor: 'var(--border-primary)',
@@ -194,7 +194,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 {/* Submenu (Side Pop-out) */}
                 {themeExpanded && (
                 <div 
-                    className={`absolute w-48 rounded-lg shadow-xl border z-50 p-3 space-y-3 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
+                    className={`absolute w-48 rounded-lg shadow-xl border z-40 p-3 space-y-3 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
                     style={{
                         backgroundColor: 'var(--bg-primary)',
                         borderColor: 'var(--border-primary)',
@@ -399,7 +399,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   {/* Submenu (Side Pop-out) */}
                   {statusBarExpanded && showTicker && (
                     <div 
-                        className={`absolute w-48 rounded-lg shadow-xl border z-50 p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
+                        className={`absolute w-48 rounded-lg shadow-xl border z-40 p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
                         style={{
                             backgroundColor: 'var(--bg-primary)',
                             borderColor: 'var(--border-primary)',
