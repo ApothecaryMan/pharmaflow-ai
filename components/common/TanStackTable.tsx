@@ -470,6 +470,12 @@ export function TanStackTable<TData, TValue>({
                       (lite ? getSmartAlignment(header.column.id) : null) ||
                       'left';
 
+                  const justifyClass = align === 'center' ? 'justify-center' :
+                                       align === 'right' ? (isRtl ? 'justify-start' : 'justify-end') :
+                                       align === 'left' ? (isRtl ? 'justify-end' : 'justify-start') :
+                                       align === 'end' ? 'justify-end' :
+                                       'justify-start';
+
                   const textAlignClass = align === 'center' ? 'text-center' :
                                        align === 'end' ? 'text-end' :
                                        align === 'start' ? 'text-start' :
@@ -493,28 +499,30 @@ export function TanStackTable<TData, TValue>({
                         onOpen={(x, y) => onContextMenuOpen(x, y, header.column.id)}
                     >
                     {header.isPlaceholder ? null : (
-                      <div
-                        className={`relative inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 ${align === 'center' ? 'mx-auto' : ''}`}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                         {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                         )}
-                         
-                         {/* Absolute Sort Indicators */}
-                         <span className={`absolute top-1/2 -translate-y-1/2 flex items-center
-                            ${align === 'left' ? 'left-full pl-1' :
-                              align === 'right' ? 'right-full pr-1 opacity-100' :
-                              isRtl && align === 'start' ? 'right-full pr-1' :
-                              !isRtl && align === 'start' ? 'left-full pl-1' :
-                              'left-full pl-1'}
-                         `}>
-                            {{
-                                asc: <span className="material-symbols-rounded text-xl leading-none text-current opacity-70">arrow_drop_up</span>,
-                                desc: <span className="material-symbols-rounded text-xl leading-none text-current opacity-70">arrow_drop_down</span>,
-                            }[header.column.getIsSorted() as string] ?? null}
-                         </span>
+                      <div className={`flex items-center w-full ${justifyClass}`}>
+                          <div
+                            className={`relative inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer`}
+                            onClick={header.column.getToggleSortingHandler()}
+                          >
+                             {flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                             )}
+                             
+                             {/* Absolute Sort Indicators */}
+                             <span className={`absolute top-1/2 -translate-y-1/2 flex items-center
+                                ${align === 'left' ? 'left-full pl-1' :
+                                  align === 'right' ? 'right-full pr-1 opacity-100' :
+                                  isRtl && align === 'start' ? 'right-full pr-1' :
+                                  !isRtl && align === 'start' ? 'left-full pl-1' :
+                                  'left-full pl-1'}
+                             `}>
+                                {{
+                                    asc: <span className="material-symbols-rounded text-xl leading-none text-current opacity-70">arrow_drop_up</span>,
+                                    desc: <span className="material-symbols-rounded text-xl leading-none text-current opacity-70">arrow_drop_down</span>,
+                                }[header.column.getIsSorted() as string] ?? null}
+                             </span>
+                          </div>
                       </div>
                     )}
                     </ContextMenuTrigger>
@@ -564,8 +572,10 @@ export function TanStackTable<TData, TValue>({
                           (lite ? getSmartAlignment(cell.column.id) : null) ||
                           'left';
                       const justifyClass = align === 'center' ? 'justify-center text-center' :
-                                           align === 'end' || align === 'right' ? 'justify-end text-right' :
-                                           'justify-start text-left';
+                                           align === 'right' ? (isRtl ? 'justify-start text-right' : 'justify-end text-right') :
+                                           align === 'left' ? (isRtl ? 'justify-end text-left' : 'justify-start text-left') :
+                                           align === 'end' ? 'justify-end text-end' :
+                                           'justify-start text-start';
                       
                       return (
                         <td 
