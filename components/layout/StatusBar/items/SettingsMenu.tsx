@@ -5,6 +5,7 @@ import { Switch } from '../../../common/Switch';
 import { SegmentedControl } from '../../../common/SegmentedControl';
 import { ThemeColor, Language } from '../../../../types';
 import { useSmartPosition } from '../../../../hooks/useSmartPosition';
+import { AVAILABLE_FONTS_EN, AVAILABLE_FONTS_AR } from '../../../../config/fonts';
 
 export interface SettingsMenuProps {
   language: 'EN' | 'AR';
@@ -14,9 +15,12 @@ export interface SettingsMenuProps {
   currentTheme: ThemeColor;
   setTheme: (theme: ThemeColor) => void;
   availableThemes: ThemeColor[];
-  // Language
   setLanguage: (lang: Language) => void;
   availableLanguages: { code: Language; label: string }[];
+  fontFamilyEN: string;
+  setFontFamilyEN: (font: string) => void;
+  fontFamilyAR: string;
+  setFontFamilyAR: (font: string) => void;
   // Text Transform
   textTransform: 'normal' | 'uppercase';
   setTextTransform: (transform: 'normal' | 'uppercase') => void;
@@ -54,6 +58,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   availableThemes,
   setLanguage,
   availableLanguages,
+  fontFamilyEN,
+  setFontFamilyEN,
+  fontFamilyAR,
+  setFontFamilyAR,
   textTransform,
   setTextTransform,
   hideInactiveModules,
@@ -84,6 +92,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   const t = TRANSLATIONS[language].settings;
 
   const [themeExpanded, setThemeExpanded] = useState(false);
+  const [typographyExpanded, setTypographyExpanded] = useState(false);
   
   // Use Custom Hook for Themes Position
   const { 
@@ -101,15 +110,25 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     resetPosition: resetInfoPos
   } = useSmartPosition({ defaultAlign: 'bottom' });
 
+  // Use Custom Hook for Typography Position
+  const { 
+    ref: typographyRef, 
+    position: typographyPos, 
+    checkPosition: checkTypographyPos,
+    resetPosition: resetTypographyPos
+  } = useSmartPosition({ defaultAlign: 'top' });
+
   // Reset submenu when main menu is closed
   useEffect(() => {
     if (!isOpen) {
       setStatusBarExpanded(false);
       setThemeExpanded(false);
+      setTypographyExpanded(false);
       resetThemesPos();
       resetInfoPos();
+      resetTypographyPos();
     }
-  }, [isOpen, resetThemesPos, resetInfoPos]);
+  }, [isOpen, resetThemesPos, resetInfoPos, resetTypographyPos]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -293,7 +312,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 }))}
               />
             </div>
-
+            
             {/* Text Transform Toggle */}
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
@@ -308,12 +327,93 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               />
             </div>
 
-            {/* Separator */}
-            {(setHideInactiveModules || setDeveloperMode) && (
-                <div className="border-t border-gray-100 dark:border-gray-800 my-1 opacity-50" />
-            )}
+      {/* Separator */}
+            <div className="border-t border-gray-100 dark:border-gray-800 my-1 opacity-50" />
 
-            {/* --- Group 3: Workspace --- */}
+            {/* --- Group 3: Typography --- */}
+            <div className="space-y-1 relative" ref={typographyRef}>
+                {/* Main Row */}
+                <div className="w-full flex items-center justify-between py-1 transition-colors">
+                    <div className="flex items-center gap-2">
+                        <span className="material-symbols-rounded text-[16px]" style={{ color: 'var(--text-secondary)' }}>font_download</span>
+                        <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{t.typography}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => {
+                                checkTypographyPos();
+                                setTypographyExpanded(!typographyExpanded);
+                                if (!typographyExpanded) {
+                                    setStatusBarExpanded(false);
+                                    setThemeExpanded(false);
+                                }
+                            }}
+                            className="transition-colors"
+                            type="button"
+                        >
+                            <span 
+                                className={`material-symbols-rounded text-[16px] transition-transform ${typographyExpanded ? 'rotate-180' : ''}`}
+                                style={{ color: 'var(--text-tertiary)' }}
+                            >
+                                {typographyPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Typography Submenu */}
+                {typographyExpanded && (
+                    <div 
+                        className={`absolute w-56 rounded-lg shadow-xl border z-40 p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
+                        style={{
+                            backgroundColor: 'var(--bg-primary)',
+                            borderColor: 'var(--border-primary)',
+                            [typographyPos.side === 'left' ? 'right' : 'left']: '100%',
+                            [typographyPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
+                        }}
+                    >
+                        {/* English Font Selection */}
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>{t.fontEN}</label>
+                            <select 
+                                value={fontFamilyEN}
+                                onChange={(e) => setFontFamilyEN(e.target.value)}
+                                className="w-full text-xs bg-transparent border rounded-md px-2 py-1 outline-none transition-colors hover:border-blue-400 focus:border-blue-500"
+                                style={{ color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                            >
+                                {AVAILABLE_FONTS_EN.map(font => (
+                                    <option key={font.value} value={font.value} style={{ backgroundColor: 'var(--bg-primary)' }}>
+                                        {font.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Arabic Font Selection */}
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>{t.fontAR}</label>
+                            <select 
+                                value={fontFamilyAR}
+                                onChange={(e) => setFontFamilyAR(e.target.value)}
+                                className="w-full text-xs bg-transparent border rounded-md px-2 py-1 outline-none transition-colors hover:border-blue-400 focus:border-blue-500"
+                                style={{ color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                            >
+                                {AVAILABLE_FONTS_AR.map(font => (
+                                    <option key={font.value} value={font.value} style={{ backgroundColor: 'var(--bg-primary)' }}>
+                                        {font.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Separator */}
+            <div className="border-t border-gray-100 dark:border-gray-800 my-1 opacity-50" />
+
+            {/* --- Group 4: Workspace --- */}
             {/* Focus Mode Toggle */}
             {setHideInactiveModules && (
               <div className="flex items-center justify-between">

@@ -124,6 +124,10 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
     setShowTickerCustomers,
     showTickerTopSeller,
     setShowTickerTopSeller,
+    fontFamilyEN,
+    setFontFamilyEN,
+    fontFamilyAR,
+    setFontFamilyAR,
   } = useSettings();
 
   // --- Real-time Data ---
@@ -201,9 +205,13 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
           setShowTickerInventory={setShowTickerInventory}
           showTickerCustomers={showTickerCustomers}
           setShowTickerCustomers={setShowTickerCustomers}
-          showTickerTopSeller={showTickerTopSeller}
-          setShowTickerTopSeller={setShowTickerTopSeller}
-        />
+           showTickerTopSeller={showTickerTopSeller}
+           setShowTickerTopSeller={setShowTickerTopSeller}
+           fontFamilyEN={fontFamilyEN}
+           setFontFamilyEN={setFontFamilyEN}
+           fontFamilyAR={fontFamilyAR}
+           setFontFamilyAR={setFontFamilyAR}
+         />
 
         {/* Connection Status */}
         <ConnectionStatus

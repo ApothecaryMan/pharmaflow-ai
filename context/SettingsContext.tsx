@@ -12,6 +12,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { Language } from '../types';
 import { THEMES, COLOR_HEX_MAP } from '../config/themeColors';
+import { AVAILABLE_FONTS_EN, AVAILABLE_FONTS_AR } from '../config/fonts';
 import { storage } from '../utils/storage';
 import type { ThemeColor } from '../types';
 
@@ -35,6 +36,8 @@ export interface SettingsState {
   darkMode: boolean;
   // Language
   language: Language;
+  fontFamilyEN: string;
+  fontFamilyAR: string;
   textTransform: 'normal' | 'uppercase';
   // UI Preferences
   navStyle: 1 | 2 | 3;
@@ -58,6 +61,8 @@ export interface SettingsContextType extends SettingsState {
   setDarkMode: (mode: boolean) => void;
   // Language Actions
   setLanguage: (lang: Language) => void;
+  setFontFamilyEN: (font: string) => void;
+  setFontFamilyAR: (font: string) => void;
   setTextTransform: (transform: 'normal' | 'uppercase') => void;
   // UI Actions
   setNavStyle: (style: 1 | 2 | 3) => void;
@@ -77,11 +82,16 @@ export interface SettingsContextType extends SettingsState {
   availableLanguages: { code: Language; label: string }[];
 }
 
+// Default Settings Logic
+const isApple = typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/.test(navigator.platform);
+
 // Default Settings
 const defaultSettings: SettingsState = {
   theme: THEMES[0],
   darkMode: false,
-  language: 'AR',
+  language: 'EN', // Default English
+  fontFamilyEN: isApple ? '-apple-system, BlinkMacSystemFont' : 'Inter', 
+  fontFamilyAR: isApple ? '-apple-system, BlinkMacSystemFont' : 'Cairo', 
   textTransform: 'uppercase',
   navStyle: 2,
   dropdownBlur: false,
@@ -110,6 +120,8 @@ const loadSettings = (): SettingsState => {
     const theme = storage.get('pharma_theme', null);
     const darkMode = storage.get('pharma_darkMode', null);
     const language = storage.get('pharma_language', null);
+    const fontFamilyEN = storage.get('pharma_fontFamilyEN', null);
+    const fontFamilyAR = storage.get('pharma_fontFamilyAR', null);
     const textTransform = storage.get('pharma_textTransform', null);
     const navStyle = storage.get('pharma_navStyle', null);
     const dropdownBlur = storage.get('pharma_dropdownBlur', null);
@@ -122,6 +134,8 @@ const loadSettings = (): SettingsState => {
       theme: theme ? (typeof theme === 'string' ? JSON.parse(theme) : theme) : defaultSettings.theme,
       darkMode: darkMode ?? defaultSettings.darkMode,
       language: (language as Language) || defaultSettings.language,
+      fontFamilyEN: fontFamilyEN || defaultSettings.fontFamilyEN,
+      fontFamilyAR: fontFamilyAR || defaultSettings.fontFamilyAR,
       textTransform: (textTransform as 'normal' | 'uppercase') || defaultSettings.textTransform,
       navStyle: navStyle ? (Number(navStyle) as 1 | 2 | 3) : defaultSettings.navStyle,
       dropdownBlur: dropdownBlur ?? defaultSettings.dropdownBlur,
@@ -157,6 +171,40 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [settings.darkMode]);
 
+  // Apply Font Settings & Load Fonts
+  useEffect(() => {
+    // 1. Update CSS Variables
+    document.documentElement.style.setProperty('--font-en', settings.fontFamilyEN);
+    document.documentElement.style.setProperty('--font-ar', settings.fontFamilyAR);
+
+    // 2. Load English Font
+    const enFont = AVAILABLE_FONTS_EN.find(f => f.value === settings.fontFamilyEN);
+    if (enFont) {
+        const linkId = `font-en-${settings.fontFamilyEN.replace(/[^a-zA-Z0-9]/g, '')}`;
+        if (!document.getElementById(linkId)) {
+            const link = document.createElement('link');
+            link.id = linkId;
+            link.href = enFont.url;
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+        }
+    }
+
+    // 3. Load Arabic Font
+    const arFont = AVAILABLE_FONTS_AR.find(f => f.value === settings.fontFamilyAR);
+    if (arFont) {
+         const linkId = `font-ar-${settings.fontFamilyAR.replace(/[^a-zA-Z0-9]/g, '')}`;
+         if (!document.getElementById(linkId)) {
+             const link = document.createElement('link');
+             link.id = linkId;
+             link.href = arFont.url;
+             link.rel = 'stylesheet';
+             document.head.appendChild(link);
+         }
+    }
+  }, [settings.fontFamilyEN, settings.fontFamilyAR]);
+
+
   // Apply text transform
   useEffect(() => {
     document.documentElement.style.setProperty('--text-transform', settings.textTransform === 'uppercase' ? 'uppercase' : 'none');
@@ -178,6 +226,14 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const setLanguage = useCallback((language: Language) => {
     setSettings(prev => ({ ...prev, language }));
+  }, []);
+
+  const setFontFamilyEN = useCallback((fontFamilyEN: string) => {
+    setSettings(prev => ({ ...prev, fontFamilyEN }));
+  }, []);
+
+  const setFontFamilyAR = useCallback((fontFamilyAR: string) => {
+      setSettings(prev => ({ ...prev, fontFamilyAR }));
   }, []);
 
   const setTextTransform = useCallback((textTransform: 'normal' | 'uppercase') => {
@@ -240,6 +296,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setShowTickerInventory,
     setShowTickerCustomers,
     setShowTickerTopSeller,
+    setFontFamilyEN,
+    setFontFamilyAR,
     availableThemes: THEMES,
     availableLanguages: LANGUAGES,
   }), [

@@ -1525,7 +1525,7 @@ export const POS: React.FC<POSProps> = ({
                             month: "2-digit",
                             year: "2-digit",
                           })
-                        : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
+                        : "-") + ` â€¢ ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                     : <span className="inline-flex items-center px-2 py-0.5 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 rounded border border-red-100 dark:border-red-800/50">{t.noStock}</span>}
                 </div>
               </div>
@@ -1561,7 +1561,7 @@ export const POS: React.FC<POSProps> = ({
                                 "en-US",
                                 { month: "2-digit", year: "2-digit" }
                               )
-                            : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
+                            : "-") + ` ï¿½ ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                         : <span className="text-red-500">{t.noStock}</span>}
                     </div>
                   );
@@ -1575,7 +1575,7 @@ export const POS: React.FC<POSProps> = ({
                             month: "2-digit",
                             year: "2-digit",
                           })
-                        : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
+                        : "-") + ` ï¿½ ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
                     </div>
                   );
                 }}

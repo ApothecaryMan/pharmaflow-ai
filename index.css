@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100;200;300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,6 +7,8 @@
 :root {
   --border-color: #e5e7eb; /* gray-200 */
   --text-secondary: #6b7280; /* gray-500 */
+  --font-en: "Inter";
+  --font-ar: "Cairo";
 }
 
 .dark {
@@ -166,6 +169,15 @@ html:not(.dark) .card-shadow {
 
   /* Slant Axis */
   --font-slant: 0;
+
+  /* Advanced Axes (Google Sans Flex) */
+  --font-xtra: 468; /* Parametric Grade (Thickness) 323..603 */
+  --font-yopq: 79;  /* Thin Stroke 25..135 */
+  --font-ytas: 750; /* Ascender Height 649..854 */
+  --font-ytde: -203; /* Descender Depth 98..305 (Using standard negative mapping or positive per font spec) */
+  --font-ytfi: 738; /* Figure Height 560..788 */
+  --font-ytlc: 514; /* Lowercase Height 416..570 */
+  --font-ytuc: 712; /* Uppercase Height 528..760 */
 }
 
 /* Dark Mode Typography Optimization */
@@ -243,14 +255,18 @@ html:not(.dark) .card-shadow {
 
 /* Global Typography Reset */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Google Sans Flex", sans-serif;
+  font-family: var(--font-en), var(--font-ar), -apple-system, BlinkMacSystemFont, "Google Sans Flex", sans-serif;
 
   /* Enable Native Browser Optical Sizing */
   font-optical-sizing: auto;
 
-  /* Bind Axes to Variables - REMOVED 'opsz' to let browser handle it automatically */
+  /* Bind Axes to Variables */
   font-variation-settings: "wght" var(--font-weight), "wdth" var(--font-width),
-    "GRAD" var(--font-grade), "slnt" var(--font-slant);
+    "GRAD" var(--font-grade), "slnt" var(--font-slant),
+    "XTRA" var(--font-xtra), "YOPQ" var(--font-yopq),
+    "YTAS" var(--font-ytas), "YTDE" var(--font-ytde),
+    "YTFI" var(--font-ytfi), "YTLC" var(--font-ytlc),
+    "YTUC" var(--font-ytuc);
 
   /* Smooth "Breathe" Transitions */
   transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
@@ -264,8 +280,7 @@ body {
    but falls back to Noto Sans Arabic for the family */
 html[dir="rtl"] body,
 html[lang="ar"] body {
-  font-family: -apple-system, BlinkMacSystemFont, "Google Sans Flex",
-    "IBM Plex Sans Arabic", sans-serif;
+  font-family: var(--font-en), var(--font-ar), -apple-system, BlinkMacSystemFont, "Google Sans Flex", sans-serif;
 }
 
 /* Arabic Headings & Active UI - IBM Plex Sans Arabic */
@@ -295,8 +310,7 @@ html[lang="ar"] .h5,
 html[lang="ar"] h6,
 html[lang="ar"] .h6,
 html[lang="ar"] nav {
-  font-family: -apple-system, BlinkMacSystemFont, "Google Sans Flex",
-    "IBM Plex Sans Arabic", sans-serif;
+  font-family: var(--font-en), var(--font-ar), -apple-system, BlinkMacSystemFont, "Google Sans Flex", sans-serif;
 }
 
 /* Adjust padding/height for Arabic Navigation to accommodate font weight/size */
@@ -384,6 +398,5 @@ h3,
 html[dir="rtl"] .font-bold,
 html[lang="ar"] .font-bold {
   font-weight: 700 !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Google Sans Flex",
-    "IBM Plex Sans Arabic", sans-serif;
+  font-family: var(--font-en), var(--font-ar), -apple-system, BlinkMacSystemFont, "Google Sans Flex", sans-serif;
 }

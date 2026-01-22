@@ -24,6 +24,8 @@ export default {
     extend: {
       fontFamily: {
         sans: [
+          'var(--font-en)',
+          'var(--font-ar)',
           '-apple-system',
           'BlinkMacSystemFont',
           '"Google Sans Flex"',

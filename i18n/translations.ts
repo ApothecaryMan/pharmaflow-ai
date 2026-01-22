@@ -50,7 +50,10 @@ export const TRANSLATIONS = {
       showInventory: 'Inventory',
       showCustomers: 'New Customers',
       showTopSeller: 'Top Seller',
-      comingSoon: 'Coming Soon'
+      comingSoon: 'Coming Soon',
+      typography: 'Typography',
+      fontEN: 'English Font',
+      fontAR: 'Arabic Font'
     },
 
     profile: {
@@ -1938,7 +1941,10 @@ export const TRANSLATIONS = {
       showInventory: 'المخزون',
       showCustomers: 'العملاء الجدد',
       showTopSeller: 'أفضل بائع',
-      comingSoon: 'قريباً'
+      comingSoon: 'قريباً',
+      typography: 'التنسيق والخطوط',
+      fontEN: 'خط اللغة الإنجليزية',
+      fontAR: 'خط اللغة العربية'
     },
 
     profile: {
