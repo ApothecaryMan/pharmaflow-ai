@@ -86,6 +86,23 @@ export const loadQzTray = (): Promise<void> => {
     
     script.onload = () => {
       qzLoaded = true;
+
+      // Configure QZ Tray Security
+      // resolving to null tells QZ to treat this as an unsigned/untrusted connection
+      // This prevents "Failed to get certificate: undefined" errors
+      const qzGlobal = (window as any).qz;
+      if (qzGlobal) {
+        qzGlobal.security.setCertificatePromise((resolve: (cert: string | null) => void) => {
+          resolve(null);
+        });
+
+        qzGlobal.security.setSignaturePromise((toSign: string) => {
+          return (resolve: (sig: string | null) => void) => {
+            resolve(null);
+          };
+        });
+      }
+
       resolve();
     };
     

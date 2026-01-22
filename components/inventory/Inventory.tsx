@@ -12,6 +12,7 @@ import { formatStock, validateStock } from '../../utils/inventory';
 import { Modal } from '../common/Modal';
 import { getCategories, getProductTypes, isMedicineCategory, getLocalizedCategory, getLocalizedProductType } from '../../data/productCategories';
 import { useStatusBar } from '../layout/StatusBar';
+import { getDisplayName } from '../../utils/drugDisplayName';
 
 interface InventoryProps {
   inventory: Drug[];
@@ -198,7 +199,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       }
 
       // Normal search: Check composite string for cross-field matches (e.g. "Pana Tablet")
-      const searchableText = d.name + ' ' + (d.dosageForm || '') + ' ' + d.category;
+      const searchableText = getDisplayName(d) + ' ' + d.category;
       
       return (
         regex.test(searchableText) ||
@@ -243,11 +244,11 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       cell: ({ row }) => {
         const drug = row.original;
         return (
-          <div className="flex flex-col">
+          <div className="flex flex-col text-start" dir="ltr">
             <div className="font-medium text-gray-900 dark:text-gray-100 text-sm drug-name">
-              {drug.name} {drug.dosageForm ? <span className="text-gray-500 font-normal">({getLocalizedProductType(drug.dosageForm, currentLang)})</span> : ''}
+              {getDisplayName({ name: drug.name })} {drug.dosageForm && <span className="text-gray-500 font-normal">{getDisplayName({ name: `(${getLocalizedProductType(drug.dosageForm, 'en')})` })}</span>}
             </div>
-            <div className="text-xs text-gray-500 flex items-center gap-1">
+            <div className="text-xs text-gray-500 w-full text-start">
               <span>{drug.genericName}</span>
             </div>
           </div>
@@ -294,7 +295,8 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     },
     {
       id: 'actions',
-      header: t.headers.actions,
+      header: '',
+      enableHiding: false,
       cell: ({ row }) => (
         <div className="relative flex justify-end">
             <button 
@@ -706,9 +708,9 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                 <div className="flex justify-between items-start">
                     <div>
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                            {viewingDrug.name} {viewingDrug.dosageForm ? <span className="text-lg text-gray-500 font-normal">({viewingDrug.dosageForm})</span> : ''}
+                            {getDisplayName({ name: viewingDrug.name })} {viewingDrug.dosageForm && <span className="text-lg text-gray-500 font-normal">{getDisplayName({ name: `(${getLocalizedProductType(viewingDrug.dosageForm, 'en')})` })}</span>}
                         </h2>
-                        <p className="text-gray-500 font-medium">{viewingDrug.genericName}</p>
+                        <p className="text-gray-500 font-medium text-start" dir="ltr">{viewingDrug.genericName}</p>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase bg-${color}-100 text-${color}-700 dark:bg-${color}-900/50 dark:text-${color}-300`}>
                         {viewingDrug.category}

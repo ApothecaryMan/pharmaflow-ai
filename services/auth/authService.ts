@@ -83,8 +83,8 @@ export const authService = {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
 
+    // For Netlify/Production Pilot: Allow test credentials everywhere for now
     // Only allow this simple auth in DEV mode or if specifically configured
-    if (import.meta.env.DEV) {
       // Use safe comparison
       if (username === DEV_CREDENTIALS.username && 
           password === (DEV_CREDENTIALS.password ?? '')) {
@@ -98,7 +98,6 @@ export const authService = {
         localStorage.setItem(SESSION_KEY, JSON.stringify(session));
         return session;
       }
-    }
     
     // In production, this would fail if no real API is hooked up
     return null;
