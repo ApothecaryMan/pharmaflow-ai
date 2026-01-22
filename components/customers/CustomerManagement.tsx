@@ -275,7 +275,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     { 
       accessorKey: 'code', 
       header: t.modal?.code || 'Code', 
-      meta: { dir: language === 'AR' ? 'rtl' : 'ltr', width: 100 },
+      meta: { dir: language === 'AR' ? 'rtl' : 'ltr', width: 100, align: 'start' },
       cell: (info) => {
         const c = info.row.original;
         return (
@@ -301,7 +301,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       cell: (info) => {
         const c = info.row.original;
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', height: '100%' }}>
+          <div className="flex items-center gap-3 w-full h-full">
               <Avatar 
                   sx={{ 
                       bgcolor: 'primary.main',
@@ -314,10 +314,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               >
                   {c.name.substring(0, 2).toUpperCase()}
               </Avatar>
-              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-                  <div className="font-medium truncate" style={{ lineHeight: 1.2 }}>{c.name}</div>
+              <div className="flex flex-col min-w-0 overflow-hidden">
+                  <div className="font-medium truncate leading-tight">{c.name}</div>
                   {(c.governorate || c.city) && (
-                      <div className="text-[10px] text-gray-400 flex items-center gap-1 truncate" style={{ lineHeight: 1.2 }}>
+                      <div className="text-[10px] text-gray-400 flex items-center gap-1 truncate leading-tight">
                           <span className="material-symbols-rounded text-[10px]">location_on</span>
                           <span className="truncate">
                               {getLocationName(c.governorate || '', 'gov', language)}
@@ -329,7 +329,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           </div>
         );
       },
-      meta: { width: 250 }
+      meta: { width: 250, align: 'start' }
     },
     { 
       accessorKey: 'phone', // Use phone for sorting 
@@ -337,18 +337,26 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       cell: (info) => {
         const c = info.row.original;
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span className="material-symbols-rounded text-[14px]">call</span> <span dir="ltr">{c.phone}</span></span>
-              {c.email && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#9ca3af' }}><span className="material-symbols-rounded text-[14px]">mail</span> {c.email}</span>}
+          <div className="flex flex-col w-full">
+              <span className="flex items-center gap-1">
+                 <span className="material-symbols-rounded text-[14px]">call</span> 
+                 <span dir="ltr">{c.phone}</span>
+              </span>
+              {c.email && (
+                 <span className="flex items-center gap-1 text-xs text-gray-400">
+                    <span className="material-symbols-rounded text-[14px]">mail</span> 
+                    {c.email}
+                 </span>
+              )}
           </div>
         );
       },
-      meta: { width: 200 }
+      meta: { width: 200, dir: 'ltr' }
     },
     { 
       accessorKey: 'totalPurchases', 
       header: t.headers?.purchases || 'Purchases', 
-      meta: { dir: 'ltr', width: 120, align: 'right' },
+      meta: { width: 120, align: 'start' },
       cell: (info) => <span className="font-medium text-gray-900 dark:text-white" dir="ltr">${info.row.original.totalPurchases.toFixed(2)}</span>,
     },
     { 
@@ -356,7 +364,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       header: t.headers?.points || 'Points', 
       meta: { align: 'center', width: 100 },
       cell: (info) => (
-        <span className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-transparent border border-amber-200 text-amber-700 dark:border-amber-700 dark:text-amber-400" dir="ltr">
+        <span className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-transparent border border-amber-200 text-amber-700 dark:border-amber-700 dark:text-amber-400">
             {parseFloat(Number(info.row.original.points || 0).toFixed(2))} pts
         </span>
       ),
@@ -365,7 +373,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       accessorKey: 'lastVisit', 
       header: t.headers?.lastVisit || 'Last Visit', 
       cell: (info) => <span>{new Date(info.row.original.lastVisit).toLocaleDateString()}</span>,
-      meta: { width: 120 }
+      meta: { width: 120, align: 'center' }
     },
     { 
       accessorKey: 'status', 
@@ -697,18 +705,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
       {mode === 'list' ? (
         <>
-          {/* Search & Content */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white dark:bg-gray-900 p-4 rounded-2xl card-shadow">
-              <div className="relative group flex-1 w-full">
-                <SearchInput
-                    value={searchQuery}
-                    onSearchChange={setSearchQuery}
-                    placeholder={t.searchPlaceholder}
-                    className="bg-gray-50 dark:bg-gray-800 ps-10"
-                    wrapperClassName="w-full"
-                />
-              </div>
-          </div>
+
 
           {/* Table Card */}
           {/* Table Card */}
@@ -721,8 +718,9 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             searchPlaceholder={t.searchPlaceholder}
             defaultHiddenColumns={['serialId']}
             color={color}
-            enableTopToolbar={false}
+            enableTopToolbar={true}
             globalFilter={searchQuery}
+            onSearchChange={setSearchQuery}
           />
         </>
       ) : (
