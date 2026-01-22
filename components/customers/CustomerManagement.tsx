@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Customer } from '../../types';
 import { useContextMenu } from '../common/ContextMenu';
-import { Avatar } from '@mui/material'; // Added Import
-import { DataTable, Column } from '../common/DataTable';
+import { Avatar } from '@mui/material';
+import { TanStackTable } from '../common/TanStackTable';
+import { ColumnDef } from '@tanstack/react-table';
 import { GOVERNORATES, CITIES, AREAS, getLocationName } from '../../data/locations';
 import { useSmartDirection, SmartPhoneInput, SmartEmailInput } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
@@ -40,7 +41,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isKioskMode, setIsKioskMode] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const { showMenu } = useContextMenu();
   const [showSuccess, setShowSuccess] = useState(false);
   const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
@@ -95,55 +95,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     }
   }, [formData.city]);
 
-  const filteredCustomers = useMemo(() => {
-    let result = customers;
 
-    // Filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(c => 
-        c.name.toLowerCase().includes(query) ||
-        c.phone.includes(query) ||
-        (c.email && c.email.toLowerCase().includes(query)) ||
-        (c.code && c.code.toLowerCase().includes(query)) ||
-        (c.serialId && c.serialId.toString().includes(query))
-      );
-    }
-
-    // Sort
-    if (sortConfig) {
-      result = [...result].sort((a, b) => {
-        const { key, direction } = sortConfig;
-        let aValue: any = a[key as keyof Customer];
-        let bValue: any = b[key as keyof Customer];
-
-        // Handle specific keys
-        if (key === 'purchases') {
-            aValue = a.totalPurchases;
-            bValue = b.totalPurchases;
-        } else if (key === 'contact') {
-            aValue = a.phone;
-            bValue = b.phone;
-        } else if (key === 'lastVisit') {
-            aValue = new Date(a.lastVisit).getTime();
-            bValue = new Date(b.lastVisit).getTime();
-        } else if (key === 'serialId') {
-            aValue = a.serialId || 0;
-            bValue = b.serialId || 0;
-        }
-
-        if (aValue < bValue) return direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-
-    return result;
-  }, [customers, searchQuery, sortConfig]);
-
-  const handleSort = (key: string, direction: 'asc' | 'desc') => {
-    setSortConfig({ key, direction });
-  };
 
   const generateUniqueCode = () => {
     let code;
@@ -312,156 +264,143 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   };
 
 
-  // Define Columns for DataTable
-  const columns: Column<Customer>[] = [
+  // Define Columns for TanStackTable
+  const columns = useMemo<ColumnDef<Customer>[]>(() => [
     { 
-      key: 'serialId', 
-      label: '#', 
-      sortable: true,
-      render: (c) => <span className="font-mono">{c.serialId || '-'}</span>,
-      defaultWidth: 60
+      accessorKey: 'serialId', 
+      header: '#', 
+      cell: (info) => <span className="font-mono">{info.row.original.serialId || '-'}</span>,
+      meta: { width: 60 }
     },
     { 
-      key: 'code', 
-      label: 'modal.code', 
-      sortable: true,
-      cellDir: language === 'AR' ? 'rtl' : 'ltr',
-      render: (c) => (
-        <span 
-            className="font-mono text-xs cursor-pointer hover:text-blue-500 transition-colors relative group"
-            title="Click to copy code"
-            onClick={(e) => {
-                e.stopPropagation();
-                if (c.code) {
-                     setCopyFeedback(true);
-                     setTimeout(() => setCopyFeedback(false), 2000);
-                     // User requested NOT to copy, just show feedback. 
-                     // But usually "press to copy just show feedback" implies the manual copy failing.
-                     // However, "make when press on customer code copy it" was previous request.
-                     // "press to copy just show feedback not copy anything" -> confusing. 
-                     // Interpreting as: "Don't perform the actual copy action because it might be annoying/broken, just show the toast to simulate it OR the user implies the copy action is ALREADY working or handled elsewhere?"
-                     // Actually, reading carefully "press to copy just show feedback not copy anything"
-                     // This likely means: "The copy action is annoying/unwanted, just show the feedback TOAST but don't write to clipboard".
-                     // OR it means "The copy action IS NOT WORKING, so just show feedback to pretend it is?" -> No, that's malicious.
-                     // OR it means "The previous implementation of 'copy + toast' was okay but maybe it pasted automatically?"
-                     // Most likely: "I want to see the feedback, but I don't want the actual clipboard write to happen (maybe for testing? or privacy?)"
-                     // Wait, "delete copy in contex menu... make when press on customer code copy it" was previous.
-                     // Now "press to copy just show feedback not copy anything".
-                     // Maybe they mean: "When I press, it copies. BUT I don't want it to copy. I just want the feedback." -> Weird.
-                     // Re-reading: "press to copy just show feedback not copy anything".
-                     // Okay, I will comment out the clipboard write but keep the feedback.
-                     // navigator.clipboard.writeText(c.code).catch(err => console.error('Failed to copy:', err));
-                }
-            }}
-        >
-            {c.code}
+      accessorKey: 'code', 
+      header: t.modal?.code || 'Code', 
+      meta: { dir: language === 'AR' ? 'rtl' : 'ltr', width: 100 },
+      cell: (info) => {
+        const c = info.row.original;
+        return (
+          <span 
+              className="font-mono text-xs cursor-pointer hover:text-blue-500 transition-colors relative group"
+              title="Click to copy code"
+              onClick={(e) => {
+                  e.stopPropagation();
+                  if (c.code) {
+                       setCopyFeedback(true);
+                       setTimeout(() => setCopyFeedback(false), 2000);
+                  }
+              }}
+          >
+              {c.code}
+          </span>
+        );
+      }
+    },
+    { 
+      accessorKey: 'name', 
+      header: t.headers?.name || 'Name', 
+      cell: (info) => {
+        const c = info.row.original;
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', height: '100%' }}>
+              <Avatar 
+                  sx={{ 
+                      bgcolor: 'primary.main',
+                      width: 32, 
+                      height: 32,
+                      fontSize: '0.8rem',
+                      fontWeight: 'bold',
+                      color: '#fff'
+                  }}
+              >
+                  {c.name.substring(0, 2).toUpperCase()}
+              </Avatar>
+              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+                  <div className="font-medium truncate" style={{ lineHeight: 1.2 }}>{c.name}</div>
+                  {(c.governorate || c.city) && (
+                      <div className="text-[10px] text-gray-400 flex items-center gap-1 truncate" style={{ lineHeight: 1.2 }}>
+                          <span className="material-symbols-rounded text-[10px]">location_on</span>
+                          <span className="truncate">
+                              {getLocationName(c.governorate || '', 'gov', language)}
+                              {c.city && `, ${getLocationName(c.city, 'city', language)}`}
+                          </span>
+                      </div>
+                  )}
+              </div>
+          </div>
+        );
+      },
+      meta: { width: 250 }
+    },
+    { 
+      accessorKey: 'phone', // Use phone for sorting 
+      header: t.headers?.contact || 'Contact', 
+      cell: (info) => {
+        const c = info.row.original;
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span className="material-symbols-rounded text-[14px]">call</span> <span dir="ltr">{c.phone}</span></span>
+              {c.email && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#9ca3af' }}><span className="material-symbols-rounded text-[14px]">mail</span> {c.email}</span>}
+          </div>
+        );
+      },
+      meta: { width: 200 }
+    },
+    { 
+      accessorKey: 'totalPurchases', 
+      header: t.headers?.purchases || 'Purchases', 
+      meta: { dir: 'ltr', width: 120, align: 'right' },
+      cell: (info) => <span className="font-medium text-gray-900 dark:text-white" dir="ltr">${info.row.original.totalPurchases.toFixed(2)}</span>,
+    },
+    { 
+      accessorKey: 'points', 
+      header: t.headers?.points || 'Points', 
+      meta: { align: 'center', width: 100 },
+      cell: (info) => (
+        <span className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-transparent border border-amber-200 text-amber-700 dark:border-amber-700 dark:text-amber-400" dir="ltr">
+            {parseFloat(Number(info.row.original.points || 0).toFixed(2))} pts
         </span>
       ),
-      defaultWidth: 100
     },
     { 
-      key: 'name', 
-      label: 'headers.name', 
-      sortable: true,
-      render: (c) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', height: '100%' }}>
-            <Avatar 
-                sx={{ 
-                    bgcolor: 'primary.main',
-                    width: 32, 
-                    height: 32,
-                    fontSize: '0.8rem',
-                    fontWeight: 'bold',
-                    color: '#fff'
-                }}
-            >
-                {c.name.substring(0, 2).toUpperCase()}
-            </Avatar>
-            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-                <div className="font-medium truncate" style={{ lineHeight: 1.2 }}>{c.name}</div>
-                {(c.governorate || c.city) && (
-                    <div className="text-[10px] text-gray-400 flex items-center gap-1 truncate" style={{ lineHeight: 1.2 }}>
-                        <span className="material-symbols-rounded text-[10px]">location_on</span>
-                        <span className="truncate">
-                            {getLocationName(c.governorate || '', 'gov', language)}
-                            {c.city && `, ${getLocationName(c.city, 'city', language)}`}
-                        </span>
-                    </div>
-                )}
-            </div>
-        </div>
-      ),
-      defaultWidth: 250
+      accessorKey: 'lastVisit', 
+      header: t.headers?.lastVisit || 'Last Visit', 
+      cell: (info) => <span>{new Date(info.row.original.lastVisit).toLocaleDateString()}</span>,
+      meta: { width: 120 }
     },
     { 
-      key: 'contact', 
-      label: 'headers.contact', 
-      sortable: true,
-
-      render: (c) => (
-        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span className="material-symbols-rounded text-[14px]">call</span> <span dir="ltr">{c.phone}</span></span>
-            {c.email && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#9ca3af' }}><span className="material-symbols-rounded text-[14px]">mail</span> {c.email}</span>}
-        </div>
-      ),
-      defaultWidth: 200
+      accessorKey: 'status', 
+      header: t.headers?.status || 'Status', 
+      meta: { align: 'center', width: 100 },
+      cell: (info) => {
+        const c = info.row.original;
+        const isActive = c.status?.toLowerCase() === 'active';
+        return (
+          <span className={`px-2 py-1 rounded-md text-xs font-medium bg-transparent border ${isActive ? 'border-green-200 text-green-700 dark:border-green-800 dark:text-green-400' : 'border-red-200 text-red-700 dark:border-red-800 dark:text-red-400'}`}>
+              {t.status[c.status?.toLowerCase()] || c.status}
+          </span>
+        );
+      },
     },
     { 
-      key: 'purchases', 
-      label: 'headers.purchases', 
-      sortable: true,
-      cellDir: 'ltr',
-      render: (c) => <span className="font-medium text-gray-900 dark:text-white" dir="ltr">${c.totalPurchases.toFixed(2)}</span>,
-      defaultWidth: 120
-    },
-    { 
-      key: 'points', 
-      label: 'headers.points', 
-      sortable: true,
-      align: 'center',
-      render: (c) => (
-        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" dir="ltr">
-            {parseFloat(Number(c.points || 0).toFixed(2))} pts
-        </span>
-      ),
-      defaultWidth: 100
-    },
-    { 
-      key: 'lastVisit', 
-      label: 'headers.lastVisit', 
-      sortable: true,
-      render: (c) => <span>{new Date(c.lastVisit).toLocaleDateString()}</span>,
-      defaultWidth: 120
-    },
-    { 
-      key: 'status', 
-      label: 'headers.status', 
-      sortable: true,
-      align: 'center',
-      render: (c) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${c.status?.toLowerCase() === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-            {t.status[c.status?.toLowerCase()] || c.status}
-        </span>
-      ),
-      defaultWidth: 100
-    },
-    { 
-      key: 'actions', 
-      label: '', 
-      align: 'right',
-      render: (c: Customer) => (
-        <div className="flex justify-end gap-2">
-            <button onClick={(e) => { e.stopPropagation(); handleOpenEdit(c); }} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-500 transition-colors">
-                <span className="material-symbols-rounded text-[20px]">edit</span>
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); onDeleteCustomer(c.id); }} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-500 transition-colors">
-                <span className="material-symbols-rounded text-[20px]">delete</span>
-            </button>
-        </div>
-      ),
-      defaultWidth: 100
+      id: 'actions', 
+      header: '', 
+      meta: { align: 'right', width: 100 },
+      enableSorting: false,
+      cell: (info) => {
+        const c = info.row.original;
+        return (
+          <div className="flex justify-end gap-2">
+              <button onClick={(e) => { e.stopPropagation(); handleOpenEdit(c); }} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-500 transition-colors">
+                  <span className="material-symbols-rounded text-[20px]">edit</span>
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); onDeleteCustomer(c.id); }} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-500 transition-colors">
+                  <span className="material-symbols-rounded text-[20px]">delete</span>
+              </button>
+          </div>
+        );
+      },
     }
-  ];
+  ], [language, t, color]);
 
   // Address Form Section Component
   const renderAddressForm = () => (
@@ -772,18 +711,18 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           </div>
 
           {/* Table Card */}
-          <DataTable
-            data={filteredCustomers}
+          {/* Table Card */}
+          <TanStackTable
+            data={customers}
             columns={columns}
-            onSort={handleSort}
             onRowContextMenu={handleContextMenu}
             onRowLongPress={handleLongPress}
-            color={color}
-            t={t}
-            storageKey="customers_table"
+            tableId="customers_table"
+            searchPlaceholder={t.searchPlaceholder}
             defaultHiddenColumns={['serialId']}
-            darkMode={darkMode}
-            language={language}
+            color={color}
+            enableTopToolbar={false}
+            globalFilter={searchQuery}
           />
         </>
       ) : (

@@ -1,4 +1,23 @@
-
+/**
+ * TanStackTable Component Design & Usage Guidelines
+ * =================================================
+ * 
+ * 1. Usage:
+ *    - Prefer this component over legacy `DataTable`.
+ *    - Use `accessorKey` for columns to strictly type-check against data.
+ *    - Search/Filtering: Delegate to this component via `globalFilter` prop rather than pre-filtering data.
+ *    - Sorting: Handled internally. Do not implement manual sort logic in parent.
+ * 
+ * 2. Styling Standards ("The Perfect Way"):
+ *    - Badges/Status Indicators:
+ *      - Style: Outline (Transparent background + Border).
+ *      - Shape: Square/Medium Rounded (`rounded-md`), NOT Pill/Full Rounded (`rounded-full`).
+ *      - Example: `bg-transparent border border-amber-200 text-amber-700 rounded-md`
+ * 
+ * 3. Internationalization (i18n):
+ *    - Headers: Pass translated strings (e.g., `t.headers.name`), NOT translation keys.
+ *    - Direction: Use `meta: { dir: 'ltr' | 'rtl' }` for specific column alignment requirements.
+ */
 import React, { useState, useRef } from 'react';
 import {
   useReactTable,
@@ -412,7 +431,7 @@ export function TanStackTable<TData, TValue>({
       e.stopPropagation();
       onContextMenuOpen(e.clientX, e.clientY, columnId);
   };
-  const rows = table.getRowModel().rows.slice(0, 20);
+  const rows = table.getRowModel().rows;
 
   return (
     <div className="flex flex-col h-full w-full">
