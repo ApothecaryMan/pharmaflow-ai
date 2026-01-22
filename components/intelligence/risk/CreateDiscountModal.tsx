@@ -29,7 +29,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
       onClose={onClose}
       title="تطبيق سياسة تخفيض"
       size="md"
-      icon="discount"
+      icon="sell"
     >
       <div className="space-y-5">
         {/* Info Banner */}
@@ -57,7 +57,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
                   : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
               }`}
             >
-              <span className="material-symbols-rounded text-2xl mb-1">percent</span>
+              <span className="material-symbols-rounded text-2xl mb-1 font-icon">percent</span>
               <p className="font-medium">نسبة مئوية</p>
             </button>
             <button
@@ -69,7 +69,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
                   : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
               }`}
             >
-              <span className="material-symbols-rounded text-2xl mb-1">attach_money</span>
+              <span className="material-symbols-rounded text-2xl mb-1 font-icon">payments</span>
               <p className="font-medium">مبلغ ثابت</p>
             </button>
           </div>
@@ -136,7 +136,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
             onClick={handleApply}
             className="px-6 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 transition-all transform active:scale-95 font-medium flex items-center gap-2"
           >
-            <span className="material-symbols-rounded">check</span>
+            <span className="material-symbols-rounded font-icon">check_circle</span>
             تطبيق التخفيض
           </button>
         </div>

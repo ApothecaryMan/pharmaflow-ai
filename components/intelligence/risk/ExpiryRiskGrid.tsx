@@ -1,15 +1,61 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { formatCurrency } from '../../../utils/currency';
 // Force refresh
 import { 
   createColumnHelper, 
-  getCoreRowModel, 
-  useReactTable, 
-  getSortedRowModel,
-  SortingState
 } from '@tanstack/react-table';
+import { TanStackTable } from '../../common/TanStackTable';
 import { ExpiryRiskItem } from '../../../types/intelligence';
-import { StatusBadge } from '../common/StatusBadge';
+
+// --- Local Components ---
+type BadgeColor = 'emerald' | 'blue' | 'amber' | 'red' | 'gray' | 'purple';
+
+const StatusBadge = ({
+  status,
+  label,
+  color,
+  size = 'md',
+  language = 'EN'
+}: {
+  status: string;
+  label?: string;
+  color?: BadgeColor;
+  size?: 'sm' | 'md';
+  language?: string;
+}) => {
+  // Default mappings
+  const getStatusConfig = (statusKey: string): { color: BadgeColor; label: string } => {
+    const isAr = language === 'AR';
+    switch (statusKey) {
+      // Risk Category
+      case 'HIGH': return { color: 'red', label: isAr ? 'مخاطرة عالية' : 'High Risk' };
+      case 'MEDIUM': return { color: 'amber', label: isAr ? 'مخاطرة متوسطة' : 'Medium Risk' };
+      case 'CRITICAL_RISK': return { color: 'red', label: isAr ? 'مخاطرة حرجة' : 'Critical Risk' };
+      case 'LOW_RISK': return { color: 'emerald', label: isAr ? 'مخاطرة قليلة' : 'Low Risk' };
+      
+      default: return { color: 'gray', label: statusKey };
+    }
+  };
+
+  const config = getStatusConfig(status);
+  const finalColor = color || config.color;
+  const finalLabel = label || config.label;
+
+  const colorClasses = {
+    emerald: 'bg-transparent text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+    amber: 'bg-transparent text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+    red: 'bg-transparent text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',
+    gray: 'bg-transparent text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-700',
+  };
+
+  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs';
+
+  return (
+    <span className={`inline-flex items-center justify-center rounded-md border font-medium whitespace-nowrap ${colorClasses[finalColor]} ${sizeClass}`}>
+      {finalLabel}
+    </span>
+  );
+};
 
 interface ExpiryRiskGridProps {
   data: ExpiryRiskItem[];
@@ -17,7 +63,13 @@ interface ExpiryRiskGridProps {
 }
 
 export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  // Infer language from T object or default (hacky but works if T structure is consistent)
+  const language = t?.metadata?.language || 'EN'; // Placeholder if needed, or just pass 'EN' if not critical. 
+  // Actually usually T comes from useTranslation which doesn't expose language directly often?
+  // Let's assume EN for now unless passed. But wait, `t` here is prop.
+  // We can pass language prop if available. 
+  // For now, let's just assume EN or use safe default.
+
   const columnHelper = createColumnHelper<ExpiryRiskItem>();
 
   const columns = useMemo(() => [
@@ -43,10 +95,12 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
     }),
     columnHelper.accessor('current_quantity', {
         header: t?.intelligence?.risk?.grid?.columns?.quantity || 'Quantity',
+        meta: { align: 'center' },
         cell: info => info.getValue()
     }),
     columnHelper.accessor('value_at_risk', {
         header: t?.intelligence?.risk?.grid?.columns?.valueAtRisk || 'Value at Risk',
+        meta: { align: 'center' },
         cell: info => formatCurrency(info.getValue())
     }),
     columnHelper.accessor('risk_category', {
@@ -55,6 +109,7 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
     }),
     columnHelper.accessor('expected_recovery_value', {
         header: t?.intelligence?.risk?.grid?.columns?.recovery || 'Est. Recovery',
+        meta: { align: 'center' },
         cell: info => (
             <span className="text-emerald-600 font-medium">
                 {formatCurrency(info.getValue() ?? 0)}
@@ -64,56 +119,32 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
     columnHelper.display({
         id: 'actions',
         header: t?.intelligence?.risk?.grid?.columns?.action || 'Action',
+        meta: { align: 'end' },
         cell: info => {
            const action = info.row.original.recommended_action;
            return (
+             <div className="flex justify-end">
                <button className="px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded text-xs font-medium transition-colors">
                    {action === 'DISCOUNT_AGGRESSIVE' ? (t?.intelligence?.risk?.grid?.actions?.discount50 || '50% Off') : 
                     action === 'DISCOUNT_MODERATE' ? (t?.intelligence?.risk?.grid?.actions?.discount25 || '25% Off') :
                     action === 'RETURN' ? (t?.intelligence?.risk?.grid?.actions?.return || 'Return') : (t?.intelligence?.risk?.grid?.actions?.action || 'Action')}
                </button>
+             </div>
            );
         }
     })
   ], [columnHelper, t]);
 
-  const table = useReactTable({
-    data,
-    columns,
-    state: { sorting },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  });
-
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div className="flex-1 overflow-auto">
-            <table className="w-full text-sm text-right">
-                <thead className="sticky top-0 z-10 bg-white dark:bg-gray-800 text-gray-500 border-b border-gray-100 dark:border-gray-700">
-                    {table.getHeaderGroups().map(headerGroup => (
-                        <tr key={headerGroup.id}>
-                            {headerGroup.headers.map(header => (
-                                <th key={header.id} className="px-4 py-3 font-medium cursor-pointer" onClick={header.column.getToggleSortingHandler()}>
-                                    {typeof header.column.columnDef.header === 'function' ? header.column.columnDef.header(header.getContext()) : header.column.columnDef.header}
-                                </th>
-                            ))}
-                        </tr>
-                    ))}
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {table.getRowModel().rows.map(row => (
-                        <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                            {row.getVisibleCells().map(cell => (
-                                <td key={cell.id} className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                                    {typeof cell.column.columnDef.cell === 'function' ? cell.column.columnDef.cell(cell.getContext()) : cell.getValue() as React.ReactNode}
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+    <div className="h-full flex flex-col overflow-hidden">
+        <TanStackTable
+            data={data}
+            columns={columns}
+            lite={true}
+            tableId="expiry-risk-table"
+            enableSearch={false}
+            emptyMessage={t?.intelligence?.risk?.grid?.empty || "No risking items found"}
+        />
     </div>
   );
 };

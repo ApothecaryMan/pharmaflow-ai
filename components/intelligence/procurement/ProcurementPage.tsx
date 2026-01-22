@@ -6,15 +6,85 @@ import { useProcurement } from '../../../hooks/useProcurement';
 import { createColumnHelper, ColumnDef } from '@tanstack/react-table';
 import { ProcurementItem } from '../../../types/intelligence';
 import { TanStackTable } from '../../common/TanStackTable';
-import { StatusBadge } from '../common/StatusBadge';
 import { ConfidenceIndicator } from '../common/ConfidenceIndicator';
+import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
+
+// --- Local Components ---
+
+type BadgeColor = 'emerald' | 'blue' | 'amber' | 'red' | 'gray' | 'purple';
+
+const StatusBadge = ({
+  status,
+  label,
+  color,
+  size = 'md',
+  language = 'EN'
+}: {
+  status: string;
+  label?: string;
+  color?: BadgeColor;
+  size?: 'sm' | 'md';
+  language?: string;
+}) => {
+  // Default mappings
+  const getStatusConfig = (statusKey: string): { color: BadgeColor; label: string } => {
+    const isAr = language === 'AR';
+    switch (statusKey) {
+      // Stock Status
+      case 'NORMAL': return { color: 'emerald', label: isAr ? 'طبيعي' : 'Normal' };
+      case 'LOW': return { color: 'amber', label: isAr ? 'منخفض' : 'Low' };
+      case 'CRITICAL': return { color: 'red', label: isAr ? 'حرج' : 'Critical' };
+      case 'OUT_OF_STOCK': return { color: 'red', label: isAr ? 'نافذ' : 'Out of Stock' };
+      case 'OVERSTOCK': return { color: 'purple', label: isAr ? 'فائض' : 'Overstock' };
+      
+      // Seasonal Trajectory
+      case 'RISING': return { color: 'emerald', label: isAr ? 'صعود ↗' : 'Rising ↗' };
+      case 'STABLE': return { color: 'blue', label: isAr ? 'مستقر ─' : 'Stable ─' };
+      case 'DECLINING': return { color: 'amber', label: isAr ? 'هبوط ↘' : 'Declining ↘' };
+      
+      // Risk Category
+      case 'HIGH': return { color: 'red', label: isAr ? 'مخاطرة عالية' : 'High Risk' };
+      case 'MEDIUM': return { color: 'amber', label: isAr ? 'مخاطرة متوسطة' : 'Medium Risk' };
+      case 'CRITICAL_RISK': return { color: 'red', label: isAr ? 'مخاطرة حرجة' : 'Critical Risk' };
+      case 'LOW_RISK': return { color: 'emerald', label: isAr ? 'مخاطرة قليلة' : 'Low Risk' };
+
+      // Data Quality
+      case 'GOOD': return { color: 'emerald', label: isAr ? 'جيدة' : 'Good' };
+      case 'SPARSE': return { color: 'amber', label: isAr ? 'قليلة' : 'Sparse' };
+      case 'NEW_PRODUCT': return { color: 'blue', label: isAr ? 'جديد' : 'New' };
+      
+      default: return { color: 'gray', label: statusKey };
+    }
+  };
+
+  const config = getStatusConfig(status);
+  const finalColor = color || config.color;
+  const finalLabel = label || config.label;
+
+  const colorClasses = {
+    emerald: 'bg-transparent text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+    blue: 'bg-transparent text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800',
+    amber: 'bg-transparent text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+    red: 'bg-transparent text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',
+    gray: 'bg-transparent text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-700',
+    purple: 'bg-transparent text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800',
+  };
+
+  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs';
+
+  return (
+    <span className={`inline-flex items-center justify-center rounded-md border font-medium whitespace-nowrap ${colorClasses[finalColor]} ${sizeClass}`}>
+      {finalLabel}
+    </span>
+  );
+};
 
 interface ProcurementPageProps {
   t: any;
   language?: string;
 }
 
-export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t }) => {
+export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 'EN' }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
   const [isPOModalOpen, setIsPOModalOpen] = useState(false);
@@ -46,6 +116,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t }) => {
   const columns = useMemo<ColumnDef<ProcurementItem, any>[]>(() => [
     columnHelper.accessor('product_name', {
       header: t?.intelligence?.procurement?.grid?.columns?.product || 'Product',
+      meta: { align: 'start' },
       cell: info => (
         <div>
           <div className="font-medium text-gray-900 dark:text-white">{info.getValue()}</div>
@@ -55,12 +126,14 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t }) => {
     }),
     columnHelper.accessor('stock_status', {
       header: t?.intelligence?.procurement?.grid?.columns?.stockStatus || 'Status',
-      cell: info => <StatusBadge status={info.getValue()} />,
+      meta: { align: 'center' },
+      cell: info => <StatusBadge status={info.getValue()} language={language} />,
     }),
     columnHelper.accessor('current_stock', {
       header: t?.intelligence?.procurement?.grid?.columns?.available || 'Available',
+      meta: { align: 'center' },
       cell: info => (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col">
           <span className="font-bold">{info.getValue()}</span>
           <span className="text-xs text-gray-400">
             {info.row.original.stock_days ? `${info.row.original.stock_days} ${t?.intelligence?.procurement?.grid?.columns?.days || 'days'}` : '-'}
@@ -70,6 +143,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t }) => {
     }),
     columnHelper.accessor('avg_daily_sales', {
       header: t?.intelligence?.procurement?.grid?.columns?.dailySales || 'Daily Sales',
+      meta: { align: 'center' },
       cell: info => (
           <span className="text-gray-600 dark:text-gray-300">
               {info.getValue().toFixed(1)} {t?.intelligence?.procurement?.grid?.columns?.perDay || '/day'}
@@ -78,13 +152,14 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t }) => {
     }),
     columnHelper.accessor('suggested_order_qty', {
       header: t?.intelligence?.procurement?.grid?.columns?.suggested || 'Suggested',
+      meta: { align: 'start' },
       cell: info => (
         <div className="flex items-center gap-2">
            <span className="font-bold text-blue-600 dark:text-blue-400">
              {info.getValue()}
            </span>
            {info.row.original.skip_reason && (
-             <span className="text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-lg font-bold">
+             <span className="text-[10px] text-amber-600 border border-amber-200 dark:border-amber-700 bg-transparent px-1.5 py-0.5 rounded-md font-bold">
                {t?.intelligence?.procurement?.grid?.skipped || 'Skipped'}
              </span>
            )}
@@ -93,6 +168,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t }) => {
     }),
     columnHelper.accessor('confidence_score', {
       header: t?.intelligence?.procurement?.grid?.columns?.confidence || 'Confidence',
+      meta: { align: 'center' },
       cell: info => (
           <div>
               <ConfidenceIndicator score={info.getValue()} size="sm" />
@@ -102,10 +178,11 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t }) => {
     columnHelper.display({
         id: 'actions',
         header: '',
+        meta: { align: 'end' },
         cell: info => (
-            <div>
+            <div className="flex justify-end">
                 <button 
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all active:scale-95"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all active:scale-95"
                 onClick={() => handleGeneratePO([info.row.original.product_id])}
                 >
                     <span className="material-symbols-rounded text-xl font-icon">add_shopping_cart</span>
@@ -117,17 +194,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t }) => {
 
   // Loading skeleton
   if (loading) {
-    return (
-      <div className="space-y-4 animate-fade-in">
-        <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
-          ))}
-        </div>
-        <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
-      </div>
-    );
+    return <DashboardPageSkeleton withTopBar />;
   }
 
   return (

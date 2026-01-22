@@ -5,6 +5,7 @@ import { getCurrencySymbol, formatCurrency } from '../../../utils/currency';
 import { ExpiryRiskGrid } from './ExpiryRiskGrid';
 import { CreateDiscountModal } from './CreateDiscountModal';
 import { useRisk } from '../../../hooks/useRisk';
+import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
 
 interface RiskPageProps {
   t: any;
@@ -25,16 +26,7 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t }) => {
 
   // Loading skeleton
   if (loading) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
-          ))}
-        </div>
-        <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
-      </div>
-    );
+    return <DashboardPageSkeleton />;
   }
 
   // Empty state
@@ -92,7 +84,7 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t }) => {
           }}
         />
       </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-8 text-center">
+        <div className="p-8 text-center bg-transparent">
           <span className="material-symbols-rounded text-5xl text-emerald-500 mb-4">verified</span>
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{t.intelligence.risk.empty.title}</h3>
           <p className="text-gray-500">{t.intelligence.risk.empty.subtitle}</p>
@@ -178,7 +170,7 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t }) => {
                     onClick={handleApplyDiscount}
                     className="px-3 py-1.5 text-sm bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors border border-amber-100 flex items-center gap-1"
                  >
-                    <span className="material-symbols-rounded text-base">discount</span>
+                    <span className="material-symbols-rounded text-lg font-icon">sell</span>
                     {t.intelligence.risk.actions.applyDiscount}
                  </button>
               </div>

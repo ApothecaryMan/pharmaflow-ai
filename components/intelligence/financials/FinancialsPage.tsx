@@ -72,6 +72,7 @@ import { useFinancials } from '../../../hooks/useFinancials';
 import { FinancialPeriod } from '../../../services/intelligence/intelligenceService';
 import { getCurrencySymbol } from '../../../utils/currency';
 import { SegmentedControl } from '../../common/SegmentedControl';
+import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
 
 interface FinancialsPageProps {
   t: any;
@@ -212,20 +213,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
 
   // Loading skeleton
   if (loading || !kpis) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex justify-between items-center bg-white dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
-          <div className="h-10 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
-          <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
-          ))}
-        </div>
-        <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
-      </div>
-    );
+    return <DashboardPageSkeleton withTopBar />;
   }
 
   return (
