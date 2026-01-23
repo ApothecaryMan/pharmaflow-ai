@@ -6,6 +6,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 import { formatCurrency, getCurrencySymbol } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { MaterialTabs } from '../common/MaterialTabs';
 import { ExpandedModal } from '../common/ExpandedModal';
 import { ChartWidget } from '../common/ChartWidget';
 import { SmallCard } from '../common/SmallCard';
@@ -280,10 +281,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
   const ExpandButton = ({ onClick, title }: { onClick: () => void, title?: string }) => (
     <button 
       onClick={onClick}
-      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+      className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95"
       title={title || t.expand?.expand || 'Expand'}
     >
-      <span className="material-symbols-rounded text-[18px]">open_in_full</span>
+      <span className="material-symbols-rounded text-xl">open_in_full</span>
     </button>
   );
 
@@ -448,7 +449,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                 </h3>
                 <ExpandButton onClick={() => setExpandedView('topSelling')} />
             </div>
-            <div className="flex-1 overflow-y-auto space-y-3 pe-1">
+            <div className="flex-1 overflow-y-auto space-y-3 pe-1" dir="ltr">
                 {topSelling.length === 0 ? (
                      <div className="h-full flex items-center justify-center text-gray-400 text-sm">{t.noResults || "No sales data"}</div>
                 ) : (
@@ -485,7 +486,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                   </h3>
                   <ExpandButton onClick={() => setExpandedView('lowStock')} />
                 </div>
-                <div className="flex-1 overflow-y-auto space-y-2 pe-1">
+                <div className="flex-1 overflow-y-auto space-y-2 pe-1" dir="ltr">
                     {lowStockItems.length === 0 ? (
                         <div className="h-full flex items-center justify-center text-gray-400 text-sm">{t.allGood}</div>
                     ) : (
@@ -521,7 +522,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                   </h3>
                   <ExpandButton onClick={() => setExpandedView('expiring')} />
                 </div>
-                <div className="flex-1 overflow-y-auto space-y-2 pe-1">
+                <div className="flex-1 overflow-y-auto space-y-2 pe-1" dir="ltr">
                     {expiringItems.length === 0 ? (
                         <div className="h-full flex items-center justify-center text-gray-400 text-sm">{t.noExpiring}</div>
                     ) : (
@@ -1030,80 +1031,134 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
           </button>
         }
       >
-        <div className="space-y-3">
+        <div className={`relative space-y-1 py-1 ${language === 'AR' ? 'pr-6' : 'pl-6'}`}>
+          {/* Vertical Timeline Rail */}
+          <div className={`absolute top-4 bottom-4 w-0.5 bg-gray-200 dark:bg-gray-800 z-0 ${language === 'AR' ? 'right-[11px]' : 'left-[11px]'}`}></div>
+
           {recentSales20.length === 0 ? (
             <div className="text-center py-12 text-gray-400">{t.expand?.noData || 'No transactions yet'}</div>
           ) : (
-            recentSales20.map(sale => (
-              <div key={sale.id} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-full bg-${color}-50 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-600 dark:text-${color}-400`}>
-                      <span className="material-symbols-rounded">shopping_bag</span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                        {sale.customerName || "Guest"}
-                        {sale.customerCode && <span className="text-[10px] bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-500">#{sale.customerCode}</span>}
-                      </p>
-                      <p className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
-                        <span>{new Date(sale.date).toLocaleDateString()} • {new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                        <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
-                        <span className="font-mono text-xs text-gray-400">#{sale.id}</span>
-                        <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
-                        <span className={`flex items-center gap-1 ${sale.paymentMethod === 'visa' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
-                            <span className="material-symbols-rounded text-[14px]">{sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}</span>
-                            {sale.paymentMethod === 'visa' ? t.visa : t.cash}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-end">
-                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                      {formatCurrency(sale.netTotal ?? sale.total)}
-                    </p>
-                    <p className="text-xs text-gray-500 flex items-center justify-end gap-1">
-                      {sale.hasReturns && (() => {
-                        let totalReturned = 0;
-                        sale.items.forEach((item, idx) => {
-                          const lineKey = `${item.id}_${idx}`;
-                          totalReturned += sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-                        });
-                        const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
-                        return (
-                          <span className="text-orange-500 flex items-center gap-0.5">
-                            <span className="material-symbols-rounded text-[12px]">keyboard_return</span>
-                            <span className="text-[10px]">({totalReturned}/{totalItems})</span>
-                          </span>
-                        );
-                      })()}
-                      {sale.items.length} {t.items || "items"}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-xs font-bold text-gray-500 uppercase mb-2">{t.expand?.transactionDetails || 'Items'}</p>
-                  <div className="space-y-1">
-                    {sale.items.map((item, idx) => {
-                      const lineKey = `${item.id}_${idx}`;
-                      const returnedQty = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-                      const hasReturn = returnedQty > 0;
-                      
-                      return (
-                        <div key={idx} className={`flex justify-between text-sm ${hasReturn ? 'bg-orange-50 dark:bg-orange-950/20 rounded px-1' : ''}`}>
-                          <span className={`${hasReturn ? 'text-orange-700 dark:text-orange-300' : 'text-gray-600 dark:text-gray-400'} item-name flex items-center gap-1`}>
-                            {hasReturn && <span className="material-symbols-rounded text-[12px] text-orange-500">keyboard_return</span>}
-                            {getDisplayName(item)} x{item.quantity}
-                            {hasReturn && <span className="text-[10px] text-orange-600 dark:text-orange-400">({returnedQty}/{item.quantity})</span>}
-                          </span>
-                          <span className="text-gray-900 dark:text-gray-100 font-medium">{formatCurrency(item.price * item.quantity)}</span>
+            recentSales20.map((sale, index) => {
+               // Determine node color based on status/returns
+               const hasReturns = sale.hasReturns;
+               const nodeColor = hasReturns ? 'orange' : (sale.customerCode ? 'blue' : 'gray');
+               
+               // Calculate relative time
+               const getRelativeTime = (d: Date) => {
+                  const now = new Date();
+                  const diff = now.getTime() - d.getTime();
+                  const mins = Math.floor(diff / 60000);
+                  const hours = Math.floor(mins / 60);
+                  
+                  if (mins < 1) return t.justNow || 'Just now';
+                  if (mins < 60) return language === 'AR' ? `${t.ago || 'منذ'} ${mins} د` : `${mins}m ${t.ago || 'ago'}`;
+                  if (hours < 24) return language === 'AR' ? `${t.ago || 'منذ'} ${hours} س` : `${hours}h ${t.ago || 'ago'}`;
+                  return d.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' });
+               };
+
+               return (
+                <div key={sale.id} className="relative z-10">
+                   {/* Timeline Node */}
+                   <div className={`absolute top-6 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-sm z-10 ${
+                      hasReturns ? 'bg-orange-400' : `bg-${color}-500`
+                   } ${language === 'AR' ? '-right-[18px]' : '-left-[18px]'}`}></div>
+
+                    <MaterialTabs
+                        index={index}
+                        total={recentSales20.length}
+                        className="!h-auto py-2 !flex-col !items-stretch gap-1 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors shadow-sm"
+                    >
+                        <div className="flex items-center justify-between gap-3 mb-1">
+                            {/* Left Side: Icon, Name, Code, Time */}
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <div className={`w-8 h-8 rounded-full bg-${color}-100 dark:bg-${color}-900/50 flex items-center justify-center text-${color}-600 dark:text-${color}-300 shrink-0`}>
+                                    <span className="material-symbols-rounded text-[18px]">shopping_bag</span>
+                                </div>
+                                
+                                <p className="font-bold text-gray-900 dark:text-gray-100 text-xs truncate">
+                                    {sale.customerName || "Guest"}
+                                </p>
+                                
+                                {sale.customerCode && (
+                                    <span className="text-[9px] bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-500 font-mono border border-gray-200 dark:border-gray-700 shrink-0">
+                                        #{sale.customerCode}
+                                    </span>
+                                )}
+                                
+                                <span className="text-[9px] text-gray-400 font-normal shrink-0">
+                                    {getRelativeTime(new Date(sale.date))}
+                                </span>
+                            </div>
+
+                            {/* Right Side: Payment, Price, Returns */}
+                            <div className="flex items-center gap-3 shrink-0">
+                                {/* Payment Icon */}
+                                <div className={`flex items-center justify-center w-6 h-6 rounded-full ${sale.paymentMethod === 'visa' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400'}`} title={sale.paymentMethod === 'visa' ? t.visa : t.cash}>
+                                    <span className="material-symbols-rounded text-[14px]">
+                                        {sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
+                                    </span>
+                                </div>
+
+                                {/* Price */}
+                                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                                    {formatCurrency(sale.netTotal ?? sale.total)}
+                                </p>
+                                
+                                {/* Item Count / Returns Info */}
+                                <div className="text-[10px] text-gray-400 flex items-center gap-1 min-w-[30px] justify-end">
+                                    {sale.hasReturns ? (() => {
+                                        let totalReturned = 0;
+                                        sale.items.forEach((item, idx) => {
+                                            const lineKey = `${item.id}_${idx}`;
+                                            totalReturned += sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
+                                        });
+                                        const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
+                                        return (
+                                            <span className="text-orange-500 flex items-center gap-0.5" title={`${totalReturned}/${totalItems} returned`}>
+                                                <span className="material-symbols-rounded text-[14px]">keyboard_return</span>
+                                            </span>
+                                        );
+                                    })() : (
+                                        <span>({sale.items.length})</span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div className="mt-1 pt-1 border-t border-gray-100 dark:border-gray-800" dir="ltr">
+                        <div className="space-y-0.5">
+                            {sale.items.map((item, idx) => {
+                            const lineKey = `${item.id}_${idx}`;
+                            const returnedQty = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
+                            const hasReturn = returnedQty > 0;
+                            
+                            return (
+                                <div key={idx} className={`flex justify-between text-xs ${
+                                    hasReturn 
+                                        ? (returnedQty === item.quantity 
+                                            ? 'bg-red-50 dark:bg-red-950/20 rounded px-1.5 py-0.5 -mx-1.5' // Full return
+                                            : 'bg-orange-50 dark:bg-orange-950/20 rounded px-1.5 py-0.5 -mx-1.5') // Partial return
+                                        : ''
+                                }`}>
+                                <span className={`${
+                                    hasReturn 
+                                        ? (returnedQty === item.quantity ? 'text-red-700 dark:text-red-300' : 'text-orange-700 dark:text-orange-300') 
+                                        : 'text-gray-600 dark:text-gray-400'
+                                } item-name flex items-center gap-1`}>
+                                    {hasReturn && <span className={`material-symbols-rounded text-[10px] ${returnedQty === item.quantity ? 'text-red-500' : 'text-orange-500'}`}>keyboard_return</span>}
+                                    <span>{getDisplayName(item)}</span> 
+                                    <span className="text-gray-400 text-[10px]">x{item.quantity}</span>
+                                    {hasReturn && <span className={`text-[9px] ${returnedQty === item.quantity ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}`}>({returnedQty})</span>}
+                                </span>
+                                <span className="text-gray-900 dark:text-gray-100 font-medium text-[11px]" dir="ltr">{formatCurrency(item.price * item.quantity)}</span>
+                                </div>
+                            );
+                            })}
+                        </div>
+                        </div>
+                    </MaterialTabs>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </ExpandedModal>
