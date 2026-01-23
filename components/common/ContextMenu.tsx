@@ -1,13 +1,40 @@
+/**
+ * ContextMenu Component Library
+ * =============================
+ * 
+ * A comprehensive solution for custom context menus (right-click menus) in React applications.
+ * 
+ * Features:
+ * - **Provider-based**: Single global menu instance managed via Context.
+ * - **Flexible Content**: Supports both strict action lists (`ContextMenuAction[]`) and fully custom React components (`React.ReactNode`).
+ * - **Smart Positioning**: Automatically adjusts position to keep the menu within the viewport (flipping edges).
+ * - **Animations**: Built-in scale-in animations and glassmorphism support.
+ * - **Reusable Components**: Exports atom components (`ContextMenuItem`, `ContextMenuSeparator`, `ContextMenuCheckboxItem`) for building consistent custom menus.
+ * - **Touch Support**: Includes long-press detection for touch devices.
+ * 
+ * Usage:
+ * 1. Wrap your app with `<ContextMenuProvider>`.
+ * 2. Use `useContextMenu()` or `<ContextMenuTrigger>` to invoke the menu.
+ */
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useLongPress } from '../../hooks/useLongPress';
 
 // --- Types ---
+/**
+ * Definition for a standard action item in the context menu.
+ */
 export interface ContextMenuAction {
+  /** The text to display for the action. */
   label?: string;
+  /** Material Symbol icon name (optional). */
   icon?: string;
+  /** The function to execute when clicked. */
   action?: () => void;
+  /** If true, renders the item in red to indicate a destructive action. */
   danger?: boolean;
+  /** If true, the item is non-interactive. */
   disabled?: boolean;
+  /** If true, renders a separator line instead of an item. */
   separator?: boolean;
 }
 
@@ -20,13 +47,24 @@ interface ContextMenuState {
 }
 
 interface ContextMenuContextType {
+  /**
+   * Shows the context menu at the specified coordinates.
+   * @param x - viewport x coordinate
+   * @param y - viewport y coordinate
+   * @param actionsOrContent - A list of actions OR a custom React Node to render.
+   */
   showMenu: (x: number, y: number, actionsOrContent: ContextMenuAction[] | React.ReactNode) => void;
+  /** Hides the currently visible menu. */
   hideMenu: () => void;
 }
 
 // --- Context ---
 const ContextMenuContext = createContext<ContextMenuContextType | undefined>(undefined);
 
+/**
+ * Hook to access the ContextMenu API.
+ * Must be used within a `ContextMenuProvider`.
+ */
 export const useContextMenu = () => {
   const context = useContext(ContextMenuContext);
   if (!context) {
@@ -39,6 +77,104 @@ export const useContextMenu = () => {
 // Remove useSettings import if it was there and unused now
 // We'll clean up imports in a separate check if needed, but for now just removing usage.
 
+// --- Reusable Menu Components ---
+
+/**
+ * A simple horizontal separator line for the context menu.
+ */
+export const ContextMenuSeparator: React.FC = () => (
+   <div className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-2" />
+);
+
+interface ContextMenuItemProps extends Omit<ContextMenuAction, 'action' | 'separator'> {
+    onClick?: () => void;
+    className?: string; // Allow custom overrides
+    children?: React.ReactNode; // Allow custom content override
+}
+
+/**
+ * Standard item for the Context Menu.
+ * Can be used when building custom menu content.
+ */
+export const ContextMenuItem: React.FC<ContextMenuItemProps> = ({ 
+    label, 
+    icon, 
+    onClick, 
+    danger, 
+    disabled, 
+    className = "",
+    children 
+}) => {
+    return (
+        <button
+            onClick={(e) => {
+                if (!disabled && onClick) {
+                    e.stopPropagation(); // Prevent bubbling if used inside other clickables
+                    onClick();
+                }
+            }}
+            disabled={disabled}
+            className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors
+                ${danger 
+                    ? 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20' 
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'}
+                ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                ${className}
+            `}
+        >
+            {children ? children : (
+                <>
+                    {icon ? (
+                        <span className="material-symbols-rounded text-[18px] opacity-70">{icon}</span>
+                    ) : (
+                        <span className="inline-block w-[18px] shrink-0"></span>
+                    )}
+                    <span className="font-medium">{label}</span>
+                </>
+            )}
+        </button>
+    );
+};
+
+/**
+ * A toggleable checkbox item for the Context Menu.
+ * Commonly used for visibility toggles or boolean settings.
+ */
+export const ContextMenuCheckboxItem: React.FC<{
+    label: string | React.ReactNode;
+    checked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+    disabled?: boolean;
+}> = ({ label, checked, onCheckedChange, disabled }) => {
+    return (
+        <button
+            onClick={(e) => {
+                if (!disabled) {
+                    e.stopPropagation();
+                    onCheckedChange(!checked);
+                }
+            }}
+            disabled={disabled}
+            className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer transition-colors group
+                ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}
+            `}
+        >
+             <span className={`text-sm font-medium transition-colors ${!checked ? 'text-gray-400 dark:text-gray-600' : 'text-gray-700 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white'}`}>
+                {label}
+            </span>
+            <span className={`material-symbols-rounded text-[16px] transition-colors ${!checked ? 'text-gray-300 dark:text-gray-600' : 'text-emerald-500'}`}>
+                {checked ? 'check_circle' : 'circle'}
+            </span>
+        </button>
+    );
+};
+
+/**
+ * Top-level provider that manages the global state of the Context Menu.
+ * Place this at the root of your application (or at least above any component that needs a context menu).
+ * 
+ * @param enableGlassEffect - If true, applies a glassmorphism backdrop blur to the menu container.
+ */
 export const ContextMenuProvider: React.FC<{ children: React.ReactNode; enableGlassEffect?: boolean }> = ({ children, enableGlassEffect = false }) => {
   const [menu, setMenu] = useState<ContextMenuState>({
     isVisible: false,
@@ -175,31 +311,21 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode; enableGl
                 menu.actions.length > 0 ? (
                     menu.actions.map((action, index) => (
                         action.separator ? (
-                            <div key={index} className="h-px bg-gray-100 dark:bg-gray-800 my-1 mx-2" />
+                            <ContextMenuSeparator key={index} />
                         ) : (
-                            <button
+                            <ContextMenuItem
                                 key={index}
+                                label={action.label}
+                                icon={action.icon}
+                                danger={action.danger}
+                                disabled={action.disabled}
                                 onClick={() => {
-                                    if(!action.disabled && action.action) {
+                                    if(action.action) {
                                         action.action();
                                         hideMenu();
                                     }
                                 }}
-                                disabled={action.disabled}
-                                className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors
-                                    ${action.danger 
-                                        ? 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20' 
-                                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'}
-                                    ${action.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                                `}
-                            >
-                                {action.icon ? (
-                                    <span className="material-symbols-rounded text-[18px] opacity-70">{action.icon}</span>
-                                ) : (
-                                    <span className="inline-block w-[18px] shrink-0"></span>
-                                )}
-                                <span className="font-medium">{action.label}</span>
-                            </button>
+                            />
                         )
                     ))
                 ) : (
@@ -288,6 +414,14 @@ interface ContextMenuTriggerProps {
     as?: React.ElementType;
 }
 
+/**
+ * Wrapper component to easily add a context menu to any element.
+ * 
+ * @example
+ * <ContextMenuTrigger actions={[{ label: 'Delete', action: deleteItem }]}>
+ *    <div className="p-4 card">Right click me</div>
+ * </ContextMenuTrigger>
+ */
 export const ContextMenuTrigger: React.FC<ContextMenuTriggerProps & { onOpen?: (x: number, y: number) => void } & Record<string, any>> = ({ 
     children, 
     actions, 

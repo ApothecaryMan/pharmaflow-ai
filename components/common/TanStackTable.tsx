@@ -44,7 +44,7 @@ declare module '@tanstack/react-table' {
     }
 }
 import { SearchInput } from './SearchInput';
-import { useContextMenu, ContextMenuTrigger } from './ContextMenu';
+import { useContextMenu, ContextMenuTrigger, ContextMenuItem, ContextMenuSeparator, ContextMenuCheckboxItem } from './ContextMenu';
 import { useLongPress } from '../../hooks/useLongPress';
 import { AlignButton, getHeaderJustifyClass, getTextAlignClass } from './TableAlignment';
 import { useSettings } from '../../context/SettingsContext';
@@ -349,7 +349,6 @@ export function TanStackTable<TData, TValue>({
           {/* Sorting Controls - Only show for specific column */}
 
 
-
           {/* All Columns Visibility */}
           <div className="space-y-1 px-1">
              <div className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-2 px-1">
@@ -364,12 +363,12 @@ export function TanStackTable<TData, TValue>({
                   : col.columnDef.header;
 
                 return (
-                 <div 
+                 <ContextMenuCheckboxItem 
                    key={col.id}
-                   className="flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group"
-                   onClick={(e) => {
-                     e.stopPropagation(); 
-                     col.toggleVisibility();
+                   label={headerValue as React.ReactNode}
+                   checked={col.getIsVisible()}
+                   onCheckedChange={(val) => {
+                     col.toggleVisibility(val);
                      
                      // Force refresh menu state live
                      if (menuPosRef.current) {
@@ -382,21 +381,14 @@ export function TanStackTable<TData, TValue>({
                         }, 0);
                      }
                    }}
-                 >
-                    <span className={`text-sm font-medium transition-colors ${!col.getIsVisible() ? 'text-gray-400 dark:text-gray-600' : 'text-gray-700 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white'}`}>
-                      {headerValue as React.ReactNode}
-                    </span>
-                    <span className={`material-symbols-rounded text-[16px] transition-colors ${!col.getIsVisible() ? 'text-gray-300 dark:text-gray-600' : 'text-emerald-500'}`}>
-                      {col.getIsVisible() ? 'check_circle' : 'circle'}
-                    </span>
-                 </div>
+                 />
                 );
              })}
           </div>
 
           {column && !column.columnDef.meta?.disableAlignment && column.id !== 'actions' && (
           <>
-          <div className="h-px bg-gray-100 dark:bg-[#333] my-3 mx-1" />
+          <ContextMenuSeparator />
 
           {/* Alignment Controls Container */}
           <div className="space-y-3 px-1">
