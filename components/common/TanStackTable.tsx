@@ -94,6 +94,7 @@ interface TanStackTableProps<TData, TValue> {
   manualFiltering?: boolean; // If true, disables client-side filtering (useful when passing pre-filtered data)
   enableSearch?: boolean; // Whether to show the internal search input
   customEmptyState?: React.ReactNode;
+  initialSorting?: SortingState;
   /**
    * If true, renders a simplified version of the table:
    * - No outer border/shadow
@@ -152,6 +153,7 @@ export function TanStackTable<TData, TValue>({
   manualFiltering = false,
   enableSearch = true,
   customEmptyState,
+  initialSorting = [],
 }: TanStackTableProps<TData, TValue> & { enableTopToolbar?: boolean }) {
   
   // Long-press support for rows
@@ -183,7 +185,7 @@ export function TanStackTable<TData, TValue>({
     return visibility;
   }, [defaultHiddenColumns]);
   
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [internalGlobalFilter, setInternalGlobalFilter] = useState('');
   
   const globalFilter = externalGlobalFilter !== undefined ? externalGlobalFilter : internalGlobalFilter;

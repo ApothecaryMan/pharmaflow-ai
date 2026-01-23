@@ -114,10 +114,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
       cell: ({ row }) => {
         const sale = row.original;
         return (
-          <div className="font-bold text-gray-900 dark:text-gray-100">
+          <div className="font-bold text-gray-900 dark:text-gray-100 tabular-nums">
             ${sale.total.toFixed(2)}
             {sale.deliveryFee && sale.deliveryFee > 0 && (
-              <div className="text-[10px] text-gray-400 font-normal">
+              <div className="text-[10px] text-gray-400 font-normal tabular-nums">
                 +${sale.deliveryFee.toFixed(2)} delivery
               </div>
             )}
@@ -248,13 +248,16 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
       </div>
 
       {/* Filters */}
-      <div className={`flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center ${CARD_BASE} p-4 rounded-2xl`}>
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center py-2">
         <div className="flex flex-wrap items-center gap-3 w-full sm:flex-1">
             <div className="relative group flex-1">
                 <SearchInput
+                    name="salesSearch"
+                    autoComplete="off"
+                    spellCheck={false}
                     value={searchTerm}
                     onSearchChange={setSearchTerm}
-                    placeholder={t.searchPlaceholder || "Search sales..."}
+                    placeholder={t.searchPlaceholder || "Search sales…"}
                     className="ps-10"
                     wrapperClassName="w-full"
                 />
@@ -295,8 +298,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
         </button>
       </div>
 
-      {/* Table Card */}
-      <div className={`flex-1 ${CARD_BASE} rounded-xl overflow-hidden flex flex-col`}>
+      {/* Table Section */}
+      <div className="flex-1 flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900">
         <TanStackTable
           data={filteredSales}
           columns={tableColumns}
@@ -305,6 +308,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
           enableTopToolbar={false} // We have custom filters above
           onRowClick={(sale) => setSelectedSale(sale)}
           emptyMessage={t.noResults}
+          lite={true}
+          initialSorting={[{ id: 'date', desc: true }]}
         />
       </div>
 
@@ -316,6 +321,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
             size="lg"
             title={t.modal.title}
             icon="receipt_long"
+            className="overscroll-contain"
         >
               <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -398,7 +404,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                             </span>
                                           )}
                                           <span className="opacity-50 text-[10px] shrink-0">x</span>
-                                          <span className="shrink-0">${effectivePrice.toFixed(2)}</span>
+                                          <span className="shrink-0 tabular-nums">${effectivePrice.toFixed(2)}</span>
                                           {item.discount && item.discount > 0 ? <span className="text-green-600 dark:text-green-400 shrink-0">(-{item.discount}%)</span> : ''}
                                       </div>
                                   </div>
@@ -411,10 +417,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                       )}
                                       {!isFullyReturned && (
                                         <div>
-                                          <span>
+                                          <span className="tabular-nums">
                                             ${((effectivePrice * (item.quantity - returnedQty)) * (1 - (item.discount || 0)/100)).toFixed(2)}
                                           </span>
-                                          {hasReturn && <span className="text-[10px] block text-gray-400 leading-none mt-0.5 line-through">
+                                          {hasReturn && <span className="text-[10px] block text-gray-400 leading-none mt-0.5 line-through tabular-nums">
                                             ${((effectivePrice * item.quantity) * (1 - (item.discount || 0)/100)).toFixed(2)}
                                           </span>}
                                         </div>
@@ -446,7 +452,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                <span>+${selectedSale.deliveryFee!.toFixed(2)}</span>
                            </div>
                        )}
-                       <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white py-3 border-t border-gray-100 dark:border-gray-800">
+                       <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white py-3 border-t border-gray-100 dark:border-gray-800 tabular-nums">
                            <span>{t.modal.total}</span>
                            <span>${selectedSale.total.toFixed(2)}</span>
                        </div>
@@ -467,6 +473,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                           {hasItemsToReturn && (
                             <button 
                               onClick={() => setReturnModalOpen(true)}
+                              aria-label={t.returns?.processReturn || 'Process Return'}
                               className={`flex-1 py-2.5 rounded-full font-medium text-white bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center gap-2`}
                             >
                                 <span className="material-symbols-rounded">assignment_return</span>
@@ -475,6 +482,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                           )}
                           <button 
                             onClick={() => handlePrint(selectedSale)}
+                            aria-label={t.modal.print}
                             className={`flex-1 py-2.5 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 transition-colors flex items-center justify-center gap-2`}
                           >
                               <span className="material-symbols-rounded">print</span>
