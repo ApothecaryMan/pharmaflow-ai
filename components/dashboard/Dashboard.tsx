@@ -4,6 +4,8 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Drug, Sale, Purchase, ExpandedView } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
+import { formatCurrency, getCurrencySymbol } from '../../utils/currency';
+import { getDisplayName } from '../../utils/drugDisplayName';
 import { ExpandedModal } from '../common/ExpandedModal';
 import { ChartWidget } from '../common/ChartWidget';
 import { SmallCard } from '../common/SmallCard';
@@ -142,7 +144,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
 
   // --- TOP SELLING PRODUCTS (accounting for returns) ---
   const topSelling = useMemo(() => {
-    const productSales: Record<string, number> = {};
+    // Store full item details keyed by ID to preserve dosageForm
+    const productSales: Record<string, { name: string, dosageForm?: string, qty: number }> = {};
+    
     sales.forEach(sale => {
       sale.items.forEach((item, idx) => {
         // Subtract returned quantities
@@ -151,18 +155,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         const actualQty = item.quantity - returnedQty;
         
         if (actualQty > 0) {
-          productSales[item.name] = (productSales[item.name] || 0) + actualQty;
+          if (!productSales[item.id]) {
+            productSales[item.id] = { 
+              name: item.name, 
+              dosageForm: item.dosageForm,
+              qty: 0 
+            };
+          }
+          productSales[item.id].qty += actualQty;
         }
       });
     });
-    return Object.entries(productSales)
-      .map(([name, qty]) => ({ name, qty }))
+    
+    return Object.values(productSales)
       .sort((a, b) => b.qty - a.qty)
       .slice(0, 5);
   }, [sales]);
 
   const topSelling20 = useMemo(() => {
-    const productSales: Record<string, { qty: number, revenue: number }> = {};
+    const productSales: Record<string, { name: string, dosageForm?: string, qty: number, revenue: number }> = {};
+    
     sales.forEach(sale => {
       sale.items.forEach((item, idx) => {
         // Subtract returned quantities
@@ -171,22 +183,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         const actualQty = item.quantity - returnedQty;
         
         if (actualQty > 0) {
-          if (!productSales[item.name]) {
-            productSales[item.name] = { qty: 0, revenue: 0 };
+          if (!productSales[item.id]) {
+            productSales[item.id] = { 
+                name: item.name, 
+                dosageForm: item.dosageForm,
+                qty: 0, 
+                revenue: 0 
+            };
           }
-          productSales[item.name].qty += actualQty;
+          const entry = productSales[item.id];
+          entry.qty += actualQty;
           
           // Calculate effective price for units
           let effectivePrice = item.price;
           if (item.isUnit && item.unitsPerPack) {
             effectivePrice = item.price / item.unitsPerPack;
           }
-          productSales[item.name].revenue += effectivePrice * actualQty;
+          entry.revenue += effectivePrice * actualQty;
         }
       });
     });
-    return Object.entries(productSales)
-      .map(([name, data]) => ({ name, ...data }))
+    
+    return Object.values(productSales)
       .sort((a, b) => b.qty - a.qty)
       .slice(0, 20);
   }, [sales]);
@@ -285,7 +303,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{label}</p>
           <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-            ${payload[0].value.toFixed(2)}
+            {formatCurrency(payload[0].value)}
           </p>
         </div>
       );
@@ -352,7 +370,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             icon="payments"
             iconColor={color}
             type="currency"
-            currencyLabel="$"
+            currencyLabel={getCurrencySymbol()}
             fractionDigits={2}
           />
         </div>
@@ -368,7 +386,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             icon="shopping_cart_checkout"
             iconColor="red"
             type="currency"
-            currencyLabel="$"
+            currencyLabel={getCurrencySymbol()}
             fractionDigits={2}
           />
         </div>
@@ -384,7 +402,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             icon="trending_up"
             iconColor="emerald"
             type="currency"
-            currencyLabel="$"
+            currencyLabel={getCurrencySymbol()}
             fractionDigits={2}
           />
         </div>
@@ -414,7 +432,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             color={chartColors.main}
             language={language as 'AR' | 'EN'}
             onExpand={() => setExpandedView('salesChart')}
-            unit="$"
+            unit={getCurrencySymbol()}
             allowChartTypeSelection={true}
             primaryLabel={t.totalSales || 'Sales'}
             className="h-80"
@@ -440,7 +458,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                                 <div className={`w-6 h-6 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 font-bold text-xs flex items-center justify-center shrink-0`}>
                                     {index + 1}
                                 </div>
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate item-name">{item.name}</span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate item-name">{getDisplayName(item)}</span>
                             </div>
                             <span className="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md whitespace-nowrap">
                                 {item.qty} {t.sold}
@@ -472,14 +490,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                         <div className="h-full flex items-center justify-center text-gray-400 text-sm">{t.allGood}</div>
                     ) : (
                         lowStockItems.slice(0, 5).map(item => (
-                            <div key={item.id} className="flex justify-between items-center p-2.5 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/50">
-                                <div>
-                                    <p className="font-medium text-sm text-gray-900 dark:text-gray-100 item-name">{item.name}</p>
-                                    <p className="text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase">{item.stock} left</p>
+                            <div key={item.id} className="flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0">
+                                        <span className="material-symbols-rounded text-base">warning</span>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="font-medium text-sm text-gray-700 dark:text-gray-200 truncate item-name">{getDisplayName(item)}</p>
+                                        <p className="text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase">{item.stock} {t.expand?.allItems || 'left'}</p>
+                                    </div>
                                 </div>
                                 <button 
                                     onClick={() => setRestockDrug(item)}
-                                    className={`text-xs px-3 py-1.5 rounded-full bg-white dark:bg-gray-800 shadow-sm font-medium text-${color}-600 hover:bg-${color}-50 dark:hover:bg-gray-700 transition-colors`}
+                                    className={`text-xs px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium hover:bg-${color}-50 hover:text-${color}-600 dark:hover:bg-gray-700 transition-colors shrink-0 ms-2`}
                                 >
                                     {t.restock}
                                 </button>
@@ -506,14 +529,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                             const days = getDaysUntilExpiry(item.expiryDate);
                             const isExpired = days < 0;
                             return (
-                                <div key={item.id} className={`flex justify-between items-center p-2.5 rounded-2xl border ${isExpired ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/50' : 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-100 dark:border-yellow-900/50'}`}>
-                                    <div>
-                                        <p className="font-medium text-sm text-gray-900 dark:text-gray-100 item-name">{item.name}</p>
-                                        <p className={`text-[10px] font-bold uppercase ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-500'}`}>
-                                            {isExpired ? t.expired : `${days} ${t.days}`}
-                                        </p>
+                                <div key={item.id} className="flex justify-between items-center p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isExpired ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'}`}>
+                                            <span className="material-symbols-rounded text-base">event_busy</span>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="font-medium text-sm text-gray-700 dark:text-gray-200 truncate item-name">{getDisplayName(item)}</p>
+                                            <p className={`text-[10px] font-bold uppercase ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-500'}`}>
+                                                {isExpired ? t.expired : `${days} ${t.days}`}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                    <span className="text-xs text-gray-400 font-medium shrink-0 ms-2 bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded-lg">
                                         {item.expiryDate}
                                     </span>
                                 </div>
@@ -563,7 +591,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                             </div>
                             <div className="text-end">
                                 <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                                  ${(sale.netTotal ?? sale.total).toFixed(2)}
+                                  {formatCurrency(sale.netTotal ?? sale.total)}
                                 </p>
                                 <p className="text-xs text-gray-500 flex items-center justify-end gap-1">
                                   {sale.hasReturns && (() => {
@@ -600,7 +628,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             size="sm"
             zIndex={50}
             title={t.modal.title}
-            subtitle={`${restockDrug.name} (${restockDrug.stock} left)`}
+            subtitle={`${getDisplayName(restockDrug)} (${restockDrug.stock} left)`}
         >
              
              <form onSubmit={handleRestockSubmit} className="space-y-5">
@@ -673,7 +701,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         <div className="space-y-6">
           <div className={`p-6 rounded-2xl bg-${color}-50 dark:bg-${color}-950/20 border border-${color}-100 dark:border-${color}-900`}>
             <p className={`text-sm font-bold text-${color}-800 dark:text-${color}-300 uppercase mb-2`}>{t.revenue}</p>
-            <p className={`text-4xl font-bold text-${color}-900 dark:text-${color}-100`}>${totalRevenue.toFixed(2)}</p>
+            <p className={`text-4xl font-bold text-${color}-900 dark:text-${color}-100`}>{formatCurrency(totalRevenue)}</p>
             <p className="text-sm text-gray-500 mt-2">{t.expand?.historicalTrend || 'Based on all sales'}</p>
           </div>
           
@@ -685,7 +713,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
               <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.expand?.amount || 'Average Sale'}</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                ${sales.length > 0 ? (totalRevenue / sales.length).toFixed(2) : '0.00'}
+                {sales.length > 0 ? formatCurrency(totalRevenue / sales.length) : formatCurrency(0)}
               </p>
             </div>
           </div>
@@ -734,7 +762,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         <div className="space-y-6">
           <div className="p-6 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900">
             <p className="text-sm font-bold text-red-800 dark:text-red-300 uppercase mb-2">{t.expenses}</p>
-            <p className="text-4xl font-bold text-red-900 dark:text-red-100">${totalExpenses.toFixed(2)}</p>
+            <p className="text-4xl font-bold text-red-900 dark:text-red-100">{formatCurrency(totalExpenses)}</p>
             <p className="text-sm text-gray-500 mt-2">{t.expand?.historicalTrend || 'Based on all purchases'}</p>
           </div>
           
@@ -746,7 +774,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
               <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.expand?.amount || 'Average Purchase'}</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                ${purchases.length > 0 ? (totalExpenses / purchases.length).toFixed(2) : '0.00'}
+                {purchases.length > 0 ? formatCurrency(totalExpenses / purchases.length) : formatCurrency(0)}
               </p>
             </div>
           </div>
@@ -759,7 +787,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                   <p className="font-medium text-sm text-gray-900 dark:text-gray-100">{purchase.supplierName}</p>
                   <p className="text-xs text-gray-500">{new Date(purchase.date).toLocaleDateString()}</p>
                 </div>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">${purchase.totalCost.toFixed(2)}</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(purchase.totalCost)}</p>
               </div>
             ))}
           </div>
@@ -790,18 +818,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         <div className="space-y-6">
           <div className={`p-6 rounded-2xl ${netProfit >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900' : 'bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900'}`}>
             <p className={`text-sm font-bold uppercase mb-2 ${netProfit >= 0 ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}`}>{t.profit}</p>
-            <p className={`text-4xl font-bold ${netProfit >= 0 ? 'text-emerald-900 dark:text-emerald-100' : 'text-red-900 dark:text-red-100'}`}>${netProfit.toFixed(2)}</p>
+            <p className={`text-4xl font-bold ${netProfit >= 0 ? 'text-emerald-900 dark:text-emerald-100' : 'text-red-900 dark:text-red-100'}`}>{formatCurrency(netProfit)}</p>
             <p className="text-sm text-gray-500 mt-2">{t.expand?.breakdown || 'Revenue - Expenses'}</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
               <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.revenue}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${totalRevenue.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalRevenue)}</p>
             </div>
             <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
               <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.expenses}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${totalExpenses.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalExpenses)}</p>
             </div>
             <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
               <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.expand?.profitMargin || 'Margin'}</p>
@@ -844,9 +872,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
           ) : (
             <div className="grid gap-3">
               {lowStockItems.map(item => (
-                <div key={item.id} className="p-4 rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/50 flex justify-between items-center">
+                <div key={item.id} className="p-4 rounded-2xl bg-transparent border border-orange-200 dark:border-orange-800 flex justify-between items-center">
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-gray-100">{item.name}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{getDisplayName(item)}</p>
                     <p className="text-sm text-gray-500">{item.category}</p>
                     <p className="text-xs text-orange-600 dark:text-orange-400 font-bold uppercase mt-1">
                       {item.stock} {t.expand?.allItems || 'units left'}
@@ -904,8 +932,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                     {index + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate item-name">{item.name}</p>
-                    <p className="text-sm text-gray-500">{item.qty} {t.sold} • ${item.revenue.toFixed(2)} {t.revenue}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate item-name">{getDisplayName(item)}</p>
+                    <p className="text-sm text-gray-500">{item.qty} {t.sold} • {formatCurrency(item.revenue)} {t.revenue}</p>
                   </div>
                 </div>
                 <div className="text-end">
@@ -955,10 +983,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
               const days = getDaysUntilExpiry(item.expiryDate);
               const isExpired = days < 0;
               return (
-                <div key={item.id} className={`p-4 rounded-2xl border ${isExpired ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/50' : 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-100 dark:border-yellow-900/50'}`}>
+                <div key={item.id} className={`p-4 rounded-2xl border ${isExpired ? 'bg-transparent border-red-200 dark:border-red-800' : 'bg-transparent border-yellow-200 dark:border-yellow-800'}`}>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900 dark:text-gray-100 item-name">{item.name}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100 item-name">{getDisplayName(item)}</p>
                       <p className="text-sm text-gray-500">{item.category} • {item.stock} in stock</p>
                       <p className={`text-xs font-bold uppercase mt-1 ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-500'}`}>
                         {isExpired ? t.expired : `${days} ${t.days}`}
@@ -1032,7 +1060,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                   </div>
                   <div className="text-end">
                     <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                      ${(sale.netTotal ?? sale.total).toFixed(2)}
+                      {formatCurrency(sale.netTotal ?? sale.total)}
                     </p>
                     <p className="text-xs text-gray-500 flex items-center justify-end gap-1">
                       {sale.hasReturns && (() => {
@@ -1065,10 +1093,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                         <div key={idx} className={`flex justify-between text-sm ${hasReturn ? 'bg-orange-50 dark:bg-orange-950/20 rounded px-1' : ''}`}>
                           <span className={`${hasReturn ? 'text-orange-700 dark:text-orange-300' : 'text-gray-600 dark:text-gray-400'} item-name flex items-center gap-1`}>
                             {hasReturn && <span className="material-symbols-rounded text-[12px] text-orange-500">keyboard_return</span>}
-                            {item.name} x{item.quantity}
+                            {getDisplayName(item)} x{item.quantity}
                             {hasReturn && <span className="text-[10px] text-orange-600 dark:text-orange-400">({returnedQty}/{item.quantity})</span>}
                           </span>
-                          <span className="text-gray-900 dark:text-gray-100 font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                          <span className="text-gray-900 dark:text-gray-100 font-medium">{formatCurrency(item.price * item.quantity)}</span>
                         </div>
                       );
                     })}
@@ -1129,12 +1157,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             </div>
             <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
               <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.revenue}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${totalRevenue.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalRevenue)}</p>
             </div>
             <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
               <p className="text-xs font-bold text-gray-500 uppercase mb-1">{t.expand?.amount || 'Average'}</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                ${sales.length > 0 ? (totalRevenue / sales.length).toFixed(2) : '0.00'}
+                {sales.length > 0 ? formatCurrency(totalRevenue / sales.length) : formatCurrency(0)}
               </p>
             </div>
           </div>
