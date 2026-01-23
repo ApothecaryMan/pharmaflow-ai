@@ -9,7 +9,6 @@ import { useContextMenu } from "../common/ContextMenu";
 import { Drug, CartItem, Sale, Customer, Language, Shift, Employee } from "../../types";
 
 import { useFilterDropdown } from "../../hooks/useFilterDropdown";
-import { getCategories, getProductTypes, getLocalizedCategory, getLocalizedProductType } from "../../data/productCategories";
 import { getLocationName } from "../../data/locations";
 import { usePOSTabs } from "../../hooks/usePOSTabs";
 import { useStatusBar } from "../layout/StatusBar";
@@ -25,7 +24,7 @@ import {
 } from "../sales/InvoiceTemplate";
 import { formatStock } from "../../utils/inventory";
 import { getPrinterSettings, printReceiptSilently } from "../../utils/qzPrinter";
-import { FilterDropdown, FilterDropdownProps } from "../common/FilterDropdown";
+import { FilterDropdown } from "../common/FilterDropdown";
 import {
   createColumnHelper,
   ColumnDef,
