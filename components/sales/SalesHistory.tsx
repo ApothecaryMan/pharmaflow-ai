@@ -1,18 +1,20 @@
 
 
 import React, { useState, useRef } from 'react';
-import { Sale, CartItem, Return } from '../../types';
+import { Sale, Return } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { ReturnModal } from '../sales/ReturnModal';
 import { DatePicker } from '../common/DatePicker';
 import { createSearchRegex } from '../../utils/searchUtils';
-import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
 import { printInvoice, InvoiceTemplateOptions, defaultOptions } from './InvoiceTemplate';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { TanStackTable } from '../common/TanStackTable';
+import { ColumnDef } from '@tanstack/react-table';
+import { MaterialTabs } from '../common/MaterialTabs';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -30,67 +32,134 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
-  const [expandedSaleId, setExpandedSaleId] = useState<string | null>(null);
   const [returnModalOpen, setReturnModalOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
   // Get help content
   const helpContent = SALES_HISTORY_HELP[language as 'EN' | 'AR'] || SALES_HISTORY_HELP.EN;
 
-  // Column definitions
-  const initialColumns = [
-    { key: 'id', label: 'modal.id', sortable: true },
-    { key: 'date', label: 'headers.date', sortable: true },
-    { key: 'customer', label: 'headers.customer', sortable: true },
-    { key: 'payment', label: 'headers.payment', sortable: true },
-    { key: 'items', label: 'headers.items', sortable: true },
-    { key: 'total', label: 'headers.total', sortable: true },
-    { key: 'actions', label: 'headers.actions', sortable: false }
-  ];
-
-  const [columns, setColumns] = useState(initialColumns);
-  const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
-
-  // --- Nested/Future Functions for Item Actions ---
-  const handleEmailReceipt = (saleId: string) => {
-    console.log(`[Future Implementation] Email receipt for Sale ID: ${saleId}`);
-    // Future: Trigger backend email service
-  };
-
-  const handleDownloadPDF = (saleId: string) => {
-    console.log(`[Future Implementation] Download PDF for Sale ID: ${saleId}`);
-    // Future: Generate PDF blob and trigger download
-  };
-
-  const handleSort = (key: string) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
+  // Column definitions using TanStackTable's ColumnDef
+  const tableColumns = React.useMemo<ColumnDef<Sale>[]>(() => [
+    {
+      accessorKey: 'id',
+      header: t.modal.id,
+      cell: ({ getValue }) => <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">{getValue() as string}</span>,
+    },
+    {
+      accessorKey: 'date',
+      header: t.headers.date,
+      cell: ({ row }) => {
+        const sale = row.original;
+        return (
+          <div>
+            <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+              {new Date(sale.date).toLocaleDateString('en-US')}
+            </div>
+            <div className="text-xs text-gray-500 flex items-center gap-1">
+              {new Date(sale.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+              {sale.saleType === 'delivery' && (
+                <span className="material-symbols-rounded text-[14px] text-blue-500" title="Delivery Order">local_shipping</span>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'customerName',
+      header: t.headers.customer,
+      cell: ({ row }) => {
+        const sale = row.original;
+        return (
+          <div>
+            <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+              {sale.customerName || "Guest"}
+            </div>
+            {sale.customerCode && (
+              <div className="text-sm text-gray-700 dark:text-gray-300">
+                {sale.customerCode}
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'paymentMethod',
+      header: t.headers.payment,
+      cell: ({ getValue }) => {
+        const method = getValue() as string;
+        const isVisa = method === 'visa';
+        return (
+          <span className={`flex items-center gap-1 ${isVisa ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
+            <span className="material-symbols-rounded text-[16px]">{isVisa ? 'credit_card' : 'payments'}</span>
+            <span className="text-sm font-medium">{isVisa ? t.visa : t.cash}</span>
+          </span>
+        );
+      },
+    },
+    {
+      id: 'items',
+      header: t.headers.items,
+      cell: ({ row }) => (
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          {row.original.items.length} {t.items || "items"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'total',
+      header: t.headers.total,
+      cell: ({ row }) => {
+        const sale = row.original;
+        return (
+          <div className="font-bold text-gray-900 dark:text-gray-100">
+            ${sale.total.toFixed(2)}
+            {sale.deliveryFee && sale.deliveryFee > 0 && (
+              <div className="text-[10px] text-gray-400 font-normal">
+                +${sale.deliveryFee.toFixed(2)} delivery
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: '',
+      meta: { align: 'end' },
+      cell: ({ row }) => {
+        const sale = row.original;
+        const totalReturned = sale.netTotal !== undefined ? sale.total - sale.netTotal : 0;
+        
+        if (sale.hasReturns) {
+          return (
+            <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-orange-200 text-orange-700 bg-transparent font-bold">
+              <span className="material-symbols-rounded text-[16px]">assignment_return</span>
+              <span className="text-xs">-${totalReturned.toFixed(2)}</span>
+            </div>
+          );
+        }
+        
+        if (sale.status === 'cancelled') {
+          return (
+            <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-red-200 text-red-700 bg-transparent font-bold">
+              <span className="material-symbols-rounded text-[16px]">cancel</span>
+              <span className="text-xs uppercase">{t.cancelled || 'Cancelled'}</span>
+            </div>
+          );
+        }
+        
+        return (
+          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-emerald-200 text-emerald-700 bg-transparent font-bold">
+            <span className="material-symbols-rounded text-[16px]">check_circle</span>
+            <span className="text-xs uppercase">{t.completed || 'Completed'}</span>
+          </div>
+        );
+      },
     }
-    setSortConfig({ key, direction });
-  };
-
-  const handleDragStart = (e: React.DragEvent, key: string) => {
-    setDraggedColumn(key);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e: React.DragEvent, key: string) => {
-    e.preventDefault();
-    if (!draggedColumn || draggedColumn === key) return;
-    
-    const sourceIndex = columns.findIndex(col => col.key === draggedColumn);
-    const targetIndex = columns.findIndex(col => col.key === key);
-    
-    if (sourceIndex !== -1 && targetIndex !== -1) {
-        const newColumns = [...columns];
-        const [removed] = newColumns.splice(sourceIndex, 1);
-        newColumns.splice(targetIndex, 0, removed);
-        setColumns(newColumns);
-    }
-  };
+  ], [t]);
 
   const filteredSales = sales
     .filter(sale => {
@@ -114,38 +183,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
       if (end && saleDate > end) return false;
 
       return true;
-    })
-    .sort((a, b) => {
-      if (sortConfig) {
-        const { key, direction } = sortConfig;
-        let aValue: any = a[key as keyof Sale];
-        let bValue: any = b[key as keyof Sale];
-
-        // Handle specific keys
-        if (key === 'items') {
-            aValue = a.items.length;
-            bValue = b.items.length;
-        } else if (key === 'date') {
-            aValue = new Date(a.date).getTime();
-            bValue = new Date(b.date).getTime();
-        } else if (key === 'customer') {
-            aValue = a.customerName || '';
-            bValue = b.customerName || '';
-        } else if (key === 'payment') {
-            // Sort by translated name
-            aValue = a.paymentMethod === 'visa' ? t.visa : t.cash;
-            bValue = b.paymentMethod === 'visa' ? t.visa : t.cash;
-        }
-
-        if (aValue < bValue) return direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return direction === 'asc' ? 1 : -1;
-        
-        // Secondary sort by date (always newest first for stability)
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      }
-
-      // Default sort: Newest first
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
 
   const totalRevenue = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
@@ -259,252 +296,16 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
       </div>
 
       {/* Table Card */}
-      <div className={`flex-1 ${CARD_BASE} rounded-3xl overflow-hidden flex flex-col`}>
-        <div className="overflow-x-auto flex-1">
-          <table className="w-full text-start border-collapse">
-            <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>
-              <tr>
-                {columns.map((col) => (
-                    <th 
-                        key={col.key}
-                        draggable={true}
-                        onDragStart={(e) => handleDragStart(e, col.key)}
-                        onDragOver={(e) => handleDragOver(e, col.key)}
-                        className={`px-3 py-2 text-${col.key === 'actions' ? 'end' : 'start'} ${col.sortable ? 'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-800' : 'cursor-move'} transition-colors`}
-                        onDoubleClick={() => col.sortable && handleSort(col.key)}
-                    >
-                        <div className={`flex items-center gap-1 ${col.key === 'actions' ? 'justify-end' : ''}`}>
-                            {t[col.label.split('.')[0]][col.label.split('.')[1]]}
-                            <span className={`material-symbols-rounded text-[14px] transition-opacity ${sortConfig?.key === col.key ? 'opacity-100' : 'opacity-0'}`}>
-                                {sortConfig?.key === col.key && sortConfig.direction === 'desc' ? 'arrow_downward' : 'arrow_upward'}
-                            </span>
-                        </div>
-                    </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {filteredSales.map((sale, index) => {
-                // Calculate total returned amount for this sale
-                const totalReturned = sale.netTotal !== undefined ? sale.total - sale.netTotal : 0;
-                
-                return (
-                <React.Fragment key={sale.id}>
-                <tr 
-                    onClick={() => setExpandedSaleId(expandedSaleId === sale.id ? null : sale.id)}
-                    className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 transition-colors cursor-pointer ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''} ${expandedSaleId === sale.id ? `bg-${color}-50/50 dark:bg-${color}-900/10` : ''}`}
-                >
-                  {columns.map(col => {
-                    if (col.key === 'id') {
-                        return (
-                            <td key={col.key} className="px-3 py-2 font-mono text-xs text-gray-500">
-                                #{sale.id}
-                            </td>
-                        );
-                    }
-                    if (col.key === 'date') {
-                        return (
-                            <td key={col.key} className="px-3 py-2">
-                                <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
-                                    {new Date(sale.date).toLocaleDateString()}
-                                </div>
-                                <div className="text-xs text-gray-500 flex items-center gap-1">
-                                    {new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                    {sale.saleType === 'delivery' && (
-                                        <span className="material-symbols-rounded text-[14px] text-blue-500" title="Delivery Order">local_shipping</span>
-                                    )}
-                                </div>
-                            </td>
-                        );
-                    }
-                    if (col.key === 'customer') {
-                        return (
-                            <td key={col.key} className="px-3 py-2">
-                                <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
-                                    {sale.customerName || "Guest"}
-                                </div>
-                                {sale.customerCode && (
-                                    <div className="text-xs text-gray-500">
-                                        #{sale.customerCode}
-                                    </div>
-                                )}
-                            </td>
-                        );
-                    }
-                    if (col.key === 'payment') {
-                        return (
-                            <td key={col.key} className="px-3 py-2">
-                                <span className={`flex items-center gap-1 ${sale.paymentMethod === 'visa' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
-                                    <span className="material-symbols-rounded text-[16px]">{sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}</span>
-                                    <span className="text-sm font-medium">{sale.paymentMethod === 'visa' ? t.visa : t.cash}</span>
-                                </span>
-                            </td>
-                        );
-                    }
-                    if (col.key === 'items') {
-                        return (
-                            <td key={col.key} className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
-                                {sale.items.length} {t.items || "items"}
-                            </td>
-                        );
-                    }
-                    if (col.key === 'total') {
-                        return (
-                            <td key={col.key} className="px-3 py-2 font-bold text-gray-900 dark:text-gray-100">
-                                ${sale.total.toFixed(2)}
-                                {sale.deliveryFee && sale.deliveryFee > 0 && (
-                                    <div className="text-[10px] text-gray-400 font-normal">
-                                        +${sale.deliveryFee.toFixed(2)} delivery
-                                    </div>
-                                )}
-                            </td>
-                        );
-                    }
-                    if (col.key === 'actions') {
-                        return (
-                            <td key={col.key} className="px-3 py-2 text-end" onClick={(e) => e.stopPropagation()}>
-                                {/* Status Icons */}
-                                {sale.hasReturns ? (
-                                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">
-                                        <span className="material-symbols-rounded text-[16px]">keyboard_return</span>
-                                        <span className="text-xs font-bold">-${totalReturned.toFixed(2)}</span>
-                                    </div>
-                                ) : sale.status === 'cancelled' ? (
-                                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-                                        <span className="material-symbols-rounded text-[16px]">cancel</span>
-                                    </div>
-                                ) : (
-                                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-                                        <span className="material-symbols-rounded text-[16px]">check_circle</span>
-                                    </div>
-                                )}
-                            </td>
-                        );
-                    }
-                    return null;
-                  })}
-                </tr>
-                {expandedSaleId === sale.id && (
-                    <tr className="animate-fade-in">
-                        <td colSpan={columns.length} className="p-0 border-b border-gray-100 dark:border-gray-800">
-                            <div className={`bg-${color}-50/30 dark:bg-${color}-900/5 p-3 flex flex-col md:flex-row gap-4 items-start`}>
-                                {/* Items List - Grid Layout for Compactness */}
-                                <div className="flex-1 w-full">
-                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-wider flex items-center gap-2">
-                                        <span className="material-symbols-rounded text-[14px]">shopping_bag</span>
-                                        {t.modal.items} <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 rounded text-[9px]">{sale.items.length}</span>
-                                    </h4>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                                        {sale.items.map((item, idx) => {
-                                            const effectivePrice = (item.isUnit && item.unitsPerPack) ? item.price / item.unitsPerPack : item.price;
-                                            const lineKey = `${item.id}_${idx}`;
-                                            const returnedQty = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-                                            return (
-                                                <div key={idx} className={`flex items-center gap-2 p-1.5 rounded border ${returnedQty > 0 ? 'border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/20' : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50'} hover:border-gray-200 dark:hover:border-gray-700 transition-colors`}>
-                                                    <div className={`h-8 w-8 rounded ${returnedQty > 0 ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-600' : 'bg-gray-50 dark:bg-gray-800 text-gray-400'} flex items-center justify-center text-xs font-bold shrink-0`}>
-                                                        {item.quantity}
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate flex items-center gap-1">
-                                                            {getDisplayName({ name: item.name, dosageForm: item.dosageForm })}
-                                                            {item.isUnit && <span className="text-[8px] bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1 rounded font-bold">UNIT</span>}
-                                                            {returnedQty > 0 && (
-                                                                <span className="text-[8px] bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300 px-1 rounded font-bold">
-                                                                    -{returnedQty} {t.returns?.returned || 'returned'}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <div className="text-[10px] text-gray-500 flex items-center gap-1">
-                                                            ${effectivePrice.toFixed(2)}
-                                                            {item.discount && item.discount > 0 ? <span className="text-green-600 dark:text-green-400">(-{item.discount}%)</span> : ''}
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-xs font-bold text-gray-700 dark:text-gray-300 shrink-0">
-                                                        ${((effectivePrice * item.quantity) * (1 - (item.discount || 0)/100)).toFixed(2)}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* Summary & Actions - Compact Sidebar */}
-                                <div className="w-full md:w-56 shrink-0 flex flex-col gap-3 md:border-s border-gray-100 dark:border-gray-800 md:ps-4">
-                                    <div className="space-y-1.5">
-                                        <div className="flex justify-between text-xs text-gray-500">
-                                            <span>{t.modal.subtotal}</span>
-                                            <span>${(sale.subtotal || 0).toFixed(2)}</span>
-                                        </div>
-                                        {sale.globalDiscount > 0 && (
-                                            <div className="flex justify-between text-xs text-green-600 dark:text-green-400">
-                                                <span>{t.modal.discount} ({sale.globalDiscount}%)</span>
-                                                <span>-${((sale.subtotal || 0) * sale.globalDiscount / 100).toFixed(2)}</span>
-                                            </div>
-                                        )}
-                                        {sale.deliveryFee > 0 && (
-                                            <div className="flex justify-between text-xs text-gray-500">
-                                                <span>{t.pos?.deliveryOrder || t.deliveryFee || "Delivery"}</span>
-                                                <span>+${sale.deliveryFee.toFixed(2)}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white pt-1.5 border-t border-gray-100 dark:border-gray-800 border-dashed">
-                                            <span>{t.modal.total}</span>
-                                            <span>${sale.total.toFixed(2)}</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {(() => {
-                                            // Check if there are any items that can still be returned (using lineKey pattern)
-                                            const hasItemsToReturn = sale.items.some((item, index) => {
-                                                const lineKey = `${item.id}_${index}`;
-                                                const returnedQty = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-                                                return returnedQty < item.quantity;
-                                            });
-                                            
-                                            return (
-                                                <>
-                                                    {hasItemsToReturn && (
-                                                        <button 
-                                                            onClick={() => {
-                                                                setSelectedSale(sale);
-                                                                setReturnModalOpen(true);
-                                                            }}
-                                                            className="py-1.5 px-2 rounded-md text-[10px] font-bold uppercase tracking-wide text-white bg-orange-500 hover:bg-orange-600 transition-colors flex items-center justify-center gap-1 shadow-sm shadow-orange-200 dark:shadow-none"
-                                                        >
-                                                            <span className="material-symbols-rounded text-[14px]">keyboard_return</span>
-                                                            {t.modal.return || 'Return'}
-                                                        </button>
-                                                    )}
-                                                    <button 
-                                                        onClick={() => handlePrint(sale)}
-                                                        className={`py-1.5 px-2 rounded-md text-[10px] font-bold uppercase tracking-wide text-white bg-${color}-600 hover:bg-${color}-700 transition-colors flex items-center justify-center gap-1 shadow-sm shadow-${color}-200 dark:shadow-none ${!hasItemsToReturn ? 'col-span-2' : ''}`}
-                                                    >
-                                                        <span className="material-symbols-rounded text-[14px]">print</span>
-                                                        {t.modal.receipt || 'Receipt'}
-                                                    </button>
-                                                </>
-                                            );
-                                        })()}
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                )}
-                </React.Fragment>
-              );
-              })}
-              {filteredSales.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-12 text-center text-gray-400">
-                    {t.noResults}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+      <div className={`flex-1 ${CARD_BASE} rounded-xl overflow-hidden flex flex-col`}>
+        <TanStackTable
+          data={filteredSales}
+          columns={tableColumns}
+          tableId="sales_history_table"
+          color={color}
+          enableTopToolbar={false} // We have custom filters above
+          onRowClick={(sale) => setSelectedSale(sale)}
+          emptyMessage={t.noResults}
+        />
       </div>
 
       {/* Detail Modal - hide when return modal is open */}
@@ -519,84 +320,140 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
               <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                          <p className="text-gray-500">{t.modal.id}</p>
-                          <p className="font-mono text-gray-700 dark:text-gray-300 text-xs">{selectedSale.id}</p>
+                          <p className="text-gray-500 text-xs">{t.modal.date}</p>
+                          <p className="font-medium text-gray-700 dark:text-gray-300 mt-0.5 flex items-center gap-1.5">
+                            {(() => {
+                                const d = new Date(selectedSale.date);
+                                const dateStr = d.toLocaleDateString('en-US');
+                                let timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                                if (language === 'AR') {
+                                    timeStr = timeStr.replace('AM', 'ص').replace('PM', 'م');
+                                }
+                                return (
+                                  <>
+                                    <span>{dateStr}</span>
+                                    <span className="text-gray-300 dark:text-gray-700 font-bold">•</span>
+                                    <span>{timeStr}</span>
+                                  </>
+                                );
+                            })()}
+                          </p>
                       </div>
                       <div className="text-end">
-                          <p className="text-gray-500">{t.modal.date}</p>
-                          <p className="font-medium text-gray-700 dark:text-gray-300">{new Date(selectedSale.date).toLocaleString()}</p>
+                          <p className="text-gray-500 text-xs">{t.modal.id}</p>
+                          <span className="text-sm text-gray-600 dark:text-gray-400 font-medium mt-0.5">{selectedSale.id}</span>
                       </div>
-                      <div className="col-span-2">
-                          <p className="text-gray-500">{t.modal.customer}</p>
-                          <div className="flex justify-between items-center">
-                            <p className="font-bold text-base text-gray-800 dark:text-gray-200">{selectedSale.customerName || 'Guest'}</p>
-                            {selectedSale.customerCode && <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-500">#{selectedSale.customerCode}</span>}
+                      <div>
+                          <p className="text-gray-500 text-xs">{t.modal.customer}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <p className="font-bold text-gray-900 dark:text-gray-100">{selectedSale.customerName || 'Guest'}</p>
+                            {selectedSale.customerCode && (
+                              <>
+                                <span className="text-gray-300 dark:text-gray-700">•</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{selectedSale.customerCode}</span>
+                              </>
+                            )}
                           </div>
                       </div>
-                      <div className="col-span-2">
-                          <p className="text-gray-500">{t.modal.payment}</p>
-                          <p className="font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <div className="text-end">
+                          <p className="text-gray-500 text-xs">{t.modal.payment}</p>
+                          <div className="font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5 justify-end mt-0.5">
                             <span className="material-symbols-rounded text-[18px] text-gray-400">
                               {selectedSale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
                             </span>
                             {selectedSale.paymentMethod === 'visa' ? t.visa : t.cash}
-                          </p>
+                          </div>
                       </div>
                   </div>
 
                   <div className="border-t border-gray-100 dark:border-gray-800 pt-3">
                       <p className="text-xs font-bold text-gray-400 uppercase mb-2">{t.modal.items}</p>
-                      <div className="space-y-2">
+                      <div className="flex flex-col gap-1">
                           {selectedSale.items.map((item, idx) => {
                              const effectivePrice = (item.isUnit && item.unitsPerPack) ? item.price / item.unitsPerPack : item.price;
-                             return (
-                              <div key={idx} className="flex justify-between items-center text-sm p-2 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                                  <div>
+                             const lineKey = `${item.id}_${idx}`;
+                             const returnedQty = selectedSale.itemReturnedQuantities?.[lineKey] || selectedSale.itemReturnedQuantities?.[item.id] || 0;
+                             const hasReturn = returnedQty > 0;
+                             const isFullyReturned = returnedQty >= item.quantity;
+
+                              return (
+                              <MaterialTabs 
+                                key={idx} 
+                                index={idx} 
+                                total={selectedSale.items.length} 
+                                color={color} 
+                                className={`h-auto py-3 transition-all ${hasReturn ? 'border-2 border-orange-500/40 bg-orange-50/30 dark:bg-orange-900/10' : ''}`}
+                              >
+                                <div className="flex justify-between items-center w-full" dir="ltr">
+                                  <div className="text-left">
                                       <p className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1 item-name">
                                         {getDisplayName({ name: item.name, dosageForm: item.dosageForm })}
-                                        {item.isUnit && <span className="text-[9px] bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1 rounded font-bold">UNIT</span>}
                                       </p>
-                                      <p className="text-xs text-gray-500">
-                                          {t.modal.qty}: {item.quantity} x ${effectivePrice.toFixed(2)}
-                                          {item.discount && item.discount > 0 ? ` (-${item.discount}%)` : ''}
-                                      </p>
+                                      <div className="text-xs text-gray-500 flex flex-row items-center gap-1 mt-0.5" dir="ltr">
+                                          <span className="shrink-0">{t.modal.qty}:</span>
+                                          <span className="font-bold shrink-0">{item.quantity}</span>
+                                          {item.isUnit && (
+                                            <span className="text-[8px] border border-sky-200 dark:border-sky-800 text-sky-600 dark:text-sky-400 px-1 py-1 leading-none rounded font-bold tracking-tighter uppercase whitespace-nowrap">
+                                              {language === 'AR' ? 'وحدة' : 'UNIT'}
+                                            </span>
+                                          )}
+                                          <span className="opacity-50 text-[10px] shrink-0">x</span>
+                                          <span className="shrink-0">${effectivePrice.toFixed(2)}</span>
+                                          {item.discount && item.discount > 0 ? <span className="text-green-600 dark:text-green-400 shrink-0">(-{item.discount}%)</span> : ''}
+                                      </div>
                                   </div>
-                                  <div className="font-medium text-gray-700 dark:text-gray-300">
-                                      ${((effectivePrice * item.quantity) * (1 - (item.discount || 0)/100)).toFixed(2)}
+                                  <div className="font-medium text-gray-700 dark:text-gray-300 text-right flex flex-col items-end">
+                                      {hasReturn && (
+                                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1 ${isFullyReturned ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 mb-1'} whitespace-nowrap`}>
+                                          <span className="material-symbols-rounded text-[13px]">{isFullyReturned ? 'assignment_return' : 'replay'}</span>
+                                          {isFullyReturned ? (language === 'AR' ? 'مرتجع كلي' : 'FULLY RETURNED') : (language === 'AR' ? `مرتجع (${returnedQty})` : `RETURNED (${returnedQty})`)}
+                                        </span>
+                                      )}
+                                      {!isFullyReturned && (
+                                        <div>
+                                          <span>
+                                            ${((effectivePrice * (item.quantity - returnedQty)) * (1 - (item.discount || 0)/100)).toFixed(2)}
+                                          </span>
+                                          {hasReturn && <span className="text-[10px] block text-gray-400 leading-none mt-0.5 line-through">
+                                            ${((effectivePrice * item.quantity) * (1 - (item.discount || 0)/100)).toFixed(2)}
+                                          </span>}
+                                        </div>
+                                      )}
                                   </div>
-                              </div>
+                                </div>
+                              </MaterialTabs>
                              );
                           })}
                       </div>
                   </div>
 
-                  <div className="border-t border-gray-100 dark:border-gray-800 pt-3 space-y-2 text-sm">
-                       {selectedSale.subtotal !== undefined && (
+                  <div className={`${selectedSale.subtotal !== selectedSale.total ? 'border-t border-gray-100 dark:border-gray-800 pt-3' : ''} space-y-2 text-sm`}>
+                  {selectedSale.subtotal !== undefined && selectedSale.subtotal !== selectedSale.total && (
                            <div className="flex justify-between text-gray-500">
                                <span>{t.modal.subtotal}</span>
                                <span>${selectedSale.subtotal.toFixed(2)}</span>
                            </div>
                        )}
-                       {selectedSale.globalDiscount !== undefined && selectedSale.globalDiscount > 0 && (
+                       {/* {selectedSale.globalDiscount !== undefined && selectedSale.globalDiscount > 0 && (
                            <div className="flex justify-between text-green-600 dark:text-green-400">
                                <span>{t.modal.discount} ({selectedSale.globalDiscount}%)</span>
                                <span>-${(selectedSale.subtotal! * selectedSale.globalDiscount / 100).toFixed(2)}</span>
                            </div>
-                       )}
-                       {selectedSale.deliveryFee && selectedSale.deliveryFee > 0 && (
+                       )} */}
+                       {Number(selectedSale.deliveryFee) > 0 && (
                            <div className="flex justify-between text-gray-500">
                                <span>{t.pos?.deliveryOrder || t.deliveryFee || "Delivery"}</span>
-                               <span>+${selectedSale.deliveryFee.toFixed(2)}</span>
+                               <span>+${selectedSale.deliveryFee!.toFixed(2)}</span>
                            </div>
                        )}
-                       <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-100 dark:border-gray-800">
+                       <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white py-3 border-t border-gray-100 dark:border-gray-800">
                            <span>{t.modal.total}</span>
                            <span>${selectedSale.total.toFixed(2)}</span>
                        </div>
                   </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex gap-3 mt-4">
+              <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex gap-3 mt-0">
                   {(() => {
                       // Check if there are any items that can still be returned (using lineKey pattern)
                       const hasItemsToReturn = selectedSale.items.some((item, index) => {
@@ -612,7 +469,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                               onClick={() => setReturnModalOpen(true)}
                               className={`flex-1 py-2.5 rounded-full font-medium text-white bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center gap-2`}
                             >
-                                <span className="material-symbols-rounded">keyboard_return</span>
+                                <span className="material-symbols-rounded">assignment_return</span>
                                 {t.returns?.processReturn || 'Process Return'}
                             </button>
                           )}
@@ -646,6 +503,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
            }}
            color={color}
            t={t}
+           language={language}
           />
         )}
 

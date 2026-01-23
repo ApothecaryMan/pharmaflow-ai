@@ -13,6 +13,7 @@ interface ReturnModalProps {
   onConfirm: (returnData: Return) => void;
   color: string;
   t: any;
+  language?: string;
 }
 
 export const ReturnModal: React.FC<ReturnModalProps> = ({ 
@@ -21,7 +22,8 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   onClose, 
   onConfirm,
   color,
-  t 
+  t,
+  language = 'EN'
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const [step, setStep] = useState(1);
@@ -286,30 +288,35 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                       color={color}
                       isSelected={isSelected}
                       onClick={() => toggleItemSelection(item.lineKey, item.availableQty)}
+                      className="h-auto py-2"
                     >
                       <div className="w-full flex items-center justify-between gap-4" dir="ltr">
-                        <div className="flex-1 min-w-0 flex items-center gap-2">
+                        <div className="flex-1 min-w-0 flex flex-col justify-center">
                           <h4 
-                            className="font-bold text-gray-900 dark:text-gray-100 truncate text-base"
+                            className="font-bold text-gray-900 dark:text-gray-100 truncate text-base leading-tight"
                             style={{ textTransform: 'var(--text-transform)' }}
                           >
                             {item.name}
                             {item.dosageForm && <span className="ml-1">{item.dosageForm}</span>}
                             {item.isUnit && <span className="ml-1 text-base bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">U</span>}
                           </h4>
+                          <div className="flex items-center gap-2 mt-0 leading-none h-4">
+                              <span className={`text-[10px] font-bold uppercase ${isSelected ? `text-${color}-600 dark:text-${color}-400` : 'text-gray-400'}`}>
+                                  {t.modal?.qty || 'Qty'}: {item.availableQty}
+                              </span>
+                              {item.returnedQty > 0 && (
+                                <div className="inline-flex items-center gap-1 text-[9px] bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300 px-1.5 py-0 rounded-md font-bold border border-orange-100 dark:border-orange-900/30 leading-none h-3.5">
+                                  <span className="material-symbols-rounded text-[10px]">history</span>
+                                  {item.returnedQty} {language === 'AR' ? 'مرتجع' : 'returned'}
+                                </div>
+                              )}
+                          </div>
                         </div>
                           
                         <div className="flex items-center gap-4 flex-shrink-0">
                             <p className="font-bold text-gray-900 dark:text-gray-100 text-base">
-                              ${((item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price).toFixed(2))}
+                                ${((item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price).toFixed(2))}
                             </p>
-                              
-                              {item.returnedQty > 0 && (
-                                <div className="inline-flex items-center gap-1 text-[10px] bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300 px-2 py-0.5 rounded-md font-medium border border-orange-100 dark:border-orange-900/30">
-                                  <span className="material-symbols-rounded text-[12px]">history</span>
-                                  {item.returnedQty} returned
-                                </div>
-                              )}
                           </div>
 
 
@@ -317,15 +324,11 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                         <div onClick={(e) => e.stopPropagation()}>
                           {isSelected ? (
                             <div className="flex items-center gap-3 animate-fadeIn">
-                               <div className="flex flex-col items-end mr-2">
-                                  <span className="text-[10px] font-bold text-gray-500 uppercase">{t.returns.returnQuantity}</span>
-                                  <span className="text-[10px] text-gray-400 font-medium">max: {item.availableQty}</span>
-                               </div>
-                               <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-full p-1 border border-gray-200 dark:border-gray-700 shadow-sm">
+                               <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-full p-0.5 border border-gray-200 dark:border-gray-700 shadow-sm">
                                 <button
                                   onClick={() => updateItemQuantity(item.lineKey, Math.max(1, selectedQty - 1))}
                                   disabled={selectedQty <= 1}
-                                  className={`w-8 h-8 rounded-full bg-white dark:bg-gray-700 shadow-sm flex items-center justify-center hover:text-${color}-600 dark:hover:text-${color}-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:hover:text-gray-600 dark:disabled:hover:text-gray-200`}
+                                  className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-sm flex items-center justify-center hover:text-${color}-600 dark:hover:text-${color}-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:hover:text-gray-600 dark:disabled:hover:text-gray-200`}
                                 >
                                   <span className="material-symbols-rounded text-lg">remove</span>
                                 </button>
@@ -335,12 +338,12 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                                   max={item.availableQty}
                                   value={selectedQty}
                                   onChange={(e) => updateItemQuantity(item.lineKey, Math.min(item.availableQty, Math.max(1, parseInt(e.target.value) || 1)))}
-                                  className="w-12 text-center bg-transparent font-bold text-base text-gray-900 dark:text-white border-none p-0 focus:ring-0 appearance-none"
+                                  className="w-10 text-center bg-transparent font-bold text-sm text-gray-900 dark:text-white border-none p-0 focus:ring-0 appearance-none"
                                 />
                                 <button
                                   onClick={() => updateItemQuantity(item.lineKey, Math.min(item.availableQty, selectedQty + 1))}
                                   disabled={selectedQty >= item.availableQty}
-                                  className={`w-8 h-8 rounded-full bg-white dark:bg-gray-700 shadow-sm flex items-center justify-center hover:text-${color}-600 dark:hover:text-${color}-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:hover:text-gray-600 dark:disabled:hover:text-gray-200`}
+                                  className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-sm flex items-center justify-center hover:text-${color}-600 dark:hover:text-${color}-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:hover:text-gray-600 dark:disabled:hover:text-gray-200`}
                                 >
                                   <span className="material-symbols-rounded text-lg">add</span>
                                 </button>

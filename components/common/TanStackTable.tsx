@@ -40,6 +40,7 @@ declare module '@tanstack/react-table' {
         minWidth?: number;
         flex?: boolean;
         dir?: 'ltr' | 'rtl';
+        disableAlignment?: boolean;
     }
 }
 import { SearchInput } from './SearchInput';
@@ -350,13 +351,13 @@ export function TanStackTable<TData, TValue>({
 
 
           {/* All Columns Visibility */}
-          <div className="space-y-1 mb-3 px-1">
+          <div className="space-y-1 px-1">
              <div className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-2 px-1">
                 Columns
              </div>
-             {table.getAllLeafColumns().map(col => {
-                // Only exclude 'actions' column from visibility menu
-                if (col.id === 'actions') return null;
+             {table.getAllLeafColumns()
+               .filter(col => col.id !== 'actions')
+               .map(col => {
                 
                 const headerValue = typeof col.columnDef.header === 'function' 
                   ? col.id 
@@ -393,9 +394,9 @@ export function TanStackTable<TData, TValue>({
              })}
           </div>
 
-          {column && (
+          {column && !column.columnDef.meta?.disableAlignment && column.id !== 'actions' && (
           <>
-          <div className="h-px bg-gray-100 dark:bg-[#333] mb-3 mx-1" />
+          <div className="h-px bg-gray-100 dark:bg-[#333] my-3 mx-1" />
 
           {/* Alignment Controls Container */}
           <div className="space-y-3 px-1">
