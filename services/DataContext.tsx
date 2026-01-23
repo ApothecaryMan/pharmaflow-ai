@@ -112,20 +112,29 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   const [employees, setEmployeesState] = useState<Employee[]>([]);
 
   // Load initial data
+  // Load initial data
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const [inv, sal, sup, pur, pRet, ret, cust, emp] = await Promise.all([
-          inventoryService.getAll(),
-          salesService.getAll(),
-          supplierService.getAll(),
-          purchaseService.getAll(),
-          returnService.getAllPurchaseReturns(),
-          returnService.getAllSalesReturns(),
-          customerService.getAll(),
-          employeeService.getAll()
+        // Enforce minimum loading time of 1000ms for better UX
+        const minLoadTime = new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const [results, _] = await Promise.all([
+            Promise.all([
+                inventoryService.getAll(),
+                salesService.getAll(),
+                supplierService.getAll(),
+                purchaseService.getAll(),
+                returnService.getAllPurchaseReturns(),
+                returnService.getAllSalesReturns(),
+                customerService.getAll(),
+                employeeService.getAll()
+            ]),
+            minLoadTime
         ]);
+
+        const [inv, sal, sup, pur, pRet, ret, cust, emp] = results;
         
         // Use initial data if fetched data is empty and initial data is provided
         // We use a stable check here instead of depending on the array reference

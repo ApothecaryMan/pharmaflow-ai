@@ -25,6 +25,7 @@ import { Supplier } from './types';
 import { Login } from './components/auth/Login';
 import { AppState } from './hooks/useAppState';
 import { AuthState } from './hooks/useAuth';
+import { DashboardSkeleton } from './components/dashboard/DashboardSkeletons';
 
 const INITIAL_SUPPLIERS: Supplier[] = [
   { id: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '' },
@@ -454,6 +455,10 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
                 
 
                 
+                if (view === 'dashboard' && isLoading) {
+                    return <DashboardSkeleton />;
+                }
+
                 return <PageComponent {...props} />;
               })()}
             </div>
