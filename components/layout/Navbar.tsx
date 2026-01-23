@@ -448,7 +448,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
             )}
             <div className="hidden md:flex flex-col items-start">
                 <span className="text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5">
-                    {language === 'AR' ? 'فارما فلو' : 'PharmaFlow'}
+                    {language === 'AR' ? 'Zinc' : 'Zinc'}
                 </span>
                 <span className="text-[10px] text-gray-400 leading-none">
                     {language === 'AR' ? 'الفرع الرئيسي' : 'Main Branch'}
@@ -496,7 +496,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900 dark:text-white">
-                        {language === 'AR' ? 'فارما فلو' : 'PharmaFlow'}
+                        {language === 'AR' ? 'Zinc' : 'Zinc'}
                     </h3>
                     <div className="flex items-center gap-2">
                         <p className="text-xs text-gray-500 dark:text-gray-400">

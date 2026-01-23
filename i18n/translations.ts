@@ -5,7 +5,7 @@
 
 export const TRANSLATIONS = {
   EN: {
-    appTitle: 'PharmaFlow',
+    appTitle: 'Zinc',
     date: 'Date',
     orderId: 'Order ID',
     orderTotal: 'Order Total',
@@ -1895,7 +1895,7 @@ export const TRANSLATIONS = {
         }
       }
     },
-    appTitle: 'PharmaFlow',
+    appTitle: 'Zinc',
     date: 'التاريخ',
     orderId: 'رقم الطلب',
     orderTotal: 'إجمالي الطلب',

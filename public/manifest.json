@@ -1,7 +1,7 @@
 {
-  "name": "PharmaFlow AI",
-  "short_name": "PharmaFlow",
-  "description": "نظام إدارة الصيدليات الذكي - Smart Pharmacy Management System",
+  "name": "Zinc",
+  "short_name": "Zinc",
+  "description": "Zinc - Smart Pharmacy Management System",
   "start_url": "/",
   "display": "standalone",
   "orientation": "any",
