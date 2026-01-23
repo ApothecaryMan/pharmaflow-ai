@@ -254,13 +254,31 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     >
       {/* Logo & Title */}
       <div 
-        className="flex items-center gap-3 ltr:mr-6 rtl:ml-6 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+        className="flex items-center gap-2 ltr:mr-6 rtl:ml-6 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
         onClick={onLogoClick}
       >
+        {/* Light Mode Logo (Black) */}
         <img 
-          src="/app_icon.svg" 
+          src="/logo_icon_black.svg" 
           alt={appTitle} 
-          className="h-8 w-auto" 
+          className="h-8 w-auto dark:hidden" 
+        />
+        <img 
+          src="/logo_word_black.svg"
+          alt="Zinc"
+          className="h-5 w-auto hidden md:block dark:hidden"
+        />
+
+        {/* Dark Mode Logo (White) */}
+        <img 
+          src="/logo_icon_white.svg" 
+          alt={appTitle} 
+          className="h-8 w-auto hidden dark:block" 
+        />
+        <img 
+          src="/logo_word_white.svg"
+          alt="Zinc"
+          className="h-5 w-auto hidden dark:md:block"
         />
       </div>
 
