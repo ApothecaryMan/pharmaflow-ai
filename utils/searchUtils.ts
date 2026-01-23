@@ -27,15 +27,15 @@ export const createSearchRegex = (term: string): RegExp => {
   return new RegExp(pattern, 'i');
 };
 
-export const parseSearchTerm = (term: string): { mode: 'normal' | 'ingredient'; regex: RegExp } => {
+export const parseSearchTerm = (term: string): { mode: 'normal' | 'generic'; regex: RegExp } => {
   const trimmedStart = term.trimStart();
   
   if (trimmedStart.startsWith('@')) {
     // Remove '@' but preserve potential leading space after it (e.g. "@ pan" vs "@pan")
-    const ingredientTerm = trimmedStart.substring(1);
+    const genericTerm = trimmedStart.substring(1);
     return {
-      mode: 'ingredient',
-      regex: createSearchRegex(ingredientTerm)
+      mode: 'generic',
+      regex: createSearchRegex(genericTerm)
     };
   }
 

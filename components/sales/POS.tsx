@@ -13,11 +13,11 @@ import { getLocationName } from "../../data/locations";
 import { usePOSTabs } from "../../hooks/usePOSTabs";
 import { useStatusBar } from "../layout/StatusBar";
 
-import { useSmartDirection, SmartAutocomplete } from "../common/SmartInputs";
+import { SmartAutocomplete } from "../common/SmartInputs";
 import { SearchInput } from "../common/SearchInput";
 import { SegmentedControl } from "../common/SegmentedControl";
 import { TabBar } from "../layout/TabBar";
-import { createSearchRegex, parseSearchTerm } from "../../utils/searchUtils";
+import { parseSearchTerm } from "../../utils/searchUtils";
 import {
   generateInvoiceHTML,
   InvoiceTemplateOptions,
@@ -29,7 +29,7 @@ import {
   createColumnHelper,
   ColumnDef,
 } from "@tanstack/react-table";
-import { TanStackTable } from "../common/TanStackTable";
+import { TanStackTable, PriceDisplay } from "../common/TanStackTable";
 import { CARD_MD } from "../../utils/themeStyles";
 import { Modal } from "../common/Modal";
 import {
@@ -1141,7 +1141,7 @@ export const POS: React.FC<POSProps> = ({
     const trimmedSearch = search.trim();
     
     // Get search term without @ prefix for length check
-    const searchTermForLength = mode === 'ingredient' 
+    const searchTermForLength = mode === 'generic' 
       ? search.trimStart().substring(1).trim() 
       : trimmedSearch;
 
@@ -1162,14 +1162,13 @@ export const POS: React.FC<POSProps> = ({
       }
       // Text search requires minimum 2 characters
       else if (searchTermForLength.length >= 2) {
-        if (mode === "ingredient") {
+        if (mode === "generic") {
           matchesSearch =
-            !!d.activeIngredients &&
-            d.activeIngredients.some((ing) => regex.test(ing));
+            !!d.genericName && regex.test(d.genericName);
         } else {
           const searchableText = [
             d.name,
-            d.genericName,
+            // d.genericName, // Generic name excluded from default search
             d.dosageForm,
             d.category,
             d.description,
@@ -1191,11 +1190,11 @@ export const POS: React.FC<POSProps> = ({
     });
   }, [inventory, search, selectedCategory, stockFilter]);
 
-  // Dynamic suggestions: active ingredients when @ prefix, else drug names (requires 2+ chars)
+  // Dynamic suggestions: generic names when @ prefix, else drug names (requires 2+ chars)
   const searchSuggestions = useMemo(() => {
     const trimmed = search.trim();
-    const isIngredientMode = search.trimStart().startsWith('@');
-    const searchTermLength = isIngredientMode 
+    const isGenericMode = search.trimStart().startsWith('@');
+    const searchTermLength = isGenericMode 
       ? search.trimStart().substring(1).trim().length 
       : trimmed.length;
     
@@ -1207,12 +1206,12 @@ export const POS: React.FC<POSProps> = ({
     const isUppercase = settings.textTransform === 'uppercase';
     
     let suggestions: string[];
-    if (isIngredientMode) {
-      const ingredients = new Set<string>();
+    if (isGenericMode) {
+      const generics = new Set<string>();
       inventory.forEach(d => {
-        d.activeIngredients?.forEach(ing => ingredients.add(`@${ing}`));
+        if (d.genericName) generics.add(`@${d.genericName}`);
       });
-      suggestions = Array.from(ingredients);
+      suggestions = Array.from(generics);
     } else {
       suggestions = inventory.map(d => `${d.name} ${d.dosageForm}`);
     }
@@ -1375,7 +1374,7 @@ export const POS: React.FC<POSProps> = ({
         size: 400,
         cell: (info) => (
           <div
-            className="flex flex-col w-full"
+            className="flex flex-col w-full min-w-0"
           >
             <span className="font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate">
               {info.row.original.name}{" "}
@@ -1387,9 +1386,9 @@ export const POS: React.FC<POSProps> = ({
                 ""
               )}
             </span>
-            <span className="text-xs text-gray-500 whitespace-normal break-words">
+            <span className="text-xs text-gray-500 whitespace-normal break-words" dir="ltr">
               {info.row.original.genericName && info.row.original.genericName.length > 35 
-                ? `${info.row.original.genericName.slice(0, 35)}...`
+                ? `${info.row.original.genericName.slice(0, 35)}…`
                 : info.row.original.genericName}
             </span>
           </div>
@@ -1409,10 +1408,9 @@ export const POS: React.FC<POSProps> = ({
         size: 100,
         cell: (info) => (
           <span
-            className="font-bold text-sm text-gray-700 dark:text-gray-300"
-            dir="ltr"
+            className="font-bold text-sm text-gray-700 dark:text-gray-300 tabular-nums"
           >
-            ${info.getValue().toFixed(2)}
+            <PriceDisplay value={info.getValue()} />
           </span>
         ),
       }),
@@ -1443,7 +1441,7 @@ export const POS: React.FC<POSProps> = ({
           }
 
           return (
-            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
+            <span className="text-sm font-bold text-gray-700 dark:text-gray-300 tabular-nums">
               {displayValue}
             </span>
           );
@@ -1481,7 +1479,7 @@ export const POS: React.FC<POSProps> = ({
                     </div>
                   )}
                   renderSelected={(item) => (
-                    <div className="w-full px-2 py-1 text-sm font-bold text-center truncate text-gray-700 dark:text-gray-300">
+                    <div className="w-full min-w-0 px-2 py-1 text-sm font-bold text-center truncate text-gray-700 dark:text-gray-300">
                       {item === "pack" ? t.pack : t.unit}
                     </div>
                   )}
@@ -1560,7 +1558,7 @@ export const POS: React.FC<POSProps> = ({
                                 "en-US",
                                 { month: "2-digit", year: "2-digit" }
                               )
-                            : "-") + ` � ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
+                            : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                         : <span className="text-red-500">{t.noStock}</span>}
                     </div>
                   );
@@ -1574,7 +1572,7 @@ export const POS: React.FC<POSProps> = ({
                             month: "2-digit",
                             year: "2-digit",
                           })
-                        : "-") + ` � ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
+                        : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
                     </div>
                   );
                 }}
@@ -1599,7 +1597,7 @@ export const POS: React.FC<POSProps> = ({
           <div className="text-center w-full flex justify-center">
             {info.row.original.inCartCount > 0 && (
               <div
-                className={`inline-block bg-${color}-600 text-white text-xs font-bold px-2 py-1 rounded-md`}
+                className={`inline-block bg-${color}-600 text-white text-xs font-bold px-2 py-1 rounded-md tabular-nums`}
               >
                 {info.row.original.inCartCount}
               </div>
@@ -2121,7 +2119,7 @@ export const POS: React.FC<POSProps> = ({
               </span>
               <span className="font-medium text-sm">{t.viewCart}</span>
             </div>
-            <span className="font-bold text-base">${cartTotal.toFixed(2)}</span>
+            <span className="font-bold text-base tabular-nums"><PriceDisplay value={cartTotal} /></span>
           </button>
         </div>
 
@@ -2280,29 +2278,34 @@ export const POS: React.FC<POSProps> = ({
           <div className="px-3 py-2 border-t border-gray-200 dark:border-gray-800 space-y-2 shrink-0">
             {/* Summary Row - Horizontal Layout like Purchases */}
             <div className="flex items-center justify-between gap-2">
-              {/* Subtotal */}
+              {/* Subtotal - Only show if different from total (i.e. if there's a discount or fee) */
+              grossSubtotal !== cartTotal && (
               <div className="flex items-center gap-2 ps-3">
                 <span className="text-[10px] text-gray-500 font-medium uppercase">{t.subtotal}:</span>
-                <span className="font-medium text-sm text-gray-700 dark:text-gray-300">${grossSubtotal.toFixed(2)}</span>
+                <span className="font-medium text-sm text-gray-700 dark:text-gray-300 tabular-nums"><PriceDisplay value={grossSubtotal} /></span>
               </div>
+              )}
 
               {/* Discount */}
+              {/* Discount - Only show if > 0 */}
+              {orderDiscountPercent > 0 && (
               <div className="flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3">
                 <span className="text-[10px] text-gray-500 font-medium uppercase">{t.orderDiscount}:</span>
                 
                 {/* Order Discount % */}
                 <div className="flex items-center gap-1">
-                  <span className="font-medium text-sm text-gray-700 dark:text-gray-300">
-                    {orderDiscountPercent > 0 ? orderDiscountPercent.toFixed(1) : 0}%
+                  <span className="font-medium text-sm text-gray-700 dark:text-gray-300 tabular-nums">
+                    {orderDiscountPercent.toFixed(1)}%
                   </span>
                 </div>
               </div>
+              )}
 
               {/* Total */}
               <div className="flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3">
                 <span className="text-xs text-gray-500 font-bold uppercase whitespace-nowrap">{t.total}:</span>
-                <span className={`text-2xl font-black text-${color}-600 dark:text-${color}-400 h-8 flex items-center`}>
-                  ${cartTotal.toFixed(2)}
+                <span className={`text-2xl font-black text-${color}-600 dark:text-${color}-400 h-8 flex items-center tabular-nums`}>
+                  <PriceDisplay value={cartTotal} />
                 </span>
               </div>
             </div>
@@ -2326,7 +2329,7 @@ export const POS: React.FC<POSProps> = ({
               
                {/* Standard Mode - Shrinks to 0 width when checkout or delivery active */}
                <div 
-                 className={`flex gap-2 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                 className={`flex gap-2 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
                    (isCheckoutMode || isDeliveryMode) ? 'w-0 opacity-0 overflow-hidden' : 'w-full opacity-100'
                  }`}
                >
@@ -2361,7 +2364,7 @@ export const POS: React.FC<POSProps> = ({
 
                {/* Checkout Mode - Expands from 0 to full width */}
                <div 
-                  className={`flex gap-2 items-stretch transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                  className={`flex gap-2 items-stretch transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
                      isCheckoutMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
                   }`}
                >
@@ -2370,9 +2373,10 @@ export const POS: React.FC<POSProps> = ({
                    <input
                      ref={(el) => { if (el && isCheckoutMode) setTimeout(() => el.focus(), 50); }}
                      type="number"
+                     inputMode="decimal"
                      value={amountPaid}
                      onChange={(e) => setAmountPaid(e.target.value)}
-                     placeholder={cartTotal.toFixed(2)}
+                     placeholder={cartTotal.toString()}
                      className="flex-1 min-w-0 bg-transparent border-none focus:outline-none focus:ring-0 font-bold text-base text-gray-900 dark:text-white p-0 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                      onKeyDown={(e) => {
                        if (e.key === 'Enter') {
@@ -2400,7 +2404,7 @@ export const POS: React.FC<POSProps> = ({
                        ? `text-${color}-600 dark:text-${color}-400`
                        : 'text-gray-400'
                    }`}>
-                     ${Math.max(0, (parseFloat(amountPaid) || 0) - cartTotal).toFixed(2)}
+                     <PriceDisplay value={Math.max(0, (parseFloat(amountPaid) || 0) - cartTotal)} />
                    </span>
                  </div>
 
@@ -2430,7 +2434,7 @@ export const POS: React.FC<POSProps> = ({
 
                {/* Delivery Driver Mode - Expands from 0 to full width */}
                <div 
-                  className={`flex gap-2 items-stretch transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                  className={`flex gap-2 items-stretch transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
                      isDeliveryMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
                   }`}
                >
@@ -2526,8 +2530,8 @@ export const POS: React.FC<POSProps> = ({
                   <label className="text-[10px] font-bold text-gray-400 uppercase">
                     {t.modal?.price || "Price"}
                   </label>
-                  <p className="text-xl font-bold text-gray-700 dark:text-gray-300">
-                    ${viewingDrug.price.toFixed(2)}
+                  <p className="text-xl font-bold text-gray-700 dark:text-gray-300 tabular-nums">
+                    <PriceDisplay value={viewingDrug.price} />
                   </p>
                 </div>
               </div>
@@ -2574,7 +2578,7 @@ export const POS: React.FC<POSProps> = ({
             <div className="p-4 bg-gray-50 dark:bg-gray-950/50 border-t border-gray-100 dark:border-gray-800">
               <button
                 onClick={() => setViewingDrug(null)}
-                className={`w-full py-3 rounded-xl font-bold text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all`}
+                className={`w-full py-3 rounded-xl font-bold text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-colors`}
               >
                 {t.close}
               </button>

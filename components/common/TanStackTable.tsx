@@ -29,7 +29,6 @@ import {
   SortingState,
   FilterFn,
   VisibilityState,
-  ColumnSizingState,
   RowData
 } from '@tanstack/react-table';
 
@@ -49,16 +48,41 @@ import { useLongPress } from '../../hooks/useLongPress';
 import { AlignButton, getHeaderJustifyClass, getTextAlignClass } from './TableAlignment';
 import { useSettings } from '../../context/SettingsContext';
 import { TRANSLATIONS } from '../../i18n/translations';
+import { formatCurrencyParts } from "../../utils/currency";
+
+export const PriceDisplay: React.FC<{ value: number; size?: 'sm' | 'base' | 'lg' | 'xl' | '2xl' }> = ({ value, size = 'base' }) => {
+    const { amount, symbol } = formatCurrencyParts(value);
+    
+    // Scale symbol based on text size approximately
+    const symbolClass = 
+       size === 'sm' ? "text-[0.75em]" :
+       size === 'base' ? "text-[0.75em]" :
+       size === 'lg' ? "text-[0.75em]" :
+       size === 'xl' ? "text-[0.6em]" : // Smaller relative scale for larger text
+       "text-[0.5em]";
+
+    return (
+        <span className="tabular-nums">
+            {amount} <span className={`${symbolClass} text-gray-400 font-normal`}>{symbol}</span>
+        </span>
+    );
+};
+
+import { createSearchRegex } from '../../utils/searchUtils';
 
 // Define a fuzzy filter function
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   const itemValue = row.getValue(columnId);
   if (itemValue == null) return false;
   
-  const itemString = String(itemValue).toLowerCase();
-  const searchString = String(value).toLowerCase();
+  const itemString = String(itemValue).toLowerCase(); 
+  // Should we remove toLowerCase() if regex is case insensitive? 
+  // createSearchRegex returns 'i' flag, so yes, regex handles case.
+  // BUT the anchored match '^' in createSearchRegex relies on the input.
+  // createSearchRegex takes 'term'.
   
-  return itemString.includes(searchString);
+  const regex = createSearchRegex(String(value));
+  return regex.test(String(itemValue));
 };
 
 const EMPTY_ALIGNMENT = {};
