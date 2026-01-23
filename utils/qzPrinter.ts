@@ -46,7 +46,7 @@ import { storage } from './storage';
 import { StorageKeys } from '../config/storageKeys';
 
 const DEFAULT_SETTINGS: PrinterSettings = {
-  enabled: true,         // Enable by default - will fallback to browser if QZ not available
+  enabled: false,        // Disable by default - avoid errors if not installed
   labelPrinter: null,
   receiptPrinter: null,
   silentMode: 'fallback' // Try silent first, fallback to browser if fails

@@ -81,10 +81,12 @@ export const usePrinter = (): UsePrinterResult => {
     };
   }, []);
   
-  // Auto-connect if enabled
+  // Auto-connect if enabled, disconnect if disabled
   useEffect(() => {
     if (settings.enabled) {
       handleConnect();
+    } else {
+      handleDisconnect();
     }
   }, [settings.enabled]);
   
