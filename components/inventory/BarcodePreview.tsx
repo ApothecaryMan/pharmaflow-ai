@@ -21,6 +21,10 @@ interface BarcodePreviewProps {
     onDragStart: (e: React.MouseEvent | React.TouchEvent, id: string) => void;
     printOffsetX?: number;
     printOffsetY?: number;
+    // Guidelines
+    showVCenterGuide?: boolean;
+    showHCenterGuide?: boolean;
+    alignmentGuides?: { x?: number; y?: number }[];
 }
 
 export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
@@ -38,7 +42,10 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
     onSelect,
     onDragStart,
     printOffsetX = 0,
-    printOffsetY = 0
+    printOffsetY = 0,
+    showVCenterGuide = false,
+    showHCenterGuide = false,
+    alignmentGuides = []
 }) => {
     
     // Generate the HTML for the iframe (THE TRUTH)
@@ -82,6 +89,11 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
                     width: ${dims.w}mm;
                     height: ${pageHeight}mm;
                     position: relative;
+                    padding-left: ${printOffsetX > 0 ? `${printOffsetX}mm` : 0};
+                    padding-right: ${printOffsetX < 0 ? `${Math.abs(printOffsetX)}mm` : 0};
+                    padding-top: ${printOffsetY > 0 ? `${printOffsetY}mm` : 0};
+                    padding-bottom: ${printOffsetY < 0 ? `${Math.abs(printOffsetY)}mm` : 0};
+                    box-sizing: border-box;
                 }
             </style>
             </head><body>
@@ -100,8 +112,8 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
         const hitboxY = el.y + yOffset + (el.hitboxOffsetY || 0);
         
         // Default sizes based on element type (if not calibrated)
-        const defaultWidth = (el.type === 'image' || el.type === 'qrcode') ? (el.width || 10) : (el.type === 'barcode' ? 30 : 10);
-        const defaultHeight = (el.type === 'image' || el.type === 'qrcode') ? (el.height || 10) : (el.type === 'barcode' ? 8 : 4);
+        const defaultWidth = (el.type === 'image' || el.type === 'qrcode' || el.type === 'barcode') ? (el.width || (el.type === 'barcode' ? 30 : 10)) : 10;
+        const defaultHeight = (el.type === 'image' || el.type === 'qrcode' || el.type === 'barcode') ? (el.height || (el.type === 'barcode' ? 8 : 4)) : 4;
         
         // Base style - simple clickable area
         const style: React.CSSProperties = {
@@ -168,6 +180,31 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
                     lineHeight: 0,
                 }}
             >
+                {/* Center Guidelines */}
+                {showVCenterGuide && (
+                    <div className="absolute top-0 bottom-0 border-l border-blue-500/50 border-dashed z-[20]" 
+                         style={{ left: `${dims.w / 2}mm`, height: `${showPairedPreview ? dims.h * 2 : dims.h}mm` }} 
+                    />
+                )}
+                {showHCenterGuide && (
+                    <div className="absolute left-0 right-0 border-t border-blue-500/50 border-dashed z-[20]" 
+                         style={{ top: `${dims.h / 2}mm`, width: `${dims.w}mm` }} 
+                    />
+                )}
+
+                {/* Element-to-Element Guides */}
+                {alignmentGuides.map((guide, idx) => (
+                    guide.x !== undefined ? (
+                        <div key={`v-${idx}`} className="absolute top-0 bottom-0 border-l border-emerald-500/40 border-dashed z-[20]" 
+                             style={{ left: `${guide.x}mm`, height: `${showPairedPreview ? dims.h * 2 : dims.h}mm` }} 
+                        />
+                    ) : guide.y !== undefined ? (
+                        <div key={`h-${idx}`} className="absolute left-0 right-0 border-t border-emerald-500/40 border-dashed z-[20]" 
+                             style={{ top: `${guide.y}mm`, width: `${dims.w}mm` }} 
+                        />
+                    ) : null
+                ))}
+
                 {[0, ...(showPairedPreview ? [1] : [])].map(offsetIndex => (
                      elements.filter(el => el.isVisible).map(el => renderPhantomElement(el, offsetIndex))
                 ))}

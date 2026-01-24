@@ -12,6 +12,7 @@ import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 
 import { LabelElement, LabelDesign, SavedTemplate } from './studio/types';
+import { getDisplayName } from '../../utils/drugDisplayName';
 
 export type { LabelElement, LabelDesign, SavedTemplate };
 
@@ -131,7 +132,7 @@ export const getLabelElementContent = (
     switch (el.field as string) {
         case 'store': return receiptSettings.storeName;
         case 'hotline': return receiptSettings.hotline || '19099';
-        case 'name': return drug.name;
+        case 'name': return getDisplayName(drug);
         case 'price': return `${Number(drug.price).toFixed(2)} ${currency === 'L.E' ? 'L.E' : '$'}`;
         case 'barcode': return barcodeSource === 'internal' 
             ? (drug.internalCode || drug.id) 
@@ -382,12 +383,12 @@ export const generateLabelHTML = (
 export const DEFAULT_LABEL_DESIGN: LabelDesign = {
     selectedPreset: '38x12',
     elements: [
-        { id: 'store', type: 'text', label: 'Store Name', x: 19, y: 0.7, fontSize: 4, align: 'center', isVisible: true, field: 'store' },
-        { id: 'name', type: 'text', label: 'Drug Name', x: 19, y: 1.8, fontSize: 7, fontWeight: 'bold', align: 'center', isVisible: true, field: 'name' },
-        { id: 'barcode', type: 'barcode', label: 'Barcode', x: 19, y: 5.5, fontSize: 24, align: 'center', isVisible: true, width: 36, barcodeFormat: 'code128' },
+        { id: 'store', type: 'text', label: 'Store Name', x: 19, y: 0.7, fontSize: 4, align: 'center', isVisible: true, field: 'store', hitboxOffsetX: 0.0, hitboxOffsetY: -1.0, hitboxWidth: 10, hitboxHeight: 2 },
+        { id: 'name', type: 'text', label: 'Drug Name', x: 19, y: 1.8, fontSize: 7, fontWeight: 'bold', align: 'center', isVisible: true, field: 'name', hitboxOffsetX: 0.0, hitboxOffsetY: -0.9, hitboxWidth: 14, hitboxHeight: 2 },
+        { id: 'barcode', type: 'barcode', label: 'Barcode', x: 19, y: 5.5, fontSize: 24, align: 'center', isVisible: true, width: 36, barcodeFormat: 'code128', hitboxOffsetX: -1.1, hitboxOffsetY: -0.1, hitboxWidth: 34, hitboxHeight: 3 },
         { id: 'barcodeNumber', type: 'text', label: 'Barcode Number', x: 19, y: 8.5, fontSize: 4, align: 'center', isVisible: false, field: 'barcode' },
-        { id: 'price', type: 'text', label: 'Price', x: 1.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'left', isVisible: true, field: 'price' },
-        { id: 'expiry', type: 'text', label: 'Expiry', x: 36.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'right', isVisible: true, field: 'expiryDate' },
+        { id: 'price', type: 'text', label: 'Price', x: 1.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'left', isVisible: true, field: 'price', hitboxOffsetX: 0.1, hitboxOffsetY: -1.3, hitboxWidth: 8, hitboxHeight: 2 },
+        { id: 'expiry', type: 'text', label: 'Expiry', x: 36.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'right', isVisible: true, field: 'expiryDate', hitboxOffsetX: 0.2, hitboxOffsetY: -1.3, hitboxWidth: 7, hitboxHeight: 2 },
         { id: 'hotline', type: 'text', label: 'Hotline', x: 19, y: 11, fontSize: 4, align: 'center', isVisible: false, field: 'hotline' }
     ]
 };
@@ -426,6 +427,14 @@ export const printLabels = async (items: PrintLabelItem[], options: PrintOptions
     if (validItems.length === 0) {
         console.warn('No valid items to print');
         return;
+    }
+
+    // 1. Ensure fonts are fully loaded in the main window context before starting.
+    // This warms the cache and reduces the chance of missing barcode fonts in the print window.
+    try {
+        await document.fonts.ready;
+    } catch (fontErr) {
+        console.warn('Font loading check failed, proceeding anyway:', fontErr);
     }
 
     // Check if QZ Tray silent printing should be attempted
@@ -555,29 +564,39 @@ export const printLabels = async (items: PrintLabelItem[], options: PrintOptions
                     console.log('Labels printed silently via QZ Tray');
                     return; // Success - no need for browser popup
                 }
-                // If silentPrinted is false, fallback mode is active - continue to browser print
-            } catch (silentErr) {
-                console.warn('QZ Tray silent print failed, falling back to browser print:', silentErr);
-                // Only throw if not in fallback mode
-                if (printerSettings.silentMode !== 'fallback') {
-                    throw silentErr;
+            } catch (silentErr: any) {
+                console.warn('QZ Tray silent print failed:', silentErr);
+                
+                // If the user explicitly requested silent printing (no fallback), we must inform them of the failure.
+                if (printerSettings.silentMode === 'on') {
+                    alert(`Silent printing failed: ${silentErr?.message || 'Check QZ Tray connection'}.`);
+                    return;
                 }
+                // Otherwise (fallback mode), we proceed to browser print below.
             }
         }
 
         // Browser print fallback
         printWindow = window.open('', '', PRINT_WINDOW_CONFIG.features);
+        
         if (!printWindow) {
-            throw new Error('Popup blocked');
+            alert('Popup blocked! Please allow popups for this site to enable manual printing.');
+            return;
         }
 
         // Add the print script for browser print
         const browserHtmlContent = htmlContent.replace('</body></html>', `
             <script>
-                document.fonts.ready.then(() => {
+                // Double-confirmation for font readiness in the new window context
+                Promise.all([
+                    document.fonts.ready,
+                    new Promise(resolve => setTimeout(resolve, 100)) // Safety delay for slow rendering engines
+                ]).then(() => {
                     window.print();
+                    // Close the window after printing starts (some browsers might need this)
+                    // window.close(); 
                 }).catch(e => {
-                    console.error('Font loading failed', e);
+                    console.error('Font loading failed in print window', e);
                     window.print();
                 });
             </script>
@@ -585,10 +604,10 @@ export const printLabels = async (items: PrintLabelItem[], options: PrintOptions
 
         printWindow.document.write(browserHtmlContent);
         printWindow.document.close();
-    } catch (e) {
-        console.error('Print failed', e);
+    } catch (e: any) {
+        console.error('Print process failed:', e);
         if (printWindow) printWindow.close();
-        alert('Failed to initialize print window. Please allow popups.');
+        alert(`An unexpected error occurred during printing: ${e?.message || 'Unknown error'}`);
     }
 };
 

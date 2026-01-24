@@ -402,6 +402,16 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
 
   const addElement = (type: 'text' | 'image' | 'qrcode') => {
+      // Toggle logic: If a custom/temporary element of this type already exists, remove it
+      const existingCustom = elements.find(el => el.type === type && el.id.startsWith('custom-'));
+      
+      if (existingCustom) {
+          saveToHistory();
+          setElements(prev => prev.filter(el => el.id !== existingCustom.id));
+          if (selectedElementId === existingCustom.id) setSelectedElementId(null);
+          return;
+      }
+
       const id = `custom-${getVerifiedDate().getTime()}`;
       const newEl: LabelElement = {
           id,
@@ -711,189 +721,177 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
     <div className="h-full flex flex-col space-y-4 animate-fade-in pb-10" 
          onMouseMove={handleMouseMove} onMouseUp={handleEnd} onTouchMove={handleTouchMove} onTouchEnd={handleEnd}>
         
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-                <h2 className="text-2xl font-bold tracking-tight type-expressive">{t.title}</h2>
-                <div className="flex items-center gap-2">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{t.subtitle}</p>
-                    <div className="flex items-center gap-1">
-                        {activeTemplateId && (
-                            editingTemplateName ? (
-                                <input
-                                    type="text"
-                                    value={tempTemplateName}
-                                    onChange={e => setTempTemplateName(e.target.value)}
-                                    onBlur={() => {
-                                        if (tempTemplateName.trim()) {
-                                            setTemplates(prev => prev.map(t => 
-                                                t.id === activeTemplateId ? { ...t, name: tempTemplateName.trim() } : t
-                                            ));
-                                        }
-                                        setEditingTemplateName(false);
-                                    }}
-                                    onKeyDown={e => {
-                                        if (e.key === 'Enter') {
-                                            if (tempTemplateName.trim()) {
-                                                setTemplates(prev => prev.map(t => 
-                                                    t.id === activeTemplateId ? { ...t, name: tempTemplateName.trim() } : t
-                                                ));
-                                            }
-                                            setEditingTemplateName(false);
-                                        }
-                                        if (e.key === 'Escape') setEditingTemplateName(false);
-                                    }}
-                                    autoFocus
-                                    className={`px-2 py-0.5 rounded-full text-[10px] bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 font-bold uppercase border-2 border-${color}-400 outline-none w-20`}
-                                />
-                            ) : (
-                                <span 
-                                    onDoubleClick={() => {
-                                        const currentName = templates.find(t => t.id === activeTemplateId)?.name || '';
-                                        setTempTemplateName(currentName);
-                                        setEditingTemplateName(true);
-                                    }}
-                                    className={`px-2 py-0.5 rounded-full text-[10px] bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 font-bold uppercase cursor-pointer hover:bg-${color}-200 dark:hover:bg-${color}-800/40 transition-colors`}
-                                    title={t.tooltips.doubleClickRename}
-                                >
-                                    {templates.find(t => t.id === activeTemplateId)?.name}
-                                </span>
-                            )
-                        )}
-                        {/* Compact Action Badges */}
-                        <button onClick={handleUndo} disabled={history.length === 0} className={`w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors`} title={t.undo}>
-                            <span className="material-symbols-rounded text-[12px]">undo</span>
+        {/* Unified Control Bar */}
+        <div className={`${CARD_BASE} p-2 px-4 rounded-2xl flex flex-wrap lg:flex-nowrap items-center justify-between gap-4 sticky top-0 z-[30] backdrop-blur-md bg-white/90 dark:bg-gray-900/90 border border-gray-100 dark:border-gray-800/50 shadow-lg shadow-gray-200/20 dark:shadow-black/20`}>
+            {/* Left Side: Branding & Templates */}
+            <div className="flex items-center gap-3">
+                <div className="hidden xl:flex flex-col border-e border-gray-200 dark:border-gray-800 pe-4 leading-tight">
+                    <h2 className="text-[14px] font-black text-gray-800 dark:text-gray-100 tracking-tight">{t.title}</h2>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                    {/* Compact Template Selector */}
+                    <div className="relative w-36 h-8">
+                        <FilterDropdown
+                            items={[{ id: '', name: t.createNew, design: null } as any, ...templates]}
+                            selectedItem={activeTemplateId ? templates.find(tmp => tmp.id === activeTemplateId) : { id: '', name: t.createNew, design: null } as any}
+                            isOpen={isTemplateDropdownOpen}
+                            onToggle={() => setIsTemplateDropdownOpen(!isTemplateDropdownOpen)}
+                            onSelect={(item) => {
+                                setIsTemplateDropdownOpen(false);
+                                loadTemplate(item.id);
+                            }}
+                            keyExtractor={(item) => item.id}
+                            renderSelected={(item) => (
+                                <div className="flex items-center gap-1 px-1">
+                                    <span className={`material-symbols-rounded text-sm ${!item?.id ? 'text-blue-500' : (item.id === defaultTemplateId ? 'text-green-500' : 'text-gray-400')}`}>
+                                        {!item?.id ? 'add_circle' : (item.id === defaultTemplateId ? 'check_circle' : 'article')}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-gray-700 dark:text-gray-200 truncate">
+                                        {item?.name || t.createNew}
+                                    </span>
+                                </div>
+                            )}
+                            renderItem={(item, isSelected) => (
+                                <div className="flex items-center gap-2">
+                                    <span className={`material-symbols-rounded text-lg ${!item.id ? 'text-blue-500' : (item.id === defaultTemplateId ? 'text-green-500' : 'text-gray-400')}`}>
+                                        {!item.id ? 'add_circle' : (item.id === defaultTemplateId ? 'check_circle' : 'article')}
+                                    </span>
+                                    <span className={`text-xs ${!item.id ? 'text-blue-600 font-bold' : 'text-gray-700 dark:text-gray-300'}`}>
+                                        {item.name}
+                                    </span>
+                                </div>
+                            )}
+                            variant="input"
+                            className="absolute top-0 left-0 w-full"
+                            color={color}
+                            rounded="xl"
+                            minHeight={32}
+                        />
+                    </div>
+
+                    {/* Ultra-Compact Quick Tools */}
+                    <div className="flex items-center bg-gray-50/50 dark:bg-gray-800/30 p-0.5 rounded-lg border border-gray-100 dark:border-gray-800/50">
+                        <button 
+                            onClick={handleUndo} 
+                            disabled={history.length === 0} 
+                            className={`w-6 h-6 flex items-center justify-center rounded-md text-gray-400 transition-all ${history.length !== 0 ? 'hover:bg-white dark:hover:bg-gray-800 hover:text-blue-500' : 'opacity-20 cursor-default'}`} 
+                            title={t.undo}
+                        >
+                            <span className="material-symbols-rounded text-sm">undo</span>
                         </button>
-                        <button onClick={handleRedo} disabled={redoStack.length === 0} className={`w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors`} title={t.redo}>
-                            <span className="material-symbols-rounded text-[12px]">redo</span>
+                        <button 
+                            onClick={handleRedo} 
+                            disabled={redoStack.length === 0} 
+                            className={`w-6 h-6 flex items-center justify-center rounded-md text-gray-400 transition-all ${redoStack.length !== 0 ? 'hover:bg-white dark:hover:bg-gray-800 hover:text-blue-500' : 'opacity-20 cursor-default'}`} 
+                            title={t.redo}
+                        >
+                            <span className="material-symbols-rounded text-sm">redo</span>
                         </button>
                         <button 
                             onClick={handleSaveClick} 
                             disabled={!hasUnsavedChanges}
-                            className={`w-5 h-5 flex items-center justify-center rounded-full bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 hover:bg-${color}-200 dark:hover:bg-${color}-800/40 transition-colors ${!hasUnsavedChanges ? 'opacity-50 cursor-not-allowed grayscale' : ''}`} 
+                            className={`w-6 h-6 flex items-center justify-center rounded-md text-gray-400 transition-all ${hasUnsavedChanges ? 'hover:bg-white dark:hover:bg-gray-800 hover:text-green-500' : 'opacity-20 cursor-default'}`} 
                             title={t.saveTemplate}
                         >
-                            <span className="material-symbols-rounded text-[12px]">save</span>
+                            <span className="material-symbols-rounded text-sm">{hasUnsavedChanges ? 'save' : 'check'}</span>
                         </button>
-                        <button onClick={() => initializeLayout(selectedPreset)} className={`w-5 h-5 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 hover:bg-red-200 dark:hover:bg-red-800/40 transition-colors`} title={t.toolbar.resetLayout}>
-                            <span className="material-symbols-rounded text-[12px]">restart_alt</span>
+                        <button onClick={() => initializeLayout(selectedPreset)} className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-all" title={t.toolbar.resetLayout}>
+                            <span className="material-symbols-rounded text-sm">restart_alt</span>
                         </button>
-                        {/* Separator */}
-                        <div className="w-px h-5 bg-gray-300 dark:bg-gray-700"></div>
-                        {/* Template Controls */}
-                        {/* Template Controls */}
-                        <div className="relative w-48 h-8 z-[20]">
-                            <FilterDropdown
-                                items={[{ id: '', name: t.createNew, design: null } as any, ...templates]}
-                                selectedItem={activeTemplateId ? templates.find(tmp => tmp.id === activeTemplateId) : { id: '', name: t.createNew, design: null } as any}
-                                isOpen={isTemplateDropdownOpen}
-                                onToggle={() => setIsTemplateDropdownOpen(!isTemplateDropdownOpen)}
-                                onSelect={(item) => {
-                                    setIsTemplateDropdownOpen(false);
-                                    loadTemplate(item.id);
-                                }}
-                                keyExtractor={(item) => item.id}
-                                renderSelected={(item) => (
-                                    <div className="flex items-center gap-2 px-1">
-                                        <span className={`material-symbols-rounded text-lg ${!item?.id ? 'text-blue-500' : (item.id === defaultTemplateId ? 'text-green-500' : 'text-gray-400')}`}>
-                                            {!item?.id ? 'add_circle' : (item.id === defaultTemplateId ? 'check_circle' : 'article')}
-                                        </span>
-                                        <span className="text-xs font-bold text-gray-700 dark:text-gray-200 truncate">
-                                            {item?.name || t.createNew}
-                                        </span>
-                                    </div>
-                                )}
-                                renderItem={(item, isSelected) => (
-                                    <div className="flex items-center gap-2">
-                                        <span className={`material-symbols-rounded text-lg ${!item.id ? 'text-blue-500' : (item.id === defaultTemplateId ? 'text-green-500' : 'text-gray-400')}`}>
-                                            {!item.id ? 'add_circle' : (item.id === defaultTemplateId ? 'check_circle' : 'article')}
-                                        </span>
-                                        <span className={`text-xs ${!item.id ? 'text-blue-600 font-bold' : 'text-gray-700 dark:text-gray-300'}`}>
-                                            {item.name}
-                                        </span>
-                                    </div>
-                                )}
-                                variant="input"
-                                className="absolute top-0 left-0 w-full"
-                                color={color}
-                                rounded="full"
-                                minHeight={32}
-                            />
-                        </div>
-                        {activeTemplateId && (
-                            <>
-                                <button 
-                                    onClick={() => {
-                                        setDefaultTemplateId(activeTemplateId);
-                                        localStorage.setItem('pharma_label_default_template', activeTemplateId);
-                                        setSaveStatus(t.inspector.defaultSet);
-                                        setTimeout(() => setSaveStatus(''), 2000);
-                                    }} 
-                                    className={`w-5 h-5 flex items-center justify-center rounded-full transition-colors ${defaultTemplateId === activeTemplateId ? 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-                                    title={defaultTemplateId === activeTemplateId ? t.inspector.defaultSet : 'Set as Default'}
-                                >
-                                    <span className={`material-symbols-rounded text-[16px] ${defaultTemplateId === activeTemplateId ? 'filled' : ''}`}>{defaultTemplateId === activeTemplateId ? 'check_circle' : 'radio_button_unchecked'}</span>
-                                </button>
-                                <button 
-                                    onClick={() => deleteTemplate(activeTemplateId)} 
-                                    className="w-5 h-5 flex items-center justify-center rounded-full text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                    title={t.deleteTemplate}
-                                >
-                                    <span className="material-symbols-rounded text-[14px]">delete</span>
-                                </button>
-                            </>
-                        )}
                     </div>
                 </div>
             </div>
-             <div className="flex items-center gap-2">
-                     <button onClick={handlePrint} disabled={!selectedDrug} className={`px-4 py-2 rounded-full bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 text-white font-bold text-sm shadow-sm transition-all flex items-center gap-2`}>
-                         <span className="material-symbols-rounded text-[18px]">print</span>
-                         <span>{t.print}</span>
+
+            {/* Center: Element Toggles (Compacted) */}
+            <div className="flex-1 flex justify-center min-w-0">
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-100/50 dark:bg-gray-950/30 rounded-2xl border border-gray-200/50 dark:border-gray-800/50 overflow-x-auto scrollbar-hide">
+                    {elements.map(el => (
+                        <button 
+                            key={el.id} 
+                            onClick={() => toggleVisibility(el.id)} 
+                            className={`whitespace-nowrap px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border ${
+                                el.isVisible 
+                                    ? `bg-${color}-500/10 text-${color}-600 dark:text-${color}-400 border-${color}-200/50 dark:border-${color}-800/50` 
+                                    : 'bg-transparent text-gray-400 border-transparent opacity-60'
+                            }`}
+                        >
+                            {el.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Right Side: Actions (Add, Zoom, Print) */}
+            <div className="flex items-center gap-2">
+                {/* Ultra-Compact Element Inserts */}
+                <div className="flex items-center bg-gray-50/50 dark:bg-gray-800/30 p-0.5 rounded-lg border border-gray-100 dark:border-gray-800/50">
+                    <button 
+                        onClick={() => addElement('text')} 
+                        className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
+                            elements.some(el => el.type === 'text' && el.id.startsWith('custom-'))
+                                ? `bg-${color}-500 text-white shadow-sm`
+                                : 'hover:bg-white dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500'
+                        }`} 
+                        title={t.toolbar.addText}
+                    >
+                        <span className="material-symbols-rounded text-[18px] leading-none">title</span>
                     </button>
-             </div>
+                    <button 
+                        onClick={() => {
+                            const existingImg = elements.find(el => el.type === 'image' && el.id.startsWith('img-'));
+                            if (existingImg) {
+                                saveToHistory();
+                                setElements(prev => prev.filter(el => el.id !== existingImg.id));
+                                if (selectedElementId === existingImg.id) setSelectedElementId(null);
+                            } else {
+                                document.getElementById('img-upload-hidden')?.click();
+                            }
+                        }} 
+                        className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
+                            elements.some(el => el.type === 'image' && el.id.startsWith('img-'))
+                                ? `bg-${color}-500 text-white shadow-sm`
+                                : 'hover:bg-white dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500'
+                        }`} 
+                        title={t.toolbar.addImage}
+                    >
+                        <span className="material-symbols-rounded text-[18px] leading-none">image</span>
+                    </button>
+                    <input type="file" id="img-upload-hidden" className="hidden" accept="image/*" onChange={handleAddImageElement} />
+                    <button onClick={() => setShowCalibrationModal(true)} className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-all" title="Calibrate Orientation">
+                        <span className="material-symbols-rounded text-[18px] leading-none">aspect_ratio</span>
+                    </button>
+                </div>
+
+                {/* Ultra-Compact Zoom Controls */}
+                <div className="flex items-center bg-gray-50/50 dark:bg-gray-800/30 p-0.5 rounded-lg border border-gray-100 dark:border-gray-800/50">
+                    <button onClick={() => setZoom(Math.max(1, zoom - 0.5))} className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-all">
+                        <span className="material-symbols-rounded text-sm">remove</span>
+                    </button>
+                    <div className="w-5 h-6 flex items-center justify-center text-gray-300 dark:text-gray-600">
+                        <span className="material-symbols-rounded text-[14px]">zoom_in</span>
+                    </div>
+                    <button onClick={() => setZoom(Math.min(8, zoom + 0.5))} className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-all">
+                        <span className="material-symbols-rounded text-sm">add</span>
+                    </button>
+                </div>
+
+                {/* Print Action */}
+                <button 
+                    onClick={handlePrint} 
+                    disabled={!selectedDrug} 
+                    className={`h-9 w-9 flex items-center justify-center rounded-xl bg-${color}-600 text-white font-black hover:opacity-90 shadow-lg shadow-${color}-600/20 disabled:grayscale disabled:opacity-50 transition-all ml-1`}
+                    title={t.print}
+                >
+                    <span className="material-symbols-rounded text-lg">print</span>
+                </button>
+            </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6 h-full overflow-hidden">
             {/* LEFT: Canvas */}
             <div className="flex-1 flex flex-col gap-4">
-                 {/* Top Toolbar */}
-                 <div className={`${CARD_BASE} p-3 rounded-2xl flex items-center gap-3`}>
-                    <div className="flex items-center gap-2 px-2 border-e border-gray-200 dark:border-gray-800">
-                        <button onClick={() => setZoom(Math.max(1, zoom - 0.5))} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors"><span className="material-symbols-rounded text-[18px]">remove</span></button>
-                        <span className="text-xs font-bold w-10 text-center text-gray-700 dark:text-gray-300">{Math.round(zoom * 100)}%</span>
-                        <button onClick={() => setZoom(Math.min(8, zoom + 0.5))} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors"><span className="material-symbols-rounded text-[18px]">add</span></button>
-                    </div>
-                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700"></div>
-                    <button 
-                         onClick={() => setShowCalibrationModal(true)} 
-                         className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors" 
-                         title={t.calibration?.title || "Calibrate Screen"}
-                    >
-                        <span className="material-symbols-rounded text-[18px]">aspect_ratio</span>
-                    </button>
-
-
-                    
-                    <div className="flex items-center gap-1 px-2 border-e border-gray-200 dark:border-gray-800">
-                        <button onClick={() => addElement('text')} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors" title={t.toolbar.addText}>
-                            <span className="material-symbols-rounded text-[18px]">title</span>
-                        </button>
-                        <button onClick={() => document.getElementById('img-upload-hidden')?.click()} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors" title={t.toolbar.addImage}>
-
-                            <span className="material-symbols-rounded text-[18px]">image</span>
-                        </button>
-                        <input type="file" id="img-upload-hidden" className="hidden" accept="image/*" onChange={handleAddImageElement} />
-                    </div>
-
-                    <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-                        {elements.map(el => (
-                            <button key={el.id} onClick={() => toggleVisibility(el.id)} className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors ${el.isVisible ? `bg-${color}-50 dark:bg-${color}-900/20 text-${color}-700 dark:text-${color}-300` : 'bg-gray-50 dark:bg-gray-800 text-gray-400'}`}>
-                                {el.label}
-                            </button>
-                        ))}
-                    </div>
-                 </div>
+                 {/* Canvas Toolbar Removed (Moved to Unified Bar) */}
 
                  {/* Canvas */}
                  <div 
@@ -918,6 +916,9 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                             qrCodeDataUrl={qrCodeDataUrl}
                             printOffsetX={printOffsetX}
                             printOffsetY={printOffsetY}
+                            showVCenterGuide={showVGuide}
+                            showHCenterGuide={showHGuide}
+                            alignmentGuides={alignmentGuides}
                             onSelect={setSelectedElementId}
                             onDragStart={(e, id) => {
                                 handleMouseDown(e as React.MouseEvent, id);

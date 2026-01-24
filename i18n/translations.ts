@@ -987,7 +987,6 @@ export const TRANSLATIONS = {
     },
     barcodeStudio: {
       title: 'Barcode Studio',
-      subtitle: 'Design and print professional product labels',
       selectProduct: 'Select Product',
       settings: 'Label Settings',
       preview: 'Live Preview',
@@ -2916,7 +2915,6 @@ export const TRANSLATIONS = {
     },
     barcodeStudio: {
       title: 'ستوديو الباركود',
-      subtitle: 'تصميم وطباعة ملصقات احترافية للمنتجات',
       calibration: {
           title: 'معايرة الشاشة',
           subtitle: 'ضبط المقياس لمطابقة الحجم الحقيقي',

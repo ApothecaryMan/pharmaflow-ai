@@ -54,10 +54,15 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
 }) => {
     return (
         <div className={`w-full lg:w-80 ${CARD_BASE} rounded-3xl flex flex-col overflow-hidden`}>
-            <div className={`p-4 border-b border-gray-100 dark:border-gray-800 bg-${color}-50 dark:bg-${color}-900/10`}>
-                <h3 className={`font-bold text-sm uppercase text-${color}-700 dark:text-${color}-300`}>
-                    {selectedElementId ? t.inspector.properties : t.inspector.noSelection}
-                </h3>
+            <div className={`px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30`}>
+                <div className="flex items-center gap-2">
+                    <span className={`material-symbols-rounded text-sm text-${color}-500`}>
+                        {selectedElementId ? 'edit_note' : 'dashboard_customize'}
+                    </span>
+                    <h3 className={`font-bold text-[10px] uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400`}>
+                        {selectedElementId ? t.inspector.properties : t.inspector.noSelection}
+                    </h3>
+                </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -229,12 +234,25 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                         /* Element Properties */
                     selectedElement && (
                         <>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.x}</label><input type="number" step="0.5" value={selectedElement.x} onChange={(e) => handlePropertyChange('x', parseFloat(e.target.value))} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
-                                <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.y}</label><input type="number" step="0.5" value={selectedElement.y} onChange={(e) => handlePropertyChange('y', parseFloat(e.target.value))} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1">{t.inspector.x}</label>
+                                    <div className="relative">
+                                        <input type="number" step="0.5" value={selectedElement.x} onChange={(e) => handlePropertyChange('x', parseFloat(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1">{t.inspector.y}</label>
+                                    <div className="relative">
+                                        <input type="number" step="0.5" value={selectedElement.y} onChange={(e) => handlePropertyChange('y', parseFloat(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
+                                    </div>
+                                </div>
                             </div>
                             {(selectedElement.type === 'text' || selectedElement.type === 'barcode') && (
-                                <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.fontSize}</label><input type="number" value={selectedElement.fontSize} onChange={(e) => handlePropertyChange('fontSize', parseInt(e.target.value))} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1">{t.inspector.fontSize}</label>
+                                    <input type="number" value={selectedElement.fontSize} onChange={(e) => handlePropertyChange('fontSize', parseInt(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
+                                </div>
                             )}
                             {selectedElement.type === 'barcode' && (
                                 <div className="mt-2">
@@ -268,43 +286,51 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                                 <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.content}</label><input type="text" value={selectedElement.content || ''} onChange={(e) => handlePropertyChange('content', e.target.value)} dir={selectedContentDir} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
                             )}
                             {(selectedElement.type === 'qrcode' || selectedElement.type === 'image') && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.width}</label><input type="number" value={selectedElement.width} onChange={(e) => handlePropertyChange('width', parseFloat(e.target.value))} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
-                                    <div><label className="text-[10px] font-bold text-gray-400 uppercase">{t.inspector.height}</label><input type="number" value={selectedElement.height} onChange={(e) => handlePropertyChange('height', parseFloat(e.target.value))} className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm"/></div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1">{t.inspector.width}</label>
+                                        <input type="number" value={selectedElement.width} onChange={(e) => handlePropertyChange('width', parseFloat(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1">{t.inspector.height}</label>
+                                        <input type="number" value={selectedElement.height} onChange={(e) => handlePropertyChange('height', parseFloat(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
+                                    </div>
                                 </div>
                             )}
-                            <div>
-                                <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">{t.inspector.align}</label>
-                                <SegmentedControl
-                                    value={selectedElement.align || 'center'}
-                                    onChange={(val) => handlePropertyChange('align', val)}
-                                    options={[
-                                        { label: '', value: 'left', icon: 'format_align_left' },
-                                        { label: '', value: 'center', icon: 'format_align_center' },
-                                        { label: '', value: 'right', icon: 'format_align_right' }
-                                    ]}
-                                    color={color}
-                                    size="xs"
-                                    fullWidth
-                                />
+
+                            <div className="space-y-3">
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1">{t.inspector.align}</label>
+                                    <SegmentedControl
+                                        value={selectedElement.align || 'center'}
+                                        onChange={(val) => handlePropertyChange('align', val)}
+                                        options={[
+                                            { label: '', value: 'left', icon: 'format_align_left' },
+                                            { label: '', value: 'center', icon: 'format_align_center' },
+                                            { label: '', value: 'right', icon: 'format_align_right' }
+                                        ]}
+                                        color={color}
+                                        size="xs"
+                                        fullWidth
+                                    />
                                 </div>
-                            {/* Rotation Toggle */}
-                            <div>
-                                <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">{t.inspector.rotate90}</label>
-                                <SegmentedControl
-                                    value={selectedElement.rotation || 0}
-                                    onChange={(val) => handlePropertyChange('rotation', val)}
-                                    options={[
-                                        { label: '0°', value: 0 },
-                                        { label: '90°', value: 90, icon: 'rotate_right' }
-                                    ]}
-                                    color={color}
-                                    size="xs"
-                                />
-                            </div>
-                            {selectedElement.type === 'barcode' && (
-                                <div>
-                                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">{t.barcodeSource}</label>
+                                {/* Rotation Toggle */}
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1">{t.inspector.rotate90}</label>
+                                    <SegmentedControl
+                                        value={selectedElement.rotation || 0}
+                                        onChange={(val) => handlePropertyChange('rotation', val)}
+                                        options={[
+                                            { label: '0°', value: 0 },
+                                            { label: '90°', value: 90, icon: 'rotate_right' }
+                                        ]}
+                                        color={color}
+                                        size="xs"
+                                    />
+                                </div>
+                                {selectedElement.type === 'barcode' && (
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1">{t.barcodeSource}</label>
                                         <SegmentedControl
                                             value={barcodeSource}
                                             onChange={(val) => setBarcodeSource(val as 'global' | 'internal')}
@@ -315,27 +341,23 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                                             color={color}
                                             size="xs"
                                         />
-                                </div>
-                            )}
-                            {selectedElement.type === 'qrcode' && (
-                                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-xs text-blue-700 dark:text-blue-300">
-                                    QR Code content is automatically generated from the selected barcode source.
-                                </div>
-                            )}
+                                    </div>
+                                )}
+                                {selectedElement.type === 'qrcode' && (
+                                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-[10px] text-blue-700 dark:text-blue-300">
+                                        {t.qrSourceHint || 'QR Code content is automatically generated from the selected barcode source.'}
+                                    </div>
+                                )}
+                            </div>
                             {/* Hitbox Calibration */}
-                            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800/30">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase flex items-center gap-1">
-                                        <span className="material-symbols-rounded text-xs">tune</span>
-                                        Hitbox Calibration
-                                    </label>
-                                    <div className="flex gap-1">
-                                        <button 
-                                            onClick={() => setShowHitboxCalibration(!showHitboxCalibration)}
-                                            className="p-1 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded transition-colors"
-                                        >
-                                            <span className="material-symbols-rounded text-sm">{showHitboxCalibration ? 'expand_less' : 'expand_more'}</span>
-                                        </button>
+                            {/* Hitbox Calibration */}
+                            <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-700/50 overflow-hidden">
+                                <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700/50">
+                                    <div className="flex items-center gap-2">
+                                        <span className="material-symbols-rounded text-sm text-gray-500">tune</span>
+                                        <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Calibration</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
                                         <button 
                                             onClick={() => { 
                                                 handlePropertyChange('hitboxOffsetX' as any, 0); 
@@ -343,70 +365,68 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                                                 handlePropertyChange('hitboxWidth' as any, undefined); 
                                                 handlePropertyChange('hitboxHeight' as any, undefined); 
                                             }}
-                                            className="p-1 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded transition-colors"
+                                            className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
                                             title="Reset Calibration"
                                         >
-                                            <span className="material-symbols-rounded text-sm">restart_alt</span>
+                                            <span className="material-symbols-rounded text-xs">restart_alt</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => setShowHitboxCalibration(!showHitboxCalibration)}
+                                            className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                                        >
+                                            <span className={`material-symbols-rounded text-sm transform transition-transform ${showHitboxCalibration ? 'rotate-180' : ''}`}>expand_more</span>
                                         </button>
                                     </div>
                                 </div>
                                 {showHitboxCalibration && (
-                                    <div className="space-y-2 mt-2">
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
-                                                    <span>Offset X</span>
-                                                    <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded">{((selectedElement as any).hitboxOffsetX || 0).toFixed(1)}mm</span>
-                                                </div>
-                                                <input 
-                                                    type="range" 
-                                                    min="-5" max="5" step="0.1"
-                                                    value={(selectedElement as any).hitboxOffsetX || 0}
-                                                    onChange={e => handlePropertyChange('hitboxOffsetX' as any, parseFloat(e.target.value))}
-                                                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
-                                                />
+                                    <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                                        <div>
+                                            <div className="flex items-center justify-between text-[10px] text-gray-400 mb-1.5">
+                                                <span className="uppercase tracking-wider">OFFSET X</span>
+                                                <span className="font-mono text-gray-600 dark:text-gray-300">{(selectedElement as any).hitboxOffsetX || 0 > 0 ? '+' : ''}{((selectedElement as any).hitboxOffsetX || 0).toFixed(1)}</span>
                                             </div>
-                                            <div>
-                                                <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
-                                                    <span>Offset Y</span>
-                                                    <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded">{((selectedElement as any).hitboxOffsetY || 0).toFixed(1)}mm</span>
-                                                </div>
-                                                <input 
-                                                    type="range" 
-                                                    min="-5" max="5" step="0.1"
-                                                    value={(selectedElement as any).hitboxOffsetY || 0}
-                                                    onChange={e => handlePropertyChange('hitboxOffsetY' as any, parseFloat(e.target.value))}
-                                                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
-                                                />
-                                            </div>
+                                            <input 
+                                                type="range" min="-5" max="5" step="0.1"
+                                                value={(selectedElement as any).hitboxOffsetX || 0}
+                                                onChange={e => handlePropertyChange('hitboxOffsetX' as any, parseFloat(e.target.value))}
+                                                className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                            />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
-                                                    <span>Width</span>
-                                                    <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded">{((selectedElement as any).hitboxWidth || (selectedElement.type === 'barcode' ? 30 : 10)).toFixed(0)}mm</span>
-                                                </div>
-                                                <input 
-                                                    type="range" 
-                                                    min="5" max="50" step="1"
-                                                    value={(selectedElement as any).hitboxWidth || (selectedElement.type === 'barcode' ? 30 : 10)}
-                                                    onChange={e => handlePropertyChange('hitboxWidth' as any, parseFloat(e.target.value))}
-                                                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
-                                                />
+                                        <div>
+                                            <div className="flex items-center justify-between text-[10px] text-gray-400 mb-1.5">
+                                                <span className="uppercase tracking-wider">OFFSET Y</span>
+                                                <span className="font-mono text-gray-600 dark:text-gray-300">{(selectedElement as any).hitboxOffsetY || 0 > 0 ? '+' : ''}{((selectedElement as any).hitboxOffsetY || 0).toFixed(1)}</span>
                                             </div>
-                                            <div>
-                                                <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
-                                                    <span>Height</span>
-                                                    <span className="font-mono bg-gray-200 dark:bg-gray-800 px-1 py-0.5 rounded">{((selectedElement as any).hitboxHeight || (selectedElement.type === 'barcode' ? 8 : 4)).toFixed(0)}mm</span>
-                                                </div>
-                                                <input 
-                                                    type="range" 
-                                                    min="2" max="20" step="0.5"
-                                                    value={(selectedElement as any).hitboxHeight || (selectedElement.type === 'barcode' ? 8 : 4)}
-                                                    onChange={e => handlePropertyChange('hitboxHeight' as any, parseFloat(e.target.value))}
-                                                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
-                                                />
+                                            <input 
+                                                type="range" min="-5" max="5" step="0.1"
+                                                value={(selectedElement as any).hitboxOffsetY || 0}
+                                                onChange={e => handlePropertyChange('hitboxOffsetY' as any, parseFloat(e.target.value))}
+                                                className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center justify-between text-[10px] text-gray-400 mb-1.5">
+                                                <span className="uppercase tracking-wider">WIDTH</span>
+                                                <span className="font-mono text-gray-600 dark:text-gray-300">{((selectedElement as any).hitboxWidth || (selectedElement.type === 'barcode' ? 30 : 10)).toFixed(0)}</span>
                                             </div>
+                                            <input 
+                                                type="range" min="5" max="50" step="1"
+                                                value={(selectedElement as any).hitboxWidth || (selectedElement.type === 'barcode' ? 30 : 10)}
+                                                onChange={e => handlePropertyChange('hitboxWidth' as any, parseFloat(e.target.value))}
+                                                className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center justify-between text-[10px] text-gray-400 mb-1.5">
+                                                <span className="uppercase tracking-wider">HEIGHT</span>
+                                                <span className="font-mono text-gray-600 dark:text-gray-300">{((selectedElement as any).hitboxHeight || (selectedElement.type === 'barcode' ? 8 : 4)).toFixed(0)}</span>
+                                            </div>
+                                            <input 
+                                                type="range" min="2" max="20" step="0.5"
+                                                value={(selectedElement as any).hitboxHeight || (selectedElement.type === 'barcode' ? 8 : 4)}
+                                                onChange={e => handlePropertyChange('hitboxHeight' as any, parseFloat(e.target.value))}
+                                                className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                            />
                                         </div>
                                     </div>
                                 )}
