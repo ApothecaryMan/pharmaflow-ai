@@ -35,6 +35,7 @@ export const StorageKeys = {
   RETURNS: 'pharma_returns',
   SHIFTS: 'pharma_shifts',
   STOCK_BATCHES: 'pharma_stock_batches',
+  STOCK_MOVEMENTS: 'pharma_stock_movements',
   
   // User/Session
   PROFILE_IMAGE: 'pharma_profileImage',

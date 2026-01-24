@@ -28,6 +28,10 @@ export interface FilterDropdownProps<T> {
      * Useful for toolbars and filter bars.
      */
     floating?: boolean;
+    /** If true, the arrow icon will be hidden. */
+    hideArrow?: boolean;
+    /** If true, hides the arrow automatically if the rendered text is long (string length > 4). */
+    autoHideArrow?: boolean;
 }
 
 /**
@@ -61,7 +65,9 @@ export function FilterDropdown<T>({
     centered = false,
     rounded = 'xl',
     zIndexHigh = 'z-40',
-    floating = false
+    floating = false,
+    hideArrow = false,
+    autoHideArrow = false
 }: FilterDropdownProps<T>) {
     
     const containerRef = useRef<HTMLDivElement>(null);
@@ -137,9 +143,7 @@ export function FilterDropdown<T>({
     const itemPaddingClasses = 'px-3 py-1';
 
     // Floating styles
-    const outerClasses = floating 
-        ? `relative inline-block ${className}` 
-        : `relative inline-block ${className}`;
+    const outerClasses = `relative inline-block ${className}`;
         
     const outerStyle = floating && minHeight 
         ? { ...style, height: minHeight, minHeight } 
@@ -147,9 +151,9 @@ export function FilterDropdown<T>({
 
     const innerClasses = `relative w-full flex flex-col overflow-hidden border transition-all outline-none
                     ${rounded === 'full' ? 'rounded-[20px]' : 'rounded-xl'}
-                    ${disabled ? 'cursor-not-allowed bg-gray-100 dark:bg-gray-800' : 'cursor-pointer'}
+                    ${disabled ? 'cursor-not-allowed bg-transparent border-gray-200 dark:bg-gray-800' : 'cursor-pointer'}
                     ${(effectiveIsOpen || isAnimating)
-                        ? (isInput ? `${zIndexHigh}` : `${zIndexHigh}`) 
+                        ? `${zIndexHigh}` 
                         : 'z-0'}
                     ${effectiveIsOpen 
                         ? 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700' 
@@ -158,7 +162,7 @@ export function FilterDropdown<T>({
                             : (isTransparent ? 'bg-transparent border-transparent' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700')
                           )
                     }
-                    ${floating ? 'absolute top-0 left-0 hover:z-[60]' : ''}
+                    ${floating ? 'absolute top-0 left-0' : ''}
                 `;
 
     return (
@@ -185,7 +189,29 @@ export function FilterDropdown<T>({
                             <div className="flex-1 truncate text-sm font-medium text-gray-700 dark:text-gray-200">
                                 {renderSelected(selectedItem)}
                             </div>
-                            <span className="material-symbols-rounded text-gray-400 text-[20px] ml-2">expand_more</span>
+                            {!(hideArrow || (autoHideArrow && (() => {
+                                const findText = (node: any): string => {
+                                    if (typeof node === 'string' || typeof node === 'number') return String(node);
+                                    if (!node) return '';
+                                    if (React.isValidElement(node)) {
+                                        const children = (node.props as any).children;
+                                        if (Array.isArray(children)) {
+                                            return children.map(findText).join('');
+                                        }
+                                        return findText(children);
+                                    }
+                                    if (Array.isArray(node)) {
+                                        return node.map(findText).join('');
+                                    }
+                                    return '';
+                                };
+
+                                const selected = renderSelected(selectedItem);
+                                const text = findText(selected);
+                                return text.length > 3;
+                            })())) && (
+                                <span className="material-symbols-rounded text-gray-400 text-[20px] ml-1 shrink-0">expand_more</span>
+                            )}
                         </>
                     ) : (
                         renderSelected(selectedItem)

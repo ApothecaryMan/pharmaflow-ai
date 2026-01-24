@@ -1485,6 +1485,11 @@ export const POS: React.FC<POSProps> = ({
                   )}
                   color={color}
                   className="h-9 w-20"
+                  variant="input"
+                  floating
+                  minHeight={32}
+                  zIndexHigh="z-[60]"
+                  autoHideArrow
                 />
               ) : (
                 <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
@@ -1584,6 +1589,11 @@ export const POS: React.FC<POSProps> = ({
                 }}
                 className="h-10 w-30"
                 color={color}
+                variant="input"
+                floating
+                minHeight={32}
+                zIndexHigh="z-[60]"
+                autoHideArrow
               />
             </div>
           );

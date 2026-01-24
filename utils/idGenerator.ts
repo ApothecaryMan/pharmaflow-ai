@@ -27,6 +27,7 @@ export type EntityType =
   | 'transactions'
   | 'tabs'
   | 'batch'
+  | 'movement'
   | 'generic';
 
 // Sequence Map Interface
@@ -98,6 +99,9 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
         break;
       case 'shifts':
         data = storage.get(StorageKeys.SHIFTS, []);
+        break;
+      case 'movement':
+        data = storage.get(StorageKeys.STOCK_MOVEMENTS, []);
         break;
       // Transactions are nested in shifts, harder to heal efficiently, 
       // but usually shift IDs are unique enough or we can scan all shifts.
