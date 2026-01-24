@@ -129,7 +129,7 @@ interface ExpandedChartModalProps {
   /** Primary color for charts and highlights (hex format) / اللون الأساسي للرسومات */
   color: string;
   
-  /** Unit symbol to display before values (e.g., "$", "EGP ") / رمز الوحدة */
+  /** Unit symbol to display before values (e.g., "$", "L.E ") / رمز الوحدة */
   unit?: string;
   
   /**
