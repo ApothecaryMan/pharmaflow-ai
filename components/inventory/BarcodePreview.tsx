@@ -1,6 +1,7 @@
 import React from 'react';
 import { Drug } from '../../types';
-import { LabelDesign, LabelElement, generateTemplateCSS, getLabelElementContent, generateLabelHTML } from './LabelPrinter';
+import { generateTemplateCSS, getLabelElementContent, generateLabelHTML } from './LabelPrinter';
+import { LabelElement, LabelDesign } from './studio/types';
 
 interface BarcodePreviewProps {
     elements: LabelElement[];

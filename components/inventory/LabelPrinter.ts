@@ -11,86 +11,17 @@ import { getPrinterSettings, printLabelSilently } from '../../utils/qzPrinter';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 
+import { LabelElement, LabelDesign, SavedTemplate } from './studio/types';
+
+export type { LabelElement, LabelDesign, SavedTemplate };
+
 // --- Types ---
-
-/**
- * Represents a single visual element within a label design.
- */
-export interface LabelElement {
-    /** Unique identifier for the element (e.g., 'drugName', 'barcode') */
-    id: string;
-    /** The type of content to render */
-    type: 'text' | 'barcode' | 'qrcode' | 'image';
-    /** Human-readable name for the element in the UI */
-    label: string;
-    /** Horizontal position in millimeters */
-    x: number;
-    /** Vertical position in millimeters */
-    y: number;
-    /** Width in millimeters (required for images/shapes) */
-    width?: number;
-    /** Height in millimeters (required for images/shapes) */
-    height?: number;
-    /** Font size in pixels */
-    fontSize?: number;
-    /** CSS font-weight value (e.g., 'bold', '700') */
-    fontWeight?: string;
-    /** Text alignment relative to the x/y coordinates */
-    align?: 'left' | 'center' | 'right';
-    /** Static content for text/images, or specific identifier */
-    content?: string;
-    /** Whether the element should be rendered or hidden */
-    isVisible: boolean;
-    /** hex or named color for the element */
-    color?: string;
-    /** Mapping to a data field from the Drug object or system settings */
-    field?: keyof Drug | 'unit' | 'store' | 'hotline';
-    /** Prevents the element from being moved in the UI editor */
-    locked?: boolean;
-    /** Specific barcode symbology and styling options */
-    barcodeFormat?: 'code39' | 'code39-text' | 'code128' | 'code128-text';
-    /** Rotation angle in degrees (currently only 0 or 90 supported) */
-    rotation?: 0 | 90;
-    
-    // Hitbox calibration (manual adjustment for selection accuracy in BarcodeStudio)
-    /** Horizontal offset for the selection hitbox in mm */
-    hitboxOffsetX?: number;
-    /** Vertical offset for the selection hitbox in mm */
-    hitboxOffsetY?: number;
-    /** Width override for the selection hitbox in mm */
-    hitboxWidth?: number;
-    /** Height override for the selection hitbox in mm */
-    hitboxHeight?: number;
-}
-
-/**
- * Container for a complete label layout design.
- */
-export interface LabelDesign {
-    /** List of all elements included in this design */
-    elements: LabelElement[];
-    /** Key referencing a preset in LABEL_PRESETS */
-    selectedPreset: string;
-    /** Physical dimensions if selectedPreset is 'custom' */
-    customDims?: { w: number; h: number };
-    /** Rule for which barcode value to prioritize */
-    barcodeSource?: 'global' | 'internal';
-    /** UI helper to show boxes around elements for layout debugging */
-    showPrintBorders?: boolean;
-    /** Global horizontal print offset (calibration) in mm */
-    printOffsetX?: number;
-    /** Global vertical print offset (calibration) in mm */
-    printOffsetY?: number;
-    /** Vertical gap between labels on the same page in mm */
-    labelGap?: 0 | 0.5 | 1;
-    /** Currency symbol preference */
-    currency?: 'EGP' | 'USD';
-}
 
 /**
  * Data required to print a label for a specific item.
  */
 export interface PrintLabelItem {
+
     /** The drug entity containing data to be rendered */
     drug: Drug;
     /** Number of copies to print */
@@ -191,7 +122,7 @@ export const getLabelElementContent = (
     drug: Drug,
     receiptSettings: { storeName: string; hotline: string },
     expiryOverride?: string,
-    currency: 'EGP' | 'USD' = 'EGP',
+    currency: 'L.E' | 'USD' = 'L.E',
     barcodeSource: 'global' | 'internal' = 'global'
 ): string => {
     if (el.content) return el.content;
@@ -201,7 +132,7 @@ export const getLabelElementContent = (
         case 'store': return receiptSettings.storeName;
         case 'hotline': return receiptSettings.hotline || '19099';
         case 'name': return drug.name;
-        case 'price': return `${Number(drug.price).toFixed(2)} ${currency === 'EGP' ? 'EGP' : '$'}`;
+        case 'price': return `${Number(drug.price).toFixed(2)} ${currency === 'L.E' ? 'L.E' : '$'}`;
         case 'barcode': return barcodeSource === 'internal' 
             ? (drug.internalCode || drug.id) 
             : (drug.barcode || drug.id);
@@ -375,7 +306,7 @@ export const generateLabelHTML = (
     const barcodeText = `*${barcodeValue.replace(/\s/g, '').toUpperCase()}*`;
 
     const getElementContent = (el: LabelElement): string => {
-        return getLabelElementContent(el, drug, receiptSettings, expiryOverride, design.currency, design.barcodeSource);
+        return getLabelElementContent(el, drug, receiptSettings, expiryOverride, design.currency || 'L.E', design.barcodeSource);
     };
 
     const generateElementHTML = (el: LabelElement): string => {
@@ -548,11 +479,21 @@ export const printLabels = async (items: PrintLabelItem[], options: PrintOptions
             }
         }
         
-        // Pagination logic: group labels into pages of 2
-        const labelsPerPage = 2;
+        // Pagination logic: dynamic based on preset
+        // '38x25' preset implies a physical roll with 2 labels per page (total height 25mm)
+        const labelsPerPage = design.selectedPreset === '38x25' ? 2 : 1;
         const labelGap = design.labelGap || 0;
-        // Total page height = (label height × 2) + gap between them
-        const pageHeight = (dims.h * labelsPerPage) + labelGap;
+        
+        // Total page height calculation
+        let pageHeight = dims.h;
+        if (labelsPerPage > 1) {
+             // For multi-label pages (like 38x25 double), the preset height usually defines the full page height
+             pageHeight = dims.h; 
+        } else {
+             // For single labels, we add the gap if needed, though usually gap is 0 for single rolls
+             pageHeight = dims.h + labelGap;
+        }
+
         const gapDivider = labelGap > 0 ? `<div style="height: ${labelGap}mm;"></div>` : '';
         const pages: string[] = [];
         
@@ -560,7 +501,7 @@ export const printLabels = async (items: PrintLabelItem[], options: PrintOptions
             const pageLabels = labelFragments.slice(i, i + labelsPerPage);
             const isLastPage = i + labelsPerPage >= labelFragments.length;
             
-            // Join labels with gap divider (only between labels, not after last one)
+            // Join labels with gap divider
             const labelsWithGap = pageLabels.join(gapDivider);
             const pageHTML = `<div class="page-container" style="page-break-after: ${isLastPage ? 'auto' : 'always'};">${labelsWithGap}</div>`;
             pages.push(pageHTML);

@@ -27,7 +27,7 @@ export const createSearchRegex = (term: string): RegExp => {
   return new RegExp(pattern, 'i');
 };
 
-export const parseSearchTerm = (term: string): { mode: 'normal' | 'generic'; regex: RegExp } => {
+export const parseSearchTerm = (term: string): { mode: 'normal' | 'generic' | 'ingredient'; regex: RegExp } => {
   const trimmedStart = term.trimStart();
   
   if (trimmedStart.startsWith('@')) {
@@ -36,6 +36,14 @@ export const parseSearchTerm = (term: string): { mode: 'normal' | 'generic'; reg
     return {
       mode: 'generic',
       regex: createSearchRegex(genericTerm)
+    };
+  }
+
+  if (trimmedStart.startsWith('#')) {
+    const ingredientTerm = trimmedStart.substring(1);
+    return {
+      mode: 'ingredient',
+      regex: createSearchRegex(ingredientTerm)
     };
   }
 
