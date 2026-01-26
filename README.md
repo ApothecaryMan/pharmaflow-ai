@@ -1,8 +1,8 @@
-# PharmaFlow AI 💊
+# Zinc 💊
 
 A modern pharmacy management system built with React, TypeScript, and Tailwind CSS.
 
-**Live Demo:** [pharmaflow-ai.netlify.app](https://pharmaflow-ai.netlify.app)
+**Live Demo:** [zinc-ai.netlify.app](https://zinc-ai.netlify.app)
 
 ---
 
@@ -44,7 +44,7 @@ npm run preview
 ## 📂 Project Structure
 
 ```
-pharmaflow-ai/
+zinc/
 ├── components/          # React components (organized by module)
 │   ├── common/          # Shared UI (SmartInputs, SegmentedControl, Switch, etc.)
 │   ├── layout/          # Navigation (Navbar, Sidebar, TabBar)
@@ -68,13 +68,13 @@ pharmaflow-ai/
 
 ### 1. Use Standard Components
 
-| Component | Use For |
-|-----------|---------|
-| `SmartInputs` | All text inputs (handles RTL) |
-| `FilterDropdown` | Dropdown selections |
-| `SegmentedControl` | Segmented buttons |
-| `Switch` | Toggle switches |
-| `TanStackTable` | Data tables |
+| Component          | Use For                       |
+| ------------------ | ----------------------------- |
+| `SmartInputs`      | All text inputs (handles RTL) |
+| `FilterDropdown`   | Dropdown selections           |
+| `SegmentedControl` | Segmented buttons             |
+| `Switch`           | Toggle switches               |
+| `TanStackTable`    | Data tables                   |
 
 **Forbidden:** Native `<select>`, raw `<input>`, HTML `<table>`.
 
@@ -85,6 +85,7 @@ All text MUST be in `i18n/translations.ts` with both EN and AR.
 ### 3. iOS Safari Compatibility
 
 Buttons with explicit dimensions need:
+
 ```tsx
 style={{ WebkitAppearance: 'none', appearance: 'none' }}
 ```
@@ -116,6 +117,7 @@ style={{ WebkitAppearance: 'none', appearance: 'none' }}
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) before making changes.
 
 **Quick Checklist:**
+
 1. Use standard components (no raw HTML)
 2. Add translations (EN + AR)
 3. Test in RTL mode

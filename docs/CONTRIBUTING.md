@@ -1,9 +1,9 @@
-# Contributing to PharmaFlow AI
+# Contributing to Zinc
 
 ## 📂 Project Structure
 
 ```
-pharmaflow-ai/
+zinc/
 ├── .agent/             # Agentic AI Configuration
 │   └── workflows/
 │       ├── enforce-translations.md  # Translation enforcement rules
@@ -62,6 +62,10 @@ pharmaflow-ai/
 │   │   ├── CompactProgressCard.tsx     # Half-height stacking card
 │   │   └── hooks/
 │   │
+│   ├── skeletons/
+│   │   ├── PageSkeletonRegistry.tsx     # Skeleton lookup by view
+│   │   └── GenericSkeleton.tsx          # Fallback loader
+│   │
 │   ├── layout/
 │   │   ├── Navbar.tsx
 │   │   │   └── NavbarComponent         # Top navigation + profile
@@ -80,6 +84,9 @@ pharmaflow-ai/
 │   │   ├── api/                         # API Clean Clients
 │   │   ├── auth/                        # Authentication & Session
 │   │   │   ├── authService.ts           # Login/Logout/Session
+│   │   │   │   ├── logAuditEvent()      # Audit logger
+│   │   │   │   ├── getLoginHistory()    # History retriever
+│   │   │   │   └── login/logout()       # Auth actions
 │   │   │   ├── hashUtils.ts             # SHA-256 hashing
 │   │   │   └── index.ts                 # Barrel export
 │   │   ├── sales/                       # Sales & POS Logic
@@ -97,11 +104,28 @@ pharmaflow-ai/
 │   │   │   └── index.ts                 # Barrel export
 │   │   ├── DataContext.tsx              # Unifying Data Provider
 │   │   ├── timeService.ts               # NTP Time Sync
-│   │   └── geminiService.ts             # AI Integration
-│   │
+│   │   ├── geminiService.ts             # AI Integration
+│   │   ├── auditService.ts              # System audit logging
+│   │   ├── salesHelpers.ts              # Cartesian product & cart utils
+│   │   │
 │   ├── dashboard/
 │   │   ├── Dashboard.tsx                # Main dashboard
+│   │   ├── DashboardSkeletons.tsx       # Loading skeletons
 │   │   └── RealTimeSalesMonitor.tsx     # Live sales chart
+│   │
+│   ├── reports/
+│   │   └── LoginAuditList.tsx           # Audit table with translation logic
+│   │
+│   ├── intelligence/
+│   │   ├── audit/
+│   │   │   ├── AuditPage.tsx            # Audit Dashboard
+│   │   │   └── TransactionLogGrid.tsx   # Audit Table
+│   │   ├── financials/
+│   │   │   └── FinancialsPage.tsx       # Profit/Loss Analytics
+│   │   ├── procurement/
+│   │   │   └── ProcurementPage.tsx      # Stock Reordering
+│   │   └── risk/
+│   │       └── RiskPage.tsx             # Expiry & Stagnant Stock
 │   │
 │   ├── sales/
 │   │   ├── POS.tsx                      # Point of Sale
@@ -224,10 +248,14 @@ pharmaflow-ai/
 │   │   └── sample-inventory.ts            # Initial seed data
 │   │
 │   ├── config/
+│   │   ├── permissions.ts                   # RBAC Role Definitions
+│   │   │   ├── canPerformAction()           # Permission check hook
+│   │   │   └── ROLE_PERMISSIONS             # Role-to-action mapping
 │   │   ├── menuData.ts                      # Menu structure
 │   │   ├── pageRegistry.ts                  # Page → Props map
 │   │   ├── storageKeys.ts                   # STORAGE KEY CONSTANTS
 │   │   ├── themeColors.ts                   # Theme palettes
+│   │   ├── fonts.ts                         # Font definitions
 │   │   └── routes.ts                        # Route constants & test routes
 │   │
 ├── i18n/
@@ -325,7 +353,7 @@ All UI elements must look professional. Avoid basic browser defaults.
 | `SmartDateInput`      | Date input (Masked)  | `common/SmartInputs.tsx`         |
 | `FloatingInput`       | Floating label input | `common/FloatingInput.tsx`       |
 | `DatePicker`          | Calendar picker      | `common/DatePicker.tsx`          |
-| `FilterDropdown`   | Dropdown selection   | `common/FilterDropdown.tsx`   |
+| `FilterDropdown`      | Dropdown selection   | `common/FilterDropdown.tsx`      |
 | `ExpandedModal`       | Full screen modal    | `common/ExpandedModal.tsx`       |
 | `SegmentedControl`    | Segmented buttons    | `common/SegmentedControl.tsx`    |
 | `Switch`              | Toggle switch        | `common/Switch.tsx`              |
@@ -368,6 +396,15 @@ Use the `variant` prop based on parent background:
 - **Close Buttons**: `w-8 h-8 (or w-10 h-10) flex items-center justify-center rounded-full`
 - **Icon Boxes**: Use consistent padding/rounded corners.
 - **Colors**: Use semantic colors from Tailwind config or `index.css`.
+
+#### Branding & Transitions Standard
+
+To maintain a premium "first impression," the login and splash screens follow a minimalist aesthetic:
+
+- **Minimalist Loading**: Avoid bulky cards or containers during transitions. Use slim progress bars and focused text on a dark background.
+- **Official Assets**: Always use official wordmarks (`logo_word_white.svg`) and icons (`logo_icon_white.svg`) instead of text-based titles or generic icons.
+- **Realistic Progress**: Transition bars MUST simulate realistic multi-stage loading (use `Math.random()` increments and staged messages).
+- **White Accents**: Use white text (`text-white` or `text-white/40`) for loading states to ensure a high-contrast, clean look.
 
 ---
 
@@ -433,6 +470,70 @@ const newId = idGenerator.generate("sales"); // Returns "B1-0001"
 // ❌ Forbidden
 const newId = Date.now().toString();
 ```
+
+---
+
+### 6. Role-Based Access Control (RBAC)
+
+**RULE:** All sensitive actions, pages, and menu items MUST be gated by permissions.
+
+#### Architecture
+
+- **Roles**: Defined in `config/permissions.ts` (e.g., `admin`, `manager`, `pharmacist`).
+- **Permissions**: Granular actions (e.g., `inventory.update`, `reports.view_financial`).
+- **Helper**: `canPerformAction(role, permission)` checks access.
+
+#### Implementation Steps
+
+1. **Page Protection**: Add `permission` to `PAGE_REGISTRY` in `config/pageRegistry.ts`.
+
+   ```typescript
+   'employee-list': {
+     // ...
+     permission: 'users.view' // Redirects to Access Restricted if user lacks permission
+   }
+   ```
+
+2. **Menu Visibility**: Add `permission` to `MenuItem` in `config/menuData.ts`.
+
+   ```typescript
+   {
+     label: "Financial Reports",
+     permission: "reports.view_financial" // Hides menu item if user lacks permission
+   }
+   ```
+
+3. **Component-Level Gating**: Use `canPerformAction` to hide specific buttons/UI.
+
+   ```typescript
+   import { canPerformAction } from '../../config/permissions';
+
+   // ... inside component
+   {canPerformAction(userRole, 'inventory.delete') && (
+     <button onClick={handleDelete}>Delete</button>
+   )}
+   ```
+
+4. **New Permissions**: Only add new permissions to `config/permissions.ts` if a suitable one doesn't exist. Update `ALL_PERMISSIONS` and `ROLE_PERMISSIONS` accordingly.
+
+---
+
+### 7. Audit Logging & Localization
+
+**RULE:** System activities (Login, Switch User, Logout) MUST be logged with localized details.
+
+#### The `translateDetails` Pattern
+
+When logging dynamic events (e.g., "Switched from Employee A"), do not log translated strings. Log the **English pattern** and translate it in the view layer.
+
+- **Service**: `authService.logAuditEvent({ ..., details: "Switched from name" })`
+- **Component**: Use `translateDetails(row.details)` in the table cell.
+- **Translation**: Define regex patterns in `translations.ts` under `loginAudit.detailPatterns`.
+
+#### Avatar & Photos
+
+- **System Actions**: Use the application logo icon for system/admin actions.
+- **Employee Actions**: Always include `employeeId` in audit entries. The `LoginAuditList` component automatically resolves this ID to a photo or initial using the `useData()` hook.
 
 ---
 

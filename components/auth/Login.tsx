@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { authService, UserSession } from '../../services/auth/authService';
 import { TRANSLATIONS } from '../../i18n/translations';
 
@@ -15,6 +15,8 @@ interface LoginState {
     username?: string;
     password?: string;
   };
+  progress: number;
+  loadingMessage: string;
 }
 
 interface LoginProps {
@@ -35,8 +37,39 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
     success: false,
     user: null,
     showPassword: false,
-    validationErrors: {}
+    validationErrors: {},
+    progress: 0,
+    loadingMessage: language === 'AR' ? 'جاري التحقق من البيانات...' : 'Validing credentials...'
   });
+
+  const loadingMessages = useMemo(() => [
+    language === 'AR' ? 'جاري التحقق من البيانات...' : 'Validing credentials...',
+    language === 'AR' ? 'جاري تحميل الملف الشخصي...' : 'Loading profile...',
+    language === 'AR' ? 'جاري تهيئة لوحة التحكم...' : 'Preparing dashboard...',
+    language === 'AR' ? 'جاري التحويل...' : 'Redirecting...'
+  ], [language]);
+
+  useEffect(() => {
+    if (state.success) {
+        let currentProgress = 0;
+        const interval = setInterval(() => {
+            currentProgress += Math.random() * 15;
+            if (currentProgress > 100) currentProgress = 100;
+            
+            const messageIndex = Math.min(Math.floor((currentProgress / 100) * loadingMessages.length), loadingMessages.length - 1);
+            
+            setState(prev => ({ 
+                ...prev, 
+                progress: currentProgress,
+                loadingMessage: loadingMessages[messageIndex]
+            }));
+
+            if (currentProgress === 100) clearInterval(interval);
+        }, 200);
+
+        return () => clearInterval(interval);
+    }
+  }, [state.success, loadingMessages]);
 
   const validate = (): boolean => {
     const errors: { username?: string; password?: string } = {};
@@ -105,32 +138,37 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
       <div className="w-full max-w-[400px] space-y-8">
         
         {/* Header Section */}
-        <div className="text-center space-y-2">
-            <div className="mx-auto w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 ring-1 ring-white/20">
-                 {/* Lock Icon */}
-                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <div className="text-center mb-10">
+            <div className="flex flex-col items-center mb-8">
+                {/* Icon Logo - No container as requested */}
+                <img src="/logo_icon_white.svg" className="w-14 h-14 object-contain mb-4" alt="Logo Icon" />
+                
+                {/* Word Mark Logo (Image instead of text) */}
+                <img src="/logo_word_white.svg" className="h-7 object-contain opacity-90" alt="Zinc" />
             </div>
             
-            <h1 className="text-3xl font-bold tracking-tight text-white">
-            {t.title}
-            </h1>
-            <p className="text-zinc-400 text-sm">
-            {t.subtitle}
-            </p>
+            {!state.success && (
+                <p className="text-zinc-400 text-sm">
+                    {t.subtitle}
+                </p>
+            )}
         </div>
 
         {/* Success State */}
         {state.success ? (
-             <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-6 rounded-xl flex flex-col items-center animate-in fade-in zoom-in duration-300">
-                <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                </div>
-                <h3 className="font-semibold text-lg mb-1">{t.successTitle}</h3>
-                <p className="text-sm text-green-500/80 text-center mb-4">
-                    {t.redirecting}
+             <div className="w-full py-20 flex flex-col items-center animate-in fade-in duration-700">
+                <h3 className="text-xl font-bold text-white mb-3 tracking-wide">
+                    {language === 'AR' ? 'تم تسجيل الدخول بنجاح!' : 'Login Successful!'}
+                </h3>
+                <p className="text-white/50 text-sm font-medium mb-10 min-h-[20px]">
+                    {state.loadingMessage}
                 </p>
-                <div className="w-full bg-zinc-800/50 rounded-full h-1 overflow-hidden">
-                    <div className="h-full bg-green-500 animate-[loading_1.5s_ease-in-out_forwards]" style={{ width: '0%' }}></div>
+                
+                <div className="w-full max-w-[200px] bg-white/5 rounded-full h-1 overflow-hidden ring-1 ring-white/10">
+                    <div 
+                        className="h-full bg-white transition-all duration-300 ease-out shadow-[0_0_20px_rgba(255,255,255,0.6)]" 
+                        style={{ width: `${state.progress}%` }}
+                    ></div>
                 </div>
              </div>
         ) : (
@@ -237,12 +275,12 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                 )}
             </button>
             
-            {/* Test credentials hint - DEV ONLY */}
+            {/* Test credentials hint - DEV ONLY
             {import.meta.env.DEV && !state.error && (
                 <div className="text-xs text-zinc-600 text-center p-2 bg-zinc-900/50 rounded border border-zinc-800">
-                    💡 Test credentials: <code className="text-green-500">test / test</code>
+                    💡 Test credentials: <code className="text-green-500">Admin / Admin@123</code>
                 </div>
-            )}
+            )} */}
             
             <p className="text-center text-xs text-zinc-600 pt-2">
                 {t.authorizedUserNotice}

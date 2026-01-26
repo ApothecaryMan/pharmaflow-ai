@@ -137,6 +137,11 @@ body {
   }
 }
 
+@keyframes loading {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
 /* Custom Card Shadow (User Request 2025-12-09) */
 /* Light Mode Only Override */
 html:not(.dark) .card-shadow {
