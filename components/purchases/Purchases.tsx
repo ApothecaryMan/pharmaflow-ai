@@ -6,7 +6,9 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { DatePicker } from '../common/DatePicker';
-import { useSmartDirection, DrugSearchInput } from '../common/SmartInputs';
+import { useSmartDirection } from '../common/SmartInputs';
+import { SearchInput } from '../common/SearchInput';
+import { SearchDropdown } from '../common/SearchDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useLongPress } from '../../hooks/useLongPress';
@@ -1084,82 +1086,83 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                              />
 
                              <div className="relative flex-1" ref={searchRef}>
-                               <DrugSearchInput
-                                   inputRef={searchInputRef}
+                               <SearchInput
+                                   ref={searchInputRef}
                                    value={search}
-                                   onChange={(val) => {
+                                   onSearchChange={(val) => {
                                        setSearch(val);
                                        setShowSuggestions(true);
                                        setSelectedSuggestionIndex(-1);
                                    }}
-                                   onEnter={() => {
-                                       if (selectedSuggestionIndex >= 0 && filteredDrugs[selectedSuggestionIndex]) {
-                                           handleAddItem(filteredDrugs[selectedSuggestionIndex]);
-                                       } else if (filteredDrugs.length > 0) {
-                                           handleAddItem(filteredDrugs[0]);
-                                       }
-                                       setShowSuggestions(false);
-                                       setSearch('');
-                                   }}
-                                   suggestions={[]} 
-                                   placeholder={t.searchDrug}
-                                   className="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all text-sm h-[42px]"
-                                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-                                   onFocus={() => setShowSuggestions(true)}
-                                   onKeyDown={(e) => {
-                                       if (filteredDrugs.length > 0) {
-                                           if (e.key === 'ArrowDown') {
-                                               e.preventDefault();
-                                               setSelectedSuggestionIndex(prev => (prev + 1) % filteredDrugs.length);
-                                           } else if (e.key === 'ArrowUp') {
-                                               e.preventDefault();
-                                               setSelectedSuggestionIndex(prev => (prev - 1 + filteredDrugs.length) % filteredDrugs.length);
-                                           } else if (e.key === 'Escape') {
-                                               setShowSuggestions(false);
-                                           }
+                                    onKeyDown={(e) => {
+                                       if (e.key === 'Enter') {
+                                            if (selectedSuggestionIndex >= 0 && filteredDrugs[selectedSuggestionIndex]) {
+                                                handleAddItem(filteredDrugs[selectedSuggestionIndex]);
+                                            } else if (filteredDrugs.length > 0) {
+                                                handleAddItem(filteredDrugs[0]);
+                                            }
+                                            setShowSuggestions(false);
+                                            setSearch('');
+                                       } else if (e.key === 'ArrowDown') {
+                                           e.preventDefault();
+                                           setSelectedSuggestionIndex(prev => (prev + 1) % filteredDrugs.length);
+                                       } else if (e.key === 'ArrowUp') {
+                                           e.preventDefault();
+                                           setSelectedSuggestionIndex(prev => (prev - 1 + filteredDrugs.length) % filteredDrugs.length);
                                        }
                                    }}
+                                    placeholder={t.placeholders?.searchDrug || 'Search products...'}
+                                    className={`w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 h-[42px] focus:ring-${color}-500 focus:border-${color}-500`}
                                />
                                
-                               {/* Search Suggestions Dropdown */}
-                               {showSuggestions && search.trim() && (
-                                 <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-2xl overflow-hidden z-[100]">
-                                   <div className="max-h-[300px] overflow-y-auto p-1 custom-scrollbar">
-                                     {filteredDrugs.length > 0 ? (
-                                       filteredDrugs.slice(0, 10).map((drug, index) => (
-                                         <button
-                                           key={drug.id}
-                                           onClick={() => {
-                                               handleAddItem(drug);
-                                               setShowSuggestions(false);
-                                               setSearch('');
-                                           }}
-                                           className={`w-full text-left p-3 flex items-center gap-3 transition-all rounded-lg ${
-                                               index === selectedSuggestionIndex 
-                                               ? `bg-${color}-50 dark:bg-gray-700 ring-2 ring-${color}-500/20` 
-                                               : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                                           }`}
-                                           dir="ltr"
-                                         >
-                                           <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-300 shrink-0">
-                                             {drug.internalCode || drug.barcode || drug.id}
-                                           </span>
-                                           <span className={`font-medium text-gray-900 dark:text-white flex-1 truncate ${typeof window !== 'undefined' && localStorage.getItem('pharma_textTransform') === 'uppercase' ? 'uppercase' : ''}`}>
-                                             {drug.name} {drug.dosageForm}
-                                           </span>
-                                           <span className="text-xs text-gray-500 shrink-0">
-                                             {drug.stock} {t.inStock || 'in stock'}
-                                           </span>
-                                         </button>
-                                       ))
-                                     ) : (
-                                       <div className="p-4 text-center text-gray-500 dark:text-gray-400 font-medium">
-                                         {t.noResults || 'No results found'}
-                                       </div>
-                                     )}
-                                   </div>
-                                 </div>
-                               )}
+                               <SearchDropdown
+                                    results={filteredDrugs}
+                                    onSelect={(drug) => {
+                                        handleAddItem(drug);
+                                        setSearch('');
+                                    }}
+                                    columns={[
+                                        {
+                                            header: t.headers?.codes || 'Codes',
+                                            width: 'w-32 shrink-0',
+                                            className: 'text-gray-900 dark:text-gray-400 justify-center text-center',
+                                            render: (drug: Drug) => drug.barcode || drug.internalCode || '---'
+                                        },
+                                        {
+                                            header: t.headers?.name || 'Name',
+                                            width: 'flex-1',
+                                            className: 'text-gray-900 dark:text-gray-400',
+                                            render: (drug: Drug) => (
+                                                 <span className={`truncate`}>
+                                                    {drug.name} <span className="opacity-75 font-normal">{drug.dosageForm}</span>
+                                                </span>
+                                            )
+                                        },
+                                        {
+                                            header: t.headers?.expiry || 'Expiry',
+                                            width: 'w-24 shrink-0',
+                                            className: 'justify-center text-center text-gray-900 dark:text-gray-400',
+                                            render: (drug: Drug) => {
+                                                if (!drug.expiryDate) return '---';
+                                                const date = new Date(drug.expiryDate);
+                                                if (isNaN(date.getTime())) return drug.expiryDate;
+                                                return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getFullYear()).slice(-2)}`;
+                                            }
+                                        },
+                                        {
+                                            header: t.headers?.stock || 'Stock',
+                                            width: 'w-[60px] shrink-0',
+                                            className: 'justify-center text-center text-gray-900 dark:text-gray-400',
+                                            render: (drug: Drug) => (
+                                                 <div className="tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center">
+                                                    {drug.stock}
+                                                </div>
+                                            )
+                                        }
+                                    ]}
+                                    isVisible={showSuggestions && !!search.trim()}
+                                    emptyMessage={t.noResults}
+                               />
                              </div>
                         </div>
 
@@ -1168,79 +1171,46 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                             <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">{t.selectSupplier}</label>
                             
                             <div ref={supplierDropdownRef} className="relative">
-                                <input
-                                    type="text"
-                                    placeholder={t.placeholders?.searchSupplier || 'Search and select supplier...'}
-                                    value={supplierSearch || (selectedSupplierId ? suppliers.find(s => s.id === selectedSupplierId)?.name : '')}
-                                    onChange={(e) => {
-                                        setSupplierSearch(e.target.value);
+                                <SearchInput
+                                    value={supplierSearch || (selectedSupplierId ? suppliers.find(s => s.id === selectedSupplierId)?.name : '') || ''}
+                                    onSearchChange={(val) => {
+                                        setSupplierSearch(val);
                                         setSelectedSupplierId('');
                                         if (!isSupplierOpen) setIsSupplierOpen(true);
                                     }}
                                     onFocus={() => setIsSupplierOpen(true)}
-                                    onBlur={() => {
-                                        setTimeout(() => {
-                                            if (!selectedSupplierId && supplierSearch) {
-                                                const match = suppliers.find(s => 
-                                                    s.name.toLowerCase() === supplierSearch.toLowerCase()
-                                                );
-                                                if (match) {
-                                                    setSelectedSupplierId(match.id);
-                                                    setSupplierSearch('');
-                                                } else {
-                                                    setSupplierSearch('');
-                                                }
-                                            }
-                                            setIsSupplierOpen(false);
-                                        }, 200);
-                                    }}
+                                    // Clear handled via value update, explicit functionality if needed
                                     dir={supplierSearchDir}
-                                    autoComplete="off"
-                                    className="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm h-[42px]"
+                                    placeholder={t.placeholders?.searchSupplier || 'Search and select supplier...'}
+                                    className={`w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 h-[42px] focus:ring-${color}-500 focus:border-${color}-500`}
                                 />
                                 
-                                {selectedSupplierId && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setSelectedSupplierId('');
-                                            setSupplierSearch('');
-                                        }}
-                                        className="absolute end-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                                    >
-                                        <span className="material-symbols-rounded text-lg">close</span>
-                                    </button>
-                                )}
-                                
-                                {isSupplierOpen && filteredSuppliers.length > 0 && (
-                                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl max-h-60 overflow-y-auto">
-                                        {filteredSuppliers.map(supplier => (
-                                            <div
-                                                key={supplier.id}
-                                                onMouseDown={(e) => e.preventDefault()} 
-                                                onClick={() => {
-                                                    setSelectedSupplierId(supplier.id);
-                                                    setSupplierSearch('');
-                                                    setIsSupplierOpen(false);
-                                                }}
-                                                className={`px-3 py-2 cursor-pointer hover:bg-${color}-50 dark:hover:bg-${color}-900/20 transition-colors ${
-                                                    selectedSupplierId === supplier.id ? `bg-${color}-50 dark:bg-gray-700/20` : ''
-                                                }`}
-                                            >
-                                                <div className="flex items-center justify-between">
-                                                    <span className="font-medium text-sm">{supplier.name}</span>
-                                                    <span className="text-xs text-gray-400 font-mono">{supplier.id}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                
-                                {isSupplierOpen && supplierSearch && filteredSuppliers.length === 0 && (
-                                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 text-center text-sm text-gray-500">
-                                        {t.noResults || 'No suppliers found'}
-                                    </div>
-                                )}
+                                <SearchDropdown
+                                    results={filteredSuppliers}
+                                    onSelect={(supplier) => {
+                                        setSelectedSupplierId(supplier.id);
+                                        setSupplierSearch('');
+                                        setIsSupplierOpen(false);
+                                    }}
+                                    columns={[
+                                        {
+                                            header: t.headers?.name || 'Name',
+                                            width: 'flex-1',
+                                            className: 'text-gray-900 dark:text-gray-400',
+                                            render: (supplier: Supplier) => (
+                                                <span className="truncate">{supplier.name}</span>
+                                            )
+                                        },
+                                        {
+                                            header: t.headers?.codes || 'Codes',
+                                            width: 'w-24 shrink-0',
+                                            className: 'text-gray-900 dark:text-gray-400 justify-center text-center',
+                                            render: (supplier: Supplier) => supplier.id
+                                        }
+                                    ]}
+                                    isVisible={isSupplierOpen}
+                                    emptyMessage={t.noResults || 'No suppliers found'}
+                                />
                             </div>
                        </div>
 
@@ -1269,7 +1239,10 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
                                             <span className="material-symbols-rounded text-gray-400 text-lg">inventory_2</span>
                                             <div className="flex flex-col">
                                                 <span className="text-[9px] text-gray-400 uppercase font-bold leading-none mb-0.5">{t.headers?.stock || 'Stock'}</span>
-                                                <span className="text-xs font-bold text-gray-700 dark:text-gray-200 font-mono leading-none">{formatStock(invItem.stock, invItem.unitsPerPack)}</span>
+                                                <span className="text-xs font-bold text-gray-700 dark:text-gray-200 font-mono leading-none">
+                                                    {Math.floor(invItem.stock / invItem.unitsPerPack)} {t.pack || 'Packs'}
+                                                    {(invItem.stock % invItem.unitsPerPack) > 0 && ` + ${invItem.stock % invItem.unitsPerPack} ${t.unit || 'Units'}`}
+                                                </span>
                                             </div>
                                        </div>
 

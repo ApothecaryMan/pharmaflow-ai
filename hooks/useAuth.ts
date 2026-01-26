@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ViewState } from '../types';
 import { authService } from '../services/auth/authService';
 import { ROUTES, TEST_ROUTES } from '../config/routes';
-import { ToastState } from './useAppState';
+import { useToast } from '../context';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -15,14 +15,16 @@ export interface AuthState {
 interface UseAuthParams {
   view: ViewState;
   setView: React.Dispatch<React.SetStateAction<ViewState>>;
-  setToast: React.Dispatch<React.SetStateAction<ToastState | null>>;
 }
 
 /**
  * Hook for managing authentication state and route guards.
  * Handles login/logout state, auth checking, and view resolution.
  */
-export function useAuth({ view, setView, setToast }: UseAuthParams): AuthState {
+export function useAuth({ view, setView }: UseAuthParams): AuthState {
+  // Use Toast Hook
+  const { error } = useToast();
+  
   // Optimistic Init: Check session synchronously to prevent "flash of loading"
   const [isAuthenticated, setIsAuthenticated] = useState(() => authService.hasSession());
   const [isAuthChecking, setIsAuthChecking] = useState(false);
@@ -98,14 +100,13 @@ export function useAuth({ view, setView, setToast }: UseAuthParams): AuthState {
         console.warn(`[Auth] Redirecting from ${view} to ${correctView}`);
       }
       if (import.meta.env.PROD && TEST_ROUTES.includes(view)) {
-        setToast({ 
-          message: 'Access Denied: Developer routes are disabled.', 
-          type: 'error' 
-        });
+      if (import.meta.env.PROD && TEST_ROUTES.includes(view)) {
+        error('Access Denied: Developer routes are disabled.');
+      }
       }
       setView(correctView);
     }
-  }, [view, isAuthChecking, resolveView, setView, setToast]);
+  }, [view, isAuthChecking, resolveView, setView, error]);
 
   return {
     isAuthenticated,

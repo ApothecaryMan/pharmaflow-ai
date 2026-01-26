@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ViewState } from './types';
-import { Toast } from './components/common/Toast';
 import { TRANSLATIONS } from './i18n/translations';
 import { SidebarContent } from './components/layout/SidebarContent';
 import { Navbar } from './components/layout/Navbar';
@@ -71,7 +70,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     view, setView,
     activeModule, setActiveModule,
     dashboardSubView, setDashboardSubView,
-    toast, setToast,
     mobileMenuOpen, setMobileMenuOpen,
     tip,
     profileImage, setProfileImage,
@@ -119,7 +117,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setDashboardSubView,
     resolveView,
     setMobileMenuOpen,
-    setToast,
     hideInactiveModules,
     developerMode,
   });
@@ -139,7 +136,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     purchases, setPurchases,
     returns, setReturns,
     customers, setCustomers,
-    setToast,
     currentEmployeeId,
     employees,
     isLoading,
@@ -484,13 +480,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       </div>
     
       {/* Toast Notifications */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
     </GlobalContextMenuWrapper>
     </ContextMenuProvider>
   );
@@ -503,8 +492,7 @@ const App: React.FC = () => {
     // 2. Initialize Auth State
     const authState = useAuth({
         view: appState.view,
-        setView: appState.setView,
-        setToast: appState.setToast
+        setView: appState.setView
     });
     
     // 3. Settings Hook (for Language)

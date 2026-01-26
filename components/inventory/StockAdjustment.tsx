@@ -1,7 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
+import { SearchDropdown } from '../common/SearchDropdown';
 import { FilterDropdown } from '../common/FilterDropdown';
+import { useToast } from '../../context';
+import { DatePicker } from '../common/DatePicker';
 import { Drug } from '../../types';
 import { parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
@@ -19,8 +22,7 @@ import { getDisplayName, getFullDisplayName } from '../../utils/drugDisplayName'
 import { TanStackTable } from '../common/TanStackTable';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { ColumnDef } from '@tanstack/react-table';
-import { SmallCard } from '../common/SmallCard'; // Assuming exists or similar
-import { FloatingInput } from '../common/FloatingInput';
+import { StockAdjustmentPrint } from './StockAdjustmentPrint';
 
 interface StockAdjustmentProps {
   inventory: Drug[];
@@ -51,12 +53,16 @@ interface BatchSelectionModalProps {
 export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onUpdateInventory, color = 'blue', t }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [adjustments, setAdjustments] = useState<AdjustmentItem[]>([]);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const { success, error, info, warning } = useToast();
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [history, setHistory] = useState<StockMovement[]>([]);
+  const [lastTransaction, setLastTransaction] = useState<StockMovement[]>([]);
   
   // State
   const searchInputRef = React.useRef<HTMLInputElement>(null);
+  
+  // RTL Detection
+  const isRTL = t.direction === 'rtl' || t.lang === 'ar' || (t.title && /[\u0600-\u06FF]/.test(t.title));
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { playSuccess, playError, playBeep } = usePosSounds();
 
@@ -68,6 +74,25 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
   // View State
   const [activeView, setActiveView] = useState<'adjust' | 'history'>('adjust');
   const [historyTab, setHistoryTab] = useState<'all' | 'pending'>('all');
+  const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  const [pharmacyName, setPharmacyName] = useState('PharmaFlow AI');
+
+  // Load pharmacy name from settings (ReceiptDesigner)
+  React.useEffect(() => {
+    try {
+      const savedTemplates = localStorage.getItem('receipt_templates');
+      const activeId = localStorage.getItem('receipt_active_template_id');
+      if (savedTemplates && activeId) {
+        const templates = JSON.parse(savedTemplates);
+        const active = templates.find((t: any) => t.id === activeId);
+        if (active && active.options?.storeName) {
+          setPharmacyName(active.options.storeName);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load pharmacy name", e);
+    }
+  }, []);
 
   // Load history on mount or tab change
   const loadHistory = async () => {
@@ -76,19 +101,20 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
         if (historyTab === 'pending') {
             filters.status = 'pending';
         }
-        // If 'all', we might want to see approved and rejected, or just everything.
-        // Let's keep it simple.
+        if (dateRange.from) filters.startDate = dateRange.from;
+        if (dateRange.to) filters.endDate = dateRange.to;
         
         const data = await stockMovementService.getHistory(filters);
         setHistory(data.slice(0, 50)); 
     } catch (e) {
         console.error('Failed to load history', e);
+        error(t.common?.error || 'Failed to load history');
     }
   };
 
   React.useEffect(() => {
     loadHistory();
-  }, [historyTab]);
+  }, [historyTab, dateRange]);
 
   const handleApprove = async (movement: StockMovement) => {
       try {
@@ -115,11 +141,15 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
           
           // 3. Refresh
           loadHistory();
+          success('Adjustment approved successfully');
+          playSuccess();
           // Also need to refresh global inventory? onUpdateInventory won't trigger from here easily 
           // unless we refetch everything.
           // For now, let's rely on history update.
       } catch (e) {
           console.error('Approve failed', e);
+          error('Failed to approve adjustment');
+          playError();
       }
   };
 
@@ -128,8 +158,11 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
            const currentEmployeeId = storage.get<string>(StorageKeys.CURRENT_EMPLOYEE_ID, 'user');
            await stockMovementService.rejectMovement(movement.id, currentEmployeeId);
            loadHistory();
+           info('Adjustment rejected');
       } catch (e) {
           console.error('Reject failed', e);
+          error('Failed to reject adjustment');
+          playError();
       }
   };
 
@@ -166,8 +199,8 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
     const drug = inventory.find(d => d.barcode === barcode || d.internalCode === barcode);
 
     if (!drug) {
+        error(t.inventory?.notFound || 'Item not found');
         playError();
-        // Maybe show toast? For now just visual cue could be added
         return;
     }
 
@@ -242,8 +275,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
 
         if (addedCount > 0) {
             setAdjustments(newAdjustments);
-            if(addedCount > 0) playSuccess();
+            success(`Successfully imported ${addedCount} items`);
+            playSuccess();
         } else {
+            warning('No valid items found in file');
             playError();
         }
     };
@@ -395,16 +430,48 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
                 });
 
                 // Update Batch/Inventory ONLY if approved
-                if (status === 'approved') {
+        if (status === 'approved') {
                      if (item.batchId) {
                         await batchService.updateBatchQuantity(item.batchId, item.difference);
                     }
                 }
             }
         }
+        
+        const newTransactionMovements = adjustments
+            .filter(item => item.difference !== 0)
+            .map(item => ({
+                id: idGenerator.generate('generic'), 
+                drugId: item.drugId,
+                drugName: item.drugName,
+                branchId: '',
+                type: 'adjustment' as const,
+                quantity: item.difference,
+                previousStock: item.currentStock,
+                newStock: item.newStock,
+                reason: item.reason,
+                notes: item.notes,
+                transactionId: transactionId,
+                batchId: item.batchId,
+                expiryDate: item.expiryDate,
+                performedBy: currentEmployeeId,
+                performedByName: currentEmployeeName,
+                status: status as "approved" | "pending" | "rejected",
+                timestamp: new Date().toISOString()
+            }));
+            
+        setLastTransaction(newTransactionMovements);
+
+        if (isManager) {
+            success('Inventory updated successfully');
+        } else {
+            success('Adjustments submitted for approval');
+        }
+        playSuccess();
     } catch (error) {
         console.error('Failed to log movements:', error);
-        // Continue to update UI even if logging fails? Or show error?
+        error('Failed to save adjustments');
+        playError();
     }
 
     // Update inventory state (Client Side) - ONLY IF APPROVED
@@ -458,7 +525,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
         return (
           <div>
              <div className="font-bold text-sm text-gray-900 dark:text-gray-100">{displayName}</div>
-             <div className="text-[10px] text-gray-500 font-mono">{item.drugId}</div>
+             <div className="text-sm text-gray-500">{item.drugId}</div>
           </div>
         );
       },
@@ -466,18 +533,18 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
     },
     {
       accessorKey: 'expiryDate',
-      header: 'Batch / Expiry',
+      header: t.barcodePrinter.tableHeaders.expiry,
       cell: info => {
         const item = info.row.original;
         if (!item.expiryDate && !item.batchId) return <span className="text-gray-400 text-xs italic">Generic Stock</span>;
         
         return (
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
-              Exp: {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'N/A'}
-            </span>
+            <div className="text-sm text-gray-900 dark:text-gray-100">
+              {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'N/A'}
+            </div>
             {item.batchId && (
-              <span className="text-[10px] text-gray-400 font-mono">
+              <span className="text-sm text-gray-400">
                 #{item.batchId.substring(0, 8)}
               </span>
             )}
@@ -490,7 +557,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
       accessorKey: 'currentStock',
       header: t.stockAdjustment.table.current,
       cell: info => (
-        <span className="px-2 py-1 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs font-mono font-bold tabular-nums text-gray-600 dark:text-gray-400">
+        <span className="px-2 py-0.5 rounded-md border border-gray-200 dark:border-gray-700 bg-transparent text-sm tabular-nums text-gray-500 dark:text-gray-400">
              {info.getValue() as number}
         </span>
       ),
@@ -503,7 +570,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
           <input
             type="number"
             inputMode="decimal"
-            className={`w-20 text-center p-1 rounded-md border text-sm font-bold tabular-nums outline-none focus:ring-2 ring-blue-500/20 transition-all
+            className={`w-20 text-center px-2 py-1 rounded-md border text-sm tabular-nums outline-none focus:ring-2 ring-blue-500/20 transition-colors
                 ${info.row.original.newStock !== info.row.original.currentStock 
                     ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/10 text-amber-700' 
                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'}`}
@@ -569,7 +636,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
         cell: info => (
             <button 
                 onClick={() => removeAdjustment(info.row.index)}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                className="flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors p-1"
                 title={t.common?.delete || 'Delete'}
             >
                 <span className="material-symbols-rounded text-lg">delete</span>
@@ -620,7 +687,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
         return (
             <div>
                 <div className="font-bold text-sm text-gray-900 dark:text-gray-100">{displayName}</div>
-                <div className="text-[10px] text-gray-400 font-mono mt-0.5 uppercase tracking-tight">
+                <div className="text-sm text-gray-400 mt-0.5 uppercase tracking-tight">
                     {drug?.barcode || item.drugId}
                 </div>
             </div>
@@ -630,7 +697,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
      },
      {
         accessorKey: 'batchId',
-        header: 'Batch / Expiry',
+        header: t.barcodePrinter.tableHeaders.expiry,
         cell: info => {
             const item = info.row.original;
             if (!item.batchId) return <span className="text-gray-400 text-xs italic">-</span>;
@@ -638,12 +705,12 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
             return (
                 <div className="flex flex-col gap-0.5">
                     {/* Expiry Date (Top) */}
-                    <div className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
+                    <div className="text-sm text-gray-900 dark:text-gray-100">
                         {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'Generic'}
                     </div>
                     {/* Batch ID (Underneath) */}
-                    <span className="text-[10px] text-gray-500 font-mono">
-                        Batch: {item.batchId?.substring(0, 8) || '-'}
+                    <span className="text-sm text-gray-500">
+                        {item.batchId?.substring(0, 8) || '-'}
                     </span>
                 </div>
             );
@@ -676,19 +743,19 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
      },
       {
           accessorKey: 'performedByName',
-          header: 'User',
+          header: t.intelligence.audit.columns.employee,
           cell: info => <span className="text-xs text-gray-500">{info.getValue() as string || info.row.original.performedBy}</span>
       },
       {
           id: 'actions',
-          header: t.common?.status || 'Status',
+          header: '',
           cell: info => {
               const item = info.row.original;
               const status = item.status;
               const isPending = status === 'pending';
               
               return (
-                  <div className="flex items-center justify-end gap-3">
+                  <div className="flex items-center justify-end gap-3 w-full">
                       {/* Status Badge */}
                       <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-transparent border ${
                           isPending 
@@ -700,7 +767,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
                           <span className="material-symbols-rounded text-sm">
                               {isPending ? 'schedule' : status === 'rejected' ? 'cancel' : 'check_circle'}
                           </span>
-                          {isPending ? 'Pending' : status}
+                          {isPending ? t.purchases.status.pending : status}
                       </span>
 
                       {/* Action Buttons (only if pending) */}
@@ -710,13 +777,13 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
                                  onClick={() => handleApprove(item)}
                                  className="p-1 px-2 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-bold transition-colors shadow-sm"
                              >
-                                 Approve
+                                 {t.pendingApproval.approve}
                              </button>
                              <button 
                                  onClick={() => handleReject(item)}
                                  className="p-1 px-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold transition-colors shadow-sm"
                              >
-                                 Reject
+                                 {t.pendingApproval.reject}
                              </button>
                           </div>
                       )}
@@ -730,6 +797,43 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
   const handlePrint = () => {
     window.print();
   };
+
+  // Search Columns Definition
+    const searchColumns = useMemo(() => [
+        {
+            header: t.inventory?.headers?.codes || 'Codes',
+            width: 'w-32 shrink-0',
+            className: 'text-gray-900 dark:text-gray-400',
+            render: (drug: Drug) => drug.barcode || drug.internalCode || '---'
+        },
+        {
+            header: t.stockAdjustment?.table?.product || 'Name',
+            width: 'flex-1',
+            className: 'text-gray-900 dark:text-gray-400',
+            render: (drug: Drug) => getDisplayName(drug)
+        },
+        {
+            header: t.inventory?.headers?.expiry || 'Expiry',
+            width: 'w-24 shrink-0',
+            className: 'justify-center text-center text-gray-900 dark:text-gray-400',
+            render: (drug: Drug) => {
+                if (!drug.expiryDate) return '---';
+                const date = new Date(drug.expiryDate);
+                if (isNaN(date.getTime())) return drug.expiryDate;
+                return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getFullYear()).slice(-2)}`;
+            }
+        },
+        {
+            header: t.inventory?.headers?.stock || 'Stock',
+            width: 'w-[60px] shrink-0',
+            className: 'justify-center text-center text-gray-900 dark:text-gray-400',
+            render: (drug: Drug) => (
+                 <div className="tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center">
+                    {drug.stock}
+                </div>
+            )
+        }
+    ], [t]);
 
   return (
     <div className="h-full flex flex-col space-y-4 animate-fade-in">
@@ -745,8 +849,8 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
              <div className="self-start md:self-center">
                  <SegmentedControl
                     options={[
-                        { label: t.stockAdjustment?.adjustStock || 'Adjust Stock', value: 'adjust' },
-                        { label: t.stockAdjustment?.historyLog || 'History Log', value: 'history' }
+                        { label: t.stockAdjustment.adjustStock, value: 'adjust' },
+                        { label: t.stockAdjustment.historyLog, value: 'history' }
                     ]}
                     value={activeView}
                     onChange={(val) => setActiveView(val as 'adjust' | 'history')}
@@ -775,61 +879,18 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
                                 }
                             }}
                         />
-                         {/* Search Results Dropdown */}
-                         {searchTerm && searchResults.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-800 max-h-[400px] overflow-y-auto ring-1 ring-black/5 dark:ring-white/5 z-50">
-                                    {searchResults.map(drug => (
-                                        <button
-                                            key={drug.id}
-                                            onClick={() => handleAddItem(drug)}
-                                            className="w-full text-start p-3 hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-50 dark:border-gray-800 last:border-0 transition-colors group"
-                                        >
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <div className="font-bold text-sm text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                                        {getDisplayName(drug)}
-                                                    </div>
-                                                    <div className="text-xs text-gray-500">{drug.genericName}</div>
-                                                </div>
-                                                <div className="text-xs font-mono font-bold tabular-nums bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
-                                                    {t.stockAdjustment.table.current}: {drug.stock}
-                                                </div>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                             {searchTerm && searchResults.length === 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-4 text-center text-gray-500 text-sm z-50">
-                                    {t.inventory.noResults}
-                                </div>
-                            )}
+                        <SearchDropdown 
+                            results={searchResults}
+                            onSelect={handleAddItem}
+                            columns={searchColumns}
+                            emptyMessage={t.inventory?.noResults}
+                            isVisible={!!searchTerm}
+                        />
                     </div>
                 </div>
              )}
 
-             {/* Actions - Context aware */}
-             <div className={`flex items-center gap-2 ${activeView === 'history' ? 'ml-auto' : ''}`}>
-                  {/* Print Audit Report */}
-                  <button
-                    onClick={handlePrint}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    title="Print Audit Report"
-                  >
-                    <span className="material-symbols-rounded text-lg">print</span>
-                    Print
-                  </button>
-
-                  {/* Import CSV */}
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95
-                        bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300
-                        dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 dark:hover:bg-blue-900/40`}
-                  >
-                    <span className="material-symbols-rounded text-lg">upload_file</span>
-                    Import
-                  </button>
+             {activeView === 'adjust' && (
                  <input
                      ref={fileInputRef}
                      type="file"
@@ -837,7 +898,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
                      className="hidden"
                      onChange={handleFileUpload}
                  />
-             </div>
+             )}
           </div>
         </div>
 
@@ -850,33 +911,51 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
 
                 {/* Bottom Row: Adjustment Table (Full Width) */}
                 <div className={`flex-1 ${CARD_BASE} rounded-3xl flex flex-col overflow-hidden shadow-lg border-0 ring-1 ring-gray-200 dark:ring-gray-800`}>
-                    <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm">
+                    <div className="p-4 flex justify-between items-center">
                         <div className="flex items-center gap-2">
                             <span className="material-symbols-rounded text-blue-600 dark:text-blue-400">edit_note</span>
                             <h3 className="font-bold text-gray-800 dark:text-gray-200">{t.stockAdjustment.title}</h3>
-                            <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-bold text-gray-500">
+                             <span className="px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-700 bg-transparent text-xs font-bold text-gray-500">
                                 {adjustments.length}
                             </span>
                         </div>
-                        <div className="flex gap-2">
-                             <button 
-                                onClick={() => setAdjustments([])}
+                        <div className="flex gap-2 items-center">
+                              {/* Import/Print Actions */}
+                             <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/10 transition-all active:enabled:scale-95"
+                             >
+                                {t.global.actions.import}
+                                <span className="material-symbols-rounded text-base">upload_file</span>
+                             </button>
+                             <button
+                                onClick={handlePrint}
+                                className="flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:enabled:scale-95"
+                             >
+                                {t.global.actions.print}
+                                <span className="material-symbols-rounded text-base">print</span>
+                             </button>
+                             
+                             <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+
+                            <button 
+                                onClick={setAdjustments.bind(null, [])}
                                 disabled={adjustments.length === 0}
-                                className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 transition-colors"
+                                className="text-xs font-bold text-gray-500 enabled:hover:text-red-600 disabled:opacity-30 transition-colors px-2"
                             >
                                 {t.stockAdjustment.clear}
                             </button>
                             <button 
                                 onClick={handleSave}
                                 disabled={adjustments.length === 0}
-                                className={`px-6 py-2 rounded-xl text-xs font-bold text-white shadow-lg shadow-${color}-500/20 bg-${color}-600 hover:bg-${color}-700 disabled:opacity-50 disabled:shadow-none transition-all transform active:scale-95`}
+                                className={`px-6 py-2 rounded-xl text-xs font-bold text-white bg-${color}-600 enabled:hover:bg-${color}-700 disabled:opacity-40 transition-all active:enabled:scale-95 shadow-md shadow-${color}-500/20`}
                             >
                                 {t.stockAdjustment.save}
                             </button>
                         </div>
                     </div>
 
-                    <div className="flex-1 relative bg-white dark:bg-gray-900">
+                    <div className="flex-1 relative bg-white dark:bg-gray-900 overflow-y-auto">
                          <TanStackTable
                             data={adjustments}
                             columns={columns}
@@ -890,40 +969,76 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
         ) : (
              /* History / Audit View */
             <div className={`flex-1 min-h-0 flex flex-col ${CARD_BASE} rounded-3xl shadow-lg border-0 ring-1 ring-gray-200 dark:ring-gray-800 overflow-hidden`}>
-                 <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm">
+                  <div className="p-4 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 border-b border-gray-100 dark:border-gray-800">
                     <div className="flex items-center gap-2">
                         <span className="material-symbols-rounded text-blue-600 dark:text-blue-400">history</span>
                         <h3 className="font-bold text-gray-800 dark:text-gray-200">{t.stockAdjustment.history || "Adjustment History"}</h3>
                     </div>
-                     <div className="flex items-center gap-3">
-                        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-                             <button 
-                                onClick={() => setHistoryTab('all')}
-                                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${historyTab === 'all' ? 'bg-white dark:bg-gray-700 shadow text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                All
-                            </button>
-                            <button 
-                                onClick={() => setHistoryTab('pending')}
-                                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${historyTab === 'pending' ? 'bg-white dark:bg-gray-700 shadow text-amber-600' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                Pending
-                            </button>
-                        </div>
+                     
+                     <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+                          {/* Refresh */}
                          <button
                             onClick={loadHistory}
-                            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                          >
                             <span className="material-symbols-rounded text-lg">refresh</span>
                          </button>
+
+                         {/* Print */}
+                         <button
+                            onClick={handlePrint}
+                            className="flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 h-8"
+                         >
+                            {t.global.actions.print}
+                            <span className="material-symbols-rounded text-base">print</span>
+                         </button>
+
+                         {/* Date Range */}
+                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-1 rounded-full border border-gray-200 dark:border-gray-700 h-8">
+                            <DatePicker
+                                value={dateRange.from}
+                                onChange={(val) => setDateRange(prev => ({ ...prev, from: val }))}
+                                label={t.common?.fromDate || "From"}
+                                color={color}
+                                icon="calendar_today"
+                                className="!py-0.5 !px-2 !text-xs border-0 bg-transparent !h-6"
+                            />
+                            <span className="text-gray-300 dark:text-gray-600 rtl:rotate-180 flex items-center">
+                                <span className="material-symbols-rounded text-[14px]">arrow_forward</span>
+                            </span>
+                            <DatePicker
+                                value={dateRange.to}
+                                onChange={(val) => setDateRange(prev => ({ ...prev, to: val }))}
+                                label={t.common?.toDate || "To"}
+                                color={color}
+                                icon="event"
+                                className="!py-0.5 !px-2 !text-xs border-0 bg-transparent !h-6"
+                            />
+                        </div>
+
+                         {/* Filter Pending/All (Right Aligned in mobile, auto in desktop) */}
+                        <div className="ml-auto xl:ml-0 flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg h-8 items-center">
+                            <button 
+                                onClick={setHistoryTab.bind(null, 'pending')}
+                                className={`px-3 py-0.5 text-xs font-bold rounded-md transition h-full flex items-center ${historyTab === 'pending' ? 'bg-white dark:bg-gray-700 shadow-sm text-amber-600' : 'text-gray-500 hover:text-amber-600 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'}`}
+                            >
+                                {t.purchases.status.pending}
+                            </button>
+                             <button 
+                                onClick={setHistoryTab.bind(null, 'all')}
+                                className={`px-3 py-0.5 text-xs font-bold rounded-md transition h-full flex items-center ${historyTab === 'all' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'}`}
+                            >
+                                {t.global.actions.all}
+                            </button>
+                        </div>
                      </div>
                  </div>
                  
-                 <div className="flex-1 relative bg-white dark:bg-gray-900">
+                 <div className="flex-1 relative bg-white dark:bg-gray-900 overflow-y-auto">
                     <TanStackTable
                         data={history}
                         columns={historyColumns}
-                        emptyMessage={t.stockAdjustment.noRecent || "No history entries found."}
+                        emptyMessage={t.stockAdjustment.noHistory}
                         color={color}
                         lite={true}
                     />
@@ -952,14 +1067,14 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
                         >
                             <div>
                                 <div className="text-sm font-bold text-gray-800 dark:text-gray-200">
-                                    Expires: {new Date(batch.expiryDate).toLocaleDateString()}
+                                    {t.inventory.headers.expiry}: {new Date(batch.expiryDate).toLocaleDateString()}
                                 </div>
                                 <div className="text-xs text-gray-500 font-mono">
-                                    Batch ID: {batch.id.substring(0, 8)}...
+                                    ID: {batch.id.substring(0, 8)}...
                                 </div>
                             </div>
-                            <div className="text-sm font-bold tabular-nums bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded-lg">
-                                Qty: {batch.quantity}
+                             <div className="text-sm tabular-nums border border-gray-200 dark:border-gray-800 bg-transparent px-2 py-0.5 rounded-lg">
+                                {t.barcodePrinter.tableHeaders.qty}: {batch.quantity}
                             </div>
                         </button>
                     ))}
@@ -968,62 +1083,23 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
                         onClick={() => addAdjustmentItem(batchSelectionDrug, null)}
                          className="w-full text-center p-3 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-colors text-sm font-medium"
                     >
-                        Adjust Total Stock (No Batch)
+                        {t.inventory.actionsMenu.adjustStock} ({t.global.actions.all})
                     </button>
                 </div>
             </div>
         </Modal>
       )}
 
-      {/* Printable Section (Hidden on Screen) */}
-      <div className="hidden print:block fixed inset-0 bg-white z-[100] p-8">
-        <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">PharmaFlow AI - Stock Adjustment Audit</h1>
-            <p className="text-sm text-gray-500">Generated on {new Date().toLocaleString()}</p>
-        </div>
-        
-        <table className="w-full text-left border-collapse mb-8 text-sm">
-            <thead>
-                <tr className="border-b-2 border-gray-800 text-gray-900">
-                    <th className="py-2">Item</th>
-                    <th className="py-2 text-center">Batch</th>
-                    <th className="py-2 text-center">Old</th>
-                    <th className="py-2 text-center">New</th>
-                    <th className="py-2 text-center">Diff</th>
-                    <th className="py-2">Reason</th>
-                    <th className="py-2">User</th>
-                </tr>
-            </thead>
-            <tbody>
-                {history.slice(0, 20).map((item) => (
-                    <tr key={item.id} className="border-b border-gray-200">
-                        <td className="py-2 font-medium">{item.drugName}</td>
-                        <td className="py-2 text-center font-mono text-xs">{item.batchId ? 'BATCHED' : '-'}</td>
-                        <td className="py-2 text-center">{item.previousStock}</td>
-                        <td className="py-2 text-center">{item.newStock}</td>
-                        <td className="py-2 text-center font-bold">
-                            {item.quantity > 0 ? '+' : ''}{item.quantity}
-                        </td>
-                        <td className="py-2 italic text-gray-600">{item.reason}</td>
-                         <td className="py-2 text-xs text-gray-500">
-                            {item.performedByName || item.performedBy}
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
 
-        <div className="mt-12 flex justify-between items-end">
-            <div className="text-center">
-                <div className="w-48 border-b border-gray-400 mb-2"></div>
-                <p className="text-sm font-bold text-gray-900">Manager Signature</p>
-            </div>
-            <div className="text-center">
-                <div className="w-48 border-b border-gray-400 mb-2"></div>
-                <p className="text-sm font-bold text-gray-900">Auditor Signature</p>
-            </div>
-        </div>
-      </div>
+
+      {/* Printable Section (Hidden on Screen) */}
+      <StockAdjustmentPrint 
+        isRTL={isRTL}
+        t={t}
+        pharmacyName={pharmacyName}
+        activeView={activeView}
+        data={activeView === 'history' ? history : lastTransaction}
+      />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Drug } from '../../types';
 import { SearchInput } from '../common/SearchInput';
+import { SearchDropdown } from '../common/SearchDropdown';
 import { printLabels, PrintLabelItem } from './LabelPrinter';
 import { useSmartDirection } from '../common/SmartInputs';
 import { useContextMenu } from '../common/ContextMenu';
@@ -345,42 +346,49 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
             />
           
             {/* Suggestions Dropdown */}
-            {showSuggestions && search.trim() && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-2xl overflow-hidden z-[100]">
-                <div className="max-h-[300px] overflow-y-auto p-1 custom-scrollbar">
-                  {searchResults.length > 0 ? (
-                    searchResults.map((drug, index) => (
-                      <button
-                        key={drug.id}
-                        onClick={() => addToQueue(drug)}
-                        className={`w-full text-left p-3 flex items-center gap-3 transition-all rounded-lg ${
-                            index === selectedSuggestionIndex 
-                            ? 'bg-blue-50 dark:bg-blue-900/30 ring-2 ring-blue-500/20' 
-                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                        }`}
-                        dir="ltr"
-                      >
-                        <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-300 shrink-0">
-                          {drug.internalCode || drug.barcode || drug.id}
-                        </span>
-                        <span className={`font-medium text-gray-900 dark:text-white flex-1 truncate ${textTransform === 'uppercase' ? 'uppercase' : ''}`}>
-                          {drug.name} <span className="opacity-75 font-normal">{drug.dosageForm}</span>
-                        </span>
-                        {drug.expiryDate && (
-                          <span className="text-xs text-gray-400 shrink-0 whitespace-nowrap">
-                            {drug.expiryDate}
-                          </span>
-                        )}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 font-medium">
-                      {t.pos?.noResults || 'No results found'}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            <SearchDropdown
+                results={searchResults}
+                onSelect={(drug) => {
+                    addToQueue(drug);
+                    setSearch('');
+                    // setShowSuggestions(false); // Handled by SearchDropdown logic if needed, or parent
+                }}
+                columns={[
+                    {
+                        header: t.inventory?.headers?.codes || 'Codes',
+                        width: 'w-32 shrink-0',
+                        className: 'text-gray-900 dark:text-gray-400',
+                        render: (drug: Drug) => drug.internalCode || drug.barcode || drug.id
+                    },
+                    {
+                        header: t.stockAdjustment?.table?.product || 'Name',
+                        width: 'flex-1',
+                        className: 'text-gray-900 dark:text-gray-400',
+                        render: (drug: Drug) => (
+                            <span className={`truncate ${textTransform === 'uppercase' ? 'uppercase' : ''}`}>
+                                {drug.name} <span className="opacity-75 font-normal">{drug.dosageForm}</span>
+                            </span>
+                        )
+                    },
+                    {
+                        header: t.inventory?.headers?.expiry || 'Expiry',
+                        width: 'w-24 shrink-0',
+                        className: 'text-center justify-center text-gray-900 dark:text-gray-400',
+                        render: (drug: Drug) => {
+                            if (!drug.expiryDate) return null;
+                            const date = new Date(drug.expiryDate);
+                            if (isNaN(date.getTime())) return drug.expiryDate;
+                            return (
+                                <span className="text-xs whitespace-nowrap">
+                                    {`${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getFullYear()).slice(-2)}`}
+                                </span>
+                            );
+                        }
+                    }
+                ]}
+                isVisible={showSuggestions && !!search.trim()}
+                emptyMessage={t.pos?.noResults}
+            />
           </div>
           
           {/* Total Labels Badge */}

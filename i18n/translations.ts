@@ -70,7 +70,10 @@ export const TRANSLATIONS = {
         help: 'Help & Support',
         close: 'Close',
         asc: 'Ascending',
-        desc: 'Descending'
+        desc: 'Descending',
+        all: 'All',
+        import: 'Import',
+        print: 'Print'
       },
       datePicker: {
         cancel: 'Cancel',
@@ -197,7 +200,7 @@ export const TRANSLATIONS = {
       clear: 'Clear',
       history: 'Adjustment History',
       table: {
-        product: 'Product',
+        product: 'Name',
         current: 'Current Stock',
         new: 'New Stock',
         diff: 'Difference',
@@ -214,7 +217,11 @@ export const TRANSLATIONS = {
         other: 'Other'
       },
       success: 'Stock adjustment saved successfully!',
-      empty: 'No items to adjust. Search and add products.'
+      empty: 'No items to adjust. Search and add products.',
+      noHistory: 'No history records found for the selected period.',
+      noRecent: 'No recent transaction to print. Perform an adjustment first.',
+      historyLog: 'History Log',
+      adjustStock: 'Adjust Stock'
     },
     barcodePrinter: {
       title: 'Barcode Printer',
@@ -1972,7 +1979,10 @@ export const TRANSLATIONS = {
         date: 'التاريخ',
         orderId: 'رقم الطلب',
         orderTotal: 'إجمالي الطلب',
-        actions: 'إجراءات'
+        actions: 'إجراءات',
+        all: 'الكل',
+        import: 'استيراد',
+        print: 'طباعة'
       },
       datePicker: {
         cancel: 'إلغاء',
@@ -2102,7 +2112,7 @@ export const TRANSLATIONS = {
       clear: 'مسح',
       history: 'سجل التعديلات',
       table: {
-        product: 'المنتج',
+        product: 'الاسم',
         current: 'المخزون الحالي',
         new: 'المخزون الجديد',
         diff: 'الفارق',
@@ -2119,7 +2129,11 @@ export const TRANSLATIONS = {
         other: 'أخرى'
       },
       success: 'تم حفظ تعديل المخزون بنجاح!',
-      empty: 'لا توجد عناصر للتعديل. ابحث وأضف منتجات.'
+      empty: 'لا توجد عناصر للتعديل. ابحث وأضف منتجات.',
+      noHistory: 'لا توجد سجلات تعديل للفترة المختارة.',
+      noRecent: 'لا توجد عملية حديثة للطباعة. قم بإجراء تعديل أولاً.',
+      historyLog: 'سجل التعديلات',
+      adjustStock: 'تعديل المخزون'
     },
 
     barcodePrinter: {
@@ -2296,8 +2310,11 @@ export const TRANSLATIONS = {
       placeholders: {
         searchHistory: 'بحث برقم، مورد...',
         searchSupplier: 'بحث واختيار المورد...',
-        enterId: 'أدخل الرقم'
+        enterId: 'أدخل الرقم',
+        searchDrug: 'بحث عن دواء...'
       },
+      pack: 'عبوة',
+      unit: 'وحدة',
       // Table headers
       tableHeaders: {
         orderId: 'رقم الطلب',
@@ -2360,7 +2377,12 @@ export const TRANSLATIONS = {
         item: 'الصنف',
         cost: 'التكلفة',
         qty: 'الكمية',
-        total: 'الإجمالي'
+        total: 'الإجمالي',
+        name: 'الاسم',
+        codes: 'الأكواد',
+        expiry: 'الصلاحية',
+        stock: 'المخزون',
+        profit: 'الربح'
       },
       cartFields: {
         qty: 'الكمية',

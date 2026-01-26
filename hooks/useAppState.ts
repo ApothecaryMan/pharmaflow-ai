@@ -19,8 +19,6 @@ export interface AppState {
   setDashboardSubView: React.Dispatch<React.SetStateAction<string>>;
   
   // UI state
-  toast: ToastState | null;
-  setToast: React.Dispatch<React.SetStateAction<ToastState | null>>;
   mobileMenuOpen: boolean;
   setMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   tip: string;
@@ -43,7 +41,6 @@ export function useAppState(): AppState {
   const [dashboardSubView, setDashboardSubView] = useState<string>('dashboard');
 
   // --- UI State ---
-  const [toast, setToast] = useState<ToastState | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [tip, setTip] = useState<string>("Loading tip...");
 
@@ -76,8 +73,6 @@ export function useAppState(): AppState {
     setDashboardSubView,
     
     // UI state
-    toast,
-    setToast,
     mobileMenuOpen,
     setMobileMenuOpen,
     tip,

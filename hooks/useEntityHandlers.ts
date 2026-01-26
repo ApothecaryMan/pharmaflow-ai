@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { Drug, Sale, CartItem, Supplier, Purchase, Return, Customer, OrderModificationRecord, OrderModification, BatchAllocation, Employee } from '../types';
-import { ToastState } from './useAppState';
+import { useToast } from '../context';
 import { migrationService } from '../services/migration';
 import { validateStock } from '../utils/inventory';
 import { addTransactionToOpenShift } from '../utils/shiftHelpers';
@@ -79,7 +79,6 @@ interface UseEntityHandlersParams {
   setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
   
   // Utilities
-  setToast: React.Dispatch<React.SetStateAction<ToastState | null>>;
   currentEmployeeId: string | null;
   employees?: Employee[];
   isLoading: boolean;
@@ -107,7 +106,6 @@ export function useEntityHandlers({
   setReturns,
   customers,
   setCustomers,
-  setToast,
   currentEmployeeId,
   employees,
   isLoading,
@@ -115,6 +113,7 @@ export function useEntityHandlers({
   validateTransactionTime,
   updateLastTransactionTime,
 }: UseEntityHandlersParams): EntityHandlers {
+  const { success, error, info, warning } = useToast();
   
   const migrationAttempted = useRef(false);
   
@@ -172,18 +171,18 @@ export function useEntityHandlers({
   // --- Customer Management ---
   const handleAddCustomer = useCallback((customer: Customer) => {
     setCustomers(prev => [...prev, customer]);
-    setToast({ message: 'Customer added successfully', type: 'success' });
-  }, [setCustomers, setToast]);
+    success('Customer added successfully');
+  }, [setCustomers, success]);
 
   const handleUpdateCustomer = useCallback((customer: Customer) => {
     setCustomers(prev => prev.map(c => c.id === customer.id ? customer : c));
-    setToast({ message: 'Customer updated successfully', type: 'success' });
-  }, [setCustomers, setToast]);
+    success('Customer updated successfully');
+  }, [setCustomers, success]);
 
   const handleDeleteCustomer = useCallback((id: string) => {
     setCustomers(prev => prev.filter(c => c.id !== id));
-    setToast({ message: 'Customer removed successfully', type: 'success' });
-  }, [setCustomers, setToast]);
+    success('Customer removed successfully');
+  }, [setCustomers, success]);
 
   // --- Purchase Management ---
   const handlePurchaseComplete = useCallback((purchase: Purchase) => {
@@ -194,8 +193,10 @@ export function useEntityHandlers({
       setInventory(prev => prev.map(drug => {
         const purchasedItem = purchase.items.find(i => i.drugId === drug.id);
         if (purchasedItem) {
-          // Convert purchased packs to units
-          const unitsToAdd = purchasedItem.quantity * (drug.unitsPerPack || 1);
+          // Convert purchased packs to units if needed
+          const unitsToAdd = purchasedItem.isUnit 
+            ? purchasedItem.quantity 
+            : purchasedItem.quantity * (drug.unitsPerPack || 1);
           
           // Create a new batch for this purchase
           batchService.createBatch({
@@ -221,9 +222,9 @@ export function useEntityHandlers({
         return drug;
       }));
     } else {
-      setToast({ message: 'Purchase Order Saved as Pending', type: 'info' });
+      info('Purchase Order Saved as Pending');
     }
-  }, [setPurchases, setInventory, setToast]);
+  }, [setPurchases, setInventory, info]);
 
   const handleApprovePurchase = useCallback((purchaseId: string, approverName: string) => {
     const purchase = purchases.find(p => p.id === purchaseId);
@@ -240,7 +241,9 @@ export function useEntityHandlers({
     setInventory(prev => prev.map(drug => {
       const purchasedItem = purchase.items.find(i => i.drugId === drug.id);
       if (purchasedItem) {
-        const unitsToAdd = purchasedItem.quantity * (drug.unitsPerPack || 1);
+        const unitsToAdd = purchasedItem.isUnit 
+          ? purchasedItem.quantity 
+          : purchasedItem.quantity * (drug.unitsPerPack || 1);
         
         // Create a new batch for this purchase
         batchService.createBatch({
@@ -265,15 +268,15 @@ export function useEntityHandlers({
       return drug;
     }));
 
-    setToast({ message: `PO #${purchase.invoiceId} Approved Successfully`, type: 'success' });
-  }, [purchases, setPurchases, setInventory, setToast]);
+    success(`PO #${purchase.invoiceId} Approved Successfully`);
+  }, [purchases, setPurchases, setInventory, success]);
 
   const handleRejectPurchase = useCallback((purchaseId: string, reason?: string) => {
     setPurchases(prev => prev.map(p => 
       p.id === purchaseId ? { ...p, status: 'rejected' } : p
     ));
-    setToast({ message: 'Purchase Order Rejected', type: 'info' });
-  }, [setPurchases, setToast]);
+    info('Purchase Order Rejected');
+  }, [setPurchases, info]);
 
   // --- Sale Management ---
   const handleCompleteSale = useCallback((saleData: SaleData) => {
@@ -283,10 +286,7 @@ export function useEntityHandlers({
     // Validate transaction time (Monotonic Check)
     const validation = validateTransactionTime(saleDate);
     if (!validation.valid) {
-      setToast({
-        message: `⚠️ ${validation.message || 'Invalid transaction time'}`,
-        type: 'error'
-      });
+      error(`⚠️ ${validation.message || 'Invalid transaction time'}`);
       return;
     }
 
@@ -394,12 +394,9 @@ export function useEntityHandlers({
       getVerifiedDate
     });
     
-    setToast({
-      message: `Order #${serialId} completed! ${pointsEarned > 0 ? `Earned ${pointsEarned} points.` : ''}`,
-      type: 'success'
-    });
+    success(`Order #${serialId} completed! ${pointsEarned > 0 ? `Earned ${pointsEarned} points.` : ''}`);
   }, [sales, inventory, currentEmployeeId, getVerifiedDate, validateTransactionTime, updateLastTransactionTime, 
-      setInventory, setCustomers, setSales, setToast]);
+      setInventory, setCustomers, setSales, success, error]);
 
   const handleUpdateSale = useCallback((saleId: string, updates: Partial<Sale>) => {
     const sale = sales.find(s => s.id === saleId);
@@ -439,7 +436,7 @@ export function useEntityHandlers({
       // Security Check: Must be logged in to modify delivery orders
       if (!currentEmployeeId) {
         console.error('[handleUpdateSale] Security Alert: Attempted modification without logged-in user');
-        setToast({ message: 'Security Alert: You must be logged in to modify orders', type: 'error' });
+        error('Security Alert: You must be logged in to modify orders');
         return;
       }
 
@@ -639,10 +636,7 @@ export function useEntityHandlers({
     const returnDate = new Date(returnData.date);
     const validation = validateTransactionTime(returnDate);
     if (!validation.valid) {
-      setToast({
-        message: `⚠️ ${validation.message || 'Invalid return time'}`,
-        type: 'error'
-      });
+      error(`⚠️ ${validation.message || 'Invalid return time'}`);
       return;
     }
 
@@ -723,11 +717,8 @@ export function useEntityHandlers({
       getVerifiedDate
     });
     
-    setToast({
-      message: `Return processed successfully. Refund: ${returnData.totalRefund.toFixed(2)} L.E`,
-      type: 'success'
-    });
-  }, [returns, validateTransactionTime, updateLastTransactionTime, setReturns, setSales, setInventory, setToast, getVerifiedDate]);
+    success(`Return processed successfully. Refund: ${returnData.totalRefund.toFixed(2)} L.E`);
+  }, [returns, validateTransactionTime, updateLastTransactionTime, setReturns, setSales, setInventory, success, error, getVerifiedDate]);
 
   // --- Computed Data ---
   const enrichedCustomers = useMemo(() => {

@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { ViewState } from '../types';
 import { PAGE_REGISTRY } from '../config/pageRegistry';
 import { PHARMACY_MENU, MenuItem } from '../config/menuData';
-import { ToastState } from './useAppState';
+import { useToast } from '../context';
 
 /**
  * Module ID to ViewState mapping.
@@ -55,7 +55,6 @@ interface UseNavigationParams {
   setDashboardSubView: React.Dispatch<React.SetStateAction<string>>;
   resolveView: (targetView: ViewState) => ViewState;
   setMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setToast: React.Dispatch<React.SetStateAction<ToastState | null>>;
   hideInactiveModules: boolean;
   developerMode: boolean;
 }
@@ -73,10 +72,10 @@ export function useNavigation({
   setDashboardSubView,
   resolveView,
   setMobileMenuOpen,
-  setToast,
   hideInactiveModules,
   developerMode,
 }: UseNavigationParams): NavigationHandlers {
+  const { error } = useToast();
   
   // Handle view change with dashboard sub-view logic
   const handleViewChange = useCallback((viewId: string) => {
@@ -84,10 +83,7 @@ export function useNavigation({
     const resolvedView = resolveView(targetView);
     
     if (resolvedView !== targetView) {
-      setToast({ 
-        message: 'Access denied. Please login first.', 
-        type: 'error' 
-      });
+      error('Access denied. Please login first.');
       setView(resolvedView);
       return;
     }
@@ -105,7 +101,7 @@ export function useNavigation({
       setView(targetView);
     }
     setMobileMenuOpen(false);
-  }, [activeModule, resolveView, setView, setDashboardSubView, setMobileMenuOpen, setToast]);
+  }, [activeModule, resolveView, setView, setDashboardSubView, setMobileMenuOpen, error]);
 
   // Handle direct navigation
   const handleNavigate = useCallback((viewId: string) => {
@@ -113,16 +109,13 @@ export function useNavigation({
     const resolvedView = resolveView(targetView);
     
     if (resolvedView !== targetView) {
-      setToast({ 
-        message: 'Access denied.', 
-        type: 'error' 
-      });
+      error('Access denied.');
       setView(resolvedView);
     } else {
       setView(targetView);
     }
     setMobileMenuOpen(false);
-  }, [resolveView, setView, setMobileMenuOpen, setToast]);
+  }, [resolveView, setView, setMobileMenuOpen, error]);
 
   // Handle module change
   const handleModuleChange = useCallback((moduleId: string) => {
