@@ -3,6 +3,7 @@ import { ViewState } from '../types';
 import { PAGE_REGISTRY } from '../config/pageRegistry';
 import { PHARMACY_MENU, MenuItem } from '../config/menuData';
 import { useToast } from '../context';
+import { UserRole, canPerformAction } from '../config/permissions';
 
 /**
  * Module ID to ViewState mapping.
@@ -25,18 +26,46 @@ const MODULE_VIEW_MAPPING: Record<string, ViewState> = {
 } as const;
 
 /**
- * Helper function to filter menu items based on activity status.
- * A module is considered active if it has a page or has submenus with navigable items.
+ * Helper function to filter menu items based on activity status AND permissions.
  */
-function filterActiveMenuItems(menu: MenuItem[]): MenuItem[] {
-  return menu.filter(module => 
-    module.hasPage !== false || 
-    module.submenus?.some(submenu => 
-      submenu.items.some(item => 
-        typeof item === 'object' && !!item.view
-      )
-    )
-  );
+function filterMenuItems(menu: MenuItem[], role: UserRole, hideInactiveModules: boolean, developerMode: boolean): MenuItem[] {
+  return menu
+    .filter(module => {
+      // 1. Permission Check
+      if (module.permission && !canPerformAction(role, module.permission)) {
+        return false;
+      }
+      
+      // 2. Activity Check (if enabled)
+      if (hideInactiveModules && !developerMode) {
+        return module.hasPage !== false || 
+               module.submenus?.some(submenu => 
+                 submenu.items.some(item => 
+                   typeof item === 'object' && !!item.view
+                 )
+               );
+      }
+      return true;
+    })
+    .map(module => ({
+      ...module,
+      submenus: module.submenus?.filter(submenu => {
+        // Filter submenus by permission
+        if (submenu.permission && !canPerformAction(role, submenu.permission)) {
+          return false;
+        }
+        return true;
+      }).map(submenu => ({
+        ...submenu,
+        items: submenu.items.filter(item => {
+          // Filter items by permission
+          if (typeof item === 'object' && item.permission && !canPerformAction(role, item.permission)) {
+            return false;
+          }
+          return true;
+        })
+      }))
+    }));
 }
 
 export interface NavigationHandlers {
@@ -57,6 +86,7 @@ interface UseNavigationParams {
   setMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   hideInactiveModules: boolean;
   developerMode: boolean;
+  role: UserRole; // Added role
 }
 
 /**
@@ -74,6 +104,7 @@ export function useNavigation({
   setMobileMenuOpen,
   hideInactiveModules,
   developerMode,
+  role, 
 }: UseNavigationParams): NavigationHandlers {
   const { error } = useToast();
   
@@ -124,12 +155,10 @@ export function useNavigation({
     setView(newView);
   }, [setActiveModule, setView]);
 
-  // Filter menu items based on settings
+  // Filter menu items based on permissions and settings
   const filteredMenuItems = useMemo(() => 
-    (!hideInactiveModules || developerMode) 
-      ? PHARMACY_MENU 
-      : filterActiveMenuItems(PHARMACY_MENU), 
-    [hideInactiveModules, developerMode]
+    filterMenuItems(PHARMACY_MENU, role, hideInactiveModules, developerMode),
+    [role, hideInactiveModules, developerMode]
   );
 
   return {

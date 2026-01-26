@@ -11,6 +11,7 @@ import { COUNTRY_CODES } from '../../data/countryCodes';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useStatusBar } from '../../components/layout/StatusBar';
+import { UserRole, canPerformAction } from '../../config/permissions';
 
 interface CustomerManagementProps {
   customers: Customer[];
@@ -21,6 +22,7 @@ interface CustomerManagementProps {
   t: any;
   language: 'EN' | 'AR';
   darkMode?: boolean;
+  userRole: UserRole;
 }
 
 export const CustomerManagement: React.FC<CustomerManagementProps> = ({
@@ -31,7 +33,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   color,
   t,
   language,
-  darkMode
+  darkMode,
+  userRole
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const [mode, setMode] = useState<'list' | 'add'>('list');
@@ -217,13 +220,15 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     { 
       label: t.modal.edit, 
       icon: 'edit', 
-      action: () => handleOpenEdit(customer) 
+      action: () => handleOpenEdit(customer),
+      disabled: !canPerformAction(userRole, 'customer.update')
     },
     { 
       label: t.modal.delete || 'Delete', 
       icon: 'delete', 
       action: () => onDeleteCustomer(customer.id),
-      danger: true
+      danger: true,
+      disabled: !canPerformAction(userRole, 'customer.delete')
     }
   ];
 
@@ -396,12 +401,16 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         const c = info.row.original;
         return (
           <div className="flex justify-end gap-2">
-              <button onClick={(e) => { e.stopPropagation(); handleOpenEdit(c); }} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-500 transition-colors">
-                  <span className="material-symbols-rounded text-[20px]">edit</span>
-              </button>
-              <button onClick={(e) => { e.stopPropagation(); onDeleteCustomer(c.id); }} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-500 transition-colors">
-                  <span className="material-symbols-rounded text-[20px]">delete</span>
-              </button>
+              {canPerformAction(userRole, 'customer.update') && (
+                <button onClick={(e) => { e.stopPropagation(); handleOpenEdit(c); }} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-500 transition-colors">
+                    <span className="material-symbols-rounded text-[20px]">edit</span>
+                </button>
+              )}
+              {canPerformAction(userRole, 'customer.delete') && (
+                <button onClick={(e) => { e.stopPropagation(); onDeleteCustomer(c.id); }} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-500 transition-colors">
+                    <span className="material-symbols-rounded text-[20px]">delete</span>
+                </button>
+              )}
           </div>
         );
       },
@@ -687,7 +696,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 size="sm"
                 options={[
                     { label: t.allCustomers || 'All Customers', value: 'list' },
-                    { label: t.addCustomer || 'Add New Customer', value: 'add' }
+                    ...(canPerformAction(userRole, 'customer.add') ? [{ label: t.addCustomer || 'Add New Customer', value: 'add' }] : [])
                 ]}
             />
         </div>

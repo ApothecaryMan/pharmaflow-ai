@@ -13,6 +13,7 @@ import { SmallCard } from '../common/SmallCard';
 import { DASHBOARD_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
+import { UserRole, canPerformAction } from '../../config/permissions';
 
 interface DashboardProps {
   inventory: Drug[];
@@ -20,14 +21,16 @@ interface DashboardProps {
   purchases: Purchase[];
   color: string;
   t: any;
-  onRestock: (id: string, qty: number) => void;
+  onRestock: (id: string, qty: number, isUnit?: boolean) => void;
   subView?: string;
   language: string;
+  userRole: UserRole;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchases, color, t, onRestock, subView, language }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchases, color, t, onRestock, subView, language, userRole }) => {
   const [restockDrug, setRestockDrug] = useState<Drug | null>(null);
   const [restockQty, setRestockQty] = useState(10);
+  const [restockIsUnit, setRestockIsUnit] = useState(false);
   const [expandedView, setExpandedView] = useState<ExpandedView>(null);
   const [showHelp, setShowHelp] = useState(false);
 
@@ -266,9 +269,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
   const handleRestockSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (restockDrug && restockQty > 0) {
-        onRestock(restockDrug.id, restockQty);
+        onRestock(restockDrug.id, restockQty, restockIsUnit);
         setRestockDrug(null);
         setRestockQty(10);
+        setRestockIsUnit(false);
     }
   };
 
@@ -361,52 +365,58 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       {/* Stats Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         {/* Revenue */}
-        <div 
-          onClick={() => setExpandedView('revenue')}
-          className="cursor-pointer transition-transform active:scale-95 touch-manipulation"
-        >
-          <SmallCard
-            title={t.revenue}
-            value={totalRevenue}
-            icon="payments"
-            iconColor={color}
-            type="currency"
-            currencyLabel={getCurrencySymbol()}
-            fractionDigits={2}
-          />
-        </div>
+        {canPerformAction(userRole, 'reports.view_financial') && (
+          <div 
+            onClick={() => setExpandedView('revenue')}
+            className="cursor-pointer transition-transform active:scale-95 touch-manipulation"
+          >
+            <SmallCard
+              title={t.revenue}
+              value={totalRevenue}
+              icon="payments"
+              iconColor={color}
+              type="currency"
+              currencyLabel={getCurrencySymbol()}
+              fractionDigits={2}
+            />
+          </div>
+        )}
 
         {/* Expenses */}
-        <div 
-          onClick={() => setExpandedView('expenses')}
-          className="cursor-pointer transition-transform active:scale-95 touch-manipulation"
-        >
-          <SmallCard
-            title={t.expenses}
-            value={totalExpenses}
-            icon="shopping_cart_checkout"
-            iconColor="red"
-            type="currency"
-            currencyLabel={getCurrencySymbol()}
-            fractionDigits={2}
-          />
-        </div>
+        {canPerformAction(userRole, 'reports.view_financial') && (
+          <div 
+            onClick={() => setExpandedView('expenses')}
+            className="cursor-pointer transition-transform active:scale-95 touch-manipulation"
+          >
+            <SmallCard
+              title={t.expenses}
+              value={totalExpenses}
+              icon="shopping_cart_checkout"
+              iconColor="red"
+              type="currency"
+              currencyLabel={getCurrencySymbol()}
+              fractionDigits={2}
+            />
+          </div>
+        )}
 
         {/* Net Profit */}
-        <div 
-          onClick={() => setExpandedView('profit')}
-          className="cursor-pointer transition-transform active:scale-95 touch-manipulation"
-        >
-          <SmallCard
-            title={t.profit}
-            value={netProfit}
-            icon="trending_up"
-            iconColor="emerald"
-            type="currency"
-            currencyLabel={getCurrencySymbol()}
-            fractionDigits={2}
-          />
-        </div>
+        {canPerformAction(userRole, 'reports.view_financial') && (
+          <div 
+            onClick={() => setExpandedView('profit')}
+            className="cursor-pointer transition-transform active:scale-95 touch-manipulation"
+          >
+            <SmallCard
+              title={t.profit}
+              value={netProfit}
+              icon="trending_up"
+              iconColor="emerald"
+              type="currency"
+              currencyLabel={getCurrencySymbol()}
+              fractionDigits={2}
+            />
+          </div>
+        )}
 
         {/* Low Stock */}
         <div 
@@ -633,8 +643,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
         >
              
              <form onSubmit={handleRestockSubmit} className="space-y-5">
-                <div className="space-y-2">
-                   <label className="text-xs font-bold text-gray-500 uppercase">{t.modal.qty}</label>
+                <div className="space-y-4">
+                   <div className="flex items-center justify-between">
+                       <label className="text-xs font-bold text-gray-500 uppercase">{t.modal.qty}</label>
+                       <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg">
+                           <button 
+                               type="button"
+                               onClick={() => setRestockIsUnit(false)}
+                               className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${!restockIsUnit ? `bg-white dark:bg-gray-700 text-${color}-600 shadow-sm` : 'text-gray-400'}`}
+                           >
+                               {t.pos?.pack || 'Pack'}
+                           </button>
+                           <button 
+                               type="button"
+                               onClick={() => setRestockIsUnit(true)}
+                               className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${restockIsUnit ? `bg-white dark:bg-gray-700 text-${color}-600 shadow-sm` : 'text-gray-400'}`}
+                           >
+                               {t.pos?.unit || 'Unit'}
+                           </button>
+                       </div>
+                   </div>
                    <div className="flex items-center gap-3">
                        <button 
                          type="button" 

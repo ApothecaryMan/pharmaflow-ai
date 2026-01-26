@@ -37,9 +37,9 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
       // Set view directly to skip route guard checks for this specific action
       setView(ROUTES.LOGIN);
     } catch (e) {
-      if (import.meta.env.DEV) {
-        console.error('Logout failed:', e);
-      }
+      // Even if API fails, client should logout
+      setIsAuthenticated(false);
+      setView(ROUTES.LOGIN);
     }
   }, [setView]);
 

@@ -5,6 +5,7 @@ import { Drug, CartItem } from "../../types";
 import { TRANSLATIONS } from "../../i18n/translations";
 import { getLocalizedProductType } from "../../data/productCategories";
 import { useLongPress } from "../../hooks/useLongPress";
+import { UserRole, canPerformAction } from "../../config/permissions";
 
 export interface SortableCartItemProps {
   packItem?: CartItem;
@@ -27,6 +28,7 @@ export interface SortableCartItemProps {
   currentLang: 'en' | 'ar';
   globalDiscount?: number;
   onSearchInTable: (term: string) => void;
+  userRole: UserRole;
 }
 
 export const calculateItemTotal = (item: CartItem) => {
@@ -60,6 +62,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
   currentLang,
   globalDiscount,
   onSearchInTable,
+  userRole,
 }) => {
   const {
     attributes,
@@ -132,29 +135,31 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
     }
 
     actions.push({ separator: true });
-    actions.push({
-      label: t.actions.discount,
-      icon: "percent",
-      action: () => {
-        const disc = prompt(
-          "Enter discount percentage (0-100):",
-          item.discount?.toString() || "0"
-        );
-        if (disc !== null) {
-          const val = parseFloat(disc);
-          if (!isNaN(val) && val >= 0 && val <= 100) {
-            const maxDisc = item.maxDiscount ?? 10;
-            if (val > maxDisc) {
-              alert(`Discount cannot exceed ${maxDisc}%`);
-            } else {
-              updateItemDiscount(item.id, !!item.isUnit, val);
-              if (val > 0) setGlobalDiscount(0);
+    if (canPerformAction(userRole, 'sale.discount')) {
+      actions.push({
+        label: t.actions.discount,
+        icon: "percent",
+        action: () => {
+          const disc = prompt(
+            "Enter discount percentage (0-100):",
+            item.discount?.toString() || "0"
+          );
+          if (disc !== null) {
+            const val = parseFloat(disc);
+            if (!isNaN(val) && val >= 0 && val <= 100) {
+              const maxDisc = item.maxDiscount ?? 10;
+              if (val > maxDisc) {
+                alert(`Discount cannot exceed ${maxDisc}%`);
+              } else {
+                updateItemDiscount(item.id, !!item.isUnit, val);
+                if (val > 0) setGlobalDiscount(0);
+              }
             }
           }
-        }
-      },
-      danger: false,
-    });
+        },
+        danger: false,
+      });
+    }
     
     // Search in table option
     actions.push({
@@ -342,8 +347,8 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                   ? item.maxDiscount 
                   : calculatedMax;
 
-               // Hide discount control if global discount is active and > 0
-               if (globalDiscount && globalDiscount > 0) return null;
+               // Hide discount control if global discount is active and > 0, OR if user lacks permission
+               if ((globalDiscount && globalDiscount > 0) || !canPerformAction(userRole, 'sale.discount')) return null;
 
                return (
             <div

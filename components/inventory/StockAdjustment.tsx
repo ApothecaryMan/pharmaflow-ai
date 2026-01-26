@@ -396,11 +396,16 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
         const currentEmployeeObject = storage.get<any>(StorageKeys.EMPLOYEES, [])?.find((e: any) => e.id === currentEmployeeId);
         const currentEmployeeName = currentEmployeeId === 'user' ? 'System User' : (currentEmployeeObject?.name || 'Unknown');
         
-        // MOCK ROLE CHECK: In real app, check permissions. Here, assume 'admin' or hardcoded logic.
-        // For demo, let's say 'user' is staff (needs approval), 'admin' is manager.
-        // Or simplified: Always 'approved' for now unless we explicitly test 'pending'. 
-        // Let's implement: If ID is 'staff', make it pending. Default 'approved'.
-        const isManager = currentEmployeeId !== 'staff'; 
+        // RBAC Check for Approval
+        const { canPerformAction } = await import('../../config/permissions');
+        let isManager = false;
+        if (currentEmployeeId === 'user') {
+             // System admin override for development/fallback
+             isManager = true; 
+        } else {
+             isManager = canPerformAction(currentEmployeeObject?.role, 'inventory.approve');
+        }
+        
         const status = isManager ? 'approved' : 'pending';
 
         const transactionId = idGenerator.generate('generic');
@@ -479,8 +484,15 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
     // For simplicity, we only update local state if approved.
     
     // We need to know if we are in manager mode to apply changes.
+    // We need to know if we are in manager mode to apply changes.
     const currentEmployeeId = storage.get<string>(StorageKeys.CURRENT_EMPLOYEE_ID, 'user');
-    const isManager = currentEmployeeId !== 'staff'; 
+    
+    // RBAC Check (Duplicate logic, ideally reusable but inside async flow)
+    const { canPerformAction } = await import('../../config/permissions');
+    const currentEmployeeObject = storage.get<any>(StorageKeys.EMPLOYEES, [])?.find((e: any) => e.id === currentEmployeeId);
+    
+    // If we are 'user', we treat as admin/dev. Otherwise check role.
+    const isManager = currentEmployeeId === 'user' ? true : canPerformAction(currentEmployeeObject?.role, 'inventory.approve'); 
 
     if (isManager) {
         // Create map of changes

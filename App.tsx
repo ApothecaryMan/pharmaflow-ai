@@ -22,9 +22,13 @@ import { DataProvider } from './services';
 import { CSV_INVENTORY } from './data/sample-inventory';
 import { Supplier } from './types';
 import { Login } from './components/auth/Login';
+import { authService } from './services/auth/authService';
 import { AppState } from './hooks/useAppState';
 import { AuthState } from './hooks/useAuth';
 import { DashboardSkeleton } from './components/dashboard/DashboardSkeletons';
+import { UserRole, canPerformAction } from './config/permissions';
+import { PageSkeletonRegistry } from './components/skeletons/PageSkeletonRegistry';
+
 
 const INITIAL_SUPPLIERS: Supplier[] = [
   { id: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '' },
@@ -64,6 +68,8 @@ const STANDALONE_VIEWS = [ROUTES.LOGIN];
 // Interface for the AuthenticatedContent props
 // It combines AppState and AuthState to pass everything down
 interface AuthenticatedContentProps extends AppState, AuthState {}
+
+
 
 const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     // App State
@@ -107,6 +113,10 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   // --- StatusBar Utilities ---
   const { getVerifiedDate, validateTransactionTime, updateLastTransactionTime } = useStatusBar();
 
+  // Determine current user role for RBAC
+  const currentEmployee = employees.find(e => e.id === currentEmployeeId);
+  const userRole = (currentEmployee?.role || 'cashier') as UserRole;
+
   // --- Navigation Hook ---
   const { handleViewChange, handleNavigate, handleModuleChange, filteredMenuItems } = useNavigation({
     view,
@@ -119,6 +129,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setMobileMenuOpen,
     hideInactiveModules,
     developerMode,
+    role: userRole, // Pass the role for menu filtering
   });
 
   // --- Entity Handlers Hook ---
@@ -166,22 +177,88 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     }
   }, [isLoading, inventory]);
 
-  // --- Auth Checking Loading State ---
-  if (isAuthChecking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-        <div className="text-white">
-          <svg className="animate-spin h-8 w-8 mx-auto" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" 
-                    stroke="currentColor" strokeWidth="4" fill="none"/>
-            <path className="opacity-75" fill="currentColor" 
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-          </svg>
-          <p className="mt-2 text-sm text-zinc-400">{TRANSLATIONS[language].global?.checkingAuth || 'Checking authentication...'}</p>
-        </div>
-      </div>
-    );
-  }
+  // --- Logout Transition State ---
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+
+
+  // Optimized Logout Handler
+  // Optimized Logout Handler with Timing Control and Error Handling
+  const onLogoutClick = useCallback(async () => {
+    const startTime = Date.now();
+    const MIN_DISPLAY_TIME = 1500; // Minimum splash screen time
+
+
+    setIsLoggingOut(true);
+
+    try {
+      // Perform logout logic
+      console.log('[App] Clearing all session states');
+      await handleSelectEmployee(null); // Use wrapper to log audit event
+      setProfileImage(null);
+      setView(ROUTES.DASHBOARD);
+      setActiveModule(ROUTES.DASHBOARD);
+      
+      await handleLogout();
+      
+      // Calculate elapsed time
+      const elapsed = Date.now() - startTime;
+      const remaining = MIN_DISPLAY_TIME - elapsed;
+
+      // Ensure splash shows for at least MIN_DISPLAY_TIME
+      if (remaining > 0) {
+        await new Promise(resolve => setTimeout(resolve, remaining));
+      }
+    } catch (error) {
+
+      // Force logout visually even on error
+      const elapsed = Date.now() - startTime;
+      if (elapsed < MIN_DISPLAY_TIME) {
+          await new Promise(r => setTimeout(r, MIN_DISPLAY_TIME - elapsed));
+      }
+    } finally {
+
+      setIsLoggingOut(false);
+    }
+  }, [handleLogout]);
+
+  // --- Employee Selection Wrapper (Audit Logging) ---
+  const handleSelectEmployee = useCallback(async (id: string | null) => {
+    const session = await authService.getCurrentUser();
+    
+    if (session) {
+      if (!id) {
+        // Log Employee Logout
+        const currentEmp = employees.find(e => e.id === currentEmployeeId);
+        authService.logAuditEvent({
+          username: currentEmp?.name || session.username,
+          role: currentEmp?.role || session.role,
+          branchId: session.branchId,
+          action: 'logout',
+          details: `Employee signed out`
+        });
+      } else {
+        const selectedEmployee = employees.find(e => e.id === id);
+        if (selectedEmployee) {
+          const isFirstSelection = !currentEmployeeId;
+          const previousEmployee = employees.find(e => e.id === currentEmployeeId);
+          const previousName = previousEmployee?.name || (currentEmployeeId ? 'unknown' : null);
+
+          authService.logAuditEvent({
+            username: selectedEmployee.name,
+            role: selectedEmployee.role,
+            branchId: session.branchId,
+            action: isFirstSelection ? 'login' : 'switch_user',
+            employeeId: selectedEmployee.id,
+            details: isFirstSelection 
+              ? `Employee session started` 
+              : `Switched from ${previousName || 'unknown'}`
+          });
+        }
+      }
+    }
+    setCurrentEmployeeId(id);
+  }, [employees, currentEmployeeId, setCurrentEmployeeId]);
 
   // --- Login Success Handler ---
   const handleLoginSuccess = useCallback(() => {
@@ -189,6 +266,51 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setActiveModule(ROUTES.DASHBOARD);
     setView(ROUTES.DASHBOARD);
   }, [setIsAuthenticated, setActiveModule, setView]);
+
+  // --- Auth Checking Loading State ---
+  if (isAuthChecking) {
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+            <div className="text-white">
+                <svg className="animate-spin h-8 w-8 mx-auto" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <p className="mt-2 text-sm text-zinc-400">{TRANSLATIONS[language].global?.checkingAuth || 'Checking authentication...'}</p>
+            </div>
+        </div>
+    );
+  }
+
+  // --- Not Authenticated (Login) ---
+  if (!isAuthenticated) {
+      return (
+          <Login 
+              onLoginSuccess={() => {
+                  setIsAuthenticated(true);
+                  setActiveModule(ROUTES.DASHBOARD);
+                  setView(ROUTES.DASHBOARD);
+              }}
+              language={language}
+              onViewChange={(view) => {
+                   if (view === 'dashboard') {
+                       setIsAuthenticated(true);
+                       setView(ROUTES.DASHBOARD);
+                   }
+              }}
+          />
+      );
+  }
+
+  // --- TRANSITION SKELETON STATE ---
+  if (isLoggingOut) {
+      return (
+        <div className="h-screen bg-[var(--bg-primary)] p-4 overflow-hidden">
+             <PageSkeletonRegistry view={view} />
+        </div>
+      );
+  }
+
 
   return (
     <ContextMenuProvider enableGlassEffect={dropdownBlur}>
@@ -251,7 +373,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
             employees={employees.map(e => ({ id: e.id, name: e.name, employeeCode: e.employeeCode }))}
             currentEmployeeId={currentEmployeeId}
             setCurrentEmployeeId={setCurrentEmployeeId}
-            onLogout={handleLogout}
+            onLogout={onLogoutClick}
           />
         )}
 
@@ -352,6 +474,31 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
                     </div>
                   );
                 }
+
+                // RBAC: Check Page Permissions
+                if (pageConfig.permission && !canPerformAction(userRole, pageConfig.permission)) {
+                  return (
+                    <div className="flex flex-col items-center justify-center h-full animate-fade-in">
+                        <div className="w-24 h-24 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-6 border-4 border-red-100 dark:border-red-900/30">
+                            <span className="material-symbols-rounded text-5xl text-red-500">lock</span>
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                            {language === 'AR' ? 'وصول مقيد' : 'Access Restricted'}
+                        </h2>
+                        <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
+                            {language === 'AR' 
+                                ? 'عذراً، ليس لديك الصلاحيات اللازمة للوصول إلى هذه الصفحة. يرجى التواصل مع المسؤول.' 
+                                : "Sorry, you don't have the necessary permissions to access this page. Please contact your administrator."}
+                        </p>
+                        <button 
+                            onClick={() => setView('dashboard')}
+                            className="mt-8 px-6 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold hover:opacity-90 transition-opacity active:scale-95"
+                        >
+                            {language === 'AR' ? 'العودة للرئيسية' : 'Back to Dashboard'}
+                        </button>
+                    </div>
+                  );
+                }
                 
                 const PageComponent = pageConfig.component;
                 
@@ -363,6 +510,8 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
                 props.t = t;
                 props.language = language;
                 props.textTransform = textTransform;
+                props.userRole = userRole;
+                props.currentEmployeeId = currentEmployeeId;
                 
                 // Conditionally add props based on page requirements
                 const requiredProps = pageConfig.requiredProps || [];
@@ -466,16 +615,32 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
           <StatusBar 
             t={t.statusBar}
             currentEmployeeId={currentEmployeeId}
-            onSelectEmployee={setCurrentEmployeeId}
+            onSelectEmployee={handleSelectEmployee}
           />
         )}
 
         {/* Mobile Bottom Nav */}
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex justify-around p-3 z-50 overflow-x-auto">
-          <button onClick={() => setView('dashboard')} className={`p-2 rounded-xl shrink-0 ${view === 'dashboard' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}><span className="material-symbols-rounded">dashboard</span></button>
-          <button onClick={() => setView('pos')} className={`p-2 rounded-xl shrink-0 ${view === 'pos' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}><span className="material-symbols-rounded">point_of_sale</span></button>
-          <button onClick={() => setView('inventory')} className={`p-2 rounded-xl shrink-0 ${view === 'inventory' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}><span className="material-symbols-rounded">inventory_2</span></button>
-          <button onClick={() => setView('purchases')} className={`p-2 rounded-xl shrink-0 ${view === 'purchases' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}><span className="material-symbols-rounded">shopping_cart_checkout</span></button>
+          {canPerformAction(userRole, 'reports.view_inventory') && (
+            <button onClick={() => setView('dashboard')} className={`p-2 rounded-xl shrink-0 ${view === 'dashboard' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}>
+              <span className="material-symbols-rounded">dashboard</span>
+            </button>
+          )}
+          {canPerformAction(userRole, 'sale.create') && (
+            <button onClick={() => setView('pos')} className={`p-2 rounded-xl shrink-0 ${view === 'pos' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}>
+              <span className="material-symbols-rounded">point_of_sale</span>
+            </button>
+          )}
+          {canPerformAction(userRole, 'inventory.view') && (
+            <button onClick={() => setView('inventory')} className={`p-2 rounded-xl shrink-0 ${view === 'inventory' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}>
+              <span className="material-symbols-rounded">inventory_2</span>
+            </button>
+          )}
+          {canPerformAction(userRole, 'purchase.view') && (
+            <button onClick={() => setView('purchases')} className={`p-2 rounded-xl shrink-0 ${view === 'purchases' ? `bg-${theme.primary}-100 text-${theme.primary}-700` : 'text-gray-400'}`}>
+              <span className="material-symbols-rounded">shopping_cart_checkout</span>
+            </button>
+          )}
         </div>
       </div>
     

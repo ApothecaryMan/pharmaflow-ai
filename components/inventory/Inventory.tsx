@@ -13,6 +13,7 @@ import { Modal } from '../common/Modal';
 import { getCategories, getProductTypes, isMedicineCategory, getLocalizedCategory, getLocalizedProductType } from '../../data/productCategories';
 import { useStatusBar } from '../layout/StatusBar';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { UserRole, canPerformAction } from '../../config/permissions';
 
 interface InventoryProps {
   inventory: Drug[];
@@ -21,9 +22,10 @@ interface InventoryProps {
   onDeleteDrug: (id: string) => void;
   color: string;
   t: any;
+  userRole: UserRole;
 }
 
-export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUpdateDrug, onDeleteDrug, color, t }) => {
+export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUpdateDrug, onDeleteDrug, color, t, userRole }) => {
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
 
@@ -210,17 +212,30 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
   }, [inventory, searchTerm]);
 
   // Helper: Get row context menu actions
-  const getRowActions = (drug: Drug) => [
-    { label: t.actionsMenu.edit, icon: 'edit', action: () => handleOpenEdit(drug) },
-    { label: t.actionsMenu.viewDetails || t.actionsMenu.view, icon: 'visibility', action: () => handleViewDetails(drug.id) },
-    { separator: true },
-    { label: t.actionsMenu.printBarcode, icon: 'print', action: () => handlePrintBarcode(drug) },
-    { label: t.actionsMenu.duplicate, icon: 'content_copy', action: () => handleDuplicate(drug) },
-    { separator: true },
-    { label: t.actionsMenu.adjustStock, icon: 'inventory', action: () => handleQuickStockAdjust(drug) },
-    { separator: true },
-    { label: t.actionsMenu.delete, icon: 'delete', action: () => handleDelete(drug.id), danger: true }
-  ];
+  const getRowActions = (drug: Drug) => {
+    const actions = [];
+    
+    if (canPerformAction(userRole, 'inventory.update')) {
+      actions.push({ label: t.actionsMenu.edit, icon: 'edit', action: () => handleOpenEdit(drug) });
+    }
+    
+    actions.push({ label: t.actionsMenu.viewDetails || t.actionsMenu.view, icon: 'visibility', action: () => handleViewDetails(drug.id) });
+    actions.push({ separator: true });
+    actions.push({ label: t.actionsMenu.printBarcode, icon: 'print', action: () => handlePrintBarcode(drug) });
+    actions.push({ label: t.actionsMenu.duplicate, icon: 'content_copy', action: () => handleDuplicate(drug) });
+    
+    if (canPerformAction(userRole, 'inventory.restock')) {
+      actions.push({ separator: true });
+      actions.push({ label: t.actionsMenu.adjustStock, icon: 'inventory', action: () => handleQuickStockAdjust(drug) });
+    }
+    
+    if (canPerformAction(userRole, 'inventory.delete')) {
+      actions.push({ separator: true });
+      actions.push({ label: t.actionsMenu.delete, icon: 'delete', action: () => handleDelete(drug.id), danger: true });
+    }
+    
+    return actions;
+  };
 
   const tableColumns = useMemo<ColumnDef<Drug>[]>(() => [
     {
@@ -315,10 +330,12 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                 className="absolute right-8 top-0 z-50 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 py-1 rtl:right-auto rtl:left-8 text-start animate-fade-in"
                 onClick={(e) => e.stopPropagation()} // Prevent row click
               >
-                <button onClick={() => handleOpenEdit(row.original)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
-                  <span className="material-symbols-rounded text-lg text-gray-400">edit</span>
-                  {t.actionsMenu.edit}
-                </button>
+                {canPerformAction(userRole, 'inventory.update') && (
+                  <button onClick={() => handleOpenEdit(row.original)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
+                    <span className="material-symbols-rounded text-lg text-gray-400">edit</span>
+                    {t.actionsMenu.edit}
+                  </button>
+                )}
                 <button onClick={() => handleViewDetails(row.original.id)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
                   <span className="material-symbols-rounded text-lg text-gray-400">visibility</span>
                   {t.actionsMenu.view}
@@ -327,11 +344,15 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                   <span className="material-symbols-rounded text-lg text-gray-400">qr_code_2</span>
                   {t.actionsMenu.printBarcode}
                 </button>
-                <div className="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
-                <button onClick={() => handleDelete(row.original.id)} className="w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-3 transition-colors">
-                  <span className="material-symbols-rounded text-lg">delete</span>
-                  {t.actionsMenu.delete}
-                </button>
+                {canPerformAction(userRole, 'inventory.delete') && (
+                  <>
+                    <div className="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
+                    <button onClick={() => handleDelete(row.original.id)} className="w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-3 transition-colors">
+                      <span className="material-symbols-rounded text-lg">delete</span>
+                      {t.actionsMenu.delete}
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -355,7 +376,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
           }}
           options={[
             { label: t.allProducts || 'All Products', value: 'list' as const },
-            { label: t.addNewProduct || 'Add New Product', value: 'add' as const }
+            ...(canPerformAction(userRole, 'inventory.add') ? [{ label: t.addNewProduct || 'Add New Product', value: 'add' as const }] : [])
           ]}
           shape="pill"
           size="sm"

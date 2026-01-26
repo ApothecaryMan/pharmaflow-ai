@@ -18,6 +18,8 @@ import { checkExpiryStatus, sanitizeExpiryInput, formatExpiryDisplay, parseExpir
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useStatusBar } from '../../components/layout/StatusBar';
+import { UserRole, canPerformAction } from '../../config/permissions';
+import { useToast } from '../../context';
 
 
 interface PurchasesProps {
@@ -28,10 +30,17 @@ interface PurchasesProps {
   onPurchaseComplete: (purchase: Purchase) => void;
   color: string;
   t: any;
+  userRole: UserRole;
+  onApprovePurchase?: (purchase: Purchase) => void;
+  onRejectPurchase?: (purchase: Purchase) => void;
 }
 
-export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purchases, purchaseReturns, onPurchaseComplete, color, t }) => {
+export const Purchases: React.FC<PurchasesProps> = ({ 
+  inventory, suppliers, purchases, purchaseReturns, onPurchaseComplete, 
+  color, t, userRole, onApprovePurchase, onRejectPurchase 
+}) => {
   const { getVerifiedDate } = useStatusBar();
+  const { error: showToastError } = useToast();
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
@@ -831,6 +840,11 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
       paymentType: paymentMethod
     };
     
+    if (!canPerformAction(userRole, 'purchase.create')) {
+        showToastError('Permission Denied: Cannot complete purchase');
+        return;
+    }
+    
     onPurchaseComplete(purchase);
     setCart([]);
     setSelectedSupplierId('');
@@ -895,6 +909,11 @@ export const Purchases: React.FC<PurchasesProps> = ({ inventory, suppliers, purc
       externalInvoiceId,
       paymentType: paymentMethod
     };
+    
+    if (!canPerformAction(userRole, 'purchase.create')) {
+        showToastError('Permission Denied: Cannot complete purchase');
+        return;
+    }
     
     onPurchaseComplete(purchase);
     setCart([]);

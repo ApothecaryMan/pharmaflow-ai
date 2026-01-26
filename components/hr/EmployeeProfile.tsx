@@ -16,6 +16,7 @@ import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
 import { COLOR_HEX_MAP } from '../../config/themeColors';
 import { ChartWidget } from '../common/ChartWidget';
+import { UserRole, canPerformAction } from '../../config/permissions';
 
 // AI Performance Summary Sub-Component
 const AIPerformanceSummary: React.FC<{
@@ -254,6 +255,8 @@ interface EmployeeProfileProps {
   color: ThemeColor;
   t: any;
   language: 'EN' | 'AR';
+  userRole: UserRole;
+  currentEmployeeId: string | null;
 }
 
 // Helper for compact currency formatting
@@ -272,7 +275,9 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   employees = [],
   color,
   t,
-  language
+  language,
+  userRole,
+  currentEmployeeId
 }) => {
   // We need to manage the selected employee. 
   // Initially, it could be the first one or none.
@@ -344,10 +349,17 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
 
   // Set default employee if not set
   React.useEffect(() => {
+    if (!canPerformAction(userRole, 'users.view')) {
+      if (currentEmployeeId) {
+        setSelectedEmployeeId(currentEmployeeId);
+      }
+      return;
+    }
+
     if (!selectedEmployeeId && allEmployees.length > 0) {
       setSelectedEmployeeId(allEmployees[0].id);
     }
-  }, [allEmployees, selectedEmployeeId]);
+  }, [allEmployees, selectedEmployeeId, userRole, currentEmployeeId]);
 
   const selectedEmployee = allEmployees.find(e => e.id === selectedEmployeeId);
   const chartColor = COLOR_HEX_MAP[color.name] || COLOR_HEX_MAP['blue'];
@@ -806,34 +818,36 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
 
         <div className="flex items-center gap-3">
              {/* Employee Selector */}
-             <div className="w-56 h-9 relative z-10">
-                <FilterDropdown
-                    className="absolute top-0 left-0 w-full text-sm"
-                    minHeight="36px"
-                    items={allEmployees}
-                    selectedItem={selectedEmployee}
-                    isOpen={isEmployeeDropdownOpen}
-                    onToggle={() => setIsEmployeeDropdownOpen(!isEmployeeDropdownOpen)}
-                    onSelect={(emp) => {
-                        setSelectedEmployeeId(emp.id);
-                        setIsEmployeeDropdownOpen(false);
-                    }}
-                    renderItem={(emp) => (
-                        <div className="flex flex-col py-1">
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">{emp.name}</span>
-                            <span className="text-xs text-gray-500">{emp.role}</span>
-                        </div>
-                    )}
-                    renderSelected={(emp) => (
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-200">
-                            {emp ? emp.name : 'Select Employee'}
-                        </span>
-                    )}
-                    keyExtractor={(emp) => emp.id}
-                    variant="input"
-                    color={color.name}
-                />
-             </div>
+             {canPerformAction(userRole, 'users.view') && (
+               <div className="w-56 h-9 relative z-10">
+                  <FilterDropdown
+                      className="absolute top-0 left-0 w-full text-sm"
+                      minHeight="36px"
+                      items={allEmployees}
+                      selectedItem={selectedEmployee}
+                      isOpen={isEmployeeDropdownOpen}
+                      onToggle={() => setIsEmployeeDropdownOpen(!isEmployeeDropdownOpen)}
+                      onSelect={(emp) => {
+                          setSelectedEmployeeId(emp.id);
+                          setIsEmployeeDropdownOpen(false);
+                      }}
+                      renderItem={(emp) => (
+                          <div className="flex flex-col py-1">
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">{emp.name}</span>
+                              <span className="text-xs text-gray-500">{emp.role}</span>
+                          </div>
+                      )}
+                      renderSelected={(emp) => (
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-200">
+                              {emp ? emp.name : 'Select Employee'}
+                          </span>
+                      )}
+                      keyExtractor={(emp) => emp.id}
+                      variant="input"
+                      color={color.name}
+                  />
+               </div>
+             )}
 
             {/* Date Filter */}
             <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">

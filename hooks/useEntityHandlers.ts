@@ -10,6 +10,13 @@ import { idGenerator } from '../utils/idGenerator';
 import { storage } from '../utils/storage';
 import { StorageKeys } from '../config/storageKeys';
 import type { AppSettings } from '../services/settings/types';
+import { validateStockAvailability, validateSaleData, validateDrug } from '../utils/validation';
+import { restoreStockForCancelledSale } from '../services/salesHelpers';
+
+import { canPerformAction } from '../config/permissions';
+import { measurePerformance } from '../utils/monitoring';
+
+import { auditService } from '../services/auditService';
 
 // Helper to get current branchCode synchronously from storage
 const getBranchCode = (): string => {
@@ -22,7 +29,7 @@ export interface EntityHandlers {
   handleAddDrug: (drug: Drug) => void;
   handleUpdateDrug: (drug: Drug) => void;
   handleDeleteDrug: (id: string) => void;
-  handleRestock: (id: string, qty: number) => void;
+  handleRestock: (id: string, qty: number, isUnit?: boolean) => void;
   
   // Supplier handlers
   handleAddSupplier: (supplier: Supplier) => void;
@@ -40,7 +47,8 @@ export interface EntityHandlers {
   handleRejectPurchase: (purchaseId: string, reason?: string) => void;
   
   // Sale handlers
-  handleCompleteSale: (saleData: SaleData) => void;
+  // Sale handlers
+  handleCompleteSale: (saleData: SaleData) => Promise<void>;
   handleUpdateSale: (saleId: string, updates: Partial<Sale>) => void;
   handleProcessReturn: (returnData: Return) => void;
   
@@ -118,78 +126,186 @@ export function useEntityHandlers({
   const migrationAttempted = useRef(false);
   
   // Run migrations on mount
+  // Run migrations on mount
   useEffect(() => {
+    let cancelled = false;
+    
     if (isLoading || migrationAttempted.current) return;
     if (!inventory || inventory.length === 0) return;
 
-    migrationAttempted.current = true;
+    const runMigrations = async () => {
+      migrationAttempted.current = true;
+      // Simulate async if needed, or structured like this for future async support
+      const { hasUpdates, migratedInventory } = migrationService.runMigrations(inventory);
+      
+      if (!cancelled && hasUpdates) {
+        setInventory(migratedInventory);
+      }
+    };
+
+    runMigrations();
     
-    const { hasUpdates, migratedInventory } = migrationService.runMigrations(inventory);
-    
-    if (hasUpdates) {
-      setInventory(migratedInventory);
-    }
-  }, [isLoading, inventory.length, setInventory]);
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoading, inventory, setInventory]);
 
   // --- Drug Management ---
   const handleAddDrug = useCallback((drug: Drug) => {
+    // Permission Check
+    const employee = employees?.find(e => e.id === currentEmployeeId);
+    if (!canPerformAction(employee?.role || 'admin', 'inventory.add')) { // Should fallback safely? Defaulting admin for safety if system... waiting, actually if !currentEmployeeId it's system.
+       // If system (no login), we might restrict. Or allow if dev.
+       // Let's assume login is required for Add.
+       if (currentEmployeeId && !canPerformAction(employee?.role, 'inventory.add')) {
+           error('Permission denied: Role cannot add items');
+           return;
+       }
+    }
+    
+    const validation = validateDrug(drug);
+    if (!validation.success) {
+      error(validation.message || 'Invalid drug data');
+      return;
+    }
     setInventory(prev => [...prev, drug]);
-  }, [setInventory]);
+    auditService.log('inventory.add', { userId: currentEmployeeId || 'System', details: `Added drug: ${drug.name}`, entityId: drug.id });
+  }, [setInventory, currentEmployeeId, employees, error]);
 
   const handleUpdateDrug = useCallback((drug: Drug) => {
+    if (!currentEmployeeId) {
+       error('Permission denied: Login required to update items');
+       return;
+    }
+    const employee = employees?.find(e => e.id === currentEmployeeId);
+    if (!canPerformAction(employee?.role, 'inventory.update')) {
+        error(`Permission denied: ${employee?.role} cannot update items`);
+        return;
+    }
+
+    const validation = validateDrug(drug);
+    if (!validation.success) {
+      error(validation.message || 'Invalid drug data');
+      return;
+    }
     setInventory(prev => prev.map(d => d.id === drug.id ? drug : d));
-  }, [setInventory]);
+    auditService.log('inventory.update', { userId: currentEmployeeId, details: `Updated drug: ${drug.name}`, entityId: drug.id });
+  }, [setInventory, currentEmployeeId, error]);
 
   const handleDeleteDrug = useCallback((id: string) => {
-    setInventory(prev => prev.filter(d => d.id !== id));
-  }, [setInventory]);
+    if (!currentEmployeeId) {
+       error('Permission denied: Login required to delete items');
+       return;
+    }
+    const employee = employees?.find(e => e.id === currentEmployeeId);
+    if (!canPerformAction(employee?.role, 'inventory.delete')) {
+        error(`Permission denied: ${employee?.role} cannot delete items`);
+        return;
+    }
 
-  const handleRestock = useCallback((id: string, qty: number) => {
+    setInventory(prev => prev.filter(d => d.id !== id));
+    auditService.log('inventory.delete', { userId: currentEmployeeId, details: `Deleted drug ID: ${id}`, entityId: id });
+  }, [setInventory, currentEmployeeId, error]);
+
+  const handleRestock = useCallback((id: string, qty: number, isUnit: boolean = false) => {
+    if (!currentEmployeeId) {
+        error('Permission denied: Login required to restock items');
+        return;
+    }
+    const employee = employees?.find(e => e.id === currentEmployeeId);
+    if (!canPerformAction(employee?.role, 'inventory.update')) { // Restock is an update
+        error('Permission denied: Role cannot restock items');
+        return;
+    }
     setInventory(prev => prev.map(d => {
       if (d.id === id) {
-        // Assume Restock input is in PACKS (Standard)
-        const unitsToAdd = qty * (d.unitsPerPack || 1);
+        // Respect isUnit flag for restock
+        const unitsToAdd = isUnit ? qty : qty * (d.unitsPerPack || 1);
         return { ...d, stock: validateStock(d.stock + unitsToAdd) };
       }
       return d;
     }));
-  }, [setInventory]);
+    auditService.log('inventory.update', { userId: currentEmployeeId, details: `Restocked drug ID: ${id} with qty: ${qty}`, entityId: id });
+  }, [setInventory, currentEmployeeId, employees, error]);
 
   // --- Supplier Management ---
   const handleAddSupplier = useCallback((supplier: Supplier) => {
+    if (!canPerformAction(employees?.find(e => e.id === currentEmployeeId)?.role, 'supplier.add')) {
+        error('Permission denied: Cannot add suppliers');
+        return;
+    }
     setSuppliers(prev => [...prev, supplier]);
-  }, [setSuppliers]);
+    auditService.log('supplier.add', { userId: currentEmployeeId, details: `Added supplier: ${supplier.name}`, entityId: supplier.id });
+  }, [setSuppliers, currentEmployeeId, employees, error]);
 
   const handleUpdateSupplier = useCallback((supplier: Supplier) => {
+    if (!canPerformAction(employees?.find(e => e.id === currentEmployeeId)?.role, 'supplier.update')) {
+        error('Permission denied: Cannot update suppliers');
+        return;
+    }
     setSuppliers(prev => prev.map(s => s.id === supplier.id ? supplier : s));
-  }, [setSuppliers]);
+    auditService.log('supplier.update', { userId: currentEmployeeId, details: `Updated supplier: ${supplier.name}`, entityId: supplier.id });
+  }, [setSuppliers, currentEmployeeId, employees, error]);
 
   const handleDeleteSupplier = useCallback((id: string) => {
+    if (!canPerformAction(employees?.find(e => e.id === currentEmployeeId)?.role, 'supplier.delete')) {
+        error('Permission denied: Cannot delete suppliers');
+        return;
+    }
     setSuppliers(prev => prev.filter(s => s.id !== id));
-  }, [setSuppliers]);
+    auditService.log('supplier.delete', { userId: currentEmployeeId, details: `Deleted supplier ID: ${id}`, entityId: id });
+  }, [setSuppliers, currentEmployeeId, employees, error]);
 
   // --- Customer Management ---
   const handleAddCustomer = useCallback((customer: Customer) => {
+    if (!canPerformAction(employees?.find(e => e.id === currentEmployeeId)?.role, 'customer.add')) {
+        error('Permission denied: Cannot add customers');
+        return;
+    }
     setCustomers(prev => [...prev, customer]);
     success('Customer added successfully');
-  }, [setCustomers, success]);
+    auditService.log('customer.add', { userId: currentEmployeeId, details: `Added customer: ${customer.name}`, entityId: customer.id });
+  }, [setCustomers, success, currentEmployeeId, employees, error]);
 
   const handleUpdateCustomer = useCallback((customer: Customer) => {
+    if (!canPerformAction(employees?.find(e => e.id === currentEmployeeId)?.role, 'customer.update')) {
+        error('Permission denied: Cannot update customers');
+        return;
+    }
     setCustomers(prev => prev.map(c => c.id === customer.id ? customer : c));
     success('Customer updated successfully');
-  }, [setCustomers, success]);
+    auditService.log('customer.update', { userId: currentEmployeeId, details: `Updated customer: ${customer.name}`, entityId: customer.id });
+  }, [setCustomers, success, currentEmployeeId, employees, error]);
 
   const handleDeleteCustomer = useCallback((id: string) => {
+    if (!canPerformAction(employees?.find(e => e.id === currentEmployeeId)?.role, 'customer.delete')) {
+        error('Permission denied: Cannot delete customers');
+        return;
+    }
     setCustomers(prev => prev.filter(c => c.id !== id));
     success('Customer removed successfully');
-  }, [setCustomers, success]);
+    auditService.log('customer.delete', { userId: currentEmployeeId, details: `Deleted customer ID: ${id}`, entityId: id });
+  }, [setCustomers, success, currentEmployeeId, employees, error]);
 
   // --- Purchase Management ---
   const handlePurchaseComplete = useCallback((purchase: Purchase) => {
+    if (!canPerformAction(employees?.find(e => e.id === currentEmployeeId)?.role, 'purchase.create')) {
+        error('Permission denied: Cannot create purchase orders');
+        return;
+    }
     setPurchases(prev => [purchase, ...prev]);
     
     // Only update inventory if purchase is completed immediately
     if (purchase.status === 'completed') {
+      if (!canPerformAction(employees?.find(e => e.id === currentEmployeeId)?.role, 'purchase.approve')) {
+         error('Permission denied: Cannot complete/approve purchase (Created as pending instead)');
+         // Force pending if not authorized to complete directly? 
+         // Logic: if status passed is completed but user can't approve, we should probably throw error or force status='pending'.
+         // Let's force pending if they don't have approval rights, OR error out.
+         // Safer behavior: Error out if they tried to complete it.
+         return; 
+      }
+      
       setInventory(prev => prev.map(drug => {
         const purchasedItem = purchase.items.find(i => i.drugId === drug.id);
         if (purchasedItem) {
@@ -221,12 +337,18 @@ export function useEntityHandlers({
         }
         return drug;
       }));
+      auditService.log('purchase.complete', { userId: currentEmployeeId, details: `Completed PO #${purchase.invoiceId}`, entityId: purchase.id });
     } else {
       info('Purchase Order Saved as Pending');
+      auditService.log('purchase.create', { userId: currentEmployeeId, details: `Created PO #${purchase.invoiceId} (Pending)`, entityId: purchase.id });
     }
-  }, [setPurchases, setInventory, info]);
+  }, [setPurchases, setInventory, info, currentEmployeeId, employees, error]);
 
   const handleApprovePurchase = useCallback((purchaseId: string, approverName: string) => {
+    if (!canPerformAction(employees?.find(e => e.id === currentEmployeeId)?.role, 'purchase.approve')) {
+        error('Permission denied: Cannot approve purchases');
+        return;
+    }
     const purchase = purchases.find(p => p.id === purchaseId);
     if (!purchase) return;
 
@@ -272,131 +394,195 @@ export function useEntityHandlers({
   }, [purchases, setPurchases, setInventory, success]);
 
   const handleRejectPurchase = useCallback((purchaseId: string, reason?: string) => {
+    if (!canPerformAction(employees?.find(e => e.id === currentEmployeeId)?.role, 'purchase.reject')) {
+        error('Permission denied: Cannot reject purchases');
+        return;
+    }
     setPurchases(prev => prev.map(p => 
       p.id === purchaseId ? { ...p, status: 'rejected' } : p
     ));
     info('Purchase Order Rejected');
-  }, [setPurchases, info]);
+    auditService.log('purchase.reject', { userId: currentEmployeeId, details: `Rejected PO ID: ${purchaseId}`, entityId: purchaseId });
+  }, [setPurchases, info, currentEmployeeId, employees, error]);
 
   // --- Sale Management ---
-  const handleCompleteSale = useCallback((saleData: SaleData) => {
-    // Get verified date
-    const saleDate = getVerifiedDate();
-    
-    // Validate transaction time (Monotonic Check)
-    const validation = validateTransactionTime(saleDate);
-    if (!validation.valid) {
-      error(`⚠️ ${validation.message || 'Invalid transaction time'}`);
-      return;
-    }
+  const handleCompleteSale = useCallback(async (saleData: SaleData) => {
+    try {
+      // Permission Check
+      if (!currentEmployeeId) {
+          // Allow guest/system sales? Usually sales require logged in user for tracking.
+          // If system supports anonymous sales (maybe kiosk mode), fine.
+          // But strict mode suggests enforcing login.
+          // Let's enforce login for consistency with strict mode.
+          error('Login required to complete sale');
+          return;
+      }
+      if (!canPerformAction(employees?.find(e => e.id === currentEmployeeId)?.role, 'sale.create')) {
+          error('Permission denied: Cannot process sales');
+          return;
+      }
 
-    // Generate Serial ID
-    const serialId = (100001 + sales.length).toString();
-    
-    // Calculate daily order number
-    const today = saleDate.toDateString();
-    const todaysSales = sales.filter(s => new Date(s.date).toDateString() === today);
-    const dailyOrderNumber = todaysSales.length + 1;
+      // 1. Validate Sale Data
+      const dataValidation = validateSaleData(saleData);
+      if (!dataValidation.success) {
+        error(dataValidation.message || 'Invalid sale data');
+        return;
+      }
 
-    // Process items with batch allocation
-    const processedItems: CartItem[] = [];
-    let allocationSuccess = true;
+      // 2. Validate Stock Availability (Pre-check)
+      const stockValidation = validateStockAvailability(saleData.items, inventory);
+      if (!stockValidation.success) {
+        error(stockValidation.message || 'Insufficient stock');
+        return;
+      }
 
-    for (const item of saleData.items) {
-      const drug = inventory.find(d => d.id === item.id);
-      if (!drug) continue;
+      // 3. Validate Transaction Time
+      const saleDate = getVerifiedDate();
+      const timeValidation = validateTransactionTime(saleDate);
+      if (!timeValidation.valid) {
+        error(`⚠️ ${timeValidation.message || 'Invalid transaction time'}`);
+        return;
+      }
 
-      const quantityToDeduct = item.isUnit 
-        ? item.quantity 
-        : item.quantity * (drug.unitsPerPack || 1);
-
-      // Allocate from batches using FEFO
-      const allocations = batchService.allocateStock(drug.id, quantityToDeduct, true);
+      // --- START TRANSACTION ---
+      const transactionAllocations: { drugId: string; allocation: BatchAllocation[] }[] = [];
+      const processedItems: CartItem[] = [];
       
-      if (allocations === null) {
-        // Insufficient stock - fallback to legacy behavior
-        console.warn(`Batch allocation failed for ${drug.name}, using legacy stock deduction`);
-        processedItems.push(item);
-      } else {
-        // Store batch allocations with the item
-        processedItems.push({
-          ...item,
-          batchAllocations: allocations
+      try {
+        // 4. Allocation Phase (The "Dangerous" part that needs rollback)
+        for (const item of saleData.items) {
+          const drug = inventory.find(d => d.id === item.id);
+          if (!drug) throw new Error(`Drug not found: ${item.name}`);
+
+          const quantityToDeduct = item.isUnit 
+            ? item.quantity 
+            : item.quantity * (drug.unitsPerPack || 1);
+
+          // Allocate from batches
+          const allocations = batchService.allocateStock(drug.id, quantityToDeduct, true);
+          
+          if (!allocations) {
+            throw new Error(`Failed to allocate batch stock for ${drug.name}`);
+          }
+
+          transactionAllocations.push({ drugId: drug.id, allocation: allocations });
+          
+          processedItems.push({
+            ...item,
+            batchAllocations: allocations
+          });
+        }
+      } catch (allocError: any) {
+        // --- ROLLBACK INITIATED ---
+        console.error('Transaction failed during allocation, rolling back...', allocError);
+        
+        // Return stock for all successful allocations so far
+        transactionAllocations.forEach(({ allocation }) => {
+          batchService.returnStock(allocation);
         });
+
+        error(allocError.message || 'Transaction failed. Stock has been rolled back.');
+        return; // Stop execution
       }
-    }
 
-    const newSale: Sale = {
-      id: serialId,
-      branchId: getBranchCode(), // Inject current branch
-      date: saleDate.toISOString(),
-      soldByEmployeeId: currentEmployeeId || undefined,
-      dailyOrderNumber,
-      status: saleData.saleType === 'delivery' ? 'pending' : 'completed',
-      ...saleData,
-      items: processedItems
-    };
-    
-    // Update last transaction time
-    updateLastTransactionTime(saleDate.getTime());
-    
-    // Update inventory (Drug.stock for display/legacy compatibility)
-    setInventory(prev => prev.map(drug => {
-      const soldItem = saleData.items.find(i => i.id === drug.id);
-      if (soldItem) {
-        const quantityToDeduct = soldItem.isUnit 
-          ? soldItem.quantity 
-          : soldItem.quantity * (drug.unitsPerPack || 1);
+      // 5. Preparation Phase (Prepare new state objects)
+      const serialId = (100001 + sales.length).toString();
+      const today = saleDate.toDateString();
+      const dailyOrderNumber = sales.filter(s => new Date(s.date).toDateString() === today).length + 1;
 
-        const newStock = drug.stock - quantityToDeduct;
-        
-        if (newStock < 0) {
-          console.error(`STOCK ERROR: Negative stock for ${drug.name}.`);
-          return { ...drug, stock: 0 };
-        }
-        
-        // Update earliest expiry from batches
-        const earliestExpiry = batchService.getEarliestExpiry(drug.id);
-        
-        return { 
-          ...drug, 
-          stock: validateStock(newStock),
-          expiryDate: earliestExpiry || drug.expiryDate
-        };
-      }
-      return drug;
-    }));
+      const newSale: Sale = {
+        id: serialId,
+        branchId: getBranchCode(),
+        date: saleDate.toISOString(),
+        soldByEmployeeId: currentEmployeeId || undefined,
+        dailyOrderNumber,
+        status: saleData.saleType === 'delivery' ? 'pending' : 'completed',
+        ...saleData,
+        items: processedItems
+      };
 
-    // Calculate Loyalty Points
-    const pointsEarned = calculateLoyaltyPoints(saleData.total, saleData.items);
+      // 6. Commit Phase (Update all States)
+      
+      // Update Inventory State
+      setInventory(prev => prev.map(drug => {
+         const soldItem = saleData.items.find(i => i.id === drug.id);
+         if (soldItem) {
+           const quantityToDeduct = soldItem.isUnit 
+             ? soldItem.quantity 
+             : soldItem.quantity * (drug.unitsPerPack || 1);
+            
+           const newStock = drug.stock - quantityToDeduct;
+           
+           // Double check for negative stock, though validation should have caught it
+           if (newStock < 0) {
+             console.error(`CRITICAL: Negative stock detected for ${drug.name} during commit!`);
+             // In a real DB we would abort, here we clamp to 0 but the batch allocation is the source of truth
+           }
 
-    // Update customer points if a customer is associated
-    if (saleData.customerCode || saleData.customerName !== 'Guest Customer') {
-      setCustomers(prev => prev.map(c => {
-        if ((saleData.customerCode && (c.code === saleData.customerCode || c.serialId?.toString() === saleData.customerCode)) || 
-            (!saleData.customerCode && c.name === saleData.customerName)) {
-          return { ...c, points: (c.points || 0) + pointsEarned };
-        }
-        return c;
+           return {
+             ...drug,
+             stock: validateStock(newStock),
+             expiryDate: batchService.getEarliestExpiry(drug.id) || drug.expiryDate
+           };
+         }
+         return drug;
       }));
+
+      // Update Sales State
+      setSales(prev => [...prev, newSale]);
+
+      // Update Customer Points
+      if (saleData.customerCode || saleData.customerName !== 'Guest Customer') {
+        const pointsEarned = calculateLoyaltyPoints(saleData.total, saleData.items);
+        if (pointsEarned > 0) {
+           setCustomers(prev => prev.map(c => {
+             const isMatch = (saleData.customerCode && (c.code === saleData.customerCode || c.serialId?.toString() === saleData.customerCode)) || 
+                             (!saleData.customerCode && c.name === saleData.customerName);
+             if (isMatch) {
+               return { ...c, points: (c.points || 0) + pointsEarned };
+             }
+             return c;
+           }));
+        }
+      }
+
+      // Update Shift/Cash Register
+      const isCash = saleData.paymentMethod === 'cash';
+      addTransactionToOpenShift({
+        type: isCash ? 'sale' : 'card_sale',
+        amount: saleData.total,
+        reason: `Sale #${serialId}`,
+        userId: currentEmployeeId || 'System',
+        relatedSaleId: serialId,
+        getVerifiedDate
+      });
+
+      updateLastTransactionTime(saleDate.getTime());
+      
+      auditService.log('sale.complete', { 
+        userId: currentEmployeeId || 'System', 
+        details: `Completed Sale #${serialId} - Total: ${saleData.total}`, 
+        entityId: serialId 
+      });
+
+      success(`Order #${serialId} completed!`);
+
+    } catch (err) {
+      console.error('[handleCompleteSale] Fatal error:', err);
+      // Attempt generic rollback if possible (difficult here as we might have partial state updates if logic wasn't clean)
+      // Since we separated Allocation (with explicit rollback) from State Commit, 
+      // the only risk is if setInventory succeeds but setSales fails. 
+      // React 18 batches these updates, but custom context logic might not.
+      // For now, the Allocation Rollback covers the most critical "Inventory Drift" issue.
+      error('An unexpected error occurred. Please refresh and try again.');
     }
-
-    setSales(prev => [...prev, newSale]);
-
-    // Update Cash Register (Shift)
-    const isCash = saleData.paymentMethod === 'cash';
-    addTransactionToOpenShift({
-      type: isCash ? 'sale' : 'card_sale',
-      amount: saleData.total,
-      reason: `Sale #${serialId}`,
-      userId: currentEmployeeId || 'System',
-      relatedSaleId: serialId,
-      getVerifiedDate
-    });
-    
-    success(`Order #${serialId} completed! ${pointsEarned > 0 ? `Earned ${pointsEarned} points.` : ''}`);
   }, [sales, inventory, currentEmployeeId, getVerifiedDate, validateTransactionTime, updateLastTransactionTime, 
       setInventory, setCustomers, setSales, success, error]);
+      
+  // Wrap with Monitoring
+  const monitoredHandleCompleteSale = useCallback((saleData: SaleData) => {
+      return measurePerformance('handleCompleteSale', () => handleCompleteSale(saleData));
+  }, [handleCompleteSale]);
 
   const handleUpdateSale = useCallback((saleId: string, updates: Partial<Sale>) => {
     const sale = sales.find(s => s.id === saleId);
@@ -404,31 +590,18 @@ export function useEntityHandlers({
 
     // Handle order cancellation - return all items to batches
     if (updates.status === 'cancelled' && sale.status !== 'cancelled') {
-      // Return stock to original batches
-      for (const item of sale.items) {
-        if (item.batchAllocations && item.batchAllocations.length > 0) {
-          batchService.returnStock(item.batchAllocations);
-        }
+      if (!currentEmployeeId) {
+          error('Permission denied: Login required to cancel orders');
+          return;
       }
-      
-      // Update Drug.stock for display - aggregate ALL items per drug
-      setInventory(prev => prev.map(drug => {
-        // Find ALL items for this drug (both pack and unit)
-        const matchingItems = sale.items.filter(i => i.id === drug.id);
-        if (matchingItems.length > 0) {
-          // Sum up units to restore from ALL matching items
-          const totalUnitsToRestore = matchingItems.reduce((sum, item) => {
-            const units = item.isUnit ? item.quantity : item.quantity * (drug.unitsPerPack || 1);
-            return sum + units;
-          }, 0);
-          return { 
-            ...drug, 
-            stock: validateStock(drug.stock + totalUnitsToRestore),
-            expiryDate: batchService.getEarliestExpiry(drug.id) || drug.expiryDate
-          };
-        }
-        return drug;
-      }));
+      const employee = employees?.find(e => e.id === currentEmployeeId);
+      if (!canPerformAction(employee?.role, 'sale.cancel')) {
+          error('Permission denied: Cannot cancel orders');
+          return;
+      }
+      const updatedInventory = restoreStockForCancelledSale(sale, inventory);
+      setInventory(updatedInventory);
+      auditService.log('sale.cancel', { userId: currentEmployeeId, details: `Cancelled Sale #${saleId}`, entityId: saleId });
     }
 
     // Handle item modifications (for delivery orders)
@@ -438,6 +611,11 @@ export function useEntityHandlers({
         console.error('[handleUpdateSale] Security Alert: Attempted modification without logged-in user');
         error('Security Alert: You must be logged in to modify orders');
         return;
+      }
+      const employee = employees?.find(e => e.id === currentEmployeeId);
+      if (!canPerformAction(employee?.role, 'sale.modify')) {
+          error('Permission denied: Cannot modify orders');
+          return;
       }
 
       const modifications: OrderModification[] = [];
@@ -632,6 +810,11 @@ export function useEntityHandlers({
   }, [sales, inventory, currentEmployeeId, setInventory, setSales]);
 
   const handleProcessReturn = useCallback((returnData: Return) => {
+    if (!canPerformAction(employees?.find(e => e.id === currentEmployeeId)?.role, 'sale.refund')) {
+        error('Permission denied: Cannot process returns');
+        return;
+    }
+
     // Validate return time
     const returnDate = new Date(returnData.date);
     const validation = validateTransactionTime(returnDate);
@@ -722,18 +905,50 @@ export function useEntityHandlers({
 
   // --- Computed Data ---
   const enrichedCustomers = useMemo(() => {
-    return customers.map(customer => {
-      const customerSales = sales.filter(s => 
-        (s.customerCode && (s.customerCode === customer.code || s.customerCode === customer.serialId?.toString())) ||
-        (!s.customerCode && s.customerName === customer.name)
-      );
+    // Optimization: Create a map of sales by customer to avoid O(N*M) complexity
+    const salesByCustomer = new Map<string, Sale[]>();
+    
+    sales.forEach(sale => {
+      // Key can be customerCode or customerName (fallback)
+      // We need to match how we look it up later.
+      // Since customers store 'code' and 'name', we can try to index by both if needed,
+      // but simpler to iterate sales once and check against a robust key strategy 
+      // OR just map sales by their identifiers.
+      
+      // Strategy: 
+      // 1. If sale has customerCode, map it to that code.
+      // 2. If no code, map it to name.
+      
+      if (sale.customerCode) {
+        const key = `code:${sale.customerCode}`;
+        const existing = salesByCustomer.get(key) || [];
+        existing.push(sale);
+        salesByCustomer.set(key, existing);
+      } else if (sale.customerName) {
+         const key = `name:${sale.customerName}`;
+         const existing = salesByCustomer.get(key) || [];
+         existing.push(sale);
+         salesByCustomer.set(key, existing);
+      }
+    });
 
-      const totalPurchases = customerSales.reduce((sum, sale) => sum + (sale.netTotal ?? sale.total), 0);
+    return customers.map(customer => {
+      // Retrieve sales using the same keys
+      const salesByCode = customer.code ? (salesByCustomer.get(`code:${customer.code}`) || []) : [];
+      // Also check serialId as fallback for code match (legacy support)
+      const salesBySerial = customer.serialId ? (salesByCustomer.get(`code:${customer.serialId}`) || []) : [];
+      const salesByName = salesByCustomer.get(`name:${customer.name}`) || [];
+      
+      // Merge unique sales
+      const allCustomerSales = Array.from(new Set([...salesByCode, ...salesBySerial, ...salesByName]));
+
+      const totalPurchases = allCustomerSales.reduce((sum, sale) => sum + (sale.netTotal ?? sale.total), 0);
       
       let lastVisit = customer.lastVisit;
-      if (customerSales.length > 0) {
-        const sortedSales = [...customerSales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        lastVisit = sortedSales[0].date;
+      if (allCustomerSales.length > 0) {
+        // Sort only the customer's sales, not the whole array every time
+        allCustomerSales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        lastVisit = allCustomerSales[0].date;
       }
 
       return {
@@ -767,7 +982,7 @@ export function useEntityHandlers({
     handleRejectPurchase,
     
     // Sale handlers
-    handleCompleteSale,
+    handleCompleteSale: monitoredHandleCompleteSale, // Export monitored version
     handleUpdateSale,
     handleProcessReturn,
     

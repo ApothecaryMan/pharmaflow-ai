@@ -1,4 +1,5 @@
 import { ComponentType } from 'react';
+import { PermissionAction } from './permissions';
 import { Dashboard } from '../components/dashboard/Dashboard';
 import { Inventory } from '../components/inventory/Inventory';
 import { POS } from '../components/sales/POS';
@@ -29,7 +30,12 @@ import { EmployeeList } from '../components/hr/EmployeeList';
 import { EmployeeProfile } from '../components/hr/EmployeeProfile';
 import { Login } from '../components/auth/Login';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
+import { LoginAuditList } from '../components/reports/LoginAuditList';
 
+// Skeletons
+import { DashboardSkeleton } from '../components/dashboard/DashboardSkeletons';
+import { InventorySkeleton } from '../components/skeletons/InventorySkeleton';
+import { POSSkeleton } from '../components/skeletons/POSSkeleton';
 
 export interface PageConfig {
   id: string;
@@ -39,6 +45,9 @@ export interface PageConfig {
   requiredProps?: string[]; // Props that need to be passed to the component
   icon?: string;
   category?: string;
+  permission?: PermissionAction;
+  skeleton?: ComponentType<any>;
+  skeletonProps?: Record<string, any>;
 }
 
 export const PAGE_REGISTRY: Record<string, PageConfig> = {
@@ -49,7 +58,9 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'نظرة عامة على لوحة التحكم',
     icon: 'dashboard',
     category: 'main-dashboard',
-    requiredProps: ['sales', 'inventory', 'purchases', 'customers', 'color', 't', 'language', 'onViewChange']
+
+    requiredProps: ['sales', 'inventory', 'purchases', 'customers', 'color', 't', 'language', 'onViewChange'],
+    skeleton: DashboardSkeleton
   },
   'inventory': {
     id: 'inventory',
@@ -58,7 +69,9 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'المخزون',
     icon: 'inventory_2',
     category: 'inventory',
-    requiredProps: ['inventory', 'onAddDrug', 'onUpdateDrug', 'onDeleteDrug', 'color', 't', 'language']
+
+    requiredProps: ['inventory', 'onAddDrug', 'onUpdateDrug', 'onDeleteDrug', 'color', 't', 'language'],
+    skeleton: InventorySkeleton
   },
   'inventory-beta': {
     id: 'inventory-beta',
@@ -67,7 +80,9 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'المخزون (تجريبي)',
     icon: 'table_view',
     category: 'inventory',
-    requiredProps: ['inventory', 'color', 't', 'language']
+
+    requiredProps: ['inventory', 'color', 't', 'language'],
+    skeleton: InventorySkeleton
   },
   'pos': {
     id: 'pos',
@@ -76,7 +91,9 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'نقطة البيع',
     icon: 'point_of_sale',
     category: 'sales',
-    requiredProps: ['inventory', 'customers', 'onCompleteSale', 'color', 't', 'language', 'onAddCustomer', 'sales', 'employees', 'onUpdateSale']
+
+    requiredProps: ['inventory', 'customers', 'onCompleteSale', 'color', 't', 'language', 'onAddCustomer', 'sales', 'employees', 'onUpdateSale'],
+    skeleton: POSSkeleton
   },
   'sales-history': {
     id: 'sales-history',
@@ -85,7 +102,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل المبيعات',
     icon: 'receipt_long',
     category: 'sales',
-    requiredProps: ['sales', 'onProcessReturn', 'color', 't', 'language']
+    requiredProps: ['sales', 'onProcessReturn', 'color', 't', 'language'],
+    permission: 'sale.view_history'
   },
   'return-history': {
     id: 'return-history',
@@ -94,7 +112,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل الإرجاعات',
     icon: 'assignment_return',
     category: 'sales',
-    requiredProps: ['returns', 'sales', 'color', 't', 'language']
+    requiredProps: ['returns', 'sales', 'color', 't', 'language'],
+    permission: 'sale.refund'
   },
   'suppliers': {
     id: 'suppliers',
@@ -103,7 +122,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'قائمة الموردين',
     icon: 'local_shipping',
     category: 'purchase',
-    requiredProps: ['suppliers', 'setSuppliers', 'color', 't', 'language']
+    requiredProps: ['suppliers', 'setSuppliers', 'color', 't', 'language'],
+    permission: 'supplier.view'
   },
   'purchases': {
     id: 'purchases',
@@ -112,7 +132,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'المشتريات',
     icon: 'shopping_cart',
     category: 'purchase',
-    requiredProps: ['inventory', 'suppliers', 'purchases', 'purchaseReturns', 'onCompletePurchase', 'drugs', 'setDrugs', 'color', 't', 'language']
+    requiredProps: ['inventory', 'suppliers', 'purchases', 'purchaseReturns', 'onCompletePurchase', 'drugs', 'setDrugs', 'color', 't', 'language'],
+    permission: 'purchase.view'
   },
   'pending-approval': {
     id: 'pending-approval',
@@ -121,7 +142,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'بانتظار الموافقة',
     icon: 'pending_actions',
     category: 'purchase',
-    requiredProps: ['color', 't', 'purchases', 'onApprovePurchase', 'onRejectPurchase', 'language']
+    requiredProps: ['color', 't', 'purchases', 'onApprovePurchase', 'onRejectPurchase', 'language'],
+    permission: 'purchase.approve'
   },
   'purchase-returns': {
     id: 'purchase-returns',
@@ -130,7 +152,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'مرتجعات المشتريات',
     icon: 'assignment_return',
     category: 'purchase',
-    requiredProps: ['purchases', 'purchaseReturns', 'setPurchaseReturns', 'drugs', 'setDrugs', 'color', 't', 'language']
+    requiredProps: ['purchases', 'purchaseReturns', 'setPurchaseReturns', 'drugs', 'setDrugs', 'color', 't', 'language'],
+    permission: 'purchase.view'
   },
   'barcode-printer': {
     id: 'barcode-printer',
@@ -139,7 +162,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'طباعة الباركود',
     icon: 'print',
     category: 'tools',
-    requiredProps: ['inventory', 'color', 't', 'language', 'textTransform']
+    requiredProps: ['inventory', 'color', 't', 'language', 'textTransform'],
+    permission: 'inventory.update'
   },
   'barcode-studio': {
     id: 'barcode-studio',
@@ -148,7 +172,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'استوديو الباركود',
     icon: 'qr_code_2',
     category: 'tools',
-    requiredProps: ['inventory', 'color', 't', 'language']
+    requiredProps: ['inventory', 'color', 't', 'language'],
+    permission: 'inventory.update'
   },
   'customers': {
     id: 'customers',
@@ -157,7 +182,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'جميع العملاء',
     icon: 'group',
     category: 'customers',
-    requiredProps: ['customers', 'onAddCustomer', 'onUpdateCustomer', 'onDeleteCustomer', 'color', 't', 'language']
+    requiredProps: ['customers', 'onAddCustomer', 'onUpdateCustomer', 'onDeleteCustomer', 'color', 't', 'language'],
+    permission: 'customer.view'
   },
   'customer-overview': {
     id: 'customer-overview',
@@ -193,7 +219,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'مراقبة المبيعات الفورية',
     icon: 'monitoring',
     category: 'sales-dashboard',
-    requiredProps: ['sales', 'customers', 'products', 'color', 't', 'language']
+    requiredProps: ['sales', 'customers', 'products', 'color', 't', 'language'],
+    permission: 'reports.view_financial'
   },
   'add-product': {
     id: 'add-product',
@@ -202,7 +229,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'إضافة منتج جديد',
     icon: 'add_box',
     category: 'inventory',
-    requiredProps: ['inventory', 'onAddDrug', 'onUpdateDrug', 'onDeleteDrug', 'color', 't', 'language', 'initialMode']
+    requiredProps: ['inventory', 'onAddDrug', 'onUpdateDrug', 'onDeleteDrug', 'color', 't', 'language', 'initialMode'],
+    permission: 'inventory.add'
   },
   'cash-register': {
     id: 'cash-register',
@@ -220,7 +248,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل الورديات',
     icon: 'history',
     category: 'sales',
-    requiredProps: ['color', 't', 'language']
+    requiredProps: ['color', 't', 'language'],
+    permission: 'shift.reports'
   },
   'stock-adjustment': {
     id: 'stock-adjustment',
@@ -229,7 +258,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'جرد المخزون',
     icon: 'inventory',
     category: 'inventory',
-    requiredProps: ['inventory', 'onUpdateInventory', 'color', 't']
+    requiredProps: ['inventory', 'onUpdateInventory', 'color', 't'],
+    permission: 'inventory.adjust'
   },
   'receipt-designer': {
     id: 'receipt-designer',
@@ -238,7 +268,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'تصميم الفاتورة',
     icon: 'brush', 
     category: 'sales',
-    requiredProps: ['color', 't', 'language']
+    requiredProps: ['color', 't', 'language'],
+    permission: 'settings.update'
   },
   'dashboard-experiments': {
     id: 'dashboard-experiments',
@@ -247,7 +278,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'تجارب لوحة التحكم',
     icon: 'science',
     category: 'test',
-    requiredProps: ['color', 't', 'language']
+    requiredProps: ['color', 't', 'language'],
+    permission: 'settings.view'
   },
   'pos-test': {
     id: 'pos-test',
@@ -292,7 +324,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'قائمة الموظفين',
     icon: 'badge',
     category: 'hr',
-    requiredProps: ['color', 't', 'language']
+    requiredProps: ['color', 't', 'language'],
+    permission: 'users.view'
   },
   'employee-profile': {
     id: 'employee-profile',
@@ -301,7 +334,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'ملف الموظف',
     icon: 'id_card',
     category: 'hr',
-    requiredProps: ['sales', 'employees', 'color', 't', 'language']
+    requiredProps: ['sales', 'employees', 'color', 't', 'language'],
+    permission: 'users.view'
   },
   'login': {
     id: 'login',
@@ -319,7 +353,18 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'ذكاء الأعمال',
     icon: 'auto_graph',
     category: 'reports',
-    requiredProps: ['color', 't', 'language']
+    requiredProps: ['color', 't', 'language'],
+    permission: 'reports.view_financial'
+  },
+  'login-audit': {
+    id: 'login-audit',
+    component: LoginAuditList,
+    menuLabel: 'Login Audit',
+    menuLabelAr: 'سجل عمليات الدخول',
+    icon: 'history',
+    category: 'reports',
+    requiredProps: ['language'],
+    permission: 'reports.view_financial'
   },
 };
 

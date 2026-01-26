@@ -16,15 +16,17 @@ import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
+import { UserRole, canPerformAction } from '../../config/permissions';
 
 interface EmployeeListProps {
   color: string;
   t: any;
   language: string;
   onUpdateEmployees?: (employees: Employee[]) => void;
+  userRole: UserRole;
 }
 
-export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, onUpdateEmployees }) => {
+export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, onUpdateEmployees, userRole }) => {
   // --- Data Context ---
   const { employees, addEmployee, updateEmployee, deleteEmployee } = useData();
 
@@ -83,7 +85,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
   }, [employees]);
 
   const filteredEmployees = useMemo(() => {
-    let data = employees;
+    // Hide Super Admin from the list
+    let data = employees.filter(e => e.id !== 'SUPER-ADMIN' && e.employeeCode !== 'EMP-000');
     
     // Status Filter
     if (statusFilter !== 'all') {
@@ -153,18 +156,22 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
           >
             <span className="material-symbols-rounded text-[20px]">visibility</span>
           </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); handleEdit(row.original); }}
-            className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-          >
-            <span className="material-symbols-rounded text-[20px]">edit</span>
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); handleDelete(row.original); }}
-            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-          >
-            <span className="material-symbols-rounded text-[20px]">delete</span>
-          </button>
+          {canPerformAction(userRole, 'users.manage') && (
+            <>
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleEdit(row.original); }}
+                className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+              >
+                <span className="material-symbols-rounded text-[20px]">edit</span>
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleDelete(row.original); }}
+                className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+              >
+                <span className="material-symbols-rounded text-[20px]">delete</span>
+              </button>
+            </>
+          )}
         </div>
       )
     }
@@ -311,13 +318,15 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                 />
             </div>
 
-            <button
-            onClick={() => { setFormData({}); setEditingEmployee(null); setIsModalOpen(true); }}
-            className={`flex items-center justify-center gap-2 px-4 py-2 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all active:scale-95 whitespace-nowrap`}
-            >
-            <span className="material-symbols-rounded">add</span>
-            <span>{t.employeeList.addEmployee}</span>
-            </button>
+            {canPerformAction(userRole, 'users.manage') && (
+              <button
+                onClick={() => { setFormData({}); setEditingEmployee(null); setIsModalOpen(true); }}
+                className={`flex items-center justify-center gap-2 px-4 py-2 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all active:scale-95 whitespace-nowrap`}
+              >
+                <span className="material-symbols-rounded">add</span>
+                <span>{t.employeeList.addEmployee}</span>
+              </button>
+            )}
         </div>
       </div>
 

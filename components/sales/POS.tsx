@@ -12,6 +12,8 @@ import { useFilterDropdown } from "../../hooks/useFilterDropdown";
 import { getLocationName } from "../../data/locations";
 import { usePOSTabs } from "../../hooks/usePOSTabs";
 import { useStatusBar } from "../layout/StatusBar";
+import { UserRole, canPerformAction } from "../../config/permissions";
+import { useToast } from "../../context";
 
 import { SmartAutocomplete } from "../common/SmartInputs";
 import { SearchInput } from "../common/SearchInput";
@@ -86,6 +88,7 @@ interface POSProps {
   sales?: Sale[];
   onUpdateSale?: (saleId: string, updates: Partial<Sale>) => void;
   currentEmployeeId?: string;
+  userRole: UserRole;
 }
 
 export const POS: React.FC<POSProps> = ({
@@ -100,7 +103,9 @@ export const POS: React.FC<POSProps> = ({
   sales = [],
   onUpdateSale,
   currentEmployeeId,
+  userRole,
 }) => {
+  const { error: showToastError } = useToast();
   const { showMenu } = useContextMenu();
   const { getVerifiedDate, addNotification } = useStatusBar();
   const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
@@ -165,9 +170,13 @@ export const POS: React.FC<POSProps> = ({
   const globalDiscount = activeTab?.discount || 0;
   const setGlobalDiscount = useCallback(
     (discount: number) => {
+      if (!canPerformAction(userRole, 'sale.discount')) {
+        showToastError('Permission Denied: Cannot apply global discount');
+        return;
+      }
       updateTab(activeTabId, { discount });
     },
-    [activeTabId, updateTab]
+    [activeTabId, updateTab, userRole, showToastError]
   );
 
   // Rest of the state remains the same
@@ -724,6 +733,10 @@ export const POS: React.FC<POSProps> = ({
     isUnit: boolean,
     discount: number
   ) => {
+    if (!canPerformAction(userRole, 'sale.discount')) {
+      showToastError('Permission Denied: Cannot apply item discount');
+      return;
+    }
     const validDiscount = Math.min(100, Math.max(0, discount));
     setCart((prev) =>
       prev.map((item) =>
@@ -831,6 +844,10 @@ export const POS: React.FC<POSProps> = ({
 
 
   const handleCheckout = (saleType: "walk-in" | "delivery" = "walk-in", isPending: boolean = false) => {
+    if (!canPerformAction(userRole, 'sale.create')) {
+        showToastError('Permission Denied: Cannot perform checkout');
+        return;
+    }
     if (!isValidOrder) return;
 
     let deliveryFee = 0;
@@ -2276,6 +2293,7 @@ export const POS: React.FC<POSProps> = ({
                              setSearch(term);
                              searchInputRef.current?.focus();
                           }}
+                          userRole={userRole}
                         />
                       </div>
                     );
