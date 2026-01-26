@@ -37,7 +37,19 @@ export interface UserSession {
   role: 'admin' | 'staff';
 }
 
+export interface LoginAuditEntry {
+  id: string;
+  timestamp: string;
+  username: string;
+  role: string;
+  branchId: string;
+  action: 'login' | 'logout' | 'switch_user' | 'system_login' | 'system_logout';
+  details?: string;
+  employeeId?: string;
+}
+
 const SESSION_KEY = 'branch_pilot_session';
+const AUDIT_KEY = 'pharmaflow_login_audit';
 
 // Development credentials - ONLY visible/active in DEV mode
 // This prevents credentials from leaking into production builds if tree-shaken correctly,
@@ -52,9 +64,6 @@ const DEV_CREDENTIALS = {
 export const authService = {
   /**
    * Get the current user session from storage
-   * 
-   * TODO [Backend]: Replace with API call to GET /api/auth/me
-   * The server should validate the HttpOnly session cookie and return user data.
    */
   getCurrentUser: async (): Promise<UserSession | null> => {
     try {
@@ -71,43 +80,39 @@ export const authService = {
 
   /**
    * Login function (Mock implementation for Pilot)
-   * 
-   * TODO [Backend]: Replace with API call to POST /api/auth/login
-   * The server should:
-   * 1. Validate credentials against database
-   * 2. Create a server-side session
-   * 3. Set HttpOnly cookie with session ID
-   * 4. Return user data (without sensitive info)
    */
   login: async (username: string, password: string): Promise<UserSession | null> => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // For Netlify/Production Pilot: Allow test credentials everywhere for now
-    // Only allow this simple auth in DEV mode or if specifically configured
-      // Use safe comparison
-      if (username === DEV_CREDENTIALS.username && 
-          password === (DEV_CREDENTIALS.password ?? '')) {
-            
-        const session: UserSession = {
-          username: DEV_CREDENTIALS.username,
-          branchId: DEV_CREDENTIALS.branchId,
-          role: DEV_CREDENTIALS.role
-        };
-        
-        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-        return session;
-      }
+    if (username === DEV_CREDENTIALS.username && 
+        password === (DEV_CREDENTIALS.password ?? '')) {
+          
+      const session: UserSession = {
+        username: DEV_CREDENTIALS.username,
+        branchId: DEV_CREDENTIALS.branchId,
+        role: DEV_CREDENTIALS.role
+      };
+      
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      
+      // Log Audit Event
+      authService.logAuditEvent({
+        username: session.username,
+        role: session.role,
+        branchId: session.branchId,
+        action: 'system_login',
+        details: 'System session started'
+      });
+
+      return session;
+    }
     
-    // In production, this would fail if no real API is hooked up
     return null;
   },
 
   /**
-   * Synchronous check for session existence (Fast UI init)
-   * 
-   * TODO [Backend]: This can remain for quick UI init, but should be
-   * followed by getCurrentUser() to validate with the server.
+   * Synchronous check for session existence
    */
   hasSession: (): boolean => {
     return !!localStorage.getItem(SESSION_KEY);
@@ -115,12 +120,57 @@ export const authService = {
 
   /**
    * Logout and clear session
-   * 
-   * TODO [Backend]: Replace with API call to POST /api/auth/logout
-   * The server should invalidate the session and clear the HttpOnly cookie.
    */
   logout: async (): Promise<void> => {
-    localStorage.removeItem(SESSION_KEY);
+    try {
+      const user = await authService.getCurrentUser();
+      if (user) {
+        authService.logAuditEvent({
+          username: user.username,
+          role: user.role,
+          branchId: user.branchId,
+          action: 'system_logout',
+          details: 'Account Logout'
+        });
+      }
+    } finally {
+      localStorage.removeItem(SESSION_KEY);
+    }
+  },
+
+  /**
+   * Log an audit event to localStorage
+   */
+  logAuditEvent: (entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): void => {
+    try {
+      const stored = localStorage.getItem(AUDIT_KEY);
+      const history: LoginAuditEntry[] = stored ? JSON.parse(stored) : [];
+      
+      const newEntry: LoginAuditEntry = {
+        ...entry,
+        id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
+        timestamp: new Date().toISOString()
+      };
+      
+      history.unshift(newEntry); // Newest first
+      
+      // Keep only last 1000 entries to prevent localStorage bloat
+      localStorage.setItem(AUDIT_KEY, JSON.stringify(history.slice(0, 1000)));
+    } catch (e) {
+      console.error('Failed to log audit event:', e);
+    }
+  },
+
+  /**
+   * Retrieve login history
+   */
+  getLoginHistory: (): LoginAuditEntry[] => {
+    try {
+      const stored = localStorage.getItem(AUDIT_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
   }
 };
 

@@ -1,3 +1,5 @@
+import { PermissionAction } from './permissions';
+
 export interface MenuItem {
   id: string;
   label: string;
@@ -7,8 +9,10 @@ export interface MenuItem {
   submenus?: {
     id: string;
     label: string;
-    items: (string | { label: string; view?: string; icon?: string })[];
+    permission?: PermissionAction; // Added for RBAC
+    items: (string | { label: string; view?: string; icon?: string; permission?: PermissionAction })[];
   }[];
+  permission?: PermissionAction; // Added for RBAC
 }
 
 export const PHARMACY_MENU: MenuItem[] = [
@@ -16,12 +20,14 @@ export const PHARMACY_MENU: MenuItem[] = [
     id: "dashboard",
     label: "Dashboard",
     icon: "dashboard_customize",
+    permission: "reports.view_inventory",
     order: 1,
     hasPage: true,
     submenus: [
       {
         id: "main-dashboard",
         label: "Main Dashboard",
+        permission: "reports.view_inventory",
         items: [
           { label: "Dashboard Overview", view: "dashboard", icon: "dashboard" },
           { label: "Business Overview", icon: "business" },
@@ -35,6 +41,7 @@ export const PHARMACY_MENU: MenuItem[] = [
       {
         id: "sales-dashboard",
         label: "Sales Dashboard",
+        permission: "sale.view_history",
         items: [
           { label: "Real-time Sales Monitor", view: "real-time-sales", icon: "monitoring" },
           { label: "Today's Sales Summary", icon: "today" },
@@ -56,6 +63,7 @@ export const PHARMACY_MENU: MenuItem[] = [
       {
         id: "inventory-dashboard",
         label: "Inventory Dashboard",
+        permission: "reports.view_inventory",
         items: [
           { label: "Stock Overview", icon: "inventory_2" },
           { label: "Stock Value Summary", icon: "monetization_on" },
@@ -79,6 +87,7 @@ export const PHARMACY_MENU: MenuItem[] = [
       {
         id: "financial-dashboard",
         label: "Financial Dashboard",
+        permission: "reports.view_financial",
         items: [
           { label: "Financial Overview", icon: "account_balance" },
           { label: "Revenue Summary", icon: "paid" },
@@ -271,6 +280,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     id: "inventory",
     label: "Inventory",
     icon: "inventory_2",
+    permission: "inventory.view",
     order: 2,
     hasPage: true,
     submenus: [
@@ -284,9 +294,9 @@ export const PHARMACY_MENU: MenuItem[] = [
           { label: "Product Categories", icon: "category" },
           { label: "Product Attributes", icon: "tune" },
           { label: "Barcodes/SKU", icon: "qr_code" },
-          { label: "Barcode Printer", view: "barcode-printer", icon: "print" },
-          { label: "Barcode Studio", view: "barcode-studio", icon: "design_services" },
-          { label: "Stock Adjustment", view: "stock-adjustment", icon: "edit_note" },
+          { label: "Barcode Printer", view: "barcode-printer", icon: "print", permission: 'inventory.update' },
+          { label: "Barcode Studio", view: "barcode-studio", icon: "design_services", permission: 'inventory.update' },
+          { label: "Stock Adjustment", view: "stock-adjustment", icon: "edit_note", permission: 'inventory.adjust' },
           { label: "Product Images", icon: "image" },
           { label: "Product Bundles", icon: "inventory_2" },
           { label: "Product Kits", icon: "medical_services" },
@@ -306,7 +316,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         label: "Stock Control",
         items: [
           { label: "Current Stock", icon: "inventory" },
-          { label: "Stock Adjustment", icon: "edit" },
+          { label: "Stock Adjustment", icon: "edit", permission: 'inventory.adjust' },
           { label: "Stock Transfer", icon: "local_shipping" },
           { label: "Stock Count", icon: "checklist" },
           { label: "Minimum Stock Levels", icon: "warning" },
@@ -369,6 +379,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     id: "sales",
     label: "Sales",
     icon: "point_of_sale",
+    permission: "sale.create",
     order: 3,
     hasPage: true,
     submenus: [
@@ -401,7 +412,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "sales-design",
         label: "Design",
         items: [
-          { label: "Receipt Design", view: "receipt-designer", icon: "design_services" }
+          { label: "Receipt Design", view: "receipt-designer", icon: "design_services", permission: 'settings.update' }
         ]
       }
     ]
@@ -410,6 +421,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     id: "purchase",
     label: "Purchase",
     icon: "shopping_cart_checkout",
+    permission: "purchase.view",
     order: 4,
     hasPage: true,
     submenus: [
@@ -419,7 +431,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         items: [
           { label: "Create PO", view: "purchases", icon: "add_shopping_cart" },
           { label: "Draft PO", icon: "edit_note" },
-          { label: "Pending Approval", view: "pending-approval", icon: "pending_actions" },
+          { label: "Pending Approval", view: "pending-approval", icon: "pending_actions", permission: 'purchase.approve' },
           { label: "Approved PO", icon: "verified" },
           { label: "PO History", icon: "history" },
           { label: "Cancel PO", icon: "cancel" },
@@ -476,6 +488,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     id: "customers",
     label: "Customers",
     icon: "group",
+    permission: "customer.view",
     order: 5,
     hasPage: true,
     submenus: [
@@ -546,6 +559,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     id: "prescriptions",
     label: "Prescriptions",
     icon: "description",
+    permission: "inventory.view",
     order: 6,
     hasPage: false,
     submenus: [
@@ -612,6 +626,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     id: "finance",
     label: "Finance",
     icon: "payments",
+    permission: "reports.view_financial",
     order: 7,
     hasPage: false,
     submenus: [
@@ -702,6 +717,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     id: "reports",
     label: "Reports",
     icon: "bar_chart",
+    permission: "reports.view_inventory",
     order: 8,
     hasPage: false,
     submenus: [
@@ -749,6 +765,7 @@ export const PHARMACY_MENU: MenuItem[] = [
       {
         id: "financial-reports-analytics",
         label: "Financial Reports",
+        permission: "reports.view_financial",
         items: [
           { label: "Profit Report", icon: "analytics" },
           { label: "Margin Analysis", icon: "pie_chart" },
@@ -763,7 +780,8 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "business-intelligence",
         label: "Business Intelligence",
         items: [
-           { label: "Sales by Product Analysis", view: "intelligence", icon: "auto_graph" },
+          { label: "Sales by Product Analysis", view: "intelligence", icon: "auto_graph", permission: "reports.view_financial" },
+          { label: "Login Audit Report", view: "login-audit", icon: "history", permission: "reports.view_financial" },
         ]
       },
       {
@@ -817,6 +835,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     id: "hr",
     label: "HR",
     icon: "badge",
+    permission: "users.view",
     order: 9,
     hasPage: false,
     submenus: [
@@ -874,6 +893,7 @@ export const PHARMACY_MENU: MenuItem[] = [
       {
         id: "user-accounts",
         label: "User Accounts",
+        permission: "users.manage",
         items: [
           { label: "User Management", icon: "manage_accounts" },
           { label: "Create User", icon: "person_add" },
@@ -889,6 +909,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     id: "compliance",
     label: "Compliance",
     icon: "verified",
+    permission: "inventory.view",
     order: 10,
     hasPage: false,
     submenus: [
@@ -956,6 +977,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     id: "settings",
     label: "Settings",
     icon: "settings",
+    permission: "settings.view",
     order: 11,
     hasPage: false,
     submenus: [
@@ -974,6 +996,7 @@ export const PHARMACY_MENU: MenuItem[] = [
       {
         id: "user-security",
         label: "User & Security",
+        permission: 'users.manage',
         items: [
           { label: "User Management", icon: "manage_accounts" },
           { label: "Roles & Permissions", icon: "security" },
@@ -1022,6 +1045,7 @@ export const PHARMACY_MENU: MenuItem[] = [
       {
         id: "backup-data",
         label: "Backup & Data",
+        permission: "backup.manage",
         items: [
           { label: "Backup Database", icon: "backup" },
           { label: "Restore Data", icon: "restore" },
@@ -1047,6 +1071,7 @@ export const PHARMACY_MENU: MenuItem[] = [
       {
         id: "system-settings",
         label: "System Settings",
+        permission: 'settings.update',
         items: [
           { label: "System Preferences", icon: "settings" },
           { label: "Module Configuration", icon: "view_module" },
@@ -1062,6 +1087,7 @@ export const PHARMACY_MENU: MenuItem[] = [
     id: "test",
     label: "Test",
     icon: "science",
+    permission: "settings.view",
     order: 12,
     hasPage: true,
     submenus: [
