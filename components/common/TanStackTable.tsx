@@ -10,9 +10,10 @@
  * 
  * 2. Styling Standards ("The Perfect Way"):
  *    - Badges/Status Indicators:
- *      - Style: Outline (Transparent background + Border).
- *      - Shape: Square/Medium Rounded (`rounded-md`), NOT Pill/Full Rounded (`rounded-full`).
- *      - Example: `bg-transparent border border-amber-200 text-amber-700 rounded-md`
+ *      - Container: `inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border bg-transparent`.
+ *      - Typography: `text-xs font-bold uppercase tracking-wider`.
+ *      - Icons: Always include a `material-symbols-rounded` icon (size `text-sm`).
+ *      - Example: `<span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider bg-transparent"><span className="material-symbols-rounded text-sm">check_circle</span>APPROVED</span>`
  * 
  * 3. Internationalization (i18n):
  *    - Headers: Pass translated strings (e.g., `t.headers.name`), NOT translation keys.
@@ -126,6 +127,7 @@ interface TanStackTableProps<TData, TValue> {
    * - No top toolbar by default
    */
   lite?: boolean;
+  dense?: boolean; // New: for compact rows
 }
 
 // Helper to get stored settings
@@ -170,6 +172,7 @@ export function TanStackTable<TData, TValue>({
   defaultHiddenColumns = [],
   activeIndex,
   lite = false,
+  dense = false,
   enableTopToolbar = !lite,
   defaultColumnAlignment = EMPTY_ALIGNMENT,
   globalFilter: externalGlobalFilter,
@@ -618,7 +621,7 @@ export function TanStackTable<TData, TValue>({
                       return (
                         <td 
                           key={cell.id} 
-                          className={`py-2 px-4 text-sm text-gray-700 dark:text-gray-300 align-middle border-b border-gray-100 dark:border-gray-800
+                          className={`${dense ? 'py-1' : 'py-2'} px-4 text-sm text-gray-700 dark:text-gray-300 align-middle border-b border-gray-100 dark:border-gray-800
                             ${cell.column.columnDef.meta?.flex ? '' : 'whitespace-nowrap'}`}
                           style={{
                                 width: cell.column.columnDef.meta?.flex ? 'auto' : cell.column.columnDef.meta?.width,

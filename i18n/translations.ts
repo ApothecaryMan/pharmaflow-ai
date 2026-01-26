@@ -132,6 +132,39 @@ export const TRANSLATIONS = {
         topSeller: 'Top Seller'
       }
     },
+    loginAudit: {
+      title: 'Login Audit Trail',
+      subtitle: 'Track all authentication and session events across the system',
+      searchPlaceholder: 'Search username or ID...',
+      emptyMessage: 'No audit records found',
+      yesterday: 'Yesterday',
+      today: 'Today',
+      am: 'AM',
+      pm: 'PM',
+      actions: {
+        login: 'Login',
+        logout: 'Logout',
+        switch: 'Switch',
+        system_login: 'System Access',
+        system_logout: 'System Exit'
+      },
+      headers: {
+        id: 'ID',
+        timestamp: 'Timestamp',
+        user: 'User',
+        action: 'Action',
+        branch: 'Branch',
+        details: 'Details'
+      },
+      detailPatterns: {
+        switchedFrom: 'Switched from {{name}}',
+        account: 'Account: {{name}}',
+        employeeSignedOut: 'Employee signed out',
+        accountLogout: 'Account Logout',
+        systemSessionStarted: 'System session started',
+        employeeSessionStarted: 'Employee session started'
+      }
+    },
     inventory: {
       title: 'Inventory',
       subtitle: 'Manage your pharmaceutical stock',
@@ -2039,6 +2072,39 @@ export const TRANSLATIONS = {
         shortages: 'نواقص',
         newCustomers: 'عملاء جدد',
         topSeller: 'أفضل بائع'
+      }
+    },
+    loginAudit: {
+      title: 'سجل عمليات الدخول',
+      subtitle: 'تتبع محاولات تسجيل الدخول والخروج والتبديل بين الحسابات',
+      searchPlaceholder: 'بحث باسم المستخدم أو ID...',
+      emptyMessage: 'لا توجد سجلات عمليات حالياً',
+      yesterday: 'أمس',
+      today: 'اليوم',
+      am: 'ص',
+      pm: 'م',
+      actions: {
+        login: 'دخول موظف',
+        logout: 'خروج',
+        switch: 'تبديل',
+        system_login: 'دخول النظام',
+        system_logout: 'خروج النظام'
+      },
+      headers: {
+        id: 'ID',
+        timestamp: 'الوقت والتاريخ',
+        user: 'المستخدم',
+        action: 'العملية',
+        branch: 'الفرع',
+        details: 'التفاصيل'
+      },
+      detailPatterns: {
+        switchedFrom: 'تحول من {{name}}',
+        account: 'حساب: {{name}}',
+        employeeSignedOut: 'قام الموظف بتسجيل الخروج',
+        accountLogout: 'تسجيل خروج الحساب',
+        systemSessionStarted: 'بداية جلسة النظام',
+        employeeSessionStarted: 'بداية جلسة الموظف'
       }
     },
     inventory: {
