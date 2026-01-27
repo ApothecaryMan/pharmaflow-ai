@@ -8,7 +8,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Drug } from '../../types';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { formatStock, validateStock } from '../../utils/inventory';
+import { formatStock, formatStockParts, validateStock } from '../../utils/inventory';
+import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { Modal } from '../common/Modal';
 import { getCategories, getProductTypes, isMedicineCategory, getLocalizedCategory, getLocalizedProductType } from '../../data/productCategories';
 import { useStatusBar } from '../layout/StatusBar';
@@ -264,7 +265,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
               {getDisplayName({ name: drug.name })} {drug.dosageForm && <span className="text-gray-500 font-normal">{getDisplayName({ name: `(${getLocalizedProductType(drug.dosageForm, 'en')})` })}</span>}
             </div>
             <div className="text-xs text-gray-500 w-full text-start">
-              <span>{drug.genericName}</span>
+              <span>{drug.genericName?.length > 35 ? drug.genericName.substring(0, 35) + '...' : drug.genericName}</span>
             </div>
           </div>
         );
@@ -275,7 +276,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       accessorKey: 'category',
       header: t.headers.category,
       cell: ({ row }) => (
-        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${color}-50 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300`}>
+        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}>
           {getLocalizedCategory(row.original.category || 'General', currentLang)}
         </span>
       ),
@@ -283,21 +284,43 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     {
       accessorKey: 'stock',
       header: t.headers.stock,
-      cell: ({ row }) => (
-        <div className={`font-medium text-sm ${row.original.stock < (row.original.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
-          {formatStock(row.original.stock, row.original.unitsPerPack)}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const parts = formatStockParts(row.original.stock, row.original.unitsPerPack, {
+          packs: t.details?.packs || 'Packs',
+          outOfStock: t.outOfStock || 'Out of Stock'
+        });
+        
+        return (
+          <div className={`font-medium text-sm ${row.original.stock < (row.original.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
+            {parts.value} {parts.label && <span className="text-[10px] text-gray-400 font-normal">{parts.label}</span>}
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'price',
       header: t.headers.price,
-      cell: ({ row }) => <span className="text-gray-700 dark:text-gray-300 text-sm font-bold">${row.original.price.toFixed(2)}</span>,
+      cell: ({ row }) => {
+        const parts = formatCurrencyParts(row.original.price);
+        return (
+          <span className="text-gray-700 dark:text-gray-300 text-sm font-bold">
+            {parts.amount} <span className="text-[10px] text-gray-400 font-normal">{parts.symbol}</span>
+          </span>
+        );
+      },
     },
     {
       accessorKey: 'costPrice',
       header: t.headers.cost,
-      cell: ({ row }) => <span className="text-gray-500 text-xs">${row.original.costPrice ? row.original.costPrice.toFixed(2) : '-'}</span>,
+      cell: ({ row }) => {
+        if (!row.original.costPrice) return <span className="text-gray-500 text-sm">-</span>;
+        const parts = formatCurrencyParts(row.original.costPrice);
+        return (
+           <span className="text-gray-900 dark:text-gray-100 text-sm font-medium">
+            {parts.amount} <span className="text-[10px] text-gray-400 font-normal">{parts.symbol}</span>
+           </span>
+        );
+      },
     },
     {
       accessorKey: 'expiryDate',
@@ -305,60 +328,10 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       cell: ({ row }) => {
         const date = new Date(row.original.expiryDate);
         const formatted = date.toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' });
-        return <span className="text-gray-500 text-sm">{formatted}</span>;
+        return <span className="text-gray-900 dark:text-gray-100 text-sm font-medium">{formatted}</span>;
       },
     },
-    {
-      id: 'actions',
-      header: '',
-      enableHiding: false,
-      cell: ({ row }) => (
-        <div className="relative flex justify-end">
-            <button 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setActiveMenuId(activeMenuId === row.original.id ? null : row.original.id);
-              }}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <span className="material-symbols-rounded text-[20px]">more_vert</span>
-            </button>
-            {activeMenuId === row.original.id && (
-              <div 
-                ref={menuRef}
-                className="absolute right-8 top-0 z-50 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 py-1 rtl:right-auto rtl:left-8 text-start animate-fade-in"
-                onClick={(e) => e.stopPropagation()} // Prevent row click
-              >
-                {canPerformAction(userRole, 'inventory.update') && (
-                  <button onClick={() => handleOpenEdit(row.original)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
-                    <span className="material-symbols-rounded text-lg text-gray-400">edit</span>
-                    {t.actionsMenu.edit}
-                  </button>
-                )}
-                <button onClick={() => handleViewDetails(row.original.id)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
-                  <span className="material-symbols-rounded text-lg text-gray-400">visibility</span>
-                  {t.actionsMenu.view}
-                </button>
-                <button onClick={() => handlePrintBarcode(row.original)} className="w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors">
-                  <span className="material-symbols-rounded text-lg text-gray-400">qr_code_2</span>
-                  {t.actionsMenu.printBarcode}
-                </button>
-                {canPerformAction(userRole, 'inventory.delete') && (
-                  <>
-                    <div className="h-px bg-gray-100 dark:bg-gray-800 my-1"></div>
-                    <button onClick={() => handleDelete(row.original.id)} className="w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-3 transition-colors">
-                      <span className="material-symbols-rounded text-lg">delete</span>
-                      {t.actionsMenu.delete}
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-      ),
-    }
-  ], [activeMenuId, color, currentLang, t]);
+  ], [color, currentLang, t]);
 
   return (
     <div className="h-full flex flex-col space-y-4 animate-fade-in">
@@ -733,20 +706,28 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                         </h2>
                         <p className="text-gray-500 font-medium text-start" dir="ltr">{viewingDrug.genericName}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase bg-${color}-100 text-${color}-700 dark:bg-${color}-900/50 dark:text-${color}-300`}>
-                        {viewingDrug.category}
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}>
+                        {getLocalizedCategory(viewingDrug.category || 'General', currentLang)}
                     </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Stock Level</label>
-                        <p className={`text-xl font-bold ${viewingDrug.stock < 10 ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
-                            {viewingDrug.stock} <span className="text-xs font-normal text-gray-500">packs</span>
-                        </p>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">{t.details?.stockLevel}</label>
+                        {(() => {
+                            const stockParts = formatStockParts(viewingDrug.stock, viewingDrug.unitsPerPack, {
+                                packs: t.details?.packs || 'Packs',
+                                outOfStock: t.outOfStock || 'Out of Stock'
+                            });
+                            return (
+                                <p className={`text-xl font-bold ${viewingDrug.stock < (viewingDrug.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
+                                    {stockParts.value} {stockParts.label && <span className="text-xs font-normal text-gray-500">{stockParts.label}</span>}
+                                </p>
+                            );
+                        })()}
                     </div>
                     <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Expiry Date</label>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">{t.modal?.expiry}</label>
                         <p className="text-xl font-bold text-gray-700 dark:text-gray-300">
                             {new Date(viewingDrug.expiryDate).toLocaleDateString()}
                         </p>
@@ -755,36 +736,36 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
                 <div className="space-y-3">
                     <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                        <span className="text-sm text-gray-500">Selling Price</span>
-                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">${viewingDrug.price.toFixed(2)}</span>
+                        <span className="text-sm text-gray-500">{t.details?.sellingPrice}</span>
+                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(viewingDrug.price)}</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                        <span className="text-sm text-gray-500">Cost Price</span>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">${viewingDrug.costPrice?.toFixed(2) || '0.00'}</span>
+                        <span className="text-sm text-gray-500">{t.details?.costPrice}</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{formatCurrency(viewingDrug.costPrice || 0)}</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                        <span className="text-sm text-gray-500">Units Per Pack</span>
+                        <span className="text-sm text-gray-500">{t.details?.unitsPerPack}</span>
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{viewingDrug.unitsPerPack || 1}</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                        <span className="text-sm text-gray-500">Barcode</span>
-                        <span className="text-sm font-mono text-gray-700 dark:text-gray-300">{viewingDrug.barcode || 'N/A'}</span>
+                        <span className="text-sm text-gray-500">{t.details?.barcode}</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{viewingDrug.barcode || 'N/A'}</span>
                     </div>
                      <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                        <span className="text-sm text-gray-500">Internal Code</span>
-                        <span className="text-sm font-mono text-gray-700 dark:text-gray-300">{viewingDrug.internalCode || 'N/A'}</span>
+                        <span className="text-sm text-gray-500">{t.details?.internalCode}</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{viewingDrug.internalCode || 'N/A'}</span>
                     </div>
                 </div>
 
                 <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Description</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">{t.details?.description}</label>
                     <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl">
-                        {viewingDrug.description || 'No description provided.'}
+                        {viewingDrug.description || t.details?.noDescription}
                     </p>
                 </div>
             </div>
 
-            <div className="p-4 bg-gray-50 dark:bg-gray-950/50 border-t border-gray-100 dark:border-gray-800 flex gap-3">
+            <div className="p-4 flex gap-3">
                 <button 
                     onClick={() => handlePrintBarcode(viewingDrug)}
                     className={`flex-1 py-2.5 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 type-interactive`}
@@ -1016,7 +997,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
             
             <div className="text-center">
               <div className="font-medium text-gray-900 dark:text-gray-100">{printModalDrug.name}</div>
-              <div className="text-sm text-gray-500">{printModalDrug.genericName}</div>
+              <div className="text-sm text-gray-500">{printModalDrug.genericName?.length > 35 ? printModalDrug.genericName.substring(0, 35) + '...' : printModalDrug.genericName}</div>
             </div>
             
             <div className="flex items-center justify-center gap-4">

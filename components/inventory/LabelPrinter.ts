@@ -156,7 +156,7 @@ export const getLabelElementContent = (
  * @returns Object with storeName and hotline
  */
 export const getReceiptSettings = (): { storeName: string; hotline: string } => {
-    const defaultSettings = { storeName: 'PharmaFlow', hotline: '19099' };
+    const defaultSettings = { storeName: 'ZINC', hotline: '19099' };
     
     try {
         const templates = storage.get<any[]>(StorageKeys.RECEIPT_TEMPLATES, []);

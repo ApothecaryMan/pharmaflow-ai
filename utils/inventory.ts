@@ -52,20 +52,48 @@ export const validateStock = (stock: number): number => {
  * formatStock(0, 12)   // Returns: "Out of Stock"
  * formatStock(10, 1)   // Returns: "10 Packs" (when unitsPerPack=1, treats each unit as a pack)
  */
-export const formatStock = (stock: number, unitsPerPack: number = 1): string => {
-    if (stock <= 0) return 'Out of Stock';
+export const formatStock = (
+    stock: number, 
+    unitsPerPack: number = 1, 
+    labels: { packs: string; outOfStock: string } = { packs: 'Packs', outOfStock: 'Out of Stock' }
+): string => {
+    if (stock <= 0) return labels.outOfStock;
     
     // If unit based (1 unit/pack), just show count
-    if (unitsPerPack === 1) return `${stock} Packs`;
+    if (unitsPerPack === 1) return `${stock} ${labels.packs}`;
     
     // User request: Show stock as fractional packs visually (e.g. 5.5 Packs)
     const packs = stock / unitsPerPack;
     
     // If integer, show as integer
-    if (Number.isInteger(packs)) return `${packs} Packs`;
+    if (Number.isInteger(packs)) return `${packs} ${labels.packs}`;
     
     // Show up to 2 decimal places, stripping trailing zeros if possible (e.g. 5.50 -> 5.5)
-    return `${parseFloat(packs.toFixed(2))} Packs`;
+    return `${parseFloat(packs.toFixed(2))} ${labels.packs}`;
+};
+
+/**
+ * Returns stock value and label separately to allow custom styling (e.g. smaller font for labels).
+ */
+export const formatStockParts = (
+    stock: number, 
+    unitsPerPack: number = 1, 
+    labels: { packs: string; outOfStock: string } = { packs: 'Packs', outOfStock: 'Out of Stock' }
+) => {
+    if (stock <= 0) return { value: labels.outOfStock, label: '' };
+    
+    let valueStr = '';
+    if (unitsPerPack === 1) {
+        valueStr = `${stock}`;
+    } else {
+        const packs = stock / unitsPerPack;
+        valueStr = Number.isInteger(packs) ? `${packs}` : `${parseFloat(packs.toFixed(2))}`;
+    }
+
+    return {
+        value: valueStr,
+        label: labels.packs
+    };
 };
 
 /**

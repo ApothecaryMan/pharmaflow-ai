@@ -237,7 +237,7 @@ export const usePrinter = (): UsePrinterResult => {
   const handleTestPrintLabel = useCallback(async () => {
     const testHtml = `
       <div style="width: 38mm; height: 12mm; font-family: sans-serif; padding: 2mm;">
-        <div style="font-size: 8px; font-weight: bold;">PharmaFlow Test</div>
+        <div style="font-size: 8px; font-weight: bold;">ZINC Test</div>
         <div style="font-size: 6px;">Label Printer OK ✓</div>
         <div style="font-size: 5px; color: gray;">${new Date().toLocaleString()}</div>
       </div>
@@ -252,7 +252,7 @@ export const usePrinter = (): UsePrinterResult => {
   const handleTestPrintReceipt = useCallback(async () => {
     const testHtml = `
       <div style="width: 72mm; font-family: monospace; padding: 4mm;">
-        <div style="text-align: center; font-size: 14px; font-weight: bold;">PharmaFlow</div>
+        <div style="text-align: center; font-size: 14px; font-weight: bold;">ZINC</div>
         <div style="text-align: center; font-size: 10px; margin-bottom: 8px;">Receipt Printer Test</div>
         <hr style="border: 1px dashed #000;" />
         <div style="font-size: 10px; margin: 4px 0;">

@@ -162,3 +162,22 @@ export const getExpiryStatusStyle = (status: ExpiryStatus, type: 'input' | 'badg
     }
   }
 };
+
+/**
+ * Get the full configuration for an expiry status (color and icon)
+ * @param status - ExpiryStatus
+ * @returns Object with color and icon
+ */
+export const getExpiryStatusConfig = (status: ExpiryStatus): { color: string; icon: string } => {
+  switch (status) {
+    case 'valid':
+      return { color: 'emerald', icon: 'check_circle' };
+    case 'near-expiry':
+      return { color: 'amber', icon: 'schedule' };
+    case 'incomplete':
+      return { color: 'orange', icon: 'pending' };
+    case 'invalid':
+    default:
+      return { color: 'red', icon: 'error' };
+  }
+};

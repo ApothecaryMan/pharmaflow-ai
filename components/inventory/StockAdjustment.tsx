@@ -75,7 +75,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
   const [activeView, setActiveView] = useState<'adjust' | 'history'>('adjust');
   const [historyTab, setHistoryTab] = useState<'all' | 'pending'>('all');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
-  const [pharmacyName, setPharmacyName] = useState('PharmaFlow AI');
+  const [pharmacyName, setPharmacyName] = useState('ZINC');
 
   // Load pharmacy name from settings (ReceiptDesigner)
   React.useEffect(() => {
