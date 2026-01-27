@@ -17,6 +17,21 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { UserRole, canPerformAction } from '../../config/permissions';
+import { authService, UserSession } from '../../services/auth/authService';
+
+// --- Smart Roles Configuration ---
+// Dependency Matrix: Defines valid roles for each department
+const DEPT_ROLES: Record<string, string[]> = {
+  pharmacy: [
+    'pharmacist_owner', 'pharmacist_manager', 'pharmacist', 
+    'assistant', 'inventory_officer', 'senior_cashier', 'officeboy'
+  ],
+  sales: ['cashier', 'senior_cashier'],
+  marketing: ['manager', 'officeboy'],
+  hr: ['hr_manager'],
+  it: ['admin'],
+  logistics: ['delivery', 'delivery_pharmacist']
+};
 
 interface EmployeeListProps {
   color: string;
@@ -44,7 +59,66 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
   const [isDepartmentOpen, setIsDepartmentOpen] = useState(false);
   const [isRoleOpen, setIsRoleOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
-  
+
+  // --- Smart Roles Logic ---
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await authService.getCurrentUser();
+      setCurrentUser(user);
+    };
+    fetchUser();
+  }, []);
+
+  // 1. Access Matrix: Filter Departments based on User Role
+  const availableDepartments = useMemo(() => {
+    const allDepts = Object.entries(t.employeeList.departments).map(([key, label]) => ({ key, label: label as string }));
+    
+    if (!currentUser) return [];
+    
+    // Admin / Owner / HR -> See ALL
+    if (currentUser.role === 'admin' || currentUser.role === 'pharmacist_owner' || currentUser.role === 'hr_manager') {
+      // Owner/HR shouldn't usually see 'IT' unless specified, but for simplicity we show all except maybe sensitive ones?
+      // Plan says Owner sees all except IT.
+      if (currentUser.role === 'pharmacist_owner') {
+         return allDepts.filter(d => d.key !== 'it');
+      }
+      return allDepts;
+    }
+
+    // Manager / Pharmacist Manager -> See Operations (Pharmacy, Sales, Logistics, Marketing)
+    if (currentUser.role === 'manager' || currentUser.role === 'pharmacist_manager') {
+       return allDepts.filter(d => ['pharmacy', 'sales', 'logistics', 'marketing'].includes(d.key));
+    }
+    
+    // Fallback: If logic fails or other roles (restricted), ideally they shouldn't see this modal at all,
+    // but if they do, show only their OWN department to be safe.
+    return allDepts.filter(d => d.key === currentUser.department);
+
+  }, [t.employeeList.departments, currentUser]);
+
+  // 2. Dependency Matrix: Filter Roles based on Selected Department
+  const availableRoles = useMemo(() => {
+    const selectedDept = formData.department || 'pharmacy';
+    const validRoles = DEPT_ROLES[selectedDept] || [];
+    
+    return Object.entries(t.employeeList.roles)
+      .filter(([key]) => validRoles.includes(key))
+      .map(([key, label]) => ({ key, label: label as string }));
+  }, [t.employeeList.roles, formData.department]);
+
+  // 3. Auto-Correction: Clear invalid role when department changes
+  useEffect(() => {
+    if (!formData.department) return;
+    
+    const validRoles = DEPT_ROLES[formData.department] || [];
+    if (formData.role && !validRoles.includes(formData.role)) {
+       // Reset role if invalid for new department
+       setFormData(prev => ({ ...prev, role: undefined }));
+    }
+  }, [formData.department]); // Only run when dept changes
+
   // Tab state for modal
   const [activeTab, setActiveTab] = useState<'general' | 'credentials' | 'documents'>('general');
   const [activeViewTab, setActiveViewTab] = useState<'general' | 'credentials' | 'documents'>('general');
@@ -133,13 +207,17 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
       header: t.employeeList.table.status,
       cell: ({ row }) => {
         const status = row.original.status;
-        let badgeClass = 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
+        let config = {
+          color: 'gray',
+          icon: 'cancel'
+        };
         
-        if (status === 'active') badgeClass = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-        if (status === 'holiday') badgeClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+        if (status === 'active') config = { color: 'emerald', icon: 'check_circle' };
+        if (status === 'holiday') config = { color: 'amber', icon: 'beach_access' };
 
         return (
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badgeClass}`}>
+          <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}>
+            <span className="material-symbols-rounded text-sm">{config.icon}</span>
             {t.employeeList.statusOptions[status] || status}
           </span>
         );
@@ -360,7 +438,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
               { value: 'general', label: language === 'AR' ? 'معلومات عامة' : 'General', icon: 'person' },
               { value: 'credentials', label: language === 'AR' ? 'بيانات الدخول' : 'Credentials', icon: 'lock' },
               { value: 'documents', label: language === 'AR' ? 'المستندات' : 'Documents', icon: 'description' }
-            ].filter(opt => opt.value !== 'credentials' || (formData.role || 'pharmacist') === 'pharmacist')}
+            ].filter(opt => opt.value !== 'credentials' || (formData.role || 'pharmacist') !== 'officeboy')}
             value={activeTab}
             onChange={(value) => setActiveTab(value as 'general' | 'credentials' | 'documents')}
             color={color}
@@ -473,8 +551,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                             <FilterDropdown
                                 className="absolute top-0 left-0 w-full z-30"
                                 minHeight="42px"
-                                items={Object.entries(t.employeeList.departments).map(([key, label]) => ({ key, label: label as string }))}
-                                selectedItem={Object.entries(t.employeeList.departments).map(([key, label]) => ({ key, label: label as string })).find(d => d.key === (formData.department || 'pharmacy'))}
+                                items={availableDepartments}
+                                selectedItem={availableDepartments.find(d => d.key === (formData.department || 'pharmacy'))}
                                 isOpen={isDepartmentOpen}
                                 onToggle={() => { setIsDepartmentOpen(!isDepartmentOpen); setIsRoleOpen(false); setIsStatusOpen(false); }}
                                 onSelect={(item) => { setFormData({...formData, department: item.key as any}); setIsDepartmentOpen(false); }}
@@ -492,8 +570,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                             <FilterDropdown
                                 className="absolute top-0 left-0 w-full z-30"
                                 minHeight="42px"
-                                items={Object.entries(t.employeeList.roles).map(([key, label]) => ({ key, label: label as string }))}
-                                selectedItem={Object.entries(t.employeeList.roles).map(([key, label]) => ({ key, label: label as string })).find(r => r.key === (formData.role || 'pharmacist'))}
+                                items={availableRoles}
+                                selectedItem={availableRoles.find(r => r.key === (formData.role || 'pharmacist'))}
                                 isOpen={isRoleOpen}
                                 onToggle={() => { setIsRoleOpen(!isRoleOpen); setIsDepartmentOpen(false); setIsStatusOpen(false); }}
                                 onSelect={(item) => { 
@@ -1056,13 +1134,19 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
                                     </div>
                                 </div>
                                 <div className="ml-auto">
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                        viewingEmployee.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                        viewingEmployee.status === 'holiday' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
-                                        'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                                    }`}>
-                                        {t.employeeList.statusOptions[viewingEmployee.status]}
-                                    </span>
+                                    {(() => {
+                                        const status = viewingEmployee.status;
+                                        let config = { color: 'gray', icon: 'cancel' };
+                                        if (status === 'active') config = { color: 'emerald', icon: 'check_circle' };
+                                        if (status === 'holiday') config = { color: 'amber', icon: 'beach_access' };
+                                        
+                                        return (
+                                            <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}>
+                                                <span className="material-symbols-rounded text-xs">{config.icon}</span>
+                                                {t.employeeList.statusOptions[status]}
+                                            </span>
+                                        );
+                                    })()}
                                 </div>
                             </div>
 

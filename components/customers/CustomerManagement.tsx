@@ -367,7 +367,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       header: t.headers?.points || 'Points', 
       meta: { align: 'center', width: 100 },
       cell: (info) => (
-        <span className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-transparent border border-amber-200 text-amber-700 dark:border-amber-700 dark:text-amber-400">
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wider bg-transparent">
+            <span className="material-symbols-rounded text-xs">loyalty</span>
             {parseFloat(Number(info.row.original.points || 0).toFixed(2))} pts
         </span>
       ),
@@ -385,8 +386,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       cell: (info) => {
         const c = info.row.original;
         const isActive = c.status?.toLowerCase() === 'active';
+        const color = isActive ? 'emerald' : 'red';
+        const icon = isActive ? 'check_circle' : 'cancel';
         return (
-          <span className={`px-2 py-1 rounded-md text-xs font-medium bg-transparent border ${isActive ? 'border-green-200 text-green-700 dark:border-green-800 dark:text-green-400' : 'border-red-200 text-red-700 dark:border-red-800 dark:text-red-400'}`}>
+          <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}>
+              <span className="material-symbols-rounded text-sm">{icon}</span>
               {t.status[c.status?.toLowerCase()] || c.status}
           </span>
         );
@@ -548,12 +552,20 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                                 <span className="material-symbols-rounded text-[14px]">qr_code</span>
                                 {c.code}
                              </div>
-                             <div className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/20 backdrop-blur-sm text-white border border-white/10`}>
-                                {c.status}
-                             </div>
+                             {(() => {
+                                 const isActive = c.status?.toLowerCase() === 'active';
+                                 const color = isActive ? 'emerald' : 'red';
+                                 const icon = isActive ? 'check_circle' : 'cancel';
+                                 return (
+                                   <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/20 backdrop-blur-sm text-white border border-white/20`}>
+                                      <span className="material-symbols-rounded text-sm">{icon}</span>
+                                      {t.status[c.status?.toLowerCase()] || c.status}
+                                   </div>
+                                 );
+                             })()}
                              {c.vip && (
-                                 <div className="px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-amber-400 text-amber-900 border border-amber-300 shadow-sm flex items-center gap-1">
-                                    <span className="material-symbols-rounded text-[14px]">stars</span>
+                                 <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-amber-400 text-amber-900 border border-amber-300 shadow-sm">
+                                    <span className="material-symbols-rounded text-sm">stars</span>
                                     VIP
                                  </div>
                              )}
@@ -826,12 +838,15 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                                 key={condition}
                                 type="button"
                                 onClick={() => toggleCondition(condition)}
-                                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                                className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
                                     (formData.chronicConditions || []).includes(condition)
-                                        ? `bg-${color}-100 text-${color}-700 border border-${color}-200`
-                                        : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                                        ? `border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 bg-transparent ring-1 ring-${color}-200 dark:ring-${color}-900/10 shadow-sm`
+                                        : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
                                 }`}
                             >
+                                {(formData.chronicConditions || []).includes(condition) && (
+                                    <span className="material-symbols-rounded text-xs">check_circle</span>
+                                )}
                                 {t.conditions[condition]}
                             </button>
                         ))}
@@ -1107,12 +1122,15 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                             key={condition}
                             type="button"
                             onClick={() => toggleCondition(condition)}
-                            className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                            className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
                                 (formData.chronicConditions || []).includes(condition)
-                                    ? `bg-${color}-100 text-${color}-700 border border-${color}-200`
-                                    : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                                    ? `border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 bg-transparent ring-1 ring-${color}-200 dark:ring-${color}-900/10 shadow-sm`
+                                    : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
                             }`}
                         >
+                            {(formData.chronicConditions || []).includes(condition) && (
+                                <span className="material-symbols-rounded text-xs">check_circle</span>
+                            )}
                             {t.conditions[condition]}
                         </button>
                     ))}
@@ -1214,7 +1232,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     {renderAddressForm()}
 
                     {/* Medical Info */}
-                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                    <div className="p-4 bg-transparent rounded-xl border border-blue-100 dark:border-blue-800/30">
                         <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-3 flex items-center gap-2">
                             <span className="material-symbols-rounded">medical_information</span>
                             {t.modal.medicalInfo}
@@ -1223,18 +1241,21 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">{t.modal.conditions}</label>
                                 <div className="flex flex-wrap gap-2">
-                                    {['Diabetes', 'Hypertension', 'Asthma', 'Allergies', 'Heart Disease'].map(condition => (
+                                    {['diabetes', 'hypertension', 'asthma', 'allergies', 'heartDisease', 'arthritis'].map(condition => (
                                         <button
                                             key={condition}
                                             type="button"
                                             onClick={() => toggleCondition(condition)}
-                                            className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                                            className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
                                                 (formData.chronicConditions || []).includes(condition)
-                                                    ? `bg-${color}-500 text-white shadow-md`
-                                                    : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:border-blue-400'
+                                                    ? `border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 bg-transparent ring-1 ring-${color}-200 dark:ring-${color}-900/10 shadow-sm`
+                                                    : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
                                             }`}
                                         >
-                                            {condition}
+                                            {(formData.chronicConditions || []).includes(condition) && (
+                                                <span className="material-symbols-rounded text-sm">check_circle</span>
+                                            )}
+                                            {t.conditions?.[condition] || condition}
                                         </button>
                                     ))}
                                 </div>
