@@ -34,7 +34,8 @@
 export interface UserSession {
   username: string;
   branchId: string;
-  role: 'admin' | 'staff';
+  department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics';
+  role: 'admin' | 'pharmacist_owner' | 'pharmacist_manager' | 'pharmacist' | 'inventory_officer' | 'assistant' | 'hr_manager' | 'cashier' | 'senior_cashier' | 'delivery' | 'delivery_pharmacist' | 'officeboy' | 'manager';
 }
 
 export interface LoginAuditEntry {
@@ -58,7 +59,8 @@ const DEV_CREDENTIALS = {
   username: import.meta.env.VITE_TEST_USER || 'test',
   password: import.meta.env.VITE_TEST_PASS || 'test',
   branchId: 'B1',
-  role: 'admin' as const
+  role: 'admin' as const,
+  department: 'it' as const
 };
 
 export const authService = {
@@ -91,7 +93,8 @@ export const authService = {
       const session: UserSession = {
         username: DEV_CREDENTIALS.username,
         branchId: DEV_CREDENTIALS.branchId,
-        role: DEV_CREDENTIALS.role
+        role: DEV_CREDENTIALS.role,
+        department: DEV_CREDENTIALS.department
       };
       
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));

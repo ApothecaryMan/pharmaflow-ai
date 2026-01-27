@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ViewState } from '../types';
-import { authService } from '../services/auth/authService';
+import { authService, UserSession } from '../services/auth/authService';
 import { ROUTES, TEST_ROUTES } from '../config/routes';
 import { useToast } from '../context';
 
 export interface AuthState {
   isAuthenticated: boolean;
   isAuthChecking: boolean;
+  user: UserSession | null;
   handleLogout: () => Promise<void>;
   resolveView: (targetView: ViewState) => ViewState;
   setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
@@ -27,7 +28,15 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
   
   // Optimistic Init: Check session synchronously to prevent "flash of loading"
   const [isAuthenticated, setIsAuthenticated] = useState(() => authService.hasSession());
-  const [isAuthChecking, setIsAuthChecking] = useState(false);
+  const [user, setUser] = useState<UserSession | null>(() => {
+    try {
+      const stored = localStorage.getItem('branch_pilot_session');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   // Logout handler
   const handleLogout = useCallback(async () => {
@@ -69,6 +78,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
       try {
         const user = await authService.getCurrentUser();
         const isUserAuth = !!user;
+        setUser(user);
         setIsAuthenticated(isUserAuth);
         
         if (!isUserAuth) {
@@ -111,6 +121,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
   return {
     isAuthenticated,
     isAuthChecking,
+    user,
     handleLogout,
     resolveView,
     setIsAuthenticated,

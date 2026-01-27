@@ -19,13 +19,17 @@ export const useDynamicTickerData = (): TickerData => {
     const today = now.toDateString();
 
     // 1. Sales Metrics (Today)
-    const todaysSalesData = sales.filter(s => new Date(s.date).toDateString() === today);
+    const todaysSalesData = sales.filter(s => {
+      const saleDate = new Date(s.updatedAt || s.date);
+      return saleDate.toDateString() === today;
+    });
     const todaySalesTotal = todaysSalesData.reduce((sum, s) => sum + (s.total || 0), 0);
     const completedInvoices = todaysSalesData.filter(s => s.status === 'completed').length;
     
-    // Pending usually means across the board, or just today? 
-    // Let's assume all pending as they are actionable.
-    const pendingInvoices = sales.filter(s => s.status === 'pending').length;
+    // Active/Pending orders (all that need attention)
+    const pendingInvoices = sales.filter(s => 
+      s.status === 'pending' || s.status === 'with_delivery' || s.status === 'on_way'
+    ).length;
 
     // 2. Inventory Metrics
     let lowStockCount = 0;

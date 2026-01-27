@@ -497,6 +497,7 @@ export function useEntityHandlers({
         soldByEmployeeId: currentEmployeeId || undefined,
         dailyOrderNumber,
         status: saleData.saleType === 'delivery' ? 'pending' : 'completed',
+        updatedAt: saleDate.toISOString(),
         ...saleData,
         items: processedItems
       };
@@ -806,7 +807,12 @@ export function useEntityHandlers({
       }
     }
 
-    setSales(prev => prev.map(s => s.id === saleId ? { ...s, ...updates } : s));
+    const finalUpdates: Partial<Sale> = {
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+
+    setSales(prev => prev.map(s => s.id === saleId ? { ...s, ...finalUpdates } : s));
   }, [sales, inventory, currentEmployeeId, setInventory, setSales]);
 
   const handleProcessReturn = useCallback((returnData: Return) => {
