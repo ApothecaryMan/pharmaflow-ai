@@ -6,56 +6,10 @@ import {
 } from '@tanstack/react-table';
 import { TanStackTable } from '../../common/TanStackTable';
 import { ExpiryRiskItem } from '../../../types/intelligence';
+import { StatusBadge } from '../common/StatusBadge';
 
 // --- Local Components ---
-type BadgeColor = 'emerald' | 'blue' | 'amber' | 'red' | 'gray' | 'purple';
-
-const StatusBadge = ({
-  status,
-  label,
-  color,
-  size = 'md',
-  language = 'EN'
-}: {
-  status: string;
-  label?: string;
-  color?: BadgeColor;
-  size?: 'sm' | 'md';
-  language?: string;
-}) => {
-  // Default mappings
-  const getStatusConfig = (statusKey: string): { color: BadgeColor; label: string } => {
-    const isAr = language === 'AR';
-    switch (statusKey) {
-      // Risk Category
-      case 'HIGH': return { color: 'red', label: isAr ? 'مخاطرة عالية' : 'High Risk' };
-      case 'MEDIUM': return { color: 'amber', label: isAr ? 'مخاطرة متوسطة' : 'Medium Risk' };
-      case 'CRITICAL_RISK': return { color: 'red', label: isAr ? 'مخاطرة حرجة' : 'Critical Risk' };
-      case 'LOW_RISK': return { color: 'emerald', label: isAr ? 'مخاطرة قليلة' : 'Low Risk' };
-      
-      default: return { color: 'gray', label: statusKey };
-    }
-  };
-
-  const config = getStatusConfig(status);
-  const finalColor = color || config.color;
-  const finalLabel = label || config.label;
-
-  const colorClasses = {
-    emerald: 'bg-transparent text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
-    amber: 'bg-transparent text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
-    red: 'bg-transparent text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',
-    gray: 'bg-transparent text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-700',
-  };
-
-  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs';
-
-  return (
-    <span className={`inline-flex items-center justify-center rounded-md border font-medium whitespace-nowrap ${colorClasses[finalColor]} ${sizeClass}`}>
-      {finalLabel}
-    </span>
-  );
-};
+// StatusBadge moved to shared components
 
 interface ExpiryRiskGridProps {
   data: ExpiryRiskItem[];

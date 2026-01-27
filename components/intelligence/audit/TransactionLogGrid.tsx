@@ -44,19 +44,21 @@ export const TransactionLogGrid: React.FC<TransactionLogGridProps> = ({ data, on
       meta: {
         align: 'center',
       },
-      cell: info => (
-          <span className={`px-2 py-1 rounded text-xs font-bold ${
-              info.getValue() === 'SALE' ? 'bg-emerald-100 text-emerald-700' :
-              info.getValue() === 'RETURN' ? 'bg-red-100 text-red-700' :
-              info.getValue() === 'VOID' ? 'bg-gray-100 text-gray-700' :
-              'bg-amber-100 text-amber-700'
-          }`}>
-              {info.getValue() === 'SALE' ? 'بيع' : 
-               info.getValue() === 'RETURN' ? 'إرجاع' : 
-               info.getValue() === 'VOID' ? 'إلغاء' : 
-               'تعديل'}
+      cell: info => {
+        const type = info.getValue() as string;
+        let config = { color: 'gray', icon: 'edit', label: 'تعديل' };
+        
+        if (type === 'SALE') config = { color: 'emerald', icon: 'check_circle', label: 'بيع' };
+        else if (type === 'RETURN') config = { color: 'red', icon: 'keyboard_return', label: 'إرجاع' };
+        else if (type === 'VOID') config = { color: 'gray', icon: 'cancel', label: 'إلغاء' };
+
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}>
+            <span className="material-symbols-rounded text-sm">{config.icon}</span>
+            {config.label}
           </span>
-      ),
+        );
+      },
     }),
     columnHelper.accessor('product_name', {
       header: 'المنتج',

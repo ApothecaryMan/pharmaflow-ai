@@ -53,17 +53,19 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
               <span className="text-gray-500">نوع العملية</span>
-              <span className={`font-medium px-2 py-0.5 rounded ${
-                transaction.type === 'SALE' 
-                  ? 'bg-emerald-100 text-emerald-700' 
-                  : transaction.type === 'RETURN'
-                  ? 'bg-red-100 text-red-700'
-                  : 'bg-blue-100 text-blue-700'
-              }`}>
-                {transaction.type === 'SALE' ? 'بيع' : 
-                 transaction.type === 'RETURN' ? 'مرتجع' : 
-                 transaction.type === 'VOID' ? 'إلغاء' : 'تعديل'}
-              </span>
+              {(() => {
+                let config = { color: 'gray', icon: 'edit', label: 'تعديل' };
+                if (transaction.type === 'SALE') config = { color: 'emerald', icon: 'check_circle', label: 'بيع' };
+                else if (transaction.type === 'RETURN') config = { color: 'red', icon: 'keyboard_return', label: 'مرتجع' };
+                else if (transaction.type === 'VOID') config = { color: 'gray', icon: 'cancel', label: 'إلغاء' };
+
+                return (
+                  <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}>
+                    <span className="material-symbols-rounded text-sm">{config.icon}</span>
+                    {config.label}
+                  </span>
+                );
+              })()}
             </div>
             <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
               <span className="text-gray-500">الكمية</span>

@@ -8,76 +8,11 @@ import { ProcurementItem } from '../../../types/intelligence';
 import { TanStackTable } from '../../common/TanStackTable';
 import { ConfidenceIndicator } from '../common/ConfidenceIndicator';
 import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
+import { StatusBadge } from '../common/StatusBadge';
 
 // --- Local Components ---
 
-type BadgeColor = 'emerald' | 'blue' | 'amber' | 'red' | 'gray' | 'purple';
-
-const StatusBadge = ({
-  status,
-  label,
-  color,
-  size = 'md',
-  language = 'EN'
-}: {
-  status: string;
-  label?: string;
-  color?: BadgeColor;
-  size?: 'sm' | 'md';
-  language?: string;
-}) => {
-  // Default mappings
-  const getStatusConfig = (statusKey: string): { color: BadgeColor; label: string } => {
-    const isAr = language === 'AR';
-    switch (statusKey) {
-      // Stock Status
-      case 'NORMAL': return { color: 'emerald', label: isAr ? 'طبيعي' : 'Normal' };
-      case 'LOW': return { color: 'amber', label: isAr ? 'منخفض' : 'Low' };
-      case 'CRITICAL': return { color: 'red', label: isAr ? 'حرج' : 'Critical' };
-      case 'OUT_OF_STOCK': return { color: 'red', label: isAr ? 'نافذ' : 'Out of Stock' };
-      case 'OVERSTOCK': return { color: 'purple', label: isAr ? 'فائض' : 'Overstock' };
-      
-      // Seasonal Trajectory
-      case 'RISING': return { color: 'emerald', label: isAr ? 'صعود ↗' : 'Rising ↗' };
-      case 'STABLE': return { color: 'blue', label: isAr ? 'مستقر ─' : 'Stable ─' };
-      case 'DECLINING': return { color: 'amber', label: isAr ? 'هبوط ↘' : 'Declining ↘' };
-      
-      // Risk Category
-      case 'HIGH': return { color: 'red', label: isAr ? 'مخاطرة عالية' : 'High Risk' };
-      case 'MEDIUM': return { color: 'amber', label: isAr ? 'مخاطرة متوسطة' : 'Medium Risk' };
-      case 'CRITICAL_RISK': return { color: 'red', label: isAr ? 'مخاطرة حرجة' : 'Critical Risk' };
-      case 'LOW_RISK': return { color: 'emerald', label: isAr ? 'مخاطرة قليلة' : 'Low Risk' };
-
-      // Data Quality
-      case 'GOOD': return { color: 'emerald', label: isAr ? 'جيدة' : 'Good' };
-      case 'SPARSE': return { color: 'amber', label: isAr ? 'قليلة' : 'Sparse' };
-      case 'NEW_PRODUCT': return { color: 'blue', label: isAr ? 'جديد' : 'New' };
-      
-      default: return { color: 'gray', label: statusKey };
-    }
-  };
-
-  const config = getStatusConfig(status);
-  const finalColor = color || config.color;
-  const finalLabel = label || config.label;
-
-  const colorClasses = {
-    emerald: 'bg-transparent text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
-    blue: 'bg-transparent text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800',
-    amber: 'bg-transparent text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
-    red: 'bg-transparent text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',
-    gray: 'bg-transparent text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-700',
-    purple: 'bg-transparent text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800',
-  };
-
-  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs';
-
-  return (
-    <span className={`inline-flex items-center justify-center rounded-md border font-medium whitespace-nowrap ${colorClasses[finalColor]} ${sizeClass}`}>
-      {finalLabel}
-    </span>
-  );
-};
+// StatusBadge moved to shared components
 
 interface ProcurementPageProps {
   t: any;
@@ -159,7 +94,8 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 
              {info.getValue()}
            </span>
            {info.row.original.skip_reason && (
-             <span className="text-[10px] text-amber-600 border border-amber-200 dark:border-amber-700 bg-transparent px-1.5 py-0.5 rounded-md font-bold">
+             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider bg-transparent">
+               <span className="material-symbols-rounded text-xs">block</span>
                {t?.intelligence?.procurement?.grid?.skipped || 'Skipped'}
              </span>
            )}

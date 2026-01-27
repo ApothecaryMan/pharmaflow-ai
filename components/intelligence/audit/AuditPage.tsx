@@ -27,19 +27,21 @@ export const AuditPage: React.FC<AuditPageProps> = ({ t, language }) => {
     }),
      columnHelper.accessor('type', {
       header: t.intelligence.audit.columns.type,
-      cell: info => (
-          <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
-              info.getValue() === 'SALE' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-              info.getValue() === 'RETURN' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-              info.getValue() === 'VOID' ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' :
-              'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-          }`}>
-              {info.getValue() === 'SALE' ? t.intelligence.audit.types.sale : 
-               info.getValue() === 'RETURN' ? t.intelligence.audit.types.return : 
-               info.getValue() === 'VOID' ? t.intelligence.audit.types.void : 
-               t.intelligence.audit.types.adjustment}
+      cell: info => {
+        const type = info.getValue() as string;
+        let config = { color: 'gray', icon: 'edit', label: t.intelligence.audit.types.adjustment };
+        
+        if (type === 'SALE') config = { color: 'emerald', icon: 'check_circle', label: t.intelligence.audit.types.sale };
+        else if (type === 'RETURN') config = { color: 'red', icon: 'keyboard_return', label: t.intelligence.audit.types.return };
+        else if (type === 'VOID') config = { color: 'gray', icon: 'cancel', label: t.intelligence.audit.types.void };
+
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}>
+            <span className="material-symbols-rounded text-sm">{config.icon}</span>
+            {config.label}
           </span>
-      ),
+        );
+      },
     }),
     columnHelper.accessor('product_name', {
       header: t.intelligence.audit.columns.product,
@@ -60,7 +62,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ t, language }) => {
     columnHelper.accessor('has_anomaly', {
         header: t.intelligence.audit.columns.notes,
         cell: info => info.getValue() ? (
-            <span className="text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg flex items-center justify-center gap-1 text-xs font-bold" title={info.row.original.anomaly_reason}>
+            <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 text-xs font-bold uppercase tracking-wider bg-transparent" title={info.row.original.anomaly_reason}>
                 <span className="material-symbols-rounded text-sm">warning</span>
                 {t.intelligence.audit.alert}
             </span>
