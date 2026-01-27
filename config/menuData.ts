@@ -173,7 +173,7 @@ export const PHARMACY_MENU: MenuItem[] = [
           { label: "Leave Requests", icon: "event_busy" },
           { label: "Sales by Employee", icon: "point_of_sale" },
           { label: "Employee Performance", icon: "workspace_premium" },
-          { label: "Shift Schedule", icon: "schedule" },
+          { label: "Shift Schedule", icon: "schedule", permission: 'shift.view' },
           { label: "Task Assignments", icon: "assignment" },
           { label: "Commission Summary", icon: "attach_money" }
         ]
@@ -387,25 +387,25 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "point-of-sale",
         label: "Point of Sale",
         items: [
-          { label: "New Sale", view: "pos", icon: "point_of_sale" },
-          { label: "Cash Register", view: "cash-register", icon: "receipt_long" },
-          { label: "Shift History", view: "shift-history", icon: "history" }
+          { label: "New Sale", view: "pos", icon: "point_of_sale", permission: 'sale.create' },
+          { label: "Cash Register", view: "cash-register", icon: "receipt_long", permission: 'sale.create' },
+          { label: "Shift History", view: "shift-history", icon: "history", permission: 'shift.reports' }
         ]
       },
       {
         id: "sales-management",
         label: "Sales Management",
         items: [
-          { label: "Today's Sales", icon: "today" },
-          { label: "Sales History", view: "sales-history", icon: "history" }
+          { label: "Today's Sales", icon: "today", permission: 'sale.view_history' },
+          { label: "Sales History", view: "sales-history", icon: "history", permission: 'sale.view_history' }
         ]
       },
       {
         id: "returns-refunds",
         label: "Returns & Refunds",
         items: [
-          { label: "Process Return", icon: "keyboard_return" },
-          { label: "Return History", view: "return-history", icon: "assignment_return" }
+          { label: "Process Return", icon: "keyboard_return", permission: 'sale.refund' },
+          { label: "Return History", view: "return-history", icon: "assignment_return", permission: 'sale.refund' }
         ]
       },
       {
@@ -863,7 +863,7 @@ export const PHARMACY_MENU: MenuItem[] = [
           { label: "Leave Approval", icon: "approval" },
           { label: "Leave Balance", icon: "account_balance_wallet" },
           { label: "Holiday Calendar", icon: "calendar_month" },
-          { label: "Shift Roster", icon: "schedule" }
+          { label: "Shift Roster", icon: "schedule", permission: 'shift.view' }
         ]
       },
       {

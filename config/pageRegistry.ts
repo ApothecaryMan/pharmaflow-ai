@@ -31,6 +31,7 @@ import { EmployeeProfile } from '../components/hr/EmployeeProfile';
 import { Login } from '../components/auth/Login';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
 import { LoginAuditList } from '../components/reports/LoginAuditList';
+import { LandingPage } from '../components/layout/LandingPage';
 
 // Skeletons
 import { DashboardSkeleton } from '../components/dashboard/DashboardSkeletons';
@@ -365,6 +366,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'reports',
     requiredProps: ['language'],
     permission: 'reports.view_financial'
+  },
+  'landing': {
+    id: 'landing',
+    component: LandingPage as any,
+    menuLabel: 'Welcome',
+    menuLabelAr: 'ترحيب',
+    icon: 'home',
+    category: 'system',
+    requiredProps: ['color', 'language', 'darkMode']
   },
 };
 

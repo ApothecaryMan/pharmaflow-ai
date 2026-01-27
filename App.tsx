@@ -4,6 +4,7 @@ import { TRANSLATIONS } from './i18n/translations';
 import { SidebarContent } from './components/layout/SidebarContent';
 import { Navbar } from './components/layout/Navbar';
 import { StatusBar, useStatusBar } from './components/layout/StatusBar';
+import { LandingPage } from './components/layout/LandingPage';
 import { PAGE_REGISTRY } from './config/pageRegistry';
 import { useTheme } from './hooks/useTheme';
 import { useData } from './services';
@@ -54,7 +55,7 @@ const GlobalContextMenuWrapper: React.FC<{
           { label: t.global.actions.fullscreen, icon: 'fullscreen', action: toggleFullscreen },
           { separator: true },
           { label: t.global.actions.reload, icon: 'refresh', action: () => window.location.reload() },
-          { label: t.global.actions.help, icon: 'help', action: () => alert('Help & Support\n\nContact support@pharmaflow.ai for assistance.') }
+          { label: t.global.actions.help, icon: 'help', action: () => alert('Help & Support\n\nContact support@zinc.ai for assistance.') }
         ]);
       }}
     >
@@ -82,7 +83,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     currentEmployeeId, setCurrentEmployeeId,
     
     // Auth State
-    isAuthenticated, isAuthChecking, handleLogout, resolveView, setIsAuthenticated
+    isAuthenticated, isAuthChecking, handleLogout, resolveView, setIsAuthenticated, user
 }) => {
   // --- Settings from Context ---
   const {
@@ -115,7 +116,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
   // Determine current user role for RBAC
   const currentEmployee = employees.find(e => e.id === currentEmployeeId);
-  const userRole = (currentEmployee?.role || 'cashier') as UserRole;
+  const userRole = (currentEmployee?.role || 'officeboy') as UserRole;
 
   // --- Navigation Hook ---
   const { handleViewChange, handleNavigate, handleModuleChange, filteredMenuItems } = useNavigation({
@@ -267,20 +268,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setView(ROUTES.DASHBOARD);
   }, [setIsAuthenticated, setActiveModule, setView]);
 
-  // --- Auth Checking Loading State ---
-  if (isAuthChecking) {
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-            <div className="text-white">
-                <svg className="animate-spin h-8 w-8 mx-auto" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-                <p className="mt-2 text-sm text-zinc-400">{TRANSLATIONS[language].global?.checkingAuth || 'Checking authentication...'}</p>
-            </div>
-        </div>
-    );
-  }
+
 
   // --- Not Authenticated (Login) ---
   if (!isAuthenticated) {
@@ -462,6 +450,16 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
             <div className={`h-full overflow-y-auto scrollbar-hide ${STANDALONE_VIEWS.includes(view) ? 'w-full' : (view === 'pos' || view === 'purchases' || view === 'pos-test'|| view === 'purchases-test') ? 'w-full px-[50px] pt-8 pb-[2px]' : 'max-w-[90rem] mx-auto px-[50px] pt-5 pb-[3px]'}`}>
               {/* Dynamic Page Rendering */}
               {(() => {
+                if (!currentEmployeeId) {
+                  return <LandingPage color={theme.primary} language={language} darkMode={darkMode} />;
+                }
+
+                // Global Data Loading State: Show skeleton while employees/data are loading
+                // to prevent "Access Restricted" flash (since userRole depends on loaded employees)
+                if (isLoading) {
+                  return <PageSkeletonRegistry view={view} />;
+                }
+
                 const pageConfig = PAGE_REGISTRY[view];
                 
                 if (!pageConfig) {
@@ -598,12 +596,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
                   props.initialMode = 'add';
                 }
                 
-
-                
-                if (view === 'dashboard' && isLoading) {
-                    return <DashboardSkeleton />;
-                }
-
                 return <PageComponent {...props} />;
               })()}
             </div>
@@ -615,6 +607,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
           <StatusBar 
             t={t.statusBar}
             currentEmployeeId={currentEmployeeId}
+            userRole={userRole}
             onSelectEmployee={handleSelectEmployee}
           />
         )}
@@ -663,8 +656,8 @@ const App: React.FC = () => {
     // 3. Settings Hook (for Language)
     const { language } = useSettings();
 
-    // 4. Loading State for Auth Check
-    if (authState.isAuthChecking) {
+    // 4. Loading State for Auth Check (Only if we don't have an optimistic session)
+    if (authState.isAuthChecking && !authState.isAuthenticated) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-zinc-950">
                 <div className="text-white">

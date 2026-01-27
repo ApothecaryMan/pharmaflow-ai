@@ -298,6 +298,8 @@ export interface Sale {
   id: string;
   branchId?: string;
   date: string;
+  /** ISO date of last update (essential for statistics timing) */
+  updatedAt?: string;
   /** Employee who processed the sale */
   soldByEmployeeId?: string;
   /** Sequential order number for the day (1, 2, 3...) */
@@ -473,6 +475,8 @@ export interface PurchaseReturnItem {
   costPrice: number;
   /** Calculated refund amount */
   refundAmount: number;
+  /** Dosage form for display */
+  dosageForm?: string;
   /** Reason for return */
   reason: 'damaged' | 'expired' | 'wrong_item' | 'defective' | 'overage' | 'other';
   /** Physical condition of items */
@@ -644,8 +648,8 @@ export interface Employee {
   
   // --- Employment Details ---
   position: string;        // Job title (e.g., "Senior Pharmacist")
-  department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it';  // Department
-  role: 'pharmacist' | 'cashier' | 'manager' | 'delivery' | 'officeboy';      // System role
+  department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics';  // Department
+  role: 'admin' | 'pharmacist_owner' | 'pharmacist_manager' | 'pharmacist' | 'inventory_officer' | 'assistant' | 'hr_manager' | 'cashier' | 'senior_cashier' | 'delivery' | 'delivery_pharmacist' | 'officeboy' | 'manager';      // System role
   startDate: string;       // ISO date (YYYY-MM-DD)
   status: 'active' | 'inactive' | 'holiday';  // Employment status
   

@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'manager' | 'pharmacist' | 'cashier' | 'senior_cashier' | 'delivery' | 'officeboy';
+export type UserRole = 'admin' | 'pharmacist_owner' | 'pharmacist_manager' | 'pharmacist' | 'inventory_officer' | 'assistant' | 'hr_manager' | 'cashier' | 'senior_cashier' | 'delivery' | 'delivery_pharmacist' | 'officeboy' | 'manager';
 
 export type PermissionAction = 
   // Inventory
@@ -69,29 +69,65 @@ const ALL_PERMISSIONS: PermissionAction[] = [
 ];
 
 export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
-  admin: [...ALL_PERMISSIONS],
-  
-  manager: [
-    'inventory.view', 'inventory.add', 'inventory.update', 'inventory.delete', 'inventory.adjust', 'inventory.approve',
+  admin: [...ALL_PERMISSIONS], // Absolute Power (Including IT/System)
+
+  // --- Pharmacy Roles ---
+  pharmacist_owner: [
+    // Full Business Access, NO System/IT access
+    'inventory.view', 'inventory.add', 'inventory.update', 'inventory.delete', 'inventory.adjust', 'inventory.approve', 'inventory.restock',
     'sale.create', 'sale.view_history', 'sale.view_details', 'sale.refund', 'sale.modify', 'sale.cancel', 'sale.discount', 'sale.checkout',
     'purchase.view', 'purchase.create', 'purchase.approve', 'purchase.reject',
     'supplier.view', 'supplier.add', 'supplier.update', 'supplier.delete',
     'customer.view', 'customer.add', 'customer.update', 'customer.delete',
     'shift.view', 'shift.open', 'shift.close', 'shift.reports',
     'reports.view_financial', 'reports.view_inventory', 'reports.export',
-    'settings.view', 'users.view' // Manager can view but not manage users/settings deeply
-  , 'inventory.restock'],
-  
+    'settings.view', 'users.view', 'users.manage' // Can manage staff
+  ],
+
+  pharmacist_manager: [
+    // Operations Lead
+    'inventory.view', 'inventory.add', 'inventory.update', 'inventory.adjust', 'inventory.approve', 'inventory.restock',
+    'sale.create', 'sale.view_history', 'sale.view_details', 'sale.refund', 'sale.modify', 'sale.cancel', 'sale.discount', 'sale.checkout',
+    'purchase.view', 'purchase.create', 'purchase.approve', 'purchase.reject',
+    'supplier.view', 'supplier.add', 'supplier.update',
+    'customer.view', 'customer.add', 'customer.update',
+    'shift.view', 'shift.open', 'shift.close', 'shift.reports',
+    'reports.view_inventory', // No financial reports
+    'users.view' // Can view staff but not manage accounts directly (unless given 'users.manage' specifically)
+  ],
+
   pharmacist: [
-    'inventory.view', 'inventory.add', 'inventory.update', 'inventory.adjust',
+    // Standard Pharmacist (Dispensing)
+    'inventory.view', 'inventory.add', 'inventory.update', 'inventory.restock',
     'sale.create', 'sale.view_history', 'sale.view_details', 'sale.discount', 'sale.checkout',
     'purchase.view', 'purchase.create',
     'supplier.view', 'supplier.add',
     'customer.view', 'customer.add', 'customer.update',
-    'reports.view_inventory',
-    'inventory.restock'
+    // NO REPORTS
   ],
-  
+
+  inventory_officer: [
+    // Stock Keeper (No Sales)
+    'inventory.view', 'inventory.add', 'inventory.update', 'inventory.adjust', 'inventory.restock',
+    'purchase.view', 'purchase.create',
+    'supplier.view', 'supplier.add', 'supplier.update',
+    'reports.view_inventory'
+  ],
+
+  assistant: [
+    // Helper
+    'inventory.view', 'inventory.restock',
+    'sale.create', // Can create cart, maybe needs checkout approval? Giving create for now.
+    'customer.view', 'customer.add'
+  ],
+
+  delivery_pharmacist: [
+    // Home Care
+    'sale.view_history', 'sale.view_details', 'sale.create', 'sale.checkout',
+    'customer.view', 'customer.add', 'customer.update'
+  ],
+
+  // --- Sales Dept ---
   senior_cashier: [
     'inventory.view',
     'sale.create', 'sale.view_history', 'sale.view_details', 'sale.refund', 'sale.cancel', 'sale.discount', 'sale.checkout',
@@ -103,7 +139,20 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'inventory.view',
     'sale.create', 'sale.checkout',
     'customer.view', 'customer.add',
-    'shift.view'
+  ],
+
+  // --- Other ---
+  manager: [ // Generic Branch Manager (if used outside Pharmacy context)
+    'inventory.view', 'inventory.approve',
+    'sale.view_history', 'sale.view_details', 'sale.refund', 'sale.cancel',
+    'shift.view', 'shift.open', 'shift.close', 'shift.reports',
+    'reports.view_financial', 'reports.view_inventory', 'reports.export',
+    'users.view'
+  ],
+
+  hr_manager: [
+    'users.view', 'users.manage',
+    'settings.view' // View settings but maybe not change them
   ],
   
   delivery: [

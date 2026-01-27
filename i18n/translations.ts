@@ -168,6 +168,7 @@ export const TRANSLATIONS = {
     inventory: {
       title: 'Inventory',
       subtitle: 'Manage your pharmaceutical stock',
+      outOfStock: 'Out of Stock',
       addDrug: 'Add New Drug',
       allProducts: 'All Products',
       addNewProduct: 'Add New Product',
@@ -218,6 +219,17 @@ export const TRANSLATIONS = {
         unitsPerPack: 'Units Per Pack',
         cancel: 'Cancel',
         save: 'Save Drug',
+      },
+      details: {
+        stockLevel: 'Stock Level',
+        packs: 'packs',
+        sellingPrice: 'Selling Price',
+        costPrice: 'Cost Price',
+        unitsPerPack: 'Units Per Pack',
+        barcode: 'Barcode',
+        internalCode: 'Internal Code',
+        description: 'Description',
+        noDescription: 'No description provided.',
       }
     },
     stockAdjustment: {
@@ -1514,14 +1526,22 @@ export const TRANSLATIONS = {
         pharmacy: 'Pharmacy',
         marketing: 'Marketing',
         hr: 'Human Resources',
-        it: 'IT'
+        it: 'IT',
+        logistics: 'Logistics'
       },
       roles: {
+        pharmacist_owner: 'Pharmacy Owner',
+        pharmacist_manager: 'Pharmacy Manager',
         pharmacist: 'Pharmacist',
+        assistant: 'Pharmacy Assistant',
+        inventory_officer: 'Inventory Officer',
+        hr_manager: 'HR Manager',
+        senior_cashier: 'Senior Cashier',
         cashier: 'Cashier',
-        manager: 'Manager',
-        delivery: 'Delivery',
-        officeboy: 'Office Boy'
+        manager: 'Branch Manager',
+        delivery: 'Delivery Courier',
+        delivery_pharmacist: 'Medical Delivery',
+        officeboy: 'Support Staff'
       },
       statusOptions: {
         all: 'All',
@@ -1747,14 +1767,22 @@ export const TRANSLATIONS = {
         pharmacy: 'الصيدلية',
         marketing: 'التسويق',
         hr: 'الموارد البشرية',
-        it: 'تقنية المعلومات'
+        it: 'تقنية المعلومات',
+        logistics: 'اللوجستيات / التوصيل'
       },
       roles: {
+        pharmacist_owner: 'مالك الصيدلية',
+        pharmacist_manager: 'مدير الصيدلية',
         pharmacist: 'صيدلي',
+        assistant: 'مساعد صيدلي',
+        inventory_officer: 'مسؤول مخزون',
+        hr_manager: 'مدير موارد بشرية',
+        senior_cashier: 'كاشير أول',
         cashier: 'كاشير',
-        manager: 'مدير',
-        delivery: 'توصيل',
-        officeboy: 'عامل',
+        manager: 'مدير فرع',
+        delivery: 'مندوب توصيل',
+        delivery_pharmacist: 'صيدلي توصيل (رعاية منزلية)',
+        officeboy: 'عامل دعم'
       },
       statusOptions: {
         all: 'الكل',
@@ -2110,6 +2138,7 @@ export const TRANSLATIONS = {
     inventory: {
       title: 'المخزون',
       subtitle: 'إدارة المخزون الدوائي',
+      outOfStock: 'نفذت الكمية',
       addDrug: 'إضافة دواء',
       allProducts: 'جميع المنتجات',
       addNewProduct: 'إضافة منتج جديد',
@@ -2163,6 +2192,17 @@ export const TRANSLATIONS = {
         unitsPerPack: 'وحدات لكل عبوة',
         cancel: 'إلغاء',
         save: 'حفظ الدواء',
+      },
+      details: {
+        stockLevel: 'مستوى المخزون',
+        packs: 'عبوة',
+        sellingPrice: 'سعر البيع',
+        costPrice: 'سعر التكلفة',
+        unitsPerPack: 'وحدات/عبوة',
+        barcode: 'الباركود',
+        internalCode: 'الكود الداخلي',
+        description: 'الوصف',
+        noDescription: 'لا يوجد وصف متاح.',
       }
     },
     stockAdjustment: {

@@ -13,7 +13,7 @@ export const AVAILABLE_FONTS_EN: FontOption[] = [
   {
     label: 'Google Sans Flex',
     value: '"Google Sans Flex"',
-    url: 'https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@8..144,100..1000&display=swap',
+    url: 'https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght,wdth,slnt,GRAD@8..144,100..1000,25..151,-10..0,-200..150&display=swap',
   },
   {
     label: 'Inter',
