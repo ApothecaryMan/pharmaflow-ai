@@ -58,6 +58,7 @@ import { SortableCartItem, calculateItemTotal } from "../sales/SortableCartItem"
 import { storage } from "../../utils/storage";
 import { StorageKeys } from "../../config/storageKeys";
 import { DeliveryOrdersModal } from "./DeliveryOrdersModal";
+import { getDisplayName } from "../../utils/drugDisplayName";
 
 // --- Main POS Component ---
 interface POSProps {
@@ -1394,14 +1395,7 @@ export const POS: React.FC<POSProps> = ({
             className="flex flex-col w-full min-w-0"
           >
             <span className="font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate">
-              {info.row.original.name}{" "}
-              {info.row.original.dosageForm ? (
-                <span className="text-gray-500 font-normal">
-                  ({info.row.original.dosageForm})
-                </span>
-              ) : (
-                ""
-              )}
+              {getDisplayName(info.row.original)}
             </span>
             <span className="text-xs text-gray-500 whitespace-normal break-words" dir="ltr">
               {info.row.original.genericName && info.row.original.genericName.length > 35 

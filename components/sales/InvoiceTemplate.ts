@@ -6,6 +6,7 @@
  */
 
 import { Sale, CartItem } from '../../types';
+import { getDisplayName } from '../../utils/drugDisplayName';
 
 export interface InvoiceTemplateOptions {
   /** Store name to display in header */
@@ -41,9 +42,9 @@ export interface InvoiceTemplateOptions {
 }
 
 export const defaultOptions: InvoiceTemplateOptions = {
-  storeName: 'PharmaFlow',
+  storeName: 'ZINC',
   storeSubtitle: 'Pharmacy Management System',
-  footerMessage: 'Thank you for choosing PharmaFlow.<br>We wish you good health!',
+  footerMessage: 'Thank you for choosing Zinc.<br>We wish you good health!',
   footerInquiry: 'For inquiries, please keep this receipt.',
   language: 'EN'
 };
@@ -56,7 +57,7 @@ export const INVOICE_DEFAULTS = {
     terms: `Refrigerated medicines, cosmetics & strips are non-refundable<br>Medicines & devices refundable within 14 days<br>30-day warranty on devices`
   },
   AR: {
-    address: '١٢٣ رسينا',
+    address: '١٢٣ ابوحمص',
     area: 'مدينة نصر',
     hotline: '19099',
     terms: `ادوية التلاجة ومستحضرات التجميل وشرايط الدواء لا ترجع<br>استرجاع الادوية والاجهزة السليمة خلال 14 يوم<br>ضمان 30 يوم على الاجهزة`
@@ -153,7 +154,7 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
         .right { text-align: right; }
         .center { text-align: center; }
         .item-qty { width: 20px; }
-        .discount { font-style: italic; color: #444; }
+        .discount { font-style: italic; color: #000; }
         
         .totals { margin-top: 5px; }
         .total-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
@@ -175,9 +176,9 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
           ? `<div class="store-logo" style="width: 40mm; max-height: 15mm; overflow: hidden; margin: 0 auto 5px auto;">${opts.logoSvgCode}</div>` 
           : opts.logoBase64 
             ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" style="width: 40mm; max-height: 15mm; object-fit: contain;" />`
-            : `<img src="/logo_outline.svg" alt="Logo" class="store-logo" />`
+            : `<img src="/app_icon.svg" alt="Logo" class="store-logo" style="width: 60px;" />`
         }
-        <div class="store-name">${opts.storeName ?? (lang === 'AR' ? 'صيدلية فارما فلو' : 'PharmaFlow Pharmacy')}</div>
+        <div class="store-name">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
         <div class="store-info">${opts.storeSubtitle ?? (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>
         <div class="store-info" dir="auto">${opts.headerAddress ?? currentDefaults.address}</div>
         <div class="store-info" dir="auto">${opts.headerArea ?? currentDefaults.area}</div>
@@ -219,7 +220,7 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
               
             return `
             <tr>
-              <td colspan="2">${item.name}${item.dosageForm ? ' ' + item.dosageForm : ''}${item.isUnit ? ' (UNIT)' : ''}</td>
+              <td colspan="2">${getDisplayName(item)}${item.isUnit ? ' (UNIT)' : ''}</td>
               <td class="right">${item.quantity} x ${effectivePrice.toFixed(2)}</td>
             </tr>
             ${item.discount && item.discount > 0 ? `
@@ -277,7 +278,7 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
               const effectivePrice = (item.isUnit && item.unitsPerPack) ? item.price / item.unitsPerPack : item.price;
               const returnedAmount = effectivePrice * qty * (1 - (item.discount || 0) / 100);
               return `
-          <div style="display: flex; justify-content: space-between; font-size: 11px; color: #666; margin: 2px 0;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: #000; margin: 2px 0;">
             <span>${item.name} x${qty}</span>
             <span>-${returnedAmount.toFixed(2)}</span>
           </div>`;

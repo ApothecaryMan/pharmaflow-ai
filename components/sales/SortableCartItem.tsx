@@ -6,6 +6,7 @@ import { TRANSLATIONS } from "../../i18n/translations";
 import { getLocalizedProductType } from "../../data/productCategories";
 import { useLongPress } from "../../hooks/useLongPress";
 import { UserRole, canPerformAction } from "../../config/permissions";
+import { getDisplayName } from "../../utils/drugDisplayName";
 
 export interface SortableCartItemProps {
   packItem?: CartItem;
@@ -271,16 +272,9 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
         <div className="flex-1 min-w-[120px]">
           <h4
             className="font-bold text-xs text-gray-900 dark:text-gray-100 leading-tight line-clamp-2 drug-name"
-            title={item.name}
+            title={getDisplayName(item)}
           >
-            {item.name}{" "}
-            {item.dosageForm ? (
-              <span className="font-normal text-gray-500">
-                ({item.dosageForm})
-              </span>
-            ) : (
-              ""
-            )}
+            {getDisplayName(item)}
           </h4>
         </div>
 

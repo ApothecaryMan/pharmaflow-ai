@@ -35,9 +35,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
 
   // Define default options based on language
   const defaultOptions: InvoiceTemplateOptions = {
-    storeName: 'PharmaFlow Pharmacy',
+    storeName: 'ZINC',
     storeSubtitle: 'Premium Care Center',
-    headerAddress: language === 'AR' ? '١٢٣ رسينا' : '123 Rasena',
+    headerAddress: language === 'AR' ? '١٢٣ ابوحمص' : '123 Rasena',
     headerArea: language === 'AR' ? 'مدينة نصر' : 'Nasr City',
     headerHotline: '19099',
     footerMessage: 'Thank you for your visit!',
