@@ -1,5 +1,6 @@
 import React from 'react';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { Tooltip } from './Tooltip';
 
 const CARD_HOVER = ""; // No animations for now, matching source
 
@@ -44,23 +45,15 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{title}</p>
             
             {/* Main Value with Tooltip */}
-            <div className="relative group/tooltip w-fit">
-                <h4 className="text-xl font-bold text-gray-900 dark:text-white leading-none mt-1 cursor-help">{value}</h4>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-lg">
-                    Total: {max}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
-                </div>
-            </div>
+            <Tooltip content={`Total: ${max}`}>
+                <h4 className="text-xl font-bold text-gray-900 dark:text-white leading-none mt-1">{value}</h4>
+            </Tooltip>
 
             {/* Secondary Value with Tooltip */}
             {value2 && (
-               <div className="relative group/tooltip w-fit mt-0.5">
-                   <p className="text-[10px] text-gray-400 cursor-help">{label2}: <span className="font-semibold text-gray-700 dark:text-gray-300">{value2}</span></p>
-                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-lg">
-                        Total: {max2}
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
-                   </div>
-               </div>
+               <Tooltip content={`Total: ${max2}`} className="mt-0.5">
+                   <p className="text-[10px] text-gray-400">{label2}: <span className="font-semibold text-gray-700 dark:text-gray-300">{value2}</span></p>
+               </Tooltip>
             )}
           </div>
         </div>

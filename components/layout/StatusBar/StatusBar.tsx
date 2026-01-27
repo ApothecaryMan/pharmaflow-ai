@@ -45,10 +45,12 @@ export interface StatusBarTranslations {
 }
 
 import { ThemeColor, Language } from '../../../types';
+import { UserRole } from '../../../config/permissions';
 
 export interface StatusBarProps {
   t?: StatusBarTranslations;
   currentEmployeeId?: string | null;
+  userRole?: UserRole;
   onSelectEmployee?: (id: string) => void;
 }
 
@@ -73,6 +75,7 @@ const defaultTranslations: StatusBarTranslations = {
 export const StatusBar: React.FC<StatusBarProps> = React.memo(({
   t = defaultTranslations,
   currentEmployeeId,
+  userRole,
   onSelectEmployee,
 }) => {
   /* 
@@ -132,7 +135,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
 
   // --- Real-time Data ---
   const tickerData = useDynamicTickerData();
-  const { employees } = useData();
+  const { employees, isLoading } = useData();
 
   // --- Shift Status Logic ---
   const { currentShift } = useShift();
@@ -180,6 +183,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
         {/* Settings Menu */}
         <SettingsMenu 
           language={language}
+          userRole={userRole}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
           currentTheme={currentTheme}
@@ -239,6 +243,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
         {showTicker && (
           <DynamicTicker
             language={language}
+            userRole={userRole}
             data={tickerData}
             showSales={showTickerSales}
             showInventory={showTickerInventory}
@@ -259,7 +264,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
 
         {/* User Info (Employee Selector) */}
         <UserInfo
-            userName={employees.find(e => e.id === currentEmployeeId)?.name || (language === 'AR' ? 'المستخدم' : 'User')}
+            userName={isLoading && currentEmployeeId ? '...' : (employees.find(e => e.id === currentEmployeeId)?.name || (language === 'AR' ? 'المستخدم' : 'User'))}
             userRole={employees.find(e => e.id === currentEmployeeId)?.role}
             employees={employees}
             currentEmployeeId={currentEmployeeId}

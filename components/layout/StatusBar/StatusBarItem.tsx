@@ -1,4 +1,5 @@
 import React from 'react';
+import { Tooltip } from '../../common/Tooltip';
 
 export interface StatusBarItemProps {
   /** Material Symbol icon name */
@@ -92,15 +93,21 @@ export const StatusBarItem: React.FC<StatusBarItemProps> = ({
 
   if (tooltip) {
     return (
-      <div
-        className={baseClasses}
-        onClick={onClick}
-        title={tooltip}
-        role={isClickable ? 'button' : undefined}
-        tabIndex={isClickable ? 0 : undefined}
+      <Tooltip 
+        content={tooltip} 
+        className="h-full" 
+        triggerClassName="h-full"
+        tooltipClassName="font-bold uppercase tracking-wider z-[60]"
       >
-        {content}
-      </div>
+        <div
+          className={baseClasses}
+          onClick={onClick}
+          role={isClickable ? 'button' : undefined}
+          tabIndex={isClickable ? 0 : undefined}
+        >
+          {content}
+        </div>
+      </Tooltip>
     );
   }
 

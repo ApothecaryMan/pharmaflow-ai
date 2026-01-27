@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { TRANSLATIONS } from '../../../../i18n/translations';
+import { UserRole, canPerformAction } from '../../../../config/permissions';
 import { StatusBarItem } from '../StatusBarItem';
 import { Switch } from '../../../common/Switch';
 import { SegmentedControl } from '../../../common/SegmentedControl';
@@ -47,6 +48,7 @@ export interface SettingsMenuProps {
   setShowTickerCustomers?: (show: boolean) => void;
   showTickerTopSeller?: boolean;
   setShowTickerTopSeller?: (show: boolean) => void;
+  userRole?: UserRole;
 }
 
 export const SettingsMenu: React.FC<SettingsMenuProps> = ({
@@ -83,6 +85,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   setShowTickerCustomers,
   showTickerTopSeller,
   setShowTickerTopSeller,
+  userRole,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [statusBarExpanded, setStatusBarExpanded] = useState(false);
@@ -431,7 +434,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             )}
 
             {/* Developer Mode Toggle */}
-            {setDeveloperMode && (
+            {setDeveloperMode && userRole === 'admin' && (
               <div className="flex items-center justify-between">
                 <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
                   <span className="material-symbols-rounded text-[14px]" style={{ color: 'var(--text-secondary)' }}>science</span>
@@ -509,7 +512,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         }}
                     >
                       {/* Sales */}
-                      {setShowTickerSales && (
+                      {setShowTickerSales && canPerformAction(userRole, 'sale.view_history') && (
                         <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
                           <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
                             {t.showSales}
@@ -523,7 +526,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         </div>
                       )}
                       {/* Inventory */}
-                      {setShowTickerInventory && (
+                      {setShowTickerInventory && canPerformAction(userRole, 'reports.view_inventory') && (
                         <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
                           <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
                             {t.showInventory}
@@ -537,7 +540,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         </div>
                       )}
                       {/* Customers */}
-                      {setShowTickerCustomers && (
+                      {setShowTickerCustomers && canPerformAction(userRole, 'customer.view') && (
                         <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
                           <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
                             {t.showCustomers}
@@ -551,7 +554,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         </div>
                       )}
                       {/* Top Seller */}
-                      {setShowTickerTopSeller && (
+                      {setShowTickerTopSeller && canPerformAction(userRole, 'reports.view_financial') && (
                         <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
                           <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
                             {t.showTopSeller}

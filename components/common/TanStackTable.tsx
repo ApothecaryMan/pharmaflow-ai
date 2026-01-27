@@ -459,7 +459,7 @@ export function TanStackTable<TData, TValue>({
     <div className="flex flex-col h-full w-full">
       {/* Header Controls */}
       {enableTopToolbar && (
-      <div className="flex items-center justify-between mb-4">
+      <div className={`flex items-center justify-between ${enableSearch ? 'mb-4' : ''}`}>
         <div className="w-full max-w-sm">
            {enableSearch && (
            <SearchInput

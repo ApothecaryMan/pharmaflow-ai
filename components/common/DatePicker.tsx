@@ -1,4 +1,162 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
+
+// --- Wheel Picker Component ---
+
+interface WheelPickerItem {
+  value: string | number;
+  label: string;
+}
+
+interface WheelPickerProps {
+  items: WheelPickerItem[];
+  value: string | number;
+  onChange: (value: string | number) => void;
+  width?: string;
+  loop?: boolean;
+}
+
+const WheelPicker: React.FC<WheelPickerProps> = ({ items, value, onChange, width = '60px', loop = false }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const highlightItemsRef = useRef<HTMLDivElement>(null);
+  const ITEM_HEIGHT = 40; 
+  const isScrollingRef = useRef(false);
+  const syncFrameRef = useRef<number | null>(null);
+  
+  const displayItems = useMemo(() => {
+    return loop ? [...items, ...items, ...items, ...items, ...items] : items;
+  }, [items, loop]);
+
+  // High-performance sync using requestAnimationFrame
+  const syncScroll = () => {
+    if (containerRef.current && highlightItemsRef.current) {
+        const top = containerRef.current.scrollTop;
+        highlightItemsRef.current.style.transform = `translate3d(0, -${top}px, 0)`;
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (containerRef.current) {
+      const originalIndex = items.findIndex(i => i.value === value);
+      if (originalIndex !== -1) {
+        const targetIndex = loop ? originalIndex + (items.length * 2) : originalIndex;
+        containerRef.current.scrollTop = targetIndex * ITEM_HEIGHT;
+        syncScroll();
+      }
+    }
+  }, [value, items, loop]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let debounceTimer: any;
+
+    const onScroll = () => {
+      isScrollingRef.current = true;
+      
+      // Zero-lag sync
+      if (syncFrameRef.current) cancelAnimationFrame(syncFrameRef.current);
+      syncFrameRef.current = requestAnimationFrame(syncScroll);
+      
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        isScrollingRef.current = false;
+        const scrollTop = container.scrollTop;
+        const index = Math.round(scrollTop / ITEM_HEIGHT);
+        
+        const actualIndex = loop ? index % items.length : index;
+        const safeIndex = Math.min(Math.max(0, actualIndex), items.length - 1);
+        const newValue = items[safeIndex]?.value;
+
+        if (loop) {
+            const sectionSize = items.length * ITEM_HEIGHT;
+            const normalizedScrollTop = (actualIndex * ITEM_HEIGHT) + (sectionSize * 2);
+            if (Math.abs(scrollTop - normalizedScrollTop) > 10) {
+                 container.scrollTo({ top: normalizedScrollTop, behavior: 'auto' });
+                 syncScroll();
+            }
+        }
+
+        if (newValue !== undefined && newValue !== value) {
+            onChange(newValue);
+        }
+      }, 50); 
+    };
+
+    container.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+        container.removeEventListener('scroll', onScroll);
+        clearTimeout(debounceTimer);
+        if (syncFrameRef.current) cancelAnimationFrame(syncFrameRef.current);
+    };
+  }, [items, value, onChange, loop]);
+
+  const ItemList = ({ isLens }: { isLens: boolean }) => (
+    <>
+      {displayItems.map((item, i) => (
+        <div 
+            key={`${item.value}-${i}`}
+            className="h-[40px] flex items-center justify-center snap-center cursor-pointer"
+            onClick={() => {
+                 if (containerRef.current) containerRef.current.scrollTo({ top: i * ITEM_HEIGHT, behavior: 'smooth' });
+            }}
+        >
+            <span 
+                className="text-sm whitespace-nowrap px-2" 
+                style={{ 
+                    fontFamily: '"Google Sans Flex", sans-serif',
+                    fontOpticalSizing: 'auto',
+                    fontVariationSettings: isLens 
+                        ? '"slnt" 0, "wdth" 151, "wght" 1000, "GRAD" 144' 
+                        : '"slnt" 0, "wdth" 100, "wght" 400, "GRAD" 0',
+                    fontSize: '16px',
+                    color: isLens ? 'inherit' : 'currentColor',
+                }}
+            >
+                {item.label}
+            </span>
+        </div>
+      ))}
+    </>
+  );
+
+  return (
+    <div className="relative h-[200px] overflow-hidden group select-none" style={{ width }}>
+        
+        {/* Layer 1: Background (Normal / Faded) */}
+        <div 
+            ref={containerRef}
+            className="h-full overflow-y-auto no-scrollbar snap-y snap-mandatory py-[80px] relative z-10 text-gray-500/60 dark:text-gray-400/60" 
+            style={{
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.1) 10%, black 40%, black 60%, rgba(0,0,0,0.1) 90%, transparent 100%)',
+                maskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.1) 10%, black 40%, black 60%, rgba(0,0,0,0.1) 90%, transparent 100%)'
+            }}
+        >
+            <ItemList isLens={false} />
+        </div>
+
+        {/* Layer 2: Foreground Lens (Bold / Sharp) */}
+        <div 
+            className="absolute inset-x-0 top-0 bottom-0 z-20 pointer-events-none"
+            style={{
+                // Sharp cut for the lens at the center 40px (from 80px to 120px)
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 80px, black 80px, black 120px, transparent 120px)',
+                maskImage: 'linear-gradient(to bottom, transparent 80px, black 80px, black 120px, transparent 120px)'
+            }}
+        >
+            <div 
+                ref={highlightItemsRef}
+                className="absolute top-0 left-0 w-full pt-[80px]"
+                style={{ willChange: 'transform' }}
+            >
+                <ItemList isLens={true} />
+            </div>
+        </div>
+    </div>
+  );
+};
+
 
 interface DatePickerProps {
     value: string;
@@ -13,8 +171,12 @@ interface DatePickerProps {
         ok: string;
         hour: string;
         minute: string;
+        am?: string;
+        pm?: string;
     };
     className?: string;
+    size?: 'sm' | 'md' | 'lg';
+    rounded?: 'full' | 'xl' | 'lg' | 'md' | 'none';
 }
 
 export const DatePicker: React.FC<DatePickerProps> = ({ 
@@ -29,98 +191,273 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         cancel: 'Cancel',
         ok: 'OK',
         hour: 'Hour',
-        minute: 'Minute'
+        minute: 'Minute',
+        am: 'AM',
+        pm: 'PM'
     },
-    className = ''
+    className = '',
+    size = 'sm',
+    rounded = 'full'
 }) => {
+    // --- State ---
     const [isOpen, setIsOpen] = useState(false);
-    const [viewDate, setViewDate] = useState(new Date());
+    
+    // Dates
+    // selectedDate: The actual value committed
     const [selectedDate, setSelectedDate] = useState<Date | null>(value ? new Date(value) : null);
-    const [focusedDate, setFocusedDate] = useState<Date>(new Date());
-    const containerRef = useRef<HTMLDivElement>(null);
-    const triggerRef = useRef<HTMLButtonElement>(null);
-    const dialogRef = useRef<HTMLDivElement>(null);
+    // viewDate: The month currently being viewed in the calendar
+    const [viewDate, setViewDate] = useState<Date>(new Date());
+    // tempDate: The date currently being manipulated inside the open picker (before OK)
+    const [tempDate, setTempDate] = useState<Date | null>(value ? new Date(value) : null);
 
+    // Refs
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Positioning State
+    const [isPositioned, setIsPositioned] = useState(false);
+    const [position, setPosition] = useState<{ top: number; left: number; transformOrigin: string }>({ 
+        top: 0, 
+        left: 0,
+        transformOrigin: 'top center'
+    });
+
+    // --- Effects ---
+
+    // Sync state with props
     useEffect(() => {
         if (value) {
-            const date = new Date(value);
-            setSelectedDate(date);
-            setViewDate(date);
-            setFocusedDate(date);
+            const d = new Date(value);
+            setSelectedDate(d);
+            setTempDate(d);
+            setViewDate(d);
         } else {
             setSelectedDate(null);
-            setFocusedDate(new Date());
+            // If open but no value, default to current date so wheels render
+            setTempDate(isOpen ? new Date() : null);
+            setViewDate(new Date());
         }
-    }, [value]);
+    }, [value, isOpen]);
 
+    // Handle Outside Click & Scroll
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        if (!isOpen) return;
+
+        const handleOutsideInteractions = (e: MouseEvent | TouchEvent) => {
+            const isInsideTrigger = triggerRef.current?.contains(e.target as Node);
+            const isInsideDropdown = dropdownRef.current?.contains(e.target as Node);
+
+            if (!isInsideTrigger && !isInsideDropdown) {
                 setIsOpen(false);
             }
         };
 
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-            // Focus the dialog or the current selected date when opened
-            setTimeout(() => {
-                const selectedButton = dialogRef.current?.querySelector('button[aria-selected="true"]') as HTMLElement;
-                if (selectedButton) {
-                    selectedButton.focus();
-                } else {
-                    dialogRef.current?.focus();
-                }
-            }, 50);
-        } else {
-            // Return focus to trigger when closed
-            triggerRef.current?.focus();
-        }
+        const handleScroll = (e: Event) => {
+            if (dropdownRef.current && (e.target === dropdownRef.current || dropdownRef.current.contains(e.target as Node))) {
+                return;
+            }
+            setIsOpen(false);
+        };
+
+        const handleResize = () => setIsOpen(false);
+
+        document.addEventListener('mousedown', handleOutsideInteractions);
+        document.addEventListener('touchstart', handleOutsideInteractions);
+        window.addEventListener('scroll', handleScroll, true);
+        window.addEventListener('resize', handleResize);
 
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('mousedown', handleOutsideInteractions);
+            document.removeEventListener('touchstart', handleOutsideInteractions);
+            window.removeEventListener('scroll', handleScroll, true);
+            window.removeEventListener('resize', handleResize);
         };
     }, [isOpen]);
 
-    const daysInMonth = (date: Date) => {
-        return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-    };
+    // Calculate Position
+    useLayoutEffect(() => {
+        if (isOpen && triggerRef.current) {
+            const rect = triggerRef.current.getBoundingClientRect();
+            const DROPDOWN_WIDTH = 320;
+            const DROPDOWN_HEIGHT = 400; 
+            const GAP = 8;
+            const VIEWPORT_PADDING = 10;
 
-    const firstDayOfMonth = (date: Date) => {
-        return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-    };
+            let top = rect.bottom + GAP;
+            let left = rect.left + (rect.width / 2) - (DROPDOWN_WIDTH / 2);
+            let transformOrigin = 'top center';
 
-    const handlePrevMonth = () => {
-        setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
-    };
+            if (top + DROPDOWN_HEIGHT > window.innerHeight - VIEWPORT_PADDING) {
+                if (rect.top - DROPDOWN_HEIGHT - GAP > VIEWPORT_PADDING) {
+                    top = rect.top - DROPDOWN_HEIGHT - GAP;
+                    transformOrigin = 'bottom center';
+                }
+            }
 
-    const handleNextMonth = () => {
-        setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
-    };
+            if (left + DROPDOWN_WIDTH > window.innerWidth - VIEWPORT_PADDING) {
+                left = window.innerWidth - DROPDOWN_WIDTH - VIEWPORT_PADDING;
+                transformOrigin = transformOrigin.replace('center', 'right');
+            }
+            if (left < VIEWPORT_PADDING) {
+                left = VIEWPORT_PADDING;
+                transformOrigin = transformOrigin.replace('center', 'left');
+            }
 
-    const handleDateClick = (day: number) => {
-        const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
-        if (selectedDate) {
-            newDate.setHours(selectedDate.getHours());
-            newDate.setMinutes(selectedDate.getMinutes());
+            setPosition({ top, left, transformOrigin });
+            setIsPositioned(true);
         } else {
-            newDate.setHours(0, 0, 0, 0);
+            setIsPositioned(false);
         }
-        setSelectedDate(newDate);
-        setFocusedDate(newDate);
+    }, [isOpen]);
+
+    // --- Wheel Logic ---
+
+    // Generate Date Items (e.g. +/- 5 years from viewDate)
+    const dateWheelItems = useMemo(() => {
+        const items = [];
+        const centerDate = new Date(); // Always center around today/selected for generation loop? 
+                                       // Actually, iOS picker is infinite. We'll simulate a wide range centered on the selected date.
+                                       // If we want it truly smooth, we need a lot of items.
+                                       // Let's go +/- 365 days for now to keep it responsive, or just render "current month" days?
+                                       // User requested "Mon 19 Feb" style.
+        
+        const base = tempDate || new Date();
+        const range = 600; // days before and after
+        
+        for (let i = -range; i <= range; i++) {
+            const d = new Date(base);
+            d.setDate(base.getDate() + i);
+            
+            // Format: "Mon 19 Feb"
+            const label = d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
+            
+            // Value: ISO string date part for uniqueness? Or just timestamp?
+            // We use full date string YYYY-MM-DD
+            const val = d.toISOString().split('T')[0];
+            
+            items.push({ label, value: val });
+        }
+        return items;
+    }, [locale]); // Recalculate if locale changes. Note: heavily dependent on 'tempDate' might cause jitters if we re-generate on every scroll. 
+                  // Better to generate around a STABLE center (e.g. initial viewDate) and just select the correct one.
+                  // Implemented: Generate around Initial Open Date (viewDate) is better to avoid array shifts.
+
+    // Dynamic Day Items based on selected Month/Year
+    const currentYearForDays = tempDate?.getFullYear() || new Date().getFullYear();
+    const currentMonthForDays = tempDate?.getMonth() || 0;
+    
+    const dayItems = useMemo(() => {
+        const daysInMonth = new Date(currentYearForDays, currentMonthForDays + 1, 0).getDate();
+        return Array.from({ length: daysInMonth }, (_, i) => ({
+            label: (i + 1).toString().padStart(2, '0'),
+            value: i + 1
+        }));
+    }, [currentYearForDays, currentMonthForDays]);
+
+    const monthItems = useMemo(() => {
+        const items = [];
+        for (let i = 0; i < 12; i++) {
+            const d = new Date(2024, i, 1);
+            items.push({
+                label: d.toLocaleDateString(locale, { month: 'short' }),
+                value: i
+            });
+        }
+        return items;
+    }, [locale]);
+
+    const yearItems = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        const items = [];
+        for (let i = currentYear - 10; i <= currentYear + 20; i++) {
+            items.push({ label: i.toString(), value: i });
+        }
+        return items;
+    }, []);
+
+    const hourItems = Array.from({ length: 12 }, (_, i) => ({
+        label: (i + 1).toString().padStart(2, '0'),
+        value: (i + 1)
+    }));
+
+    const minuteItems = Array.from({ length: 60 }, (_, i) => ({
+        label: i.toString().padStart(2, '0'),
+        value: i
+    }));
+
+    const amPmItems = [
+        { label: translations.am || 'AM', value: 'AM' },
+        { label: translations.pm || 'PM', value: 'PM' }
+    ];
+
+    const handleWheelChange = (type: 'day' | 'month' | 'year' | 'hour' | 'minute' | 'ampm', val: string | number) => {
+        if (!tempDate) return;
+        const newDate = new Date(tempDate);
+
+        if (type === 'day') {
+            newDate.setDate(val as number);
+        } else if (type === 'month') {
+            const newMonth = val as number;
+            // Handle month days overflow (e.g. going from Jan 31 to Feb)
+            const daysInMonth = new Date(newDate.getFullYear(), newMonth + 1, 0).getDate();
+            if (newDate.getDate() > daysInMonth) {
+                newDate.setDate(daysInMonth);
+            }
+            newDate.setMonth(newMonth);
+        } else if (type === 'year') {
+            newDate.setFullYear(val as number);
+        } else if (type === 'hour') {
+            // 12-hour format handling
+            const h = val as number; // 1-12
+            const currentHours = newDate.getHours();
+            const isPM = currentHours >= 12;
+            
+            if (h === 12) {
+                newDate.setHours(isPM ? 12 : 0);
+            } else {
+                newDate.setHours(isPM ? h + 12 : h);
+            }
+        } else if (type === 'minute') {
+            newDate.setMinutes(val as number);
+        } else if (type === 'ampm') {
+            const currentHours = newDate.getHours();
+            const isPM = val === 'PM';
+            
+            if (isPM && currentHours < 12) {
+                newDate.setHours(currentHours + 12);
+            } else if (!isPM && currentHours >= 12) {
+                newDate.setHours(currentHours - 12);
+            }
+        }
+
+        setTempDate(newDate);
     };
 
-    const handleTimeChange = (type: 'hours' | 'minutes', val: string) => {
-        if (!selectedDate) return;
-        const newDate = new Date(selectedDate);
-        if (type === 'hours') newDate.setHours(parseInt(val));
-        else newDate.setMinutes(parseInt(val));
-        setSelectedDate(newDate);
+    // Helper to get current values for wheels
+    const getCurrentDayValue = () => tempDate?.getDate() || 1;
+    const getCurrentMonthValue = () => tempDate?.getMonth() || 0;
+    const getCurrentYearValue = () => tempDate?.getFullYear() || new Date().getFullYear();
+    const getCurrentMinuteValue = () => tempDate?.getMinutes() || 0;
+
+    const getCurrentHourValue = () => {
+        if (!tempDate) return 12;
+        const h = tempDate.getHours();
+        if (h === 0) return 12;
+        if (h > 12) return h - 12;
+        return h;
     };
 
-    const handleConfirm = () => {
-        if (selectedDate) {
-            const offset = selectedDate.getTimezoneOffset() * 60000;
-            const localISOTime = (new Date(selectedDate.getTime() - offset)).toISOString().slice(0, 16);
+    const getCurrentAmPmValue = () => {
+        if (!tempDate) return 'AM';
+        return tempDate.getHours() >= 12 ? 'PM' : 'AM';
+    };
+
+    const confirmSelection = () => {
+        if (tempDate) {
+            // Convert to ISO string for output, handling timezone offset properly
+            // We want to preserve the selected local time in the string
+            const offset = tempDate.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(tempDate.getTime() - offset)).toISOString().slice(0, 16);
             onChange(localISOTime);
         } else {
             onChange('');
@@ -128,224 +465,172 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         setIsOpen(false);
     };
 
-    const handleClear = (e: React.MouseEvent) => {
+    const clearSelection = (e: React.MouseEvent) => {
         e.stopPropagation();
         onChange('');
-        setSelectedDate(null);
+        setIsOpen(false);
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (!isOpen) return;
-
-        switch (e.key) {
-            case 'Escape':
-                setIsOpen(false);
-                break;
-            case 'ArrowLeft':
-                e.preventDefault();
-                setFocusedDate(new Date(focusedDate.getFullYear(), focusedDate.getMonth(), focusedDate.getDate() - 1));
-                if (focusedDate.getDate() === 1) handlePrevMonth();
-                break;
-            case 'ArrowRight':
-                e.preventDefault();
-                setFocusedDate(new Date(focusedDate.getFullYear(), focusedDate.getMonth(), focusedDate.getDate() + 1));
-                if (focusedDate.getDate() === daysInMonth(focusedDate)) handleNextMonth();
-                break;
-            case 'ArrowUp':
-                e.preventDefault();
-                setFocusedDate(new Date(focusedDate.getFullYear(), focusedDate.getMonth(), focusedDate.getDate() - 7));
-                break;
-            case 'ArrowDown':
-                e.preventDefault();
-                setFocusedDate(new Date(focusedDate.getFullYear(), focusedDate.getMonth(), focusedDate.getDate() + 7));
-                break;
-            case 'Enter':
-                e.preventDefault();
-                handleDateClick(focusedDate.getDate());
-                break;
+    // Styles Map
+    const styles = {
+        sm: 'px-3 py-1 text-xs h-[32px] gap-1.5',
+        md: 'px-4 py-2 text-sm gap-2 h-[42px]',
+        lg: 'px-5 py-3 text-base gap-3 h-[48px]',
+        rounded: {
+            full: 'rounded-full',
+            xl: 'rounded-xl',
+            lg: 'rounded-lg',
+            md: 'rounded-md',
+            none: 'rounded-none'
+        },
+        dropdownRounded: {
+            full: 'rounded-[24px]',
+            xl: 'rounded-xl',
+            lg: 'rounded-lg',
+            md: 'rounded-md',
+            none: 'rounded-none'
         }
     };
-
-    // Sync viewDate with focusedDate for keyboard nav
-    useEffect(() => {
-        if (isOpen && (focusedDate.getMonth() !== viewDate.getMonth() || focusedDate.getFullYear() !== viewDate.getFullYear())) {
-            setViewDate(new Date(focusedDate.getFullYear(), focusedDate.getMonth(), 1));
-        }
-    }, [focusedDate, isOpen]);
-
-    const renderCalendar = () => {
-        const days = [];
-        const totalDays = daysInMonth(viewDate);
-        const startDay = firstDayOfMonth(viewDate);
-
-        for (let i = 0; i < startDay; i++) {
-            days.push(<div key={`empty-${i}`} className="w-8 h-8"></div>);
-        }
-
-        for (let i = 1; i <= totalDays; i++) {
-            const currentDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), i);
-            const isSelected = selectedDate && 
-                currentDate.getDate() === selectedDate.getDate() && 
-                currentDate.getMonth() === selectedDate.getMonth() && 
-                currentDate.getFullYear() === selectedDate.getFullYear();
-            
-            const isToday = new Date().toDateString() === currentDate.toDateString();
-            const isFocused = focusedDate.getDate() === i && focusedDate.getMonth() === viewDate.getMonth();
-
-            days.push(
-                <button
-                    key={i}
-                    onClick={() => handleDateClick(i)}
-                    tabIndex={isFocused ? 0 : -1}
-                    aria-selected={isSelected}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-colors focus:outline-none focus:ring-2 ring-${color}-500
-                        ${isSelected 
-                            ? `bg-${color}-600 text-white font-bold` 
-                            : isToday 
-                                ? `text-${color}-600 font-bold border border-${color}-200 dark:border-${color}-800` 
-                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                        }
-                    `}
-                >
-                    {i.toLocaleString(locale)}
-                </button>
-            );
-        }
-
-        return days;
-    };
-
-    // Generate weekdays based on locale
-    const weekDays = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(2023, 0, i + 1); // Start from a Sunday
-        return d.toLocaleDateString(locale, { weekday: 'narrow' });
-    });
 
     return (
-        <div className="relative" ref={containerRef} onKeyDown={handleKeyDown}>
-            {/* Trigger */}
-            <button 
+        <div className="relative inline-block">
+            {/* --- Trigger Button --- */}
+            <button
                 ref={triggerRef}
                 type="button"
-                aria-haspopup="dialog"
-                aria-expanded={isOpen}
-                aria-label={label}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all cursor-pointer select-none focus:outline-none focus:ring-2 ring-${color}-500 ${className}
-                    ${value 
-                        ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-800 text-${color}-700 dark:text-${color}-300` 
-                        : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
+                onClick={() => {
+                    if (!isOpen && !value) {
+                         setTempDate(new Date());
                     }
+                    setIsOpen(!isOpen);
+                }}
+                className={`
+                    flex items-center border transition-all select-none outline-none focus:ring-0
+                    ${styles[size]}
+                    ${styles.rounded[rounded]}
+                    
+                    ${value 
+                        ? `bg-${color}-200 dark:bg-${color}-800 border-${color}-400 dark:border-${color}-600 text-${color}-900 dark:text-${color}-50 font-semibold shadow-sm` 
+                        : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-white dark:hover:bg-gray-800'
+                    }
+                    ${className}
                 `}
-                onClick={() => setIsOpen(!isOpen)}
             >
                 <span className="material-symbols-rounded text-[18px]">{icon}</span>
                 <span className="text-sm font-medium whitespace-nowrap">
-                    {value ? new Date(value).toLocaleString(locale, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : (placeholder || label)}
+                    {value 
+                        ? new Date(value).toLocaleString(locale, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) 
+                        : (placeholder || label)
+                    }
                 </span>
+                
                 {value && (
-                    <div 
-                        role="button"
-                        tabIndex={0}
-                        onClick={handleClear}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                handleClear(e as any);
-                            }
-                        }}
-                        className={`w-5 h-5 rounded-full flex items-center justify-center hover:bg-${color}-200 dark:hover:bg-${color}-800 transition-colors ml-1`}
-                        aria-label="Clear date"
+                    <div
+                        onClick={clearSelection}
+                        className={`w-5 h-5 rounded-full flex items-center justify-center transform hover:scale-110 active:scale-95 transition-all ml-1 hover:bg-${color}-200 dark:hover:bg-${color}-800`}
                     >
                         <span className="material-symbols-rounded text-[14px]">close</span>
                     </div>
                 )}
             </button>
 
-            {/* Dropdown */}
-            {isOpen && (
-                <div 
-                    ref={dialogRef}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={label}
-                    tabIndex={-1}
-                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-900 rounded-[28px] shadow-xl border border-gray-200 dark:border-gray-800 p-4 w-[320px] animate-fade-in outline-none"
+            {/* --- Portal Dropdown --- */}
+            {isOpen && isPositioned && createPortal(
+                <div
+                    ref={dropdownRef}
+                    className="fixed z-[99999] animate-fade-in"
+                    style={{
+                        top: position.top,
+                        left: position.left,
+                        transformOrigin: position.transformOrigin
+                    }}
                     dir={locale === 'ar-EG' || locale.startsWith('ar') ? 'rtl' : 'ltr'}
                 >
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-4">
-                        <button onClick={handlePrevMonth} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 rtl:rotate-180" aria-label="Previous month">
-                            <span className="material-symbols-rounded">chevron_left</span>
-                        </button>
-                        <span className="text-sm font-bold text-gray-800 dark:text-gray-200" aria-live="polite">
-                            {viewDate.toLocaleString(locale, { month: 'long', year: 'numeric' })}
-                        </span>
-                        <button onClick={handleNextMonth} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 rtl:rotate-180" aria-label="Next month">
-                            <span className="material-symbols-rounded">chevron_right</span>
-                        </button>
-                    </div>
+                    <div className={`bg-white dark:bg-gray-900 ${styles.dropdownRounded[rounded]} shadow-2xl border border-gray-200 dark:border-gray-800 p-5 w-[380px] select-none`}>
+                        
+                        {/* iOS Style Wheel Layout */}
+                        <div className="relative flex items-center justify-center gap-2 mb-4">
+                            {/* Unified Highlight Bar */}
+                            <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-[42px] bg-gray-100/50 dark:bg-gray-800/40 rounded-xl z-0"></div>
+                            
+                            {tempDate && (
+                                <>
+                                    {/* Day */}
+                                    <WheelPicker 
+                                        items={dayItems} 
+                                        value={getCurrentDayValue()} 
+                                        onChange={(v) => handleWheelChange('day', v)}
+                                        width="50px"
+                                        loop={true}
+                                    />
 
-                    {/* Weekdays */}
-                    <div className="grid grid-cols-7 mb-2" aria-hidden="true">
-                        {weekDays.map((day, i) => (
-                            <div key={i} className="w-8 h-8 flex items-center justify-center text-xs font-medium text-gray-400">
-                                {day}
-                            </div>
-                        ))}
-                    </div>
+                                    {/* Month */}
+                                    <WheelPicker 
+                                        items={monthItems} 
+                                        value={getCurrentMonthValue()} 
+                                        onChange={(v) => handleWheelChange('month', v)}
+                                        width="75px"
+                                        loop={true}
+                                    />
 
-                    {/* Calendar Grid */}
-                    <div className="grid grid-cols-7 gap-y-1 mb-4" role="grid">
-                        {renderCalendar()}
-                    </div>
-
-                    {/* Time Selection */}
-                    {selectedDate && (
-                        <div className="flex items-center justify-center gap-2 mb-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                            <div className="flex flex-col items-center">
-                                <label htmlFor="hour-input" className="text-[10px] text-gray-400 mb-1">{translations.hour}</label>
-                                <input 
-                                    id="hour-input"
-                                    type="number" 
-                                    min="0" 
-                                    max="23" 
-                                    className={`w-12 p-1 text-center rounded bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 ring-${color}-500 outline-none`}
-                                    value={selectedDate.getHours()}
-                                    onChange={(e) => handleTimeChange('hours', e.target.value)}
-                                />
-                            </div>
-                            <span className="text-gray-400 mt-4">:</span>
-                            <div className="flex flex-col items-center">
-                                <label htmlFor="minute-input" className="text-[10px] text-gray-400 mb-1">{translations.minute}</label>
-                                <input 
-                                    id="minute-input"
-                                    type="number" 
-                                    min="0" 
-                                    max="59" 
-                                    className={`w-12 p-1 text-center rounded bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 ring-${color}-500 outline-none`}
-                                    value={selectedDate.getMinutes()}
-                                    onChange={(e) => handleTimeChange('minutes', e.target.value)}
-                                />
-                            </div>
+                                    {/* Year */}
+                                    <WheelPicker 
+                                        items={yearItems} 
+                                        value={getCurrentYearValue()} 
+                                        onChange={(v) => handleWheelChange('year', v)}
+                                        width="75px"
+                                    />
+                                    
+                                    <div className="w-[1px] h-20 bg-gray-200 dark:bg-gray-800 mx-1 self-center opacity-50" />
+                                    
+                                    {/* Hour */}
+                                    <WheelPicker 
+                                        items={hourItems} 
+                                        value={getCurrentHourValue()} 
+                                        onChange={(v) => handleWheelChange('hour', v)}
+                                        width="50px"
+                                        loop={true}
+                                    />
+                                    
+                                    {/* Minute */}
+                                    <WheelPicker 
+                                        items={minuteItems} 
+                                        value={getCurrentMinuteValue()} 
+                                        onChange={(v) => handleWheelChange('minute', v)}
+                                        width="50px"
+                                        loop={true}
+                                    />
+                                    
+                                    {/* AM/PM */}
+                                    <WheelPicker 
+                                        items={amPmItems} 
+                                        value={getCurrentAmPmValue()} 
+                                        onChange={(v) => handleWheelChange('ampm', v)}
+                                        width="50px"
+                                    />
+                                </>
+                            )}
                         </div>
-                    )}
 
-                    {/* Actions */}
-                    <div className="flex justify-end gap-2">
-                        <button 
-                            onClick={() => setIsOpen(false)}
-                            className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors focus:outline-none focus:ring-2 ring-gray-400"
-                        >
-                            {translations.cancel}
-                        </button>
-                        <button 
-                            onClick={handleConfirm}
-                            className={`px-4 py-2 text-sm font-medium text-white bg-${color}-600 hover:bg-${color}-700 rounded-full transition-colors focus:outline-none focus:ring-2 ring-${color}-500`}
-                        >
-                            {translations.ok}
-                        </button>
+                        {/* Footer Actions */}
+                        <div className="flex items-center justify-end gap-2 border-t border-gray-100 dark:border-gray-800 pt-3">
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                            >
+                                {translations.cancel}
+                            </button>
+                            <button
+                                onClick={confirmSelection}
+                                className={`px-6 py-2 text-sm font-bold text-white bg-${color}-600 hover:bg-${color}-700 rounded-lg shadow-lg shadow-${color}-500/20 active:scale-95 transition-all`}
+                            >
+                                {translations.ok}
+                            </button>
+                        </div>
+
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

@@ -83,6 +83,12 @@ interface ModalProps {
    * at the bottom of the modal for better UX.
    */
   hideCloseButton?: boolean;
+  
+  /**
+   * Footer content (e.g. action buttons).
+   * Renders at the bottom of the modal, fixed outside the scrollable area.
+   */
+  footer?: React.ReactNode;
 }
 
 const SIZE_MAP = {
@@ -118,7 +124,8 @@ export const Modal: React.FC<ModalProps> = ({
   tabs,
   activeTab,
   onTabChange,
-  hideCloseButton = false
+  hideCloseButton = false,
+  footer
 }) => {
   
   // Handle ESC key and Body Scroll Lock
@@ -242,8 +249,15 @@ export const Modal: React.FC<ModalProps> = ({
                         background: transparent;
                     }
                 `}</style>
-               {children}
+                {children}
              </div>
+             
+             {/* Footer */}
+             {footer && (
+                 <div className="mt-6 pt-0 shrink-0">
+                     {footer}
+                 </div>
+             )}
            </div>
          ) : (
            children

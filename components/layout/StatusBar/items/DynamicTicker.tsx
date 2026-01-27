@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { StatusBarItem } from '../StatusBarItem';
+import { Tooltip } from '../../../common/Tooltip';
+import { UserRole, canPerformAction } from '../../../../config/permissions';
 
 /**
  * DynamicTicker - A rotating status display component
@@ -53,6 +55,7 @@ export interface DynamicTickerProps {
   showInventory?: boolean;
   showCustomers?: boolean;
   showTopSeller?: boolean;
+  userRole?: UserRole;
 }
 
 const defaultTranslations = {
@@ -85,6 +88,7 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
   showInventory = true,
   showCustomers = true,
   showTopSeller = true,
+  userRole,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -132,23 +136,32 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
     },
   ];
 
-  // Filter slides based on visibility settings
+  // Filter slides based on visibility settings AND Permissions
   const slides = allSlides.filter(slide => {
-    if (slide.id === 'sales') return showSales;
-    if (slide.id === 'inventory') return showInventory;
-    if (slide.id === 'customers') return showCustomers;
-    if (slide.id === 'topSeller') return showTopSeller;
+    // 1. Check User Settings (toggle)
+    let visibleBySettings = true;
+    if (slide.id === 'sales') visibleBySettings = showSales;
+    if (slide.id === 'inventory') visibleBySettings = showInventory;
+    if (slide.id === 'customers') visibleBySettings = showCustomers;
+    if (slide.id === 'topSeller') visibleBySettings = showTopSeller;
+
+    if (!visibleBySettings) return false;
+
+    // 2. Check RBAC Permissions
+    if (!userRole) return false; // Hide all if no role? Or maybe show public info? 
+    // Usually if no employee selected, we show nothing (officeboy fallback has minimal perms anyway)
+
+    if (slide.id === 'sales') return canPerformAction(userRole, 'sale.view_history');
+    if (slide.id === 'inventory') return canPerformAction(userRole, 'reports.view_inventory');
+    if (slide.id === 'customers') return canPerformAction(userRole, 'customer.view');
+    if (slide.id === 'topSeller') return canPerformAction(userRole, 'reports.view_financial');
+
     return true;
   });
 
-  // If no slides visible, don't render
-  if (slides.length === 0) return null;
-
-  const currentSlide = priorityMessage || slides[currentIndex % slides.length];
-
   // Rotation logic
   const rotateNext = useCallback(() => {
-    if (isPaused || priorityMessage) return;
+    if (isPaused || priorityMessage || slides.length === 0) return;
     
     setIsAnimating(true);
     setTimeout(() => {
@@ -158,13 +171,13 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
   }, [isPaused, priorityMessage, slides.length]);
 
   useEffect(() => {
-    if (isPaused || priorityMessage) return;
+    if (isPaused || priorityMessage || slides.length === 0) return;
 
     timeoutRef.current = setTimeout(rotateNext, interval);
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [currentIndex, interval, isPaused, priorityMessage, rotateNext]);
+  }, [currentIndex, interval, isPaused, priorityMessage, rotateNext, slides.length]);
 
   // Priority message handler - clears after showing
   useEffect(() => {
@@ -178,6 +191,7 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
 
   // Manual navigation
   const goToSlide = (index: number) => {
+    if (slides.length === 0) return;
     setCurrentIndex(index);
     // Reset timer
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -191,6 +205,40 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
     return value;
   };
 
+  // Generate descriptive tooltip based on slide type
+  const getSlideTooltip = (slide: TickerSlide) => {
+    switch (slide.id) {
+      case 'sales':
+        return language === 'AR'
+          ? `إجمالي مبيعات اليوم: ${slide.value} (${data.completedInvoices} ${t.completed || 'مكتملة'}، ${data.pendingInvoices} ${t.pending || 'معلقة'})`
+          : `Total Daily Sales: ${slide.value} (${data.completedInvoices} ${t.completed || 'Completed'}, ${data.pendingInvoices} ${t.pending || 'Pending'})`;
+      
+      case 'inventory':
+        return language === 'AR'
+          ? `حالة المخزون: ${data.lowStockCount} ${t.lowStock}, ${data.shortagesCount} ${t.shortages}`
+          : `Inventory Status: ${data.lowStockCount} ${t.lowStock}, ${data.shortagesCount} ${t.shortages}`;
+      
+      case 'customers':
+        return language === 'AR'
+          ? `العملاء الجدد: تم تسجيل ${data.newCustomersToday} عملاء جدد اليوم`
+          : `New Customers: ${data.newCustomersToday} new customers registered today`;
+      
+      case 'topSeller':
+        return language === 'AR'
+          ? `الأكثر مبيعاً: ${data.topSeller?.name || '—'} (${data.topSeller?.count || 0} ${t.invoices || 'فاتورة'})`
+          : `Top Seller: ${data.topSeller?.name || '—'} (${data.topSeller?.count || 0} ${t.invoices || 'Invoices'})`;
+      
+      default:
+        return slide.label;
+    }
+  };
+
+  // Safely get current slide - MUST NOT return null before hooks
+  const currentSlide = priorityMessage || (slides.length > 0 ? slides[currentIndex % slides.length] : null);
+
+  // If no slides visible, don't render - This return is now AFTER all hooks
+  if (!currentSlide) return null;
+
   return (
     <div
       className="relative flex items-center h-full group"
@@ -198,69 +246,74 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Main Content */}
-      <div
-        className={`
-          flex items-center h-full px-2.5 gap-1.5 cursor-default
-          transition-all duration-150 ease-in-out
-          hover:bg-black/5 dark:hover:bg-white/10
-          ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}
-        `}
-        onClick={() => goToSlide((currentIndex + 1) % slides.length)}
-        title={`${currentSlide.label}: ${currentSlide.value}${currentSlide.secondaryValue ? ` | ${currentSlide.secondaryLabel}: ${currentSlide.secondaryValue}` : ''}`}
+      <Tooltip
+        content={getSlideTooltip(currentSlide)}
+        className="h-full"
+        triggerClassName="h-full"
+        tooltipClassName="font-bold uppercase tracking-wider z-[60]"
       >
-        {/* Icon */}
-        <span
-          className={`material-symbols-rounded text-[14px] leading-none ${
-            currentSlide.variant === 'success' ? 'text-emerald-500' :
-            currentSlide.variant === 'warning' ? 'text-amber-500' :
-            currentSlide.variant === 'error' ? 'text-red-500' :
-            currentSlide.variant === 'info' ? 'text-blue-500' :
-            'text-[var(--text-secondary)]'
-          }`}
+        {/* Main Content */}
+        <div
+          className={`
+            flex items-center h-full px-2.5 gap-1.5 cursor-default
+            transition-all duration-150 ease-in-out
+            hover:bg-black/5 dark:hover:bg-white/10
+            ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}
+          `}
+          onClick={() => goToSlide((currentIndex + 1) % slides.length)}
         >
-          {currentSlide.icon}
-        </span>
+          {/* Icon */}
+          <span
+            className={`material-symbols-rounded text-[14px] leading-none ${
+              currentSlide.variant === 'success' ? 'text-emerald-500' :
+              currentSlide.variant === 'warning' ? 'text-amber-500' :
+              currentSlide.variant === 'error' ? 'text-red-500' :
+              currentSlide.variant === 'info' ? 'text-blue-500' :
+              'text-[var(--text-secondary)]'
+            }`}
+          >
+            {currentSlide.icon}
+          </span>
 
-        {/* Primary: Label + Value */}
-        <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
-          {currentSlide.label}
-        </span>
-        <span className="text-[10px] font-bold" style={{ color: 'var(--text-primary)' }}>
-          {formatValue(currentSlide.value)}
-        </span>
+          {/* Primary: Label + Value */}
+          <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
+            {currentSlide.label}
+          </span>
+          <span className="text-[10px] font-bold" style={{ color: 'var(--text-primary)' }}>
+            {formatValue(currentSlide.value)}
+          </span>
 
-        {/* Secondary (optional) */}
-        {currentSlide.secondaryValue !== undefined && (
-          <>
-            <span className="text-[8px] opacity-40 mx-0.5">|</span>
-            {currentSlide.secondaryLabel && (
-              <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
-                {currentSlide.secondaryLabel}
+          {/* Secondary (optional) */}
+          {currentSlide.secondaryValue !== undefined && (
+            <>
+              <span className="text-[8px] opacity-40 mx-0.5">|</span>
+              {currentSlide.secondaryLabel && (
+                <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
+                  {currentSlide.secondaryLabel}
+                </span>
+              )}
+              <span className="text-[10px] font-bold" style={{ color: 'var(--text-primary)' }}>
+                {formatValue(currentSlide.secondaryValue)}
               </span>
-            )}
-            <span className="text-[10px] font-bold" style={{ color: 'var(--text-primary)' }}>
-              {formatValue(currentSlide.secondaryValue)}
-            </span>
-          </>
-        )}
+            </>
+          )}
 
-        {/* Tertiary (optional) */}
-        {currentSlide.tertiaryValue !== undefined && (
-          <>
-            <span className="text-[8px] opacity-40 mx-0.5">|</span>
-            {currentSlide.tertiaryLabel && (
-              <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
-                {currentSlide.tertiaryLabel}
+          {/* Tertiary (optional) */}
+          {currentSlide.tertiaryValue !== undefined && (
+            <>
+              <span className="text-[8px] opacity-40 mx-0.5">|</span>
+              {currentSlide.tertiaryLabel && (
+                <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
+                  {currentSlide.tertiaryLabel}
+                </span>
+              )}
+              <span className="text-[10px] font-bold" style={{ color: 'var(--text-primary)' }}>
+                {formatValue(currentSlide.tertiaryValue)}
               </span>
-            )}
-            <span className="text-[10px] font-bold" style={{ color: 'var(--text-primary)' }}>
-              {formatValue(currentSlide.tertiaryValue)}
-            </span>
-          </>
-        )}
-      </div>
-
+            </>
+          )}
+        </div>
+      </Tooltip>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { AnimatedCounter } from './AnimatedCounter';
+import { Tooltip } from './Tooltip';
 
 const CARD_HOVER = ""; // No animations
 
@@ -63,12 +64,8 @@ export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, tr
       <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-0.5">{title}</p>
       
       <div className="flex items-center gap-2">
-        <h4 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-baseline">
+        <h4 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-baseline leading-none">
           {typeof value === 'number' && type !== 'currency' && value <= 10000 ? ( 
-              // Keep AnimatedCounter for smaller non-currency numbers to show precision/change if needed, 
-              // or just use it for everything if it supported strings. 
-              // But AnimatedCounter usually takes a raw number. 
-              // Let's assume we use the static formatted string for large numbers to support '1.5M'
               <AnimatedCounter value={value} fractionDigits={fractionDigits ?? 0} />
           ) : (
              formattedValue
@@ -83,28 +80,34 @@ export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, tr
 
         {/* Badge Next to Number (Includes Trend Value + Label/SubValue) */}
         {(trend || subValue) && (
-           <span className={`text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1.5 ${
-             trend === 'up' 
-               ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' 
-               : trend === 'down'
-               ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
-               : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' // Neutral for subValue only
-           }`}>
-             {trend && trend !== 'unchanged' && (
-                <>
-                    <span>{trend === 'up' ? '▲' : '▼'}</span>
+          <Tooltip 
+            content={subValue || trendLabel} 
+            className="min-w-0 shrink max-w-full"
+            tooltipClassName="font-bold uppercase tracking-wider"
+          >
+            <span className={`flex items-center gap-1.5 px-1.5 rounded-lg border bg-transparent text-[10px] font-bold uppercase tracking-wider leading-none h-[22px] min-w-0 max-w-full ${
+              trend === 'up' 
+                ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400' 
+                : trend === 'down' 
+                ? 'border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400'
+                : 'border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-500' // Neutral/SubValue
+            }`}>
+              {trend && trend !== 'unchanged' && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                    <span className="material-symbols-rounded text-sm">{trend === 'up' ? 'trending_up' : 'trending_down'}</span>
                     <span>{trendValue}</span>
-                </>
-             )}
-             
-             {/* Small Text Inside Badge */}
-             {(trendLabel || subValue) && (
-                 <span className={`font-medium ${trend && trend !== 'unchanged' ? 'opacity-80 ltr:border-l rtl:border-r border-current ltr:pl-1.5 rtl:pr-1.5' : ''}`}>
+                </div>
+              )}
+              
+              {/* Small Text Inside Badge */}
+              {(trendLabel || subValue) && (
+                <span className={`truncate min-w-0 ${trend && trend !== 'unchanged' ? 'opacity-80 ltr:border-l rtl:border-r border-current ltr:pl-1.5 rtl:pr-1.5' : ''}`}>
                     {subValue || trendLabel}
-                 </span>
-             )}
-           </span>
-         )}
+                </span>
+              )}
+            </span>
+          </Tooltip>
+        )}
       </div>
     </div>
   </div>
