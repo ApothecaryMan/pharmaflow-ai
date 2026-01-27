@@ -13,13 +13,15 @@ import { usePosSounds } from '../common/hooks/usePosSounds';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useLongPress } from '../../hooks/useLongPress';
 import { settingsService } from '../../services';
+import { getDisplayName } from '../../utils/drugDisplayName';
 import { FloatingInput } from '../common/FloatingInput';
-import { checkExpiryStatus, sanitizeExpiryInput, formatExpiryDisplay, parseExpiryDisplay, getExpiryStatusStyle } from '../../utils/expiryUtils';
+import { checkExpiryStatus, sanitizeExpiryInput, formatExpiryDisplay, parseExpiryDisplay, getExpiryStatusStyle, getExpiryStatusConfig } from '../../utils/expiryUtils';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { UserRole, canPerformAction } from '../../config/permissions';
 import { useToast } from '../../context';
+import { TanStackTable } from '../common/TanStackTable';
 
 
 interface PurchasesProps {
@@ -33,11 +35,12 @@ interface PurchasesProps {
   userRole: UserRole;
   onApprovePurchase?: (purchase: Purchase) => void;
   onRejectPurchase?: (purchase: Purchase) => void;
+  language: 'EN' | 'AR';
 }
 
 export const Purchases: React.FC<PurchasesProps> = ({ 
   inventory, suppliers, purchases, purchaseReturns, onPurchaseComplete, 
-  color, t, userRole, onApprovePurchase, onRejectPurchase 
+  color, t, userRole, onApprovePurchase, onRejectPurchase, language 
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const { error: showToastError } = useToast();
@@ -260,7 +263,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       if (historySearch.trim()) {
           const { mode: searchMode, regex } = parseSearchTerm(historySearch);
           
-          if (searchMode === 'ingredient') {
+          if (searchMode === 'ingredient' || searchMode === 'generic') {
              data = data.filter(p => 
                  p.items && p.items.some(item => 
                      item.name && regex.test(item.name)
@@ -295,238 +298,128 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
   const filteredSearchSuggestions = useMemo(() => {
       const { mode, regex } = parseSearchTerm(historySearch);
-      if (mode !== 'ingredient') return [];
+      if (mode !== 'ingredient' && mode !== 'generic') return [];
       return (inventory || []).filter(d => d.name && regex.test(d.name)).slice(0, 10);
   }, [historySearch, inventory]);
 
 
-  // History Table Column State
-  // History Table Column State - REFACTORED TO MATCH POS
-  const {
-    columnOrder,
-    hiddenColumns,
-    draggedColumn,
-    dragOverColumn,
-    toggleColumnVisibility,
-    handleColumnDragStart,
-    handleColumnDragOver,
-    handleColumnTouchMove,
-    handleColumnDrop,
-    handleColumnTouchEnd,
-    handleColumnDragEnd,
-  } = useColumnReorder({
-    defaultColumns: ['orderId', 'invId', 'date', 'supplier', 'payment', 'items', 'discount', 'total', 'action'],
-    storageKey: 'purchases_history_columns'
-  });
 
-  // --- Column Resize Logic (History) ---
-  const [historyColumnWidths, setHistoryColumnWidths] = useState<Record<string, number | undefined>>(() => {
-    if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('purchases_history_column_widths');
-        if (saved) {
-            try { return JSON.parse(saved); } catch (e) { console.error('Failed to parse column widths', e); }
-        }
+  const columns = useMemo(() => [
+    {
+      header: t.tableHeaders?.orderId || 'Order #',
+      accessorKey: 'invoiceId',
+      cell: (info: any) => <span className="text-xs font-mono font-bold text-gray-700 dark:text-gray-300">{info.getValue() || '-'}</span>,
+    },
+    {
+      header: t.tableHeaders?.invId || 'Inv #',
+      accessorKey: 'externalInvoiceId',
+      cell: (info: any) => <span className="text-xs font-mono text-gray-500">{info.getValue() || '-'}</span>,
+    },
+    {
+      header: t.tableHeaders?.date || 'Date',
+      accessorKey: 'date',
+      cell: (info: any) => (
+        <div className="flex flex-col">
+          <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">{new Date(info.getValue()).toLocaleDateString()}</span>
+          <span className="text-[10px] text-gray-400">{formatTime(new Date(info.getValue()))}</span>
+        </div>
+      ),
+    },
+    {
+      header: t.tableHeaders?.supplier || 'Supplier',
+      accessorKey: 'supplierName',
+      cell: (info: any) => <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{info.getValue()}</span>,
+    },
+    {
+      header: t.tableHeaders?.payment || 'Payment',
+      accessorKey: 'paymentType',
+      cell: (info: any) => {
+        const type = info.getValue() as string;
+        const config = type === 'cash' 
+          ? { color: 'emerald', icon: 'payments', label: t.cash || 'Cash' }
+          : { color: 'blue', icon: 'credit_card', label: t.credit || 'Credit' };
+        
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}>
+            <span className="material-symbols-rounded text-xs">{config.icon}</span>
+            {config.label}
+          </span>
+        );
+      },
+    },
+    {
+      header: t.tableHeaders?.items || 'Items',
+      accessorFn: (row: any) => row.items?.length || 0,
+      cell: (info: any) => <span className="text-xs text-gray-500 font-medium">{info.getValue()}</span>,
+    },
+    {
+      header: t.tableHeaders?.discount || 'Discount',
+      accessorFn: (p: any) => {
+        const totalSale = p.items.reduce((sum: number, i: any) => sum + (i.salePrice * i.quantity), 0);
+        const totalCost = p.totalCost;
+        const totalDiscount = totalSale - totalCost;
+        return totalSale > 0 ? (totalDiscount / totalSale) * 100 : 0;
+      },
+      cell: (info: any) => {
+        const val = info.getValue() as number;
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}>
+            <span className="material-symbols-rounded text-xs">percent</span>
+            {val.toFixed(1)}
+          </span>
+        );
+      }
+    },
+    {
+      header: t.tableHeaders?.total || 'Total',
+      accessorKey: 'totalCost',
+      cell: (info: any) => {
+        const p = info.row.original;
+        const returns = getPurchaseReturns(p.id);
+        const hasReturns = returns.length > 0;
+        const totalReturned = returns.reduce((sum, r) => sum + r.totalRefund, 0);
+        return (
+          <div className="flex flex-col items-end">
+            <span className="text-sm font-bold text-gray-900 dark:text-white">${info.getValue().toFixed(2)}</span>
+            {hasReturns && (
+              <span className="text-[10px] text-orange-600 dark:text-orange-400 font-medium">
+                -${totalReturned.toFixed(2)} {t.detailsModal?.returnedLabel || 'returned'}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      header: t.tableHeaders?.action || 'Status',
+      id: 'status',
+      accessorFn: (p: any) => {
+        const hasReturns = getPurchaseReturns(p.id).length > 0;
+        if (p.status === 'rejected') return 'REJECTED';
+        if (p.status === 'pending') return 'PENDING';
+        if (hasReturns) return 'RETURNED';
+        return 'COMPLETED';
+      },
+      cell: (info: any) => {
+        const status = info.getValue() as string;
+        let config = { color: 'emerald', icon: 'check_circle', label: t.tooltips?.completed || 'Completed' };
+        if (status === 'PENDING') config = { color: 'amber', icon: 'pending', label: t.tooltips?.pending || 'Pending' };
+        else if (status === 'REJECTED') config = { color: 'red', icon: 'cancel', label: t.tooltips?.rejected || 'Rejected' };
+        else if (status === 'RETURNED') config = { color: 'purple', icon: 'assignment_return', label: t.tooltips?.returned || 'Returned' };
+
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}>
+            <span className="material-symbols-rounded text-xs">{config.icon}</span>
+            {config.label}
+          </span>
+        );
+      }
     }
-    return {
-      orderId: 100,
-      invId: 100,
-      date: 120,
-      supplier: 200,
-      payment: 100,
-      items: 80,
-      discount: 100,
-      total: 120,
-      action: 80
-    };
-  });
-
-  useEffect(() => {
-    localStorage.setItem('purchases_history_column_widths', JSON.stringify(historyColumnWidths));
-  }, [historyColumnWidths]);
-
-  const [isColumnResizing, setIsColumnResizing] = useState(false);
-  const resizingColumn = useRef<string | null>(null);
-  const startX = useRef<number>(0);
-  const startWidth = useRef<number>(0);
-
-  const startColumnResize = (e: React.MouseEvent, columnId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsColumnResizing(true);
-    resizingColumn.current = columnId;
-    startX.current = e.pageX;
-    startWidth.current = historyColumnWidths[columnId] || 100;
-
-    document.addEventListener('mousemove', handleColumnResizeMove);
-    document.addEventListener('mouseup', endColumnResize);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  };
-
-  const handleColumnResizeMove = useCallback((e: MouseEvent) => {
-    if (!resizingColumn.current) return;
-    const diff = e.pageX - startX.current;
-    
-    // Check RTL
-    const isRTL = document.dir === 'rtl' || document.documentElement.getAttribute('dir') === 'rtl';
-    const finalDiff = isRTL ? -diff : diff;
-    
-    const newWidth = Math.max(50, startWidth.current + finalDiff);
-    setHistoryColumnWidths(prev => ({ ...prev, [resizingColumn.current!]: newWidth }));
-  }, [historyColumnWidths]);
-
-  const endColumnResize = useCallback(() => {
-    setIsColumnResizing(false);
-    resizingColumn.current = null;
-    document.removeEventListener('mousemove', handleColumnResizeMove);
-    document.removeEventListener('mouseup', endColumnResize);
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-  }, [handleColumnResizeMove]);
-
-  useEffect(() => {
-      return () => {
-        document.removeEventListener('mousemove', handleColumnResizeMove);
-        document.removeEventListener('mouseup', endColumnResize);
-      };
-  }, [endColumnResize, handleColumnResizeMove]);
-
-  const handleAutoFit = (e: React.MouseEvent, columnId: string) => {
-      e.stopPropagation();
-      setHistoryColumnWidths(prev => {
-          const next = { ...prev };
-          delete next[columnId];
-          return next;
-      });
-  };
-
-  const historyColumnsDef = {
-    orderId: { label: t.tableHeaders?.orderId || 'Order #', className: 'px-3 py-2 text-start' },
-    invId: { label: t.tableHeaders?.invId || 'Inv #', className: 'px-3 py-2 text-start' },
-    date: { label: t.tableHeaders?.date || 'Date', className: 'px-3 py-2 text-start' },
-    supplier: { label: t.tableHeaders?.supplier || 'Supplier', className: 'px-3 py-2 text-start' },
-    payment: { label: t.tableHeaders?.payment || 'Payment', className: 'px-3 py-2 text-center' },
-    items: { label: t.tableHeaders?.items || 'Items', className: 'px-3 py-2 text-center' },
-    discount: { label: t.tableHeaders?.discount || 'Discount', className: 'px-3 py-2 text-end' },
-    total: { label: t.tableHeaders?.total || 'Total', className: 'px-3 py-2 text-end' },
-    action: { label: t.tableHeaders?.action || 'Action', className: 'px-3 py-2 text-center' }
-  };
-    
-  // Header context menu actions
-  const getHeaderActions = () => [
-    { label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', icon: 'visibility', action: () => {} },
-    { separator: true },
-    ...Object.keys(historyColumnsDef).map(colId => ({
-      label: historyColumnsDef[colId as keyof typeof historyColumnsDef].label,
-      icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
-      action: () => toggleColumnVisibility(colId)
-    }))
-  ];
-
-  // Header context menu trigger (replaces manual useLongPress)
-  const { triggerProps: headerTriggerProps } = useContextMenuTrigger({
-    actions: getHeaderActions
-  });
+  ], [t, language, purchaseReturns]);
 
     // Helper: Get returns for a purchase
     const getPurchaseReturns = (purchaseId: string) => {
         return purchaseReturns.filter(r => r.purchaseId === purchaseId);
-    };
-
-    const renderHistoryCell = (p: Purchase, columnId: string) => {
-        const totalSale = p.items.reduce((sum, i) => sum + (i.salePrice * i.quantity), 0);
-        const totalCost = p.totalCost;
-        const totalDiscount = totalSale - totalCost;
-        const discountPercent = totalSale > 0 ? (totalDiscount / totalSale) * 100 : 0;
-        const returns = getPurchaseReturns(p.id);
-        const hasReturns = returns.length > 0;
-        const totalReturned = returns.reduce((sum, r) => sum + r.totalRefund, 0);
-
-        switch(columnId) {
-            case 'orderId':
-                return <span className="text-xs font-mono font-bold text-gray-700 dark:text-gray-300 truncate">{p.invoiceId || '-'}</span>;
-            case 'invId':
-                return <span className="text-xs font-mono text-gray-500 truncate">{p.externalInvoiceId || '-'}</span>;
-            case 'date':
-                return (
-                    <div className="flex flex-col">
-                        <span className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate">{new Date(p.date).toLocaleDateString()}</span>
-                        <span className="text-[10px] text-gray-400">{formatTime(new Date(p.date))}</span>
-                    </div>
-                );
-            case 'supplier':
-                return <span className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{p.supplierName}</span>;
-            case 'payment':
-                return (
-                    <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide text-white shadow-sm ${p.paymentType === 'cash' ? 'bg-green-600' : 'bg-blue-600'}`}>
-                        {p.paymentType === 'cash' ? (t.cash || 'Cash') : (t.credit || 'Credit')}
-                    </span>
-                );
-            case 'items':
-                return <span className="text-xs text-gray-500 font-medium">{p.items.length}</span>;
-            case 'discount':
-                return <span className="text-xs font-bold text-green-600">{discountPercent.toFixed(1)}%</span>;
-            case 'total':
-                return (
-                    <div className="flex flex-col items-end">
-                        <span className="text-sm font-bold text-gray-900 dark:text-white">${p.totalCost.toFixed(2)}</span>
-                        {hasReturns && (
-                            <span className="text-[10px] text-orange-600 dark:text-orange-400 font-medium">
-                                -${totalReturned.toFixed(2)} {t.detailsModal?.returnedLabel || 'returned'}
-                            </span>
-                        )}
-                    </div>
-                );
-            case 'action':
-                if (p.status === 'pending') {
-                    return (
-                        <div className="flex justify-center">
-                            <span 
-                                className="material-symbols-rounded text-orange-500 text-[20px]" 
-                                title={t.tooltips?.pending || 'Pending Approval'}
-                            >
-                                pending
-                            </span>
-                        </div>
-                    );
-                }
-                if (p.status === 'rejected') {
-                     return (
-                        <div className="flex justify-center">
-                            <span 
-                                className="material-symbols-rounded text-red-500 text-[20px]" 
-                                title={t.tooltips?.rejected || 'Rejected'}
-                            >
-                                cancel
-                            </span>
-                        </div>
-                    );
-                }
-                if (hasReturns) {
-                     return (
-                        <div className="flex justify-center">
-                            <span 
-                                className="material-symbols-rounded text-purple-500 text-[20px]" 
-                                title={t.tooltips?.returned || 'Returned'}
-                            >
-                                assignment_return
-                            </span>
-                        </div>
-                    );
-                }
-                return (
-                    <div className="flex justify-center">
-                        <span 
-                            className="material-symbols-rounded text-green-500 text-[20px]" 
-                            title={t.tooltips?.completed || 'Completed'}
-                        >
-                            check_circle
-                        </span>
-                    </div>
-                );
-            default:
-                return null;
-        }
     };
 
     // Copy helper with fallback
@@ -958,39 +851,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
           <div>
               <div className="flex items-center gap-3">
                   <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'create' ? t.title : t.historyTitle}</h2>
-                  {mode === 'history' && (
-                      <>
-                          <span className="text-gray-300 text-2xl font-light">|</span>
-                          <FilterDropdown
-                              items={[
-                                  { id: 'all', label: t.status?.all || 'All Status' },
-                                  { id: 'pending', label: t.status?.pending || 'Pending' },
-                                  { id: 'completed', label: t.status?.completed || 'Completed' },
-                                  { id: 'returned', label: t.status?.returned || 'Returned' },
-                                  { id: 'rejected', label: t.status?.rejected || 'Rejected' }
-                              ]}
-                              selectedItem={{ id: statusFilter, label: statusFilter === 'all' ? (t.status?.all || 'All Status') : (t.status?.[statusFilter] || statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)) }}
-                              isOpen={isStatusFilterOpen}
-                              onToggle={() => setIsStatusFilterOpen(!isStatusFilterOpen)}
-                              onSelect={(item) => {
-                                  setStatusFilter(item.id as any);
-                                  setIsStatusFilterOpen(false);
-                              }}
-                              keyExtractor={(item) => item.id}
-                              renderItem={(item, isSelected) => (
-                                  <div className="flex items-center justify-between w-full">
-                                      <span>{item.label}</span>
-                                      {isSelected && <span className="material-symbols-rounded text-sm">check</span>}
-                                  </div>
-                              )}
-                              renderSelected={(item) => <span className="text-[11px] font-bold">{item?.label}</span>}
-                              className="w-32 h-[28px]"
-                              minHeight="28px"
-                              variant="input"
-                              color={color}
-                          />
-                      </>
-                  )}
               </div>
              <p className="text-sm text-gray-500">{t.subtitle}</p>
           </div>
@@ -998,53 +858,21 @@ export const Purchases: React.FC<PurchasesProps> = ({
              {/* Status Filter (History Mode Only) */}
              {mode === 'history' && (
                   <>
-                  <div className="relative me-2" ref={searchSuggestionsRef}>
-                      <span className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none text-gray-500 material-symbols-rounded text-lg">search</span>
-                      <input
-                          type="text"
-                          value={historySearch}
-                          onChange={(e) => {
-                              setHistorySearch(e.target.value);
-                              setIsSearchSuggestionsOpen(true);
-                          }}
-                          onFocus={() => setIsSearchSuggestionsOpen(true)}
-                          dir={historySearch.startsWith('@') ? 'ltr' : historySearchDir}
-                          placeholder={t.placeholders?.searchHistory || 'Search ID, Supplier...'}
-                          className={`ps-10 pe-4 py-1 h-[32px] bg-gray-100 dark:bg-gray-800 rounded-full text-xs font-medium focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 w-48 placeholder-gray-400 ${historySearch.startsWith('@') ? 'text-left' : ''}`}
-                      />
-                      {isSearchSuggestionsOpen && filteredSearchSuggestions.length > 0 && (
-                          <div dir="ltr" className="absolute top-full mt-2 start-0 w-60 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden max-h-60 overflow-y-auto">
-                              {filteredSearchSuggestions.map((drug) => (
-                                  <div 
-                                      key={drug.id}
-                                      onClick={() => {
-                                          setHistorySearch(`@${drug.name}`);
-                                          setIsSearchSuggestionsOpen(false);
-                                      }}
-                                      className="px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer flex items-center gap-3 transition-colors border-b last:border-0 border-gray-50 dark:border-gray-700/50"
-                                  >
-                                      <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-                                           <span className="material-symbols-rounded text-blue-500 text-lg">medication</span>
-                                      </div>
-                                      <div className="flex flex-col min-w-0 justify-center">
-                                           <div className="flex items-center gap-1.5 overflow-hidden">
-                                                <span className="text-xs font-bold text-gray-700 dark:text-gray-200 truncate">{drug.name}</span>
-                                                {drug.dosageForm && <span className="text-[10px] text-gray-400 flex-shrink-0">{drug.dosageForm}</span>}
-                                           </div>
-                                      </div>
-                                  </div>
-                              ))}
-                          </div>
-                      )}
-                  </div>
-                  <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-full me-2">
+                  <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl me-2">
                       <DatePicker
                           value={dateRange.from}
                           onChange={(val) => setDateRange(prev => ({ ...prev, from: val }))}
                           label={t.fromDate || "From"}
                           color="gray"
                           icon="calendar_today"
-                          className="py-1 px-3 text-xs h-[32px] focus:ring-0 hover:bg-white dark:hover:bg-gray-800"
+                          translations={{
+                              cancel: t.cancel || 'Cancel',
+                              ok: t.ok || 'OK',
+                              hour: t.hour || 'Hour',
+                              minute: t.minute || 'Minute',
+                              am: t.time?.am || t.am || 'AM',
+                              pm: t.time?.pm || t.pm || 'PM'
+                          }}
                       />
                       <span className="text-gray-400 material-symbols-rounded px-1 text-lg rtl:rotate-180">arrow_forward</span>
                       <DatePicker
@@ -1053,7 +881,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           label={t.toDate || "To"}
                           color="gray"
                           icon="event"
-                          className="py-1 px-3 text-xs h-[32px] focus:ring-0 hover:bg-white dark:hover:bg-gray-800"
+                          translations={{
+                              cancel: t.cancel || 'Cancel',
+                              ok: t.ok || 'OK',
+                              hour: t.hour || 'Hour',
+                              minute: t.minute || 'Minute',
+                              am: t.time?.am || t.am || 'AM',
+                              pm: t.time?.pm || t.pm || 'PM'
+                          }}
                       />
                   </div>
                   </>
@@ -1079,7 +914,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
 
                 {/* TOP: Search Controls */}
-                <div className={`${CARD_BASE} p-4 rounded-3xl flex flex-col xl:flex-row gap-4 items-end flex-shrink-0`}>
+                <div className={`${CARD_BASE} p-4 rounded-xl flex flex-col xl:flex-row gap-4 items-end flex-shrink-0`}>
                         {/* Drug Search & Filter */}
                         <div className="flex-[1.5] w-full flex gap-2">
                              <FilterDropdown
@@ -1153,7 +988,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                                             className: 'text-gray-900 dark:text-gray-400',
                                             render: (drug: Drug) => (
                                                  <span className={`truncate`}>
-                                                    {drug.name} <span className="opacity-75 font-normal">{drug.dosageForm}</span>
+                                                    {getDisplayName(drug)}
                                                 </span>
                                             )
                                         },
@@ -1412,7 +1247,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                                         {/* Product Name */}
                                         <div className="flex-1 min-w-0">
                                             <p className="font-bold text-md drug-name truncate mb-1" title={item.name}>
-                                                {item.name} {item.dosageForm || ''}
+                                                {getDisplayName(item)}
                                             </p>
                                         </div>
                                         
@@ -1654,97 +1489,91 @@ export const Purchases: React.FC<PurchasesProps> = ({
                </div>
            </div>
        ) : (
-           /* HISTORY VIEW */
-           <div className={`flex-1 ${CARD_BASE} rounded-3xl overflow-hidden flex flex-col`}>
-           <div className="flex-1 overflow-auto bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-               <table className="w-full min-w-full table-fixed border-collapse type-functional">
-                <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>
-                    <tr>
-                        {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
-                          <th
-                            key={columnId}
-                            data-column-id={columnId}
-                            className={`${historyColumnsDef[columnId as keyof typeof historyColumnsDef].className} ${!isColumnResizing ? 'cursor-grab active:cursor-grabbing' : ''} select-none transition-colors relative group/header hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                              draggedColumn === columnId ? 'opacity-50' : ''
-                            } ${dragOverColumn === columnId ? `bg-${color}-100 dark:bg-${color}-900/50` : ''}`}
-                            title={historyColumnsDef[columnId as keyof typeof historyColumnsDef].label}
-                            draggable={!isColumnResizing}
-                            onDragStart={(e) => {
-                              if ((e.target as HTMLElement).closest('.resize-handle')) {
-                                  e.preventDefault();
-                                  return;
-                              }
-                              handleColumnDragStart(e, columnId);
-                            }}
-                            onDragOver={(e) => handleColumnDragOver(e, columnId)}
-                            onDrop={(e) => handleColumnDrop(e, columnId)}
-                            onDragEnd={handleColumnDragEnd}
-                            onTouchStart={(e) => {
-                              if ((e.target as HTMLElement).closest('.resize-handle')) return;
-                              e.stopPropagation();
-                              handleColumnDragStart(e, columnId);
-                            }}
-                            onTouchMove={(e) => {
-                                handleColumnTouchMove(e);
-                            }}
-                            onTouchEnd={(e) => {
-                                handleColumnTouchEnd(e);
-                            }}
-                            {...headerTriggerProps}
-                            style={{ width: historyColumnWidths[columnId] ? `${historyColumnWidths[columnId]}px` : 'auto' }}
-                          >
-                           <div className="flex items-center justify-between h-full w-full">
-                            <span className="truncate flex-1">{historyColumnsDef[columnId as keyof typeof historyColumnsDef].label}</span>
-                            
-                            {/* Resize Handle / Separator */}
-                            <div 
-                                className="resize-handle absolute right-0 top-1/2 -translate-y-1/2 h-4 w-4 cursor-col-resize z-20 flex items-center justify-center opacity-0 group-hover/header:opacity-100 transition-opacity"
-                                style={{ right: '-8px' }}
-                                onMouseDown={(e) => startColumnResize(e, columnId)}
-                                onClick={(e) => e.stopPropagation()}
-                                onDoubleClick={(e) => handleAutoFit(e, columnId)}
-                            >
-                                 {/* Hit area only, no visual line */}
-                            </div>
-                           </div>
-                          </th>
-                        ))}
-                    </tr>
-                </thead>
-                 <tbody>
-                     {sortedHistory.map((p, index) => (
-                         <tr 
-                            key={p.id} 
-                            onClick={(e) => { e.stopPropagation(); setSelectedPurchase(p); }}
-                            onTouchStart={(e) => {
-                                currentTouchRow.current = p;
-                                onRowTouchStart(e);
-                            }}
-                            onTouchEnd={onRowTouchEnd}
-                            onTouchMove={onRowTouchMove}
-                            onContextMenu={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                showMenu(e.clientX, e.clientY, getRowContextActions(p));
-                            }}
-                            className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''}`}
-                        >
-                            {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
-                                <td 
-                                    key={columnId} 
-                                    className={`${historyColumnsDef[columnId as keyof typeof historyColumnsDef].className} align-middle border-none`}
-                                    style={{ width: historyColumnWidths[columnId] ? `${historyColumnWidths[columnId]}px` : 'auto' }}
-                                >
-                                    {renderHistoryCell(p, columnId)}
-                                </td>
-                            ))}
-                        </tr>
-                     ))}
-                    {purchases.length === 0 && <tr><td colSpan={10} className="p-12 text-center text-gray-400">{t.noHistory || 'No purchase history found'}</td></tr>}
-                </tbody>
-               </table>
-           </div>
-           </div>
+             /* HISTORY VIEW */
+             <div className="flex flex-col flex-1 gap-4 overflow-hidden">
+                <div className="flex items-center gap-3">
+                    <div className="relative w-[512px]" ref={searchSuggestionsRef}>
+                    <SearchInput
+                        value={historySearch}
+                        onSearchChange={(val) => {
+                            setHistorySearch(val);
+                            setIsSearchSuggestionsOpen(true);
+                        }}
+                        onClear={() => setHistorySearch('')}
+                        onFocus={() => setIsSearchSuggestionsOpen(true)}
+                        placeholder={(t.placeholders?.searchHistory || 'Search ID, Supplier...') + ' (use @ to search medicine)'}
+                        className={`${historySearch.startsWith('@') ? 'text-left' : ''}`}
+                        rounded="xl"
+                    />
+                    <SearchDropdown
+                        results={filteredSearchSuggestions}
+                        onSelect={(drug) => {
+                            setHistorySearch(`@${drug.name}`);
+                            setIsSearchSuggestionsOpen(false);
+                        }}
+                        columns={[
+                            {
+                                header: t.headers?.barcode || 'Barcode',
+                                width: 'w-32 shrink-0',
+                                className: 'text-gray-900 dark:text-gray-400',
+                                render: (drug: Drug) => drug.barcode || drug.id || drug.internalCode || '---'
+                            },
+                            {
+                                header: t.headers?.name || 'Name',
+                                width: 'flex-1',
+                                className: 'text-gray-900 dark:text-gray-400',
+                                render: (drug: Drug) => (
+                                     <span className="truncate">
+                                        {getDisplayName(drug)}
+                                    </span>
+                                )
+                            }
+                        ]}
+                        isVisible={isSearchSuggestionsOpen && filteredSearchSuggestions.length > 0}
+                    />
+                </div>
+
+                <FilterDropdown
+                    items={[
+                        { id: 'all', label: t.status?.all || 'All Status' },
+                        { id: 'pending', label: t.status?.pending || 'Pending' },
+                        { id: 'completed', label: t.status?.completed || 'Completed' },
+                        { id: 'returned', label: t.status?.returned || 'Returned' },
+                        { id: 'rejected', label: t.status?.rejected || 'Rejected' }
+                    ]}
+                    selectedItem={{ id: statusFilter, label: statusFilter === 'all' ? (t.status?.all || 'All Status') : (t.status?.[statusFilter] || statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)) }}
+                    isOpen={isStatusFilterOpen}
+                    onToggle={() => setIsStatusFilterOpen(!isStatusFilterOpen)}
+                    onSelect={(item) => {
+                        setStatusFilter(item.id as any);
+                        setIsStatusFilterOpen(false);
+                    }}
+                    keyExtractor={(item) => item.id}
+                    renderItem={(item, isSelected) => (
+                        <div className="flex items-center justify-between w-full">
+                            <span>{item.label}</span>
+                            {isSelected && <span className="material-symbols-rounded text-sm">check</span>}
+                        </div>
+                    )}
+                    renderSelected={(item) => <span className="text-xs font-bold">{item?.label}</span>}
+                    className="w-40 h-[42px]"
+                    variant="input"
+                    color={color}
+                />
+            </div>
+
+                <div className={`flex-1 ${CARD_BASE} rounded-xl overflow-hidden flex flex-col`}>
+                <TanStackTable
+                    data={sortedHistory}
+                    columns={columns}
+                    color={color}
+                    onRowClick={(p) => setSelectedPurchase(p)}
+                    tableId="purchases_history_v2"
+                    manualFiltering={true}
+                    enableSearch={false}
+                />
+                </div>
+            </div>
        )}
        
        {/* Purchase Details Modal */}
@@ -1770,28 +1599,57 @@ export const Purchases: React.FC<PurchasesProps> = ({
                         </div>
                          <div>
                             <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.detailsModal?.payment || 'Payment'}</p>
-                                 <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase text-white ${selectedPurchase.paymentType === 'cash' ? 'bg-green-600' : 'bg-blue-600'}`}>
-                                {selectedPurchase.paymentType === 'cash' ? (t.cash || 'Cash') : (t.credit || 'Credit')}
-                            </span>
+                            {(() => {
+                                const config = selectedPurchase.paymentType === 'cash' 
+                                    ? { color: 'emerald', icon: 'payments', label: t.cash || 'Cash' }
+                                    : { color: 'blue', icon: 'credit_card', label: t.credit || 'Credit' };
+                                return (
+                                    <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}>
+                                        <span className="material-symbols-rounded text-xs">{config.icon}</span>
+                                        {config.label}
+                                    </span>
+                                );
+                            })()}
                         </div>
                          <div>
                             <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.detailsModal?.totalCost || 'Total Cost'}</p>
                             <p className={`font-bold text-lg text-${color}-600`}>${selectedPurchase.totalCost.toFixed(2)}</p>
                         </div>
-                        {selectedPurchase.approvalDate ? (
+                        <div>
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.detailsModal?.status || 'Status'}</p>
+                            {(() => {
+                                const status = selectedPurchase.status as string;
+                                let config = { color: 'gray', icon: 'help', label: status };
+                                
+                                switch (status) {
+                                    case 'pending':
+                                        config = { color: 'amber', icon: 'pending', label: t.detailsModal?.pendingApproval || 'Pending Approval' };
+                                        break;
+                                    case 'completed':
+                                        config = { color: 'emerald', icon: 'check_circle', label: t.detailsModal?.completed || 'Completed' };
+                                        break;
+                                    case 'rejected':
+                                        config = { color: 'red', icon: 'cancel', label: t.detailsModal?.rejected || 'Rejected' };
+                                        break;
+                                    case 'returned':
+                                        config = { color: 'orange', icon: 'assignment_return', label: t.detailsModal?.returned || 'Returned' };
+                                        break;
+                                }
+                                
+                                return (
+                                    <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}>
+                                        <span className="material-symbols-rounded text-xs">{config.icon}</span>
+                                        {config.label}
+                                    </span>
+                                );
+                            })()}
+                        </div>
+                        {selectedPurchase.approvalDate && (
                             <div>
                                 <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.detailsModal?.approvedOn || 'Approved On'}</p>
                                 <p className="font-bold">{new Date(selectedPurchase.approvalDate).toLocaleDateString()} {formatTime(new Date(selectedPurchase.approvalDate))}</p>
                             </div>
-                        ) : selectedPurchase.status === 'pending' ? (
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.detailsModal?.status || 'Status'}</p>
-                                <p className="font-bold text-orange-500 flex items-center gap-1">
-                                    <span className="material-symbols-rounded text-sm">pending</span>
-                                    {t.detailsModal?.pendingApproval || 'Pending Approval'}
-                                </p>
-                            </div>
-                        ) : null}
+                        )}
 
                         {selectedPurchase.approvedBy && (
                             <div>
@@ -1830,7 +1688,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                                     return (
                                         <tr key={idx} className="border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-white dark:hover:bg-gray-800 transition-colors">
                                             <td className="p-2">
-                                                <p className="font-bold text-gray-800 dark:text-gray-200">{item.name}</p>
+                                                <p className="font-bold text-gray-800 dark:text-gray-200">{getDisplayName(item)}</p>
                                                 {hasReturns && (
                                                     <div className="mt-1 space-y-1">
                                                         {itemReturns.map((ret, ridx) => {
@@ -1849,11 +1707,15 @@ export const Purchases: React.FC<PurchasesProps> = ({
                                                 )}
                                             </td>
                                             <td className="p-2 text-center">
-                                                {item.expiryDate ? (
-                                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${getExpiryStatusStyle(checkExpiryStatus(item.expiryDate), 'badge')}`}>
-                                                        {formatExpiryDisplay(item.expiryDate)}
-                                                    </span>
-                                                ) : '-'}
+                                                {item.expiryDate ? (() => {
+                                                    const status = checkExpiryStatus(item.expiryDate);
+                                                    const config = getExpiryStatusConfig(status);
+                                                    return (
+                                                        <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}>
+                                                            {formatExpiryDisplay(item.expiryDate)}
+                                                        </span>
+                                                    );
+                                                })() : '-'}
                                             </td>
                                             <td className="p-2 text-center font-bold">{item.quantity}</td>
                                             <td className="p-2 text-center">
@@ -1862,11 +1724,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                                                         <span className={`font-bold ${isFullReturn ? 'text-red-600' : 'text-orange-600'}`}>
                                                             {totalReturned}
                                                         </span>
-                                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
-                                                            isFullReturn 
-                                                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
-                                                                : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                                        }`}>
+                                                        <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${isFullReturn ? 'red' : 'orange'}-200 dark:border-${isFullReturn ? 'red' : 'orange'}-900/50 text-${isFullReturn ? 'red' : 'orange'}-700 dark:text-${isFullReturn ? 'red' : 'orange'}-400 text-[9px] font-bold uppercase tracking-wider bg-transparent`}>
+                                                            <span className="material-symbols-rounded text-xs">{isFullReturn ? 'assignment_return' : 'assignment_return'}</span>
                                                             {isFullReturn ? (t.detailsModal?.fullReturn || 'Full') : (t.detailsModal?.partialReturn || 'Partial')}
                                                         </span>
                                                     </div>

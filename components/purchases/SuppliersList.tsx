@@ -1,13 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
+import { useContextMenu } from '../common/ContextMenu';
 import { Supplier } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { useColumnReorder } from '../../hooks/useColumnReorder';
-import { useLongPress } from '../../hooks/useLongPress';
-import { SearchInput } from '../common/SearchInput';
 import { useSmartDirection, isValidEmail, isValidPhone, SmartPhoneInput, SmartEmailInput } from '../common/SmartInputs';
 import { Modal } from '../common/Modal';
+import { TanStackTable } from '../common/TanStackTable';
+import { ColumnDef } from '@tanstack/react-table';
 
 interface SuppliersListProps {
   suppliers: Supplier[];
@@ -20,7 +20,8 @@ interface SuppliersListProps {
 export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSuppliers, color, t, language }) => {
   const { showMenu } = useContextMenu();
   const [search, setSearch] = useState('');
-  // SearchInput handles its own direction, so removing manual hook for search input
+
+
 
   
   // Mode and state
@@ -41,109 +42,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
   const addressDir = useSmartDirection(editForm.address, t.form?.enterAddress || 'Enter company address');
   const contactPersonDir = useSmartDirection(editForm.contactPerson, t.form?.enterContactPerson || 'Enter contact person name');
 
-  // Column management
-  const {
-    columnOrder,
-    hiddenColumns,
-    draggedColumn,
-    dragOverColumn,
-    toggleColumnVisibility,
-    handleColumnDragStart,
-    handleColumnDragOver,
-    handleColumnTouchMove,
-    handleColumnDrop,
-    handleColumnTouchEnd,
-    handleColumnDragEnd,
-  } = useColumnReorder({
-    defaultColumns: ['id', 'name', 'contactPerson', 'phone', 'email', 'address', 'action'],
-    storageKey: 'suppliers_columns'
-  });
 
-  // Column widths with localStorage persistence
-  const [columnWidths, setColumnWidths] = useState<Record<string, number | undefined>>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('suppliers_column_widths');
-      if (saved) {
-        try { return JSON.parse(saved); } catch (e) { console.error('Failed to parse column widths', e); }
-      }
-    }
-    return {
-      id: 100,
-      name: 200,
-      contactPerson: 180,
-      phone: 140,
-      email: 200,
-      address: 250,
-      action: 80
-    };
-  });
-
-  useEffect(() => {
-    localStorage.setItem('suppliers_column_widths', JSON.stringify(columnWidths));
-  }, [columnWidths]);
-
-  const [isColumnResizing, setIsColumnResizing] = useState(false);
-  const resizingColumn = useRef<string | null>(null);
-  const startX = useRef<number>(0);
-  const startWidth = useRef<number>(0);
-
-  const startColumnResize = (e: React.MouseEvent, columnId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsColumnResizing(true);
-    resizingColumn.current = columnId;
-    startX.current = e.pageX;
-    startWidth.current = columnWidths[columnId] || 100;
-
-    document.addEventListener('mousemove', handleColumnResizeMove);
-    document.addEventListener('mouseup', endColumnResize);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  };
-
-  const handleColumnResizeMove = useCallback((e: MouseEvent) => {
-    if (!resizingColumn.current) return;
-    const diff = e.pageX - startX.current;
-    const isRTL = document.dir === 'rtl' || document.documentElement.getAttribute('dir') === 'rtl';
-    const finalDiff = isRTL ? -diff : diff;
-    const newWidth = Math.max(50, startWidth.current + finalDiff);
-    setColumnWidths(prev => ({ ...prev, [resizingColumn.current!]: newWidth }));
-  }, []);
-
-  const endColumnResize = useCallback(() => {
-    setIsColumnResizing(false);
-    resizingColumn.current = null;
-    document.removeEventListener('mousemove', handleColumnResizeMove);
-    document.removeEventListener('mouseup', endColumnResize);
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-  }, [handleColumnResizeMove]);
-
-  useEffect(() => {
-    return () => {
-      document.removeEventListener('mousemove', handleColumnResizeMove);
-      document.removeEventListener('mouseup', endColumnResize);
-    };
-  }, [endColumnResize, handleColumnResizeMove]);
-
-  const handleAutoFit = (e: React.MouseEvent, columnId: string) => {
-    e.stopPropagation();
-    setColumnWidths(prev => {
-      const next = { ...prev };
-      delete next[columnId];
-      return next;
-    });
-  };
-
-  const columnsDef = {
-    id: { label: t.headers?.id || 'ID', className: 'px-3 py-2 text-start' },
-    name: { label: t.headers?.name || 'Name', className: 'px-3 py-2 text-start' },
-    contactPerson: { label: t.headers?.contactPerson || 'Contact Person', className: 'px-3 py-2 text-start' },
-    phone: { label: t.headers?.phone || 'Phone', className: 'px-3 py-2 text-start' },
-    email: { label: t.headers?.email || 'Email', className: 'px-3 py-2 text-start' },
-    address: { label: t.headers?.address || 'Address', className: 'px-3 py-2 text-start' },
-    action: { label: t.headers?.action || 'Action', className: 'px-3 py-2 text-center' }
-  };
 
   // Copy helper
   const copyToClipboard = async (text: string) => {
@@ -256,81 +155,70 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
     { label: t.contextMenu?.copyEmail || 'Copy Email', icon: 'email', action: () => copyToClipboard(supplier.email) }
   ];
 
-  // Helper: Get header context menu actions
-  const getHeaderActions = () => [
-    { label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', icon: 'visibility', action: () => {} },
-    { separator: true },
-    ...Object.keys(columnsDef).map(colId => ({
-      label: columnsDef[colId as keyof typeof columnsDef].label,
-      icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
-      action: () => toggleColumnVisibility(colId)
-    }))
-  ];
-
-  // Header context menu trigger
-  const { triggerProps: headerTriggerProps } = useContextMenuTrigger({
-    actions: getHeaderActions
-  });
-
-  // Row touch/long-press support
-  const currentTouchRow = useRef<Supplier | null>(null);
-
-  const {
-    onTouchStart: onRowTouchStart,
-    onTouchEnd: onRowTouchEnd,
-    onTouchMove: onRowTouchMove
-  } = useLongPress({
-    onLongPress: (e) => {
-      if (currentTouchRow.current) {
-        const touch = e.touches[0];
-        showMenu(touch.clientX, touch.clientY, getRowActions(currentTouchRow.current));
-      }
+  // Table columns definition
+  const columns = useMemo<ColumnDef<Supplier>[]>(() => [
+    {
+      accessorKey: 'id',
+      header: t.headers?.id || 'ID',
+      size: 100,
+      meta: { align: 'start' },
+      cell: ({ getValue }) => <span className="text-xs font-mono text-gray-500 truncate">{getValue() as string}</span>
+    },
+    {
+      accessorKey: 'name',
+      header: t.headers?.name || 'Name',
+      size: 200,
+      meta: { align: 'start' },
+      cell: ({ getValue }) => <span className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{getValue() as string}</span>
+    },
+    {
+      accessorKey: 'contactPerson',
+      header: t.headers?.contactPerson || 'Contact Person',
+      size: 180,
+      meta: { align: 'start' },
+      cell: ({ getValue }) => <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{getValue() as string}</span>
+    },
+    {
+      accessorKey: 'phone',
+      header: t.headers?.phone || 'Phone',
+      size: 140,
+      meta: { align: 'start', dir: 'ltr' },
+      cell: ({ getValue }) => <span className="text-sm font-mono text-gray-600 dark:text-gray-400 truncate" dir="ltr">{getValue() as string}</span>
+    },
+    {
+      accessorKey: 'email',
+      header: t.headers?.email || 'Email',
+      size: 200,
+      meta: { align: 'start' },
+      cell: ({ getValue }) => <span className="text-sm text-gray-600 dark:text-gray-400 truncate">{getValue() as string}</span>
+    },
+    {
+      accessorKey: 'address',
+      header: t.headers?.address || 'Address',
+      size: 250,
+      meta: { align: 'start' },
+      cell: ({ getValue }) => <span className="text-sm text-gray-600 dark:text-gray-400 truncate">{getValue() as string}</span>
+    },
+    {
+      id: 'actions',
+      header: t.headers?.action || 'Action',
+      size: 80,
+      meta: { align: 'center' },
+      cell: ({ row }) => (
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            showMenu(e.clientX, e.clientY, getRowActions(row.original));
+          }}
+          className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors outline-none"
+          title={t.headers?.actions || 'Actions'}
+        >
+          <span className="material-symbols-rounded text-[20px]">more_vert</span>
+        </button>
+      )
     }
-  });
+  ], [t, getRowActions]); // getRowActions is stable component reference but we just in case include it
 
-  const renderCell = (supplier: Supplier, columnId: string) => {
-    switch(columnId) {
-      case 'id':
-        return <span className="text-xs font-mono text-gray-500 truncate">{supplier.id}</span>;
-      case 'name':
-        return <span className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{supplier.name}</span>;
-      case 'contactPerson':
-        return <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{supplier.contactPerson}</span>;
-      case 'phone':
-        return <span className="text-sm font-mono text-gray-600 dark:text-gray-400 truncate" dir="ltr">{supplier.phone}</span>;
-      case 'email':
-        return <span className="text-sm text-gray-600 dark:text-gray-400 truncate">{supplier.email}</span>;
-      case 'address':
-        return <span className="text-sm text-gray-600 dark:text-gray-400 truncate">{supplier.address}</span>;
-      case 'action':
-        return (
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              showMenu(e.clientX, e.clientY, getRowActions(supplier));
-            }}
-            className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors outline-none"
-            title={t.headers?.actions || 'Actions'}
-          >
-            <span className="material-symbols-rounded text-[20px]">more_vert</span>
-          </button>
-        );
-      default:
-        return null;
-    }
-  };
-
-  // Filter suppliers
-  const filteredSuppliers = suppliers.filter(s => {
-    if (!search.trim()) return true;
-    const searchLower = search.toLowerCase();
-    return (
-      s.name.toLowerCase().includes(searchLower) ||
-      s.contactPerson.toLowerCase().includes(searchLower) ||
-      s.phone.toLowerCase().includes(searchLower) ||
-      s.email.toLowerCase().includes(searchLower)
-    );
-  });
 
   return (
     <div className="h-full flex flex-col space-y-4 animate-fade-in p-4 overflow-hidden">
@@ -358,114 +246,40 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
 
       {mode === 'list' ? (
         <>
-          {/* Search */}
           <div className="flex-shrink-0">
-            <SearchInput
-              value={search}
-              onSearchChange={setSearch}
-              placeholder={t.searchPlaceholder || 'Search supplier name, contact...'}
-              className="w-full p-3 rounded-xl border-gray-200 dark:border-gray-700"
-              style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-            />
+             <SearchInput
+               value={search}
+               onSearchChange={setSearch}
+               placeholder={t.searchPlaceholder || 'Search supplier name, contact...'}
+               wrapperClassName="w-96"
+               className="p-3 rounded-xl border-gray-200 dark:border-gray-700"
+               style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+             />
           </div>
+          <div className={`flex-1 overflow-hidden ${CARD_BASE} rounded-xl p-0 flex flex-col`}>
 
-          {/* Table */}
-          <div className={`flex-1 overflow-auto ${CARD_BASE} rounded-3xl`}>
-        <table className="w-full min-w-full table-fixed border-collapse">
-          <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>
-            <tr>
-              {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
-                <th
-                  key={columnId}
-                  data-column-id={columnId}
-                  className={`${columnsDef[columnId as keyof typeof columnsDef].className} ${!isColumnResizing ? 'cursor-grab active:cursor-grabbing' : ''} select-none transition-colors relative group/header hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                    draggedColumn === columnId ? 'opacity-50' : ''
-                  } ${dragOverColumn === columnId ? `bg-${color}-100 dark:bg-${color}-900/50` : ''}`}
-                  title={columnsDef[columnId as keyof typeof columnsDef].label}
-                  draggable={!isColumnResizing}
-                  onDragStart={(e) => {
-                    if ((e.target as HTMLElement).closest('.resize-handle')) {
-                      e.preventDefault();
-                      return;
-                    }
-                    handleColumnDragStart(e, columnId);
-                  }}
-                  onDragOver={(e) => handleColumnDragOver(e, columnId)}
-                  onDrop={(e) => handleColumnDrop(e, columnId)}
-                  onDragEnd={handleColumnDragEnd}
-                  onTouchStart={(e) => {
-                    if ((e.target as HTMLElement).closest('.resize-handle')) return;
-                    e.stopPropagation();
-                    handleColumnDragStart(e, columnId);
-                  }}
-                  onTouchMove={(e) => handleColumnTouchMove(e)}
-                  onTouchEnd={(e) => handleColumnTouchEnd(e)}
-                  {...headerTriggerProps}
-                  style={{ width: columnWidths[columnId] ? `${columnWidths[columnId]}px` : 'auto' }}
-                >
-                  <div className="flex items-center justify-between h-full w-full">
-                    <span className="truncate flex-1">{columnsDef[columnId as keyof typeof columnsDef].label}</span>
-                    
-                    <div 
-                      className="resize-handle absolute right-0 top-1/2 -translate-y-1/2 h-4 w-4 cursor-col-resize z-20 flex items-center justify-center opacity-0 group-hover/header:opacity-100 transition-opacity"
-                      style={{ right: '-8px' }}
-                      onMouseDown={(e) => startColumnResize(e, columnId)}
-                      onClick={(e) => e.stopPropagation()}
-                      onDoubleClick={(e) => handleAutoFit(e, columnId)}
-                    >
-                    </div>
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filteredSuppliers.map((supplier, index) => (
-              <tr 
-                key={supplier.id}
-                onClick={() => handleViewDetails(supplier)}
-                onTouchStart={(e) => {
-                    currentTouchRow.current = supplier;
-                    onRowTouchStart(e);
-                }}
-                onTouchEnd={onRowTouchEnd}
-                onTouchMove={onRowTouchMove}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  showMenu(e.clientX, e.clientY, getRowActions(supplier));
-                }}
-                className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''}`}
-              >
-                {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
-                  <td 
-                    key={columnId} 
-                    className={`${columnsDef[columnId as keyof typeof columnsDef].className} align-middle border-none`}
-                    style={{ width: columnWidths[columnId] ? `${columnWidths[columnId]}px` : 'auto' }}
-                  >
-                    {renderCell(supplier, columnId)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-            {filteredSuppliers.length === 0 && (
-              <tr>
-                <td colSpan={10} className="p-12 text-center text-gray-400">
-                  {search.trim() ? (t.noSuppliersFound || 'No suppliers found matching your search') : (t.noSuppliersAvailable || 'No suppliers available')}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+             <TanStackTable
+                data={suppliers}
+                columns={columns}
+                tableId="suppliers_list"
+                globalFilter={search}
+                onSearchChange={setSearch}
+                enableTopToolbar={false}
+                searchPlaceholder={t.searchPlaceholder || 'Search supplier name, contact...'}
+                onRowClick={(row) => handleViewDetails(row)}
+                onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
+                color={color}
+             />
+        </div>
         </>
       ) : (
         /* ADD SUPPLIER FORM VIEW - INLINE */
         <div className="flex-1 overflow-y-auto">
+
           <form onSubmit={handleSaveNew} className="max-w-full mx-auto pb-20 space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 {/* Company Information Card */}
-                <div className={`${CARD_BASE} rounded-3xl p-6`}>
+                <div className={`${CARD_BASE} rounded-xl p-6`}>
                 <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                     <span className="material-symbols-rounded text-[18px]">business</span>
                     {t.form?.companyInfo || 'Company Information'}
@@ -508,7 +322,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
                 </div>
 
                 {/* Contact Information Card */}
-                <div className={`${CARD_BASE} rounded-3xl p-6`}>
+                <div className={`${CARD_BASE} rounded-xl p-6`}>
                 <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                     <span className="material-symbols-rounded text-[18px]">person</span>
                     {t.form?.contactInfo || 'Contact Information'}

@@ -5,6 +5,8 @@ import { PENDING_APPROVAL_HELP } from '../../i18n/helpInstructions';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { HelpModal, HelpButton } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
+import { getDisplayName } from '../../utils/drugDisplayName';
+import { checkExpiryStatus, formatExpiryDisplay, getExpiryStatusConfig } from '../../utils/expiryUtils';
 
 interface PendingApprovalProps {
   color: string;
@@ -191,32 +193,38 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             onClose={() => setSelectedPurchase(null)}
             size="4xl"
             zIndex={50}
+            title={t.orderDetails || 'Purchase Order Details'}
+            subtitle={selectedPurchase ? `${selectedPurchase.invoiceId} • ${new Date(selectedPurchase.date).toLocaleDateString()} ${formatTime(new Date(selectedPurchase.date))}` : ''}
+            icon="receipt_long"
+            footer={
+                <div className="flex justify-end gap-3 w-full">
+                    <button 
+                        onClick={() => {
+                            if (approverName.trim()) {
+                                if (selectedPurchase) {
+                                    onApprovePurchase(selectedPurchase.id, approverName);
+                                    setSelectedPurchase(null);
+                                    setApproverName('');
+                                }
+                            } else {
+                                alert(t.enterApproverName || "Please enter the approver's name.");
+                            }
+                        }}
+                        disabled={!approverName.trim()}
+                        className={`px-8 py-3 rounded-2xl font-bold transition-all flex items-center gap-2 ${
+                            approverName.trim() 
+                            ? `bg-${color}-600 text-white hover:bg-${color}-700 shadow-xl shadow-${color}-200 dark:shadow-none active:scale-95` 
+                            : `bg-gray-50 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600`
+                        }`}
+                    >
+                        <span className="material-symbols-rounded">check_circle</span>
+                        {t.approveOrder || 'Approve Order'}
+                    </button>
+                </div>
+            }
         >
             {selectedPurchase && (
                 <>
-                    {/* Header */}
-                    <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
-                        <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600`}>
-                                <span className="material-symbols-rounded">receipt_long</span>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t.orderDetails || 'Purchase Order Details'}</h3>
-                                <p className="text-xs text-gray-500 flex items-center gap-2">
-                                    <span className="font-mono">{selectedPurchase.invoiceId}</span>
-                                    <span>•</span>
-                                    <span>{new Date(selectedPurchase.date).toLocaleDateString()} {formatTime(new Date(selectedPurchase.date))}</span>
-                                </p>
-                            </div>
-                        </div>
-                        <button 
-                            onClick={() => setSelectedPurchase(null)}
-                            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
-                        >
-                            <span className="material-symbols-rounded">close</span>
-                        </button>
-                    </div>
-
                     {/* Info Bar */}
                     <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 bg-white dark:bg-gray-900 text-sm border-b border-gray-100 dark:border-gray-800">
                         <div>
@@ -228,10 +236,19 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                             <p className="font-mono text-gray-800 dark:text-gray-100">{selectedPurchase.externalInvoiceId || '-'}</p>
                         </div>
                          <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.info?.payment || 'Payment'}</p>
-                                 <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase text-white ${selectedPurchase.paymentType === 'cash' ? 'bg-green-600' : 'bg-blue-600'}`}>
-                                    {selectedPurchase.paymentType === 'cash' ? (t.info?.cash || 'Cash') : (t.info?.credit || 'Credit')}
-                            </span>
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-1.5">{t.info?.payment || 'Payment'}</p>
+                                 {(() => {
+                                     const type = selectedPurchase.paymentType;
+                                     const config = type === 'cash' 
+                                         ? { color: 'emerald', icon: 'payments', label: t.info?.cash || 'Cash' }
+                                         : { color: 'blue', icon: 'credit_card', label: t.info?.credit || 'Credit' };
+                                     return (
+                                         <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}>
+                                             <span className="material-symbols-rounded text-xs">{config.icon}</span>
+                                             {config.label}
+                                         </span>
+                                     );
+                                 })()}
                         </div>
                          <div>
                             <p className="text-xs text-gray-500 uppercase font-bold mb-1">{t.info?.totalCost || 'Total Cost'}</p>
@@ -240,7 +257,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     </div>
 
                     {/* Items Table Header & Input */}
-                    <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                    <div className="px-4 py-2 bg-white dark:bg-gray-900 flex items-center justify-between">
                         <h4 className="font-bold text-gray-700 dark:text-gray-300 text-sm flex items-center gap-2">
                             <span className="material-symbols-rounded text-gray-400 text-sm">list_alt</span>
                             {t.itemsList || 'Items List'}
@@ -261,70 +278,51 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     </div>
 
                     {/* Items Table */}
-                    <div className="flex-1 overflow-y-auto p-0 bg-gray-50 dark:bg-black/20">
+                    <div className="bg-gray-50 dark:bg-black/20 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800">
                         <table className="w-full text-left border-collapse">
                             <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900 shadow-sm">
                                 <tr className="border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500 uppercase">
-                                    <th className="p-3 font-bold bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.item || 'Item'}</th>
-                                    <th className="p-3 font-bold text-center bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.expiry || 'Expiry'}</th>
-                                    <th className="p-3 font-bold text-center bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.qty || 'Qty'}</th>
-                                    <th className="p-3 font-bold text-right bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.cost || 'Cost'}</th>
-                                    <th className="p-3 font-bold text-center bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.discount || 'Disc %'}</th>
-                                    <th className="p-3 font-bold text-right bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.salePrice || 'Sale Price'}</th>
-                                    <th className="p-3 font-bold text-right bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.total || 'Total'}</th>
+                                    <th className="p-2 font-bold bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.item || 'Item'}</th>
+                                    <th className="p-2 font-bold text-center bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.expiry || 'Expiry'}</th>
+                                    <th className="p-2 font-bold text-center bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.qty || 'Qty'}</th>
+                                    <th className="p-2 font-bold text-right bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.cost || 'Cost'}</th>
+                                    <th className="p-2 font-bold text-center bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.discount || 'Disc %'}</th>
+                                    <th className="p-2 font-bold text-right bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.salePrice || 'Sale Price'}</th>
+                                    <th className="p-2 font-bold text-right bg-gray-50 dark:bg-gray-900">{t.tableHeaders?.total || 'Total'}</th>
                                 </tr>
                             </thead>
-                            <tbody className="text-sm bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300">
+                            <tbody className="text-sm">
                                 {selectedPurchase.items.map((item, idx) => (
-                                    <tr key={idx} className="border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                        <td className="p-3 font-medium text-gray-800 dark:text-gray-200">
-                                            {item.name}
-                                            {item.dosageForm && <span className="text-xs text-gray-400 ml-1 font-normal">({item.dosageForm})</span>}
+                                    <tr key={idx} className="border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-white dark:hover:bg-gray-800 transition-colors">
+                                        <td className="p-2 font-bold text-gray-800 dark:text-gray-200">
+                                            {getDisplayName(item)}
                                         </td>
-                                        <td className="p-3 text-center">
-                                            {item.expiryDate ? (item.expiryDate.length === 4 && !item.expiryDate.includes('/') 
-                                                ? `${item.expiryDate.slice(0, 2)}/20${item.expiryDate.slice(2)}` 
-                                                : item.expiryDate) : '-'}
+                                        <td className="p-2 text-center">
+                                            {item.expiryDate ? (() => {
+                                                const status = checkExpiryStatus(item.expiryDate);
+                                                const config = getExpiryStatusConfig(status);
+                                                return (
+                                                    <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}>
+                                                        {formatExpiryDisplay(item.expiryDate)}
+                                                    </span>
+                                                );
+                                            })() : '-'}
                                         </td>
-                                        <td className="p-3 text-center font-bold bg-gray-50/50 dark:bg-gray-800/30">{item.quantity}</td>
-                                        <td className="p-3 text-right">${item.costPrice.toFixed(2)}</td>
-                                        <td className="p-3 text-center text-gray-500">{item.discount || 0}%</td>
-                                        <td className="p-3 text-right">${(item.salePrice || 0).toFixed(2)}</td>
-                                        <td className="p-3 text-right font-bold text-gray-800 dark:text-gray-200">${(item.quantity * item.costPrice).toFixed(2)}</td>
+                                        <td className="p-2 text-center font-bold">{item.quantity}</td>
+                                        <td className="p-2 text-right">${item.costPrice.toFixed(2)}</td>
+                                        <td className="p-2 text-center text-gray-500">{item.discount || 0}%</td>
+                                        <td className="p-2 text-right">${(item.salePrice || 0).toFixed(2)}</td>
+                                        <td className="p-2 text-right font-bold text-gray-800 dark:text-gray-200">${(item.quantity * item.costPrice).toFixed(2)}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-
-                    {/* Modal Footer */}
-                    <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 flex justify-end gap-3 z-20">
-                        <button 
-                            onClick={() => {
-                                if (approverName.trim()) {
-                                    onApprovePurchase(selectedPurchase.id, approverName);
-                                    setSelectedPurchase(null);
-                                    setApproverName('');
-                                } else {
-                                    alert(t.enterApproverName || "Please enter the approver's name.");
-                                }
-                            }}
-                            disabled={!approverName.trim()}
-                            className={`px-8 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 ${
-                                approverName.trim() 
-                                ? `bg-${color}-600 text-white hover:bg-${color}-700 shadow-lg shadow-${color}-200 dark:shadow-none active:scale-95` 
-                                : `bg-gray-100 text-gray-400 cursor-not-allowed shadow-none dark:bg-gray-800 dark:text-gray-600`
-                            }`}
-                        >
-                            <span className="material-symbols-rounded">check_circle</span>
-                            {t.approveOrder || 'Approve Order'}
-                        </button>
-                    </div>
                 </>
             )}
         </Modal>
 
-        {/* Reject Confirmation Modal */}
+         {/* Reject Confirmation Modal */}
          <Modal
             isOpen={isRejectModalOpen}
             onClose={() => setIsRejectModalOpen(false)}
@@ -332,34 +330,34 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             zIndex={60}
          >
                 <div className="p-6 text-center">
-                    <div className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
-                        <span className="material-symbols-rounded text-3xl">warning</span>
+                    <div className="text-red-500 mx-auto mb-2 animate-bounce-short">
+                        <span className="material-symbols-rounded text-7xl">warning</span>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{t.rejectOrder?.title || 'Reject Purchase Order?'}</h3>
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{t.rejectOrder?.title || 'Reject Purchase Order'}</h3>
                     <p className="text-sm text-gray-500 mb-6">{t.rejectOrder?.confirm || 'Are you sure you want to reject this order? This action cannot be undone.'}</p>
                     
-                    <div className="text-left mb-4">
+                    <div className="text-left mb-6">
                         <label className="text-xs font-bold text-gray-400 uppercase ml-1 mb-1 block">{t.rejectOrder?.reason || 'Reason (Optional)'}</label>
                         <input 
                             type="text" 
                             value={rejectReason}
                             onChange={(e) => setRejectReason(e.target.value)}
                             placeholder={t.rejectOrder?.reasonPlaceholder || 'E.g., Incorrect pricing, wrong items...'}
-                            className="w-full px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-red-500/50"
+                            className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-red-500/50"
                             dir={rejectReasonDir}
                         />
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex w-full gap-3">
                         <button 
                             onClick={() => setIsRejectModalOpen(false)}
-                            className="flex-1 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            className="flex-1 py-3 rounded-xl font-bold border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                         >
                             {t.rejectOrder?.cancel || 'Cancel'}
                         </button>
                         <button 
                             onClick={confirmReject}
-                            className="flex-1 py-3 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200 dark:shadow-none transition-all"
+                            className="flex-1 py-3 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 transition-colors"
                         >
                             {t.rejectOrder?.reject || t.reject || 'Reject'}
                         </button>

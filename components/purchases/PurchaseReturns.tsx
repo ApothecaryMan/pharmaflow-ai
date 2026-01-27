@@ -1,10 +1,14 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
+import { useContextMenu } from '../common/ContextMenu';
 import { PurchaseReturn, PurchaseReturnItem, Purchase, Drug } from '../../types';
-import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useSmartDirection } from '../common/SmartInputs';
 import { Modal } from '../common/Modal';
+import { TanStackTable } from '../common/TanStackTable';
+import { ColumnDef } from '@tanstack/react-table';
+import { SearchInput } from '../common/SearchInput';
+import { CARD_BASE } from '../../utils/themeStyles';
+import { getDisplayName } from '../../utils/drugDisplayName';
 
 interface PurchaseReturnsProps {
   purchases: Purchase[];
@@ -33,6 +37,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   const searchDir = useSmartDirection(search, t.purchaseReturns?.searchPlaceholder || 'Search returns...');
 
   // Create Return state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [returnItems, setReturnItems] = useState<PurchaseReturnItem[]>([]);
   const [notes, setNotes] = useState('');
@@ -44,130 +49,90 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   // Details modal state
   const [viewingReturn, setViewingReturn] = useState<PurchaseReturn | null>(null);
 
-  // Column management for history table
-  const {
-    columnOrder,
-    hiddenColumns,
-    draggedColumn,
-    dragOverColumn,
-    toggleColumnVisibility,
-    handleColumnDragStart,
-    handleColumnDragOver,
-    handleColumnTouchMove,
-    handleColumnDrop,
-    handleColumnTouchEnd,
-    handleColumnDragEnd,
-  } = useColumnReorder({
-    defaultColumns: ['id', 'date', 'purchaseId', 'supplier', 'totalRefund', 'status', 'action'],
-    storageKey: 'purchase_returns_columns'
-  });
 
-  // Column widths
-  const [columnWidths, setColumnWidths] = useState<Record<string, number | undefined>>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('purchase_returns_column_widths');
-      if (saved) {
-        try { return JSON.parse(saved); } catch (e) { console.error('Failed to parse column widths', e); }
-      }
-    }
-    return {
-      id: 100,
-      date: 120,
-      purchaseId: 120,
-      supplier: 180,
-      totalRefund: 130,
-      status: 120,
-      action: 80
-    };
-  });
-
-  useEffect(() => {
-    localStorage.setItem('purchase_returns_column_widths', JSON.stringify(columnWidths));
-  }, [columnWidths]);
-
-  const [isColumnResizing, setIsColumnResizing] = useState(false);
-  const resizingColumn = useRef<string | null>(null);
-  const startX = useRef<number>(0);
-  const startWidth = useRef<number>(0);
-
-  const startColumnResize = (e: React.MouseEvent, columnId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsColumnResizing(true);
-    resizingColumn.current = columnId;
-    startX.current = e.pageX;
-    startWidth.current = columnWidths[columnId] || 100;
-
-    document.addEventListener('mousemove', handleColumnResizeMove);
-    document.addEventListener('mouseup', endColumnResize);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  };
-
-  const handleColumnResizeMove = useCallback((e: MouseEvent) => {
-    if (!resizingColumn.current) return;
-    const diff = e.pageX - startX.current;
-    const isRTL = document.dir === 'rtl' || document.documentElement.getAttribute('dir') === 'rtl';
-    const finalDiff = isRTL ? -diff : diff;
-    const newWidth = Math.max(50, startWidth.current + finalDiff);
-    setColumnWidths(prev => ({ ...prev, [resizingColumn.current!]: newWidth }));
-  }, []);
-
-  const endColumnResize = useCallback(() => {
-    setIsColumnResizing(false);
-    resizingColumn.current = null;
-    document.removeEventListener('mousemove', handleColumnResizeMove);
-    document.removeEventListener('mouseup', endColumnResize);
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-  }, [handleColumnResizeMove]);
-
-  useEffect(() => {
-    return () => {
-      document.removeEventListener('mousemove', handleColumnResizeMove);
-      document.removeEventListener('mouseup', endColumnResize);
-    };
-  }, [endColumnResize, handleColumnResizeMove]);
-
-  const handleAutoFit = (e: React.MouseEvent, columnId: string) => {
-    e.stopPropagation();
-    setColumnWidths(prev => {
-      const next = { ...prev };
-      delete next[columnId];
-      return next;
-    });
-  };
-
-  const columnsDef = {
-    id: { label: t.purchaseReturns?.tableHeaders?.id || 'Return ID', className: 'px-3 py-2 text-start' },
-    date: { label: t.purchaseReturns?.tableHeaders?.date || 'Date', className: 'px-3 py-2 text-start' },
-    purchaseId: { label: t.purchaseReturns?.tableHeaders?.purchaseId || 'Purchase ID', className: 'px-3 py-2 text-start' },
-    supplier: { label: t.purchaseReturns?.tableHeaders?.supplier || 'Supplier', className: 'px-3 py-2 text-start' },
-    totalRefund: { label: t.purchaseReturns?.tableHeaders?.refund || 'Total Refund', className: 'px-3 py-2 text-end' },
-    status: { label: t.purchaseReturns?.tableHeaders?.status || 'Status', className: 'px-3 py-2 text-center' },
-    action: { label: t.purchaseReturns?.tableHeaders?.action || 'Action', className: 'px-3 py-2 text-center' }
-  };
 
   // Helper: Get row context menu actions
   const getRowActions = (returnRecord: PurchaseReturn) => [
     { label: t.purchaseReturns?.contextMenu?.viewDetails || 'View Details', icon: 'visibility', action: () => handleViewDetails(returnRecord) }
   ];
 
-  // Helper: Get header context menu actions
-  const getHeaderActions = () => [
-    { label: t.contextMenu?.showHideColumns || 'Show/Hide Columns', icon: 'visibility', action: () => {} },
-    { separator: true },
-    ...Object.keys(columnsDef).map(colId => ({
-      label: columnsDef[colId as keyof typeof columnsDef].label,
-      icon: hiddenColumns.has(colId) ? 'visibility_off' : 'visibility',
-      action: () => toggleColumnVisibility(colId)
-    }))
-  ];
+  // Table columns definition
+  const columns = useMemo<ColumnDef<PurchaseReturn>[]>(() => [
+    {
+      accessorKey: 'id',
+      header: t.purchaseReturns?.tableHeaders?.id || 'Return ID',
+      size: 100,
+      meta: { align: 'start' },
+      cell: ({ getValue }) => <span className="text-xs font-mono text-gray-500 truncate">{getValue() as string}</span>
+    },
+    {
+      accessorKey: 'date',
+      header: t.purchaseReturns?.tableHeaders?.date || 'Date',
+      size: 120,
+      meta: { align: 'start' },
+      cell: ({ getValue }) => <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{new Date(getValue() as string).toLocaleDateString()}</span>
+    },
+    {
+      accessorKey: 'purchaseId',
+      header: t.purchaseReturns?.tableHeaders?.purchaseId || 'Purchase ID',
+      size: 120,
+      meta: { align: 'start' },
+      cell: ({ getValue }) => <span className="text-xs font-mono text-gray-500 truncate">{getValue() as string}</span>
+    },
+    {
+      accessorKey: 'supplierName',
+      header: t.purchaseReturns?.tableHeaders?.supplier || 'Supplier',
+      size: 180,
+      meta: { align: 'start' },
+      cell: ({ getValue }) => <span className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{getValue() as string}</span>
+    },
+    {
+      accessorKey: 'totalRefund',
+      header: t.purchaseReturns?.tableHeaders?.refund || 'Total Refund',
+      size: 130,
+      meta: { align: 'end' },
+      cell: ({ getValue }) => <span className="text-sm font-bold text-red-600 dark:text-red-400 truncate">${(getValue() as number).toFixed(2)}</span>
+    },
+    {
+      accessorKey: 'status',
+      header: t.purchaseReturns?.tableHeaders?.status || 'Status',
+      size: 120,
+      meta: { align: 'center' },
+      cell: ({ getValue }) => {
+        const val = getValue() as string;
+        const style = 
+           val === 'completed' ? { color: 'emerald', icon: 'check_circle' } :
+           val === 'approved' ? { color: 'blue', icon: 'verified' } :
+           { color: 'amber', icon: 'hourglass_top' };
 
-  // Header context menu trigger
-  const { triggerProps: headerTriggerProps } = useContextMenuTrigger({
-    actions: getHeaderActions
-  });
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border bg-transparent border-${style.color}-200 dark:border-${style.color}-900/50 text-${style.color}-700 dark:text-${style.color}-400 text-xs font-bold uppercase tracking-wider`}>
+            <span className="material-symbols-rounded text-sm">{style.icon}</span>
+            {t.purchaseReturns?.status?.[val] || val}
+          </span>
+        );
+      }
+    },
+    {
+      id: 'actions',
+      header: t.purchaseReturns?.tableHeaders?.action || 'Action',
+      size: 80,
+      meta: { align: 'center' },
+      cell: ({ row }) => (
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            showMenu(e.clientX, e.clientY, getRowActions(row.original));
+          }}
+          className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors outline-none"
+          title="Actions"
+        >
+          <span className="material-symbols-rounded text-[20px]">more_vert</span>
+        </button>
+      )
+    }
+  ], [t, getRowActions]); // getRowActions is stable component reference but we just in case include it
+
 
   // Add item to return
   const handleAddReturnItem = (drugId: string, quantity: number, reason: PurchaseReturnItem['reason'], condition: PurchaseReturnItem['condition']) => {
@@ -206,6 +171,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
         quantityReturned: quantity,
         costPrice: purchaseItem.costPrice,
         refundAmount,
+        dosageForm: purchaseItem.dosageForm,
         reason,
         condition
       };
@@ -249,7 +215,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
     setReturnItems([]);
     setNotes('');
     setItemFormData({});
-    setMode('history');
+    setIsCreateModalOpen(false);
   };
 
   // View details
@@ -275,6 +241,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           quantityReturned: availableQty,
           costPrice: item.costPrice,
           refundAmount: availableQty * item.costPrice,
+          dosageForm: item.dosageForm,
           reason: 'other' as const,
           condition: 'other' as const
         };
@@ -306,84 +273,100 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
     return !allReturned;
   });
 
-  // Filter returns
-  const filteredReturns = purchaseReturns.filter(r => {
-    if (!search.trim()) return true;
-    const searchLower = search.toLowerCase();
-    return (
-      r.id.toLowerCase().includes(searchLower) ||
-      r.purchaseId.toLowerCase().includes(searchLower) ||
-      r.supplierName.toLowerCase().includes(searchLower)
-    );
-  });
 
-  const renderCell = (returnRecord: PurchaseReturn, columnId: string) => {
-    switch(columnId) {
-      case 'id':
-        return <span className="text-xs font-mono text-gray-500 truncate">{returnRecord.id}</span>;
-      case 'date':
-        return <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{new Date(returnRecord.date).toLocaleDateString()}</span>;
-      case 'purchaseId':
-        return <span className="text-xs font-mono text-gray-500 truncate">{returnRecord.purchaseId}</span>;
-      case 'supplier':
-        return <span className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{returnRecord.supplierName}</span>;
-      case 'totalRefund':
-        return <span className="text-sm font-bold text-red-600 dark:text-red-400 truncate">${returnRecord.totalRefund.toFixed(2)}</span>;
-      case 'status':
-        return (
-          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            returnRecord.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-            returnRecord.status === 'approved' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-            'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-          }`}>
-            {t.purchaseReturns?.status?.[returnRecord.status] || returnRecord.status}
-          </span>
-        );
-      case 'action':
-        return (
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              showMenu(e.clientX, e.clientY, getRowActions(returnRecord));
-            }}
-            className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors outline-none"
-            title="Actions"
-          >
-            <span className="material-symbols-rounded text-[20px]">more_vert</span>
-          </button>
-        );
-      default:
-        return null;
-    }
-  };
+
+
 
   return (
     <div className="h-full flex flex-col space-y-4 animate-fade-in p-4 overflow-hidden">
       {/* Header */}
       <div className="flex justify-between items-center flex-shrink-0">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight type-expressive">{mode === 'create' ? (t.purchaseReturns?.createReturn || 'Create Return') : (t.purchaseReturns?.returnHistory || 'Return History')}</h2>
-          <p className="text-sm text-gray-500">{mode === 'create' ? (t.purchaseReturns?.createSubtitle || 'Return items to supplier') : (t.purchaseReturns?.historySubtitle || 'View all purchase returns')}</p>
+          <h2 className="text-2xl font-bold tracking-tight type-expressive">{t.purchaseReturns?.returnHistory || 'Return History'}</h2>
+          <p className="text-sm text-gray-500">{t.purchaseReturns?.historySubtitle || 'View all purchase returns'}</p>
         </div>
-          <SegmentedControl
-            value={mode}
-            onChange={(val) => setMode(val as 'create' | 'history')}
-            color={color}
-            shape="pill"
-            size="sm"
-            options={[
-                { label: t.purchaseReturns?.createReturn || 'Create Return', value: 'create' },
-                { label: t.purchaseReturns?.returnHistory || 'Return History', value: 'history' }
-            ]}
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white font-bold shadow-lg shadow-${color}-200 dark:shadow-none transition-all active:scale-95`}
+        >
+          <span className="material-symbols-rounded text-[20px]">add_circle</span>
+          {t.purchaseReturns?.createReturn || 'Create Return'}
+        </button>
+      </div>
+
+      {/* RETURN HISTORY TABLE (Always visible now) */}
+      <div className="flex-shrink-0">
+        <SearchInput
+            value={search}
+            onSearchChange={setSearch}
+            placeholder={t.purchaseReturns?.searchPlaceholder || 'Search returns...'}
+            wrapperClassName="w-96"
+            className="p-3 rounded-xl border-gray-200 dark:border-gray-700"
+            style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
           />
       </div>
 
-      {mode === 'create' ? (
-        /* CREATE RETURN FORM */
-        <div className="flex-1 overflow-y-auto">
-          <form onSubmit={handleSubmitReturn} className="max-w-4xl mx-auto space-y-6 pb-20">
+      <div className={`flex-1 overflow-hidden ${CARD_BASE} rounded-xl p-0 flex flex-col`}>
+          <TanStackTable
+            data={purchaseReturns}
+            columns={columns}
+            tableId="purchase_returns_history"
+            globalFilter={search}
+            onSearchChange={setSearch}
+            enableTopToolbar={false}
+            searchPlaceholder={t.purchaseReturns?.searchPlaceholder || 'Search returns...'}
+            onRowClick={(row) => handleViewDetails(row)}
+            onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
+            color={color}
+          />
+      </div>
+
+      {/* CREATE RETURN MODAL */}
+      {isCreateModalOpen && (
+        <Modal
+          isOpen={true}
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setSelectedPurchase(null);
+            setReturnItems([]);
+            setNotes('');
+          }}
+          size="2xl"
+          zIndex={50}
+          title={t.purchaseReturns?.createReturn || 'Create Return'}
+          icon="add_circle"
+          footer={
+            <div className="flex justify-end gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  setSelectedPurchase(null);
+                  setReturnItems([]);
+                  setNotes('');
+                }}
+                className="px-6 py-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-sm font-medium"
+              >
+                {t.modal?.cancel || 'Cancel'}
+              </button>
+              <button
+                onClick={(e) => handleSubmitReturn(e as any)}
+                disabled={returnItems.length === 0}
+                className={`px-8 py-3 rounded-xl shadow-lg transition-all font-bold flex items-center gap-2 ${
+                  returnItems.length === 0
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : `bg-${color}-600 hover:bg-${color}-700 text-white`
+                }`}
+              >
+                <span className="material-symbols-rounded">check_circle</span>
+                {t.purchaseReturns?.submit || 'Submit Return'}
+              </button>
+            </div>
+          }
+        >
+          <div className="space-y-6">
             {/* Purchase Selection */}
-            <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+            <div>
               <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                 <span className="material-symbols-rounded text-[18px]">receipt_long</span>
                 {t.purchaseReturns?.selectPurchase || 'Select Purchase Order'}
@@ -412,7 +395,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                 <button
                   type="button"
                   onClick={handleReturnAll}
-                  className="mt-3 w-full px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  className={`mt-3 w-full px-4 py-2 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 text-sm font-bold transition-colors flex items-center justify-center gap-2`}
                 >
                   <span className="material-symbols-rounded text-[18px]">assignment_return</span>
                   {t.purchaseReturns?.returnAll || 'Return All Items from This Purchase'}
@@ -420,55 +403,60 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
               )}
             </div>
 
-            {/* Return Items */}
-            {selectedPurchase && (
-              <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+            {/* Return Items (Redesigned as Card List) */}
+            {selectedPurchase && returnItems.length > 0 && (
+              <div>
                 <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                   <span className="material-symbols-rounded text-[18px]">inventory_2</span>
                   {t.purchaseReturns?.itemsToReturn || 'Items to Return'}
                 </h3>
                 
-                {returnItems.length > 0 && (
-                  <div className="mb-4 space-y-2">
-                    {returnItems.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
-                          <p className="text-xs text-gray-500">
-                            <span className="font-bold">{t.purchaseReturns?.quantity || 'Qty'}:</span> {item.quantityReturned} | <span className="font-bold">{t.purchaseReturns?.reason || 'Reason'}:</span> {t.purchaseReturns?.reasons?.[item.reason] || item.reason} | <span className="font-bold">{t.purchaseReturns?.condition || 'Condition'}:</span> {t.purchaseReturns?.conditions?.[item.condition] || item.condition}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-red-600">${item.refundAmount.toFixed(2)}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveReturnItem(index)}
-                            className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          >
-                            <span className="material-symbols-rounded text-[18px]">delete</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    <div className="flex justify-end pt-3 border-t border-gray-200 dark:border-gray-700">
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">{t.purchaseReturns?.totalRefund || 'Total Refund'}</p>
-                        <p className="text-2xl font-bold text-red-600">
-                          ${returnItems.reduce((sum, item) => sum + item.refundAmount, 0).toFixed(2)}
+                <div className="space-y-2">
+                  {returnItems.map((item, index) => (
+                    <div key={index} className="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex justify-between items-center group hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 dark:text-white text-sm mb-1 truncate">
+                          {getDisplayName({ ...item, dosageForm: item.dosageForm || drugs.find(d => d.id === item.drugId)?.dosageForm })}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          <span className="opacity-70">{t.purchaseReturns?.quantity || 'Qty'}:</span> {item.quantityReturned} <span className="mx-1 opacity-30">|</span> 
+                          <span className="opacity-70">{t.purchaseReturns?.reason || 'Reason'}:</span> {t.purchaseReturns?.reasons?.[item.reason] || item.reason} <span className="mx-1 opacity-30">|</span> 
+                          <span className="opacity-70">{t.purchaseReturns?.condition || 'Cond'}:</span> {t.purchaseReturns?.conditions?.[item.condition] || item.condition}
                         </p>
                       </div>
+                      <div className="flex items-center gap-3">
+                        <p className="font-bold text-red-600 text-sm">${item.refundAmount.toFixed(2)}</p>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveReturnItem(index)}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                        >
+                          <span className="material-symbols-rounded text-[20px]">delete_sweep</span>
+                        </button>
+                      </div>
                     </div>
+                  ))}
+                  
+                  <div className="flex justify-between items-center p-3 rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 mt-4 shadow-sm">
+                    <span className="text-sm text-gray-500 font-medium">{t.purchaseReturns?.totalRefund || 'Total Refund'}</span>
+                    <span className="text-xl font-black text-red-600">${returnItems.reduce((sum, item) => sum + item.refundAmount, 0).toFixed(2)}</span>
                   </div>
-                )}
+                </div>
+              </div>
+            )}
 
 
-                {/* Available Items from Purchase */}
+            {/* Available Items from Purchase */}
+            {selectedPurchase && (
+              <div>
+                <h3 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4 h-4 flex items-center gap-2">
+                   <div className="h-[2px] w-6 bg-gray-200 dark:bg-gray-800 rounded-full" />
+                   {t.purchaseReturns?.availableItems || 'Available Items from Purchase Order'}
+                </h3>
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">{t.purchaseReturns?.availableItems || 'Available Items from Purchase Order'}</h4>
                   {selectedPurchase.items
                     .filter(item => {
                       const returned = getReturnedQuantity(selectedPurchase.id, item.drugId);
-                      // Sum ALL return items for this drug (regardless of reason/condition)
                       const alreadyInReturn = returnItems
                         .filter(ri => ri.drugId === item.drugId)
                         .reduce((sum, ri) => sum + ri.quantityReturned, 0);
@@ -476,97 +464,102 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                       return available > 0;
                     })
                     .map((purchaseItem, index) => {
-                    const itemKey = purchaseItem.drugId;
-                    const returnedQty = getReturnedQuantity(selectedPurchase.id, itemKey);
-                    // Sum ALL return items for this drug (regardless of reason/condition)
-                    const alreadyInReturn = returnItems
-                      .filter(ri => ri.drugId === itemKey)
-                      .reduce((sum, ri) => sum + ri.quantityReturned, 0);
-                    const availableQty = purchaseItem.quantity - returnedQty - alreadyInReturn;
-                    const formData = itemFormData[itemKey] || { quantity: 1, reason: 'damaged' as const, condition: 'damaged' as const };
-                    
-                    const updateItemFormData = (updates: Partial<typeof formData>) => {
-                      setItemFormData(prev => ({
-                        ...prev,
-                        [itemKey]: { ...formData, ...updates }
-                      }));
-                    };
-                    
-                    return (
-                      <div key={index} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <p className="font-bold text-gray-900 dark:text-white">{purchaseItem.name}</p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              <span className="font-bold">{t.purchaseReturns?.available || 'Available'}:</span> {availableQty} {t.purchaseReturns?.packs || 'packs'} (<span className="font-bold">{t.menu?.totalItems || 'Total'}:</span> {purchaseItem.quantity}, <span className="font-bold">{t.purchaseReturns?.returnedItems || 'Returned'}:</span> {returnedQty}, <span className="font-bold">{t.purchaseReturns?.inReturnList || 'In Return List'}:</span> {alreadyInReturn}) | <span className="font-bold">{t.purchases?.detailsModal?.cost || 'Cost'}:</span> ${purchaseItem.costPrice.toFixed(2)}/{t.purchaseReturns?.pack || 'pack'}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t.purchaseReturns?.quantity || 'Quantity'}</label>
-                            <input
-                              type="number"
-                              min="1"
-                              max={availableQty}
-                              value={formData.quantity}
-                              onChange={(e) => updateItemFormData({ quantity: Math.min(availableQty, Math.max(1, parseInt(e.target.value) || 1)) })}
-                              className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm"
-                            />
+                      const itemKey = purchaseItem.drugId;
+                      const returnedQty = getReturnedQuantity(selectedPurchase.id, itemKey);
+                      const alreadyInReturn = returnItems
+                        .filter(ri => ri.drugId === itemKey)
+                        .reduce((sum, ri) => sum + ri.quantityReturned, 0);
+                      const availableQty = purchaseItem.quantity - returnedQty - alreadyInReturn;
+                      const formData = itemFormData[itemKey] || { quantity: 1, reason: 'damaged' as const, condition: 'damaged' as const };
+                      
+                      const updateItemFormData = (updates: Partial<typeof formData>) => {
+                        setItemFormData(prev => ({
+                          ...prev,
+                          [itemKey]: { ...formData, ...updates }
+                        }));
+                      };
+                      
+                      return (
+                        <div key={index} className="p-4 bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm group hover:border-gray-200 dark:hover:border-gray-700 transition-all">
+                          <div className="flex items-start justify-between mb-3 min-w-0">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-black text-gray-900 dark:text-white text-base truncate">{getDisplayName(purchaseItem)}</p>
+                              <div className="flex flex-wrap items-center gap-2 mt-1">
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500`}>
+                                   {t.purchaseReturns?.available || 'Avail'}: {availableQty}
+                                </span>
+                                <span className="text-[10px] text-gray-400 font-medium">
+                                   ${purchaseItem.costPrice.toFixed(2)}/{t.purchaseReturns?.pack || 'pk'}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                           
-                          <div>
-                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t.purchaseReturns?.reason || 'Reason'}</label>
-                            <select
-                              value={formData.reason}
-                              onChange={(e) => updateItemFormData({ reason: e.target.value as PurchaseReturnItem['reason'] })}
-                              className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm"
-                            >
-                              <option value="damaged">{t.purchaseReturns?.reasons?.damaged || 'Damaged'}</option>
-                              <option value="expired">{t.purchaseReturns?.reasons?.expired || 'Expired'}</option>
-                              <option value="wrong_item">{t.purchaseReturns?.reasons?.wrong_item || 'Wrong Item'}</option>
-                              <option value="defective">{t.purchaseReturns?.reasons?.defective || 'Defective'}</option>
-                              <option value="overage">{t.purchaseReturns?.reasons?.overage || 'Overage - Entered by Mistake'}</option>
-                              <option value="other">{t.purchaseReturns?.reasons?.other || 'Other'}</option>
-                            </select>
-                          </div>
-                          
-                          <div>
-                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t.purchaseReturns?.condition || 'Condition'}</label>
-                            <select
-                              value={formData.condition}
-                              onChange={(e) => updateItemFormData({ condition: e.target.value as PurchaseReturnItem['condition'] })}
-                              className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm"
-                            >
-                              <option value="damaged">{t.purchaseReturns?.conditions?.damaged || 'Damaged'}</option>
-                              <option value="expired">{t.purchaseReturns?.conditions?.expired || 'Expired'}</option>
-                              <option value="other">{t.purchaseReturns?.conditions?.other || 'Other'}</option>
-                            </select>
-                          </div>
-                          
-                          <div className="flex items-end">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
+                            <div className="space-y-1.5">
+                              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">{t.purchaseReturns?.quantity || 'Quantity'}</label>
+                              <input
+                                type="number"
+                                min="1"
+                                max={availableQty}
+                                value={formData.quantity}
+                                onChange={(e) => updateItemFormData({ quantity: Math.min(availableQty, Math.max(1, parseInt(e.target.value) || 1)) })}
+                                className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                              />
+                            </div>
+                            
+                            <div className="space-y-1.5">
+                              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">{t.purchaseReturns?.reason || 'Reason'}</label>
+                              <select
+                                value={formData.reason}
+                                onChange={(e) => updateItemFormData({ reason: e.target.value as PurchaseReturnItem['reason'] })}
+                                className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                              >
+                                <option value="damaged">{t.purchaseReturns?.reasons?.damaged || 'Damaged'}</option>
+                                <option value="expired">{t.purchaseReturns?.reasons?.expired || 'Expired'}</option>
+                                <option value="wrong_item">{t.purchaseReturns?.reasons?.wrong_item || 'Wrong Item'}</option>
+                                <option value="defective">{t.purchaseReturns?.reasons?.defective || 'Defective'}</option>
+                                <option value="overage">{t.purchaseReturns?.reasons?.overage || 'Overage'}</option>
+                                <option value="other">{t.purchaseReturns?.reasons?.other || 'Other'}</option>
+                              </select>
+                            </div>
+                            
+                            <div className="space-y-1.5">
+                              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">{t.purchaseReturns?.condition || 'Condition'}</label>
+                              <select
+                                value={formData.condition}
+                                onChange={(e) => updateItemFormData({ condition: e.target.value as PurchaseReturnItem['condition'] })}
+                                className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                              >
+                                <option value="damaged">{t.purchaseReturns?.conditions?.damaged || 'Damaged'}</option>
+                                <option value="expired">{t.purchaseReturns?.conditions?.expired || 'Expired'}</option>
+                                <option value="other">{t.purchaseReturns?.conditions?.other || 'Other'}</option>
+                              </select>
+                            </div>
+                            
                             <button
                               type="button"
                               onClick={() => {
                                 handleAddReturnItem(purchaseItem.drugId, formData.quantity, formData.reason, formData.condition);
                                 updateItemFormData({ quantity: 1 });
                               }}
-                              className={`w-full px-3 py-2 rounded-lg bg-${color}-600 hover:bg-${color}-700 text-white text-sm font-medium transition-colors`}
+                              className={`w-full py-2.5 rounded-xl bg-${color}-600/10 hover:bg-${color}-600 text-${color}-600 hover:text-white text-xs font-black transition-all border border-${color}-600/20 active:scale-95`}
                             >
-                              {t.purchaseReturns?.addToReturn || 'Add to Return'}
+                              <span className="material-symbols-rounded block mb-0.5">add_shopping_cart</span>
+                              {t.purchaseReturns?.addToReturn || 'Add'}
                             </button>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               </div>
             )}
-
-            {/* Notes */}
-            <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+            {/* Additional Notes */}
+            <div>
               <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
                 <span className="material-symbols-rounded text-[18px]">notes</span>
                 {t.purchaseReturns?.additionalNotes || 'Additional Notes'}
@@ -576,138 +569,13 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
                 dir={notesDir}
-                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all resize-none"
+                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all resize-none text-sm font-medium"
                 style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                 placeholder={t.purchaseReturns?.notesPlaceholder || 'Add any additional notes about this return...'}
               />
-
-              {/* Action Buttons */}
-              <div className="mt-6 flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedPurchase(null);
-                    setReturnItems([]);
-                    setNotes('');
-                  }}
-                  className="px-6 py-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-sm font-medium"
-                >
-                  {t.purchaseReturns?.clear || 'Clear'}
-                </button>
-                <button
-                  type="submit"
-                  disabled={returnItems.length === 0}
-                  className={`px-6 py-3 rounded-xl shadow-lg transition-all font-bold ${
-                    returnItems.length === 0
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : `bg-${color}-600 hover:bg-${color}-700 text-white`
-                  }`}
-                >
-                  {t.purchaseReturns?.submit || 'Submit Return'}
-                </button>
-              </div>
             </div>
-          </form>
-        </div>
-      ) : (
-        /* RETURN HISTORY TABLE */
-        <>
-          {/* Search */}
-          <div className="flex-shrink-0">
-            <input 
-              type="text" 
-              placeholder={t.purchaseReturns?.searchPlaceholder || 'Search returns...'}
-              className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all text-sm"
-              style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              dir={searchDir}
-              autoComplete="off"
-            />
           </div>
-
-          {/* Table */}
-          <div className="flex-1 overflow-auto bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-            <table className="w-full min-w-full table-fixed border-collapse">
-              <thead className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}>
-                <tr>
-                  {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
-                    <th
-                      key={columnId}
-                      data-column-id={columnId}
-                      className={`${columnsDef[columnId as keyof typeof columnsDef].className} ${!isColumnResizing ? 'cursor-grab active:cursor-grabbing' : ''} select-none transition-colors relative group/header hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                        draggedColumn === columnId ? 'opacity-50' : ''
-                      } ${dragOverColumn === columnId ? `bg-${color}-100 dark:bg-${color}-900/50` : ''}`}
-                      title={columnsDef[columnId as keyof typeof columnsDef].label}
-                      draggable={!isColumnResizing}
-                      onDragStart={(e) => {
-                        if ((e.target as HTMLElement).closest('.resize-handle')) {
-                          e.preventDefault();
-                          return;
-                        }
-                        handleColumnDragStart(e, columnId);
-                      }}
-                      onDragOver={(e) => handleColumnDragOver(e, columnId)}
-                      onDrop={(e) => handleColumnDrop(e, columnId)}
-                      onDragEnd={handleColumnDragEnd}
-                      onTouchStart={(e) => {
-                        if ((e.target as HTMLElement).closest('.resize-handle')) return;
-                        e.stopPropagation();
-                        handleColumnDragStart(e, columnId);
-                      }}
-                      onTouchMove={(e) => handleColumnTouchMove(e)}
-                      onTouchEnd={(e) => handleColumnTouchEnd(e)}
-                      {...headerTriggerProps}
-                      style={{ width: columnWidths[columnId] ? `${columnWidths[columnId]}px` : 'auto' }}
-                    >
-                      <div className="flex items-center justify-between h-full w-full">
-                        <span className="truncate flex-1">{columnsDef[columnId as keyof typeof columnsDef].label}</span>
-                        
-                        <div 
-                          className="resize-handle absolute right-0 top-1/2 -translate-y-1/2 h-4 w-4 cursor-col-resize z-20 flex items-center justify-center opacity-0 group-hover/header:opacity-100 transition-opacity"
-                          style={{ right: '-8px' }}
-                          onMouseDown={(e) => startColumnResize(e, columnId)}
-                          onClick={(e) => e.stopPropagation()}
-                          onDoubleClick={(e) => handleAutoFit(e, columnId)}
-                        >
-                        </div>
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredReturns.map((returnRecord, index) => (
-                  <tr 
-                    key={returnRecord.id}
-                    onClick={() => handleViewDetails(returnRecord)}
-                    className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''}`}
-                  >
-                    {columnOrder.filter(col => !hiddenColumns.has(col)).map((columnId) => (
-                      <td 
-                        key={columnId} 
-                        className={`${columnsDef[columnId as keyof typeof columnsDef].className} align-middle border-none`}
-                        style={{ width: columnWidths[columnId] ? `${columnWidths[columnId]}px` : 'auto' }}
-                      >
-                        {renderCell(returnRecord, columnId)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                {filteredReturns.length === 0 && (
-                  <tr>
-                    <td colSpan={10} className="p-12 text-center text-gray-400">
-                      {search.trim() 
-                        ? (t.purchaseReturns?.messages?.noReturnsFound || 'No returns found matching your search')
-                        : (t.purchaseReturns?.messages?.noReturnsYet || 'No purchase returns yet')
-                      }
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </>
+        </Modal>
       )}
 
       {/* Details View Modal */}
@@ -715,98 +583,113 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
         <Modal
             isOpen={true}
             onClose={() => setViewingReturn(null)}
-            size="3xl"
+            size="2xl"
             zIndex={50}
             title={t.purchaseReturns?.returnDetails || 'Return Details'}
             icon="assignment_return"
+            footer={
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setViewingReturn(null)}
+                  className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  {t.modal?.close || 'Close'}
+                </button>
+              </div>
+            }
         >
-            {/* Content */}
             <div className="space-y-6">
-              {/* Return Information */}
+              
+              {/* Return Information Section */}
               <div>
-                <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4 flex items-center gap-2">
                   <span className="material-symbols-rounded text-[18px]">info</span>
                   {t.purchaseReturns?.returnInfo || 'Return Information'}
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.id || 'Return ID'}</label>
-                    <p className="text-sm text-gray-900 dark:text-white font-mono">{viewingReturn.id}</p>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.date || 'Date'}</label>
-                    <p className="text-sm text-gray-900 dark:text-white">{new Date(viewingReturn.date).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.purchaseId || 'Purchase ID'}</label>
-                    <p className="text-sm text-gray-900 dark:text-white font-mono">{viewingReturn.purchaseId}</p>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.supplier || 'Supplier'}</label>
-                    <p className="text-sm text-gray-900 dark:text-white font-bold">{viewingReturn.supplierName}</p>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.status || 'Status'}</label>
-                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      viewingReturn.status === 'completed' ? 'bg-green-100 text-green-700' :
-                      viewingReturn.status === 'approved' ? 'bg-blue-100 text-blue-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {t.purchaseReturns?.status?.[viewingReturn.status] || viewingReturn.status}
-                    </span>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.totalRefund || 'Total Refund'}</label>
-                    <p className="text-lg font-bold text-red-600">${viewingReturn.totalRefund.toFixed(2)}</p>
-                  </div>
+                </h3>
+                
+                <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+                   <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.id || 'Return ID'}</label>
+                      <p className="font-bold text-gray-900 dark:text-white font-mono text-sm">{viewingReturn.id}</p>
+                   </div>
+                   <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.date || 'Date'}</label>
+                      <p className="font-bold text-gray-900 dark:text-white text-sm">{new Date(viewingReturn.date).toLocaleDateString()}</p>
+                   </div>
+
+                   <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.purchaseId || 'Purchase ID'}</label>
+                      <p className="font-bold text-gray-900 dark:text-white font-mono text-sm">{viewingReturn.purchaseId}</p>
+                   </div>
+                   <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.supplier || 'Supplier'}</label>
+                      <p className="font-bold text-gray-900 dark:text-white text-sm">{viewingReturn.supplierName}</p>
+                   </div>
+
+                   <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.tableHeaders?.status || 'Status'}</label>
+                       {(() => {
+                          const status = viewingReturn.status;
+                          const style = 
+                             status === 'completed' ? { color: 'emerald', icon: 'check_circle' } :
+                             status === 'approved' ? { color: 'blue', icon: 'verified' } :
+                             { color: 'amber', icon: 'hourglass_top' };
+                          
+                          return (
+                              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border bg-transparent border-${style.color}-200 dark:border-${style.color}-900/50 text-${style.color}-700 dark:text-${style.color}-400 text-xs font-bold uppercase tracking-wider`}>
+                                  <span className="material-symbols-rounded text-sm">{style.icon}</span>
+                                  {t.purchaseReturns?.status?.[status] || status}
+                              </span>
+                          );
+                       })()}
+                   </div>
+                   <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">{t.purchaseReturns?.totalRefund || 'Total Refund'}</label>
+                      <p className="font-bold text-red-600 text-sm">${viewingReturn.totalRefund.toFixed(2)}</p>
+                   </div>
                 </div>
               </div>
 
-              {/* Returned Items */}
+              {/* Returned Items Section */}
               <div>
-                <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
                   <span className="material-symbols-rounded text-[18px]">inventory_2</span>
                   {t.purchaseReturns?.returnedItems || 'Returned Items'}
-                </h4>
+                </h3>
+                
                 <div className="space-y-2">
                   {viewingReturn.items.map((item, index) => (
-                    <div key={index} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            <span className="font-bold">{t.purchaseReturns?.quantity || 'Qty'}:</span> {item.quantityReturned} | <span className="font-bold">{t.purchases?.detailsModal?.cost || 'Cost'}:</span> ${item.costPrice.toFixed(2)} | <span className="font-bold">{t.purchaseReturns?.reason || 'Reason'}:</span> {t.purchaseReturns?.reasons?.[item.reason] || item.reason} | <span className="font-bold">{t.purchaseReturns?.condition || 'Condition'}:</span> {t.purchaseReturns?.conditions?.[item.condition] || item.condition}
+                      <div key={index} className="p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex justify-between items-center group hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
+                       <div>
+                          <p className="font-bold text-gray-900 dark:text-white text-sm mb-1">
+                             {getDisplayName({ ...item, dosageForm: item.dosageForm || drugs.find(d => d.id === item.drugId)?.dosageForm })}
                           </p>
-                        </div>
-                        <p className="font-bold text-red-600">${item.refundAmount.toFixed(2)}</p>
-                      </div>
+                          <p className="text-xs text-gray-500">
+                             <span className="opacity-70">{t.purchaseReturns?.quantity || 'Qty'}:</span> {item.quantityReturned} <span className="mx-1 opacity-30">|</span> 
+                             <span className="opacity-70">{t.purchases?.detailsModal?.cost || 'Cost'}:</span> ${item.costPrice.toFixed(2)} <span className="mx-1 opacity-30">|</span> 
+                             <span className="opacity-70">{t.purchaseReturns?.reason || 'Reason'}:</span> {t.purchaseReturns?.reasons?.[item.reason] || item.reason}
+                          </p>
+                       </div>
+                       <p className="font-bold text-red-600 text-sm">
+                          ${item.refundAmount.toFixed(2)}
+                       </p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Notes */}
               {viewingReturn.notes && (
-                <div>
-                  <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                    <span className="material-symbols-rounded text-[18px]">notes</span>
-                    {t.purchaseReturns?.notes || 'Notes'}
-                  </h4>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                    {viewingReturn.notes}
-                  </p>
-                </div>
+                 <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-2">
+                      <span className="material-symbols-rounded text-[18px]">notes</span>
+                      {t.purchaseReturns?.notes || 'Notes'}
+                    </h3>
+                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 text-amber-900 dark:text-amber-100 border border-amber-100 dark:border-amber-900/30 text-sm">
+                      {viewingReturn.notes}
+                    </div>
+                 </div>
               )}
-            </div>
 
-            {/* Footer */}
-            <div className="p-4 border-t border-gray-100 dark:border-gray-800 flex gap-3 justify-end">
-              <button
-                onClick={() => setViewingReturn(null)}
-                className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              >
-                Close
-              </button>
             </div>
         </Modal>
       )}
