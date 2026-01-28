@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Shift, CashTransaction, CashTransactionType, Language, Employee } from '../../types';
 import { CARD_BASE, TABLE_HEADER_BASE, TABLE_ROW_BASE, BUTTON_BASE, INPUT_BASE, THEME_COLORS } from '../../utils/themeStyles';
+import { canPerformAction } from '../../config/permissions';
 import { useSmartDirection } from '../common/SmartInputs';
 import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
@@ -9,6 +10,7 @@ import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { useShift } from '../../hooks/useShift';
+import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 
 interface CashRegisterProps {
   color: string;
@@ -62,6 +64,24 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       operations: currentShift.transactions.filter(tx => ['in', 'out', 'opening', 'closing'].includes(tx.type)).length
     };
   }, [currentShift]);
+
+  // Check if current user has permission to view expected balance
+  const canViewExpectedBalance = useMemo(() => {
+     if (!currentEmployeeId || !employees) return false;
+     const user = employees.find(e => e.id === currentEmployeeId);
+     if (!user) return false;
+     
+     return canPerformAction(user.role, 'shift.view_expected_balance');
+  }, [currentEmployeeId, employees]);
+  
+  // Check if current user has permission to add/remove cash manually
+  const canManageCash = useMemo(() => {
+    if (!currentEmployeeId || !employees) return false;
+    const user = employees.find(e => e.id === currentEmployeeId);
+    if (!user) return false;
+    
+    return canPerformAction(user.role, 'shift.manage_cash');
+  }, [currentEmployeeId, employees]);
 
   // Actions
   const handleOpenShift = () => {
@@ -192,7 +212,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       type: type,
       amount: amount,
       reason: reasonInput,
-      userId: 'Pharmacist'
+      userId: employees?.find(e => e.id === currentEmployeeId)?.name || 'System'
     };
 
     addTransaction(currentShift.id, transaction, {
@@ -212,7 +232,10 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
   if (isLoading) return <div className="p-10 text-center">{t.cashRegister.messages.loading}</div>;
 
   return (
-    <div className={`h-full flex flex-col gap-6 animate-fade-in pb-10 ${language === 'AR' ? 'text-right' : 'text-left'}`}>
+    <div 
+      dir={language === 'AR' ? 'rtl' : 'ltr'}
+      className={`h-full flex flex-col gap-6 animate-fade-in pb-10 ${language === 'AR' ? 'text-right' : 'text-left'}`}
+    >
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -223,20 +246,24 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
         <div className="flex gap-3">
           {currentShift ? (
             <>
-              <button 
-                onClick={() => setModalMode('in')}
-                className={`px-4 py-2 rounded-xl bg-${color}-100 text-${color}-700 hover:bg-${color}-200 font-bold transition-colors flex items-center gap-2`}
-              >
-                 <span className="material-symbols-rounded">add</span>
-                 {t.cashRegister.actions.addCash}
-              </button>
-              <button 
-                onClick={() => setModalMode('out')}
-                className={`px-4 py-2 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2`}
-              >
-                 <span className="material-symbols-rounded">remove</span>
-                 {t.cashRegister.actions.removeCash}
-              </button>
+              {canManageCash && (
+                <>
+                  <button 
+                    onClick={() => setModalMode('in')}
+                    className={`px-4 py-2 rounded-xl bg-${color}-100 text-${color}-700 hover:bg-${color}-200 font-bold transition-colors flex items-center gap-2`}
+                  >
+                     <span className="material-symbols-rounded">add</span>
+                     {t.cashRegister.actions.addCash}
+                  </button>
+                  <button 
+                    onClick={() => setModalMode('out')}
+                    className={`px-4 py-2 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2`}
+                  >
+                     <span className="material-symbols-rounded">remove</span>
+                     {t.cashRegister.actions.removeCash}
+                  </button>
+                </>
+              )}
               <button 
                 onClick={() => setModalMode('close')}
                 className={`px-4 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-bold transition-colors flex items-center gap-2`}
@@ -264,15 +291,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
           
           {/* Status Card */}
           <div className={`p-6 rounded-3xl ${CARD_BASE} relative overflow-hidden group`}>
-            {currentShift ? (
-               <div className="absolute top-0 ltr:right-0 rtl:left-0 p-4 opacity-10">
-                  <span className={`material-symbols-rounded text-9xl text-${color}-500`}>lock_open</span>
-               </div>
-            ) : (
-                <div className="absolute top-0 ltr:right-0 rtl:left-0 p-4 opacity-10">
-                  <span className="material-symbols-rounded text-9xl text-gray-500">lock</span>
-               </div>
-            )}
+            <div className="absolute -bottom-6 ltr:-right-6 rtl:-left-6 opacity-10 group-hover:scale-110 transition-transform duration-500 pointer-events-none select-none">
+              <span className={`material-symbols-rounded text-[180px] ${currentShift ? `text-${color}-500` : 'text-gray-500'} -rotate-12`}>
+                {currentShift ? 'lock_open' : 'lock'}
+              </span>
+            </div>
             
             <p className="text-sm font-bold uppercase text-gray-500 mb-2">{t.cashRegister.status.details}</p>
             <div className="flex items-center gap-3 mb-4">
@@ -283,34 +306,53 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                <div className="space-y-2">
                   {/* Time Badge */}
                   <div className="flex items-center gap-2">
-                     <span className="material-symbols-rounded text-base text-gray-400">schedule</span>
                      <span className="text-sm text-gray-600 dark:text-gray-400">{t.cashRegister.messages.started}:</span>
-                     <span className="px-2.5 py-1 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-mono font-bold text-sm">
-                        {new Date(currentShift.openTime).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { 
-                           hour: '2-digit', 
-                           minute: '2-digit', 
-                           hour12: true 
-                        })}
+                     <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400 text-xs font-bold uppercase tracking-wider bg-transparent">
+                        <span className="material-symbols-rounded text-sm">schedule</span>
+                        {(() => {
+                           const timeStr = new Date(currentShift.openTime).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true
+                           });
+                           
+                           const parts = timeStr.split(' ');
+                           const timeValue = parts[0];
+                           const amPm = parts[1];
+
+                           if (language === 'AR') {
+                              const arabicMarker = amPm === 'AM' ? 'ص' : 'م';
+                              return (
+                                 <span className="flex items-center gap-1">
+                                    <span className="font-sans">{timeValue}</span>
+                                    <span className="text-[10px] font-bold opacity-80 mt-1">{arabicMarker}</span>
+                                 </span>
+                              );
+                           }
+                           return timeStr;
+                        })()}
                      </span>
                      <span className="text-xs text-gray-400">
-                        {new Date(currentShift.openTime).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' })}
+                        {new Date(currentShift.openTime).toLocaleDateString(language === 'AR' ? 'ar-EG-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'short' })}
                      </span>
                   </div>
                   
                   {/* User Badge */}
                   <div className="flex items-center gap-2">
-                     <span className="material-symbols-rounded text-base text-gray-400">person</span>
                      <span className="text-sm text-gray-600 dark:text-gray-400">{t.cashRegister.messages.by}:</span>
-                     <span className="px-2.5 py-1 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-bold text-sm">
+                     <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-purple-200 dark:border-purple-900/50 text-purple-700 dark:text-purple-400 text-xs font-bold uppercase tracking-wider bg-transparent">
+                        <span className="material-symbols-rounded text-sm">person</span>
                         {currentShift.openedBy}
                      </span>
                   </div>
                   
                   {/* Shift ID */}
                   <div className="flex items-center gap-2">
-                     <span className="material-symbols-rounded text-base text-gray-400">tag</span>
                      <span className="text-sm text-gray-600 dark:text-gray-400">{t.cashRegister.messages.id}:</span>
-                     <span className="font-mono text-sm font-bold text-gray-700 dark:text-gray-300" dir="ltr">#{currentShift.id.slice(-6)}</span>
+                     <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-400 text-xs font-bold uppercase tracking-wider bg-transparent">
+                        <span className="material-symbols-rounded text-sm">tag</span>
+                        {currentShift.id.slice(-6)}
+                     </span>
                   </div>
                </div>
             )}
@@ -319,40 +361,78 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
           {/* Balance Cards (Only if Open) */}
           {currentShift ? (
              <div className="space-y-3">
-                <div className={`p-4 rounded-2xl bg-${color}-50 dark:bg-${color}-950/20 border border-${color}-100 dark:border-${color}-900`}>
-                   <p className={`text-xs font-bold uppercase text-${color}-800 dark:text-${color}-300 mb-1`}>{t.cashRegister.summary.expectedBalance}</p>
-                   <p className={`text-3xl font-bold text-${color}-900 dark:text-${color}-100 type-expressive`}>${currentBalance.toFixed(2)}</p>
-                </div>
+                {canViewExpectedBalance && (
+                   <div className={`p-4 rounded-2xl bg-${color}-50 dark:bg-${color}-950/20 border border-${color}-100 dark:border-${color}-900`}>
+                      <p className={`text-xs font-bold uppercase text-${color}-800 dark:text-${color}-300 mb-1`}>{t.cashRegister.summary.expectedBalance}</p>
+                      <p className={`text-2xl font-bold text-${color}-900 dark:text-${color}-100 type-expressive`}>
+                         {(() => {
+                            const { amount, symbol } = formatCurrencyParts(currentBalance, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US');
+                            return <>{amount} <span className="text-sm font-normal opacity-70">{symbol}</span></>;
+                         })()}
+                      </p>
+                   </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-3">
                    <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                       <p className="text-xs font-bold uppercase text-gray-500 mb-1">{t.cashRegister.summary.openingBalance}</p>
-                      <p className="text-lg font-bold">${currentShift.openingBalance.toFixed(2)}</p>
+                      <p className="text-base font-bold text-gray-700 dark:text-gray-300">
+                        {(() => {
+                           const { amount, symbol } = formatCurrencyParts(currentShift.openingBalance, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0);
+                           return <>{amount} <span className="text-[10px] opacity-60 font-normal">{symbol}</span></>;
+                        })()}
+                      </p>
                    </div>
                    <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                       <p className="text-xs font-bold uppercase text-gray-500 mb-1">{t.cashRegister.summary.cashSales}</p>
-                      <p className="text-lg font-bold text-green-600">+${currentShift.cashSales.toFixed(2)}</p>
+                      <p className="text-base font-bold text-emerald-600 flex items-center gap-1.5">
+                        <span className="material-symbols-rounded text-2xl">add</span>
+                        {(() => {
+                           const { amount, symbol } = formatCurrencyParts(currentShift.cashSales, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0);
+                           return <>{amount} <span className="text-[10px] opacity-60 font-normal">{symbol}</span></>;
+                        })()}
+                      </p>
                    </div>
                    <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                       <p className="text-xs font-bold uppercase text-gray-500 mb-1">{t.cashRegister.summary.cardSales}</p>
-                      <p className="text-lg font-bold text-violet-600">+${(currentShift.cardSales || 0).toFixed(2)}</p>
+                      <p className="text-base font-bold text-violet-600 flex items-center gap-1.5">
+                        <span className="material-symbols-rounded text-2xl">add</span>
+                        {(() => {
+                           const { amount, symbol } = formatCurrencyParts(currentShift.cardSales || 0, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0);
+                           return <>{amount} <span className="text-[10px] opacity-60 font-normal">{symbol}</span></>;
+                        })()}
+                      </p>
                    </div>
                    <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                       <p className="text-xs font-bold uppercase text-gray-500 mb-1">{t.cashRegister.summary.cashIn}</p>
-                      <p className="text-lg font-bold text-orange-600">+${currentShift.cashIn.toFixed(2)}</p>
+                      <p className="text-base font-bold text-orange-600 flex items-center gap-1.5">
+                        <span className="material-symbols-rounded text-2xl">add</span>
+                        {(() => {
+                           const { amount, symbol } = formatCurrencyParts(currentShift.cashIn, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0);
+                           return <>{amount} <span className="text-[10px] opacity-60 font-normal">{symbol}</span></>;
+                        })()}
+                      </p>
                    </div>
                    <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                       <p className="text-xs font-bold uppercase text-gray-500 mb-1">{t.cashRegister.summary.cashOut}</p>
-                      <p className="text-lg font-bold text-orange-600">-${currentShift.cashOut.toFixed(2)}</p>
+                      <p className="text-base font-bold text-red-600 flex items-center gap-1.5">
+                        <span className="material-symbols-rounded text-2xl">remove</span>
+                        {(() => {
+                           const { amount, symbol } = formatCurrencyParts(currentShift.cashOut, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0);
+                           return <>{amount} <span className="text-[10px] opacity-60 font-normal">{symbol}</span></>;
+                        })()}
+                      </p>
                    </div>
                    <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                       <p className="text-xs font-bold uppercase text-gray-500 mb-1">{t.cashRegister.summary.returns || 'Returns'}</p>
-                      <p className="text-lg font-bold text-red-600">
-                        -{(() => {
-                          // Calculate total returns from transactions
+                      <p className="text-base font-bold text-red-600 flex items-center gap-1.5">
+                        <span className="material-symbols-rounded text-2xl">remove</span>
+                        {(() => {
                           const returnTransactions = currentShift.transactions.filter(tx => tx.type === 'return');
-                          return returnTransactions.reduce((sum, tx) => sum + tx.amount, 0).toFixed(2);
-                        })()}$
+                          const totalReturns = returnTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+                          const { amount, symbol } = formatCurrencyParts(totalReturns, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US', 0);
+                          return <>{amount} <span className="text-[10px] opacity-60 font-normal">{symbol}</span></>;
+                        })()}
                       </p>
                    </div>
                 </div>
@@ -390,8 +470,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                       <table className="w-full text-left border-collapse">
                          <thead className="sticky top-0 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm z-10">
                             <tr>
-                               <th className={TABLE_HEADER_BASE}>{t.cashRegister.transactions.time}</th>
-                               <th className={TABLE_HEADER_BASE}>{t.cashRegister.transactions.type}</th>
+                               <th className={`${TABLE_HEADER_BASE} text-start`}>{t.cashRegister.transactions.time}</th>
+                               <th className={`${TABLE_HEADER_BASE} text-start`}>{t.cashRegister.transactions.type}</th>
                                <th className={TABLE_HEADER_BASE}>{t.cashRegister.transactions.user || 'User'}</th>
                                <th className={TABLE_HEADER_BASE}>{t.cashRegister.transactions.reason}</th>
                                <th className={`${TABLE_HEADER_BASE} text-end`}>{t.cashRegister.transactions.amount}</th>
@@ -400,17 +480,47 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                             {filteredTransactions.map((tx) => (
                                <tr key={tx.id} className={TABLE_ROW_BASE}>
-                                  <td className="py-3 px-4 text-sm text-gray-500 font-mono" dir="ltr">
-                                     {new Date(tx.time).toLocaleTimeString()}
+                                  <td className="py-3 px-4 text-sm text-gray-500 text-start">
+                                     {(() => {
+                                        const timeStr = new Date(tx.time).toLocaleTimeString('en-US', {
+                                           hour: '2-digit',
+                                           minute: '2-digit',
+                                           hour12: true
+                                        });
+                                        
+                                        const parts = timeStr.split(' '); // ["12:30", "PM"]
+                                        const timeValue = parts[0];
+                                        const amPm = parts[1];
+
+                                        if (language === 'AR') {
+                                           const arabicMarker = amPm === 'AM' ? 'ص' : 'م';
+                                           return (
+                                              <span className="flex items-center gap-1">
+                                                 <span className="font-sans">{timeValue}</span>
+                                                 <span className="text-[10px] font-bold opacity-80 mt-1">{arabicMarker}</span>
+                                              </span>
+                                           );
+                                        }
+                                        return timeStr;
+                                     })()}
                                   </td>
-                                  <td className="py-3 px-4">
-                                     <span className={`text-xs font-bold px-2 py-1 rounded-full uppercase
-                                        ${tx.type === 'in' || tx.type === 'opening' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : ''}
-                                        ${tx.type === 'out' || tx.type === 'closing' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : ''}
-                                        ${tx.type === 'sale' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : ''}
-                                        ${tx.type === 'card_sale' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300' : ''}
-                                        ${tx.type === 'return' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' : ''}
+                                  <td className="py-3 px-4 text-start">
+                                     <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider bg-transparent
+                                        ${(tx.type === 'in' || tx.type === 'opening') ? 'border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400' : ''}
+                                        ${(tx.type === 'out' || tx.type === 'closing') ? 'border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400' : ''}
+                                        ${tx.type === 'sale' ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400' : ''}
+                                        ${tx.type === 'card_sale' ? 'border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400' : ''}
+                                        ${tx.type === 'return' ? 'border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400' : ''}
                                      `}>
+                                        <span className="material-symbols-rounded text-sm">
+                                           {tx.type === 'opening' ? 'lock_open' : 
+                                            tx.type === 'closing' ? 'lock' : 
+                                            tx.type === 'in' ? 'login' : 
+                                            tx.type === 'out' ? 'logout' : 
+                                            tx.type === 'sale' ? 'point_of_sale' : 
+                                            tx.type === 'card_sale' ? 'credit_card' : 
+                                            tx.type === 'return' ? 'assignment_return' : 'receipt'}
+                                        </span>
                                         {t.cashRegister.types[tx.type]}
                                      </span>
                                   </td>
@@ -420,10 +530,14 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                                   <td className="py-3 px-4 text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate">
                                      {tx.reason || '-'}
                                   </td>
-                                  <td className={`py-3 px-4 text-sm font-bold text-end font-mono
-                                     ${(['in', 'opening', 'sale', 'card_sale'].includes(tx.type)) ? 'text-green-600' : 'text-red-600'}
+                                  <td className={`py-3 px-4 text-sm font-bold text-end
+                                     ${(['in', 'opening', 'sale', 'card_sale'].includes(tx.type)) ? 'text-emerald-600' : 'text-red-600'}
                                   `}>
-                                     {(['in', 'opening', 'sale', 'card_sale'].includes(tx.type)) ? '+' : '-'}${tx.amount.toFixed(2)}
+                                     {(['in', 'opening', 'sale', 'card_sale'].includes(tx.type)) ? '+' : '-'}
+                                     {(() => {
+                                        const { amount, symbol } = formatCurrencyParts(tx.amount, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US');
+                                        return <>{amount} <span className="text-[10px] opacity-60 font-normal">{symbol}</span></>;
+                                     })()}
                                   </td>
                                </tr>
                             ))}
@@ -506,17 +620,25 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                      />
                   </div>
 
-                  {modalMode === 'close' && currentShift && (
+                  {modalMode === 'close' && currentShift && canViewExpectedBalance && (
                      <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-xl border border-yellow-100 dark:border-yellow-900/50 text-sm">
                         <div className="flex justify-between">
                            <span>{t.cashRegister.messages.expected}</span>
-                           <span className="font-bold">${currentBalance.toFixed(2)}</span>
+                           <span className="font-bold">
+                              {(() => {
+                                 const { amount, symbol } = formatCurrencyParts(currentBalance, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US');
+                                 return <>{amount} <span className="text-[0.7em] opacity-60 font-normal ml-0.5">{symbol}</span></>;
+                              })()}
+                           </span>
                         </div>
                         {amountInput && !isNaN(parseFloat(amountInput)) && (
                            <div className="flex justify-between mt-1 pt-1 border-t border-yellow-200 dark:border-yellow-900">
                               <span>{t.cashRegister.summary.variance}</span>
-                              <span className={`font-bold ${Math.abs(parseFloat(amountInput) - currentBalance) <= 50 ? 'text-green-500' : 'text-red-500'}`}>
-                                 ${(parseFloat(amountInput) - currentBalance).toFixed(2)}
+                              <span className={`font-bold ${Math.abs(parseFloat(amountInput) - currentBalance) <= 50 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                 {(() => {
+                                    const { amount, symbol } = formatCurrencyParts(parseFloat(amountInput) - currentBalance, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US');
+                                    return <>{amount} <span className="text-[0.7em] opacity-60 font-normal ml-0.5">{symbol}</span></>;
+                                 })()}
                               </span>
                            </div>
                         )}
