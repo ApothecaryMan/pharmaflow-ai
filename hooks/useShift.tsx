@@ -17,7 +17,7 @@ interface ShiftContextType {
   isLoading: boolean;
   startShift: (newShift: Shift) => void;
   endShift: (closedShift: Shift) => void;
-  addTransaction: (shiftId: string, transaction: CashTransaction, updates: Partial<Shift>) => void;
+  addTransaction: (shiftId: string, transaction: CashTransaction, updates?: Partial<Shift>) => void;
   refreshShifts: () => void;
 }
 
@@ -95,17 +95,33 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   const addTransaction = useCallback(
-    (shiftId: string, transaction: CashTransaction, updates: Partial<Shift>) => {
+    (shiftId: string, transaction: CashTransaction, updates: Partial<Shift> = {}) => {
       setShifts((prev) =>
-        prev.map((s) =>
-          s.id === shiftId
-            ? {
-                ...s,
-                ...updates,
-                transactions: [transaction, ...s.transactions],
-              }
-            : s
-        )
+        prev.map((s) => {
+          if (s.id !== shiftId) return s;
+
+          // Calculate new totals based on transaction type
+          let newCashSales = s.cashSales;
+          let newCardSales = s.cardSales || 0;
+          let newReturns = s.returns || 0;
+
+          if (transaction.type === 'sale') {
+            newCashSales += transaction.amount;
+          } else if (transaction.type === 'card_sale') {
+            newCardSales += transaction.amount;
+          } else if (transaction.type === 'return') {
+            newReturns += transaction.amount;
+          }
+
+          return {
+            ...s,
+            ...updates,
+            cashSales: newCashSales,
+            cardSales: newCardSales,
+            returns: newReturns,
+            transactions: [transaction, ...s.transactions],
+          };
+        })
       );
     },
     []

@@ -1,4 +1,4 @@
-export const formatCurrency = (amount: number, currency: string = 'EGP', locale?: string): string => {
+export const formatCurrency = (amount: number, currency: string = 'EGP', locale?: string, decimals: number = 2): string => {
   // 1. Detect language from DOM if not provided
   const currentLang = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
   const isArabic = locale ? locale.startsWith('ar') : currentLang.startsWith('ar');
@@ -10,8 +10,8 @@ export const formatCurrency = (amount: number, currency: string = 'EGP', locale?
       // Force English numerals by using 'en-US' for the number formatting
       const formatter = new Intl.NumberFormat('en-US', {
           style: 'decimal',
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals,
       });
       
       return isArabic 
@@ -22,10 +22,12 @@ export const formatCurrency = (amount: number, currency: string = 'EGP', locale?
   return new Intl.NumberFormat(targetLocale, {
     style: 'currency',
     currency: currency,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(amount);
 };
 
-export const formatCurrencyParts = (amount: number, currency: string = 'EGP', locale?: string) => {
+export const formatCurrencyParts = (amount: number, currency: string = 'EGP', locale?: string, decimals: number = 2) => {
     // 1. Detect language from DOM if not provided
     const currentLang = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
     const isArabic = locale ? locale.startsWith('ar') : currentLang.startsWith('ar');
@@ -35,8 +37,8 @@ export const formatCurrencyParts = (amount: number, currency: string = 'EGP', lo
     if (currency === 'EGP') {
         const formatter = new Intl.NumberFormat('en-US', {
             style: 'decimal',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals,
         });
         
         return {
@@ -48,6 +50,8 @@ export const formatCurrencyParts = (amount: number, currency: string = 'EGP', lo
     const parts = new Intl.NumberFormat(targetLocale, {
       style: 'currency',
       currency: currency,
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
     }).formatToParts(amount);
     
     const amountPart = parts.filter(p => p.type !== 'currency' && p.type !== 'literal').map(p => p.value).join('');

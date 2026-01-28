@@ -24,7 +24,9 @@ export type PermissionAction =
   | 'purchase.view'
   | 'purchase.create'
   | 'purchase.approve'
+  | 'purchase.approve'
   | 'purchase.reject'
+  | 'purchase.return'
   
   // Suppliers
   | 'supplier.view'
@@ -43,6 +45,8 @@ export type PermissionAction =
   | 'shift.open'
   | 'shift.close'
   | 'shift.reports' // View X/Z reports
+  | 'shift.view_expected_balance' // See expected balance (Blind closing override)
+  | 'shift.manage_cash' // Add/Remove cash manually
   
   // Reports & Dashboard
   | 'reports.view_financial'
@@ -59,10 +63,10 @@ export type PermissionAction =
 const ALL_PERMISSIONS: PermissionAction[] = [
   'inventory.view', 'inventory.add', 'inventory.update', 'inventory.delete', 'inventory.adjust', 'inventory.approve',
   'sale.create', 'sale.view_history', 'sale.view_details', 'sale.refund', 'sale.modify', 'sale.cancel', 'sale.discount', 'sale.checkout',
-  'purchase.view', 'purchase.create', 'purchase.approve', 'purchase.reject',
+  'purchase.view', 'purchase.create', 'purchase.approve', 'purchase.reject', 'purchase.return',
   'supplier.view', 'supplier.add', 'supplier.update', 'supplier.delete',
   'customer.view', 'customer.add', 'customer.update', 'customer.delete',
-  'shift.view', 'shift.open', 'shift.close', 'shift.reports',
+  'shift.view', 'shift.open', 'shift.close', 'shift.reports', 'shift.view_expected_balance', 'shift.manage_cash',
   'reports.view_financial', 'reports.view_inventory', 'reports.export',
   'settings.view', 'settings.update', 'users.view', 'users.manage', 'backup.manage',
   'inventory.restock'
@@ -76,24 +80,26 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     // Full Business Access, NO System/IT access
     'inventory.view', 'inventory.add', 'inventory.update', 'inventory.delete', 'inventory.adjust', 'inventory.approve', 'inventory.restock',
     'sale.create', 'sale.view_history', 'sale.view_details', 'sale.refund', 'sale.modify', 'sale.cancel', 'sale.discount', 'sale.checkout',
-    'purchase.view', 'purchase.create', 'purchase.approve', 'purchase.reject',
+    'purchase.view', 'purchase.create', 'purchase.approve', 'purchase.reject', 'purchase.return',
     'supplier.view', 'supplier.add', 'supplier.update', 'supplier.delete',
     'customer.view', 'customer.add', 'customer.update', 'customer.delete',
-    'shift.view', 'shift.open', 'shift.close', 'shift.reports',
+    'shift.view', 'shift.open', 'shift.close', 'shift.reports', 'shift.manage_cash',
     'reports.view_financial', 'reports.view_inventory', 'reports.export',
-    'settings.view', 'users.view', 'users.manage' // Can manage staff
+    'settings.view', 'users.view', 'users.manage', // Can manage staff
+    'shift.view_expected_balance'
   ],
 
   pharmacist_manager: [
     // Operations Lead
     'inventory.view', 'inventory.add', 'inventory.update', 'inventory.adjust', 'inventory.approve', 'inventory.restock',
     'sale.create', 'sale.view_history', 'sale.view_details', 'sale.refund', 'sale.modify', 'sale.cancel', 'sale.discount', 'sale.checkout',
-    'purchase.view', 'purchase.create', 'purchase.approve', 'purchase.reject',
+    'purchase.view', 'purchase.create', 'purchase.approve', 'purchase.reject', 'purchase.return',
     'supplier.view', 'supplier.add', 'supplier.update',
     'customer.view', 'customer.add', 'customer.update',
-    'shift.view', 'shift.open', 'shift.close', 'shift.reports',
+    'shift.view', 'shift.open', 'shift.close', 'shift.reports', 'shift.manage_cash',
     'reports.view_inventory', // No financial reports
-    'users.view' // Can view staff but not manage accounts directly (unless given 'users.manage' specifically)
+    'users.view', // Can view staff but not manage accounts directly (unless given 'users.manage' specifically)
+    'shift.view_expected_balance'
   ],
 
   pharmacist: [
@@ -109,7 +115,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
   inventory_officer: [
     // Stock Keeper (No Sales)
     'inventory.view', 'inventory.add', 'inventory.update', 'inventory.adjust', 'inventory.restock',
-    'purchase.view', 'purchase.create',
+    'purchase.view', 'purchase.create', 'purchase.return',
     'supplier.view', 'supplier.add', 'supplier.update',
     'reports.view_inventory'
   ],
@@ -132,7 +138,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'inventory.view',
     'sale.create', 'sale.view_history', 'sale.view_details', 'sale.refund', 'sale.cancel', 'sale.discount', 'sale.checkout',
     'customer.view', 'customer.add', 'customer.update',
-    'shift.view', 'shift.open', 'shift.close', 'shift.reports'
+    'shift.view', 'shift.open', 'shift.close', 'shift.reports', 'shift.manage_cash'
   ],
   
   cashier: [
@@ -145,9 +151,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
   manager: [ // Generic Branch Manager (if used outside Pharmacy context)
     'inventory.view', 'inventory.approve',
     'sale.view_history', 'sale.view_details', 'sale.refund', 'sale.cancel',
-    'shift.view', 'shift.open', 'shift.close', 'shift.reports',
+    'shift.view', 'shift.open', 'shift.close', 'shift.reports', 'shift.manage_cash',
     'reports.view_financial', 'reports.view_inventory', 'reports.export',
-    'users.view'
+    'users.view',
+    'shift.view_expected_balance'
   ],
 
   hr_manager: [
