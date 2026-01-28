@@ -54,13 +54,12 @@ export interface PrintOptions {
  * Values are in millimeters (mm).
  */
 export const LABEL_PRESETS: Record<string, { w: number; h: number; label: string }> = {
-    '38x12': { w: 38, h: 12, label: '38×12 mm (Single)' },
     '38x25': { w: 38, h: 25, label: '38×25 mm (Double)' }
 };
 
 /**
  * Retrieves physical dimensions for a preset, with automatic fallback.
- * @param presetKey - The key to look up (e.g., '38x12')
+ * @param presetKey - The key to look up (e.g., '38x25')
  * @param customDims - Custom dimensions to return if key is 'custom'
  * @returns Object with width (w) and height (h) in mm
  */
@@ -69,7 +68,7 @@ export const getPresetDimensions = (
     customDims?: { w: number; h: number }
 ): { w: number; h: number } => {
     if (presetKey === 'custom' && customDims) return customDims;
-    return LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x12'];
+    return LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x25'];
 };
 
 /** Configuration for the popup window used to trigger the browser's print dialog */
@@ -378,10 +377,10 @@ export const generateLabelHTML = (
 // --- Default Design Configuration ---
 
 /**
- * Standard factory fallback design for 38x12mm labels.
+ * Standard factory fallback design for 38x25mm labels.
  */
 export const DEFAULT_LABEL_DESIGN: LabelDesign = {
-    selectedPreset: '38x12',
+    selectedPreset: '38x25',
     elements: [
         { id: 'store', type: 'text', label: 'Store Name', x: 19, y: 0.7, fontSize: 4, align: 'center', isVisible: true, field: 'store', hitboxOffsetX: 0.0, hitboxOffsetY: -1.0, hitboxWidth: 10, hitboxHeight: 2 },
         { id: 'name', type: 'text', label: 'Drug Name', x: 19, y: 1.8, fontSize: 7, fontWeight: 'bold', align: 'center', isVisible: true, field: 'name', hitboxOffsetX: 0.0, hitboxOffsetY: -0.9, hitboxWidth: 14, hitboxHeight: 2 },
@@ -413,6 +412,60 @@ export const DEFAULT_LABEL_DESIGN: LabelDesign = {
  * printLabels([{ drug: myDrug, quantity: 5 }]);
  */
 
+
+export const generatePageHTML = (
+    contentHTML: string,
+    css: string,
+    dims: { w: number; h: number },
+    pageHeight: number,
+    offsets: { x: number; y: number } = { x: 0, y: 0 }
+): string => {
+    const fullCSS = `
+            ${css}
+            @page { size: ${dims.w}mm ${pageHeight}mm; margin: 0; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            html, body { margin: 0; padding: 0; background: white; }
+            body { 
+                font-family: 'Roboto', sans-serif; 
+            }
+            .print-container {
+                width: ${dims.w}mm;
+                background: white;
+                font-size: 0;
+                line-height: 0;
+                /* Use transform for offsets - this allows moving "ink" without affecting layout flow or paper size triggers */
+                transform: translate(${offsets.x}mm, ${offsets.y}mm);
+                box-sizing: border-box;
+            }
+            .page-container {
+                width: ${dims.w}mm;
+                height: ${pageHeight}mm;
+                position: relative;
+                background: white;
+                font-size: 0;
+                line-height: 0;
+                box-sizing: border-box;
+            }
+        `;
+
+    return `<!DOCTYPE html>
+            <html><head><title>Print Labels</title>
+            <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+            <style>${fullCSS}</style></head><body>
+            <div class="print-container">${contentHTML}</div>
+            <script>
+                // Double-confirmation for font readiness in the new window context
+                Promise.all([
+                    document.fonts.ready,
+                    new Promise(resolve => setTimeout(resolve, 100)) // Safety delay for slow rendering engines
+                ]).then(() => {
+                    // print() call injected by consumer if needed
+                }).catch(e => {
+                    console.error('Font loading failed in print window', e);
+                });
+            </script>
+            </body></html>`;
+};
 
 export const printLabels = async (items: PrintLabelItem[], options: PrintOptions = {}): Promise<void> => {
     const validItems = items.filter(item => {
@@ -460,14 +513,33 @@ export const printLabels = async (items: PrintLabelItem[], options: PrintOptions
         }
 
         const dims = design.selectedPreset === 'custom'
-            ? (design.customDims || { w: 38, h: 12 })
-            : (LABEL_PRESETS[design.selectedPreset] || LABEL_PRESETS['38x12']);
+            ? (design.customDims || { w: 38, h: 25 })
+            : (LABEL_PRESETS[design.selectedPreset] || { w: 38, h: 25 });
 
         const receiptSettings = getReceiptSettings();
         const offsets = getPrintOffsets();
         const printOffsetX = offsets.x;
         const printOffsetY = offsets.y;
+
+        // Dimensions and Pitch logic
+        // For the 38x25 double label, we have: [12mm label] + [1mm inner gap] + [12mm label] + [3mm outer gap]
+        // This results in a 28mm total pitch (page height)
+        const isDouble = design.selectedPreset === '38x25';
+        const labelsPerPage = isDouble ? 2 : 1;
         
+        // Configuration for the specific double-label system
+        const labelHeight = isDouble ? 12 : dims.h;
+        const innerGap = isDouble ? 1 : 0;
+        const outerGap = isDouble ? 3 : (design.labelGap || 0); // Always 3mm for 38x25 as per roll specs
+        
+        // The effective height of the page (from top of one pair to top of next pair)
+        const pageHeight = isDouble 
+            ? (labelHeight * 2) + innerGap + outerGap // (12*2) + 1 + 3 = 28mm
+            : labelHeight + outerGap;
+
+        // Correct dimensions for the individual label HTML generation
+        const renderDims = { w: dims.w, h: labelHeight };
+
         const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
 
         const labelFragments: string[] = [];
@@ -475,7 +547,7 @@ export const printLabels = async (items: PrintLabelItem[], options: PrintOptions
             const singleLabel = generateLabelHTML(
                 item.drug,
                 design,
-                dims,
+                renderDims, // Use 12mm for individual label content
                 receiptSettings,
                 item.expiryDateOverride,
                 undefined,
@@ -488,73 +560,33 @@ export const printLabels = async (items: PrintLabelItem[], options: PrintOptions
             }
         }
         
-        // Pagination logic: dynamic based on preset
-        // '38x25' preset implies a physical roll with 2 labels per page (total height 25mm)
-        const labelsPerPage = design.selectedPreset === '38x25' ? 2 : 1;
-        const labelGap = design.labelGap || 0;
-        
-        // Total page height calculation
-        let pageHeight = dims.h;
-        if (labelsPerPage > 1) {
-             // For multi-label pages (like 38x25 double), the preset height usually defines the full page height
-             pageHeight = dims.h; 
-        } else {
-             // For single labels, we add the gap if needed, though usually gap is 0 for single rolls
-             pageHeight = dims.h + labelGap;
-        }
-
-        const gapDivider = labelGap > 0 ? `<div style="height: ${labelGap}mm;"></div>` : '';
+        const innerGapDivider = innerGap > 0 ? `<div style="height: ${innerGap}mm;"></div>` : '';
         const pages: string[] = [];
         
         for (let i = 0; i < labelFragments.length; i += labelsPerPage) {
             const pageLabels = labelFragments.slice(i, i + labelsPerPage);
             const isLastPage = i + labelsPerPage >= labelFragments.length;
             
-            // Join labels with gap divider
-            const labelsWithGap = pageLabels.join(gapDivider);
-            const pageHTML = `<div class="page-container" style="page-break-after: ${isLastPage ? 'auto' : 'always'};">${labelsWithGap}</div>`;
+            // Join labels with the internal gap (1mm)
+            const labelsContent = pageLabels.join(innerGapDivider);
+            
+            // The container height includes ONLY the labels and the inner gap.
+            // The outer gap is handled by the pageHeight (Pitch) and transform logic.
+            const pageHTML = `<div class="page-container" style="height: ${pageHeight - outerGap}mm; page-break-after: ${isLastPage ? 'auto' : 'always'};">
+                ${labelsContent}
+            </div>`;
             pages.push(pageHTML);
         }
         
         const allPagesHTML = pages.join('');
 
-        const css = `
-            ${templateCSS}
-            @page { size: ${dims.w}mm ${pageHeight}mm; margin: 0; }
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-                margin: 0; 
-                padding: 0; 
-                font-family: 'Roboto', sans-serif; 
-            }
-            .print-container {
-                width: ${dims.w}mm;
-                background: white;
-                font-size: 0;
-                line-height: 0;
-                padding-left: ${printOffsetX > 0 ? printOffsetX : 0}mm;
-                padding-right: ${printOffsetX < 0 ? Math.abs(printOffsetX) : 0}mm;
-                padding-top: ${printOffsetY > 0 ? printOffsetY : 0}mm;
-                padding-bottom: ${printOffsetY < 0 ? Math.abs(printOffsetY) : 0}mm;
-                box-sizing: border-box;
-            }
-            .page-container {
-                width: ${dims.w}mm;
-                height: ${pageHeight}mm;
-                position: relative;
-                background: white;
-                font-size: 0;
-                line-height: 0;
-                box-sizing: border-box;
-            }
-        `;
-
-        const htmlContent = `<!DOCTYPE html>
-            <html><head><title>Print Labels</title>
-            <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-            <style>${css}</style></head><body>
-            <div class="print-container">${allPagesHTML}</div>
-            </body></html>`;
+        const htmlContent = generatePageHTML(
+            allPagesHTML,
+            templateCSS,
+            dims,
+            pageHeight,
+            { x: printOffsetX, y: printOffsetY }
+        );
 
         // Try silent printing via QZ Tray first
         if (shouldTrySilent) {

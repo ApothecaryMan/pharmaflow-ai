@@ -1,6 +1,6 @@
 import React from 'react';
 import { Drug } from '../../types';
-import { generateTemplateCSS, getLabelElementContent, generateLabelHTML } from './LabelPrinter';
+import { generateTemplateCSS, getLabelElementContent, generateLabelHTML, generatePageHTML } from './LabelPrinter';
 import { LabelElement, LabelDesign } from './studio/types';
 
 interface BarcodePreviewProps {
@@ -59,11 +59,19 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
             showPrintBorders
         };
 
-        const { css, classNameMap } = generateTemplateCSS(tempDesign);
+        const currentDims = dims || { w: 38, h: 25 };
+        const isDouble = currentDims.w === 38 && currentDims.h === 25; // Matching 38x25 logic
+        const labelHeight = isDouble ? 12 : currentDims.h;
+        const innerGap = isDouble ? 1 : 0;
+        const outerGap = 3; // Standard gap as requested
+
+        const renderDims = { w: currentDims.w, h: labelHeight };
+
+        const { css: templateCSS, classNameMap } = generateTemplateCSS(tempDesign);
         const singleLabelHTML = generateLabelHTML(
             drug,
             tempDesign,
-            dims,
+            renderDims,
             receiptSettings,
             undefined, // expiryOverride
             qrCodeDataUrl,
@@ -71,40 +79,41 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
             classNameMap
         );
 
-        let finalHTML = singleLabelHTML;
-        // If showing paired (2 labels), duplicate
-        if (!isSingleLabel && showPairedPreview) {
-            finalHTML += singleLabelHTML;
+        let finalHTML = '';
+        const labelsCount = (!isSingleLabel && showPairedPreview) ? 2 : 1;
+        
+        if (labelsCount === 2) {
+            finalHTML = `
+                <div class="pair-container">
+                    ${singleLabelHTML}
+                    <div style="height: ${innerGap}mm;"></div>
+                    ${singleLabelHTML}
+                </div>
+            `;
+        } else {
+            finalHTML = singleLabelHTML;
         }
 
-        const pageHeight = showPairedPreview ? dims.h * 2 : dims.h;
-
-        return `<!DOCTYPE html>
-            <html><head>
-            <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-            <style>
-                ${css}
-                body { margin: 0; padding: 0; overflow: hidden; background: white; }
-                .preview-container {
-                    width: ${dims.w}mm;
-                    height: ${pageHeight}mm;
-                    position: relative;
-                    padding-left: ${printOffsetX > 0 ? `${printOffsetX}mm` : 0};
-                    padding-right: ${printOffsetX < 0 ? `${Math.abs(printOffsetX)}mm` : 0};
-                    padding-top: ${printOffsetY > 0 ? `${printOffsetY}mm` : 0};
-                    padding-bottom: ${printOffsetY < 0 ? `${Math.abs(printOffsetY)}mm` : 0};
-                    box-sizing: border-box;
-                }
-            </style>
-            </head><body>
-            <div class="preview-container">
-                ${finalHTML}
-            </div>
-            </body></html>`;
+        const pageHeight = labelsCount === 2 ? (labelHeight * 2) + innerGap + outerGap : labelHeight + outerGap;
+        
+        // Use the SHARED generator to ensure identical output to the printer
+        return generatePageHTML(
+            finalHTML,
+            templateCSS,
+            dims,
+            pageHeight,
+            { x: printOffsetX, y: printOffsetY }
+        );
     };
 
     const renderPhantomElement = (el: LabelElement, offsetIndex: number = 0) => {
-        const yOffset = offsetIndex * dims.h;
+        const currentDims = dims || { w: 38, h: 25 };
+        const isDouble = currentDims.w === 38 && currentDims.h === 25;
+        const labelHeight = isDouble ? 12 : currentDims.h;
+        const innerGap = isDouble ? 1 : 0;
+        
+        // The vertical offset for the second label in a pair includes the 1mm gap
+        const yOffset = offsetIndex * (labelHeight + innerGap);
         const alignTransform = el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0';
         
         // Apply hitbox calibration offsets (manual adjustment for selection accuracy)
@@ -156,7 +165,7 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
                 scrolling="no"
                 style={{ 
                     width: `${dims.w}mm`, 
-                    height: `${showPairedPreview ? dims.h * 2 : dims.h}mm`,
+                    height: `${showPairedPreview ? (2 * 12 + 1 + 3) : 15}mm`, // Explicitly show the full pitch
                     border: 'none',
                     display: 'block',
                     overflow: 'hidden',
@@ -171,10 +180,7 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
                 style={{
                     // Mirror .print-container styles from LabelPrinter.ts
                     // This ensures the coordinate system matches the print output exactly
-                    paddingLeft: printOffsetX > 0 ? `${printOffsetX}mm` : 0,
-                    paddingRight: printOffsetX < 0 ? `${Math.abs(printOffsetX)}mm` : 0,
-                    paddingTop: printOffsetY > 0 ? `${printOffsetY}mm` : 0,
-                    paddingBottom: printOffsetY < 0 ? `${Math.abs(printOffsetY)}mm` : 0,
+                    transform: `translate(${printOffsetX}mm, ${printOffsetY}mm)`,
                     boxSizing: 'border-box',
                     fontSize: 0,
                     lineHeight: 0,

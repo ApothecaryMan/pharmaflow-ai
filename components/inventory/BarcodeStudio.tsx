@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ScreenCalibration } from '../common/ScreenCalibration';
 import { BarcodePreview } from './BarcodePreview';
 import { useContextMenu } from '../common/ContextMenu';
@@ -13,7 +13,7 @@ import { CARD_BASE } from '../../utils/themeStyles';
 import { Modal } from '../common/Modal';
 import { TRANSLATIONS } from '../../i18n/translations';
 
-import { generateLabelHTML, getLabelElementContent, generateTemplateCSS, getReceiptSettings, DEFAULT_LABEL_DESIGN, LABEL_PRESETS } from './LabelPrinter';
+import { generateLabelHTML, getLabelElementContent, generateTemplateCSS, getReceiptSettings, DEFAULT_LABEL_DESIGN, LABEL_PRESETS, generatePageHTML } from './LabelPrinter';
 import { PropertyInspector } from './studio/PropertyInspector';
 import { useDebounce } from '../../hooks/useDebounce';
 import { FilterDropdown } from '../common/FilterDropdown';
@@ -75,8 +75,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   }, []);
 
   // Global Settings
-  const [selectedPreset, setSelectedPreset] = useState<string>('38x12');
-  const [customDims, setCustomDims] = useState<{ w: number, h: number }>({ w: 38, h: 12 });
+  const [selectedPreset, setSelectedPreset] = useState<string>('38x25');
+  const [customDims, setCustomDims] = useState<{ w: number, h: number }>({ w: 38, h: 25 });
   const [zoom, setZoom] = useState(5);
 
   const [printMode, setPrintMode] = useState<'single' | 'sheet'>('single');
@@ -178,7 +178,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   const initialElemPos = useRef({ x: 0, y: 0 });
   const dragStartSnapshot = useRef<LabelElement[]>([]);
 
-  const dims = selectedPreset === 'custom' ? customDims : (LABEL_PRESETS[selectedPreset] || LABEL_PRESETS['38x12']);
+  const dims = selectedPreset === 'custom' ? customDims : (LABEL_PRESETS[selectedPreset] || LABEL_PRESETS['38x25']);
 
   // Load Templates & Last State
   useEffect(() => {
@@ -206,14 +206,14 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                     applyDesignState(defaultTemplate.design);
                     setActiveTemplateId(savedDefaultId);
                 } else {
-                    initializeLayout('38x12');
+                    initializeLayout('38x25');
                 }
             } else {
-                initializeLayout('38x12');
+                initializeLayout('38x25');
             }
         } catch (e) {
             console.error("Failed to load design", e);
-            initializeLayout('38x12');
+            initializeLayout('38x25');
         }
     } else if (savedDefaultId && loadedTemplates.length > 0) {
         const defaultTemplate = loadedTemplates.find(t => t.id === savedDefaultId);
@@ -221,10 +221,10 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
             applyDesignState(defaultTemplate.design);
             setActiveTemplateId(savedDefaultId);
         } else {
-            initializeLayout('38x12');
+            initializeLayout('38x25');
         }
     } else {
-        initializeLayout('38x12');
+        initializeLayout('38x25');
     }
     
     setIsLoaded(true); // Enable autosave
@@ -295,7 +295,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   ]);
 
   const initializeLayout = (presetKey: string) => {
-      const { w, h } = presetKey === 'custom' ? customDims : (LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x12']);
+      const { w, h } = presetKey === 'custom' ? customDims : (LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x25']);
       
       const newElements = [...DEFAULT_LABEL_DESIGN.elements];
       setElements(newElements);
@@ -637,77 +637,40 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   ];
 
   // Shared HTML generator - used by BOTH print and preview to ensure 100% match
-  const generatePrintHTML = (forPrint: boolean = false, singleLabel: boolean = false) => {
+  const generatePrintHTML = (forPrint: boolean = false, isSingleLabel: boolean = false) => {
       if (!selectedDrug) return '';
-      
-      const design: LabelDesign = {
-          elements,
-          selectedPreset,
-          customDims,
-          barcodeSource,
-          showPrintBorders,
-          printOffsetX,
-          printOffsetY,
-          labelGap
-      };
-
+      const design: LabelDesign = { elements, selectedPreset, customDims, barcodeSource, showPrintBorders, printOffsetX, printOffsetY, labelGap };
       const receiptSettings = { storeName, hotline };
 
+      const isDouble = selectedPreset === '38x25';
+      const labelHeight = isDouble ? 12 : dims.h;
+      const innerGap = isDouble ? 1 : 0;
+      const outerGap = labelGap || 3;
+      const pageHeight = isDouble ? (labelHeight * 2) + innerGap + outerGap : labelHeight + outerGap;
+      const renderDims = { w: dims.w, h: labelHeight };
+
       const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
+      const singleLabelHTML = generateLabelHTML(selectedDrug, design, renderDims, receiptSettings, undefined, qrCodeDataUrl, uploadedLogo, classNameMap);
 
-      const singleLabelHTML = generateLabelHTML(
-          selectedDrug,
-          design,
-          dims,
-          receiptSettings,
-          undefined,
-          qrCodeDataUrl,
-          uploadedLogo,
-          classNameMap
-      );
+      const labelsCount = (!isSingleLabel && isDouble) ? 2 : 1;
+      let finalHTML = labelsCount === 2 ? `<div class="pair-container">${singleLabelHTML}<div style="height: ${innerGap}mm;"></div>${singleLabelHTML}</div>` : singleLabelHTML;
 
-      const labelCount = selectedPreset === '38x25' ? 2 : 1;
-      const gapMm = labelGap || 0;
-      const gapDivider = gapMm > 0 ? `<div style="height: ${gapMm}mm;"></div>` : '';
-      const labelHTML = Array(labelCount).fill(null).map(() => singleLabelHTML).join(gapDivider);
-
-      // Total height matches the logic in LabelPrinter.ts
-      let totalHeight = dims.h;
-      if (labelCount === 1) {
-          totalHeight = dims.h + gapMm;
-      }
-
-      const css = `
-        @page { size: ${dims.w}mm ${totalHeight}mm; margin: 0; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'Roboto', sans-serif; 
-        }
-        .print-container {
-            width: ${dims.w}mm; 
-            height: ${totalHeight}mm;
-            position: relative;
-            background: white;
-            font-size: 0;
-            line-height: 0;
-            padding-left: ${printOffsetX > 0 ? printOffsetX : 0}mm;
-            padding-right: ${printOffsetX < 0 ? Math.abs(printOffsetX) : 0}mm;
-            padding-top: ${printOffsetY > 0 ? printOffsetY : 0}mm;
-            padding-bottom: ${printOffsetY < 0 ? Math.abs(printOffsetY) : 0}mm;
-            box-sizing: border-box;
-        }
-      `;
-
-      return `<!DOCTYPE html>
-<html><head><title>Print</title>
-<link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-<style>${css} ${templateCSS} </style></head><body>
-<div class="print-container">${labelHTML}</div>
-${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>' : ''}
-</body></html>`;
+      let html = generatePageHTML(finalHTML, templateCSS, dims, pageHeight, { x: printOffsetX, y: printOffsetY });
+      if (forPrint) html = html.replace('</body>', '<script>document.fonts.ready.then(() => window.print());</script></body>');
+      return html;
   };
+
+  const payloadSize = useMemo(() => {
+      if (!selectedDrug || !isLoaded) return '0 B';
+      try {
+          const html = generatePrintHTML(false, false);
+          const bytes = (new TextEncoder().encode(html)).length;
+          if (bytes < 1024) return `${bytes} B`;
+          return `${(bytes / 1024).toFixed(1)} KB`;
+      } catch (e) {
+          return '0 B';
+      }
+  }, [elements, selectedDrug, isLoaded, selectedPreset, customDims, barcodeSource, showPrintBorders, printOffsetX, printOffsetY, labelGap, qrCodeDataUrl, uploadedLogo, storeName, hotline]);
 
   const handlePrint = () => {
       if (!selectedDrug) return;
@@ -862,6 +825,14 @@ ${forPrint ? '<script>document.fonts.ready.then(() => window.print());</script>'
                         <span className="material-symbols-rounded text-[18px] leading-none">aspect_ratio</span>
                     </button>
                 </div>
+
+                {/* Payload Size Badge */}
+                {isLoaded && selectedDrug && (
+                    <div className="hidden sm:flex items-center px-2 h-7 bg-gray-50/50 dark:bg-gray-800/30 rounded-lg border border-gray-100 dark:border-gray-800/50 text-[10px] font-bold text-gray-500 gap-1.5" title="Estimated Printing Payload Size">
+                        <span className="material-symbols-rounded text-sm text-gray-400">database</span>
+                        <span>{payloadSize}</span>
+                    </div>
+                )}
 
                 {/* Ultra-Compact Zoom Controls */}
                 <div className="flex items-center bg-gray-50/50 dark:bg-gray-800/30 p-0.5 rounded-lg border border-gray-100 dark:border-gray-800/50">
