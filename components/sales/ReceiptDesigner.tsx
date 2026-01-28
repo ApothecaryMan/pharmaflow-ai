@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { FilterDropdown } from '../common/FilterDropdown';
@@ -37,7 +37,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   const defaultOptions: InvoiceTemplateOptions = {
     storeName: 'ZINC',
     storeSubtitle: 'Premium Care Center',
-    headerAddress: language === 'AR' ? '١٢٣ ابوحمص' : '123 Rasena',
+    headerAddress: language === 'AR' ? '١٢٣ ابوحمص' : '123 Abu Hommos',
     headerArea: language === 'AR' ? 'مدينة نصر' : 'Nasr City',
     headerHotline: '19099',
     footerMessage: 'Thank you for your visit!',
@@ -220,6 +220,74 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     const html = generateInvoiceHTML(DUMMY_SALE, { ...options, language });
     setPreviewHtml(html);
   }, [options, language, showDeliveryPreview, showReturnsPreview]);
+
+  const payloadSize = useMemo(() => {
+    if (!previewHtml) return '0 B';
+    const bytes = (new TextEncoder().encode(previewHtml)).length;
+    if (bytes < 1024) return `${bytes} B`;
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }, [previewHtml]);
+  /* 
+  // Old calculation for reference (HTML + Base64 images decoded)
+  const actualPrintSize = useMemo(() => {
+    if (!previewHtml) return '0 B';
+    
+    // حساب HTML (يشمل السلاسل النصية للصور)
+    const htmlBytes = new TextEncoder().encode(previewHtml).length;
+    
+    // حساب حجم الصور الفعلي (تقريبي من base64)
+    const images = (previewHtml.match(/data:image\/[^;]+;base64,[^"]+/g) || []) as string[];
+    const imageBytes = images.reduce((sum: number, img: string) => {
+      const parts = img.split(',');
+      if (parts.length < 2) return sum;
+      const base64 = parts[1];
+      return sum + (base64.length * 0.75); // تحويل تقريبي لحجم الباينري
+    }, 0);
+    
+    const total = htmlBytes + imageBytes;
+    
+    if (total < 1024) return `${total.toFixed(0)} B`;
+    if (total < 1024 * 1024) return `${(total / 1024).toFixed(1)} KB`;
+    return `${(total / (1024 * 1024)).toFixed(1)} MB`;
+  }, [previewHtml]);
+  */
+
+  const actualPrintSize = useMemo(() => {
+    if (!previewHtml) return '0 B';
+    
+    // 1. Raw Payload size (the string itself)
+    const htmlBytes = new TextEncoder().encode(previewHtml).length;
+    
+    // 2. Resource Dependencies (Approximate download sizes from public folder)
+    let dependencyBytes = 30 * 1024; // JsBarcode.min.js (~30KB Gzipped)
+    
+    // Add font sizes
+    const fontSizes = {
+      'fake-receipt': 48 * 1024,
+      'raqami': 74.5 * 1024,
+      'receiptional': 134 * 1024
+    };
+    
+    // Always includes Raqami for Arabic fallback in current template
+    dependencyBytes += fontSizes['raqami'];
+    
+    if (options.receiptFont === 'receipt-basic') {
+      dependencyBytes += fontSizes['receiptional'];
+    } else {
+      dependencyBytes += fontSizes['fake-receipt'];
+    }
+    
+    // If using default logo (not custom svg or base64)
+    if (!options.logoBase64 && !options.logoSvgCode) {
+      dependencyBytes += 84 * 1024; // app_icon.svg size
+    }
+    
+    const total = htmlBytes + dependencyBytes;
+    
+    if (total < 1024) return `${total.toFixed(0)} B`;
+    if (total < 1024 * 1024) return `${(total / 1024).toFixed(1)} KB`;
+    return `${(total / (1024 * 1024)).toFixed(1)} MB`;
+  }, [previewHtml, options.receiptFont, options.logoBase64, options.logoSvgCode]);
 
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-140px)] gap-6 p-4">
@@ -672,7 +740,19 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       </div>
 
       {/* RIGHT: Preview */}
-      <div className="flex-1 rounded-2xl flex justify-center p-8 border border-gray-200 dark:border-gray-800 overflow-y-auto custom-scrollbar bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] bg-gray-100 dark:bg-gray-950">
+      <div className="flex-1 rounded-2xl flex justify-center p-8 border border-gray-200 dark:border-gray-800 overflow-y-auto custom-scrollbar bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] bg-gray-100 dark:bg-gray-950 relative">
+        {/* Top-Left Unified Stats Badge */}
+        <div className="absolute top-4 left-4 flex items-center px-2.5 h-7 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-xl border border-gray-200/50 dark:border-gray-700/50 shadow-sm text-[10px] font-bold gap-3 z-20 pointer-events-none">
+            <div className="flex items-center gap-1.2" title="Real Printing Memory Size (Actual)">
+                <span className="material-symbols-rounded text-[16px] text-blue-500">memory</span>
+                <span className="text-blue-600 dark:text-blue-400">{actualPrintSize}</span>
+            </div>
+            <div className="w-[1px] h-3 bg-gray-200 dark:bg-gray-700" />
+            <div className="flex items-center gap-1.2 opacity-80" title="Raw Data Transfer Size (Payload)">
+                <span className="material-symbols-rounded text-[16px] text-gray-400">database</span>
+                <span className="text-gray-500 dark:text-gray-400">{payloadSize}</span>
+            </div>
+        </div>
         <div className="bg-white shadow-2xl shadow-gray-300 dark:shadow-black flex-shrink-0 transition-all duration-200 ease-in-out rounded-lg overflow-hidden" style={{ width: '79mm', height: 'fit-content', minHeight: '300px' }}>
           <iframe 
             srcDoc={previewHtml}
