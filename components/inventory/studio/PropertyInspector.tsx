@@ -65,7 +65,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-6">
                 {!selectedElementId ? (
                     <>
                         <SidebarSection title="General Settings" icon="settings" color={color}>
@@ -238,20 +238,20 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                                 <div className="space-y-1.5">
                                     <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1">{t.inspector.x}</label>
                                     <div className="relative">
-                                        <input type="number" step="0.5" value={selectedElement.x} onChange={(e) => handlePropertyChange('x', parseFloat(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
+                                        <input type="number" step="0.5" inputMode="decimal" value={selectedElement.x} onChange={(e) => handlePropertyChange('x', parseFloat(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1">{t.inspector.y}</label>
                                     <div className="relative">
-                                        <input type="number" step="0.5" value={selectedElement.y} onChange={(e) => handlePropertyChange('y', parseFloat(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
+                                        <input type="number" step="0.5" inputMode="decimal" value={selectedElement.y} onChange={(e) => handlePropertyChange('y', parseFloat(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
                                     </div>
                                 </div>
                             </div>
                             {(selectedElement.type === 'text' || selectedElement.type === 'barcode') && (
                                 <div className="space-y-1.5">
                                     <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1">{t.inspector.fontSize}</label>
-                                    <input type="number" value={selectedElement.fontSize} onChange={(e) => handlePropertyChange('fontSize', parseInt(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
+                                    <input type="number" inputMode="numeric" value={selectedElement.fontSize} onChange={(e) => handlePropertyChange('fontSize', parseInt(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
                                 </div>
                             )}
                             {selectedElement.type === 'barcode' && (
@@ -289,11 +289,11 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
                                         <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1">{t.inspector.width}</label>
-                                        <input type="number" value={selectedElement.width} onChange={(e) => handlePropertyChange('width', parseFloat(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
+                                        <input type="number" inputMode="decimal" value={selectedElement.width} onChange={(e) => handlePropertyChange('width', parseFloat(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block px-1">{t.inspector.height}</label>
-                                        <input type="number" value={selectedElement.height} onChange={(e) => handlePropertyChange('height', parseFloat(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
+                                        <input type="number" inputMode="decimal" value={selectedElement.height} onChange={(e) => handlePropertyChange('height', parseFloat(e.target.value))} className="w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all"/>
                                     </div>
                                 </div>
                             )}
