@@ -153,7 +153,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'مرتجعات المشتريات',
     icon: 'assignment_return',
     category: 'purchase',
-    requiredProps: ['purchases', 'purchaseReturns', 'setPurchaseReturns', 'drugs', 'setDrugs', 'color', 't', 'language'],
+    requiredProps: ['purchases', 'purchaseReturns', 'setPurchaseReturns', 'drugs', 'setDrugs', 'color', 't', 'language', 'onCreatePurchaseReturn'],
     permission: 'purchase.view'
   },
   'barcode-printer': {
@@ -325,7 +325,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'قائمة الموظفين',
     icon: 'badge',
     category: 'hr',
-    requiredProps: ['color', 't', 'language'],
+    requiredProps: ['employees', 'onAddEmployee', 'onUpdateEmployee', 'onDeleteEmployee', 'color', 't', 'language'],
     permission: 'users.view'
   },
   'employee-profile': {

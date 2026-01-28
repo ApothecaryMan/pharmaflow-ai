@@ -19,6 +19,7 @@ interface PurchaseReturnsProps {
   color: string;
   t: any;
   language: 'EN' | 'AR';
+  onCreatePurchaseReturn?: (ret: PurchaseReturn) => Promise<void>;
 }
 
 export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({ 
@@ -29,7 +30,8 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   setDrugs,
   color, 
   t, 
-  language 
+  language,
+  onCreatePurchaseReturn
 }) => {
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
@@ -186,7 +188,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   };
 
   // Submit return
-  const handleSubmitReturn = (e: React.FormEvent) => {
+  const handleSubmitReturn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPurchase || returnItems.length === 0) {
       alert(t.purchaseReturns?.messages?.selectPurchaseAlert || 'Please select a purchase and add items to return');
@@ -208,7 +210,13 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       notes
     };
 
-    setPurchaseReturns([...purchaseReturns, newReturn]);
+    if (onCreatePurchaseReturn) {
+        await onCreatePurchaseReturn(newReturn);
+    } else {
+        // Fallback (should not happen if wired correctly)
+        console.error("onCreatePurchaseReturn prop likely missing");
+        setPurchaseReturns([...purchaseReturns, newReturn]);
+    }
     
     // Reset form
     setSelectedPurchase(null);

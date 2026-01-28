@@ -39,11 +39,26 @@ interface EmployeeListProps {
   language: string;
   onUpdateEmployees?: (employees: Employee[]) => void;
   userRole: UserRole;
+  employees: Employee[];
+  onAddEmployee: (employee: Employee) => Promise<void>;
+  onUpdateEmployee: (id: string, updates: Partial<Employee>) => Promise<void>;
+  onDeleteEmployee: (id: string) => Promise<void>;
 }
 
-export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, onUpdateEmployees, userRole }) => {
+export const EmployeeList: React.FC<EmployeeListProps> = ({ 
+  color, 
+  t, 
+  language, 
+  onUpdateEmployees, 
+  userRole, 
+  employees, 
+  onAddEmployee, 
+  onUpdateEmployee, 
+  onDeleteEmployee 
+}) => {
   // --- Data Context ---
-  const { employees, addEmployee, updateEmployee, deleteEmployee } = useData();
+  // Removed direct useData() call for employees/actions to enforce centralized logic
+  // const { employees, addEmployee, updateEmployee, deleteEmployee } = useData();
 
   // --- State ---
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -139,7 +154,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
 
   const handleDelete = async (emp: Employee) => {
     if (confirm(t.employeeList.deleteConfirm)) {
-      await deleteEmployee(emp.id);
+      await onDeleteEmployee(emp.id);
       playBeep();
     }
   };
@@ -309,7 +324,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
 
     try {
       if (isEdit) {
-          await updateEmployee(editingEmployee.id, finalFormData);
+          await onUpdateEmployee(editingEmployee.id, finalFormData);
       } else {
           // Generate ID and Code
           const maxSerial = employees.reduce((max, emp) => {
@@ -328,7 +343,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ color, t, language, 
               role: 'pharmacist',
               ...finalFormData as any
           };
-          await addEmployee(newEmp);
+          await onAddEmployee(newEmp);
       }
 
       playSuccess();

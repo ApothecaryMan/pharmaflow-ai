@@ -107,7 +107,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     purchaseReturns, setPurchaseReturns,
     returns, setReturns,
     customers, setCustomers,
-    employees,
+    employees, setEmployees, // Added setEmployees
     isLoading
   } = useData();
 
@@ -138,8 +138,9 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     handleAddDrug, handleUpdateDrug, handleDeleteDrug, handleRestock,
     handleAddSupplier, handleUpdateSupplier, handleDeleteSupplier,
     handleAddCustomer, handleUpdateCustomer, handleDeleteCustomer,
-    handlePurchaseComplete, handleApprovePurchase, handleRejectPurchase,
+    handlePurchaseComplete, handleApprovePurchase, handleRejectPurchase, handleCreatePurchaseReturn,
     handleCompleteSale, handleUpdateSale, handleProcessReturn,
+    handleAddEmployee, handleUpdateEmployee, handleDeleteEmployee,
     enrichedCustomers,
   } = useEntityHandlers({
     inventory, setInventory,
@@ -149,7 +150,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     returns, setReturns,
     customers, setCustomers,
     currentEmployeeId,
-    employees,
+    employees, setEmployees, // Added setEmployees
     isLoading,
     getVerifiedDate,
     validateTransactionTime,
@@ -549,6 +550,12 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
                 if (requiredProps.includes('onRejectPurchase')) props.onRejectPurchase = handleRejectPurchase;
                 if (requiredProps.includes('onAddProduct')) props.onAddProduct = () => setView('add-product');
                 if (requiredProps.includes('onRestock')) props.onRestock = handleRestock;
+                
+                // New Handlers
+                if (requiredProps.includes('onAddEmployee')) props.onAddEmployee = handleAddEmployee;
+                if (requiredProps.includes('onUpdateEmployee')) props.onUpdateEmployee = handleUpdateEmployee;
+                if (requiredProps.includes('onDeleteEmployee')) props.onDeleteEmployee = handleDeleteEmployee;
+                if (requiredProps.includes('onCreatePurchaseReturn')) props.onCreatePurchaseReturn = handleCreatePurchaseReturn;
                 
                 // Navigation Handlers
                 if (requiredProps.includes('onViewChange')) props.onViewChange = handleNavigate;
