@@ -125,8 +125,20 @@ export const usePrinter = (): UsePrinterResult => {
         // Refresh printer list on connect
         await handleRefreshPrinters();
       }
-    } catch (err) {
-      console.error('Failed to connect to QZ Tray:', err);
+    } catch (err: any) {
+      const errorMsg = err?.message || String(err);
+      
+      // Handle known connection errors quietly
+      if (
+        errorMsg.includes('Connection blocked by client') || 
+        errorMsg.includes('Connection refused') ||
+        errorMsg.includes('failed to connect')
+      ) {
+        console.warn(`[Printer] QZ Tray unreachable: ${errorMsg}. Ensure QZ Tray is running.`);
+      } else {
+        console.error('Failed to connect to QZ Tray:', err);
+      }
+      
       if (isMounted.current) {
         setStatus('not_installed');
       }
@@ -192,8 +204,14 @@ export const usePrinter = (): UsePrinterResult => {
           }
         }
       }
-    } catch (err) {
-      console.error('Failed to get printers:', err);
+    } catch (err: any) {
+      const errorMsg = err?.message || String(err);
+      if (errorMsg.includes('Connection blocked by client') || errorMsg.includes('Connection refused')) {
+        console.warn(`[Printer] Could not refresh printers: QZ Tray unreachable.`);
+      } else {
+        console.error('Failed to get printers:', err);
+      }
+      
       if (isMounted.current) {
         setPrinters([]);
       }
