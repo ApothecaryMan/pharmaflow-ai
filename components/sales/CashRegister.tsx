@@ -75,12 +75,37 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
   }, [currentEmployeeId, employees]);
   
   // Check if current user has permission to add/remove cash manually
-  const canManageCash = useMemo(() => {
+  const canAddCash = useMemo(() => {
     if (!currentEmployeeId || !employees) return false;
     const user = employees.find(e => e.id === currentEmployeeId);
     if (!user) return false;
     
-    return canPerformAction(user.role, 'shift.manage_cash');
+    return canPerformAction(user.role, 'shift.cash_in');
+  }, [currentEmployeeId, employees]);
+
+  const canRemoveCash = useMemo(() => {
+    if (!currentEmployeeId || !employees) return false;
+    const user = employees.find(e => e.id === currentEmployeeId);
+    if (!user) return false;
+    
+    return canPerformAction(user.role, 'shift.cash_out');
+  }, [currentEmployeeId, employees]);
+
+  // Check if current user has permission to open/close shift
+  const canOpenShift = useMemo(() => {
+    if (!currentEmployeeId || !employees) return false;
+    const user = employees.find(e => e.id === currentEmployeeId);
+    if (!user) return false;
+    
+    return canPerformAction(user.role, 'shift.open');
+  }, [currentEmployeeId, employees]);
+
+  const canCloseShift = useMemo(() => {
+    if (!currentEmployeeId || !employees) return false;
+    const user = employees.find(e => e.id === currentEmployeeId);
+    if (!user) return false;
+    
+    return canPerformAction(user.role, 'shift.close');
   }, [currentEmployeeId, employees]);
 
   // Actions
@@ -97,9 +122,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       return;
     }
 
-    // CHECK AUTH
-    if (!currentEmployeeId) {
-        setValidationError(language === 'AR' ? 'يجب تسجيل الدخول لفتح المناوبة' : 'You must login to open a shift');
+    // CHECK AUTH & PERMISSIONS
+    if (!currentEmployeeId || !canOpenShift) {
+        setValidationError(language === 'AR' ? 'غير مصرح لك بفتح المناوبة' : 'You do not have permission to open a shift');
         return;
     }
 
@@ -146,9 +171,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       return;
     }
 
-    // CHECK AUTH
-    if (!currentEmployeeId) {
-        setValidationError(language === 'AR' ? 'يجب تسجيل الدخول لإغلاق المناوبة' : 'You must login to close a shift');
+    // CHECK AUTH & PERMISSIONS
+    if (!currentEmployeeId || !canCloseShift) {
+        setValidationError(language === 'AR' ? 'غير مصرح لك بإغلاق المناوبة' : 'You do not have permission to close a shift');
         return;
     }
 
@@ -191,9 +216,19 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       setValidationError(t.cashRegister.validation.positiveAmount);
       return;
     }
+    // CHECK PERMISSIONS
+    if (modalMode === 'in' && !canAddCash) {
+      setValidationError(language === 'AR' ? 'غير مصرح لك بإضافة نقدية' : 'You do not have permission to add cash');
+      return;
+    }
+    if (modalMode === 'out' && !canRemoveCash) {
+      setValidationError(language === 'AR' ? 'غير مصرح لك بسحب نقدية' : 'You do not have permission to remove cash');
+      return;
+    }
+
     if (modalMode === 'out') {
-      // Protect opening balance - can only withdraw from sales + deposits
-      const withdrawableBalance = currentShift.cashSales + currentShift.cashIn - currentShift.cashOut;
+      // Protect opening balance - can only withdraw from sales + deposits - returns
+      const withdrawableBalance = currentShift.cashSales + currentShift.cashIn - currentShift.cashOut - (currentShift.returns || 0);
       if (amount > withdrawableBalance) {
         setValidationError(t.cashRegister.validation.protectedBalance);
         return;
@@ -246,40 +281,44 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
         <div className="flex gap-3">
           {currentShift ? (
             <>
-              {canManageCash && (
-                <>
-                  <button 
-                    onClick={() => setModalMode('in')}
-                    className={`px-4 py-2 rounded-xl bg-${color}-100 text-${color}-700 hover:bg-${color}-200 font-bold transition-colors flex items-center gap-2`}
-                  >
-                     <span className="material-symbols-rounded">add</span>
-                     {t.cashRegister.actions.addCash}
-                  </button>
-                  <button 
-                    onClick={() => setModalMode('out')}
-                    className={`px-4 py-2 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2`}
-                  >
-                     <span className="material-symbols-rounded">remove</span>
-                     {t.cashRegister.actions.removeCash}
-                  </button>
-                </>
+                  {canAddCash && (
+                    <button 
+                      onClick={() => setModalMode('in')}
+                      className={`px-4 py-2 rounded-xl bg-${color}-100 text-${color}-700 hover:bg-${color}-200 font-bold transition-colors flex items-center gap-2`}
+                    >
+                       <span className="material-symbols-rounded">add</span>
+                       {t.cashRegister.actions.addCash}
+                    </button>
+                  )}
+                  {canRemoveCash && (
+                    <button 
+                      onClick={() => setModalMode('out')}
+                      className={`px-4 py-2 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 font-bold transition-colors flex items-center gap-2`}
+                    >
+                       <span className="material-symbols-rounded">remove</span>
+                       {t.cashRegister.actions.removeCash}
+                    </button>
+                  )}
+              {canCloseShift && (
+                <button 
+                  onClick={() => setModalMode('close')}
+                  className={`px-4 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-bold transition-colors flex items-center gap-2`}
+                >
+                   <span className="material-symbols-rounded">lock</span>
+                   {t.cashRegister.actions.closeShift}
+                </button>
               )}
-              <button 
-                onClick={() => setModalMode('close')}
-                className={`px-4 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-bold transition-colors flex items-center gap-2`}
-              >
-                 <span className="material-symbols-rounded">lock</span>
-                 {t.cashRegister.actions.closeShift}
-              </button>
             </>
           ) : (
-            <button 
-              onClick={() => setModalMode('open')}
-              className={`px-6 py-2.5 rounded-xl bg-${color}-600 text-white hover:bg-${color}-700 font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2`}
-            >
-               <span className="material-symbols-rounded">lock_open</span>
-               {t.cashRegister.actions.openShift}
-            </button>
+            canOpenShift && (
+              <button 
+                onClick={() => setModalMode('open')}
+                className={`px-6 py-2.5 rounded-xl bg-${color}-600 text-white hover:bg-${color}-700 font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2`}
+              >
+                 <span className="material-symbols-rounded">lock_open</span>
+                 {t.cashRegister.actions.openShift}
+              </button>
+            )
           )}
         </div>
       </div>

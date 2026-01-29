@@ -13,7 +13,7 @@ import { getLocationName } from "../../data/locations";
 import { usePOSTabs } from "../../hooks/usePOSTabs";
 import { useStatusBar } from "../layout/StatusBar";
 import { UserRole, canPerformAction } from "../../config/permissions";
-import { useToast } from "../../context";
+import { useAlert } from "../../context";
 
 import { SmartAutocomplete } from "../common/SmartInputs";
 import { SearchInput } from "../common/SearchInput";
@@ -106,7 +106,7 @@ export const POS: React.FC<POSProps> = ({
   currentEmployeeId,
   userRole,
 }) => {
-  const { error: showToastError } = useToast();
+  const { error: showToastError } = useAlert();
   const { showMenu } = useContextMenu();
   const { getVerifiedDate, addNotification } = useStatusBar();
   const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
@@ -2361,7 +2361,7 @@ export const POS: React.FC<POSProps> = ({
                      setIsDeliveryMode(false);
                      setAmountPaid("");
                    }}
-                   disabled={!isValidOrder || !hasOpenShift}
+                   disabled={!isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')}
                    className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
                  >
                    <span className="material-symbols-rounded text-[18px]">
@@ -2374,7 +2374,7 @@ export const POS: React.FC<POSProps> = ({
                      setIsDeliveryMode(true);
                      setIsCheckoutMode(false);
                    }}
-                   disabled={!isValidOrder || !hasOpenShift}
+                   disabled={!isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')}
                    className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex justify-center items-center shrink-0`}
                    title={t.deliveryOrder}
                  >

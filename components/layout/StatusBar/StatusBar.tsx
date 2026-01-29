@@ -2,7 +2,8 @@ import React from 'react';
 import { useStatusBar } from './StatusBarContext';
 import { ConnectionStatus } from './items/ConnectionStatus';
 import { NotificationBell } from './items/NotificationBell';
-import { AnnouncementBanner } from './items/AnnouncementBanner';
+// import { AnnouncementBanner } from './items/AnnouncementBanner';
+import { AlertsAndAds } from '../../features/alerts/AlertsAndAds';
 import { VersionInfo } from './items/VersionInfo';
 import { StatusBarItem } from './StatusBarItem';
 import { DateTime } from './items/DateTime';
@@ -232,10 +233,13 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
 
         {/* Date Time */}
         <DateTime hideIcon={true} />
+
+        {/* Alerts & Ads (Next to Time) */}
+        <AlertsAndAds />
       </div>
 
-      {/* Center Section - Announcements */}
-      <AnnouncementBanner />
+      {/* Center Spacer (Visible only if needed, currently empty as we moved Ads) */}
+      <div className="flex-1" />
 
       {/* Right Section */}
       <div className="flex items-center h-full">
