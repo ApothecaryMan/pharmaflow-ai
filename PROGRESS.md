@@ -62,7 +62,6 @@ This document tracks the current implementation status of unit tests across the 
 ### Interface Elements
 
 - [x] `Modal.tsx` (4 tests)
-- [x] `Toast.tsx` (3 tests)
 - [x] `ContextMenu.tsx` (4 tests)
 - [ ] `FilterDropdown.tsx`
 - [ ] `ChartWidget.tsx`

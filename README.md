@@ -1,8 +1,10 @@
-# Zinc 💊
+# Zinc
 
 A modern pharmacy management system built with React, TypeScript, and Tailwind CSS.
 
-**Live Demo:** [zinc-ai.netlify.app](https://zinc-ai.netlify.app)
+<!-- OLD **Live Demo:** [pharmaflow-ai.netlify.app](https://pharmaflow-ai.netlify.app) -->
+
+**Live Demo:** [zinc.netlify.app](https://zinc.netlify.app)
 
 ---
 

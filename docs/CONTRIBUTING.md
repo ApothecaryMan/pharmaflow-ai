@@ -10,6 +10,11 @@ zinc/
 │       └── new-page-standard.md     # New page creation standards
 │
 ├── components/
+│   ├── features/
+│   │   ├── alerts/
+│   │   │   ├── AlertContext.tsx        # Centralized notifications
+│   │   │   └── AlertsAndAds.tsx        # Status bar UI
+│   │
 │   ├── common/         # Shared UI Components
 │   │   ├── SmartInputs.tsx
 │   │   │   ├── useSmartDirection()      # Auto-detect RTL/LTR
@@ -53,7 +58,7 @@ zinc/
 │   │   │
 │   │   ├── ScreenCalibration.tsx       # Screen sizing helper
 │   │   ├── TableAlignment.tsx          # Table content alignment
-│   │   ├── Toast.tsx                   # Notification toasts
+
 │   │   ├── HelpModal.tsx               # Help modal
 │   │   ├── AnimatedCounter.tsx         # Numbers with roll animation
 │   │   ├── ChartWidget.tsx             # Standard Area/Bar chart
@@ -360,7 +365,7 @@ All UI elements must look professional. Avoid basic browser defaults.
 | `SearchInput`         | Search bar           | `common/SearchInput.tsx`         |
 | `Modal`               | Dialog/popup         | `common/Modal.tsx`               |
 | `HelpModal`           | Help dialog          | `common/HelpModal.tsx`           |
-| `Toast`               | Notifications        | `common/Toast.tsx`               |
+| `Alerts & Ads`        | Notifications        | `features/alerts`                |
 | `TanStackTable`       | Data tables          | `common/TanStackTable.tsx`       |
 | `ContextMenu`         | Right-click menus    | `common/ContextMenu.tsx`         |
 | `Navbar`              | Top Navigation       | `layout/Navbar.tsx`              |
@@ -375,6 +380,21 @@ All UI elements must look professional. Avoid basic browser defaults.
 | `CompactProgressCard` | Multi-stacking stats | `common/CompactProgressCard.tsx` |
 
 **Forbidden:** Never use HTML `<select>`, raw `<input>`, or `<table>` directly.
+
+#### Badge & Status Indicator Design ("The Perfect Way")
+
+To maintain a consistent, premium look for statuses and tags, follow these specs:
+
+- **Container**: `inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border bg-transparent`
+- **Typography**: `text-xs font-bold uppercase tracking-wider`
+- **Icons**: Always include a `material-symbols-rounded` icon (size `text-sm`).
+- **Example**:
+  ```tsx
+  <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider bg-transparent">
+    <span className="material-symbols-rounded text-sm">check_circle</span>
+    APPROVED
+  </span>
+  ```
 
 #### iOS Safari Compatibility
 

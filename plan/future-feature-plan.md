@@ -1,0 +1,172 @@
+# 🚀 Future Feature Plan | خطة المميزات المستقبلية
+
+### 🛠️ Advanced Security & Oversight | الأمان والرقابة المتقدمة
+
+1. **Audit Logs | سجلات المراجعة**
+   - **EN**: Record all sensitive operations (deletions, price changes, discounts).
+   - **AR**: تسجيل جميع العمليات الحساسة (حذف، تعديل أسعار، خصومات).
+
+2. **Two-Factor Approval | الموافقة الثنائية**
+   - **EN**: Large transactions (above a certain threshold) require approval from two different authorized users.
+   - **AR**: العمليات الكبيرة (فوق مبلغ معين) تحتاج موافقة شخصين مفوضين.
+
+3. **Time-Based Restrictions | القيود الزمنية**
+   - **EN**: Prevent sensitive operations from being performed outside of official business hours.
+   - **AR**: منع عمليات حساسة خارج أوقات العمل الرسمية لضمان الأمان.
+
+4. **Shift Pattern Analysis | تحليل أنماط الورديات**
+   - **EN**: AI-driven analysis of shift data to detect anomalies and optimize resources.
+   - **AR**: تحليل أنماط الورديات بالذكاء الاصطناعي لاكتشاف الأنماط غير الطبيعية وتحسين الموارد.
+
+   **Monitoring Scope | نطاق الرقابة:**
+   - 📉 **Cash Discrepancies**: Recurring gaps for specific employees | فروق نقدية متكررة لنفس الشخص.
+   - 💸 **Discount Rates**: Monitoring rates significantly above average | معدل خصومات أعلى من المتوسط.
+   - ⏱️ **Error Peaks**: Identifying windows with high error rates | تحديد أوقات ذروة الأخطاء.
+   - ⚖️ **Benchmarking**: Comparing performance across different shifts | مقارنة أداء الورديات.
+   - 🔮 **Forecasting**: Predicting staffing needs based on history | توقع الاحتياجات (عدد الموظفين/الوقت).
+
+   **Sample Automated Report | نموذج تقرير تلقائي:**
+
+   > 🔍 **Cashier Performance Analysis**: Mahmoud Ali
+   > 📊 **Last 30 Days**:
+   >
+   > - **Cash Gaps**: 7 times (3x higher than average) | فروق نقدية: 7 مرات
+   > - **Avg Gap**: -85 EGP | متوسط الفرق: -85 جنيه
+   > - **Timing**: Mostly during Evening Shift | التوقيت: غالباً في الوردية المسائية
+   > - **Recommendation**: Review handover procedures | التوصية: مراجعة إجراءات التسليم
+
+5. **AI-Powered Fraud Detection | كشف الاحتيال الذكي**
+   - **EN**: Real-time detection of suspicious activities and potential fraud patterns.
+   - **AR**: الكشف الفوري عن الأنشطة المشبوهة وأنماط الاحتيال المحتملة باستخدام الذكاء الاصطناعي.
+
+   **Suspicious Patterns | الأنماط المشبوهة:**
+   - 🚫 **Consecutive Cancellations**: Cancelling multiple invoices with the same amount | إلغاء فواتير متتالية لنفس المبلغ.
+   - 🔄 **Refund Fraud**: Large sales without discount followed by return with discount | مبيعات كبيرة بدون خصم ثم إرجاع بخصم.
+   - 🕛 **Odd-Hour Activity**: Stock adjustments during non-business hours | تعديل مخزون في أوقات غريبة.
+   - 🗑️ **Data Deletion**: Deleting customer data immediately after large transactions | حذف بيانات عملاء بعد عمليات كبيرة.
+   - 📉 **Abnormal Discounts**: Discount patterns deviating from the norm | نمط خصومات غير طبيعي.
+
+   **Sample Alert | نموذج تنبيه:**
+
+   > 🚨 **Suspicious Activity Detected! | نشاط مشبوه مكتشف!**
+   >
+   > - **Pattern**: 5 cancelled invoices within 1 hour | النمط: 5 فواتير ملغاة خلال ساعة
+   > - **Total Value**: 2,340 EGP | القيمة الإجمالية: 2,340 جنيه
+   > - **Employee**: [Name] | الموظف: [اسم]
+   > - **Probability**: 87% Fraud | الاحتمالية: 87% احتيال
+   >
+   > [**Immediate Review | مراجعة فورية**] [**Freeze Account | تجميد الحساب**]
+
+6. **Multi-Level Discount Authority | صلاحيات خصم متدرجة**
+   - **EN**: Tiered discount system based on user roles and approval workflows.
+   - **AR**: نظام خصومات متدرج يعتمد على صلاحيات الموظفين وسير عمل الموافقات.
+
+   **Smart Discount System | نظام الخصومات الذكي:**
+   - **0-5%**: Automatic for all employees | تلقائي لجميع الموظفين.
+   - **5-10%**: Senior Cashier Approval (PIN) | موافقة كبير الكاشير (رمز PIN).
+   - **10-20%**: Manager Approval (Mobile App) | موافقة المدير (تطبيق الموبايل).
+   - **20%+**: Owner Approval + Reason Documentation | موافقة المالك + توثيق السبب.
+   - **VIP Discounts**: Pre-approved list | خصومات VIP: قائمة معتمدة مسبقاً.
+
+   **Application Flow | التطبيق:**
+
+   > 🎯 **Discount Request**: 15% | طلب خصم: 15%
+   >
+   > - **Original Amount**: 850 EGP | المبلغ الأصلي: 850 جنيه
+   > - **After Discount**: 722.5 EGP | بعد الخصم: 722.5 جنيه
+   > - **Saved**: 127.5 EGP | الموفر: 127.5 جنيه
+   >
+   > **Requires Approval**: Pharmacy Manager | يحتاج موافقة: مدير الصيدلية
+   >
+   > [**Send Request | إرسال طلب**] [**Reduce to 10% | تقليل الخصم لـ 10%**]
+   >
+   > ⏱️ **Waiting...** (30s) | جاري الانتظار...
+   > ✅ **Approved by**: Dr. Ahmed (3:45 PM) | تمت الموافقة من: د. أحمد
+
+7. **Real-Time Notifications Hub | مركز إشعارات فورية**
+   - **EN**: Centralized notification system across multiple channels (App, SMS, WhatsApp, Email, Telegram).
+   - **AR**: نظام إشعارات مركزي عبر قنوات متعددة (التطبيق، رسائل نصية، واتساب، بريد إلكتروني، تيليجرام).
+
+   **Alert Channels | قنوات التنبيه:**
+   - 📱 **In-App**: Immediate alerts for active users | داخل التطبيق.
+   - 💬 **SMS**: Critical operations | SMS للعمليات الحرجة.
+   - 🟢 **WhatsApp**: Approvals & Urgent alerts | واتساب للموافقات.
+   - 📧 **Email**: Daily reports | بريد إلكتروني للتقارير اليومية.
+   - 🤖 **Telegram Bot**: Owner notifications | Telegram Bot للمالك.
+
+   **Examples | أمثلة:**
+
+   > 📲 **WhatsApp → Manager**:
+   > "🔴 **Urgent**: Withdrawal attempt 5,000 EGP - Approval Required" | "🔴 عاجل: محاولة سحب 5,000 جنيه - موافقة مطلوبة"
+   >
+   > 📧 **Email → Owner (Daily 11 PM)**:
+   > "📊 **Daily Summary**: 45 Invoices | 18,500 EGP | 3 Alerts" | "📊 ملخص اليوم: 45 فاتورة | 18,500 جنيه | 3 تنبيهات"
+   >
+   > 💬 **Telegram → Pharmacy Owner**:
+   > "⚠️ **Low Stock**: Amoxicillin (5 packs remaining)" | "⚠️ مخزون منخفض: أموكسيسيلين (5 علب متبقية)"
+
+8. **Batch Operations Control | التحكم في العمليات الجماعية**
+   - **EN**: Security restrictions for mass updates and deletions.
+   - **AR**: قيود أمنية للعمليات المتعددة والتحديثات الجماعية.
+
+   **Restrictions | تقييد العمليات:**
+   - ❌ **Bulk Deletion**: Deleting > 5 items requires Manager Approval | حذف أكثر من 5 عناصر: موافقة مدير.
+   - 📝 **Bulk Pricing**: Updating prices for > 10 products requires documentation | تعديل أسعار أكثر من 10 منتجات: توثيق السبب.
+   - 📦 **Manual Count**: Audit for > 50 items requires dual review | جرد يدوي لأكثر من 50 صنف: مراجعة ثنائية.
+   - 📤 **Full Export**: Detailed logging for full data exports | تصدير بيانات كاملة: سجل تفصيلي.
+
+9. **Predictive Inventory | المخزون التنبؤي**
+   - **EN**: AI-driven inventory forecasting based on seasons, events, and disease trends.
+   - **AR**: التنبؤ باحتياجات المخزون بالذكاء الاصطناعي بناءً على المواسم والأحداث واتجاهات الأمراض.
+
+   **AI Forecasts | الذكاء الاصطناعي يتنبأ:**
+   - 📦 **Future Needs**: Upcoming purchase requirements | احتياجات الشراء القادمة.
+   - 🍂 **Seasonality**: Winter (Cold meds), Summer (Skincare) | المواسم (شتاء = أدوية برد).
+   - 📅 **Events**: Ramadan, Hajj, Schools starting | الأحداث (رمضان، حج، مدارس).
+   - 🦠 **Disease Trends**: Analyzing local health trends | تحليل اتجاهات الأمراض.
+   - ⚖️ **Balance**: Avoiding overstocking and shortages | تفادي التكدس والنقص.
+
+   **Example Forecast | مثال:**
+
+   > 🔮 **Next Week Forecast | توقعات الأسبوع القادم**
+   > 📈 **Expected Increase**: +35% | زيادة متوقعة بـ 35%:
+   >
+   > - **Allergy Meds**: Start of Spring | أدوية الحساسية (بداية الربيع)
+   > - **Kids Vitamins**: Exams period | فيتامينات الأطفال (امتحانات)
+   >
+   > 💡 **Purchase Recommendation | توصية شراء:**
+   >
+   > - **Claritin**: +50 packs | كلاريتين: +50 علبة
+   > - **C-Retard**: +30 packs | سي ريتارد: +30 علبة
+   >
+   > [**Auto-Order | تنفيذ الطلب تلقائياً**] [**Manual Review | مراجعة يدوياً**]
+
+E-Invoice & Tax Integration (الفاتورة الإلكترونية والضرائب)
+الفكرة:
+التزام كامل بالفاتورة الإلكترونية
+├── توقيع إلكتروني لكل فاتورة
+├── رفع تلقائي لمصلحة الضرائب
+├── QR Code على كل فاتورة
+├── أرشفة إلكترونية 7 سنوات
+├── تقارير ضريبية جاهزة
+└── تكامل مع منظومة الإيصال الإلكتروني
+الفاتورة:
+🏪 صيدلية النور الإلكترونية
+📅 28 يناير 2026 - 3:45 PM
+رقم الفاتورة: INV-2026-00523
+UUID: 8F7D3B2A1C...
+
+🛒 المنتجات:
+1× بنادول أدفانس 85.00 ج
+2× فيتامين د 50000 260.00 ج
+────────────────────────
+الإجمالي: 345.00 ج
+الضريبة (14%): 48.30 ج
+────────────────────────
+المجموع النهائي: 393.30 ج
+
+📱 [QR Code للتحقق]
+✅ فاتورة مسجلة إلكترونياً
+حالة الرفع: ✓ تم الإرسال للضرائب
+وقت الرفع: 3:45:12 PM
+الأولويةالتأثيرسهولة التطبيق🔴 عاجلعالي جداً (التزام قانوني)متوسط
