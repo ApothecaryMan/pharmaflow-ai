@@ -33,15 +33,23 @@ const shouldCapitalize = (): boolean => {
 };
 
 /**
+ * Helper to capitalize first letter of every word
+ */
+const capitalizeWords = (str: string): string => {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+/**
  * Returns a formatted display name for a drug item.
  * Combines the drug name with its dosage form (in English).
  * 
  * @param item - The drug item object containing name and optional dosageForm
  * @returns Formatted string like "Panadol Tablet" or "Levoxin 500mg Capsule"
- * 
- * @example
- * getDisplayName({ name: 'Panadol', dosageForm: 'Tablet' }) // "Panadol Tablet"
- * getDisplayName({ name: 'Levoxin 250 mg' }) // "Levoxin 250 mg"
  */
 export const getDisplayName = (item: DrugDisplayItem): string => {
   if (!item) return '';
@@ -53,7 +61,7 @@ export const getDisplayName = (item: DrugDisplayItem): string => {
   }
   
   const fullName = parts.join(' ');
-  return shouldCapitalize() ? fullName.toUpperCase() : fullName;
+  return shouldCapitalize() ? fullName.toUpperCase() : capitalizeWords(fullName);
 };
 
 /**
@@ -76,5 +84,6 @@ export const getFullDisplayName = (item: DrugDisplayItem): string => {
   }
   
   const fullName = parts.join(' ');
-  return shouldCapitalize() ? fullName.toUpperCase() : fullName;
+  return shouldCapitalize() ? fullName.toUpperCase() : capitalizeWords(fullName);
 };
+
