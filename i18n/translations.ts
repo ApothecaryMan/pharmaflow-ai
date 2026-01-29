@@ -90,7 +90,9 @@ export const TRANSLATIONS = {
         alignment: 'Alignment',
         noColumnsVisible: 'No columns visible',
         manageColumnsHint: 'Right-click anywhere to manage columns',
-        loadingData: 'Loading data...'
+        loadingData: 'Loading data...',
+        page: 'Page',
+        of: 'of'
       }
     },
     login: {
@@ -2093,7 +2095,9 @@ export const TRANSLATIONS = {
         alignment: 'المحاذاة',
         noColumnsVisible: 'لا توجد أعمدة مرئية',
         manageColumnsHint: 'انقر بزر الماوس الأيمن في أي مكان لإدارة الأعمدة',
-        loadingData: 'جاري تحميل البيانات...'
+        loadingData: 'جاري تحميل البيانات...',
+        page: 'صفحة',
+        of: 'من'
       }
     },
     login: {

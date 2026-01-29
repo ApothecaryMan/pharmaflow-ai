@@ -661,13 +661,9 @@ export interface Employee {
   
   // --- Auth ---
   username?: string;       // Login Username
-  /** 
-   * @security CRITICAL: This field stores login password.
-   * In production, this MUST be hashed using bcrypt or similar.
-   * Never store or transmit plain text passwords.
-   * Consider using a separate AuthCredentials table with proper encryption.
-   */
   password?: string;
+  biometricCredentialId?: string; // WebAuthn Credential ID
+  biometricPublicKey?: string;    // WebAuthn Public Key (Base64)
   
   // --- Profile ---
   image?: string;          // Base64 encoded profile image
