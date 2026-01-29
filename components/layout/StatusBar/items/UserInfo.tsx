@@ -5,6 +5,7 @@ import { useContextMenu } from '../../../common/ContextMenu';
 import { Employee } from '../../../../types';
 
 import { useSmartDirection } from '../../../common/SmartInputs';
+import { usePosSounds } from '../../../common/hooks/usePosSounds';
 
 /*
  * RTL SUPPORT REMINDER
@@ -41,6 +42,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({
   
   const containerRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const { playSuccess, playError } = usePosSounds();
 
   // Auto-detect direction
   const dir = useSmartDirection(inputVal, language === 'AR' ? 'كلمة المرور...' : 'Password...');
@@ -102,6 +104,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({
            setIsError(false);
          } else {
            setIsError(true);
+           playError();
          }
        } else if (step === 'password') {
          // Validate Password
@@ -122,10 +125,12 @@ export const UserInfo: React.FC<UserInfoProps> = ({
              }
 
              if (isValid) {
+                 playSuccess();
                  onSelectEmployee(tempEmployee.id);
                  resetState();
              } else {
                  setIsError(true);
+                 playError();
              }
          }
        }
@@ -189,15 +194,80 @@ export const UserInfo: React.FC<UserInfoProps> = ({
   return (
     <div className="relative flex items-center h-full" ref={containerRef} dir={language === 'AR' ? 'rtl' : 'ltr'}>
       {step === 'idle' ? (
-        <div onContextMenu={handleContextMenu} className="h-full">
-            <StatusBarItem
-            icon="person"
-            label={currentEmployeeId ? userName : (language === 'AR' ? 'تسجيل الدخول' : 'Login')} // Show "Login" if no user
-            tooltip={tooltipText}
-            onClick={handleStartLogin}
-            variant={currentEmployeeId ? 'info' : 'warning'}
-            className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/10"
-            />
+        <div onContextMenu={handleContextMenu} className="h-full flex items-center">
+             <StatusBarItem
+                icon="person"
+                label={currentEmployeeId ? userName : (language === 'AR' ? 'تسجيل الدخول' : 'Login')} // Show "Login" if no user
+                tooltip={tooltipText}
+                onClick={handleStartLogin}
+                variant={currentEmployeeId ? 'info' : 'warning'}
+                className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/10"
+             />
+             {!currentEmployeeId && (
+                <button
+                    onClick={async () => {
+                        try {
+                            const { startAuthentication } = await import('@simplewebauthn/browser');
+                            const { generateChallenge, bufferToBase64, isWebAuthnSupported, parseWebAuthnError } = await import('../../../../utils/webAuthnUtils');
+                            const { authService } = await import('../../../../services/auth/authService');
+                            
+                            // Check if browser supports WebAuthn
+                            if (!(await isWebAuthnSupported())) {
+                                const msg = language === 'AR' 
+                                    ? 'هذا المتصفح لا يدعم مفاتيح المرور (Passkeys). تأكد من استخدام HTTPS.' 
+                                    : 'Browser does not support Passkeys. Ensure you are on HTTPS.';
+                                alert(msg);
+                                return;
+                            }
+
+                            // 1. Get Challenge from "Backend"
+                            const challengeBuffer = generateChallenge();
+                            const challengeBase64 = bufferToBase64(challengeBuffer);
+
+                            // 2. Options for Authentication (Mocked backend response)
+                            const publicKeyCredentialRequestOptions = {
+                                challenge: challengeBase64,
+                                rpId: window.location.hostname,
+                                userVerification: "required" as UserVerificationRequirement,
+                                timeout: 60000,
+                            };
+
+                            // 3. Start Authentication via Library
+                            const asseResp = await startAuthentication({
+                                optionsJSON: publicKeyCredentialRequestOptions as any
+                            });
+
+                            if (asseResp && onSelectEmployee) {
+                                // 4. Verify on Backend
+                                // For pilot, we check if the credential ID exists in our local list
+                                const credentialId = asseResp.id; // Library gives us base64url id directly
+                                
+                                const result = await authService.loginWithBiometric(credentialId, employees);
+                                if (result) {
+                                    // User logged in
+                                    playSuccess();
+                                    onSelectEmployee(result.id);
+                                    resetState();
+                                } else {
+                                    console.warn("Credential ID not found in local records:", credentialId);
+                                    setIsError(true);
+                                    playError();
+                                }
+                            }
+                        } catch (err: any) {
+                            console.error("Passkey login failed", err);
+                            const { parseWebAuthnError } = await import('../../../../utils/webAuthnUtils');
+                            setIsError(true);
+                            playError();
+                            alert(parseWebAuthnError(err, language as any));
+                        }
+                    }}
+                    className="flex items-center justify-center h-full px-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors border-l border-gray-200 dark:border-gray-700"
+                    title={language === 'AR' ? 'تسجيل الدخول بمفتاح المرور' : 'Login with Passkey'}
+                >
+                    <span className="material-symbols-rounded text-[18px] text-blue-500">fingerprint</span>
+                </button>
+             )}
         </div>
       ) : (
         <div className="flex items-center h-full px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-l border-r border-gray-300 dark:border-gray-700 min-w-[150px]">
