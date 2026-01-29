@@ -223,7 +223,9 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     actions.push({ label: t.actionsMenu.viewDetails || t.actionsMenu.view, icon: 'visibility', action: () => handleViewDetails(drug.id) });
     actions.push({ separator: true });
     actions.push({ label: t.actionsMenu.printBarcode, icon: 'print', action: () => handlePrintBarcode(drug) });
-    actions.push({ label: t.actionsMenu.duplicate, icon: 'content_copy', action: () => handleDuplicate(drug) });
+    if (canPerformAction(userRole, 'inventory.add')) {
+      actions.push({ label: t.actionsMenu.duplicate, icon: 'content_copy', action: () => handleDuplicate(drug) });
+    }
     
     if (canPerformAction(userRole, 'inventory.restock')) {
       actions.push({ separator: true });
@@ -773,15 +775,17 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
                     <span className="material-symbols-rounded">qr_code_2</span>
                     {t.actionsMenu.printBarcode}
                 </button>
-                 <button 
-                    onClick={() => {
-                        setViewingDrug(null);
-                        handleOpenEdit(viewingDrug);
-                    }}
-                    className="flex-1 py-2.5 rounded-full font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors type-interactive"
-                >
-                    {t.actionsMenu.edit}
-                </button>
+                 {canPerformAction(userRole, 'inventory.update') && (
+                   <button 
+                      onClick={() => {
+                          setViewingDrug(null);
+                          handleOpenEdit(viewingDrug);
+                      }}
+                      className="flex-1 py-2.5 rounded-full font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors type-interactive"
+                  >
+                      {t.actionsMenu.edit}
+                  </button>
+                 )}
             </div>
         </Modal>
       )}

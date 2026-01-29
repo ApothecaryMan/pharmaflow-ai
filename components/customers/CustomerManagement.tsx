@@ -23,6 +23,7 @@ interface CustomerManagementProps {
   language: 'EN' | 'AR';
   darkMode?: boolean;
   userRole: UserRole;
+  onViewChange?: (view: string, params?: Record<string, any>) => void;
 }
 
 export const CustomerManagement: React.FC<CustomerManagementProps> = ({
@@ -34,7 +35,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   t,
   language,
   darkMode,
-  userRole
+  userRole,
+  onViewChange
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const [mode, setMode] = useState<'list' | 'add'>('list');
@@ -215,6 +217,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       label: t.contextMenu?.showProfile || 'Show Profile Info', 
       icon: 'account_circle', 
       action: () => handleOpenProfile(customer)
+    },
+    {
+      label: t.contextMenu?.viewHistory || 'View History',
+      icon: 'manage_search',
+      action: () => onViewChange && onViewChange('customer-history', { customerId: customer.id })
     },
     { separator: true },
     { 
@@ -688,14 +695,16 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         </div>
         
         <div className="flex gap-2 items-center">
-            <button
-            onClick={handleOpenKiosk}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full transition-all text-xs font-bold"
-            title="Open Patient Self-Entry Mode"
-            >
-            <span className="material-symbols-rounded text-[18px]">monitor_heart</span>
-            <span className="hidden md:inline">{t.modal.kioskMode}</span>
-            </button>
+            {canPerformAction(userRole, 'customer.add') && (
+              <button
+                onClick={handleOpenKiosk}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full transition-all text-xs font-bold"
+                title="Open Patient Self-Entry Mode"
+              >
+                <span className="material-symbols-rounded text-[18px]">monitor_heart</span>
+                <span className="hidden md:inline">{t.modal.kioskMode}</span>
+              </button>
+            )}
 
             <SegmentedControl
                 value={mode}

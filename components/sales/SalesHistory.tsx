@@ -1,5 +1,4 @@
 
-
 import React, { useState, useRef } from 'react';
 import { Sale, Return } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
@@ -14,7 +13,9 @@ import { printInvoice, InvoiceTemplateOptions, defaultOptions } from './InvoiceT
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { TanStackTable } from '../common/TanStackTable';
 import { ColumnDef } from '@tanstack/react-table';
+import { UserRole, canPerformAction } from '../../config/permissions';
 import { MaterialTabs } from '../common/MaterialTabs';
+import { Shift } from '../../types';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -24,9 +25,23 @@ interface SalesHistoryProps {
   t: any;
   language: string;
   datePickerTranslations: any;
+  userRole: UserRole;
+  currentEmployeeId?: string;
+  currentShift: Shift | null;
 }
 
-export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onProcessReturn, color, t, language, datePickerTranslations }) => {
+export const SalesHistory: React.FC<SalesHistoryProps> = ({ 
+  sales, 
+  returns, 
+  onProcessReturn, 
+  color, 
+  t, 
+  language, 
+  datePickerTranslations, 
+  userRole,
+  currentEmployeeId,
+  currentShift
+}) => {
   // Determine locale based on language
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,6 +50,20 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [returnModalOpen, setReturnModalOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+
+  // Calculate daily refunds for the current employee (used for pharmacist limits)
+  const currentDailyRefunds = React.useMemo(() => {
+    if (!currentEmployeeId || userRole !== 'pharmacist') return 0;
+    
+    const today = new Date().toISOString().split('T')[0];
+    return (returns || [])
+      .filter(r => {
+        const isToday = r.date.startsWith(today);
+        const isSameEmployee = r.processedBy === currentEmployeeId;
+        return isToday && isSameEmployee;
+      })
+      .reduce((sum, r) => sum + r.totalRefund, 0);
+  }, [returns, currentEmployeeId, userRole]);
 
   // Get help content
   const helpContent = SALES_HISTORY_HELP[language as 'EN' | 'AR'] || SALES_HISTORY_HELP.EN;
@@ -181,6 +210,13 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
       
       if (start && saleDate < start) return false;
       if (end && saleDate > end) return false;
+      
+      // Restriction: View assigned orders only (Delivery Agent)
+      // FIX: Admins, Owners, and Managers should always see everything even if they have this permission (e.g. from ALL_PERMISSIONS)
+      const isPrivileged = ['admin', 'pharmacist_owner', 'pharmacist_manager', 'manager'].includes(userRole);
+      if (!isPrivileged && canPerformAction(userRole, 'sale.view_assigned_only')) {
+        return sale.deliveryEmployeeId === currentEmployeeId;
+      }
 
       return true;
     });
@@ -240,11 +276,13 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
           <p className="text-sm text-gray-500 dark:text-gray-400">{t.subtitle}</p>
         </div>
         
-        {/* Total Revenue Card */}
-        <div className={`px-4 py-2 rounded-2xl bg-${color}-50 dark:bg-${color}-900/20 ${CARD_BASE} flex flex-col items-end min-w-[140px]`}>
-            <span className={`text-[10px] font-bold uppercase text-${color}-600 dark:text-${color}-400`}>{t.totalRevenue}</span>
-            <span className={`text-xl font-bold text-${color}-900 dark:text-${color}-100`}>${sales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}</span>
-        </div>
+        {/* Total Revenue Card - Hidden for Delivery Agents */}
+        {userRole !== 'delivery' && (
+          <div className={`px-4 py-2 rounded-2xl bg-${color}-50 dark:bg-${color}-900/20 ${CARD_BASE} flex flex-col items-end min-w-[140px]`}>
+              <span className={`text-[10px] font-bold uppercase text-${color}-600 dark:text-${color}-400`}>{t.totalRevenue}</span>
+              <span className={`text-xl font-bold text-${color}-900 dark:text-${color}-100`}>${sales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}</span>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -403,9 +441,13 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                                               {language === 'AR' ? 'وحدة' : 'UNIT'}
                                             </span>
                                           )}
-                                          <span className="opacity-50 text-[10px] shrink-0">x</span>
-                                          <span className="shrink-0 tabular-nums">${effectivePrice.toFixed(2)}</span>
-                                          {item.discount && item.discount > 0 ? <span className="text-green-600 dark:text-green-400 shrink-0">(-{item.discount}%)</span> : ''}
+                                          {userRole !== 'delivery' && (
+                                            <>
+                                              <span className="opacity-50 text-[10px] shrink-0">x</span>
+                                              <span className="shrink-0 tabular-nums">${effectivePrice.toFixed(2)}</span>
+                                              {item.discount && item.discount > 0 ? <span className="text-green-600 dark:text-green-400 shrink-0">(-{item.discount}%)</span> : ''}
+                                            </>
+                                          )}
                                       </div>
                                   </div>
                                   <div className="font-medium text-gray-700 dark:text-gray-300 text-right flex flex-col items-end">
@@ -433,8 +475,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                       </div>
                   </div>
 
-                  <div className={`${selectedSale.subtotal !== selectedSale.total ? 'border-t border-gray-100 dark:border-gray-800 pt-3' : ''} space-y-2 text-sm`}>
-                  {selectedSale.subtotal !== undefined && selectedSale.subtotal !== selectedSale.total && (
+                  <div className={`${(selectedSale.subtotal !== selectedSale.total && userRole !== 'delivery') ? 'border-t border-gray-100 dark:border-gray-800 pt-3' : ''} space-y-2 text-sm`}>
+                  {selectedSale.subtotal !== undefined && selectedSale.subtotal !== selectedSale.total && userRole !== 'delivery' && (
                            <div className="flex justify-between text-gray-500">
                                <span>{t.modal.subtotal}</span>
                                <span>${selectedSale.subtotal.toFixed(2)}</span>
@@ -467,19 +509,24 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
                           const returnedQty = selectedSale.itemReturnedQuantities?.[lineKey] || selectedSale.itemReturnedQuantities?.[item.id] || 0;
                           return returnedQty < item.quantity;
                       });
+
+                      // Check if sale is in current shift (for cashier)
+                      const isSaleInCurrentShift = !!currentShift && new Date(selectedSale.date) >= new Date(currentShift.openTime);
+                      const canRefund = canPerformAction(userRole, 'sale.refund') && 
+                                       (userRole !== 'cashier' || isSaleInCurrentShift);
                       
                       return (
                         <>
-                          {hasItemsToReturn && (
-                            <button 
-                              onClick={() => setReturnModalOpen(true)}
-                              aria-label={t.returns?.processReturn || 'Process Return'}
-                              className={`flex-1 py-2.5 rounded-full font-medium text-white bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center gap-2`}
-                            >
-                                <span className="material-symbols-rounded">assignment_return</span>
-                                {t.returns?.processReturn || 'Process Return'}
-                            </button>
-                          )}
+                           {hasItemsToReturn && canRefund && (
+                             <button 
+                               onClick={() => setReturnModalOpen(true)}
+                               aria-label={t.returns?.processReturn || 'Process Return'}
+                               className={`flex-1 py-2.5 rounded-full font-medium text-white bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center gap-2`}
+                             >
+                                 <span className="material-symbols-rounded">assignment_return</span>
+                                 {t.returns?.processReturn || 'Process Return'}
+                             </button>
+                           )}
                           <button 
                             onClick={() => handlePrint(selectedSale)}
                             aria-label={t.modal.print}
@@ -512,12 +559,15 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, returns, onPr
            color={color}
            t={t}
            language={language}
+           userRole={userRole}
+           currentDailyRefunds={currentDailyRefunds}
+           currentShift={currentShift}
           />
-        )}
+       )}
 
       {/* Help */}
       <HelpButton onClick={() => setShowHelp(true)} title={helpContent.title} color={color} isRTL={language === 'AR'} />
       <HelpModal show={showHelp} onClose={() => setShowHelp(false)} helpContent={helpContent as any} color={color} language={language} />
      </div>
    );
- };
+};

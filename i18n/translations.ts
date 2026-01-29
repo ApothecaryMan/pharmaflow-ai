@@ -84,7 +84,14 @@ export const TRANSLATIONS = {
       currency: 'L.E',
       loading: 'Loading...',
       checkingAuth: 'Checking authentication...',
-      pageNotFound: 'Page not found'
+      pageNotFound: 'Page not found',
+      table: {
+        columns: 'Columns',
+        alignment: 'Alignment',
+        noColumnsVisible: 'No columns visible',
+        manageColumnsHint: 'Right-click anywhere to manage columns',
+        loadingData: 'Loading data...'
+      }
     },
     login: {
       title: 'Welcome back!',
@@ -1257,7 +1264,33 @@ export const TRANSLATIONS = {
         copied: 'Code copied to clipboard',
         kioskDesc: 'Please fill in your details to register with us.'
       },
-      noResults: 'No customers found.'
+      noResults: 'No customers found.',
+      customerHistory: {
+        title: 'Customer History',
+        subtitle: 'View detailed sales and returns history',
+        searchPlaceholder: 'Search by name, code, phone, or address...',
+        noCustomerSelected: 'Select a customer to view history',
+        stats: {
+          totalSpent: 'Total Spent',
+          totalReturns: 'Total Returns',
+          points: 'Loyalty Points',
+          visitCount: 'Total Visits'
+        },
+        tabs: {
+          invoices: 'Invoices',
+          returns: 'Returns'
+        },
+        table: {
+          date: 'Date',
+          invoiceNo: 'Invoice #',
+          returnNo: 'Return #',
+          items: 'Items',
+          total: 'Total',
+          refundAmount: 'Refund',
+          status: 'Status',
+          reason: 'Reason'
+        }
+      }
     },
     customerOverview: {
       title: 'Customer Overview',
@@ -2054,7 +2087,14 @@ export const TRANSLATIONS = {
       currency: 'ج.م',
       loading: 'جاري التحميل...',
       checkingAuth: 'جاري التحقق من تسجيل الدخول...',
-      pageNotFound: 'الصفحة غير موجودة'
+      pageNotFound: 'الصفحة غير موجودة',
+      table: {
+        columns: 'الأعمدة',
+        alignment: 'المحاذاة',
+        noColumnsVisible: 'لا توجد أعمدة مرئية',
+        manageColumnsHint: 'انقر بزر الماوس الأيمن في أي مكان لإدارة الأعمدة',
+        loadingData: 'جاري تحميل البيانات...'
+      }
     },
     login: {
       title: 'مرحباً بعودتك!',
@@ -2912,7 +2952,33 @@ export const TRANSLATIONS = {
         copied: 'تم نسخ الكود للحافظة',
         kioskDesc: 'يرجى ملء بياناتك للتسجيل معنا.'
       },
-      noResults: 'لم يتم العثور على عملاء.'
+      noResults: 'لم يتم العثور على عملاء.',
+      customerHistory: {
+        title: 'سجل العميل',
+        subtitle: 'عرض سجل المبيعات والمرتجعات التفصيلي',
+        searchPlaceholder: 'بحث بالاسم، الكود، الهاتف، أو العنوان...',
+        noCustomerSelected: 'اختر عميلاً لعرض السجل',
+        stats: {
+          totalSpent: 'إجمالي المبيعات',
+          totalReturns: 'إجمالي المرتجعات',
+          points: 'نقاط الولاء',
+          visitCount: 'عدد الزيارات'
+        },
+        tabs: {
+          invoices: 'الفواتير',
+          returns: 'المرتجعات'
+        },
+        table: {
+          date: 'التاريخ',
+          invoiceNo: 'رقم الفاتورة',
+          returnNo: 'رقم الإرجاع',
+          items: 'الأصناف',
+          total: 'الإجمالي',
+          refundAmount: 'المسترد',
+          status: 'الحالة',
+          reason: 'السبب'
+        }
+      }
     },
     customerOverview: {
       title: 'نظرة عامة على العملاء',

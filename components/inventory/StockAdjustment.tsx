@@ -3,7 +3,7 @@ import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
 import { SearchDropdown } from '../common/SearchDropdown';
 import { FilterDropdown } from '../common/FilterDropdown';
-import { useToast } from '../../context';
+import { useAlert } from '../../context';
 import { DatePicker } from '../common/DatePicker';
 import { Drug } from '../../types';
 import { parseSearchTerm } from '../../utils/searchUtils';
@@ -53,7 +53,7 @@ interface BatchSelectionModalProps {
 export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onUpdateInventory, color = 'blue', t }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [adjustments, setAdjustments] = useState<AdjustmentItem[]>([]);
-  const { success, error, info, warning } = useToast();
+  const { success, error, info, warning } = useAlert();
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [history, setHistory] = useState<StockMovement[]>([]);
   const [lastTransaction, setLastTransaction] = useState<StockMovement[]>([]);

@@ -304,7 +304,7 @@ export function TanStackTable<TData, TValue>({
   /* State specific for Context Menu tracking to enable live updates */
   const menuPosRef = React.useRef<{x: number, y: number, columnId?: string} | null>(null);
 
-  const getMenuContent = (
+  const getMenuContent = React.useCallback((
     columnId?: string,
     overrideAlign?: Record<string, 'left' | 'center' | 'right'>
   ) => {
@@ -375,13 +375,10 @@ export function TanStackTable<TData, TValue>({
       return (
         <div className="w-[220px] p-1 font-sans">
           
-          {/* Sorting Controls - Only show for specific column */}
-
-
           {/* All Columns Visibility */}
           <div className="space-y-1 px-1">
              <div className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-2 px-1">
-                Columns
+                {t.global.table.columns}
              </div>
              {table.getAllLeafColumns()
                .filter(col => col.id !== 'actions')
@@ -432,7 +429,7 @@ export function TanStackTable<TData, TValue>({
                 <AlignButton align="center" isActive={currentAlign === 'center'} onClick={() => handleAlign('center')} />
                 <AlignButton align="right" isActive={currentAlign === 'right'} onClick={() => handleAlign('right')} />
               </div>
-              <span className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase ml-3">Alignment</span>
+              <span className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase ml-3">{t.global.table.alignment}</span>
             </div>
 
           </div>
@@ -441,7 +438,7 @@ export function TanStackTable<TData, TValue>({
           
         </div>
       );
-  };
+  }, [table, columnAlignment, showMenu, columnVisibility, persistSettings, t.global.table]);
 
   const onContextMenuOpen = (x: number, y: number, columnId?: string) => {
       menuPosRef.current = { x, y, columnId };
@@ -476,7 +473,6 @@ export function TanStackTable<TData, TValue>({
       )}
 
       {/* Table Container - Modified to support context menu on empty state */}
-      {/* Table Container - Modified to support context menu on empty state */}
       <div 
          className={`flex-1 overflow-auto custom-scrollbar relative
             ${lite 
@@ -489,8 +485,8 @@ export function TanStackTable<TData, TValue>({
            <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 gap-3 select-none">
               <span className="material-symbols-rounded text-6xl opacity-50">view_column</span>
               <div className="text-center">
-                  <p className="text-lg font-medium mb-1">No columns visible</p>
-                  <p className="text-sm opacity-70">Right-click anywhere to manage columns</p>
+                  <p className="text-lg font-medium mb-1">{t.global.table.noColumnsVisible}</p>
+                  <p className="text-sm opacity-70">{t.global.table.manageColumnsHint}</p>
               </div>
            </div>
            </ContextMenuTrigger>
@@ -578,7 +574,7 @@ export function TanStackTable<TData, TValue>({
                  <td colSpan={columns.length} className="h-32 text-center">
                     <div className="flex flex-col items-center justify-center p-4">
                         <div className={`w-6 h-6 border-2 border-${color}-500 border-t-transparent rounded-full animate-spin mb-2`}></div>
-                        <span className="text-sm text-gray-500">Loading data...</span>
+                        <span className="text-sm text-gray-500">{t.global.table.loadingData}</span>
                     </div>
                  </td>
                </tr>

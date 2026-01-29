@@ -20,7 +20,7 @@ import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { UserRole, canPerformAction } from '../../config/permissions';
-import { useToast } from '../../context';
+import { useAlert } from '../../context';
 import { TanStackTable } from '../common/TanStackTable';
 
 
@@ -43,7 +43,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   color, t, userRole, onApprovePurchase, onRejectPurchase, language 
 }) => {
   const { getVerifiedDate } = useStatusBar();
-  const { error: showToastError } = useToast();
+  const { error: showToastError } = useAlert();
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
