@@ -30,7 +30,8 @@ import {
   SortingState,
   FilterFn,
   VisibilityState,
-  RowData
+  RowData,
+  getPaginationRowModel
 } from '@tanstack/react-table';
 
 declare module '@tanstack/react-table' {
@@ -113,7 +114,7 @@ interface TanStackTableProps<TData, TValue> {
    * // Inside columns definition:
    * cell: info => <div className="flex w-full justify-end">...</div>
    */
-  defaultColumnAlignment?: Record<string, 'left' | 'center' | 'right'>;
+  defaultColumnAlignment?: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'>;
   globalFilter?: string; // External global filter value
   onSearchChange?: (value: string) => void;
   manualFiltering?: boolean; // If true, disables client-side filtering (useful when passing pre-filtered data)
@@ -128,6 +129,8 @@ interface TanStackTableProps<TData, TValue> {
    */
   lite?: boolean;
   dense?: boolean; // New: for compact rows
+  enablePagination?: boolean;
+  pageSize?: number;
 }
 
 // Helper to get stored settings
@@ -181,8 +184,12 @@ export function TanStackTable<TData, TValue>({
   enableSearch = true,
   customEmptyState,
   initialSorting = [],
+  enablePagination = false,
+  pageSize = 20,
 }: TanStackTableProps<TData, TValue> & { enableTopToolbar?: boolean }) {
-  
+  // Detect RTL direction
+  const isRtl = typeof document !== 'undefined' && document.dir === 'rtl';
+
   // Long-press support for rows
   const currentTouchRow = useRef<TData | null>(null);
   const {
@@ -227,18 +234,45 @@ export function TanStackTable<TData, TValue>({
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(storedSettings?.columnVisibility || defaultVisibility);
   
-  // Initialize alignment with defaults merged with stored settings
-  const [columnAlignment, setColumnAlignment] = useState<Record<string, 'left' | 'center' | 'right'>>({
-    ...defaultColumnAlignment,
-    ...(storedSettings?.columnAlignment || {})
-  });
+  // Initialize alignment: Priority = Stored > Prop > Meta > Smart Default
+  const memoizedInitialAlignment = React.useMemo(() => {
+    const alignment: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'> = { ...defaultColumnAlignment };
+    
+    // Add defaults from column metadata
+    columns.forEach(col => {
+      const colAny = col as any;
+      const id = colAny.id || colAny.accessorKey;
+      if (id) {
+        let align = colAny.meta?.align;
+        
+        // Custom default rules
+        if (!align && id.toLowerCase().includes('code')) {
+            align = 'start';
+        }
+
+        if (align) {
+          // Map logical alignments to physical ones for the menu triad (left/center/right)
+          if (align === 'start') align = isRtl ? 'right' : 'left';
+          if (align === 'end') align = isRtl ? 'left' : 'right';
+          alignment[id] = align;
+        } else if (lite && !alignment[id]) {
+          alignment[id] = getSmartAlignment(id);
+        }
+      }
+    });
+
+    // Merge with stored overrides
+    return { ...alignment, ...(storedSettings?.columnAlignment || {}) };
+  }, [columns, defaultColumnAlignment, lite, storedSettings]);
+
+  const [columnAlignment, setColumnAlignment] = useState<Record<string, 'left' | 'center' | 'right' | 'start' | 'end'>>(memoizedInitialAlignment);
   
   // Helper to extract only the overrides (values different from defaults)
   const getDiff = React.useCallback((
-    current: Record<string, 'left' | 'center' | 'right'>, 
-    defaults: Record<string, 'left' | 'center' | 'right'>
+    current: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'>, 
+    defaults: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'>
   ) => {
-    const diff: Record<string, 'left' | 'center' | 'right'> = {};
+    const diff: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'> = {};
     Object.keys(current).forEach(key => {
       if (current[key] !== defaults[key]) {
         diff[key] = current[key];
@@ -249,7 +283,7 @@ export function TanStackTable<TData, TValue>({
 
   const persistSettings = React.useCallback((
     newColVis: VisibilityState,
-    newAlign: Record<string, 'left' | 'center' | 'right'>
+    newAlign: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'>
   ) => {
     const settings = {
       columnVisibility: newColVis,
@@ -258,22 +292,13 @@ export function TanStackTable<TData, TValue>({
     localStorage.setItem(`table-settings-${tableId}`, JSON.stringify(settings));
   }, [tableId, defaultColumnAlignment, getDiff]);
 
-  // React to default prop changes (e.g. Language switch)
+  // React to default prop changes (e.g. Language switch or prop updates)
   React.useEffect(() => {
-     const stored = getStoredSettings(tableId);
-     
-      // Re-initialize state by merging new defaults with stored overrides
-      setColumnAlignment({
-          ...defaultColumnAlignment,
-          ...(stored?.columnAlignment || {})
-      });
-  }, [defaultColumnAlignment, tableId]);
+    setColumnAlignment(memoizedInitialAlignment);
+  }, [memoizedInitialAlignment]);
   
   const { showMenu } = useContextMenu();
   
-  // Detect RTL direction
-  const isRtl = typeof document !== 'undefined' && document.dir === 'rtl';
-
   const handleColumnVisibilityChange = React.useCallback((updaterOrValue: any) => {
      setColumnVisibility(old => {
         const newVal = typeof updaterOrValue === 'function' ? updaterOrValue(old) : updaterOrValue;
@@ -296,9 +321,15 @@ export function TanStackTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
     globalFilterFn: fuzzyFilter,
     enableSorting: true,
     manualFiltering, // Enable manual filtering if prop is true
+    initialState: {
+        pagination: {
+            pageSize: pageSize,
+        },
+    }
   });
 
   /* State specific for Context Menu tracking to enable live updates */
@@ -306,7 +337,7 @@ export function TanStackTable<TData, TValue>({
 
   const getMenuContent = React.useCallback((
     columnId?: string,
-    overrideAlign?: Record<string, 'left' | 'center' | 'right'>
+    overrideAlign?: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'>
   ) => {
       const column = columnId ? table.getColumn(columnId) : null;
       
@@ -316,7 +347,7 @@ export function TanStackTable<TData, TValue>({
       const currentAlign = columnId ? (effectiveAlign[columnId] || 'left') : 'left';
 
       // Handlers (re-create handlers that use the state/props)
-      const handleAlign = (align: 'left' | 'center' | 'right') => {
+      const handleAlign = (align: 'left' | 'center' | 'right' | 'start' | 'end') => {
         if (!columnId) return;
         const newAlign = { ...columnAlignment, [columnId]: align };
         setColumnAlignment(newAlign);
@@ -472,14 +503,14 @@ export function TanStackTable<TData, TValue>({
       </div>
       )}
 
-      {/* Table Container - Modified to support context menu on empty state */}
-      <div 
-         className={`flex-1 overflow-auto custom-scrollbar relative
-            ${lite 
-                ? 'bg-transparent' 
-                : 'rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900'
-            }`}
-      >
+      {/* Unified Card Wrapper */}
+      <div className={`flex flex-col flex-1 min-h-0 ${
+          lite 
+            ? 'bg-transparent' 
+            : 'rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900 overflow-hidden'
+      }`}>
+        {/* Table Scroll Area */}
+        <div className="flex-1 overflow-auto custom-scrollbar relative">
         {table.getVisibleLeafColumns().length === 0 ? (
            <ContextMenuTrigger className="h-full w-full" onOpen={(x, y) => onContextMenuOpen(x, y)}>
            <div className="h-full min-h-[400px] flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 gap-3 select-none">
@@ -502,8 +533,8 @@ export function TanStackTable<TData, TValue>({
 // ... inside TanStackTable ...
 
                   const align = 
-                      header.column.columnDef.meta?.align || 
                       columnAlignment[header.column.id] || 
+                      header.column.columnDef.meta?.align || 
                       (lite ? getSmartAlignment(header.column.id) : null) ||
                       'left';
 
@@ -520,14 +551,16 @@ export function TanStackTable<TData, TValue>({
                                        align === 'left' ? 'text-left' :
                                        'text-start';
                   
+                  const isFlex = header.column.columnDef.meta?.flex ?? header.column.id.toLowerCase().includes('name');
+
                   return (
                   <th
                     key={header.id}
                     className={`p-0 text-xs font-semibold text-gray-500 uppercase tracking-wider select-none relative group border-b ${lite ? 'border-gray-200 dark:border-gray-700' : 'border-gray-200 dark:border-gray-800'}
                         ${textAlignClass}
-                        ${header.column.columnDef.meta?.flex ? '' : 'w-[1%] whitespace-nowrap'}`}
+                        ${isFlex ? '' : 'w-[1%] whitespace-nowrap'}`}
                     style={{
-                         width: header.column.columnDef.meta?.flex ? 'auto' : header.column.columnDef.meta?.width,
+                         width: isFlex ? 'auto' : header.column.columnDef.meta?.width,
                          minWidth: header.column.columnDef.meta?.minWidth
                     }}
                   >
@@ -604,8 +637,8 @@ export function TanStackTable<TData, TValue>({
                   >
                     {row.getVisibleCells().map(cell => {
                       const align = 
-                          cell.column.columnDef.meta?.align || 
                           columnAlignment[cell.column.id] || 
+                          cell.column.columnDef.meta?.align || 
                           (lite ? getSmartAlignment(cell.column.id) : null) ||
                           'left';
                       const justifyClass = align === 'center' ? 'justify-center text-center' :
@@ -614,13 +647,15 @@ export function TanStackTable<TData, TValue>({
                                            align === 'end' ? 'justify-end text-end' :
                                            'justify-start text-start';
                       
+                      const isFlex = cell.column.columnDef.meta?.flex ?? cell.column.id.toLowerCase().includes('name');
+                      
                       return (
                         <td 
                           key={cell.id} 
                           className={`${dense ? 'py-1' : 'py-2'} px-4 text-sm text-gray-700 dark:text-gray-300 align-middle border-b border-gray-100 dark:border-gray-800
-                            ${cell.column.columnDef.meta?.flex ? '' : 'whitespace-nowrap'}`}
+                            ${isFlex ? '' : 'whitespace-nowrap'}`}
                           style={{
-                                width: cell.column.columnDef.meta?.flex ? 'auto' : cell.column.columnDef.meta?.width,
+                                width: isFlex ? 'auto' : cell.column.columnDef.meta?.width,
                                 minWidth: cell.column.columnDef.meta?.minWidth
                            }}
                            dir={cell.column.columnDef.meta?.dir}
@@ -650,6 +685,58 @@ export function TanStackTable<TData, TValue>({
           </tbody>
         </table>
         )}
+      </div>
+
+      {/* Pagination Footer */}
+      {enablePagination && table.getPageCount() > 1 && (
+        <div
+          className="flex items-center justify-between h-6 border-t  bg-[var(--bg-secondary)] border-[var(--border-primary)]"
+        >
+          {/* Left: Info */}
+          <div className="flex items-center px-2 text-[10px] font-bold tracking-wide text-gray-500 uppercase h-full">
+             {t.global?.table?.page || 'Page'} <span className="mx-1 text-gray-900 dark:text-gray-100">{table.getState().pagination.pageIndex + 1}</span> {t.global?.table?.of || 'of'} <span className="ml-1 text-gray-900 dark:text-gray-100">{table.getPageCount()}</span>
+          </div>
+
+          {/* Right: Controls */}
+          <div className="flex items-center h-full">
+             <button
+               onClick={() => table.setPageIndex(0)}
+               disabled={!table.getCanPreviousPage()}
+               className="h-full aspect-square flex items-center justify-center transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 hover:enabled:text-gray-900 dark:hover:enabled:text-gray-100"
+               title="First Page"
+             >
+               <span className="material-symbols-rounded text-[18px] leading-none">first_page</span>
+             </button>
+             <button
+               onClick={() => table.previousPage()}
+               disabled={!table.getCanPreviousPage()}
+               className="h-full aspect-square flex items-center justify-center transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 hover:enabled:text-gray-900 dark:hover:enabled:text-gray-100"
+               title="Previous Page"
+             >
+               <span className="material-symbols-rounded text-[18px] leading-none">chevron_left</span>
+             </button>
+             
+             <div className="w-px h-3 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+
+             <button
+               onClick={() => table.nextPage()}
+               disabled={!table.getCanNextPage()}
+               className="h-full aspect-square flex items-center justify-center transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 hover:enabled:text-gray-900 dark:hover:enabled:text-gray-100"
+               title="Next Page"
+             >
+               <span className="material-symbols-rounded text-[18px] leading-none">chevron_right</span>
+             </button>
+             <button
+               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+               disabled={!table.getCanNextPage()}
+               className="h-full aspect-square flex items-center justify-center transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 hover:enabled:text-gray-900 dark:hover:enabled:text-gray-100"
+               title="Last Page"
+             >
+               <span className="material-symbols-rounded text-[18px] leading-none">last_page</span>
+             </button>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

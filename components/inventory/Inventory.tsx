@@ -242,7 +242,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
 
   const tableColumns = useMemo<ColumnDef<Drug>[]>(() => [
     {
-      id: 'codes',
+      id: 'code',
       header: t.headers.codes,
       cell: ({ row }) => {
         const drug = row.original;
@@ -386,6 +386,8 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
             onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
             emptyMessage={t.noResults}
             lite={false} // Use standard card design
+            enablePagination={true}
+            pageSize={20}
         />
       </div>
       </>

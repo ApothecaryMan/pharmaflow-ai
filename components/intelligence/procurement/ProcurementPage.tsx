@@ -228,6 +228,8 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 
               tableId="procurement-table"
               lite={true}
               enableSearch={false}
+              enablePagination={true}
+              pageSize={20}
             />
           ) : (
             <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center h-full flex flex-col items-center justify-center">
