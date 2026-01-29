@@ -294,6 +294,24 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         playError();
         return; // Validation failed
     }
+
+    // Check for duplicate username
+    if (formData.username && formData.username.trim().length > 0) {
+        const username = formData.username.trim().toLowerCase();
+        const isDuplicate = employees.some(emp => 
+            emp.id !== (editingEmployee?.id) && 
+            emp.username && 
+            emp.username.toLowerCase() === username
+        );
+
+        if (isDuplicate) {
+            playError();
+            alert(language === 'AR' 
+                ? 'اسم المستخدم هذا مسجل مسبقاً لموظف آخر. يرجى اختيار اسم مختلف.' 
+                : 'This username is already taken by another employee. Please choose a different one.');
+            return;
+        }
+    }
   
     // Secure Password Hashing
     let hashedPassword = editingEmployee?.password; // Default: keep existing password
@@ -335,7 +353,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
           const newCode = `EMP-${String(maxSerial + 1).padStart(3, '0')}`;
           
           const newEmp: Employee = {
-              id: generateUUID(),
+              id: formData.id || generateUUID(),
               employeeCode: newCode,
               startDate: new Date().toISOString().split('T')[0],
               status: 'active',
@@ -692,20 +710,105 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
                             />
                         </div>
-                        {/* Password field for NEW employees */}
-                        {!editingEmployee && (
+                        {/* Biometric Setup Section */}
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.password || 'Password'}</label>
-                            <SmartInput
-                            value={formData.password || ''}
-                            onChange={e => setFormData({...formData, password: e.target.value})}
-                            placeholder={t.employeeList.passwordPlaceholder || "Login Password"}
-                            type="password"
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                            />
+                            <label className="text-xs font-semibold text-gray-500 uppercase px-1">{language === 'AR' ? 'مفتاح المرور (Passkey)' : 'Passkey'}</label>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    try {
+                                        // Dynamic import for SimpleWebAuthn
+                                        const { startRegistration } = await import('@simplewebauthn/browser');
+                                        const { generateChallenge, bufferToBase64, isWebAuthnSupported, parseWebAuthnError } = await import('../../utils/webAuthnUtils');
+                                        
+                                        // Check if browser supports WebAuthn
+                                        if (!(await isWebAuthnSupported())) {
+                                            const msg = language === 'AR' 
+                                                ? 'هذا المتصفح لا يدعم مفاتيح المرور (Passkeys). تأكد من استخدام HTTPS أو Localhost.' 
+                                                : 'Browser does not support Passkeys. Ensure you are on HTTPS or Localhost.';
+                                            alert(msg);
+                                            return;
+                                        }
+
+                                        // 1. Get Challenge from "Backend" (Mocked)
+                                        const challengeBuffer = generateChallenge();
+                                        const challengeBase64 = bufferToBase64(challengeBuffer);
+                                        const employeeId = formData.id || generateUUID();
+                                        
+                                        // 2. Options for Creation (Usually comes from backend)
+                                        const publicKeyCredentialCreationOptions = {
+                                            challenge: challengeBase64,
+                                            rp: { name: "PharmaFlow AI", id: window.location.hostname },
+                                            user: {
+                                                id: employeeId,
+                                                name: formData.username || formData.name || "user",
+                                                displayName: formData.name || "User",
+                                            },
+                                            pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
+                                            authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: 'preferred' },
+                                            timeout: 60000,
+                                            attestation: 'none'
+                                        };
+
+                                        // 3. Start Registration via Library
+                                        const registrationOptions: any = {
+                                            ...publicKeyCredentialCreationOptions,
+                                        };
+
+                                        const attResp = await startRegistration({
+                                          optionsJSON: {
+                                            ...registrationOptions,
+                                            challenge: challengeBase64,
+                                            user: { ...registrationOptions.user, id: employeeId } 
+                                          } as any 
+                                        });
+
+                                        if (attResp) {
+                                            // Success!
+                                            setFormData({
+                                                ...formData,
+                                                id: employeeId, // CRITICAL: Save the ID so it matches during final form save
+                                                biometricCredentialId: attResp.id,
+                                                biometricPublicKey: "MOCKED_PASSKEY_PILOT"
+                                            });
+                                            playSuccess();
+                                        }
+                                    } catch (err: any) {
+                                        console.error("Passkey registration failed", err);
+                                        const { parseWebAuthnError } = await import('../../utils/webAuthnUtils');
+                                        playError();
+                                        alert(parseWebAuthnError(err, language as any));
+                                    }
+                                }}
+                                className={`flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border-2 transition-all font-medium ${
+                                    formData.biometricCredentialId 
+                                        ? `bg-green-50 border-green-200 text-green-700 dark:bg-green-900/10 dark:border-green-800/30 dark:text-green-400`
+                                        : `border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800`
+                                }`}
+                            >
+                                <span className={`material-symbols-rounded text-lg ${formData.biometricCredentialId ? 'text-green-500' : ''}`}>
+                                    {formData.biometricCredentialId ? 'fingerprint_check' : 'fingerprint'}
+                                </span>
+                                {formData.biometricCredentialId 
+                                    ? (language === 'AR' ? 'تم ضبط المفتاح' : 'Passkey Set') 
+                                    : (language === 'AR' ? 'إعداد مفتاح المرور' : 'Setup Passkey')}
+                            </button>
                         </div>
-                        )}
                     </div>
+
+                    {/* Password field for NEW employees */}
+                    {!editingEmployee && (
+                    <div className="space-y-1.5 pt-2">
+                        <label className="text-xs font-semibold text-gray-500 uppercase px-1">{t.employeeList.password || 'Password'}</label>
+                        <SmartInput
+                        value={formData.password || ''}
+                        onChange={e => setFormData({...formData, password: e.target.value})}
+                        placeholder={t.employeeList.passwordPlaceholder || "Login Password"}
+                        type="password"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                        />
+                    </div>
+                    )}
 
                     {/* Password Change Section - Only when EDITING and user WANTS to change */}
                     {editingEmployee && editingEmployee.password && (
@@ -1140,8 +1243,15 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                     {getInitials(viewingEmployee.name)}
                                   </div>
                                 )}
-                                <div>
-                                    <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">{viewingEmployee.name}</h3>
+                                    <div className="flex-1">
+                                        <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">
+                                            {viewingEmployee.name}
+                                            {viewingEmployee.biometricCredentialId && (
+                                                <span className="material-symbols-rounded text-green-500 text-sm align-middle ml-2" title={language === 'AR' ? 'البصمة مفعلة' : 'Fingerprint Enabled'}>
+                                                    fingerprint
+                                                </span>
+                                            )}
+                                        </h3>
                                     <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
                                         <span>{viewingEmployee.employeeCode}</span>
                                         <span>•</span>
