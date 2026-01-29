@@ -145,35 +145,51 @@ export const authService = {
    * Log an audit event to localStorage
    */
   logAuditEvent: (entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): void => {
+    // ... (existing implementation)
+  },
+
+  /**
+   * Register Biometric Credential
+   */
+  registerBiometric: async (employeeId: string, credentialId: string, publicKey: string): Promise<boolean> => {
     try {
-      const stored = localStorage.getItem(AUDIT_KEY);
-      const history: LoginAuditEntry[] = stored ? JSON.parse(stored) : [];
-      
-      const newEntry: LoginAuditEntry = {
-        ...entry,
-        id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
-        timestamp: new Date().toISOString()
-      };
-      
-      history.unshift(newEntry); // Newest first
-      
-      // Keep only last 1000 entries to prevent localStorage bloat
-      localStorage.setItem(AUDIT_KEY, JSON.stringify(history.slice(0, 1000)));
-    } catch (e) {
-      console.error('Failed to log audit event:', e);
+      // In a real app, this would be an API call to save to DB.
+      // Since we are in pilot mode, this should be handled by the data context update.
+      // This helper is for the UI to know it's "theoretically" registered.
+      console.log(`Registering biometric for ${employeeId}`);
+      return true;
+    } catch {
+      return false;
     }
   },
 
   /**
-   * Retrieve login history
+   * Login with Biometric (Mock for Pilot)
    */
-  getLoginHistory: (): LoginAuditEntry[] => {
-    try {
-      const stored = localStorage.getItem(AUDIT_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
+  loginWithBiometric: async (credentialId: string, employees: any[]): Promise<{ session: UserSession, id: string } | null> => {
+    // Find employee by credential ID
+    const employee = employees.find(emp => emp.biometricCredentialId === credentialId);
+    if (!employee) return null;
+
+    const session: UserSession = {
+      username: employee.username || employee.name,
+      branchId: employee.branchId || 'B1',
+      role: employee.role,
+      department: employee.department
+    };
+    
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    
+    authService.logAuditEvent({
+      username: session.username,
+      role: session.role,
+      branchId: session.branchId,
+      action: 'system_login',
+      details: 'Biometric login successful',
+      employeeId: employee.id
+    });
+
+    return { session, id: employee.id };
   }
 };
 
