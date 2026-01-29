@@ -18,7 +18,7 @@ import { useAuth } from './hooks/useAuth';
 import { useNavigation } from './hooks/useNavigation';
 import { useEntityHandlers } from './hooks/useEntityHandlers';
 import { batchService } from './services/inventory/batchService';
-import { ShiftProvider } from './hooks/useShift';
+import { ShiftProvider, useShift } from './hooks/useShift';
 import { DataProvider } from './services';
 import { CSV_INVENTORY } from './data/sample-inventory';
 import { Supplier } from './types';
@@ -81,10 +81,14 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     tip,
     profileImage, setProfileImage,
     currentEmployeeId, setCurrentEmployeeId,
+    navigationParams, setNavigationParams,
     
     // Auth State
     isAuthenticated, isAuthChecking, handleLogout, resolveView, setIsAuthenticated, user
 }) => {
+  // --- Shifts ---
+  const { currentShift } = useShift();
+
   // --- Settings from Context ---
   const {
     theme, setTheme,
@@ -131,6 +135,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     hideInactiveModules,
     developerMode,
     role: userRole, // Pass the role for menu filtering
+    setNavigationParams,
   });
 
   // --- Entity Handlers Hook ---
@@ -541,6 +546,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
                 if (requiredProps.includes('onAddCustomer')) props.onAddCustomer = handleAddCustomer;
                 if (requiredProps.includes('onUpdateCustomer')) props.onUpdateCustomer = handleUpdateCustomer;
                 if (requiredProps.includes('onDeleteCustomer')) props.onDeleteCustomer = handleDeleteCustomer;
+                if (requiredProps.includes('currentShift')) props.currentShift = currentShift;
                 if (requiredProps.includes('setSuppliers')) props.setSuppliers = setSuppliers;
                 if (requiredProps.includes('onAddSupplier')) props.onAddSupplier = handleAddSupplier;
                 if (requiredProps.includes('onUpdateSupplier')) props.onUpdateSupplier = handleUpdateSupplier;
@@ -560,6 +566,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
                 // Navigation Handlers
                 if (requiredProps.includes('onViewChange')) props.onViewChange = handleNavigate;
                 if (requiredProps.includes('onLoginSuccess')) props.onLoginSuccess = handleLoginSuccess;
+                if (requiredProps.includes('navigationParams')) props.navigationParams = navigationParams;
                 
                 // Allow all components to receive theme props by default
                 props.darkMode = darkMode;
@@ -593,6 +600,8 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
                 } else if (view === 'barcode-studio') {
                   props.t = t.barcodeStudio;
                 } else if (view === 'customers') {
+                  props.t = t.customers;
+                } else if (view === 'customer-history') {
                   props.t = t.customers;
                 } else if (view === 'customer-overview') {
                   props.t = t.customerOverview;

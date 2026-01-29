@@ -1,7 +1,10 @@
 import { useCallback, useMemo, useRef, useEffect } from 'react';
-import { Drug, Sale, CartItem, Supplier, Purchase, Return, PurchaseReturn, 
-  Customer, OrderModificationRecord, OrderModification, BatchAllocation, Employee } from '../types';
-import { useToast } from '../context';
+import { 
+  Drug, Sale, CartItem, Supplier, Purchase, Return, PurchaseReturn, 
+  Customer, OrderModificationRecord, OrderModification,
+  BatchAllocation, Employee 
+} from '../types';
+import { useAlert } from '../context';
 import { migrationService } from '../services/migration';
 import { validateStock } from '../utils/inventory';
 import { addTransactionToOpenShift } from '../utils/shiftHelpers'; // Deprecated - replaced by useShift context
@@ -48,8 +51,6 @@ export interface EntityHandlers {
   handleApprovePurchase: (purchaseId: string, approverName: string) => void;
   handleRejectPurchase: (purchaseId: string, reason?: string) => void;
   
-  // Sale handlers
-  // Sale handlers
   // Sale handlers
   handleCompleteSale: (saleData: SaleData) => Promise<void>;
   handleUpdateSale: (saleId: string, updates: Partial<Sale>) => void;
@@ -137,7 +138,7 @@ export function useEntityHandlers({
   updateLastTransactionTime,
 }: UseEntityHandlersParams): EntityHandlers {
 
-  const { success, error, info, warning } = useToast();
+  const { success, error, info, warning } = useAlert();
   const { addTransaction, currentShift } = useShift();
   
   const migrationAttempted = useRef(false);
@@ -692,6 +693,13 @@ export function useEntityHandlers({
           error('Permission denied: Cannot cancel orders');
           return;
       }
+      
+      // Limit for senior_cashier
+      if (employee?.role === 'senior_cashier' && sale.total > 500) {
+          error(`Permission denied: Senior Cashiers cannot cancel sales exceeding 500 EGP (Sale Total: ${sale.total.toFixed(2)}). Manager approval required.`);
+          return;
+      }
+
       const updatedInventory = restoreStockForCancelledSale(sale, inventory);
       setInventory(updatedInventory);
       auditService.log('sale.cancel', { userId: currentEmployeeId, details: `Cancelled Sale #${saleId}`, entityId: saleId });

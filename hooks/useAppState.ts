@@ -17,6 +17,8 @@ export interface AppState {
   setActiveModule: React.Dispatch<React.SetStateAction<string>>;
   dashboardSubView: string;
   setDashboardSubView: React.Dispatch<React.SetStateAction<string>>;
+  navigationParams: Record<string, any> | null;
+  setNavigationParams: React.Dispatch<React.SetStateAction<Record<string, any> | null>>;
   
   // UI state
   mobileMenuOpen: boolean;
@@ -39,6 +41,7 @@ export function useAppState(): AppState {
   const [view, setView] = usePersistedState<ViewState>(StorageKeys.VIEW, ROUTES.DASHBOARD);
   const [activeModule, setActiveModule] = usePersistedState<string>(StorageKeys.ACTIVE_MODULE, ROUTES.DASHBOARD);
   const [dashboardSubView, setDashboardSubView] = useState<string>('dashboard');
+  const [navigationParams, setNavigationParams] = useState<Record<string, any> | null>(null);
 
   // --- UI State ---
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -71,6 +74,8 @@ export function useAppState(): AppState {
     setActiveModule,
     dashboardSubView,
     setDashboardSubView,
+    navigationParams,
+    setNavigationParams,
     
     // UI state
     mobileMenuOpen,

@@ -7,7 +7,7 @@ if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
-import { SettingsProvider, ToastProvider } from './context';
+import { SettingsProvider, AlertProvider } from './context';
 import { StatusBarProvider } from './components/layout/StatusBar';
 
 
@@ -16,9 +16,9 @@ root.render(
   <React.StrictMode>
     <SettingsProvider>
       <StatusBarProvider>
-        <ToastProvider>
+        <AlertProvider>
           <App />
-        </ToastProvider>
+        </AlertProvider>
       </StatusBarProvider>
     </SettingsProvider>
   </React.StrictMode>

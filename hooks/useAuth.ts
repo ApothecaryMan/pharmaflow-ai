@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ViewState } from '../types';
 import { authService, UserSession } from '../services/auth/authService';
 import { ROUTES, TEST_ROUTES } from '../config/routes';
-import { useToast } from '../context';
+import { useAlert } from '../context';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -23,8 +23,8 @@ interface UseAuthParams {
  * Handles login/logout state, auth checking, and view resolution.
  */
 export function useAuth({ view, setView }: UseAuthParams): AuthState {
-  // Use Toast Hook
-  const { error } = useToast();
+  // Use Alert Hook
+  const { error } = useAlert();
   
   // Optimistic Init: Check session synchronously to prevent "flash of loading"
   const [isAuthenticated, setIsAuthenticated] = useState(() => authService.hasSession());

@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { ViewState } from '../types';
 import { PAGE_REGISTRY } from '../config/pageRegistry';
 import { PHARMACY_MENU, MenuItem } from '../config/menuData';
-import { useToast } from '../context';
+import { useAlert } from '../context';
 import { UserRole, canPerformAction } from '../config/permissions';
 
 /**
@@ -69,8 +69,8 @@ function filterMenuItems(menu: MenuItem[], role: UserRole, hideInactiveModules: 
 }
 
 export interface NavigationHandlers {
-  handleViewChange: (viewId: string) => void;
-  handleNavigate: (viewId: string) => void;
+  handleViewChange: (viewId: string, params?: Record<string, any>) => void;
+  handleNavigate: (viewId: string, params?: Record<string, any>) => void;
   handleModuleChange: (moduleId: string) => void;
   filteredMenuItems: MenuItem[];
 }
@@ -87,6 +87,7 @@ interface UseNavigationParams {
   hideInactiveModules: boolean;
   developerMode: boolean;
   role: UserRole; // Added role
+  setNavigationParams: React.Dispatch<React.SetStateAction<Record<string, any> | null>>;
 }
 
 /**
@@ -105,11 +106,12 @@ export function useNavigation({
   hideInactiveModules,
   developerMode,
   role, 
+  setNavigationParams
 }: UseNavigationParams): NavigationHandlers {
-  const { error } = useToast();
+  const { error } = useAlert();
   
   // Handle view change with dashboard sub-view logic
-  const handleViewChange = useCallback((viewId: string) => {
+  const handleViewChange = useCallback((viewId: string, params?: Record<string, any>) => {
     const targetView = viewId as ViewState;
     const resolvedView = resolveView(targetView);
     
@@ -118,6 +120,9 @@ export function useNavigation({
       setView(resolvedView);
       return;
     }
+
+    // Set params if provided, otherwise clear them
+    setNavigationParams(params || null);
 
     if (activeModule === 'dashboard') {
       // Check if this viewId exists in PAGE_REGISTRY (meaning it's a real page)
@@ -135,7 +140,7 @@ export function useNavigation({
   }, [activeModule, resolveView, setView, setDashboardSubView, setMobileMenuOpen, error]);
 
   // Handle direct navigation
-  const handleNavigate = useCallback((viewId: string) => {
+  const handleNavigate = useCallback((viewId: string, params?: Record<string, any>) => {
     const targetView = viewId as ViewState;
     const resolvedView = resolveView(targetView);
     
@@ -143,6 +148,7 @@ export function useNavigation({
       error('Access denied.');
       setView(resolvedView);
     } else {
+      setNavigationParams(params || null);
       setView(targetView);
     }
     setMobileMenuOpen(false);
