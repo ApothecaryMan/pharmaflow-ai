@@ -388,7 +388,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         label: "Point of Sale",
         items: [
           { label: "New Sale", view: "pos", icon: "point_of_sale", permission: 'sale.create' },
-          { label: "Cash Register", view: "cash-register", icon: "receipt_long", permission: 'sale.create' },
+          { label: "Cash Register", view: "cash-register", icon: "receipt_long", permission: 'shift.open' },
           { label: "Shift History", view: "shift-history", icon: "history", permission: 'shift.reports' }
         ]
       },
@@ -453,6 +453,7 @@ export const PHARMACY_MENU: MenuItem[] = [
       {
         id: "supplier-management",
         label: "Supplier Management",
+        permission: "supplier.view",
         items: [
           { label: "Supplier List", view: "suppliers", icon: "local_shipping" },
           { label: "Supplier Profile", icon: "contact_page" },
@@ -500,6 +501,7 @@ export const PHARMACY_MENU: MenuItem[] = [
           { label: "Add Customer", icon: "person_add" },
           { label: "Edit Customer", icon: "edit" },
           { label: "Customer Profile", icon: "account_circle" },
+          { label: "Customer History", view: "customer-history", icon: "manage_search" },
           { label: "Customer Search", icon: "search" },
           { label: "Import Customers", icon: "upload" },
           { label: "Merge Duplicates", icon: "merge_type" }
@@ -790,7 +792,6 @@ export const PHARMACY_MENU: MenuItem[] = [
         items: [
           { label: "Customer Analysis", icon: "person_search" },
           { label: "Top Customers", icon: "star" },
-          { label: "Customer Purchase History", icon: "history" },
           { label: "Customer Loyalty", icon: "loyalty" },
           { label: "Outstanding Report", icon: "pending" },
           { label: "Customer Aging", icon: "timelapse" }

@@ -10,6 +10,7 @@ export const ROUTES = {
   PURCHASES: 'purchases' as ViewState,
   CUSTOMERS: 'customers' as ViewState,
   CUSTOMER_OVERVIEW: 'customer-overview' as ViewState,
+  CUSTOMER_HISTORY: 'customer-history' as ViewState,
   RETURN_HISTORY: 'return-history' as ViewState,
   INTELLIGENCE: 'intelligence' as ViewState,
 } as const;

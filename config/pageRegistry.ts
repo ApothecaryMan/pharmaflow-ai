@@ -13,6 +13,7 @@ import { BarcodeStudio } from '../components/inventory/BarcodeStudio';
 import { CustomerManagement } from '../components/customers/CustomerManagement';
 import { CustomerOverview } from '../components/customers/CustomerOverview';
 import { CustomerLoyaltyOverview } from '../components/customers/CustomerLoyaltyOverview';
+import { CustomerHistory } from '../components/customers/CustomerHistory';
 import { CustomerLoyaltyLookup } from '../components/customers/CustomerLoyaltyLookup';
 import { StockAdjustment } from '../components/inventory/StockAdjustment';
 import { RealTimeSalesMonitor } from '../components/dashboard/RealTimeSalesMonitor';
@@ -61,7 +62,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'main-dashboard',
 
     requiredProps: ['sales', 'inventory', 'purchases', 'customers', 'color', 't', 'language', 'onViewChange'],
-    skeleton: DashboardSkeleton
+    skeleton: DashboardSkeleton,
+    permission: 'dashboard.view'
   },
   'inventory': {
     id: 'inventory',
@@ -72,7 +74,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'inventory',
 
     requiredProps: ['inventory', 'onAddDrug', 'onUpdateDrug', 'onDeleteDrug', 'color', 't', 'language'],
-    skeleton: InventorySkeleton
+    skeleton: InventorySkeleton,
+    permission: 'inventory.view'
   },
   'inventory-beta': {
     id: 'inventory-beta',
@@ -83,7 +86,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'inventory',
 
     requiredProps: ['inventory', 'color', 't', 'language'],
-    skeleton: InventorySkeleton
+    skeleton: InventorySkeleton,
+    permission: 'inventory.view_beta'
   },
   'pos': {
     id: 'pos',
@@ -94,7 +98,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'sales',
 
     requiredProps: ['inventory', 'customers', 'onCompleteSale', 'color', 't', 'language', 'onAddCustomer', 'sales', 'employees', 'onUpdateSale'],
-    skeleton: POSSkeleton
+    skeleton: POSSkeleton,
+    permission: 'sale.create'
   },
   'sales-history': {
     id: 'sales-history',
@@ -103,7 +108,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل المبيعات',
     icon: 'receipt_long',
     category: 'sales',
-    requiredProps: ['sales', 'onProcessReturn', 'color', 't', 'language'],
+    requiredProps: ['sales', 'returns', 'onProcessReturn', 'color', 't', 'language', 'currentShift'],
     permission: 'sale.view_history'
   },
   'return-history': {
@@ -183,7 +188,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'جميع العملاء',
     icon: 'group',
     category: 'customers',
-    requiredProps: ['customers', 'onAddCustomer', 'onUpdateCustomer', 'onDeleteCustomer', 'color', 't', 'language'],
+    requiredProps: ['customers', 'onAddCustomer', 'onUpdateCustomer', 'onDeleteCustomer', 'color', 't', 'language', 'onViewChange'],
     permission: 'customer.view'
   },
   'customer-overview': {
@@ -193,7 +198,18 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'نظرة عامة على العملاء',
     icon: 'analytics',
     category: 'customer-dashboard',
-    requiredProps: ['customers', 'sales', 'color', 't', 'language']
+    requiredProps: ['customers', 'sales', 'color', 't', 'language'],
+    permission: 'customer.view'
+  },
+  'customer-history': {
+    id: 'customer-history',
+    component: CustomerHistory,
+    menuLabel: 'Customer History',
+    menuLabelAr: 'سجل العملاء',
+    icon: 'manage_search',
+    category: 'customers',
+    requiredProps: ['customers', 'sales', 'returns', 'color', 't', 'language', 'navigationParams'],
+    permission: 'customer.view'
   },
   'loyalty-overview': {
     id: 'loyalty-overview',
@@ -202,7 +218,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'نظرة عامة على الولاء',
     icon: 'stars',
     category: 'customer-dashboard',
-    requiredProps: ['customers', 'sales', 'color', 't', 'language']
+    requiredProps: ['customers', 'sales', 'color', 't', 'language'],
+    permission: 'customer.view_loyalty'
   },
   'loyalty-lookup': {
     id: 'loyalty-lookup',
@@ -211,7 +228,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'بحث ولاء العملاء',
     icon: 'person_search',
     category: 'customer-dashboard',
-    requiredProps: ['customers', 'sales', 'color', 't', 'language']
+    requiredProps: ['customers', 'sales', 'color', 't', 'language'],
+    permission: 'customer.view_loyalty'
   },
   'real-time-sales': {
     id: 'real-time-sales',
@@ -240,7 +258,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل النقدية',
     icon: 'point_of_sale',
     category: 'sales',
-    requiredProps: ['color', 't', 'language']
+    requiredProps: ['color', 't', 'language'],
+    permission: 'shift.open'
   },
   'shift-history': {
     id: 'shift-history',
@@ -280,7 +299,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'science',
     category: 'test',
     requiredProps: ['color', 't', 'language'],
-    permission: 'settings.view'
+    permission: 'system.debug'
   },
   'pos-test': {
     id: 'pos-test',
@@ -289,7 +308,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'نقطة بيع (اختبار)',
     icon: 'science',
     category: 'test',
-    requiredProps: ['inventory', 'customers', 'onCompleteSale', 'color', 't', 'language', 'onAddCustomer']
+    requiredProps: ['inventory', 'customers', 'onCompleteSale', 'color', 't', 'language', 'onAddCustomer'],
+    permission: 'system.debug'
   },
   'purchases-test': {
     id: 'purchases-test',
@@ -298,7 +318,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'انشاء امر شراء (تيست)',
     icon: 'shopping_cart',
     category: 'test',
-    requiredProps: ['inventory', 'suppliers', 'purchases', 'purchaseReturns', 'onCompletePurchase', 'color', 't', 'language']
+    requiredProps: ['inventory', 'suppliers', 'purchases', 'purchaseReturns', 'onCompletePurchase', 'color', 't', 'language'],
+    permission: 'system.debug'
   },
   'advanced-sm-card': {
     id: 'advanced-sm-card',
@@ -307,7 +328,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'بطاقات صغيرة متطورة',
     icon: 'dashboard_customize',
     category: 'test',
-    requiredProps: ['color', 't', 'language']
+    requiredProps: ['color', 't', 'language'],
+    permission: 'system.debug'
   },
   'modal-tests': {
     id: 'modal-tests',
@@ -316,7 +338,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'اختبار النوافذ',
     icon: 'dialogs',
     category: 'test',
-    requiredProps: ['color', 't', 'language']
+    requiredProps: ['color', 't', 'language'],
+    permission: 'system.debug'
   },
   'employee-list': {
     id: 'employee-list',
