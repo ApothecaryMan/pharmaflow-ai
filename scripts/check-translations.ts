@@ -334,7 +334,7 @@ class TranslationValidator {
     }
 
     // تخطي الأسماء المعروفة (brand names، أسماء خاصة)
-    const knownBrands = ['React', 'Vue', 'Angular', 'PharmaFlow', 'TypeScript', 'JavaScript'];
+    const knownBrands = ['React', 'Vue', 'Angular', 'ZINC', 'TypeScript', 'JavaScript'];
     if (knownBrands.includes(text)) {
       return true;
     }
