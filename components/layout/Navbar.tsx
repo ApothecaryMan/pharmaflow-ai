@@ -257,28 +257,16 @@ const NavbarComponent: React.FC<NavbarProps> = ({
         className="flex items-center gap-2 ltr:mr-6 rtl:ml-6 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
         onClick={onLogoClick}
       >
-        {/* Light Mode Logo (Black) */}
+        {/* Dynamic Logo based on darkMode prop */}
         <img 
-          src="/logo_icon_black.svg" 
+          src={darkMode ? "/logo_icon_white.svg" : "/logo_icon_black.svg"} 
           alt={appTitle} 
-          className="h-8 w-auto dark:hidden" 
+          className="h-8 w-auto" 
         />
         <img 
-          src="/logo_word_black.svg"
+          src={darkMode ? "/logo_word_white.svg" : "/logo_word_black.svg"}
           alt="Zinc"
-          className="h-5 w-auto hidden md:block dark:hidden"
-        />
-
-        {/* Dark Mode Logo (White) */}
-        <img 
-          src="/logo_icon_white.svg" 
-          alt={appTitle} 
-          className="h-8 w-auto hidden dark:block" 
-        />
-        <img 
-          src="/logo_word_white.svg"
-          alt="Zinc"
-          className="h-5 w-auto hidden dark:md:block"
+          className="h-5 w-auto hidden md:block"
         />
       </div>
 

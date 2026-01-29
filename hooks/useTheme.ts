@@ -100,7 +100,7 @@ const COLOR_PALETTES: Record<string, Record<string, string>> = {
   },
 };
 
-export const useTheme = (color: string, darkMode: boolean) => {
+export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean = false) => {
   useEffect(() => {
     const palette = COLOR_PALETTES[color] || COLOR_PALETTES.blue;
     const root = document.documentElement;
@@ -111,10 +111,30 @@ export const useTheme = (color: string, darkMode: boolean) => {
     });
 
     // Update dark mode class
-    if (darkMode) {
+    // Update all theme-color meta tags to match the current mode
+    // If it's the login view, we use pure black as requested
+    const titleBarColor = isLoginView ? '#000000' : (darkMode ? '#111827' : '#ffffff');
+    const metaTags = document.querySelectorAll('meta[name="theme-color"]');
+    if (metaTags.length > 0) {
+      metaTags.forEach(tag => tag.setAttribute('content', titleBarColor));
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.content = titleBarColor;
+      document.head.appendChild(meta);
+    }
+    
+    if (darkMode || isLoginView) {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-  }, [color, darkMode]);
+
+    // Update browser favicon dynamically
+    const favicon = document.querySelector('link[rel="icon"]');
+    if (favicon) {
+      // Force white icon for login as well
+      favicon.setAttribute('href', (darkMode || isLoginView) ? '/logo_icon_white.svg' : '/app_icon.svg');
+    }
+  }, [color, darkMode, isLoginView]);
 };

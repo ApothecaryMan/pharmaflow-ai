@@ -134,7 +134,11 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
   const toggleRememberMe = () => setState(prev => ({ ...prev, rememberMe: !prev.rememberMe }));
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-zinc-950 text-white p-4 sm:p-6" dir={language === 'AR' ? 'rtl' : 'ltr'}>
+    <div 
+      className="min-h-screen w-full flex items-center justify-center text-white p-4 sm:p-6" 
+      style={{ backgroundColor: '#000000' }}
+      dir={language === 'AR' ? 'rtl' : 'ltr'}
+    >
       <div className="w-full max-w-[400px] space-y-8">
         
         {/* Header Section */}

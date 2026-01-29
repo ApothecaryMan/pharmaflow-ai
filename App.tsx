@@ -165,9 +165,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   // --- Translations ---
   const t = TRANSLATIONS[language];
 
-  // --- Theme ---
-  useTheme(theme.primary, darkMode);
-
   // --- Language Direction ---
   useEffect(() => {
     document.documentElement.lang = language.toLowerCase();
@@ -277,6 +274,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
 
   // --- Not Authenticated (Login) ---
+
   if (!isAuthenticated) {
       return (
           <Login 
@@ -670,12 +668,16 @@ const App: React.FC = () => {
     });
     
     // 3. Settings Hook (for Language)
-    const { language } = useSettings();
+    const { theme, darkMode, language } = useSettings();
 
-    // 4. Loading State for Auth Check (Only if we don't have an optimistic session)
+    // 4. Dynamic Theme Hook - Handles PWA Title Bar & Global Dark Mode
+    // When not authenticated, we force isLoginView=true for the black theme color override
+    useTheme(theme.primary, darkMode, !authState.isAuthenticated);
+
+    // 5. Loading State for Auth Check (Only if we don't have an optimistic session)
     if (authState.isAuthChecking && !authState.isAuthenticated) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+            <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#000000' }}>
                 <div className="text-white">
                     <svg className="animate-spin h-8 w-8 mx-auto" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
