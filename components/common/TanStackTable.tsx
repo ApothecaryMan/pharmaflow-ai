@@ -42,6 +42,7 @@ declare module '@tanstack/react-table' {
         flex?: boolean;
         dir?: 'ltr' | 'rtl';
         disableAlignment?: boolean;
+        smartDate?: boolean;
     }
 }
 import { SearchInput } from './SearchInput';
@@ -650,6 +651,49 @@ export function TanStackTable<TData, TValue>({
                       
                       const isFlex = cell.column.columnDef.meta?.flex ?? cell.column.id.toLowerCase().includes('name');
                       
+                      const colId = cell.column.id.toLowerCase();
+                      const isIdColumn = colId.includes('id') || colId.includes('code');
+                      
+                      // Date Detection & Formatting
+                      const isDateColumn = ['date', 'time', 'at', 'timestamp'].some(key => colId.includes(key));
+                      const cellValue = cell.getValue();
+                      
+                      const renderCellContent = () => {
+                        // If it's a date column and we have a value and smart formatting is enabled (default)
+                        const smartDateVisible = cell.column.columnDef.meta?.smartDate !== false;
+
+                        if (smartDateVisible && isDateColumn && cellValue && (typeof cellValue === 'string' || typeof cellValue === 'number' || cellValue instanceof Date)) {
+                          const date = new Date(cellValue);
+                          if (!isNaN(date.getTime())) {
+                            const now = new Date();
+                            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                            const yesterday = new Date(today);
+                            yesterday.setDate(yesterday.getDate() - 1);
+                            
+                            const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                            
+                            let dateLabel = date.toLocaleDateString();
+                            if (targetDate.getTime() === today.getTime()) {
+                              dateLabel = isRtl ? 'اليوم' : 'Today';
+                            } else if (targetDate.getTime() === yesterday.getTime()) {
+                              dateLabel = isRtl ? 'أمس' : 'Yesterday';
+                            }
+
+                            const timeLabel = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            const formattedTime = isRtl ? timeLabel.replace('AM', 'ص').replace('PM', 'م') : timeLabel;
+
+                            return (
+                              <div className={`flex flex-col ${justifyClass.includes('center') ? 'items-center' : justifyClass.includes('end') ? 'items-end' : 'items-start'}`}>
+                                <span className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight">{formattedTime}</span>
+                                <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5">{dateLabel}</span>
+                              </div>
+                            );
+                          }
+                        }
+
+                        return flexRender(cell.column.columnDef.cell, cell.getContext());
+                      };
+
                       return (
                         <td 
                           key={cell.id} 
@@ -661,8 +705,11 @@ export function TanStackTable<TData, TValue>({
                            }}
                            dir={cell.column.columnDef.meta?.dir}
                         >
-                          <div className={`flex items-center w-full ${justifyClass}`}>
-                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          <div className={`flex items-center w-full ${justifyClass} ${isIdColumn ? '-ml-3' : ''}`}>
+                             {isIdColumn && (
+                               <span className="material-symbols-rounded text-base text-gray-400 mr-1.5 shrink-0">tag</span>
+                             )}
+                             {renderCellContent()}
                           </div>
                         </td>
                       );
