@@ -190,11 +190,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
     {
       accessorKey: 'employeeCode',
       header: t.employeeList.table.code,
-      cell: ({ row }) => (
-        <span className="font-bold text-gray-700 dark:text-gray-300">
-          {row.original.employeeCode}
-        </span>
-      )
+      meta: { align: 'start' }
     },
     {
       accessorKey: 'name',

@@ -23,7 +23,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ t, language }) => {
   const columns = useMemo<ColumnDef<AuditTransaction, any>[]>(() => [
     columnHelper.accessor('timestamp', {
       header: t.intelligence.audit.columns.timestamp,
-      cell: info => <span dir="ltr" className="text-gray-600 dark:text-gray-300 font-medium">{new Date(info.getValue()).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute:'2-digit' })}</span>,
+      meta: { align: 'center' }
     }),
      columnHelper.accessor('type', {
       header: t.intelligence.audit.columns.type,
