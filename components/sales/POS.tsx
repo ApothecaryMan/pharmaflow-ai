@@ -23,6 +23,7 @@ import { parseSearchTerm } from "../../utils/searchUtils";
 import {
   generateInvoiceHTML,
   InvoiceTemplateOptions,
+  getActiveReceiptSettings,
 } from "../sales/InvoiceTemplate";
 import { formatStock } from "../../utils/inventory";
 import { getPrinterSettings, printReceiptSilently } from "../../utils/qzPrinter";
@@ -185,10 +186,12 @@ export const POS: React.FC<POSProps> = ({
   const search = activeTab?.searchQuery || "";
   const setSearch = useCallback(
     (query: string | ((prev: string) => string)) => {
-      const newQuery = typeof query === "function" ? query(search) : query;
-      updateTab(activeTabId, { searchQuery: newQuery });
+      updateTab(activeTabId, (prevTab) => {
+        const newQuery = typeof query === "function" ? query(prevTab.searchQuery) : query;
+        return { searchQuery: newQuery };
+      });
     },
-    [search, activeTabId, updateTab]
+    [activeTabId, updateTab]
   );
   // Customer Search State
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
@@ -318,7 +321,7 @@ export const POS: React.FC<POSProps> = ({
     };
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, []);
+  }, [setSearch]);
 
   const [stockFilter, setStockFilter] = useState<
     "all" | "in_stock" | "out_of_stock"
@@ -921,27 +924,14 @@ export const POS: React.FC<POSProps> = ({
 
     // Auto-Print Receipt Logic
     try {
-      const activeId = storage.get<string | null>(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, null);
-      const templates = storage.get<any[]>(StorageKeys.RECEIPT_TEMPLATES, []);
+      const opts = getActiveReceiptSettings();
+      const isDelivery = saleType === "delivery";
+      
+      const shouldPrint =
+        (isDelivery && opts.autoPrintOnDelivery) ||
+        opts.autoPrintOnComplete;
 
-      if (activeId && templates.length > 0) {
-        const activeTemplate = templates.find((t: any) => t.id === activeId);
-
-        if (activeTemplate) {
-          const opts = activeTemplate.options as InvoiceTemplateOptions;
-          const isDelivery = saleType === "delivery";
-          // If delivery, check distinct flag. Else check general complete flag.
-          // Usually, 'autoPrintOnComplete' implies ANY complete unless delivery overrides?
-          // Interpreting user request: "Option for delivery order" AND "Option for any order".
-          // If Any Order is checked, it prints for everything.
-          // If Delivery is checked, it prints for delivery.
-          // So: (isDelivery && opts.autoPrintOnDelivery) || opts.autoPrintOnComplete
-
-          const shouldPrint =
-            (isDelivery && opts.autoPrintOnDelivery) ||
-            opts.autoPrintOnComplete;
-
-          if (shouldPrint) {
+      if (shouldPrint) {
             // Construct a temporary Sale object for printing
             // Since onCompleteSale is an event, we don't have the final DB ID yet.
             // We'll use a placeholder or handle it gracefully.
@@ -1041,8 +1031,6 @@ export const POS: React.FC<POSProps> = ({
               }
             }
           }
-        }
-      }
     } catch (e) {
       console.error("Auto-print failed:", e);
     }
@@ -1805,7 +1793,8 @@ export const POS: React.FC<POSProps> = ({
                     onKeyDown={customerDropdownHook.handleKeyDown}
                     placeholder={t.customerSearchPlaceholder}
                     icon="person"
-                    className="border-gray-200 dark:border-gray-700"
+                     color={color}
+                     className=""
                   />
                   {/* Customer Dropdown */}
                   {showCustomerDropdown && filteredCustomers.length > 0 && (
@@ -1886,14 +1875,11 @@ export const POS: React.FC<POSProps> = ({
                 value={search}
                 onChange={(val) => {
                   setSearch(val);
-                  setActiveIndex(0);
                 }}
                 suggestions={searchSuggestions}
                 placeholder={t.searchPlaceholder}
-                className={`w-full px-3 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:border-${color}-500 text-gray-900 dark:text-gray-100 placeholder-gray-400`}
-                style={
-                  { "--tw-ring-color": `var(--color-${color}-500)` } as any
-                }
+                color={color}
+                className=""
                 onKeyDown={(e) => {
                   const term = search.trim();
 
@@ -1993,7 +1979,8 @@ export const POS: React.FC<POSProps> = ({
                 const searchDir = /[\u0600-\u06FF]/.test(search) ? 'rtl' : 'ltr';
                 return (
                   <div className={`absolute inset-y-0 flex items-center pointer-events-none ${searchDir === 'rtl' ? 'left-3' : 'right-3'}`}>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400`}>
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent shadow-sm`}>
+                      <span className="material-symbols-rounded text-sm">inventory_2</span>
                       {filteredDrugs.length}
                     </span>
                   </div>
@@ -2003,6 +1990,7 @@ export const POS: React.FC<POSProps> = ({
             <div className="relative flex-1 h-[42px]">
               <FilterDropdown
                 variant="input"
+                onBackground={true}
                 items={categories}
                 selectedItem={categories.find((c) => c.id === selectedCategory)}
                 isOpen={activeFilterDropdown === "category"}
@@ -2022,6 +2010,7 @@ export const POS: React.FC<POSProps> = ({
             <div className="relative flex-1 h-[42px]">
               <FilterDropdown
                 variant="input"
+                onBackground={true}
                 items={["all", "in_stock", "out_of_stock"]}
                 selectedItem={stockFilter}
                 isOpen={activeFilterDropdown === "stock"}
@@ -2053,7 +2042,7 @@ export const POS: React.FC<POSProps> = ({
           </div>
 
           {/* Grid */}
-          <div className="flex-1 flex flex-col overflow-hidden pe-1 pb-24 lg:pb-0">
+          <div className="flex-1 flex flex-col overflow-hidden pb-24 lg:pb-0">
               <TanStackTable
                 tableId="pos-products-table-v2"
                 data={tableData}
@@ -2362,7 +2351,7 @@ export const POS: React.FC<POSProps> = ({
                      setAmountPaid("");
                    }}
                    disabled={!isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')}
-                   className={`flex-1 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
+                   className={`flex-1 py-2.5 rounded-xl bg-${color}-600 enabled:hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
                  >
                    <span className="material-symbols-rounded text-[18px]">
                      payments
@@ -2375,7 +2364,7 @@ export const POS: React.FC<POSProps> = ({
                      setIsCheckoutMode(false);
                    }}
                    disabled={!isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')}
-                   className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex justify-center items-center shrink-0`}
+                   className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 enabled:hover:bg-${color}-200 dark:enabled:hover:bg-${color}-900/50 disabled:opacity-50 disabled:pointer-events-none transition-colors flex justify-center items-center shrink-0`}
                    title={t.deliveryOrder}
                  >
                    <span className="material-symbols-rounded text-[20px]">
@@ -2391,7 +2380,7 @@ export const POS: React.FC<POSProps> = ({
                   }`}
                >
                  {/* Amount Input */}
-                 <div className={`flex-1 bg-white dark:bg-gray-900 border-2 border-${color}-500 rounded-xl flex items-center px-2 gap-1 overflow-hidden whitespace-nowrap`}>
+                 <div className={`flex-1 bg-white dark:bg-gray-900 border border-${color}-500 dark:border-${color}-400 rounded-xl flex items-center px-3 gap-1 overflow-hidden whitespace-nowrap shadow-sm`}>
                    <input
                      ref={(el) => { if (el && isCheckoutMode) setTimeout(() => el.focus(), 50); }}
                      type="number"
@@ -2465,7 +2454,7 @@ export const POS: React.FC<POSProps> = ({
                     <select
                         value={deliveryEmployeeId}
                         onChange={(e) => setDeliveryEmployeeId(e.target.value)}
-                        className={`w-full h-full bg-white dark:bg-gray-900 border-2 border-${color}-500 rounded-xl text-sm px-3 focus:ring-0 focus:outline-none appearance-none cursor-pointer font-bold tabular-nums`}
+                        className={`w-full h-full bg-white dark:bg-gray-900 border border-${color}-400 dark:border-${color}-500/50 rounded-xl text-sm px-3 focus:ring-0 focus:outline-none appearance-none cursor-pointer font-bold tabular-nums shadow-sm transition-all`}
                         style={{
                             backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
                             backgroundRepeat: 'no-repeat',
