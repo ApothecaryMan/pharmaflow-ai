@@ -91,9 +91,9 @@ export const usePOSTabs = () => {
   }, []);
 
   // Update tab
-  const updateTab = useCallback((tabId: string, updates: Partial<SaleTab>) => {
+  const updateTab = useCallback((tabId: string, updates: Partial<SaleTab> | ((prev: SaleTab) => Partial<SaleTab>)) => {
     setTabs(prev => prev.map(tab => 
-      tab.id === tabId ? { ...tab, ...updates } : tab
+      tab.id === tabId ? { ...tab, ...(typeof updates === 'function' ? updates(tab) : updates) } : tab
     ));
   }, []);
 
