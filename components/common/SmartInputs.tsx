@@ -480,6 +480,7 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
         placeholder={placeholder}
         disabled={disabled}
         dir={dir}
+        spellCheck="false"
         className={`
           w-full px-3 py-2.5 rounded-xl
           bg-white dark:bg-gray-900

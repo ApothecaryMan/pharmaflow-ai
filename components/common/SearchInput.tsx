@@ -44,6 +44,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
         value={value}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={placeholder}
+        spellCheck="false"
         className={`
           w-full ${isRtl ? 'pr-10 pl-10' : 'pl-10 pr-10'} 
           ${showClear ? (isRtl ? 'pl-16' : 'pr-16') : ''} 
