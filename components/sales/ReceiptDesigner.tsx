@@ -5,6 +5,8 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { generateInvoiceHTML, InvoiceTemplateOptions } from '../sales/InvoiceTemplate';
 import { Sale } from '../../types';
 import { useStatusBar } from '../layout/StatusBar';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 interface ReceiptDesignerProps {
   color: string;
@@ -51,13 +53,9 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
 
   const [templates, setTemplates] = useState<SavedTemplate[]>(() => {
     try {
-      const saved = localStorage.getItem('receipt_templates');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Ensure default template exists if none are saved or if the saved ones are empty
-        if (parsed.length > 0) {
-            return parsed;
-        }
+      const saved = storage.get<SavedTemplate[]>(StorageKeys.RECEIPT_TEMPLATES, []);
+      if (saved && saved.length > 0) {
+        return saved;
       }
     } catch (e) {
       console.error("Failed to load templates", e);
@@ -72,7 +70,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   });
 
   const [activeTemplateId, setActiveTemplateId] = useState<string>(() => {
-    const savedActive = localStorage.getItem('receipt_active_template_id');
+    const savedActive = storage.get<string | null>(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, null);
     if (savedActive) return savedActive;
     const def = templates.find(t => t.isDefault);
     return def ? def.id : templates[0].id;
@@ -96,13 +94,13 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   useEffect(() => {
     if (hasMounted) {
       try {
-        localStorage.setItem('receipt_templates', JSON.stringify(templates));
-        localStorage.setItem('receipt_active_template_id', activeTemplateId);
+        localStorage.setItem(StorageKeys.RECEIPT_TEMPLATES, JSON.stringify(templates));
+        localStorage.setItem(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, activeTemplateId);
         setQuotaError(false); // Clear error on successful save
       } catch (error) {
         console.error('Failed to save settings:', error);
         // Only alert if it's a quota error to avoid spamming
-        if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
              setQuotaError(true);
         }
       }

@@ -9,7 +9,7 @@ import { SearchInput } from '../common/SearchInput';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { HelpModal, HelpButton } from '../common/HelpModal';
 import { Modal } from '../common/Modal';
-import { printInvoice, InvoiceTemplateOptions, defaultOptions } from './InvoiceTemplate';
+import { printInvoice, InvoiceTemplateOptions, getActiveReceiptSettings } from './InvoiceTemplate';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { TanStackTable } from '../common/TanStackTable';
 import { ColumnDef } from '@tanstack/react-table';
@@ -258,8 +258,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   };
 
   const handlePrint = (sale: Sale) => {
+    const activeSettings = getActiveReceiptSettings();
     const options: InvoiceTemplateOptions = { 
-        ...defaultOptions, 
+        ...activeSettings, 
         language: language as 'EN' | 'AR' 
     };
     printInvoice(sale, options);
