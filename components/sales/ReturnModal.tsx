@@ -381,7 +381,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                                 <button
                                   onClick={() => updateItemQuantity(item.lineKey, Math.max(1, selectedQty - 1))}
                                   disabled={selectedQty <= 1}
-                                  className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-sm flex items-center justify-center hover:text-${color}-600 dark:hover:text-${color}-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:hover:text-gray-600 dark:disabled:hover:text-gray-200`}
+                                  className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-sm flex items-center justify-center enabled:hover:text-${color}-600 dark:enabled:hover:text-${color}-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:pointer-events-none`}
                                 >
                                   <span className="material-symbols-rounded text-lg">remove</span>
                                 </button>
@@ -396,7 +396,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                                 <button
                                   onClick={() => updateItemQuantity(item.lineKey, Math.min(item.availableQty, selectedQty + 1))}
                                   disabled={selectedQty >= item.availableQty}
-                                  className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-sm flex items-center justify-center hover:text-${color}-600 dark:hover:text-${color}-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:hover:text-gray-600 dark:disabled:hover:text-gray-200`}
+                                  className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-sm flex items-center justify-center enabled:hover:text-${color}-600 dark:enabled:hover:text-${color}-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:pointer-events-none`}
                                 >
                                   <span className="material-symbols-rounded text-lg">add</span>
                                 </button>
@@ -575,7 +575,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
             <button
               onClick={handleNext}
               disabled={step === 1 && selectedItems.size === 0}
-              className={`px-8 py-2.5 rounded-xl font-bold text-white bg-${color}-600 hover:bg-${color}-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-lg shadow-${color}-200 dark:shadow-none`}
+              className={`px-8 py-2.5 rounded-xl font-bold text-white bg-${color}-600 enabled:hover:bg-${color}-700 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 shadow-lg shadow-${color}-200 dark:shadow-none`}
             >
               {t.returns.next}
               <span className="material-symbols-rounded text-lg">arrow_forward</span>
