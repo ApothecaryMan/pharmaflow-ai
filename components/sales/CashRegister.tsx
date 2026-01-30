@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Shift, CashTransaction, CashTransactionType, Language, Employee } from '../../types';
-import { CARD_BASE, TABLE_HEADER_BASE, TABLE_ROW_BASE, BUTTON_BASE, INPUT_BASE, THEME_COLORS } from '../../utils/themeStyles';
+import { CARD_BASE, BUTTON_BASE, INPUT_BASE, THEME_COLORS } from '../../utils/themeStyles';
 import { canPerformAction } from '../../config/permissions';
 import { useSmartDirection } from '../common/SmartInputs';
 import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
@@ -11,6 +11,8 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { useShift } from '../../hooks/useShift';
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
+import { TanStackTable } from '../common/TanStackTable';
+import { ColumnDef } from '@tanstack/react-table';
 
 interface CashRegisterProps {
   color: string;
@@ -42,6 +44,136 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
     if (!currentShift) return 0;
     return currentShift.openingBalance + currentShift.cashSales + currentShift.cashIn - currentShift.cashOut - (currentShift.returns || 0);
   }, [currentShift]);
+
+  const columns = useMemo<ColumnDef<CashTransaction>[]>(() => [
+      {
+        accessorKey: 'time',
+        header: t.cashRegister?.transactions?.time || 'Time',
+        cell: (info) => {
+            const time = info.getValue() as string;
+            const txDate = new Date(time);
+            const timeStr = txDate.toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            });
+
+            const now = new Date();
+            const isToday = now.getDate() === txDate.getDate() && 
+                            now.getMonth() === txDate.getMonth() && 
+                            now.getFullYear() === txDate.getFullYear();
+            
+            const yesterday = new Date(now);
+            yesterday.setDate(now.getDate() - 1);
+            const isYesterday = yesterday.getDate() === txDate.getDate() &&
+                                yesterday.getMonth() === txDate.getMonth() &&
+                                yesterday.getFullYear() === txDate.getFullYear();
+
+            let dateLabel = '';
+            if (isToday) {
+                dateLabel = language === 'AR' ? 'اليوم' : 'Today';
+            } else if (isYesterday) {
+                dateLabel = language === 'AR' ? 'أمس' : 'Yesterday';
+            } else {
+                dateLabel = txDate.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' });
+            }
+
+            const parts = timeStr.split(' '); // ["12:30", "PM"]
+            const timeValue = parts[0];
+            const amPm = parts[1];
+
+            if (language === 'AR') {
+              const arabicMarker = amPm === 'AM' ? 'ص' : 'م';
+              return (
+                  <div className="flex flex-col leading-none justify-center">
+                    <span className="flex items-center gap-1">
+                        <span className="font-sans text-[11px] leading-none">{timeValue}</span>
+                        <span className="text-[9px] font-bold opacity-80 mt-0.5">{arabicMarker}</span>
+                    </span>
+                    <span className="text-[9px] text-gray-400 font-normal leading-none -mt-0.1">{dateLabel}</span>
+                  </div>
+              );
+            }
+            return (
+                <div className="flex flex-col leading-none justify-center">
+                    <span className="font-medium text-[11px] leading-none">{timeStr}</span>
+                    <span className="text-[9px] text-gray-400 font-normal leading-none mt-0.5">{dateLabel}</span>
+                </div>
+            );
+        }
+      },
+      {
+        accessorKey: 'type',
+        header: t.cashRegister?.transactions?.type || 'Type',
+        cell: (info) => {
+            const type = info.getValue() as CashTransactionType;
+            return (
+                <span className={`inline-flex items-center gap-1 px-1 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-tight bg-transparent
+                  ${(type === 'in' || type === 'card_sale') ? 'border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400' : ''}
+                  ${(type === 'out' || type === 'closing') ? 'border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400' : ''}
+                  ${type === 'sale' ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400' : ''}
+                  ${type === 'opening' ? 'border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400' : ''}
+                  ${type === 'return' ? 'border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400' : ''}
+                `}>
+                  <span className="material-symbols-rounded text-sm">
+                      {type === 'opening' ? 'lock_open' : 
+                        type === 'closing' ? 'lock' : 
+                        type === 'in' ? 'login' : 
+                        type === 'out' ? 'logout' : 
+                        type === 'sale' ? 'point_of_sale' : 
+                        type === 'card_sale' ? 'credit_card' : 
+                        type === 'return' ? 'assignment_return' : 'receipt'}
+                  </span>
+                  {t.cashRegister.types[type] || type}
+                </span>
+            );
+        }
+      },
+      {
+        accessorKey: 'userId',
+        header: t.cashRegister?.transactions?.user || 'User',
+        cell: info => <span className="font-bold text-[10px] text-gray-500">{info.getValue() as string || '-'}</span>
+      },
+      {
+        accessorKey: 'reason',
+        header: t.cashRegister?.transactions?.reason || 'Reason',
+        cell: (info) => {
+            const reason = info.getValue() as string;
+            if (!reason) return '-';
+            const match = reason.match(/^(Sale|Return|Return for Sale|Refund)\s*#(\d+)$/i);
+            if (match) {
+                return (
+                    <span className="flex items-center gap-1.5 font-medium">
+                        <span className="material-symbols-rounded text-sm text-gray-400 dark:text-gray-500">tag</span>
+                        <span className="tabular-nums tracking-normal text-[11px] text-gray-900 dark:text-gray-100">{match[2]}</span>
+                    </span>
+                );
+            }
+            return <span className="text-[11px] text-gray-700 dark:text-gray-300 max-w-xs truncate block">{reason}</span>;
+        }
+      },
+      {
+        accessorKey: 'amount',
+        header: t.cashRegister?.transactions?.amount || 'Amount',
+        cell: (info) => {
+            const amountVal = info.getValue() as number;
+            const row = info.row.original;
+            const isPositive = ['in', 'opening', 'sale', 'card_sale'].includes(row.type);
+            
+            return (
+                <div className={`text-[11px] font-bold ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {isPositive ? '+' : '-'}
+                    {(() => {
+                        const { amount, symbol } = formatCurrencyParts(amountVal, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US');
+                        return <>{amount} <span className="text-[9px] opacity-60 font-normal">{symbol}</span></>;
+                    })()}
+                </div>
+            );
+        },
+        meta: { align: 'end' }
+      }
+  ], [t, language]);
+
 
   // Filter Logic
   const filteredTransactions = useMemo(() => {
@@ -233,10 +365,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
         setValidationError(t.cashRegister.validation.protectedBalance);
         return;
       }
-      if (!reasonInput.trim()) {
-        setValidationError(t.cashRegister.validation.reasonRequired);
-        return;
-      }
+    }
+
+    if (!reasonInput.trim()) {
+      setValidationError(t.cashRegister.validation.reasonRequired);
+      return;
     }
 
     const type: CashTransactionType = modalMode === 'in' ? 'in' : 'out';
@@ -504,91 +637,20 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
                    />
                 </div>
                 
-                <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
-                   {currentShift && filteredTransactions.length > 0 ? (
-                      <table className="w-full text-left border-collapse">
-                         <thead className="sticky top-0 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm z-10">
-                            <tr>
-                               <th className={`${TABLE_HEADER_BASE} text-start`}>{t.cashRegister.transactions.time}</th>
-                               <th className={`${TABLE_HEADER_BASE} text-start`}>{t.cashRegister.transactions.type}</th>
-                               <th className={TABLE_HEADER_BASE}>{t.cashRegister.transactions.user || 'User'}</th>
-                               <th className={TABLE_HEADER_BASE}>{t.cashRegister.transactions.reason}</th>
-                               <th className={`${TABLE_HEADER_BASE} text-end`}>{t.cashRegister.transactions.amount}</th>
-                            </tr>
-                         </thead>
-                         <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                            {filteredTransactions.map((tx) => (
-                               <tr key={tx.id} className={TABLE_ROW_BASE}>
-                                  <td className="py-3 px-4 text-sm text-gray-500 text-start">
-                                     {(() => {
-                                        const timeStr = new Date(tx.time).toLocaleTimeString('en-US', {
-                                           hour: '2-digit',
-                                           minute: '2-digit',
-                                           hour12: true
-                                        });
-                                        
-                                        const parts = timeStr.split(' '); // ["12:30", "PM"]
-                                        const timeValue = parts[0];
-                                        const amPm = parts[1];
-
-                                        if (language === 'AR') {
-                                           const arabicMarker = amPm === 'AM' ? 'ص' : 'م';
-                                           return (
-                                              <span className="flex items-center gap-1">
-                                                 <span className="font-sans">{timeValue}</span>
-                                                 <span className="text-[10px] font-bold opacity-80 mt-1">{arabicMarker}</span>
-                                              </span>
-                                           );
-                                        }
-                                        return timeStr;
-                                     })()}
-                                  </td>
-                                  <td className="py-3 px-4 text-start">
-                                     <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider bg-transparent
-                                        ${(tx.type === 'in' || tx.type === 'opening') ? 'border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400' : ''}
-                                        ${(tx.type === 'out' || tx.type === 'closing') ? 'border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400' : ''}
-                                        ${tx.type === 'sale' ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400' : ''}
-                                        ${tx.type === 'card_sale' ? 'border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400' : ''}
-                                        ${tx.type === 'return' ? 'border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400' : ''}
-                                     `}>
-                                        <span className="material-symbols-rounded text-sm">
-                                           {tx.type === 'opening' ? 'lock_open' : 
-                                            tx.type === 'closing' ? 'lock' : 
-                                            tx.type === 'in' ? 'login' : 
-                                            tx.type === 'out' ? 'logout' : 
-                                            tx.type === 'sale' ? 'point_of_sale' : 
-                                            tx.type === 'card_sale' ? 'credit_card' : 
-                                            tx.type === 'return' ? 'assignment_return' : 'receipt'}
-                                        </span>
-                                        {t.cashRegister.types[tx.type]}
-                                     </span>
-                                  </td>
-                                  <td className="py-3 px-4 text-xs font-bold text-gray-500">
-                                     {tx.userId || '-'}
-                                  </td>
-                                  <td className="py-3 px-4 text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate">
-                                     {tx.reason || '-'}
-                                  </td>
-                                  <td className={`py-3 px-4 text-sm font-bold text-end
-                                     ${(['in', 'opening', 'sale', 'card_sale'].includes(tx.type)) ? 'text-emerald-600' : 'text-red-600'}
-                                  `}>
-                                     {(['in', 'opening', 'sale', 'card_sale'].includes(tx.type)) ? '+' : '-'}
-                                     {(() => {
-                                        const { amount, symbol } = formatCurrencyParts(tx.amount, 'EGP', language === 'AR' ? 'ar-EG' : 'en-US');
-                                        return <>{amount} <span className="text-[10px] opacity-60 font-normal">{symbol}</span></>;
-                                     })()}
-                                  </td>
-                               </tr>
-                            ))}
-                         </tbody>
-                      </table>
-                   ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                         <span className="material-symbols-rounded text-4xl mb-2 opacity-50">receipt_long</span>
-                         <p>{t.cashRegister.messages.noTransactions}</p>
-                      </div>
-                   )}
-                </div>
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                    <TanStackTable
+                        data={filteredTransactions}
+                        columns={columns}
+                        dense
+                        lite
+                        tableId="cash-register-table"
+                        searchPlaceholder={t.global?.actions?.search || "Search..."}
+                        emptyMessage={t.cashRegister.messages.noTransactions}
+                        enablePagination={false}
+                        enableSearch={false} 
+                        color={color}
+                    />
+                 </div>
              </div>
         </div>
       </div>
@@ -645,12 +707,17 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
 
                   <div>
                      <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
-                        {t.cashRegister.modal.notes}
+                        {(modalMode === 'in' || modalMode === 'out') 
+                           ? (t.cashRegister.transactions.reason || 'Reason') 
+                           : t.cashRegister.modal.notes}
+                        {(modalMode === 'in' || modalMode === 'out') && <span className="text-red-500 ml-1">*</span>}
                      </label>
                      <textarea 
                         className={INPUT_BASE}
                         rows={3}
-                        placeholder={t.cashRegister.messages.optionalNotes}
+                        placeholder={(modalMode === 'in' || modalMode === 'out') 
+                           ? (t.cashRegister.transactions.reason || 'Enter reason...') 
+                           : t.cashRegister.messages.optionalNotes}
                         value={reasonInput}
                         onChange={e => {
                            setReasonInput(e.target.value);
