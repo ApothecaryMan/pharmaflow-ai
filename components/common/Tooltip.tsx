@@ -154,8 +154,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
             ref={tooltipRef}
             className={`
                 fixed px-2 py-1 
-                bg-gray-800 dark:bg-gray-700 text-white text-[10px] 
-                rounded-lg z-[9999] shadow-xl border border-gray-700/50
+                bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-[10px] 
+                rounded-lg z-[9999] shadow-2xl border border-gray-200 dark:border-gray-700/50
                 pointer-events-none whitespace-nowrap
                 transition-opacity duration-200
                 ${tooltipClassName}
@@ -174,8 +174,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
                   absolute w-0 h-0 
                   border-4 border-transparent
                   ${placement === 'top' 
-                    ? 'top-full border-t-gray-800 dark:border-t-gray-700' 
-                    : 'bottom-full border-b-gray-800 dark:border-b-gray-700'
+                    ? 'top-full border-t-white dark:border-t-gray-800' 
+                    : 'bottom-full border-b-white dark:border-b-gray-800'
                   }
                 `}
                 style={{
