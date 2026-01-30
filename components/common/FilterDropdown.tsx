@@ -32,20 +32,17 @@ export interface FilterDropdownProps<T> {
     hideArrow?: boolean;
     /** If true, hides the arrow automatically if the rendered text is long (string length > 4). */
     autoHideArrow?: boolean;
+    /** 
+     * NEW: If true, the dropdown is placed directly on the page background (e.g. gray toolbar).
+     * It swaps the colors: use "open" color for closed state and vice versa.
+     */
+    onBackground?: boolean;
 }
 
 /**
  * FilterDropdown - A generic dropdown/combobox component.
- * 
- * @warning **LAYOUT BEHAVIOR NOTICE**
- * This component defaults to an **Accordion-style expansion**, meaning it naturally pushes sibling content down when opened.
- * Use `floating={true}` prop to make it float over content instead.
- * 
- * @param {boolean} floating - Set to true to make dropdown float over content.
- * @param {boolean} minHeight - Use minHeight={38} for standard 40px input alignment.
  */
 export function FilterDropdown<T>({
-
     items,
     selectedItem,
     isOpen,
@@ -67,7 +64,8 @@ export function FilterDropdown<T>({
     zIndexHigh = 'z-40',
     floating = false,
     hideArrow = false,
-    autoHideArrow = false
+    autoHideArrow = false,
+    onBackground = false
 }: FilterDropdownProps<T>) {
     
     const containerRef = useRef<HTMLDivElement>(null);
@@ -76,19 +74,14 @@ export function FilterDropdown<T>({
 
     const handleMouseDown = () => {
         isClickingRef.current = true;
-        // Reset after short delay to ensure focus event sees it as true
         setTimeout(() => { isClickingRef.current = false; }, 200);
     };
     
-    // State for uncontrolled mode
     const [internalIsOpen, setInternalIsOpen] = useState(false);
-    
-    // Determine controlled vs uncontrolled state
     const isControlled = isOpen !== undefined && onToggle !== undefined;
     const effectiveIsOpen = isControlled ? isOpen : internalIsOpen;
     const handleToggle = isControlled ? onToggle : () => setInternalIsOpen(prev => !prev);
     
-    // Sync isAnimating with effectiveIsOpen
     useEffect(() => {
         if (effectiveIsOpen) {
             setIsAnimating(true);
@@ -104,20 +97,17 @@ export function FilterDropdown<T>({
         }
     };
     
-    // Click outside handler
     useEffect(() => {
         if (!effectiveIsOpen) return;
-        
         const handleClickOutside = (event: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 if (isControlled) {
-                    onToggle(); // Call parent's toggle
+                    onToggle();
                 } else {
                     setInternalIsOpen(false);
                 }
             }
         };
-        
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [effectiveIsOpen, isControlled, onToggle]);
@@ -138,35 +128,44 @@ export function FilterDropdown<T>({
     const isSingle = items.length <= 1;
     const isTransparent = transparentIfSingle && isSingle;
     const isInput = variant === 'input';
-
-    // Padding settings
     const itemPaddingClasses = 'px-3 py-1';
 
-    // Floating styles
-    const outerClasses = `relative inline-block ${className}`;
-        
-    const outerStyle = floating && minHeight 
-        ? { ...style, height: minHeight, minHeight } 
-        : style;
+    // Design Tokens & Variable Inversion
+    const bgClosed = onBackground ? 'var(--bg-closed)' : (isInput ? 'var(--bg-input)' : (isTransparent ? 'transparent' : 'var(--bg-active)'));
+    const bgOpen = 'var(--bg-active)';
+    const currentBg = effectiveIsOpen ? bgOpen : bgClosed;
+    const currentBorder = (onBackground || effectiveIsOpen || isInput || !isTransparent) ? 'var(--border-gray)' : 'transparent';
 
-    const innerClasses = `relative w-full flex flex-col overflow-hidden border transition-all outline-none
+    const outerClasses = `relative inline-block ${className}`;
+    const outerStyle = floating && minHeight ? { ...style, height: minHeight, minHeight } : style;
+
+    const innerClasses = `relative w-full flex flex-col overflow-hidden border transition-all duration-300 outline-none
                     ${rounded === 'full' ? 'rounded-[20px]' : 'rounded-xl'}
-                    ${disabled ? 'cursor-not-allowed bg-transparent border-gray-200 dark:bg-gray-800' : 'cursor-pointer'}
-                    ${(effectiveIsOpen || isAnimating)
-                        ? `${zIndexHigh}` 
-                        : 'z-0'}
-                    ${effectiveIsOpen 
-                        ? 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700' 
-                        : (isInput 
-                            ? (disabled ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600')
-                            : (isTransparent ? 'bg-transparent border-transparent' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700')
-                          )
-                    }
+                    ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
+                    ${(effectiveIsOpen || isAnimating) ? zIndexHigh : 'z-0'}
+                    ${onBackground ? 'shadow-sm' : ''}
+                    motion-safe:transition-all motion-reduce:transition-none
                     ${floating ? 'absolute top-0 left-0' : ''}
                 `;
 
     return (
         <div ref={containerRef} className={outerClasses} style={outerStyle}>
+            <style>{`
+                :root {
+                    --bg-active: white;
+                    --bg-closed: white;
+                    --bg-input: #f9fafb;
+                    --border-gray: #e5e7eb; /* gray-200 */
+                }
+                .dark {
+                    --bg-active: #1f2937; /* gray-800 */
+                    --bg-closed: #111827; /* gray-900 */
+                    --bg-input: #1f2937;
+                    --border-gray: #1f2937; /* gray-800 - match table/input */
+                }
+                .filter-dropdown-scroll::-webkit-scrollbar { width: 2px; background: transparent; }
+                .filter-dropdown-scroll::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.6); border-radius: 9999px; }
+            `}</style>
              <div 
                 tabIndex={disabled ? -1 : 0}
                 onKeyDown={disabled ? undefined : handleKeyDown}
@@ -174,15 +173,20 @@ export function FilterDropdown<T>({
                 onFocus={handleFocus}
                 onMouseDown={handleMouseDown}
                 className={innerClasses}
-                style={effectiveIsOpen ? { borderColor: `var(--color-${color}-500)` } : {}}
+                style={{ 
+                    backgroundColor: currentBg,
+                    borderColor: effectiveIsOpen ? `var(--color-${color}-500)` : currentBorder,
+                    willChange: isAnimating ? 'grid-template-rows, background-color, border-color' : 'auto',
+                    transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
                 onClick={disabled ? undefined : handleClick}
             >
-                {/* Trigger Area - العنصر المحدد */}
+                {/* Trigger Area */}
                 <div 
-                    className={`w-full flex items-center 
-                        ${isInput ? `justify-between ${itemPaddingClasses}` : `justify-center items-center ${itemPaddingClasses}`}
-                    `}
-                    style={isInput ? { minHeight: minHeight || '40px' } : {}}
+                    className={`w-full flex items-center ${isInput 
+                        ? `justify-between ${onBackground ? 'px-3 py-[9px]' : itemPaddingClasses}` 
+                        : `justify-center items-center ${itemPaddingClasses}`}`}
+                    style={isInput ? { minHeight: minHeight || (onBackground ? '42px' : '40px') } : {}}
                 >
                     {isInput ? (
                         <>
@@ -195,20 +199,11 @@ export function FilterDropdown<T>({
                                     if (!node) return '';
                                     if (React.isValidElement(node)) {
                                         const children = (node.props as any).children;
-                                        if (Array.isArray(children)) {
-                                            return children.map(findText).join('');
-                                        }
-                                        return findText(children);
+                                        return Array.isArray(children) ? children.map(findText).join('') : findText(children);
                                     }
-                                    if (Array.isArray(node)) {
-                                        return node.map(findText).join('');
-                                    }
-                                    return '';
+                                    return Array.isArray(node) ? node.map(findText).join('') : '';
                                 };
-
-                                const selected = renderSelected(selectedItem);
-                                const text = findText(selected);
-                                return text.length > 3;
+                                return findText(renderSelected(selectedItem)).length > 3;
                             })())) && (
                                 <span className="material-symbols-rounded text-gray-400 text-[20px] ml-1 shrink-0">expand_more</span>
                             )}
@@ -218,52 +213,30 @@ export function FilterDropdown<T>({
                     )}
                 </div>
 
-                {/* Dropdown Menu with Animation */}
+                {/* Dropdown Menu Container */}
                 <div 
-                    className="w-full overflow-hidden bg-white dark:bg-gray-900 transition-all duration-200 ease-out"
+                    className="w-full overflow-hidden transition-all duration-300"
                     style={{
                         display: 'grid',
                         gridTemplateRows: effectiveIsOpen ? '1fr' : '0fr',
-                        transition: 'grid-template-rows 200ms ease-out'
+                        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'
                     }}
                 >
                     <div className="min-h-0 overflow-hidden">
                         <div 
-                            className={`filter-dropdown-scroll border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto ${effectiveIsOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-150`}
-                            style={{
-                                scrollbarWidth: 'thin',
-                                scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
-                            }}
+                            className={`filter-dropdown-scroll border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto ${effectiveIsOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}
                         >
-                            <style>{`
-                                .filter-dropdown-scroll::-webkit-scrollbar {
-                                    width: 2px;
-                                    background: transparent;
-                                }
-                                .filter-dropdown-scroll::-webkit-scrollbar-track {
-                                    background: transparent;
-                                    border: none;
-                                    box-shadow: none;
-                                }
-                                .filter-dropdown-scroll::-webkit-scrollbar-thumb {
-                                    background: rgba(156, 163, 175, 0.6);
-                                    border-radius: 9999px;
-                                }
-                                .filter-dropdown-scroll::-webkit-scrollbar-corner {
-                                    background: transparent;
-                                }
-                            `}</style>
                             {items
                                 .filter(item => keyExtractor(item) !== (selectedItem ? keyExtractor(selectedItem) : ''))
                                 .map(item => (
                                     <div 
                                         key={keyExtractor(item)}
-                                        className={`w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 ${itemPaddingClasses} transition-colors`}
+                                        className="w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1 transition-colors"
                                         onClick={(e) => handleOptionClick(e, item)}
                                     >
                                         {renderItem(item, false)}
                                     </div>
-                            ))}
+                                ))}
                         </div>
                     </div>
                 </div>

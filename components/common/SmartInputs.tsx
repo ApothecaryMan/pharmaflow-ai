@@ -356,6 +356,7 @@ export interface SmartAutocompleteProps extends Omit<InputHTMLAttributes<HTMLInp
   caseSensitive?: boolean;
   onSuggestionAccept?: (suggestion: string) => void;
   inputRef?: React.RefObject<HTMLInputElement>;
+  color?: string; // Theme color (default: 'blue')
 }
 
 /**
@@ -390,6 +391,7 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
   caseSensitive = false,
   onSuggestionAccept,
   inputRef: externalRef,
+  color = 'blue',
   ...restProps
 }) => {
   const [currentSuggestion, setCurrentSuggestion] = useState<string>('');
@@ -478,10 +480,20 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
         placeholder={placeholder}
         disabled={disabled}
         dir={dir}
-        className={className}
+        className={`
+          w-full px-3 py-2.5 rounded-xl
+          bg-white dark:bg-gray-900
+          border border-gray-200 dark:border-gray-800
+          hover:border-gray-300 dark:hover:border-gray-700
+          focus:outline-none focus:ring-0
+          focus:border-${color}-500 dark:focus:border-${color}-400
+          focus:hover:border-${color}-500 dark:focus:hover:border-${color}-400
+          text-gray-900 dark:text-gray-100 placeholder-gray-400
+          shadow-sm ${className}
+        `}
       />
       
-      {/* Ghost Text Overlay */}
+      {/* Ghost Text Overlay - Badge Style */}
       {ghostText && (
         <div
           className={`absolute inset-0 pointer-events-none flex items-center ${ghostTextClassName}`}
@@ -492,9 +504,17 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
           }}
         >
           {/* Invisible spacer matching the actual input value */}
-          <span className="invisible">{value}</span>
-          {/* Visible ghost text */}
-          <span className="text-gray-400 dark:text-gray-600">
+          <span className="invisible whitespace-pre">{value}</span>
+          
+          {/* Visible ghost text as a Badge */}
+          <span className={`
+            inline-flex items-center px-0.5 py-0.5 ms-1
+            rounded-lg border border-gray-200 dark:border-gray-800 
+            bg-gray-50/50 dark:bg-gray-800/50 
+            text-sm font-bold tracking-tight
+            text-gray-400 dark:text-gray-500 
+            transition-all animate-in fade-in zoom-in duration-200
+          `}>
             {ghostText}
           </span>
         </div>
