@@ -161,8 +161,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({ suppliers, setSupp
       accessorKey: 'id',
       header: t.headers?.id || 'ID',
       size: 100,
-      meta: { align: 'start' },
-      cell: ({ getValue }) => <span className="text-xs font-mono text-gray-500 truncate">{getValue() as string}</span>
+      meta: { align: 'start' }
     },
     {
       accessorKey: 'name',

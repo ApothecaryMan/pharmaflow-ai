@@ -22,6 +22,7 @@ import { useStatusBar } from '../../components/layout/StatusBar';
 import { UserRole, canPerformAction } from '../../config/permissions';
 import { useAlert } from '../../context';
 import { TanStackTable } from '../common/TanStackTable';
+import { ColumnDef } from '@tanstack/react-table';
 
 
 interface PurchasesProps {
@@ -304,26 +305,21 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
 
 
-  const columns = useMemo(() => [
+  const columns = useMemo<ColumnDef<Purchase>[]>(() => [
     {
       header: t.tableHeaders?.orderId || 'Order #',
       accessorKey: 'invoiceId',
-      cell: (info: any) => <span className="text-xs font-mono font-bold text-gray-700 dark:text-gray-300">{info.getValue() || '-'}</span>,
+      meta: { align: 'start' }
     },
     {
       header: t.tableHeaders?.invId || 'Inv #',
       accessorKey: 'externalInvoiceId',
-      cell: (info: any) => <span className="text-xs font-mono text-gray-500">{info.getValue() || '-'}</span>,
+      meta: { align: 'start' }
     },
     {
       header: t.tableHeaders?.date || 'Date',
       accessorKey: 'date',
-      cell: (info: any) => (
-        <div className="flex flex-col">
-          <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">{new Date(info.getValue()).toLocaleDateString()}</span>
-          <span className="text-[10px] text-gray-400">{formatTime(new Date(info.getValue()))}</span>
-        </div>
-      ),
+      meta: { align: 'center' }
     },
     {
       header: t.tableHeaders?.supplier || 'Supplier',

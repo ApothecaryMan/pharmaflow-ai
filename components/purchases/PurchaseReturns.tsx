@@ -64,22 +64,19 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       accessorKey: 'id',
       header: t.purchaseReturns?.tableHeaders?.id || 'Return ID',
       size: 100,
-      meta: { align: 'start' },
-      cell: ({ getValue }) => <span className="text-xs font-mono text-gray-500 truncate">{getValue() as string}</span>
+      meta: { align: 'start' }
     },
     {
       accessorKey: 'date',
       header: t.purchaseReturns?.tableHeaders?.date || 'Date',
       size: 120,
-      meta: { align: 'start' },
-      cell: ({ getValue }) => <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{new Date(getValue() as string).toLocaleDateString()}</span>
+      meta: { align: 'center' }
     },
     {
       accessorKey: 'purchaseId',
       header: t.purchaseReturns?.tableHeaders?.purchaseId || 'Purchase ID',
       size: 120,
-      meta: { align: 'start' },
-      cell: ({ getValue }) => <span className="text-xs font-mono text-gray-500 truncate">{getValue() as string}</span>
+      meta: { align: 'start' }
     },
     {
       accessorKey: 'supplierName',

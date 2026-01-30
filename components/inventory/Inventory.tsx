@@ -287,6 +287,14 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
       accessorKey: 'stock',
       header: t.headers.stock,
       cell: ({ row }) => {
+        if (row.original.stock <= 0) {
+          return (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-lg border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest bg-red-50 dark:bg-red-900/10 shadow-sm shadow-red-500/10">
+              {t.outOfStockShort || 'OUT'}
+            </span>
+          );
+        }
+
         const parts = formatStockParts(row.original.stock, row.original.unitsPerPack, {
           packs: t.details?.packs || 'Packs',
           outOfStock: t.outOfStock || 'Out of Stock'
@@ -327,11 +335,33 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
     {
       accessorKey: 'expiryDate',
       header: t.headers.expiry,
-      cell: ({ row }) => {
-        const date = new Date(row.original.expiryDate);
-        const formatted = date.toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' });
-        return <span className="text-gray-900 dark:text-gray-100 text-sm font-medium">{formatted}</span>;
+      cell: ({ getValue }) => {
+        const val = getValue() as string;
+        if (!val) return <span className="text-gray-400">-</span>;
+        
+        const date = new Date(val);
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const sixMonthsFromNow = new Date(today);
+        sixMonthsFromNow.setMonth(today.getMonth() + 6);
+
+        // Remove time part for comparison
+        const expiry = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+        let colorClass = 'text-gray-900 dark:text-gray-100';
+        if (expiry <= today) {
+          colorClass = 'text-red-500 font-bold';
+        } else if (expiry <= sixMonthsFromNow) {
+          colorClass = 'text-amber-500 font-bold';
+        }
+
+        return (
+          <span className={`${colorClass} tabular-nums text-sm`}>
+            {date.toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' })}
+          </span>
+        );
       },
+      meta: { align: 'center', smartDate: false }
     },
   ], [color, currentLang, t]);
 

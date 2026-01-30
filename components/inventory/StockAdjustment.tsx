@@ -663,30 +663,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
       {
          accessorKey: 'timestamp',
          header: t.common?.date || 'Date',
-         cell: info => {
-            const date = new Date(info.getValue() as string);
-            const now = new Date();
-            const dDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            const dNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const diffDays = Math.round((dNow.getTime() - dDate.getTime()) / (1000 * 60 * 60 * 24));
-            
-            let dateLabel = '';
-            if (diffDays === 0) dateLabel = t.common?.today || 'Today';
-            else if (diffDays === 1) dateLabel = t.common?.yesterday || 'Yesterday';
-            else dateLabel = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
-
-            return (
-                <div className="flex flex-col py-0.5">
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    <span className="text-[10px] text-gray-400 font-mono uppercase tracking-tight">
-                        {dateLabel}
-                    </span>
-                </div>
-            );
-         },
-         meta: { width: 120 }
+         meta: { width: 120, align: 'center' }
       },
      {
         accessorKey: 'drugName',
