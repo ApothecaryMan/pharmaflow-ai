@@ -76,3 +76,56 @@ export const getCurrencySymbol = (currency: string = 'EGP', locale?: string): st
     currency 
   }).formatToParts(0).find(p => p.type === 'currency')?.value || currency;
 };
+export const formatCompactCurrency = (amount: number, currency: string = 'EGP', locale?: string, decimals: number = 1): string => {
+  const currentLang = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
+  const isArabic = locale ? locale.startsWith('ar') : currentLang.startsWith('ar');
+  
+  const formatter = new Intl.NumberFormat('en-US', {
+    notation: "compact", 
+    maximumFractionDigits: decimals
+  });
+
+  if (currency === 'EGP') {
+    return isArabic 
+      ? `${formatter.format(amount)} ج.م`
+      : `${formatter.format(amount)} L.E`;
+  }
+
+  return new Intl.NumberFormat(locale || (isArabic ? 'ar-EG' : 'en-US'), {
+    notation: "compact",
+    style: 'currency',
+    currency: currency,
+    maximumFractionDigits: decimals,
+  }).format(amount);
+};
+export const formatCompactCurrencyParts = (amount: number, currency: string = 'EGP', locale?: string, decimals: number = 1) => {
+  const currentLang = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
+  const isArabic = locale ? locale.startsWith('ar') : currentLang.startsWith('ar');
+  
+  const formatter = new Intl.NumberFormat('en-US', {
+    notation: "compact", 
+    maximumFractionDigits: decimals
+  });
+
+  if (currency === 'EGP') {
+    return {
+      amount: formatter.format(amount),
+      symbol: isArabic ? 'ج.م' : 'L.E'
+    };
+  }
+
+  const parts = new Intl.NumberFormat(locale || (isArabic ? 'ar-EG' : 'en-US'), {
+    notation: "compact",
+    style: 'currency',
+    currency: currency,
+    maximumFractionDigits: decimals,
+  }).formatToParts(amount);
+  
+  const amountPart = parts.filter(p => p.type !== 'currency' && p.type !== 'literal').map(p => p.value).join('');
+  const symbolPart = parts.find(p => p.type === 'currency')?.value || currency;
+  
+  return {
+      amount: amountPart,
+      symbol: symbolPart
+  }
+};
