@@ -44,6 +44,7 @@ export const StockAdjustmentPrint: React.FC<StockAdjustmentPrintProps> = ({
                             margin: 0 !important;
                             padding: 0 !important;
                             background: white !important;
+                            font-size: 10pt !important;
                         }
 
                         /* 3. Style our portal container */
@@ -63,7 +64,7 @@ export const StockAdjustmentPrint: React.FC<StockAdjustmentPrintProps> = ({
                             width: 100%;
                             height: auto;
                             margin: 0;
-                            padding: 15px;
+                            padding: 12pt;
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
                         }
@@ -72,6 +73,13 @@ export const StockAdjustmentPrint: React.FC<StockAdjustmentPrintProps> = ({
                         thead { display: table-header-group; }
                         tr { page-break-inside: avoid; }
                         .signature-block { page-break-inside: avoid; }
+
+                        /* Pt-based typography overrides for print */
+                        .print-text-base { font-size: 10pt !important; }
+                        .print-text-sm { font-size: 8pt !important; }
+                        .print-text-xs { font-size: 7pt !important; }
+                        .print-text-lg { font-size: 12pt !important; }
+                        .print-text-xl { font-size: 14pt !important; }
                     }
                 `}
             </style>
@@ -81,8 +89,8 @@ export const StockAdjustmentPrint: React.FC<StockAdjustmentPrintProps> = ({
                 <div className="stock-adjustment-print-content min-h-screen flex flex-col">
                     <div className="flex justify-between items-start mb-4">
                         <div className="text-left">
-                            <h1 className="text-xl font-bold text-black mb-1">{pharmacyName} - Inventory Count</h1>
-                            <p className="text-[10px] text-black">Generated on {new Date().toLocaleString(isRTL ? 'ar-EG' : 'en-US')}</p>
+                            <h1 className="print-text-xl font-bold text-black mb-1">{pharmacyName} - Inventory Count</h1>
+                            <p className="print-text-sm text-black">Generated on {new Date().toLocaleString(isRTL ? 'ar-EG' : 'en-US')}</p>
                         </div>
                         <div className="flex items-center gap-2">
                              <img src="/logo_icon_black.svg" alt="App Logo" className="h-6 w-auto" />
@@ -90,7 +98,7 @@ export const StockAdjustmentPrint: React.FC<StockAdjustmentPrintProps> = ({
                         </div>
                     </div>
                     
-                    <table className="w-full text-start border-collapse mb-4 text-[10px]">
+                    <table className="w-full text-start border-collapse mb-4 print-text-sm">
                         <thead>
                             <tr className="border-b border-black text-black">
                                 <th className="py-1 text-start font-bold w-[30%]">{t.stockAdjustment?.table?.product || "Product"}</th>
@@ -150,11 +158,11 @@ export const StockAdjustmentPrint: React.FC<StockAdjustmentPrintProps> = ({
                     <div className="signature-block mt-auto pb-4 flex justify-between items-end" style={{ pageBreakInside: 'avoid' }}>
                         <div className="text-center">
                             <div className="w-40 border-b border-gray-400 mb-1"></div>
-                            <p className="text-[10px] font-bold text-black">{t.stockAdjustment?.managerSignature || "Manager Signature"}</p>
+                            <p className="print-text-sm font-bold text-black">{t.stockAdjustment?.managerSignature || "Manager Signature"}</p>
                         </div>
                         <div className="text-center">
                             <div className="w-40 border-b border-gray-400 mb-1"></div>
-                            <p className="text-[10px] font-bold text-black">{t.stockAdjustment?.auditorSignature || "Auditor Signature"}</p>
+                            <p className="print-text-sm font-bold text-black">{t.stockAdjustment?.auditorSignature || "Auditor Signature"}</p>
                         </div>
                     </div>
                 </div>
