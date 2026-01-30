@@ -268,179 +268,180 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
   };
 
   const clearQueue = () => {
-      if (window.confirm(t.barcodePrinter?.alerts?.confirmClear || 'Clear print queue?')) {
-          setQueue([]);
-      }
+    setQueue([]);
   };
 
   return (
-    <div className="h-full flex flex-col gap-4 overflow-hidden">
-      {/* Header Card */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              <span className={`p-2 rounded-xl bg-${color}-100 text-${color}-600 dark:bg-${color}-900/30 dark:text-${color}-400`}>
-                <span className="material-symbols-rounded">print</span>
-              </span>
-              {t.barcodePrinter?.title || 'Barcode Printer'}
-            </h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-              {t.barcodePrinter?.subtitle || 'Queue and print product labels'}
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-             <button 
-                onClick={clearQueue}
-                disabled={queue.length === 0}
-                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-             >
-               {t.barcodePrinter?.clearQueue || 'Clear Queue'}
-             </button>
-             <button 
-                onClick={handlePrint}
-                disabled={queue.length === 0}
-                className={`px-6 py-2 bg-${color}-600 hover:bg-${color}-700 text-white rounded-xl shadow-lg shadow-${color}-500/30 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none`}
-             >
-               <span className="material-symbols-rounded">print</span>
-               {t.barcodePrinter?.printLabels || 'Print Labels'}
-             </button>
-          </div>
+    <div className="h-full flex flex-col gap-4 overflow-hidden animate-fade-in">
+      {/* Dynamic Header & Toolbar */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-1">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-2">
+            <span className="material-symbols-rounded text-2xl">print</span>
+            {t.barcodePrinter?.title || 'Barcode Printer'}
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {t.barcodePrinter?.subtitle || 'Queue and print product labels'}
+          </p>
         </div>
 
-        {/* Search Bar with Total Badge */}
-        <div className="flex items-center gap-3">
-          <div className="relative z-20 flex-1" ref={searchRef}>
-            <SearchInput
-              ref={searchInputRef}
-              value={search}
-              onSearchChange={(val) => {
-                  setSearch(val);
-                  setShowSuggestions(true);
-                  setSelectedSuggestionIndex(-1);
-              }}
-              onKeyDown={(e) => {
-                  if (searchResults.length > 0) {
-                      if (e.key === 'ArrowDown') {
-                          e.preventDefault();
-                          setSelectedSuggestionIndex(prev => (prev + 1) % searchResults.length);
-                      } else if (e.key === 'ArrowUp') {
-                          e.preventDefault();
-                          setSelectedSuggestionIndex(prev => (prev - 1 + searchResults.length) % searchResults.length);
-                      } else if (e.key === 'Enter') {
-                          e.preventDefault();
-                          if (selectedSuggestionIndex >= 0) {
-                              addToQueue(searchResults[selectedSuggestionIndex]);
-                          } else if (searchResults.length === 1) {
-                              addToQueue(searchResults[0]);
-                          }
-                      }
-                  }
-              }}
-              onClear={() => setSearch('')}
-              placeholder={t.barcodePrinter?.searchPlaceholder || 'Search product to print...'}
-              className="w-full"
-              autoComplete="off"
-              onFocus={() => setShowSuggestions(true)}
-            />
-          
-            {/* Suggestions Dropdown */}
-            <SearchDropdown
-                results={searchResults}
-                onSelect={(drug) => {
-                    addToQueue(drug);
-                    setSearch('');
-                    // setShowSuggestions(false); // Handled by SearchDropdown logic if needed, or parent
-                }}
-                columns={[
-                    {
-                        header: t.inventory?.headers?.codes || 'Codes',
-                        width: 'w-32 shrink-0',
-                        className: 'text-gray-900 dark:text-gray-400',
-                        render: (drug: Drug) => drug.internalCode || drug.barcode || drug.id
-                    },
-                    {
-                        header: t.stockAdjustment?.table?.product || 'Name',
-                        width: 'flex-1',
-                        className: 'text-gray-900 dark:text-gray-400',
-                        render: (drug: Drug) => (
-                            <span className={`truncate ${textTransform === 'uppercase' ? 'uppercase' : ''}`}>
-                                {drug.name} <span className="opacity-75 font-normal">{drug.dosageForm}</span>
-                            </span>
-                        )
-                    },
-                    {
-                        header: t.inventory?.headers?.expiry || 'Expiry',
-                        width: 'w-24 shrink-0',
-                        className: 'text-center justify-center text-gray-900 dark:text-gray-400',
-                        render: (drug: Drug) => {
-                            if (!drug.expiryDate) return null;
-                            const date = new Date(drug.expiryDate);
-                            if (isNaN(date.getTime())) return drug.expiryDate;
-                            return (
-                                <span className="text-xs whitespace-nowrap">
-                                    {`${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getFullYear()).slice(-2)}`}
-                                </span>
-                            );
+        <div className="flex items-center gap-2">
+          {queue.length > 0 && (
+            <button 
+              onClick={clearQueue}
+              className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+            >
+              {t.barcodePrinter?.clearQueue || 'Clear Queue'}
+            </button>
+          )}
+          <button 
+            onClick={handlePrint}
+            disabled={queue.length === 0}
+            className={`px-5 py-2.5 bg-${color}-600 hover:bg-${color}-700 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:grayscale disabled:shadow-none font-semibold`}
+          >
+            <span className="material-symbols-rounded">print</span>
+            {t.barcodePrinter?.printLabels || 'Print Labels'}
+          </button>
+        </div>
+      </div>
+
+      {/* Main Filter/Search Toolbar */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row items-center gap-4">
+        {/* Search Input Container */}
+        <div className="relative z-20 flex-1 w-full" ref={searchRef}>
+          <SearchInput
+            ref={searchInputRef}
+            value={search}
+            onSearchChange={(val) => {
+                setSearch(val);
+                setShowSuggestions(true);
+                setSelectedSuggestionIndex(-1);
+            }}
+            onKeyDown={(e) => {
+                if (searchResults.length > 0) {
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setSelectedSuggestionIndex(prev => (prev + 1) % searchResults.length);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setSelectedSuggestionIndex(prev => (prev - 1 + searchResults.length) % searchResults.length);
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (selectedSuggestionIndex >= 0) {
+                            addToQueue(searchResults[selectedSuggestionIndex]);
+                        } else if (searchResults.length === 1) {
+                            addToQueue(searchResults[0]);
                         }
                     }
-                ]}
-                isVisible={showSuggestions && !!search.trim()}
-                emptyMessage={t.pos?.noResults}
-            />
-          </div>
+                }
+            }}
+            onClear={() => setSearch('')}
+            placeholder={t.barcodePrinter?.searchPlaceholder || 'Search product to print...'}
+            color={color}
+            autoComplete="off"
+            onFocus={() => setShowSuggestions(true)}
+          />
+        
+          <SearchDropdown
+              results={searchResults}
+              onSelect={(drug) => {
+                  addToQueue(drug);
+                  setSearch('');
+              }}
+              columns={[
+                  {
+                      header: t.inventory?.headers?.codes || 'Codes',
+                      width: 'w-32 shrink-0',
+                      className: 'text-gray-900 dark:text-gray-400',
+                      render: (drug: Drug) => drug.internalCode || drug.barcode || drug.id
+                  },
+                  {
+                      header: t.stockAdjustment?.table?.product || 'Name',
+                      width: 'flex-1',
+                      className: 'text-gray-900 dark:text-gray-400 font-bold',
+                      render: (drug: Drug) => (
+                          <span className={`${textTransform === 'uppercase' ? 'uppercase' : ''}`}>
+                              {drug.name} <span className="opacity-75 font-normal text-xs">{drug.dosageForm}</span>
+                          </span>
+                      )
+                  },
+                  {
+                      header: t.inventory?.headers?.expiry || 'Expiry',
+                      width: 'w-24 shrink-0',
+                      className: 'text-center justify-center text-gray-900 dark:text-gray-400',
+                      render: (drug: Drug) => {
+                          if (!drug.expiryDate) return null;
+                          const date = new Date(drug.expiryDate);
+                          if (isNaN(date.getTime())) return drug.expiryDate;
+                          return (
+                              <span className="text-xs whitespace-nowrap">
+                                  {`${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getFullYear()).slice(-2)}`}
+                              </span>
+                          );
+                      }
+                  }
+              ]}
+              isVisible={showSuggestions && !!search.trim()}
+              emptyMessage={t.pos?.noResults}
+          />
+        </div>
+
+        {/* Labels Summary & Settings */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="h-8 w-[1px] bg-gray-100 dark:bg-gray-800 hidden md:block" />
           
-          {/* Total Labels Badge */}
-          {queue.length > 0 && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl shrink-0">
-              <span className="text-xs text-gray-500 dark:text-gray-400">{t.barcodePrinter?.totalLabels || 'Labels'}:</span>
-              <span className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">
+          <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-100 dark:border-gray-800">
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                {t.barcodePrinter?.totalLabels || 'Total Labels'}
+              </span>
+              <span className={`text-sm font-bold text-${color}-600 dark:text-${color}-400 tabular-nums`}>
                 {queue.reduce((acc, item) => acc + item.quantity, 0)}
               </span>
-              <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    const menuItems = [
-                        { 
-                            label: t.barcodePrinter?.settings?.store || 'Pharmacy Name', 
-                            icon: printConfig.store ? 'check' : undefined, 
-                            action: () => setPrintConfig(p => ({ ...p, store: !p.store })) 
-                        },
-                        { 
-                            label: t.barcodePrinter?.settings?.name || 'Drug Name', 
-                            icon: printConfig.name ? 'check' : undefined, 
-                            action: () => setPrintConfig(p => ({ ...p, name: !p.name })) 
-                        },
-                        { 
-                            label: t.barcodePrinter?.settings?.price || 'Price', 
-                            icon: printConfig.price ? 'check' : undefined, 
-                            action: () => setPrintConfig(p => ({ ...p, price: !p.price })) 
-                        },
-                        { 
-                            label: t.barcodePrinter?.settings?.expiry || 'Expiry Date', 
-                            icon: printConfig.expiry ? 'check' : undefined, 
-                            action: () => setPrintConfig(p => ({ ...p, expiry: !p.expiry })) 
-                        },
-                        { 
-                            label: t.barcodePrinter?.settings?.barcode || 'Barcode', 
-                            icon: printConfig.barcode ? 'check' : undefined, 
-                            action: () => setPrintConfig(p => ({ ...p, barcode: !p.barcode })) 
-                        },
-                        { 
-                            label: t.barcodePrinter?.settings?.hotline || 'Hotline', 
-                            icon: printConfig.hotline ? 'check' : undefined, 
-                            action: () => setPrintConfig(p => ({ ...p, hotline: !p.hotline })) 
-                        }
-                    ];
-                    showMenu(e.clientX, e.clientY, menuItems);
-                }}
-                className="ml-2 w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 transition-colors"
-              >
-                  <span className="material-symbols-rounded text-sm">settings</span>
-              </button>
             </div>
-          )}
+            
+            <button
+              onClick={(e) => {
+                  e.stopPropagation();
+                  const menuItems = [
+                      { 
+                          label: t.barcodePrinter?.settings?.store || 'Pharmacy Name', 
+                          icon: printConfig.store ? 'check' : undefined, 
+                          action: () => setPrintConfig(p => ({ ...p, store: !p.store })) 
+                      },
+                      { 
+                          label: t.barcodePrinter?.settings?.name || 'Drug Name', 
+                          icon: printConfig.name ? 'check' : undefined, 
+                          action: () => setPrintConfig(p => ({ ...p, name: !p.name })) 
+                      },
+                      { 
+                          label: t.barcodePrinter?.settings?.price || 'Price', 
+                          icon: printConfig.price ? 'check' : undefined, 
+                          action: () => setPrintConfig(p => ({ ...p, price: !p.price })) 
+                      },
+                      { 
+                          label: t.barcodePrinter?.settings?.expiry || 'Expiry Date', 
+                          icon: printConfig.expiry ? 'check' : undefined, 
+                          action: () => setPrintConfig(p => ({ ...p, expiry: !p.expiry })) 
+                      },
+                      { 
+                          label: t.barcodePrinter?.settings?.barcode || 'Barcode', 
+                          icon: printConfig.barcode ? 'check' : undefined, 
+                          action: () => setPrintConfig(p => ({ ...p, barcode: !p.barcode })) 
+                      },
+                      { 
+                          label: t.barcodePrinter?.settings?.hotline || 'Hotline', 
+                          icon: printConfig.hotline ? 'check' : undefined, 
+                          action: () => setPrintConfig(p => ({ ...p, hotline: !p.hotline })) 
+                      }
+                  ];
+                  showMenu(e.clientX, e.clientY, menuItems);
+              }}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 transition-colors"
+            >
+                <span className="material-symbols-rounded text-lg">settings</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -453,10 +454,10 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
               {queue.map((item) => (
                 <div 
                   key={item.id} 
-                  className={`border transition-all group gap-3 flex items-center p-3 rounded-xl ${
+                  className={`border transition-colors group gap-3 flex items-center p-3 rounded-xl ${
                       lastAddedId === item.id 
                       ? `bg-${color}-500/10 dark:bg-${color}-400/10 border-${color}-200 dark:border-${color}-700/50` 
-                      : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-800'
                   }`}
                   dir="ltr"
                 >
