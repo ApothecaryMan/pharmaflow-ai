@@ -3,6 +3,10 @@ import { Customer, Sale } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { useSmartDirection } from '../common/SmartInputs';
 import { SearchInput } from '../common/SearchInput';
+import { TanStackTable, PriceDisplay } from '../common/TanStackTable';
+import { ColumnDef } from '@tanstack/react-table';
+import { SmallCard } from '../common/SmallCard';
+import { SearchDropdown, SearchDropdownColumn } from '../common/SearchDropdown';
 
 interface CustomerLoyaltyLookupProps {
   customers: Customer[];
@@ -61,86 +65,147 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
   };
 
   // Get customer's sales history with points breakdown
+  // Helper to calculate points for a single sale based on business rules
+  const calculateSalePoints = (sale: Sale) => {
+    let totalRate = 0;
+    if (sale.total > 20000) totalRate = 0.05;
+    else if (sale.total > 10000) totalRate = 0.04;
+    else if (sale.total > 5000) totalRate = 0.03;
+    else if (sale.total > 1000) totalRate = 0.02;
+    else if (sale.total > 100) totalRate = 0.01;
+    
+    const orderPoints = sale.total * totalRate;
+    
+    let itemPoints = 0;
+    sale.items.forEach(item => {
+      let itemRate = 0;
+      let price = item.price;
+      if (item.isUnit && item.unitsPerPack) {
+        price = item.price / item.unitsPerPack;
+      }
+      
+      if (price > 20000) itemRate = 0.15;
+      else if (price > 10000) itemRate = 0.12;
+      else if (price > 5000) itemRate = 0.10;
+      else if (price > 1000) itemRate = 0.05;
+      else if (price > 500) itemRate = 0.03;
+      else if (price > 100) itemRate = 0.02;
+
+      if (itemRate > 0) {
+        itemPoints += price * item.quantity * itemRate;
+      }
+    });
+
+    return {
+      orderPoints: parseFloat(orderPoints.toFixed(1)),
+      itemPoints: parseFloat(itemPoints.toFixed(1)),
+      totalEarned: parseFloat((orderPoints + itemPoints).toFixed(1))
+    };
+  };
+
   const customerSales = useMemo(() => {
     if (!selectedCustomer) return [];
     
-    const customerSalesData = sales.filter(s => 
+    const filteredSales = sales.filter(s => 
       (s.customerCode && (s.customerCode === selectedCustomer.code || 
        s.customerCode === selectedCustomer.serialId?.toString())) ||
       (!s.customerCode && s.customerName === selectedCustomer.name)
-    ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    );
 
-    // Calculate points for each sale
-    return customerSalesData.map((sale, index) => {
-      // Order-level points
-      let totalRate = 0;
-      if (sale.total > 20000) totalRate = 0.05;
-      else if (sale.total > 10000) totalRate = 0.04;
-      else if (sale.total > 5000) totalRate = 0.03;
-      else if (sale.total > 1000) totalRate = 0.02;
-      else if (sale.total > 100) totalRate = 0.01;
+    // Sort sales by date ascending to calculate running balance correctly
+    const sortedSales = [...filteredSales]
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    let runningBalance = 0;
+    const enrichedSales = sortedSales.map(sale => {
+      const points = calculateSalePoints(sale);
+      runningBalance = parseFloat((runningBalance + points.totalEarned).toFixed(1));
       
-      const orderPoints = sale.total * totalRate;
-      
-      // Item-level points
-      let itemPoints = 0;
-      sale.items.forEach(item => {
-        let itemRate = 0;
-        let price = item.price;
-        if (item.isUnit && item.unitsPerPack) {
-          price = item.price / item.unitsPerPack;
-        }
-        
-        if (price > 20000) itemRate = 0.15;
-        else if (price > 10000) itemRate = 0.12;
-        else if (price > 5000) itemRate = 0.10;
-        else if (price > 1000) itemRate = 0.05;
-        else if (price > 500) itemRate = 0.03;
-        else if (price > 100) itemRate = 0.02;
-
-        if (itemRate > 0) {
-          itemPoints += price * item.quantity * itemRate;
-        }
-      });
-
-      const totalPoints = parseFloat((orderPoints + itemPoints).toFixed(1));
-      
-      // Calculate running balance (sum of all points up to this sale)
-      const previousSales = customerSalesData.slice(index + 1);
-      const previousPoints = previousSales.reduce((sum, s) => {
-        let tRate = 0;
-        if (s.total > 20000) tRate = 0.05;
-        else if (s.total > 10000) tRate = 0.04;
-        else if (s.total > 5000) tRate = 0.03;
-        else if (s.total > 1000) tRate = 0.02;
-        else if (s.total > 100) tRate = 0.01;
-        
-        const oPoints = s.total * tRate;
-        let iPoints = 0;
-        s.items.forEach(item => {
-          let iRate = 0;
-          let p = item.price;
-          if (item.isUnit && item.unitsPerPack) p = item.price / item.unitsPerPack;
-          if (p > 20000) iRate = 0.15;
-          else if (p > 10000) iRate = 0.12;
-          else if (p > 5000) iRate = 0.10;
-          else if (p > 1000) iRate = 0.05;
-          else if (p > 500) iRate = 0.03;
-          else if (p > 100) iRate = 0.02;
-          if (iRate > 0) iPoints += p * item.quantity * iRate;
-        });
-        return sum + parseFloat((oPoints + iPoints).toFixed(1));
-      }, 0);
-
       return {
         ...sale,
-        orderPoints: parseFloat(orderPoints.toFixed(1)),
-        itemPoints: parseFloat(itemPoints.toFixed(1)),
-        totalPoints,
-        runningBalance: parseFloat((previousPoints + totalPoints).toFixed(1))
+        ...points,
+        totalPoints: points.totalEarned,
+        runningBalance
       };
     });
+
+    // Return reversed for the table (most recent first)
+    return enrichedSales.reverse();
   }, [selectedCustomer, sales]);
+
+  // Derived totals for cards to ensure data consistency
+  const derivedTotals = useMemo(() => {
+    return {
+      totalPoints: customerSales.length > 0 ? customerSales[0].runningBalance : 0,
+      totalPurchases: customerSales.reduce((sum, s) => sum + s.total, 0),
+      totalOrders: customerSales.length
+    };
+  }, [selectedCustomer, sales]);
+
+  const columns = useMemo<ColumnDef<any>[]>(() => [
+    {
+      accessorKey: 'date',
+      header: t.date || 'Date',
+      cell: info => info.getValue() as string, // Let TanStackTable handle smart formatting
+      meta: { align: 'start' }
+    },
+    {
+      accessorKey: 'id',
+      header: t.orderId || 'Order ID',
+      cell: info => <span className="font-mono text-gray-500">#{info.getValue() as string}</span>,
+      meta: { align: 'start' }
+    },
+    {
+      accessorKey: 'total',
+      header: t.orderTotal || 'Order Total',
+      cell: info => <PriceDisplay value={info.getValue() as number} />,
+      meta: { align: 'start' }
+    },
+    {
+      accessorKey: 'orderPoints',
+      header: t.loyalty?.orderPoints || 'Order',
+      cell: info => (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900/30 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-transparent">
+          <span className="material-symbols-rounded text-sm">stars</span>
+          {(info.getValue() as number).toFixed(1)}
+        </span>
+      ),
+      meta: { align: 'center' }
+    },
+    {
+      accessorKey: 'itemPoints',
+      header: t.loyalty?.itemPoints || 'Item',
+      cell: info => (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-purple-100 dark:border-purple-900/30 text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 bg-transparent">
+          <span className="material-symbols-rounded text-sm">stars</span>
+          {(info.getValue() as number).toFixed(1)}
+        </span>
+      ),
+      meta: { align: 'center' }
+    },
+    {
+      accessorKey: 'totalPoints',
+      header: t.loyalty?.totalEarned || 'Total Earned',
+      cell: info => (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-amber-100 dark:border-amber-900/30 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-transparent">
+          <span className="material-symbols-rounded text-sm">stars</span>
+          +{(info.getValue() as number).toFixed(1)}
+        </span>
+      ),
+      meta: { align: 'center' }
+    },
+    {
+      accessorKey: 'runningBalance',
+      header: t.loyalty?.balance || 'Balance',
+      cell: info => (
+        <span className="font-bold text-gray-900 dark:text-gray-100">
+          {(info.getValue() as number).toFixed(1)}
+          <span className="ms-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-gray-400">pts</span>
+        </span>
+      ),
+      meta: { align: 'start' }
+    }
+  ], [t, color]);
 
   const getTierInfo = (points: number) => {
     if (points > 2000) return { 
@@ -176,66 +241,71 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
   const tierInfo = selectedCustomer ? getTierInfo(selectedCustomer.points || 0) : null;
   const isRTL = language === 'AR';
 
-  return (
-    <div className="h-full overflow-y-auto pe-2 space-y-4 animate-fade-in pb-10" dir={isRTL ? 'rtl' : 'ltr'}>
-      <h2 className="text-2xl font-medium tracking-tight mb-4 flex items-center gap-2">
-        <span className="material-symbols-rounded text-blue-500">person_search</span>
-        {t.loyalty?.lookup || 'Customer Loyalty Lookup'}
-      </h2>
+  // Columns for the SearchDropdown
+  const dropdownColumns: SearchDropdownColumn<Customer>[] = [
+    {
+      header: t.customers?.code || 'Code',
+      width: 'w-24',
+      className: 'justify-center',
+      render: (customer) => (
+        <span className="font-bold text-gray-500 font-mono tracking-tight">
+          {customer.code || customer.serialId}
+        </span>
+      )
+    },
+    {
+      header: t.customers?.name || 'Customer',
+      render: (customer) => (
+        <div className="flex flex-col">
+          <span className="font-bold text-gray-800 dark:text-gray-200">{customer.name}</span>
+          <span className="text-[10px] opacity-60 font-medium">{customer.phone}</span>
+        </div>
+      )
+    }
+  ];
 
-      {/* Search Section */}
-      <div className={`p-5 rounded-3xl ${CARD_BASE} relative z-20`}>
-        <div className="relative" ref={dropdownRef}>
-          <SearchInput
-            value={searchTerm}
-            onSearchChange={(val) => {
-              setSearchTerm(val);
-              setShowDropdown(true);
-            }}
-            onFocus={() => setShowDropdown(true)}
-            placeholder={t.loyalty?.searchPlaceholder || 'Search by name, code, or phone...'}
-            className="ps-10 pe-4 py-3 border-gray-200 dark:border-gray-800"
-            style={{ '--tw-ring-color': 'var(--primary-500)' } as any}
-          />
-            
-            {/* Autocomplete Dropdown */}
-            {showDropdown && searchTerm && filteredCustomers.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl card-shadow max-h-60 overflow-y-auto z-50">
-                {filteredCustomers.map(customer => (
-                  <button
-                    key={customer.id}
-                    onClick={() => handleCustomerSelect(customer)}
-                    className="w-full text-left rtl:text-right px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-between group transition-colors border-b border-gray-100 dark:border-gray-700/50 last:border-0"
-                  >
-                    <div>
-                      <p className="font-bold text-gray-800 dark:text-gray-200 text-sm">{customer.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{customer.phone}</p>
-                    </div>
-                    <div className="text-right rtl:text-left">
-                      <span className="text-xs font-mono bg-gray-100 dark:bg-gray-900 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-400 block mb-1">
-                        {customer.code || customer.serialId}
-                      </span>
-                      {customer.points && customer.points > 0 && (
-                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center justify-end rtl:justify-start gap-0.5">
-                          <span className="material-symbols-rounded text-[12px]">stars</span>
-                          {customer.points.toFixed(0)}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
+  return (
+    <div className="h-full flex flex-col overflow-hidden animate-fade-in" dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 flex-shrink-0 pe-2">
+        <h2 className="text-2xl font-medium tracking-tight flex items-center gap-2">
+          <span className="material-symbols-rounded text-gray-900 dark:text-gray-100">person_search</span>
+          {t.loyalty?.lookup || 'Customer Loyalty Lookup'}
+        </h2>
+
+        {/* Search Section */}
+        <div className="flex items-center gap-2 flex-1 max-w-md relative z-30">
+          <div className="relative flex-1" ref={dropdownRef}>
+            <SearchInput
+              value={searchTerm}
+              onSearchChange={(val) => {
+                setSearchTerm(val);
+                setShowDropdown(true);
+              }}
+              onFocus={() => setShowDropdown(true)}
+              icon="person_search"
+              placeholder={t.loyalty?.searchPlaceholder || 'Search by name, code, or phone...'}
+              className="pe-4 py-2.5 border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm"
+              style={{ '--tw-ring-color': 'var(--primary-500)' } as any}
+            />
+              
+              <SearchDropdown
+                results={filteredCustomers}
+                onSelect={handleCustomerSelect}
+                columns={dropdownColumns}
+                isVisible={showDropdown && !!searchTerm}
+                emptyMessage={t.loyalty?.noCustomerFound || "No customer found"}
+              />
+            </div>
+
+            {selectedCustomer && (
+              <button
+                onClick={handleClear}
+                className="px-4 py-2.5 rounded-xl font-medium text-xs text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 backdrop-blur-sm transition-all whitespace-nowrap"
+              >
+                {t.clear || 'Clear'}
+              </button>
             )}
           </div>
-
-          {selectedCustomer && (
-            <button
-              onClick={handleClear}
-              className="px-6 py-3 rounded-xl font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
-            >
-              {t.clear || 'Clear'}
-            </button>
-          )}
         </div>
 
       {/* Results */}
@@ -249,9 +319,9 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       )}
 
       {selectedCustomer && (
-        <>
+        <div className="flex-1 flex flex-col min-h-0 pb-4 pe-2">
           {/* Customer Profile Card */}
-          <div className={`p-6 rounded-3xl ${tierInfo?.bg} ${CARD_BASE}`}>
+          <div className={`p-6 rounded-3xl bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border border-gray-100 dark:border-gray-800 ${CARD_BASE} flex flex-col h-full overflow-hidden`}>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
               <div className="flex items-center gap-4">
                 <div className={`w-16 h-16 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 flex items-center justify-center font-bold text-2xl`}>
@@ -260,10 +330,17 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
                 <div>
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{selectedCustomer.name}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-400">
+                    <span className="font-bold text-gray-500 font-mono tracking-tight text-xs">
                       {selectedCustomer.code || selectedCustomer.serialId}
                     </span>
-                    <span className={`text-xs font-medium px-2 py-1 rounded ${selectedCustomer.status === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}>
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider bg-transparent ${
+                      selectedCustomer.status === 'active' 
+                        ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400' 
+                        : 'border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400'
+                    }`}>
+                      <span className="material-symbols-rounded text-sm">
+                        {selectedCustomer.status === 'active' ? 'check_circle' : 'pause_circle'}
+                      </span>
                       {selectedCustomer.status}
                     </span>
                   </div>
@@ -271,90 +348,127 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
               </div>
               
               {/* Tier Badge */}
-              <div className={`flex flex-col items-center p-4 rounded-2xl ${tierInfo?.bg} ${tierInfo?.border} border-2 bg-white/50 dark:bg-gray-900/50`}>
-                <span className={`material-symbols-rounded text-5xl ${tierInfo?.color}`}>{tierInfo?.icon}</span>
-                <p className={`text-lg font-bold ${tierInfo?.color} mt-1`}>{tierInfo?.tier}</p>
+              <div className={`flex flex-col items-center p-3 rounded-2xl border-2 ${tierInfo?.bg} ${tierInfo?.border} bg-white/50 dark:bg-gray-900/50 min-w-[100px]`}>
+                <span className={`material-symbols-rounded text-4xl ${tierInfo?.color}`}>{tierInfo?.icon}</span>
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${tierInfo?.color} mt-1`}>{tierInfo?.tier}</span>
               </div>
             </div>
 
             {/* Points Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className={`p-4 rounded-xl ${CARD_BASE}`}>
-                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{t.loyalty?.currentPoints || 'Current Points'}</p>
-                <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{(selectedCustomer.points || 0).toFixed(1)}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <SmallCard
+                title={t.loyalty?.currentPoints || 'Current Points'}
+                value={derivedTotals.totalPoints}
+                icon="stars"
+                iconColor="amber"
+                fractionDigits={1}
+                // Detailed breakdown of tiered earning rules for Order and Item points
+                iconTooltip={
+                  <div className="space-y-3 min-w-[200px] p-1">
+                    <div>
+                      <p className="font-bold text-amber-400 mb-1 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                        <span className="material-symbols-rounded text-sm">receipt</span>
+                        {t.loyalty?.orderPoints || 'Order Points'}
+                      </p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] opacity-90">
+                        <span>&gt; 20,000 L.E</span> <span className="text-right font-bold text-amber-500">5%</span>
+                        <span>&gt; 10,000 L.E</span> <span className="text-right font-bold text-amber-500">4%</span>
+                        <span>&gt; 5,000 L.E</span> <span className="text-right font-bold text-amber-500">3%</span>
+                        <span>&gt; 1,000 L.E</span> <span className="text-right font-bold text-amber-500">2%</span>
+                        <span>&gt; 100 L.E</span> <span className="text-right font-bold text-amber-500">1%</span>
+                      </div>
+                    </div>
+                    <div className="border-t border-white/10 pt-2">
+                      <p className="font-bold text-purple-400 mb-1 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                        <span className="material-symbols-rounded text-sm">inventory_2</span>
+                        {t.loyalty?.itemPoints || 'Item Points'}
+                      </p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] opacity-90">
+                        <span>&gt; 20,000 L.E</span> <span className="text-right font-bold text-purple-500">15%</span>
+                        <span>&gt; 10,000 L.E</span> <span className="text-right font-bold text-purple-500">12%</span>
+                        <span>&gt; 5,000 L.E</span> <span className="text-right font-bold text-purple-500">10%</span>
+                        <span>&gt; 1,000 L.E</span> <span className="text-right font-bold text-purple-500">5%</span>
+                        <span>&gt; 500 L.E</span> <span className="text-right font-bold text-purple-500">3%</span>
+                        <span>&gt; 100 L.E</span> <span className="text-right font-bold text-purple-500">2%</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              />
+              <SmallCard
+                title={t.loyalty?.totalPurchases || 'Total Purchases'}
+                value={derivedTotals.totalPurchases}
+                icon="payments"
+                iconColor="emerald"
+                type="currency"
+              />
+              <SmallCard
+                title={t.loyalty?.totalOrders || 'Total Orders'}
+                value={derivedTotals.totalOrders}
+                icon="receipt_long"
+                iconColor="blue"
+              />
+              <SmallCard
+                title={t.loyalty?.avgOrder || 'Avg Order'}
+                value={derivedTotals.totalOrders > 0 ? (derivedTotals.totalPurchases / derivedTotals.totalOrders) : 0}
+                icon="analytics"
+                iconColor="purple"
+                type="currency"
+                // Shows the mathematical breakdown: Total Purchases / Total Orders
+                iconTooltip={
+                  <div className="p-1 min-w-[180px]">
+                    <p className="font-bold text-purple-400 mb-2 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                      <span className="material-symbols-rounded text-sm">calculate</span>
+                      {t.loyalty?.avgOrder || 'Avg Order'} Formula
+                    </p>
+                    <div className="space-y-2 text-[10px]">
+                      <div className="flex justify-between gap-4 border-b border-white/10 pb-1">
+                        <span className="opacity-70">{t.loyalty?.totalPurchases || 'Total Purchases'}</span>
+                        <span>{derivedTotals.totalPurchases.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between gap-4 border-b border-white/10 pb-1">
+                        <span className="opacity-70">÷ {t.loyalty?.totalOrders || 'Total Orders'}</span>
+                        <span>{derivedTotals.totalOrders}</span>
+                      </div>
+                      <div className="flex justify-between gap-4 pt-1 text-amber-400 font-bold uppercase tracking-widest text-[9px]">
+                        <span>Result</span>
+                        <span className="text-xs">
+                          {(derivedTotals.totalOrders > 0 ? derivedTotals.totalPurchases / derivedTotals.totalOrders : 0).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              />
+            </div>
+
+            {/* Points History (Integrated) - Flexible Section */}
+            <div className="flex-1 min-h-0 flex flex-col mt-4">
+              <div className="flex items-center justify-between mb-2">
+                 <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 opacity-70">
+                   {t.loyalty?.history || 'Transaction History'}
+                 </h4>
               </div>
-              <div className={`p-4 rounded-xl ${CARD_BASE}`}>
-                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{t.loyalty?.totalPurchases || 'Total Purchases'}</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${selectedCustomer.totalPurchases.toFixed(2)}</p>
-              </div>
-              <div className={`p-4 rounded-xl ${CARD_BASE}`}>
-                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{t.loyalty?.totalOrders || 'Total Orders'}</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{customerSales.length}</p>
-              </div>
-              <div className={`p-4 rounded-xl ${CARD_BASE}`}>
-                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{t.loyalty?.avgOrder || 'Avg Order'}</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  ${customerSales.length > 0 ? (selectedCustomer.totalPurchases / customerSales.length).toFixed(2) : '0.00'}
-                </p>
+              
+              <div className="flex-1 overflow-y-auto min-h-0 border-t border-gray-100 dark:border-gray-800/50">
+                {customerSales.length === 0 ? (
+                  <div className="py-8 text-center text-gray-400 text-sm italic">
+                    {t.loyalty?.noHistory || 'No purchase history found for this customer.'}
+                  </div>
+                ) : (
+                  <TanStackTable
+                    data={customerSales}
+                    columns={columns}
+                    lite
+                    dense
+                    enableSearch={false}
+                    tableId="customer-loyalty-history"
+                  />
+                )}
               </div>
             </div>
           </div>
-
-            {/* Points History */}
-          <div className={`p-5 rounded-3xl ${CARD_BASE}`}>
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-              <span className="material-symbols-rounded text-blue-500">receipt_long</span>
-              {t.loyalty?.pointsHistory || 'Points History'}
-            </h3>
-            
-            {customerSales.length === 0 ? (
-              <div className="py-12 text-center text-gray-400">
-                {t.loyalty?.noHistory || 'No purchase history'}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className={`bg-${color}-50 dark:bg-${color}-900/20 text-${color}-900 dark:text-${color}-100 text-xs font-bold uppercase`}>
-                    <tr>
-                      <th className={`px-3 py-3 ${isRTL ? 'text-right' : 'text-left'}`}>{t.date || 'Date'}</th>
-                      <th className={`px-3 py-3 ${isRTL ? 'text-right' : 'text-left'}`}>{t.orderId || 'Order ID'}</th>
-                      <th className={`px-3 py-3 ${isRTL ? 'text-left' : 'text-right'}`}>{t.orderTotal || 'Order Total'}</th>
-                      <th className={`px-3 py-3 ${isRTL ? 'text-left' : 'text-right'}`}>{t.loyalty?.orderPoints || 'Order Pts'}</th>
-                      <th className={`px-3 py-3 ${isRTL ? 'text-left' : 'text-right'}`}>{t.loyalty?.itemPoints || 'Item Pts'}</th>
-                      <th className={`px-3 py-3 ${isRTL ? 'text-left' : 'text-right'}`}>{t.loyalty?.totalEarned || 'Total Earned'}</th>
-                      <th className={`px-3 py-3 ${isRTL ? 'text-left' : 'text-right'}`}>{t.loyalty?.balance || 'Balance'}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {customerSales.map((sale) => (
-                      <tr key={sale.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                        <td className="px-3 py-3 text-sm text-gray-600 dark:text-gray-400">
-                          {new Date(sale.date).toLocaleDateString()}
-                        </td>
-                        <td className="px-3 py-3 text-sm font-mono text-gray-500">#{sale.id}</td>
-                        <td className={`px-3 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 ${isRTL ? 'text-left' : 'text-right'}`}>
-                          ${sale.total.toFixed(2)}
-                        </td>
-                        <td className={`px-3 py-3 text-sm text-blue-600 dark:text-blue-400 ${isRTL ? 'text-left' : 'text-right'}`}>
-                          {sale.orderPoints.toFixed(1)}
-                        </td>
-                        <td className={`px-3 py-3 text-sm text-purple-600 dark:text-purple-400 ${isRTL ? 'text-left' : 'text-right'}`}>
-                          {sale.itemPoints.toFixed(1)}
-                        </td>
-                        <td className={`px-3 py-3 text-sm font-bold text-amber-600 dark:text-amber-400 ${isRTL ? 'text-left' : 'text-right'}`}>
-                          +{sale.totalPoints.toFixed(1)}
-                        </td>
-                        <td className={`px-3 py-3 text-sm font-bold text-gray-900 dark:text-gray-100 ${isRTL ? 'text-left' : 'text-right'}`}>
-                          {sale.runningBalance.toFixed(1)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </>
+        </div>
       )}
     </div>
   );
