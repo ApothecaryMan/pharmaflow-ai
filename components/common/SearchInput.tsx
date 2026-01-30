@@ -33,11 +33,6 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
 
   return (
     <div className={`relative ${wrapperClassName}`} dir={dir}>
-      <div className={`absolute inset-y-0 flex items-center pointer-events-none text-gray-400 ${isRtl ? 'right-3' : 'left-3'}`}>
-        <span className="material-symbols-rounded text-[18px]">
-          {icon}
-        </span>
-      </div>
       <input
         ref={ref}
         type="text"
@@ -68,6 +63,13 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
         `}
         {...props}
       />
+
+      {/* Leading Icon */}
+      <div className={`absolute inset-y-0 flex items-center pointer-events-none text-gray-400 ${isRtl ? 'right-3' : 'left-3'} z-10`}>
+        <span className="material-symbols-rounded text-[18px]">
+          {icon}
+        </span>
+      </div>
       
       {/* Badge & Clear Button Group */}
       <div className={`absolute inset-y-0 flex items-center gap-2 ${isRtl ? 'left-3' : 'right-3'}`}>
