@@ -139,6 +139,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
             onSearchChange={setSearchQuery}
             onClear={() => setSearchQuery('')}
             placeholder={`${language === 'AR' ? 'بحث في' : 'Search in'} ${getMenuTranslation(activeModuleData?.label || '', language)}...`}
+            color={theme}
             className="rounded-lg border ps-9 pe-9"
             style={{ 
               backgroundColor: 'var(--bg-secondary)',

@@ -495,6 +495,7 @@ export function TanStackTable<TData, TValue>({
              onSearchChange={(val) => setGlobalFilter(val)}
              onClear={() => setGlobalFilter('')}
              placeholder={searchPlaceholder}
+             color={color}
            />
            )}
         </div>

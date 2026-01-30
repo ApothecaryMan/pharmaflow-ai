@@ -248,9 +248,9 @@ export const Inventory: React.FC<InventoryProps> = ({ inventory, onAddDrug, onUp
         const drug = row.original;
         return (
           <div className="flex flex-col gap-0.5">
-            {drug.barcode && <div className="text-gray-600 dark:text-gray-400 text-xs"><span className="opacity-50">BC:</span> {drug.barcode}</div>}
-            {drug.internalCode && <div className="text-gray-600 dark:text-gray-400 text-xs"><span className="opacity-50">INT:</span> {drug.internalCode}</div>}
-            {!drug.barcode && !drug.internalCode && <span className="text-gray-300">-</span>}
+            {drug.barcode && <div className="text-gray-900 dark:text-gray-100 text-sm">{drug.barcode}</div>}
+            {drug.internalCode && <div className="text-gray-900 dark:text-gray-100 text-sm">{drug.internalCode}</div>}
+            {!drug.barcode && !drug.internalCode && <span className="text-gray-400">-</span>}
           </div>
         );
       },
