@@ -279,31 +279,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     { 
       accessorKey: 'serialId', 
       header: '#', 
-      cell: (info) => <span className="font-mono">{info.row.original.serialId || '-'}</span>,
-      meta: { width: 60 }
+      meta: { width: 60, align: 'start' }
     },
     { 
       accessorKey: 'code', 
       header: t.modal?.code || 'Code', 
-      meta: { dir: language === 'AR' ? 'rtl' : 'ltr', width: 100, align: 'start' },
-      cell: (info) => {
-        const c = info.row.original;
-        return (
-          <span 
-              className="font-mono text-xs cursor-pointer hover:text-blue-500 transition-colors relative group"
-              title="Click to copy code"
-              onClick={(e) => {
-                  e.stopPropagation();
-                  if (c.code) {
-                       setCopyFeedback(true);
-                       setTimeout(() => setCopyFeedback(false), 2000);
-                  }
-              }}
-          >
-              {c.code}
-          </span>
-        );
-      }
+      meta: { dir: language === 'AR' ? 'rtl' : 'ltr', width: 100, align: 'start' }
     },
     { 
       accessorKey: 'name', 
@@ -383,7 +364,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     { 
       accessorKey: 'lastVisit', 
       header: t.headers?.lastVisit || 'Last Visit', 
-      cell: (info) => <span>{new Date(info.row.original.lastVisit).toLocaleDateString()}</span>,
       meta: { width: 120, align: 'center' }
     },
     { 

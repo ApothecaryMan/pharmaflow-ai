@@ -49,58 +49,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({ color, t, language =
       {
         accessorKey: 'time',
         header: t.cashRegister?.transactions?.time || 'Time',
-        cell: (info) => {
-            const time = info.getValue() as string;
-            const txDate = new Date(time);
-            const timeStr = txDate.toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            });
-
-            const now = new Date();
-            const isToday = now.getDate() === txDate.getDate() && 
-                            now.getMonth() === txDate.getMonth() && 
-                            now.getFullYear() === txDate.getFullYear();
-            
-            const yesterday = new Date(now);
-            yesterday.setDate(now.getDate() - 1);
-            const isYesterday = yesterday.getDate() === txDate.getDate() &&
-                                yesterday.getMonth() === txDate.getMonth() &&
-                                yesterday.getFullYear() === txDate.getFullYear();
-
-            let dateLabel = '';
-            if (isToday) {
-                dateLabel = language === 'AR' ? 'اليوم' : 'Today';
-            } else if (isYesterday) {
-                dateLabel = language === 'AR' ? 'أمس' : 'Yesterday';
-            } else {
-                dateLabel = txDate.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' });
-            }
-
-            const parts = timeStr.split(' '); // ["12:30", "PM"]
-            const timeValue = parts[0];
-            const amPm = parts[1];
-
-            if (language === 'AR') {
-              const arabicMarker = amPm === 'AM' ? 'ص' : 'م';
-              return (
-                  <div className="flex flex-col leading-none justify-center">
-                    <span className="flex items-center gap-1">
-                        <span className="font-sans text-[11px] leading-none">{timeValue}</span>
-                        <span className="text-[9px] font-bold opacity-80 mt-0.5">{arabicMarker}</span>
-                    </span>
-                    <span className="text-[9px] text-gray-400 font-normal leading-none -mt-0.1">{dateLabel}</span>
-                  </div>
-              );
-            }
-            return (
-                <div className="flex flex-col leading-none justify-center">
-                    <span className="font-medium text-[11px] leading-none">{timeStr}</span>
-                    <span className="text-[9px] text-gray-400 font-normal leading-none mt-0.5">{dateLabel}</span>
-                </div>
-            );
-        }
+        meta: { align: 'center' }
       },
       {
         accessorKey: 'type',

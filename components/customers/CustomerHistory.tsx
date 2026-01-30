@@ -73,12 +73,7 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
     {
       accessorKey: 'date',
       header: t.customerHistory?.table.date || 'Date',
-      cell: (info) => {
-        try {
-            return new Date(info.row.original.date).toLocaleDateString();
-        } catch (e) { return '-'; }
-      },
-      meta: { width: 110 }
+      meta: { width: 110, align: 'center' }
     },
     {
       accessorKey: 'customerName',
@@ -135,12 +130,7 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
       {
           accessorKey: 'date',
           header: t.customerHistory?.table.date || 'Date',
-          cell: (info) => {
-            try {
-                return new Date(info.row.original.date).toLocaleDateString();
-            } catch(e) { return '-'; }
-          },
-          meta: { width: 110 }
+          meta: { width: 110, align: 'center' }
       },
       {
         accessorKey: 'customerName',
@@ -150,8 +140,7 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
       {
           accessorKey: 'id',
           header: t.customerHistory?.table.returnNo || 'Return #',
-          cell: (info) => info.row.original.id.substring(0, 8),
-          meta: { width: 100 }
+          meta: { width: 100, align: 'start' }
       },
       {
         accessorKey: 'totalRefund',

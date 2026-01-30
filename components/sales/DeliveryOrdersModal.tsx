@@ -430,72 +430,13 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
     columnHelper.accessor('customerCode', {
       header: 'ID',
       size: 60,
-      cell: info => {
-        const hasHistory = (info.row.original.modificationHistory?.length || 0) > 0;
-        return (
-            <div className="inline-flex items-center gap-1">
-                <span className={`font-mono font-bold ${hasHistory ? 'text-orange-600 dark:text-orange-400' : ''}`}>
-                    {info.getValue() || '-'}
-                </span>
-                {hasHistory && (
-                    <span className="material-symbols-rounded text-[14px] text-orange-500 animate-pulse" title={t.modifications || 'Modified'}>
-                        history_edu
-                    </span>
-                )}
-            </div>
-        );
-      }
+      meta: { align: 'start' }
     }),
     // Time and Date
     columnHelper.accessor('date', {
       header: t.time || 'Time',
       size: 120,
-      cell: info => {
-        const date = new Date(info.getValue());
-        const now = new Date();
-        
-        // Calculate days difference
-        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const startOfOrderDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        const daysDiff = Math.floor((startOfToday.getTime() - startOfOrderDate.getTime()) / (1000 * 60 * 60 * 24));
-        
-        const hours = date.getHours();
-        const minutes = date.getMinutes();
-        const ampm = hours >= 12 ? (t.pm || 'PM') : (t.am || 'AM');
-        const displayHours = hours % 12 || 12;
-        const displayMinutes = minutes.toString().padStart(2, '0');
-        const timeStr = `${displayHours}:${displayMinutes} ${ampm}`;
-        
-        let dateStr = '';
-        
-        if (daysDiff === 0) {
-          // Today - show nothing
-          dateStr = '';
-        } else if (daysDiff === 1) {
-          // Yesterday
-          dateStr = t.yesterday || 'Yesterday';
-        } else if (date.getFullYear() === now.getFullYear()) {
-          // Same year - show day and month only
-          dateStr = date.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', {
-            day: 'numeric',
-            month: 'short'
-          });
-        } else {
-          // Different year - show day, month, and year
-          dateStr = date.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric'
-          });
-        }
-        
-        return (
-          <div className="leading-tight">
-            <div className="font-bold text-gray-900 dark:text-gray-100">{timeStr}</div>
-            {dateStr && <div className="text-[10px] text-gray-500 dark:text-gray-400">{dateStr}</div>}
-          </div>
-        );
-      }
+      meta: { align: 'center' }
     }),
     // Customer name and code badge
     columnHelper.accessor('customerName', {

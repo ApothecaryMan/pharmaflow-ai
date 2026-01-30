@@ -49,21 +49,17 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({ returns, sales, co
       {
         accessorKey: 'id',
         header: t.headers.returnId,
-        cell: (info) => <span className="font-medium text-gray-900 dark:text-gray-100">#{info.getValue() as string}</span>,
+        meta: { align: 'start' }
       },
       {
         accessorKey: 'date',
         header: t.headers.date,
-        cell: (info) => (
-          <span className="text-gray-600 dark:text-gray-400">
-            {new Date(info.getValue() as string).toLocaleDateString(locale)}
-          </span>
-        ),
+        meta: { align: 'center' }
       },
       {
         accessorKey: 'saleId',
         header: t.headers.saleId,
-        cell: (info) => <span className="text-gray-600 dark:text-gray-400">#{info.getValue() as string}</span>,
+        meta: { align: 'start' }
       },
       {
         id: 'customerName',

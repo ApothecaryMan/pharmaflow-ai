@@ -73,27 +73,12 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     {
       accessorKey: 'id',
       header: t.modal.id,
-      cell: ({ getValue }) => <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">{getValue() as string}</span>,
+      meta: { align: 'start' }
     },
     {
       accessorKey: 'date',
       header: t.headers.date,
-      cell: ({ row }) => {
-        const sale = row.original;
-        return (
-          <div>
-            <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
-              {new Date(sale.date).toLocaleDateString('en-US')}
-            </div>
-            <div className="text-xs text-gray-500 flex items-center gap-1">
-              {new Date(sale.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-              {sale.saleType === 'delivery' && (
-                <span className="material-symbols-rounded text-[14px] text-blue-500" title="Delivery Order">local_shipping</span>
-              )}
-            </div>
-          </div>
-        );
-      },
+      meta: { align: 'center' }
     },
     {
       accessorKey: 'customerName',
