@@ -145,7 +145,35 @@ export const authService = {
    * Log an audit event to localStorage
    */
   logAuditEvent: (entry: Omit<LoginAuditEntry, 'id' | 'timestamp'>): void => {
-    // ... (existing implementation)
+    try {
+      const history = authService.getLoginHistory();
+      const newEntry: LoginAuditEntry = {
+        ...entry,
+        id: Math.random().toString(36).substring(2, 11),
+        timestamp: new Date().toISOString()
+      };
+
+      const updatedHistory = [newEntry, ...history].slice(0, 500); // Keep last 500 entries
+      localStorage.setItem(AUDIT_KEY, JSON.stringify(updatedHistory));
+    } catch (error) {
+      console.error('Failed to log audit event:', error);
+    }
+  },
+
+  /**
+   * Get login audit history
+   */
+  getLoginHistory: (): LoginAuditEntry[] => {
+    try {
+      const stored = localStorage.getItem(AUDIT_KEY);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+      return [];
+    } catch (error) {
+      console.error('Failed to get login history:', error);
+      return [];
+    }
   },
 
   /**
