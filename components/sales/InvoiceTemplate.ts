@@ -7,6 +7,8 @@
 
 import { Sale, CartItem } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 export interface InvoiceTemplateOptions {
   /** Store name to display in header */
@@ -49,16 +51,38 @@ export const defaultOptions: InvoiceTemplateOptions = {
   language: 'EN'
 };
 
+/**
+ * Helper to fetch the active receipt template and its options from storage.
+ * Synchronized with ReceiptDesigner's saving logic.
+ */
+export function getActiveReceiptSettings(): InvoiceTemplateOptions {
+  try {
+    const templates = storage.get<any[]>(StorageKeys.RECEIPT_TEMPLATES, []);
+    const activeId = storage.get<string | null>(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, null);
+    
+    const activeTemplate = templates.find((t: any) => t.id === activeId) || 
+                          templates.find((t: any) => t.isDefault) || 
+                          templates[0];
+                          
+    if (activeTemplate?.options) {
+      return { ...defaultOptions, ...activeTemplate.options };
+    }
+  } catch (e) {
+    console.error("Failed to load active receipt settings", e);
+  }
+  return defaultOptions;
+}
+
 export const INVOICE_DEFAULTS = {
   EN: {
-    address: '123 Rasena',
-    area: 'Nasr City',
+    address: '123 Abu Hamous',
+    area: 'Beheira',
     hotline: '19099',
     terms: `Refrigerated medicines, cosmetics & strips are non-refundable<br>Medicines & devices refundable within 14 days<br>30-day warranty on devices`
   },
   AR: {
     address: '١٢٣ ابوحمص',
-    area: 'مدينة نصر',
+    area: 'مدينة البحيرة',
     hotline: '19099',
     terms: `ادوية التلاجة ومستحضرات التجميل وشرايط الدواء لا ترجع<br>استرجاع الادوية والاجهزة السليمة خلال 14 يوم<br>ضمان 30 يوم على الاجهزة`
   }
