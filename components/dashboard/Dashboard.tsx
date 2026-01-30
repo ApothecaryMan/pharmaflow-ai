@@ -4,7 +4,9 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Drug, Sale, Purchase, ExpandedView } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
-import { formatCurrency, getCurrencySymbol } from '../../utils/currency';
+import { formatCurrency, getCurrencySymbol, formatCompactCurrency } from '../../utils/currency';
+import { useDashboardAnalytics } from './useDashboardAnalytics';
+import { InsightTooltip, CurrencyValue } from '../common/InsightTooltip';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { ExpandedModal } from '../common/ExpandedModal';
@@ -86,51 +88,35 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
     link.click();
   };
 
-  // --- STATS ---
-  const lowStockItems = useMemo(() => inventory.filter(d => d.stock <= 10), [inventory]);
-  
-  // Use netTotal for sales with returns, fallback to total
-  const totalRevenue = useMemo(() => sales.reduce((sum, sale) => sum + (sale.netTotal ?? sale.total), 0), [sales]);
-  
-  // Calculate total returns amount
-  const totalReturns = useMemo(() => sales.reduce((sum, sale) => {
-    if (sale.hasReturns && sale.netTotal !== undefined) {
-      return sum + (sale.total - sale.netTotal);
-    }
-    return sum;
-  }, 0), [sales]);
-  
+  // --- STATS & ANALYTICS ---
   const totalExpenses = useMemo(() => purchases.reduce((sum, p) => sum + p.totalCost, 0), [purchases]);
-  
-  // Calculate actual gross profit (revenue - cost of goods sold)
-  const grossProfit = useMemo(() => {
-    let totalCost = 0;
-    sales.forEach(sale => {
-      sale.items.forEach((item, idx) => {
-        // Find the drug in inventory to get cost price
-        const drug = inventory.find(d => d.id === item.id);
-        const costPrice = drug?.costPrice || 0;
-        
-        // Get returned quantity using lineKey pattern
-        const lineKey = `${item.id}_${idx}`;
-        const returnedQty = sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
-        const actualQty = item.quantity - returnedQty;
-        
-        if (actualQty > 0) {
-          // Handle unit pricing
-          let effectiveCost = costPrice;
-          if (item.isUnit && item.unitsPerPack) {
-            effectiveCost = costPrice / item.unitsPerPack;
-          }
-          totalCost += effectiveCost * actualQty;
-        }
-      });
-    });
-    return totalRevenue - totalCost;
-  }, [sales, inventory, totalRevenue]);
-  
-  // Net profit = Gross profit - Operating expenses (purchases)
-  const netProfit = grossProfit - totalExpenses;
+
+  const { 
+    totalRevenue, 
+    totalReturns, 
+    totalCogs, 
+    inventoryValuation, 
+    inventoryTurnoverRatio, 
+    daysOfInventory, 
+    grossProfit, 
+    netProfit, 
+    profitMarginPercent, 
+    averageOrderValue, 
+    returnRate, 
+    movingItemsAnalysis, 
+    profitGrade,
+    revenueTooltip: revenueTooltipData,
+    inventoryTooltip: inventoryTooltipData,
+    profitTooltip: profitTooltipData,
+    lowStockTooltip: lowStockTooltipData
+  } = useDashboardAnalytics({ sales, inventory, totalExpenses, language });
+
+  const lowStockItems = useMemo(() => inventory.filter(d => d.stock <= 10), [inventory]);
+
+  const revenueTooltip = <InsightTooltip {...revenueTooltipData} language={language} />;
+  const expensesTooltip = <InsightTooltip {...inventoryTooltipData} language={language} />;
+  const profitTooltip = <InsightTooltip {...profitTooltipData} language={language} />;
+  const lowStockTooltip = <InsightTooltip {...lowStockTooltipData} language={language} />;
 
   // --- CHART DATA (Sales by Date) ---
   const salesData = useMemo(() => {
@@ -364,7 +350,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
       
       {/* Stats Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-        {/* Revenue */}
+        {/* Revenue Card: Primary financial intake indicator */}
         {canPerformAction(userRole, 'reports.view_financial') && (
           <div 
             onClick={() => setExpandedView('revenue')}
@@ -378,11 +364,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
               type="currency"
               currencyLabel={getCurrencySymbol()}
               fractionDigits={2}
+              iconTooltip={revenueTooltip} // Advanced analytics on hover
             />
           </div>
         )}
 
-        {/* Expenses */}
+        {/* Expenses Card: Direct spending on stock and operations */}
         {canPerformAction(userRole, 'reports.view_financial') && (
           <div 
             onClick={() => setExpandedView('expenses')}
@@ -396,11 +383,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
               type="currency"
               currencyLabel={getCurrencySymbol()}
               fractionDigits={2}
+              iconTooltip={expensesTooltip} // Advanced analytics on hover
             />
           </div>
         )}
 
-        {/* Net Profit */}
+        {/* Net Profit Card: Bottom-line pharmacy health */}
         {canPerformAction(userRole, 'reports.view_financial') && (
           <div 
             onClick={() => setExpandedView('profit')}
@@ -414,11 +402,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
               type="currency"
               currencyLabel={getCurrencySymbol()}
               fractionDigits={2}
+              iconTooltip={profitTooltip} // Advanced analytics on hover
             />
           </div>
         )}
 
-        {/* Low Stock */}
+        {/* Low Stock Card: Operational critical alerts */}
         <div 
           onClick={() => setExpandedView('lowStock')}
           className="cursor-pointer transition-transform active:scale-95 touch-manipulation"
@@ -429,6 +418,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
             icon="warning"
             iconColor="orange"
             fractionDigits={0}
+            iconTooltip={lowStockTooltip} // Advanced analytics on hover
           />
         </div>
       </div>
