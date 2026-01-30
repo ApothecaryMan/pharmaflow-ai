@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { StockMovement } from '../../services/inventory/stockMovement/types';
+import { getDisplayName } from '../../utils/drugDisplayName';
 
 interface StockAdjustmentPrintProps {
     isRTL: boolean;
@@ -112,7 +113,7 @@ export const StockAdjustmentPrint: React.FC<StockAdjustmentPrintProps> = ({
                                     >
                                         <td className="py-0.5 font-bold text-start leading-tight">
                                             <div className="line-clamp-2 overflow-hidden">
-                                                {item.drugName.replace(/\s*\(Batch:.*/i, '')}
+                                                {getDisplayName({ name: item.drugName || item.drugId || 'Unknown Product' })}
                                             </div>
                                         </td>
                                         <td className="py-0.5 text-center font-bold text-black whitespace-nowrap">

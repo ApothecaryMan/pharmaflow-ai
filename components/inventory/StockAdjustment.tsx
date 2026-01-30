@@ -260,7 +260,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
 
                  newAdjustments.push({
                       drugId: drug.id,
-                      drugName: getFullDisplayName(drug) + (batch ? ` (Batch: ${new Date(batch.expiryDate).toLocaleDateString()})` : ''),
+                      drugName: getFullDisplayName(drug),
                       currentStock: currentStock,
                       newStock: qty > 0 ? qty : currentStock + 1, // If qty provided use it, else +1
                       difference: qty > 0 ? qty - currentStock : 1,
@@ -342,7 +342,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
 
      const newItem: AdjustmentItem = {
       drugId: drug.id,
-      drugName: getFullDisplayName(drug) + (batch ? ` (Batch: ${new Date(batch.expiryDate).toLocaleDateString()})` : ''),
+      drugName: getFullDisplayName(drug),
       currentStock: currentStock,
       newStock: currentStock,
       difference: 0,
