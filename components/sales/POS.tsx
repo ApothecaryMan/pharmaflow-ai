@@ -1628,7 +1628,7 @@ export const POS: React.FC<POSProps> = ({
 
   return (
     <div className="h-full flex flex-col gap-2">
-      <div className="flex items-center gap-4 px-2">
+      <div className="flex items-center gap-4 px-2 h-12 shrink-0">
         {/* Header - Compact */}
         <h2 className="text-xl font-bold tracking-tight type-expressive shrink-0">
           {t.posTitle}
@@ -1636,9 +1636,9 @@ export const POS: React.FC<POSProps> = ({
         
         <button
             onClick={() => setShowDeliveryModal(true)}
-            className={`px-3 py-1.5 rounded-lg bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 text-sm font-bold flex items-center gap-2 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 transition-colors cursor-pointer`}
+            className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent hover:bg-${color}-600 dark:hover:bg-${color}-500 hover:text-white dark:hover:text-white hover:border-${color}-600 dark:hover:border-${color}-500 transition-all duration-200 cursor-pointer shadow-sm`}
         >
-            <span className="material-symbols-rounded text-[18px]">local_shipping</span>
+            <span className="material-symbols-rounded text-sm">local_shipping</span>
             {t.deliveryOrders || "Delivery Orders"}
         </button>
 
