@@ -11,6 +11,7 @@ interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: string; // Custom icon name (default: 'search')
   badge?: React.ReactNode; // Optional badge/content to display on the right
   rounded?: 'xl' | 'full'; // Border radius variant
+  color?: string; // Theme color (default: 'blue')
 }
 
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
@@ -23,6 +24,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
   icon = 'search',
   badge,
   rounded = 'xl',
+  color = 'blue',
   ...props
 }, ref) => {
   const dir = useSmartDirection(value, placeholder);
@@ -42,7 +44,27 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
         value={value}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-full ${isRtl ? 'pr-10 pl-10' : 'pl-10 pr-10'} ${showClear ? (isRtl ? 'pl-16' : 'pr-16') : ''} py-2.5 ${rounded === 'full' ? 'rounded-full' : 'rounded-xl'} border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-all text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 shadow-sm ${className}`}
+        className={`
+          w-full ${isRtl ? 'pr-10 pl-10' : 'pl-10 pr-10'} 
+          ${showClear ? (isRtl ? 'pl-16' : 'pr-16') : ''} 
+          py-2.5 ${rounded === 'full' ? 'rounded-full' : 'rounded-xl'} 
+          
+          /* Border & Background */
+          bg-white dark:bg-gray-800
+          border border-gray-200 dark:border-gray-800
+          
+          /* Hover State - Subtle border adjustment */
+          hover:border-gray-300 dark:hover:border-gray-700
+          
+          /* Focus State - Sharp theme border, no glow */
+          focus:border-${color}-500 dark:focus:border-${color}-400
+          focus:hover:border-${color}-500 dark:focus:hover:border-${color}-400
+          focus:ring-0 outline-none
+          
+          text-sm 
+          text-gray-900 dark:text-gray-100 
+          placeholder-gray-400 shadow-sm ${className}
+        `}
         {...props}
       />
       

@@ -214,7 +214,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({ color, t, language, 
                     value={searchTerm}
                     onSearchChange={setSearchTerm}
                     placeholder={t.shiftHistory?.searchPlaceholder || "Search by shift ID or user..."}
-                    className="ps-10"
+                    color={color}
                     wrapperClassName="w-full"
                 />
             </div>
