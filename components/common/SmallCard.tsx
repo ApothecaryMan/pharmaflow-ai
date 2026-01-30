@@ -19,6 +19,7 @@ export interface SmallCardProps {
   fractionDigits?: number;
   iconOverlay?: React.ReactNode;
   valueSuffix?: React.ReactNode;
+  iconTooltip?: React.ReactNode;
 }
 
 
@@ -33,7 +34,7 @@ const formatCompactNumber = (number: number) => {
   }).format(number);
 };
 
-export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, trendLabel, subValue, type, currencyLabel, fractionDigits, iconOverlay, valueSuffix }: SmallCardProps) => { // Render value logic
+export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, trendLabel, subValue, type, currencyLabel, fractionDigits, iconOverlay, valueSuffix, iconTooltip }: SmallCardProps) => { // Render value logic
   const formattedValue = useMemo(() => {
     if (typeof value !== 'number') return value;
     
@@ -49,15 +50,25 @@ export const SmallCard = ({ title, value, icon, iconColor, trend, trendValue, tr
     return value; 
   }, [value, type]);
   
+  const iconContent = (
+    <div className={`flex-shrink-0 text-${iconColor}-600 dark:text-${iconColor}-400 relative`}>
+      <span className="material-symbols-rounded text-[38px] leading-none">{icon}</span>
+      {iconOverlay}
+    </div>
+  );
+
   return (
   // Compact design: h-[84px], p-3
   <div className={`p-3 rounded-2xl ${CARD_BASE} ${CARD_HOVER} h-[84px] flex items-center gap-3`}>
     
     {/* Icon - Left Side */}
-    <div className={`flex-shrink-0 text-${iconColor}-600 dark:text-${iconColor}-400 relative`}>
-      <span className="material-symbols-rounded text-[38px] leading-none">{icon}</span>
-      {iconOverlay}
-    </div>
+    {iconTooltip ? (
+      <Tooltip content={iconTooltip} position="top" triggerClassName="flex-shrink-0">
+        {iconContent}
+      </Tooltip>
+    ) : (
+      iconContent
+    )}
 
     {/* Content - Right Side */}
     <div className="flex-1 min-w-0">
