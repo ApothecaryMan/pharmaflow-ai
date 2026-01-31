@@ -497,18 +497,34 @@ html[lang="ar"] .font-bold {
     sans-serif;
 }
 
-/* --- Mobile Dock Fluid Animation (Grid Method) --- */
+/* --- Mobile Dock Fluid Animation --- */
 .transition-fluid {
   transition-property: all;
   transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
   transition-duration: 0.4s;
 }
 
+@keyframes wordEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.animate-word-entrance {
+  animation: wordEntrance 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
 .animate-grid-expand {
   display: grid;
   grid-template-columns: 0fr;
   will-change: grid-template-columns;
-  /* Transition handled by parent or utility if applied, but default here for safety */
   transition: grid-template-columns 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -516,6 +532,23 @@ html[lang="ar"] .font-bold {
   grid-template-columns: 1fr;
 }
 
+
+
 .mask-fade-edges {
   mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
