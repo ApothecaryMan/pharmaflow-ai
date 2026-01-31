@@ -26,7 +26,6 @@ export type PermissionAction =
   | 'purchase.view'
   | 'purchase.create'
   | 'purchase.approve'
-  | 'purchase.approve'
   | 'purchase.reject'
   | 'purchase.return'
   
