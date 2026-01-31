@@ -19,6 +19,16 @@ import type { ThemeColor } from '../types';
 // Re-export for convenience
 export { THEMES } from '../config/themeColors';
 
+/**
+ * ARCHITECTURE NOTE:
+ * This context is the Single Source of Truth for all application-wide settings.
+ * 
+ * DESIGN PATTERN: Hook-based Consumption (Anti Prop-Drilling)
+ * - DO NOT pass settings properties (like darkMode, language, blur) as props through layout components.
+ * - Components (even deeply nested ones) should use the `useSettings()` hook directly.
+ * - This decouples layout components (Navbar, StatusBar, etc.) from the configuration state.
+ */
+
 
 // Available Languages
 export const LANGUAGES: { code: Language; label: string }[] = [
@@ -42,6 +52,9 @@ export interface SettingsState {
   // UI Preferences
   navStyle: 1 | 2 | 3;
   dropdownBlur: boolean;
+  sidebarBlur: boolean;
+  menuBlur: boolean;
+  tooltipBlur: boolean;
   sidebarVisible: boolean;
   // Developer
   hideInactiveModules: boolean;
@@ -67,6 +80,9 @@ export interface SettingsContextType extends SettingsState {
   // UI Actions
   setNavStyle: (style: 1 | 2 | 3) => void;
   setDropdownBlur: (blur: boolean) => void;
+  setSidebarBlur: (blur: boolean) => void;
+  setMenuBlur: (blur: boolean) => void;
+  setTooltipBlur: (blur: boolean) => void;
   setSidebarVisible: (visible: boolean) => void;
   // Developer Actions
   setHideInactiveModules: (hide: boolean) => void;
@@ -95,6 +111,9 @@ const defaultSettings: SettingsState = {
   textTransform: 'uppercase',
   navStyle: 2,
   dropdownBlur: false,
+  sidebarBlur: false,
+  menuBlur: false,
+  tooltipBlur: false,
   sidebarVisible: false,
   hideInactiveModules: true,
   developerMode: false,
@@ -139,6 +158,9 @@ const loadSettings = (): SettingsState => {
       textTransform: (textTransform as 'normal' | 'uppercase') || defaultSettings.textTransform,
       navStyle: navStyle ? (Number(navStyle) as 1 | 2 | 3) : defaultSettings.navStyle,
       dropdownBlur: dropdownBlur ?? defaultSettings.dropdownBlur,
+      sidebarBlur: storage.get('pharma_sidebarBlur', defaultSettings.sidebarBlur),
+      menuBlur: storage.get('pharma_menuBlur', defaultSettings.menuBlur),
+      tooltipBlur: storage.get('pharma_tooltipBlur', defaultSettings.tooltipBlur),
       sidebarVisible: sidebarVisible ?? defaultSettings.sidebarVisible,
       hideInactiveModules: hideInactiveModules ?? defaultSettings.hideInactiveModules,
       developerMode: developerMode ?? defaultSettings.developerMode,
@@ -245,7 +267,25 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, []);
 
   const setDropdownBlur = useCallback((dropdownBlur: boolean) => {
-    setSettings(prev => ({ ...prev, dropdownBlur }));
+    setSettings(prev => ({ 
+      ...prev, 
+      dropdownBlur,
+      sidebarBlur: dropdownBlur,
+      menuBlur: dropdownBlur,
+      tooltipBlur: dropdownBlur
+    }));
+  }, []);
+
+  const setSidebarBlur = useCallback((sidebarBlur: boolean) => {
+    setSettings(prev => ({ ...prev, sidebarBlur }));
+  }, []);
+
+  const setMenuBlur = useCallback((menuBlur: boolean) => {
+    setSettings(prev => ({ ...prev, menuBlur }));
+  }, []);
+
+  const setTooltipBlur = useCallback((tooltipBlur: boolean) => {
+    setSettings(prev => ({ ...prev, tooltipBlur }));
   }, []);
 
   const setSidebarVisible = useCallback((sidebarVisible: boolean) => {
@@ -288,6 +328,9 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setTextTransform,
     setNavStyle,
     setDropdownBlur,
+    setSidebarBlur,
+    setMenuBlur,
+    setTooltipBlur,
     setSidebarVisible,
     setHideInactiveModules,
     setDeveloperMode,
