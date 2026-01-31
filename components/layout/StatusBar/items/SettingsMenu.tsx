@@ -7,86 +7,57 @@ import { SegmentedControl } from '../../../common/SegmentedControl';
 import { ThemeColor, Language } from '../../../../types';
 import { useSmartPosition } from '../../../../hooks/useSmartPosition';
 import { AVAILABLE_FONTS_EN, AVAILABLE_FONTS_AR } from '../../../../config/fonts';
+import { useSettings } from '../../../../context';
 
-export interface SettingsMenuProps {
-  language: 'EN' | 'AR';
-  // Theme
-  darkMode: boolean;
-  setDarkMode: (mode: boolean) => void;
-  currentTheme: ThemeColor;
-  setTheme: (theme: ThemeColor) => void;
-  availableThemes: ThemeColor[];
-  setLanguage: (lang: Language) => void;
-  availableLanguages: { code: Language; label: string }[];
-  fontFamilyEN: string;
-  setFontFamilyEN: (font: string) => void;
-  fontFamilyAR: string;
-  setFontFamilyAR: (font: string) => void;
-  // Text Transform
-  textTransform: 'normal' | 'uppercase';
-  setTextTransform: (transform: 'normal' | 'uppercase') => void;
-  // Focus Mode
-  hideInactiveModules?: boolean;
-  setHideInactiveModules?: (hide: boolean) => void;
-  // Nav Style
-  navStyle?: 1 | 2 | 3;
-  setNavStyle?: (style: 1 | 2 | 3) => void;
-  // Developer Mode
-  developerMode?: boolean;
-  setDeveloperMode?: (mode: boolean) => void;
-  // Dropdown Blur
-  dropdownBlur?: boolean;
-  setDropdownBlur?: (blur: boolean) => void;
-  // Status Bar Settings
-  showTicker?: boolean;
-  setShowTicker?: (show: boolean) => void;
-  showTickerSales?: boolean;
-  setShowTickerSales?: (show: boolean) => void;
-  showTickerInventory?: boolean;
-  setShowTickerInventory?: (show: boolean) => void;
-  showTickerCustomers?: boolean;
-  setShowTickerCustomers?: (show: boolean) => void;
-  showTickerTopSeller?: boolean;
-  setShowTickerTopSeller?: (show: boolean) => void;
-  userRole?: UserRole;
-}
-
-export const SettingsMenu: React.FC<SettingsMenuProps> = ({
-  language,
-  darkMode,
-  setDarkMode,
-  currentTheme,
-  setTheme,
-  availableThemes,
-  setLanguage,
-  availableLanguages,
-  fontFamilyEN,
-  setFontFamilyEN,
-  fontFamilyAR,
-  setFontFamilyAR,
-  textTransform,
-  setTextTransform,
-  hideInactiveModules,
-  setHideInactiveModules,
-  navStyle,
-  setNavStyle,
-  developerMode,
-  setDeveloperMode,
-  dropdownBlur,
-  setDropdownBlur,
-  // Status Bar Settings
-  showTicker,
-  setShowTicker,
-  showTickerSales,
-  setShowTickerSales,
-  showTickerInventory,
-  setShowTickerInventory,
-  showTickerCustomers,
-  setShowTickerCustomers,
-  showTickerTopSeller,
-  setShowTickerTopSeller,
-  userRole,
+/**
+ * ARCHITECTURE NOTE:
+ * This component is self-contained. It consumes the `useSettings` hook directly to manage its toggles.
+ * Never re-introduce passed-down setting props here; always use the central context.
+ */
+export const SettingsMenu: React.FC<{ userRole?: UserRole }> = ({ 
+  userRole 
 }) => {
+  const {
+    language,
+    theme: currentTheme,
+    setTheme,
+    darkMode,
+    setDarkMode,
+    setLanguage,
+    availableThemes,
+    availableLanguages,
+    fontFamilyEN,
+    setFontFamilyEN,
+    fontFamilyAR,
+    setFontFamilyAR,
+    textTransform,
+    setTextTransform,
+    hideInactiveModules,
+    setHideInactiveModules,
+    navStyle,
+    setNavStyle,
+    developerMode,
+    setDeveloperMode,
+    dropdownBlur,
+    setDropdownBlur,
+    sidebarBlur,
+    setSidebarBlur,
+    menuBlur,
+    setMenuBlur,
+    tooltipBlur,
+    setTooltipBlur,
+    showTicker,
+    setShowTicker,
+    showTickerSales,
+    setShowTickerSales,
+    showTickerInventory,
+    setShowTickerInventory,
+    showTickerCustomers,
+    setShowTickerCustomers,
+    showTickerTopSeller,
+    setShowTickerTopSeller,
+  } = useSettings();
+
   const [isOpen, setIsOpen] = useState(false);
   const [statusBarExpanded, setStatusBarExpanded] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -121,17 +92,29 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     resetPosition: resetTypographyPos
   } = useSmartPosition({ defaultAlign: 'top' });
 
+  // Use Custom Hook for Blur Options Position
+  const { 
+    ref: blurOptionsRef, 
+    position: blurOptionsPos, 
+    checkPosition: checkBlurOptionsPos,
+    resetPosition: resetBlurOptionsPos
+  } = useSmartPosition({ defaultAlign: 'top' });
+
+  const [blurOptionsExpanded, setBlurOptionsExpanded] = useState(false);
+
   // Reset submenu when main menu is closed
   useEffect(() => {
     if (!isOpen) {
       setStatusBarExpanded(false);
       setThemeExpanded(false);
       setTypographyExpanded(false);
+      setBlurOptionsExpanded(false);
       resetThemesPos();
       resetInfoPos();
       resetTypographyPos();
+      resetBlurOptionsPos();
     }
-  }, [isOpen, resetThemesPos, resetInfoPos, resetTypographyPos]);
+  }, [isOpen, resetThemesPos, resetInfoPos, resetTypographyPos, resetBlurOptionsPos]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -262,21 +245,94 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 )}
             </div>
 
-            {/* Dropdown Blur Toggle */}
-            {setDropdownBlur && (
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                  <span className="material-symbols-rounded text-[14px]" style={{ color: 'var(--text-secondary)' }}>blur_on</span>
-                  {t.dropdownBlur}
-                </label>
-                <Switch 
-                  checked={dropdownBlur || false}
-                  onChange={(val) => setDropdownBlur(val)}
-                  theme={currentTheme.name.toLowerCase()}
-                  activeColor={currentTheme.hex}
-                />
-              </div>
-            )}
+            {/* Blur Options Nested Menu */}
+            <div className="space-y-1 relative" ref={blurOptionsRef}>
+                {/* Main Row */}
+                <div className="w-full flex items-center justify-between py-1 transition-colors">
+                    <div className="flex items-center gap-2">
+                        <span className="material-symbols-rounded text-[16px]" style={{ color: 'var(--text-secondary)' }}>blur_on</span>
+                        <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{t.dropdownBlur}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <Switch 
+                            checked={dropdownBlur || false}
+                            onChange={(val) => setDropdownBlur?.(val)}
+                            theme={currentTheme.name.toLowerCase()}
+                            activeColor={currentTheme.hex}
+                        />
+                        <button
+                            onClick={() => {
+                                checkBlurOptionsPos();
+                                setBlurOptionsExpanded(!blurOptionsExpanded);
+                                if (!blurOptionsExpanded) {
+                                    setStatusBarExpanded(false);
+                                    setThemeExpanded(false);
+                                    setTypographyExpanded(false);
+                                }
+                            }}
+                            className="transition-colors"
+                            type="button"
+                        >
+                            <span 
+                                className={`material-symbols-rounded text-[16px] transition-transform ${blurOptionsExpanded ? 'rotate-180' : ''}`}
+                                style={{ color: 'var(--text-tertiary)' }}
+                            >
+                                {blurOptionsPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Blur Options Submenu */}
+                {blurOptionsExpanded && (
+                    <div 
+                        className={`absolute w-56 rounded-lg shadow-xl border z-40 p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
+                        style={{
+                            backgroundColor: 'var(--bg-primary)',
+                            borderColor: 'var(--border-primary)',
+                            [blurOptionsPos.side === 'left' ? 'right' : 'left']: '100%',
+                            [blurOptionsPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
+                        }}
+                    >
+                        {/* Summary Label */}
+                        <label className="text-[10px] font-bold uppercase mb-1 block" style={{ color: 'var(--text-tertiary)' }}>{t.dropdownBlur}</label>
+                        
+                        {/* Sidebar Blur */}
+                        <div className="flex items-center justify-between py-1">
+                            <span className="text-xs" style={{ color: 'var(--text-primary)' }}>{t.sidebarBlur}</span>
+                            <Switch 
+                                checked={sidebarBlur || false}
+                                onChange={(val) => setSidebarBlur?.(val)}
+                                theme={currentTheme.name.toLowerCase()}
+                                activeColor={currentTheme.hex}
+                            />
+                        </div>
+
+                        {/* Menu Blur */}
+                        <div className="flex items-center justify-between py-1">
+                            <span className="text-xs" style={{ color: 'var(--text-primary)' }}>{t.menuBlur}</span>
+                            <Switch 
+                                checked={menuBlur || false}
+                                onChange={(val) => setMenuBlur?.(val)}
+                                theme={currentTheme.name.toLowerCase()}
+                                activeColor={currentTheme.hex}
+                            />
+                        </div>
+
+                        {/* Tooltip Blur */}
+                        <div className="flex items-center justify-between py-1">
+                            <span className="text-xs" style={{ color: 'var(--text-primary)' }}>{t.tooltipBlur}</span>
+                            <Switch 
+                                checked={tooltipBlur || false}
+                                onChange={(val) => setTooltipBlur?.(val)}
+                                theme={currentTheme.name.toLowerCase()}
+                                activeColor={currentTheme.hex}
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Nav Style Switch */}
             {setNavStyle && (
