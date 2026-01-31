@@ -93,13 +93,14 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   const {
     theme, setTheme,
     darkMode, setDarkMode,
-    language, setLanguage,
-    textTransform, setTextTransform,
+    language,
+    textTransform,
     sidebarVisible, setSidebarVisible,
+    sidebarBlur,
     hideInactiveModules, setHideInactiveModules,
     developerMode, setDeveloperMode,
     navStyle, setNavStyle,
-    dropdownBlur, setDropdownBlur,
+    menuBlur,
   } = useSettings();
 
   // --- Data from Context ---
@@ -305,7 +306,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 
 
   return (
-    <ContextMenuProvider enableGlassEffect={dropdownBlur}>
+    <ContextMenuProvider enableGlassEffect={menuBlur}>
     <GlobalContextMenuWrapper 
       t={t} 
       toggleTheme={() => {
@@ -336,30 +337,11 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
             menuItems={filteredMenuItems}
             activeModule={activeModule}
             onModuleChange={handleModuleChange}
-            theme={theme.primary}
-            darkMode={darkMode}
             appTitle={t.appTitle}
             onMobileMenuToggle={() => setMobileMenuOpen(true)}
-            language={language}
-            setTheme={setTheme}
-            setDarkMode={setDarkMode}
-            setLanguage={setLanguage}
-            availableThemes={THEMES}
-            availableLanguages={LANGUAGES}
-            currentTheme={theme}
             profileImage={profileImage}
             setProfileImage={setProfileImage}
-            textTransform={textTransform}
-            setTextTransform={setTextTransform}
             onLogoClick={() => setSidebarVisible(!sidebarVisible)}
-            hideInactiveModules={hideInactiveModules}
-            setHideInactiveModules={setHideInactiveModules}
-            navStyle={navStyle}
-            setNavStyle={setNavStyle}
-            developerMode={developerMode}
-            setDeveloperMode={setDeveloperMode}
-            dropdownBlur={dropdownBlur}
-            setDropdownBlur={setDropdownBlur}
             currentView={activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view}
             onNavigate={handleNavigate}
             employees={employees.map(e => ({ id: e.id, name: e.name, employeeCode: e.employeeCode }))}
@@ -374,7 +356,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
           {/* Desktop Sidebar */}
           {!STANDALONE_VIEWS.includes(view) && (
             <aside 
-              className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col w-72 backdrop-blur-xl transition-all duration-300 ease-in-out`}
+              className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col w-72 ${sidebarBlur ? 'backdrop-blur-xl' : ''} transition-all duration-300 ease-in-out`}
               style={{ backgroundColor: 'var(--bg-primary)' }}
             >
               <SidebarContent 

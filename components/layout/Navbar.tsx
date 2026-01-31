@@ -12,79 +12,61 @@ import { Switch } from '../common/Switch';
 
 import { PrinterSettings } from '../settings/PrinterSettings';
 
+import { useSettings } from '../../context';
+
 interface NavbarProps {
   menuItems: MenuItem[];
   activeModule: string;
   onModuleChange: (moduleId: string) => void;
-  theme: string;
-  darkMode: boolean;
   appTitle: string;
   onMobileMenuToggle: () => void;
   isMobile?: boolean;
-  language: 'EN' | 'AR';
-  setTheme: (theme: ThemeColor) => void;
-  setDarkMode: (mode: boolean) => void;
-  setLanguage: (lang: Language) => void;
-  availableThemes: ThemeColor[];
-  availableLanguages: { code: Language; label: string }[];
-  currentTheme: ThemeColor;
   profileImage: string | null;
   setProfileImage: (image: string | null) => void;
-  textTransform: 'normal' | 'uppercase';
-  setTextTransform: (transform: 'normal' | 'uppercase') => void;
   onLogoClick?: () => void;
-  hideInactiveModules?: boolean;
-  setHideInactiveModules?: (hide: boolean) => void;
-  navStyle?: 1 | 2 | 3;
-  setNavStyle?: (style: 1 | 2 | 3) => void;
   currentView?: string;
   onNavigate?: (view: string) => void;
-  developerMode?: boolean;
-  setDeveloperMode?: (mode: boolean) => void;
-  dropdownBlur?: boolean;
-  setDropdownBlur?: (blur: boolean) => void;
   employees?: Array<{ id: string; name: string; employeeCode: string }>;
   currentEmployeeId?: string | null;
   setCurrentEmployeeId?: (id: string | null) => void;
   onLogout?: () => void;
 }
 
+/**
+ * ARCHITECTURE NOTE:
+ * Navbar properties are limited to structural/data items (menuItems, activeModule).
+ * Application settings (theme, language, blur, etc.) are consumed internally via `useSettings()`
+ * to prevent unnecessary re-renders and property-drilling from App.tsx.
+ */
 const NavbarComponent: React.FC<NavbarProps> = ({
   menuItems,
   activeModule,
   onModuleChange,
-  theme,
-  darkMode,
   appTitle,
   onMobileMenuToggle,
   isMobile = false,
-  language,
-  setTheme,
-  setDarkMode,
-  setLanguage,
-  availableThemes,
-  availableLanguages,
-  currentTheme,
   profileImage,
   setProfileImage,
-  textTransform,
-  setTextTransform,
   onLogoClick,
-  hideInactiveModules,
-  setHideInactiveModules,
-  navStyle = 1,
-  setNavStyle,
   currentView,
   onNavigate,
-  developerMode = false,
-  setDeveloperMode,
-  dropdownBlur = false,
-  setDropdownBlur,
   employees = [],
   currentEmployeeId,
   setCurrentEmployeeId,
   onLogout
 }) => {
+  const {
+    language,
+    theme: currentTheme,
+    darkMode,
+    navStyle = 1,
+    sidebarBlur,
+    hideInactiveModules,
+    developerMode
+  } = useSettings();
+  
+  const theme = currentTheme.primary;
+
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showPrinterSettings, setShowPrinterSettings] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -346,7 +328,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         theme={theme}
                         language={language}
                         hideInactiveModules={hideInactiveModules && !developerMode}
-                        blur={dropdownBlur}
+                        blur={sidebarBlur}
                         anchorEl={activeAnchor}
                         onMouseEnter={cancelClose}
                         onMouseLeave={handleMouseLeave}
@@ -422,7 +404,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                             theme={theme}
                             language={language}
                             hideInactiveModules={hideInactiveModules && !developerMode}
-                            blur={dropdownBlur}
+                            blur={sidebarBlur}
                             anchorEl={activeAnchor}
                             onMouseEnter={cancelClose}
                             onMouseLeave={handleMouseLeave}

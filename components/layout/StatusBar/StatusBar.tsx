@@ -99,6 +99,11 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
   const { state } = useStatusBar();
 
   // --- Settings from Context ---
+  /**
+   * ARCHITECTURE NOTE:
+   * StatusBar is decoupled from configuration state. It only accepts functional props (t, userRole, etc.).
+   * Global settings are accessed via the `useSettings` hook to keep the component interface lean.
+   */
   const {
     language,
     theme: currentTheme,
@@ -118,6 +123,12 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
     setDeveloperMode,
     dropdownBlur,
     setDropdownBlur,
+    sidebarBlur,
+    setSidebarBlur,
+    menuBlur,
+    setMenuBlur,
+    tooltipBlur,
+    setTooltipBlur,
     showTicker,
     setShowTicker,
     showTickerSales,
@@ -183,39 +194,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(({
 
         {/* Settings Menu */}
         <SettingsMenu 
-          language={language}
           userRole={userRole}
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
-          currentTheme={currentTheme}
-          setTheme={setTheme}
-          availableThemes={availableThemes}
-          setLanguage={setLanguage}
-          availableLanguages={availableLanguages}
-          textTransform={textTransform}
-          setTextTransform={setTextTransform}
-          hideInactiveModules={hideInactiveModules}
-          setHideInactiveModules={setHideInactiveModules}
-          navStyle={navStyle}
-          setNavStyle={setNavStyle}
-          developerMode={developerMode}
-          setDeveloperMode={setDeveloperMode}
-          dropdownBlur={dropdownBlur}
-          setDropdownBlur={setDropdownBlur}
-          showTicker={showTicker}
-          setShowTicker={setShowTicker}
-          showTickerSales={showTickerSales}
-          setShowTickerSales={setShowTickerSales}
-          showTickerInventory={showTickerInventory}
-          setShowTickerInventory={setShowTickerInventory}
-          showTickerCustomers={showTickerCustomers}
-          setShowTickerCustomers={setShowTickerCustomers}
-           showTickerTopSeller={showTickerTopSeller}
-           setShowTickerTopSeller={setShowTickerTopSeller}
-           fontFamilyEN={fontFamilyEN}
-           setFontFamilyEN={setFontFamilyEN}
-           fontFamilyAR={fontFamilyAR}
-           setFontFamilyAR={setFontFamilyAR}
          />
 
         {/* Connection Status */}
