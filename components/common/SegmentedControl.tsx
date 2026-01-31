@@ -138,6 +138,7 @@ export function SegmentedControl<T extends string | number | boolean>({
   return (
     <div 
       ref={containerRef}
+      dir="ltr"
       className={`relative flex p-1 gap-1 bg-gray-200/50 dark:bg-gray-700/50 ${containerRound} shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] isolate ${className}`}
     >
       {indicatorStyle && (
