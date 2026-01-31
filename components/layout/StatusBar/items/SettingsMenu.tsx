@@ -14,8 +14,22 @@ import { useSettings } from '../../../../context';
  * This component is self-contained. It consumes the `useSettings` hook directly to manage its toggles.
  * Never re-introduce passed-down setting props here; always use the central context.
  */
-export const SettingsMenu: React.FC<{ userRole?: UserRole }> = ({ 
-  userRole 
+export interface SettingsMenuProps {
+  userRole?: UserRole;
+  dropDirection?: 'up' | 'down';
+  showTrigger?: boolean;
+  align?: 'start' | 'end';
+  triggerVariant?: 'statusBar' | 'navbar';
+  triggerSize?: number;
+}
+
+export const SettingsMenu: React.FC<SettingsMenuProps> = ({ 
+  userRole,
+  dropDirection = 'up',
+  showTrigger = true,
+  align = 'start',
+  triggerVariant = 'statusBar',
+  triggerSize = 24
 }) => {
   const {
     language,
@@ -135,19 +149,35 @@ export const SettingsMenu: React.FC<{ userRole?: UserRole }> = ({
   };
 
   return (
-    <div className="relative font-cairo h-full flex items-center" ref={dropdownRef}>
+    <div className={`relative font-cairo ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`} ref={dropdownRef}>
       {/* Settings Button */}
-      <StatusBarItem
-        icon="settings"
-        tooltip={t.settings}
-        variant={isOpen ? 'info' : 'default'}
-        onClick={() => setIsOpen(!isOpen)}
-      />
+      {showTrigger && (
+        triggerVariant === 'statusBar' ? (
+          <StatusBarItem
+            icon="settings"
+            tooltip={t.settings}
+            variant={isOpen ? 'info' : 'default'}
+            onClick={() => setIsOpen(!isOpen)}
+          />
+        ) : (
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className={`flex items-center justify-center w-10 h-10 transition-colors ${isOpen ? 'text-blue-500' : 'text-gray-600 dark:text-gray-300'}`}
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: `${triggerSize}px` }}>settings</span>
+          </button>
+        )
+      )}
 
       {/* Settings Dropdown */}
       {isOpen && (
         <div 
-          className="absolute bottom-full start-0 mb-2 w-64 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-800 backdrop-blur-sm z-40 animate-fade-in origin-bottom-start"
+          className={`
+            absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
+            ${align === 'start' ? 'start-0 origin-top-start' : 'end-0 origin-top-end'}
+            w-64 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-800 
+            backdrop-blur-sm z-[110] animate-fade-in
+          `}
           style={{ 
             backgroundColor: 'var(--bg-primary)',
             borderColor: 'var(--border-primary)',
@@ -199,7 +229,7 @@ export const SettingsMenu: React.FC<{ userRole?: UserRole }> = ({
                 {/* Submenu (Side Pop-out) */}
                 {themeExpanded && (
                 <div 
-                    className={`absolute w-48 rounded-lg shadow-xl border z-40 p-3 space-y-3 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
+                    className={`absolute w-48 rounded-lg shadow-xl border z-[120] p-3 space-y-3 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
                     style={{
                         backgroundColor: 'var(--bg-primary)',
                         borderColor: 'var(--border-primary)',
@@ -287,7 +317,7 @@ export const SettingsMenu: React.FC<{ userRole?: UserRole }> = ({
                 {/* Blur Options Submenu */}
                 {blurOptionsExpanded && (
                     <div 
-                        className={`absolute w-56 rounded-lg shadow-xl border z-40 p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
+                        className={`absolute w-56 rounded-lg shadow-xl border z-[120] p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
                         style={{
                             backgroundColor: 'var(--bg-primary)',
                             borderColor: 'var(--border-primary)',
@@ -424,7 +454,7 @@ export const SettingsMenu: React.FC<{ userRole?: UserRole }> = ({
                 {/* Typography Submenu */}
                 {typographyExpanded && (
                     <div 
-                        className={`absolute w-56 rounded-lg shadow-xl border z-40 p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
+                        className={`absolute w-56 rounded-lg shadow-xl border z-[120] p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
                         style={{
                             backgroundColor: 'var(--bg-primary)',
                             borderColor: 'var(--border-primary)',
@@ -558,7 +588,7 @@ export const SettingsMenu: React.FC<{ userRole?: UserRole }> = ({
                   {/* Submenu (Side Pop-out) */}
                   {statusBarExpanded && showTicker && (
                     <div 
-                        className={`absolute w-48 rounded-lg shadow-xl border z-40 p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
+                        className={`absolute w-48 rounded-lg shadow-xl border z-[120] p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
                         style={{
                             backgroundColor: 'var(--bg-primary)',
                             borderColor: 'var(--border-primary)',
