@@ -1,5 +1,6 @@
 import React, { ReactNode, useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useSettings } from '../../context';
 
 /**
  * A highly reusable, Smart Tooltip component.
@@ -26,6 +27,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   triggerClassName = "",
   delay = 300
 }) => {
+  const { tooltipBlur } = useSettings();
   const [isVisible, setIsVisible] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, arrowLeft: 0 });
   const [placement, setPlacement] = useState<'top' | 'bottom'>(position);
@@ -154,8 +156,12 @@ export const Tooltip: React.FC<TooltipProps> = ({
             ref={tooltipRef}
             className={`
                 fixed px-2 py-1 
-                bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-[10px] 
-                rounded-lg z-[9999] shadow-2xl border border-gray-200 dark:border-gray-700/50
+                ${tooltipBlur 
+                  ? 'backdrop-blur-xl bg-white/70 dark:bg-gray-800/75 saturate-150 border-white/40 dark:border-white/10 shadow-xl' 
+                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/50 shadow-2xl'
+                }
+                text-gray-900 dark:text-white text-[10px] 
+                rounded-lg z-[9999] border
                 pointer-events-none whitespace-nowrap
                 transition-opacity duration-200
                 ${tooltipClassName}
@@ -168,21 +174,23 @@ export const Tooltip: React.FC<TooltipProps> = ({
         >
             {content}
             
-            {/* Arrow */}
-            <div 
-                className={`
-                  absolute w-0 h-0 
-                  border-4 border-transparent
-                  ${placement === 'top' 
-                    ? 'top-full border-t-white dark:border-t-gray-800' 
-                    : 'bottom-full border-b-white dark:border-b-gray-800'
-                  }
-                `}
-                style={{
-                    left: coords.arrowLeft,
-                    transform: 'translateX(-50%)' // Center the arrow itself at the calculated point
-                }}
-            />
+            {/* Arrow - Hidden when blur is active for a cleaner look */}
+            {!tooltipBlur && (
+              <div 
+                  className={`
+                    absolute w-2 h-2 
+                    bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/50
+                    ${placement === 'top' 
+                      ? 'top-full -mt-1 border-b border-r' 
+                      : 'bottom-full -mb-1 border-t border-l'
+                    }
+                  `}
+                  style={{
+                      left: coords.arrowLeft,
+                      transform: 'translateX(-50%) rotate(45deg)' // Center and rotate for diamond shape
+                  }}
+              />
+            )}
         </div>,
         document.body
       )}
