@@ -34,6 +34,18 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Scroll Lock for Mobile Drawer/Modals */
+.drawer-open,
+.drawer-open html,
+.drawer-open body {
+  overflow: hidden !important;
+}
+
+.drawer-open .main-content-scroll {
+  overflow: hidden !important;
+  touch-action: none !important;
+}
+
 /* PWA Standalone Mode Detection */
 @media (display-mode: standalone) {
   /* Add any standalone-specific styles here */
@@ -483,4 +495,27 @@ html[lang="ar"] .font-bold {
     BlinkMacSystemFont,
     "Google Sans Flex",
     sans-serif;
+}
+
+/* --- Mobile Dock Fluid Animation (Grid Method) --- */
+.transition-fluid {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  transition-duration: 0.4s;
+}
+
+.animate-grid-expand {
+  display: grid;
+  grid-template-columns: 0fr;
+  will-change: grid-template-columns;
+  /* Transition handled by parent or utility if applied, but default here for safety */
+  transition: grid-template-columns 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.animate-grid-expand.active {
+  grid-template-columns: 1fr;
+}
+
+.mask-fade-edges {
+  mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
 }
