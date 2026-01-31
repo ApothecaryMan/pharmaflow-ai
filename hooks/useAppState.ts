@@ -23,7 +23,6 @@ export interface AppState {
   // UI state
   mobileMenuOpen: boolean;
   setMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  tip: string;
   
   // User state
   profileImage: string | null;
@@ -45,26 +44,10 @@ export function useAppState(): AppState {
 
   // --- UI State ---
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [tip, setTip] = useState<string>("Loading tip...");
 
   // --- User/Session State ---
   const [profileImage, setProfileImage] = usePersistedState<string | null>(StorageKeys.PROFILE_IMAGE, null);
   const [currentEmployeeId, setCurrentEmployeeId] = usePersistedState<string | null>(StorageKeys.CURRENT_EMPLOYEE_ID, null);
-
-  // Generate random tip on mount
-  useEffect(() => {
-    const tips = [
-      "Hydration is key to health.",
-      "Check expiry dates regularly.",
-      "Organize stock by frequency.",
-      "Monitor temperature for meds.",
-      "Update software regularly.",
-      "Double check prescriptions.",
-      "Maintain a clean workspace.",
-      "Review sales trends weekly."
-    ];
-    setTip(tips[Math.floor(Math.random() * tips.length)]);
-  }, []);
 
   return {
     // View state
@@ -80,7 +63,6 @@ export function useAppState(): AppState {
     // UI state
     mobileMenuOpen,
     setMobileMenuOpen,
-    tip,
     
     // User state
     profileImage,
