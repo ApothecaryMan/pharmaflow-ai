@@ -1,15 +1,16 @@
 import { formatCompactCurrencyParts } from '../../utils/currency';
 
 /**
+ * @fileoverview InsightTooltip Component
  * ═══════════════════════════════════════════════════════════════════════════
- * 📊 DASHBOARD ANALYTICS - TOOLTIP ARCHITECTURE
+ * DASHBOARD ANALYTICS - TOOLTIP ARCHITECTURE
  * ═══════════════════════════════════════════════════════════════════════════
  * 
  * This section implements a professional 3-tier tooltip system for senior-level
  * business intelligence. Each tooltip follows a strict information hierarchy.
  * 
  * ───────────────────────────────────────────────────────────────────────────
- * 🏛️ THE 3-TIER ARCHITECTURE
+ * THE 3-TIER ARCHITECTURE
  * ───────────────────────────────────────────────────────────────────────────
  * 
  * TIER 1: PRIMARY RESULT (The "What")
@@ -29,6 +30,11 @@ import { formatCompactCurrencyParts } from '../../utils/currency';
  * ├─ Format: Contextual metrics, trends, and performance grades
  * ├─ Example: Return Rate 2.3%, Revenue at Risk EGP 4,200, Grade: Excellent
  * └─ Rule: Convert raw data into strategic decisions
+ * 
+ *  * Updated: 
+ * - Uses compact formatting for large numbers.
+ * - Uses normal font (non-monospace) for numbers for better readability.
+ * - Displays small size L.E or ج.م according to language.
  */
 
 export interface CalculationBlock {
