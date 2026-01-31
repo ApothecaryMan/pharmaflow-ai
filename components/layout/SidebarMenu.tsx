@@ -15,6 +15,7 @@ interface SidebarMenuProps {
   translations: any;
   language: 'EN' | 'AR';
   hideInactiveModules?: boolean;
+  hideSearch?: boolean;
 }
 
 export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
@@ -27,7 +28,8 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
   theme,
   translations,
   language,
-  hideInactiveModules = false
+  hideInactiveModules = false,
+  hideSearch = false
 }) => {
   const [expandedSubmenus, setExpandedSubmenus] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -132,23 +134,25 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
   return (
     <div className="flex-1 flex flex-col w-full overflow-hidden h-full">
       {/* Search Bar */}
-      <div className="px-3 py-3 sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        <div className="relative">
-          <SearchInput
-            value={searchQuery}
-            onSearchChange={setSearchQuery}
-            onClear={() => setSearchQuery('')}
-            placeholder={`${language === 'AR' ? 'بحث في' : 'Search in'} ${getMenuTranslation(activeModuleData?.label || '', language)}...`}
-            color={theme}
-            className="rounded-lg border ps-9 pe-9"
-            style={{ 
-              backgroundColor: 'var(--bg-secondary)',
-              borderColor: 'var(--border-primary)',
-              color: 'var(--text-primary)'
-            }}
-          />
+      {!hideSearch && (
+        <div className="px-3 py-3 sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-primary)' }}>
+          <div className="relative">
+            <SearchInput
+              value={searchQuery}
+              onSearchChange={setSearchQuery}
+              onClear={() => setSearchQuery('')}
+              placeholder={`${language === 'AR' ? 'بحث في' : 'Search in'} ${getMenuTranslation(activeModuleData?.label || '', language)}...`}
+              color={theme}
+              className="rounded-lg border ps-9 pe-9"
+              style={{ 
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--border-primary)',
+                color: 'var(--text-primary)'
+              }}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Submenus - Simplified Flat List */}
       <nav 
@@ -180,12 +184,12 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
               <div className="space-y-0.5">
                 {submenu.items.slice(0, 15).map((item, idx) => {
                   const itemLabel = typeof item === 'string' ? item : item.label;
+                  const itemIcon = typeof item === 'object' ? item.icon : undefined;
                   const itemView = typeof item === 'object' && item.view ? item.view : itemLabel;
                   const isImplemented = typeof item === 'object' && !!item.view;
                   const isActive = itemView === currentView;
                   
                   return (
-
                     <button
                       key={idx}
                       disabled={!isImplemented}
@@ -196,7 +200,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
                           handleItemClick(submenu.label, itemLabel);
                         }
                       }}
-                      className={`w-full ltr:text-left rtl:text-right px-3 py-2 rounded-lg transition-all type-interactive ${
+                      className={`w-full flex items-center gap-2.5 ltr:text-left rtl:text-right px-3 py-2 rounded-lg transition-all type-interactive ${
                         !isImplemented
                           ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
                           : isActive 
@@ -204,8 +208,19 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(({
                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                       }`}
                     >
-                      {getMenuTranslation(itemLabel, language)}
-                      {!isImplemented && <span className="text-[10px] opacity-60 ltr:ml-2 rtl:mr-2 border border-gray-300 dark:border-gray-700 px-1 rounded">Soon</span>}
+                      {itemIcon && (
+                        <span className={`material-symbols-rounded text-[18px] ${isActive ? 'font-fill' : 'opacity-60'}`}>
+                          {itemIcon}
+                        </span>
+                      )}
+                      <span className="flex-1">
+                        {getMenuTranslation(itemLabel, language)}
+                      </span>
+                      {!isImplemented && (
+                        <span className="text-[10px] opacity-60 border border-gray-300 dark:border-gray-700 px-1 rounded uppercase tracking-tighter">
+                          Soon
+                        </span>
+                      )}
                     </button>
                   );
 

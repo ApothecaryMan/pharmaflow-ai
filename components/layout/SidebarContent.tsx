@@ -13,7 +13,6 @@ interface SidebarContentProps {
   theme: any;
   t: any;
   language: 'EN' | 'AR';
-  tip: string;
   hideInactiveModules?: boolean;
 }
 
@@ -28,7 +27,6 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
   theme,
   t,
   language,
-  tip,
   hideInactiveModules = false
 }) => {
   return (
@@ -44,12 +42,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
         translations={t}
         language={language}
         hideInactiveModules={hideInactiveModules}
+        hideSearch={isMobile}
       />
-      <div className="mt-auto space-y-4 pt-4">
-        <div className="px-4 pb-2 text-center text-[10px] text-gray-400">
-          <p>{tip}</p>
-        </div>
-      </div>
     </>
   );
 };
