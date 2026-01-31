@@ -9,6 +9,8 @@ import { ThemeColor, Language } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { SidebarDropdown } from './SidebarDropdown';
 import { Switch } from '../common/Switch';
+import { UserRole } from '../../config/permissions';
+import { SettingsMenu } from './StatusBar/items/SettingsMenu';
 
 import { PrinterSettings } from '../settings/PrinterSettings';
 
@@ -30,6 +32,7 @@ interface NavbarProps {
   currentEmployeeId?: string | null;
   setCurrentEmployeeId?: (id: string | null) => void;
   onLogout?: () => void;
+  userRole?: UserRole;
 }
 
 /**
@@ -53,7 +56,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   employees = [],
   currentEmployeeId,
   setCurrentEmployeeId,
-  onLogout
+  onLogout,
+  userRole
 }) => {
   const {
     language,
@@ -339,13 +343,22 @@ const NavbarComponent: React.FC<NavbarProps> = ({
         })}
       </div>
 
-      {/* Mobile: Hamburger Menu */}
-      <button
-        onClick={onMobileMenuToggle}
-        className="md:hidden ltr:ml-auto rtl:mr-auto p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-      >
-        <span className="material-symbols-rounded text-[24px]">menu</span>
-      </button>
+      {/* Mobile: Hamburger Menu & Settings */}
+      <div className="md:hidden ltr:ml-auto rtl:mr-auto flex items-center gap-1">
+        <SettingsMenu 
+          userRole={userRole} 
+          dropDirection="down" 
+          align="end" 
+          triggerVariant="navbar" 
+          triggerSize={26} 
+        />
+        <button
+          onClick={onMobileMenuToggle}
+          className="flex items-center justify-center w-10 h-10 text-gray-600 dark:text-gray-300 transition-colors"
+        >
+          <span className="material-symbols-rounded text-[28px]">menu</span>
+        </button>
+      </div>
 
       {/* Right Side Actions (Desktop) */}
       <div className="hidden md:flex items-center gap-2 ltr:ml-4 rtl:mr-4">
