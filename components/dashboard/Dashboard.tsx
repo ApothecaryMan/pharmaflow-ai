@@ -271,7 +271,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
   const ExpandButton = ({ onClick, title }: { onClick: () => void, title?: string }) => (
     <button 
       onClick={onClick}
-      className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95"
+      className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 opacity-0 group-hover:opacity-100"
       title={title || t.expand?.expand || 'Expand'}
     >
       <span className="material-symbols-rounded text-xl">open_in_full</span>
@@ -576,22 +576,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                                 <div>
                                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                                         {sale.customerName || "Guest"}
-                                        {sale.customerCode && <span className="text-[10px] bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-500">#{sale.customerCode}</span>}
+                                        {sale.customerCode && (
+                                            <span 
+                                                dir="ltr"
+                                                className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400 text-[10px] font-bold uppercase tracking-wider bg-transparent"
+                                            >
+                                                <span className="material-symbols-rounded text-sm">tag</span>
+                                                {sale.customerCode}
+                                            </span>
+                                        )}
                                     </p>
                                     <p className="text-xs text-gray-500 flex items-center gap-2">
                                         <span>{new Date(sale.date).toLocaleDateString()} • {new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                         <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
-                                        <span className="font-mono text-xs text-gray-400">#{sale.id}</span>
+                                        <span className="text-xs">#{sale.id}</span>
                                         <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
-                                        <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border bg-transparent text-xs font-bold uppercase tracking-wider ${
-                                            sale.paymentMethod === 'visa' 
-                                                ? 'border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400' 
-                                                : 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'
-                                        }`}>
-                                            <span className="material-symbols-rounded text-sm">
-                                                {sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
-                                            </span>
-                                            {sale.paymentMethod === 'visa' ? t.visa : t.cash}
+                                        <span className={`inline-flex items-center ${sale.paymentMethod === 'visa' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
+                                            <span className="material-symbols-rounded text-base">{sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}</span>
+                                        </span>
+                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400 text-[10px] font-bold uppercase tracking-wider bg-transparent">
+                                            <span className="material-symbols-rounded text-sm">package_2</span>
+                                            {sale.items.length}
                                         </span>
                                     </p>
                                 </div>
@@ -610,13 +615,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                                     });
                                     const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
                                     return (
-                                      <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-lg border border-orange-200 dark:border-orange-900/50 text-orange-600 dark:text-orange-400 text-[10px] font-bold uppercase tracking-wider bg-transparent">
-                                        <span className="material-symbols-rounded text-[14px]">keyboard_return</span>
-                                        <span>({totalReturned}/{totalItems})</span>
+                                      <span className="text-orange-500 flex items-center gap-0.5">
+                                        <span className="material-symbols-rounded text-[12px]">keyboard_return</span>
+                                        <span className="text-[10px]">({totalReturned}/{totalItems})</span>
                                       </span>
                                     );
                                   })()}
-                                  {sale.items.length} {t.items || "items"}
+                                  {/* Item count moved to payment badge */}
                                 </p>
                             </div>
                         </div>
