@@ -583,8 +583,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                                         <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
                                         <span className="font-mono text-xs text-gray-400">#{sale.id}</span>
                                         <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
-                                        <span className={`flex items-center gap-1 ${sale.paymentMethod === 'visa' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
-                                            <span className="material-symbols-rounded text-[14px]">{sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}</span>
+                                        <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border bg-transparent text-xs font-bold uppercase tracking-wider ${
+                                            sale.paymentMethod === 'visa' 
+                                                ? 'border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400' 
+                                                : 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'
+                                        }`}>
+                                            <span className="material-symbols-rounded text-sm">
+                                                {sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
+                                            </span>
                                             {sale.paymentMethod === 'visa' ? t.visa : t.cash}
                                         </span>
                                     </p>
@@ -604,9 +610,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ inventory, sales, purchase
                                     });
                                     const totalItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
                                     return (
-                                      <span className="text-orange-500 flex items-center gap-0.5">
-                                        <span className="material-symbols-rounded text-[12px]">keyboard_return</span>
-                                        <span className="text-[10px]">({totalReturned}/{totalItems})</span>
+                                      <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-lg border border-orange-200 dark:border-orange-900/50 text-orange-600 dark:text-orange-400 text-[10px] font-bold uppercase tracking-wider bg-transparent">
+                                        <span className="material-symbols-rounded text-[14px]">keyboard_return</span>
+                                        <span>({totalReturned}/{totalItems})</span>
                                       </span>
                                     );
                                   })()}
