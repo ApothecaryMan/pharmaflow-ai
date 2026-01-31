@@ -521,16 +521,6 @@ html[lang="ar"] .font-bold {
   animation: wordEntrance 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
-.animate-grid-expand {
-  display: grid;
-  grid-template-columns: 0fr;
-  will-change: grid-template-columns;
-  transition: grid-template-columns 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.animate-grid-expand.active {
-  grid-template-columns: 1fr;
-}
 
 
 
