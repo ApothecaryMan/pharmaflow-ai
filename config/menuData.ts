@@ -65,7 +65,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         label: "Inventory Dashboard",
         permission: "reports.view_inventory",
         items: [
-          { label: "Stock Overview", icon: "inventory_2" },
+          { label: "Stock Overview", icon: "package_2" },
           { label: "Stock Value Summary", icon: "monetization_on" },
           { label: "Low Stock Alerts", icon: "warning" },
           { label: "Out of Stock Items", icon: "remove_shopping_cart" },
@@ -279,7 +279,7 @@ export const PHARMACY_MENU: MenuItem[] = [
   {
     id: "inventory",
     label: "Inventory",
-    icon: "inventory_2",
+    icon: "package_2",
     permission: "inventory.view",
     order: 2,
     hasPage: true,
@@ -298,7 +298,7 @@ export const PHARMACY_MENU: MenuItem[] = [
           { label: "Barcode Studio", view: "barcode-studio", icon: "design_services", permission: 'inventory.update' },
           { label: "Stock Adjustment", view: "stock-adjustment", icon: "edit_note", permission: 'inventory.adjust' },
           { label: "Product Images", icon: "image" },
-          { label: "Product Bundles", icon: "inventory_2" },
+          { label: "Product Bundles", icon: "package_2" },
           { label: "Product Kits", icon: "medical_services" },
           { label: "Product Variants", icon: "style" },
           { label: "Product Pricing Rules", icon: "price_change" },
@@ -729,7 +729,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         items: [
           { label: "Daily Sales", icon: "today" },
           { label: "Sales Summary", icon: "summarize" },
-          { label: "Sales by Product", icon: "inventory_2" },
+          { label: "Sales by Product", icon: "package_2" },
           { label: "Sales by Category", icon: "category" },
           { label: "Sales by Customer", icon: "people" },
           { label: "Sales by Employee", icon: "badge" },
