@@ -157,7 +157,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
   };
 
   return (
-    <div className={`lg:col-span-2 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-transparent ${className || ''}`}>
+    <div className={`lg:col-span-2 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-transparent group ${className || ''}`}>
         {/* Header */}
         <div className={`flex items-center justify-between mb-4 ${headerClassName || ''}`}>
             <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
@@ -202,7 +202,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
               {onExpand && (
                 <button 
                   onClick={onExpand}
-                  className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95"
+                  className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 opacity-0 group-hover:opacity-100"
                   title={language === 'AR' ? 'توسيع الرسم البياني' : 'Expand Chart'}
                 >
                   <span className="material-symbols-rounded text-xl">open_in_full</span>
