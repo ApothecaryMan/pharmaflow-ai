@@ -54,10 +54,18 @@ export const usePosSounds = () => {
         playTone(2000, 'sine', 0.03, 0.02); // Very subtle click
     }, [playTone]);
 
+    const playHighValue = useCallback(() => {
+        // Triple ascending chime
+        playTone(600, 'sine', 0.1, 0.08);
+        setTimeout(() => playTone(900, 'sine', 0.1, 0.08), 100);
+        setTimeout(() => playTone(1200, 'sine', 0.3, 0.1), 200);
+    }, [playTone]);
+
     return {
         playBeep,
         playError,
         playSuccess,
-        playClick
+        playClick,
+        playHighValue
     };
 };
