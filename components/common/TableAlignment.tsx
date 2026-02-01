@@ -1,16 +1,26 @@
 import React from 'react';
 
-export type Alignment = 'left' | 'center' | 'right';
+export type Alignment = 'start' | 'center' | 'end';
 
 interface AlignButtonProps {
   align: Alignment;
   isActive: boolean;
   onClick: () => void;
+  isRtl?: boolean;
 }
 
-export const AlignButton: React.FC<AlignButtonProps> = ({ align, isActive, onClick }) => {
+export const AlignButton: React.FC<AlignButtonProps> = ({ align, isActive, onClick, isRtl }) => {
   const activeClass = 'bg-emerald-500 dark:bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-400 dark:ring-emerald-500';
   const inactiveClass = 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50';
+
+  let iconName = '';
+  if (align === 'center') {
+    iconName = 'align_horizontal_center';
+  } else if (align === 'start') {
+    iconName = isRtl ? 'align_horizontal_right' : 'align_horizontal_left';
+  } else { // end
+    iconName = isRtl ? 'align_horizontal_left' : 'align_horizontal_right';
+  }
 
   return (
     <button
@@ -26,28 +36,34 @@ export const AlignButton: React.FC<AlignButtonProps> = ({ align, isActive, onCli
     >
       <span 
         className="material-symbols-rounded text-[18px]" 
-        style={{ direction: 'ltr' }}
       >
-        {align === 'left' ? 'format_align_left' : align === 'center' ? 'format_align_center' : 'format_align_right'}
+        {iconName}
       </span>
     </button>
   );
 };
 
-export const getHeaderJustifyClass = (align: Alignment, isRtl: boolean) => {
+export const getHeaderJustifyClass = (align: Alignment) => {
   if (align === 'center') {
     return 'justify-center';
-  } else if (align === 'right') {
-    // Right Align: In RTL this is 'justify-start', in LTR 'justify-end'
-    return isRtl ? 'justify-start' : 'justify-end';
+  } else if (align === 'end') {
+    // End -> aligns to the end of the container (Right in LTR, Left in RTL)
+    return 'justify-end';
   } else {
-    // Left Align: In RTL this is 'justify-end', in LTR 'justify-start'
-    return isRtl ? 'justify-end' : 'justify-start';
+    // Start -> aligns to the start of the container (Left in LTR, Right in RTL)
+    return 'justify-start';
   }
 };
 
 export const getTextAlignClass = (align: Alignment) => {
   return align === 'center' 
     ? 'text-center' 
-    : align === 'right' ? 'text-right' : 'text-left';
+    : align === 'end' ? 'text-end' : 'text-start';
 };
+
+export const getItemsAlignClass = (align: Alignment) => {
+  return align === 'center' 
+    ? 'items-center' 
+    : align === 'end' ? 'items-end' : 'items-start';
+};
+
