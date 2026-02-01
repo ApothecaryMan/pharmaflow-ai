@@ -227,27 +227,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     employees
   }), [sales, inventory, enrichedCustomers, suppliers, purchases, purchaseReturns, returns, employees]);
 
-  // --- Not Authenticated (Login) ---
-
-  if (!isAuthenticated) {
-      return (
-          <Login 
-              onLoginSuccess={() => {
-                  setIsAuthenticated(true);
-                  setActiveModule(ROUTES.DASHBOARD);
-                  setView(ROUTES.DASHBOARD);
-              }}
-              language={language}
-              onViewChange={(view) => {
-                   if (view === 'dashboard') {
-                       setIsAuthenticated(true);
-                       setView(ROUTES.DASHBOARD);
-                   }
-              }}
-          />
-      );
-  }
-
   // --- TRANSITION SKELETON STATE ---
   if (isLoggingOut) {
       return (
