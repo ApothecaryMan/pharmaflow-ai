@@ -41,8 +41,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
         placeholder={placeholder}
         spellCheck="false"
         className={`
-          w-full ${isRtl ? 'pr-10 pl-10' : 'pl-10 pr-10'} 
-          ${showClear ? (isRtl ? 'pl-16' : 'pr-16') : ''} 
+          w-full ps-10 pe-10
+          ${showClear ? 'pe-16' : ''} 
           py-2.5 ${rounded === 'full' ? 'rounded-full' : 'rounded-xl'} 
           
           /* Border & Background */
@@ -65,14 +65,14 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
       />
 
       {/* Leading Icon */}
-      <div className={`absolute inset-y-0 flex items-center pointer-events-none text-gray-400 ${isRtl ? 'right-3' : 'left-3'} z-10`}>
+      <div className="absolute inset-y-0 start-3 flex items-center pointer-events-none text-gray-400 z-10">
         <span className="material-symbols-rounded text-[18px]">
           {icon}
         </span>
       </div>
       
       {/* Badge & Clear Button Group */}
-      <div className={`absolute inset-y-0 flex items-center gap-2 ${isRtl ? 'left-3' : 'right-3'}`}>
+      <div className="absolute inset-y-0 end-3 flex items-center gap-2">
         {badge && (
            <div className="pointer-events-none flex items-center h-full">
              {badge}

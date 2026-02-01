@@ -36,7 +36,7 @@ import {
 
 declare module '@tanstack/react-table' {
     interface ColumnMeta<TData extends RowData, TValue> {
-        align?: 'left' | 'right' | 'center' | 'start' | 'end';
+        align?: 'start' | 'center' | 'end';
         width?: number;
         minWidth?: number;
         flex?: boolean;
@@ -48,7 +48,7 @@ declare module '@tanstack/react-table' {
 import { SearchInput } from './SearchInput';
 import { useContextMenu, ContextMenuTrigger, ContextMenuItem, ContextMenuSeparator, ContextMenuCheckboxItem } from './ContextMenu';
 import { useLongPress } from '../../hooks/useLongPress';
-import { AlignButton, getHeaderJustifyClass, getTextAlignClass } from './TableAlignment';
+import { AlignButton, getHeaderJustifyClass, getTextAlignClass, getItemsAlignClass } from './TableAlignment';
 import { useSettings } from '../../context/SettingsContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { formatCurrencyParts } from "../../utils/currency";
@@ -115,7 +115,7 @@ interface TanStackTableProps<TData, TValue> {
    * // Inside columns definition:
    * cell: info => <div className="flex w-full justify-end">...</div>
    */
-  defaultColumnAlignment?: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'>;
+  defaultColumnAlignment?: Record<string, 'start' | 'center' | 'end'>;
   globalFilter?: string; // External global filter value
   onSearchChange?: (value: string) => void;
   manualFiltering?: boolean; // If true, disables client-side filtering (useful when passing pre-filtered data)
@@ -145,12 +145,13 @@ const getStoredSettings = (tableId: string) => {
 };
 
 // Heuristic for smart alignment
-const getSmartAlignment = (columnId: string): 'left' | 'right' | 'center' => {
+// Heuristic for smart alignment
+const getSmartAlignment = (columnId: string): 'start' | 'end' | 'center' => {
     const id = columnId.toLowerCase();
     
-    // Numeric / Financial fields -> Right
+    // Numeric / Financial fields -> End
     if (['price', 'cost', 'revenue', 'profit', 'margin', 'qty', 'quantity', 'count', 'amount', 'total', 'balance', 'distribution'].some(key => id.includes(key))) {
-        return 'right';
+        return 'end';
     }
     
     // Status / Actions -> Center
@@ -158,8 +159,8 @@ const getSmartAlignment = (columnId: string): 'left' | 'right' | 'center' => {
         return 'center';
     }
     
-    // Default -> Left
-    return 'left';
+    // Default -> Start
+    return 'start';
 };
 
 export function TanStackTable<TData, TValue>({
@@ -239,7 +240,7 @@ export function TanStackTable<TData, TValue>({
   
   // Initialize alignment: Priority = Stored > Prop > Meta > Smart Default
   const memoizedInitialAlignment = React.useMemo(() => {
-    const alignment: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'> = { ...defaultColumnAlignment };
+    const alignment: Record<string, 'start' | 'center' | 'end'> = { ...defaultColumnAlignment };
     
     // Add defaults from column metadata
     columns.forEach(col => {
@@ -254,9 +255,9 @@ export function TanStackTable<TData, TValue>({
         }
 
         if (align) {
-          // Map logical alignments to physical ones for the menu triad (left/center/right)
-          if (align === 'start') align = isRtl ? 'right' : 'left';
-          if (align === 'end') align = isRtl ? 'left' : 'right';
+          // Map legacy physical alignments to logical ones
+          if (align === 'left') align = 'start';
+          if (align === 'right') align = 'end';
           alignment[id] = align;
         } else if (lite && !alignment[id]) {
           alignment[id] = getSmartAlignment(id);
@@ -268,14 +269,14 @@ export function TanStackTable<TData, TValue>({
     return { ...alignment, ...(storedSettings?.columnAlignment || {}) };
   }, [columns, defaultColumnAlignment, lite, storedSettings]);
 
-  const [columnAlignment, setColumnAlignment] = useState<Record<string, 'left' | 'center' | 'right' | 'start' | 'end'>>(memoizedInitialAlignment);
+  const [columnAlignment, setColumnAlignment] = useState<Record<string, 'start' | 'center' | 'end'>>(memoizedInitialAlignment);
   
   // Helper to extract only the overrides (values different from defaults)
   const getDiff = React.useCallback((
-    current: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'>, 
-    defaults: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'>
+    current: Record<string, 'start' | 'center' | 'end'>, 
+    defaults: Record<string, 'start' | 'center' | 'end'>
   ) => {
-    const diff: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'> = {};
+    const diff: Record<string, 'start' | 'center' | 'end'> = {};
     Object.keys(current).forEach(key => {
       if (current[key] !== defaults[key]) {
         diff[key] = current[key];
@@ -284,16 +285,23 @@ export function TanStackTable<TData, TValue>({
     return diff;
   }, []);
 
+  const [pagination, setPagination] = React.useState({
+    pageIndex: storedSettings?.pagination?.pageIndex ?? 0,
+    pageSize: storedSettings?.pagination?.pageSize ?? pageSize,
+  });
+
   const persistSettings = React.useCallback((
     newColVis: VisibilityState,
-    newAlign: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'>
+    newAlign: Record<string, 'start' | 'center' | 'end'>,
+    newPagination?: { pageIndex: number, pageSize: number }
   ) => {
     const settings = {
       columnVisibility: newColVis,
       columnAlignment: getDiff(newAlign, defaultColumnAlignment),
+      pagination: newPagination || pagination,
     };
     localStorage.setItem(`table-settings-${tableId}`, JSON.stringify(settings));
-  }, [tableId, defaultColumnAlignment, getDiff]);
+  }, [tableId, defaultColumnAlignment, getDiff, pagination]);
 
   // React to default prop changes (e.g. Language switch or prop updates)
   React.useEffect(() => {
@@ -310,10 +318,13 @@ export function TanStackTable<TData, TValue>({
      });
   }, [persistSettings, columnAlignment]);
 
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: pageSize,
-  });
+  const handlePaginationChange = React.useCallback((updaterOrValue: any) => {
+    setPagination(old => {
+       const newVal = typeof updaterOrValue === 'function' ? updaterOrValue(old) : updaterOrValue;
+       persistSettings(columnVisibility, columnAlignment, newVal);
+       return newVal;
+    });
+  }, [persistSettings, columnVisibility, columnAlignment]);
 
   const table = useReactTable({
     data,
@@ -329,7 +340,7 @@ export function TanStackTable<TData, TValue>({
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: handleColumnVisibilityChange,
-    onPaginationChange: setPagination,
+    onPaginationChange: handlePaginationChange,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -344,17 +355,17 @@ export function TanStackTable<TData, TValue>({
 
   const getMenuContent = React.useCallback((
     columnId?: string,
-    overrideAlign?: Record<string, 'left' | 'center' | 'right' | 'start' | 'end'>
+    overrideAlign?: Record<string, 'start' | 'center' | 'end'>
   ) => {
       const column = columnId ? table.getColumn(columnId) : null;
       
       // Use override values if provided, otherwise fall back to state
       const effectiveAlign = overrideAlign ?? columnAlignment;
       
-      const currentAlign = columnId ? (effectiveAlign[columnId] || 'left') : 'left';
+      const currentAlign = columnId ? (effectiveAlign[columnId] || 'start') : 'start';
 
       // Handlers (re-create handlers that use the state/props)
-      const handleAlign = (align: 'left' | 'center' | 'right' | 'start' | 'end') => {
+      const handleAlign = (align: 'start' | 'center' | 'end') => {
         if (!columnId) return;
         const newAlign = { ...columnAlignment, [columnId]: align };
         setColumnAlignment(newAlign);
@@ -461,11 +472,10 @@ export function TanStackTable<TData, TValue>({
             <div className="flex items-center justify-between">
               <div 
                 className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700"
-                dir="ltr"
               >
-                <AlignButton align="left" isActive={currentAlign === 'left'} onClick={() => handleAlign('left')} />
-                <AlignButton align="center" isActive={currentAlign === 'center'} onClick={() => handleAlign('center')} />
-                <AlignButton align="right" isActive={currentAlign === 'right'} onClick={() => handleAlign('right')} />
+                <AlignButton align="start" isActive={currentAlign === 'start'} onClick={() => handleAlign('start')} isRtl={language === 'AR'} />
+                <AlignButton align="center" isActive={currentAlign === 'center'} onClick={() => handleAlign('center')} isRtl={language === 'AR'} />
+                <AlignButton align="end" isActive={currentAlign === 'end'} onClick={() => handleAlign('end')} isRtl={language === 'AR'} />
               </div>
               <span className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase ml-3">{t.global.table.alignment}</span>
             </div>
@@ -544,20 +554,10 @@ export function TanStackTable<TData, TValue>({
                       columnAlignment[header.column.id] || 
                       header.column.columnDef.meta?.align || 
                       (lite ? getSmartAlignment(header.column.id) : null) ||
-                      'left';
+                      'start';
 
-                  const justifyClass = align === 'center' ? 'justify-center' :
-                                       align === 'right' ? (isRtl ? 'justify-start' : 'justify-end') :
-                                       align === 'left' ? (isRtl ? 'justify-end' : 'justify-start') :
-                                       align === 'end' ? 'justify-end' :
-                                       'justify-start';
-
-                  const textAlignClass = align === 'center' ? 'text-center' :
-                                       align === 'end' ? 'text-end' :
-                                       align === 'start' ? 'text-start' :
-                                       align === 'right' ? 'text-right' :
-                                       align === 'left' ? 'text-left' :
-                                       'text-start';
+                  const justifyClass = getHeaderJustifyClass(align);
+                  const textAlignClass = getTextAlignClass(align);
                   
                   const isFlex = header.column.columnDef.meta?.flex ?? header.column.id.toLowerCase().includes('name');
 
@@ -589,11 +589,9 @@ export function TanStackTable<TData, TValue>({
                              
                              {/* Absolute Sort Indicators */}
                              <span className={`absolute top-1/2 -translate-y-1/2 flex items-center
-                                ${align === 'left' ? 'left-full pl-1' :
-                                  align === 'right' ? 'right-full pr-1 opacity-100' :
-                                  isRtl && align === 'start' ? 'right-full pr-1' :
-                                  !isRtl && align === 'start' ? 'left-full pl-1' :
-                                  'left-full pl-1'}
+                                ${align === 'start' ? 'ltr:left-full ltr:pl-1 rtl:right-full rtl:pr-1' :
+                                  align === 'end' ? 'ltr:right-full ltr:pr-1 rtl:left-full rtl:pl-1 opacity-100' :
+                                  'ltr:left-full ltr:pl-1 rtl:right-full rtl:pr-1'}
                              `}>
                                 {{
                                     asc: <span className="material-symbols-rounded text-xl leading-none text-current opacity-70">arrow_drop_up</span>,
@@ -648,12 +646,9 @@ export function TanStackTable<TData, TValue>({
                           columnAlignment[cell.column.id] || 
                           cell.column.columnDef.meta?.align || 
                           (lite ? getSmartAlignment(cell.column.id) : null) ||
-                          'left';
-                      const justifyClass = align === 'center' ? 'justify-center text-center' :
-                                           align === 'right' ? (isRtl ? 'justify-start text-right' : 'justify-end text-right') :
-                                           align === 'left' ? (isRtl ? 'justify-end text-left' : 'justify-start text-left') :
-                                           align === 'end' ? 'justify-end text-end' :
-                                           'justify-start text-start';
+                          'start';
+                      
+                      const justifyClass = `${getHeaderJustifyClass(align)} ${getTextAlignClass(align)}`;
                       
                       const isFlex = cell.column.columnDef.meta?.flex ?? cell.column.id.toLowerCase().includes('name');
                       
@@ -689,7 +684,7 @@ export function TanStackTable<TData, TValue>({
                             const formattedTime = isRtl ? timeLabel.replace('AM', 'ص').replace('PM', 'م') : timeLabel;
 
                             return (
-                              <div className={`flex flex-col ${justifyClass.includes('center') ? 'items-center' : justifyClass.includes('end') ? 'items-end' : 'items-start'}`}>
+                              <div className={`flex flex-col ${getItemsAlignClass(align)}`}>
                                 <span className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight">{formattedTime}</span>
                                 <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5">{dateLabel}</span>
                               </div>
@@ -700,7 +695,7 @@ export function TanStackTable<TData, TValue>({
                         return flexRender(cell.column.columnDef.cell, cell.getContext());
                       };
 
-                      return (
+                       return (
                         <td 
                           key={cell.id} 
                           className={`${dense ? 'py-1' : 'py-2'} px-4 text-sm text-gray-700 dark:text-gray-300 align-middle border-b border-gray-100 dark:border-gray-800
@@ -709,11 +704,11 @@ export function TanStackTable<TData, TValue>({
                                 width: isFlex ? 'auto' : cell.column.columnDef.meta?.width,
                                 minWidth: cell.column.columnDef.meta?.minWidth
                            }}
-                           dir={cell.column.columnDef.meta?.dir}
+                           dir={cell.column.columnDef.meta?.dir || (isIdColumn ? 'ltr' : undefined)}
                         >
-                          <div className={`flex items-center w-full ${justifyClass} ${isIdColumn ? '-ml-3' : ''}`}>
+                          <div className={`flex items-center w-full ${justifyClass} ${isIdColumn && align === 'start' ? '-ms-3' : ''} ${isIdColumn && align === 'end' ? '-me-3' : ''}`}>
                              {isIdColumn && (
-                               <span className="material-symbols-rounded text-base text-gray-400 mr-1.5 shrink-0">tag</span>
+                               <span className={`material-symbols-rounded text-base text-gray-400 shrink-0 ${isRtl ? 'ms-1.5 order-1' : 'me-1.5'}`}>tag</span>
                              )}
                              {renderCellContent()}
                           </div>

@@ -7,7 +7,7 @@ export interface Column<T> {
   label: string;
   sortable?: boolean;
   render?: (item: T) => React.ReactNode;
-  align?: 'left' | 'center' | 'right';
+  align?: 'start' | 'center' | 'end';
   defaultWidth?: number;
   cellDir?: 'ltr' | 'rtl' | 'auto';
   headerDir?: 'ltr' | 'rtl';
@@ -86,11 +86,11 @@ export const DataTable = <T extends { id: string }>({
         field: col.key,
         headerName: headerText,
         width: savedState?.width?.[col.key] || col.defaultWidth || 150,
-        align: col.align || 'left',
-        headerAlign: col.align || 'left',
+        align: (col.align === 'end' ? 'right' : col.align === 'start' ? 'left' : col.align) || 'left',
+        headerAlign: (col.align === 'end' ? 'right' : col.align === 'start' ? 'left' : col.align) || 'left',
         sortable: col.sortable ?? true,
         renderHeader: col.headerDir ? (params) => (
-          <div style={{ direction: col.headerDir, textAlign: 'left', width: '100%', display: 'flex', alignItems: 'center' }}>{headerText}</div>
+          <div style={{ direction: col.headerDir, textAlign: 'start', width: '100%', display: 'flex', alignItems: 'center' }}>{headerText}</div>
         ) : undefined,
         renderCell: (params: GridRenderCellParams) => {
             const content = col.render ? col.render(params.row) : params.value;
