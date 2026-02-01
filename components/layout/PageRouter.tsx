@@ -27,8 +27,11 @@ interface PageRouterProps {
  * ARCHITECTURE NOTE:
  * PageRouter handles the dynamic injection of props into registered pages.
  * It manages RBAC (Role Based Access Control) and fallback views.
+ * 
+ * PERFORMANCE: Wrapped with React.memo to prevent unnecessary re-renders
+ * when parent state changes but PageRouter props remain stable.
  */
-export const PageRouter: React.FC<PageRouterProps> = ({
+const PageRouterComponent: React.FC<PageRouterProps> = ({
   view,
   currentEmployeeId,
   userRole,
@@ -181,3 +184,7 @@ export const PageRouter: React.FC<PageRouterProps> = ({
 
   return <PageComponent {...props} />;
 };
+
+// Export memoized version to prevent unnecessary re-renders
+export const PageRouter = React.memo(PageRouterComponent);
+
