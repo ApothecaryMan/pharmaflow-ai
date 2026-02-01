@@ -1369,7 +1369,6 @@ export const POS: React.FC<POSProps> = ({
         cell: (info) => (
           <span
             className="text-sm font-bold text-gray-700 dark:text-gray-300"
-            dir={language === "AR" ? "rtl" : "ltr"}
           >
             {info.row.original.internalCode || info.row.original.barcode}
           </span>
@@ -1380,7 +1379,7 @@ export const POS: React.FC<POSProps> = ({
         size: 400,
         cell: (info) => (
           <div
-            className="flex flex-col w-full min-w-0"
+            className={`flex flex-col w-full min-w-0 ${language === 'AR' ? 'items-end text-end' : 'items-start text-start'}`}
           >
             <span className="font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate">
               {getDisplayName(info.row.original)}
@@ -1602,17 +1601,18 @@ export const POS: React.FC<POSProps> = ({
         id: "inCart",
         header: t.inCart,
         size: 80,
-        cell: (info) => (
-          <div className="text-center w-full flex justify-center">
-            {info.row.original.inCartCount > 0 && (
-              <div
-                className={`inline-block bg-${color}-600 text-white text-xs font-bold px-2 py-1 rounded-md tabular-nums`}
-              >
-                {info.row.original.inCartCount}
-              </div>
-            )}
-          </div>
-        ),
+        meta: { align: 'center' },
+        cell: (info) => {
+          const count = info.row.original.inCartCount;
+          if (count <= 0) return null;
+          return (
+            <div
+              className={`inline-block bg-${color}-600 text-white text-xs font-bold px-2 py-1 rounded-md tabular-nums`}
+            >
+              {count}
+            </div>
+          );
+        },
       }),
     ],
     [
@@ -2099,8 +2099,8 @@ export const POS: React.FC<POSProps> = ({
                 }
                 defaultHiddenColumns={["category", "inCart"]}
                 defaultColumnAlignment={{ 
-                  barcode: language === "AR" ? 'right' : 'left',
-                  name: 'left', 
+                  barcode: 'start',
+                  name: language === 'AR' ? 'end' : 'start', 
                   category: 'center', 
                   price: 'center', 
                   stock: 'center', 
