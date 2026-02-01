@@ -292,7 +292,21 @@ const App: React.FC = () => {
     // When not authenticated, we force isLoginView=true for the black theme color override
     useTheme(theme.primary, darkMode, !authState.isAuthenticated);
 
-    // 5. Loading State for Auth Check (Only if we don't have an optimistic session)
+    // 5. Stable Login Callbacks
+    const handleLoginSuccess = useCallback(() => {
+        authState.setIsAuthenticated(true);
+        appState.setActiveModule(ROUTES.DASHBOARD);
+        appState.setView(ROUTES.DASHBOARD);
+    }, [authState, appState]);
+
+    const handleViewChange = useCallback((view: string) => {
+        if (view === 'dashboard') {
+            authState.setIsAuthenticated(true);
+            appState.setView(ROUTES.DASHBOARD);
+        }
+    }, [authState, appState]);
+
+    // 6. Loading State for Auth Check (Only if we don't have an optimistic session)
     if (authState.isAuthChecking && !authState.isAuthenticated) {
         return (
             <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#000000' }}>
@@ -307,23 +321,13 @@ const App: React.FC = () => {
         );
     }
 
-    // 5. Not Authenticated -> Show Login
+    // 7. Not Authenticated -> Show Login
     if (!authState.isAuthenticated) {
         return (
             <Login 
-                onLoginSuccess={() => {
-                    authState.setIsAuthenticated(true);
-                    appState.setActiveModule(ROUTES.DASHBOARD);
-                    appState.setView(ROUTES.DASHBOARD);
-                }}
+                onLoginSuccess={handleLoginSuccess}
                 language={language}
-                onViewChange={(view) => {
-                     // Handle view changes from Login if needed (usually just dashboard)
-                     if (view === 'dashboard') {
-                         authState.setIsAuthenticated(true);
-                         appState.setView(ROUTES.DASHBOARD);
-                     }
-                }}
+                onViewChange={handleViewChange}
             />
         );
     }
