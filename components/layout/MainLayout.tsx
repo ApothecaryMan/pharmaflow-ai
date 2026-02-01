@@ -31,7 +31,6 @@ interface MainLayoutProps {
   setCurrentEmployeeId: (id: string | null) => void;
   employees: any[];
   dashboardSubView: string;
-  tip: string;
 }
 
 const STANDALONE_VIEWS = [ROUTES.LOGIN];

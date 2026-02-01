@@ -64,7 +64,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     activeModule, setActiveModule,
     dashboardSubView, setDashboardSubView,
     mobileMenuOpen, setMobileMenuOpen,
-    tip,
     profileImage, setProfileImage,
     currentEmployeeId, setCurrentEmployeeId,
     navigationParams, setNavigationParams,
@@ -182,7 +181,51 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setView(ROUTES.DASHBOARD);
   }, [setIsAuthenticated, setActiveModule, setView]);
 
+  // --- Memoized Props for PageRouter ---
+  const handlers = React.useMemo(() => ({
+    setInventory, 
+    setPurchases, 
+    setPurchaseReturns, 
+    handleAddDrug, 
+    handleUpdateDrug,
+    handleDeleteDrug, 
+    handleCompleteSale, 
+    handleUpdateSale, 
+    handleProcessReturn,
+    handleAddCustomer, 
+    handleUpdateCustomer, 
+    handleDeleteCustomer, 
+    setSuppliers,
+    handleAddSupplier, 
+    handleUpdateSupplier, 
+    handleDeleteSupplier, 
+    handlePurchaseComplete,
+    handleApprovePurchase, 
+    handleRejectPurchase, 
+    handleRestock, 
+    handleAddEmployee,
+    handleUpdateEmployee, 
+    handleDeleteEmployee, 
+    handleCreatePurchaseReturn
+  }), [
+    setInventory, setPurchases, setPurchaseReturns, handleAddDrug, handleUpdateDrug,
+    handleDeleteDrug, handleCompleteSale, handleUpdateSale, handleProcessReturn,
+    handleAddCustomer, handleUpdateCustomer, handleDeleteCustomer, setSuppliers,
+    handleAddSupplier, handleUpdateSupplier, handleDeleteSupplier, handlePurchaseComplete,
+    handleApprovePurchase, handleRejectPurchase, handleRestock, handleAddEmployee,
+    handleUpdateEmployee, handleDeleteEmployee, handleCreatePurchaseReturn
+  ]);
 
+  const data = React.useMemo(() => ({
+    sales, 
+    inventory, 
+    enrichedCustomers, 
+    suppliers, 
+    purchases,
+    purchaseReturns, 
+    returns, 
+    employees
+  }), [sales, inventory, enrichedCustomers, suppliers, purchases, purchaseReturns, returns, employees]);
 
   // --- Not Authenticated (Login) ---
 
@@ -234,7 +277,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       setCurrentEmployeeId={handleSelectEmployee}
       employees={employees}
       dashboardSubView={dashboardSubView}
-      tip={tip}
     >
       <PageRouter 
         view={view}
@@ -247,18 +289,8 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
         handleLoginSuccess={handleLoginSuccess}
         navigationParams={navigationParams}
         currentShift={currentShift}
-        handlers={{
-          setInventory, setPurchases, setPurchaseReturns, handleAddDrug, handleUpdateDrug,
-          handleDeleteDrug, handleCompleteSale, handleUpdateSale, handleProcessReturn,
-          handleAddCustomer, handleUpdateCustomer, handleDeleteCustomer, setSuppliers,
-          handleAddSupplier, handleUpdateSupplier, handleDeleteSupplier, handlePurchaseComplete,
-          handleApprovePurchase, handleRejectPurchase, handleRestock, handleAddEmployee,
-          handleUpdateEmployee, handleDeleteEmployee, handleCreatePurchaseReturn
-        }}
-        data={{
-          sales, inventory, enrichedCustomers, suppliers, purchases,
-          purchaseReturns, returns, employees
-        }}
+        handlers={handlers}
+        data={data}
       />
     </MainLayout>
   );
