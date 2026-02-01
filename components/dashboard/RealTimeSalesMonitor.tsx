@@ -9,6 +9,9 @@ import { AnimatedCounter } from '../common/AnimatedCounter';
 import { SmallCard } from '../common/SmallCard';
 import { FlexDataCard } from '../common/ProgressCard';
 import { ChartWidget } from '../common/ChartWidget';
+import { useRealTimeSalesAnalytics } from './useRealTimeSalesAnalytics';
+import { InsightTooltip } from '../common/InsightTooltip';
+import { usePosSounds } from '../common/hooks/usePosSounds';
 
 interface RealTimeSalesMonitorProps {
   sales: Sale[];
@@ -28,8 +31,42 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   language
 }) => {
   const isRTL = language === 'AR';
+
+  // === REAL-TIME ANALYTICS HOOK ===
+  const {
+    // Tooltip Data
+    revenueTooltip: revenueTooltipData,
+    transactionsTooltip: transactionsTooltipData,
+    itemsSoldTooltip: itemsSoldTooltipData,
+    activeCountersTooltip: activeCountersTooltipData,
+    
+    // Core Metrics
+    revenue,
+    transactions,
+    itemsSold,
+    todaysSales,
+    revenueChange,
+    
+    // Analysis Objects
+    hourlyAnalysis,
+    customerAnalysis,
+    paymentAnalysis,
+    highValueAnalysis,
+    itemsAnalysis,
+    orderTypeAnalysis,
+    topProducts,
+    activeCountersStats
+  } = useRealTimeSalesAnalytics({ sales, customers, products, language });
+
+  // Create tooltip elements
+  const revenueTooltip = <InsightTooltip {...revenueTooltipData} language={language} />;
+  const transactionsTooltip = <InsightTooltip {...transactionsTooltipData} language={language} />;
+  const itemsSoldTooltip = <InsightTooltip {...itemsSoldTooltipData} language={language} />;
+  const activeCountersTooltip = <InsightTooltip {...activeCountersTooltipData} language={language} />;
   const [expandedView, setExpandedView] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+
+  const { playHighValue } = usePosSounds();
 
   const helpContent = REALTIME_SALES_MONITOR_HELP[language] || REALTIME_SALES_MONITOR_HELP.EN;
   
@@ -60,132 +97,32 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   }, [activeFilter]);
 
 
-  // --- Statistics Calculation ---
-  const todayStats = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Filter Today's Sales
-    const todaysSales = sales.filter(s => {
-      const d = new Date(s.date);
-      return d >= today && d < new Date(today.getTime() + 86400000);
-    });
-
-    const revenue = todaysSales.reduce((sum, s) => sum + (s.netTotal || s.total), 0);
-    const transactions = todaysSales.length;
-    
-    const itemsSold = todaysSales.reduce((sum, s) => {
-      // Calculate net quantity (sold - returned)
-      let quantity = s.items.reduce((qSum, i) => qSum + i.quantity, 0);
-      
-      // Subtract returned items if any
-      if (s.itemReturnedQuantities) {
-        Object.values(s.itemReturnedQuantities).forEach((qty: number) => {
-          quantity -= qty;
-        });
-      }
-      return sum + quantity;
-    }, 0);
-
-    // Mock Active Counters
-    const activeCounters = 3; 
-    const totalCounters = 5;
-    const onHoldCount = 2;
-
-    // --- Hourly & Customer Metrics ---
-    const nowHour = new Date().getHours();
-    const nowMinutes = new Date().getMinutes();
-    
-    // Dynamic opening hour: Use earliest sale time of the day (robust against unsorted data), fallback to 8 AM
-    let openingHour = 8;
-    if (todaysSales.length > 0) {
-        const earliestTime = Math.min(...todaysSales.map(s => new Date(s.date).getTime()));
-        openingHour = new Date(earliestTime).getHours();
-    }
-    
-    // Calculate hours open with fractional precision
-    const hoursOpen = Math.max(0.5, (nowHour + nowMinutes / 60) - openingHour);
-
-    const hourlySalesRate = revenue / hoursOpen;
-    const hourlyInvoiceRate = transactions / hoursOpen;
-    // Improved "New Customers" Logic: Check if customer registration date is today?
-    // Since we don't have explicit registration date in 'customers' array easily accessible here without a join/lookup,
-    // we use a heuristic or strictly check against sales history if possible.
-    // For now, retaining the heuristic but making it clearer it's an estimate if no precise data.
-    const newCustomersToday = todaysSales.filter(s => s.customerName && !customers.find(c => c.name === s.customerName))?.length;
-    // Only fallback if logic returns 0 and we want to show *something* for demo, otherwise 0 is valid.
-    // Removing arbitrary 10% fallback to be more accurrate to data provided.
-    const finalNewCustomers = newCustomersToday || 0; 
-    const hourlyNewCustomerRate = finalNewCustomers / hoursOpen;
-
-    // Order Types (Inside vs Delivery)
-    const deliveryCount = todaysSales.filter(s => s.saleType === 'delivery').length;
-    const walkInCount = todaysSales.length - deliveryCount;
-    const deliveryRate = transactions > 0 ? (deliveryCount / transactions) * 100 : 0;
-    const walkInRate = transactions > 0 ? (walkInCount / transactions) * 100 : 0;
-
-    // Registered vs Anonymous
-    const registeredCount = todaysSales.filter(s => s.customerCode).length;
-    const anonymousCount = todaysSales.length - registeredCount;
-    const registeredRate = transactions > 0 ? (registeredCount / transactions) * 100 : 0;
-    const anonymousRate = transactions > 0 ? (anonymousCount / transactions) * 100 : 0;
-
-    // Calculate Average Transaction Value
-    const avgTransactionValue = transactions > 0 ? revenue / transactions : 0;
-
-    // Revenue Change (Mocked Logic)
-    const mockYesterdayRevenue = revenue * 0.9; 
-    const revenueChange = mockYesterdayRevenue > 0 ? ((revenue - mockYesterdayRevenue) / mockYesterdayRevenue) * 100 : 0;
-
-    // Top Categories
-    const categoryCounts: Record<string, number> = {};
-    todaysSales.forEach(s => {
-      s.items.forEach(i => {
-        categoryCounts[i.category] = (categoryCounts[i.category] || 0) + i.quantity;
-      });
-    });
-    const topCategory = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
-
-    // Highlight Levels
-    // High Value: Strict Top 5% of TODAY'S sales by rank.
-    // We identify exactly which IDs are in the top 5% quota.
-    const sortedToday = [...todaysSales].sort((a, b) => {
-        const totalA = a.netTotal || a.total;
-        const totalB = b.netTotal || b.total;
-        return Number(totalB) - Number(totalA);
-    });
-    // Calculate how many make the cut (at least 1 if there is data, or strictly 5%?)
-    // User asked for "Top 5%", so Math.ceil(length * 0.05).
-    // Example: 20 sales -> 1 high value. 100 sales -> 5 high value.
-    const topCount = Math.ceil(sortedToday.length * 0.05);
-    const highValueIds = new Set(sortedToday.slice(0, topCount).map(s => s.id)); 
-
-    return {
+  // --- Statistics Calculation (Adapter) ---
+  // Using values from the hook to maintain compatibility with existing render logic
+  const todayStats = {
       revenue,
       transactions,
       itemsSold,
-      activeCounters,
-      totalCounters,
-      onHoldCount,
-      avgTransactionValue,
+      activeCounters: activeCountersStats.activeCounters,
+      totalCounters: activeCountersStats.totalCounters,
+      onHoldCount: activeCountersStats.onHoldCount,
+      avgTransactionValue: highValueAnalysis.avgTransactionValue,
       revenueChange,
-      topCategory,
+      topCategory: itemsAnalysis.topCategory,
       todaysSales,
-      highValueIds,
-      // New Metrics
-      hourlySalesRate,
-      hourlyInvoiceRate,
-      hourlyNewCustomerRate,
-      deliveryCount,
-      deliveryRate,
-      walkInCount,
-      walkInRate,
-      registeredCount,
-      registeredRate,
-      anonymousCount,
-      anonymousRate
-    };
-  }, [sales, customers]); // Added customers dependency if needed, but mainly sales
+      highValueIds: highValueAnalysis.highValueIds,
+      hourlySalesRate: hourlyAnalysis.hourlySalesRate,
+      hourlyInvoiceRate: hourlyAnalysis.hourlyInvoiceRate,
+      hourlyNewCustomerRate: hourlyAnalysis.hourlyNewCustomerRate,
+      deliveryCount: orderTypeAnalysis.deliveryCount,
+      deliveryRate: orderTypeAnalysis.deliveryRate,
+      walkInCount: orderTypeAnalysis.walkInCount,
+      walkInRate: orderTypeAnalysis.walkInRate,
+      registeredCount: customerAnalysis.registeredTransactions,
+      registeredRate: customerAnalysis.registeredRate,
+      anonymousCount: transactions - customerAnalysis.registeredTransactions,
+      anonymousRate: customerAnalysis.anonymousRate
+  };
 
   // Sync displayedSales with todayStats.todaysSales with animation detection
   useEffect(() => {
@@ -233,6 +170,24 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     const newSales = currentSales.filter(s => !processedSalesRef.current.has(s.id));
     
     if (newSales.length > 0) {
+        // Audio Alerts for significant transactions
+        const hasHighValue = newSales.some(s => {
+            const isHighValue = todayStats.highValueIds.has(s.id);
+            let isVIP = false;
+            if (s.customerCode) {
+                const c = customers.find(cust => cust.code === s.customerCode || cust.serialId?.toString() === s.customerCode);
+                if (c && c.totalPurchases >= 1000) isVIP = true;
+            } else if (s.customerName) {
+                const c = customers.find(cust => cust.name === s.customerName);
+                if (c && c.totalPurchases >= 1000) isVIP = true;
+            }
+            return isHighValue || isVIP;
+        });
+
+        if (hasHighValue) {
+            playHighValue();
+        }
+
         newSales.forEach(s => processedSalesRef.current.add(s.id));
         // New sales are naturally at the end of todaysSales list, so we reverse them to put them at top of display
         const newRows = newSales.slice().reverse().map(s => ({ ...s, isNew: true }));
@@ -245,67 +200,10 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   }, [todayStats, customers, activeFilter]); // Depend on activeFilter
 
   // --- Hourly Revenue Data for Chart ---
-  const hourlyData = useMemo(() => {
-    const hours = Array(24).fill(0).map((_, i) => {
-        // Format time: English numbers, but localized AM/PM
-        let period = i >= 12 ? 'PM' : 'AM';
-        let hour12 = i % 12 || 12; // 0 becomes 12
-        
-        // Localize PM/AM if needed, but KEEP NUMBERS in English
-        if (language === 'AR') {
-           period = i >= 12 ? 'م' : 'ص';
-        }
-
-        return { 
-            hour: i.toString().padStart(2, '0') + ':00', 
-            date: `${hour12} ${period}`, 
-            revenue: 0,
-            sales: 0
-        };
-    });
-    
-    todayStats.todaysSales.forEach(s => {
-      const h = new Date(s.date).getHours();
-      if (hours[h]) {
-        hours[h].revenue += (s.netTotal || s.total);
-        hours[h].sales += 1;
-      }
-    });
-    
-    // Filter to current hour for cleaner view
-    const currentHour = new Date().getHours();
-    return hours.slice(0, currentHour + 1);
-  }, [todayStats.todaysSales]);
+  const hourlyData = hourlyAnalysis.hourlyData;
 
   // --- Top Products Data ---
-  const topProducts = useMemo(() => {
-    const productMap: Record<string, { name: string, qty: number, revenue: number }> = {};
-    
-    todayStats.todaysSales.forEach(s => {
-      s.items.forEach(i => {
-        // Find current drug info from products prop for consistent naming
-        const drug = products.find(d => d.id === i.id);
-        const name = drug?.name || i.name;
-        
-        if (!productMap[i.id]) {
-          productMap[i.id] = { name, qty: 0, revenue: 0 };
-        }
-        // Quantity accumulation is now handled with effectiveQty below to account for returns
-        let effectiveQty = i.quantity;
-        if (s.itemReturnedQuantities && s.itemReturnedQuantities[i.id]) {
-            effectiveQty -= s.itemReturnedQuantities[i.id];
-        }
-        
-        // Use effective quantity for both count and revenue
-        productMap[i.id].qty += effectiveQty;
-        productMap[i.id].revenue += (i.price * effectiveQty);
-      });
-    });
-
-    return Object.values(productMap)
-      .sort((a, b) => b.qty - a.qty)
-      .slice(0, 5); // Top 5
-  }, [todayStats.todaysSales, products]);
+  // topProducts is already calculated in the hook
 
 
   // Helper for Payment Method Visual
@@ -349,6 +247,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 currencyLabel="$"
                 trend={todayStats.revenueChange > 0 ? 'up' : 'neutral'}
                 trendValue={`${todayStats.revenueChange > 0 ? '+' : ''}${Math.abs(todayStats.revenueChange).toFixed(1)}%`}
+                iconTooltip={revenueTooltip}
              />
         </div>
 
@@ -364,6 +263,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 icon="receipt_long"
                 iconColor="blue"
                 subValue={`$${todayStats.avgTransactionValue.toFixed(0)} avg`}
+                iconTooltip={transactionsTooltip}
              />
         </div>
 
@@ -379,6 +279,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 icon="inventory_2"
                 iconColor="purple"
                 subValue={todayStats.topCategory}
+                iconTooltip={itemsSoldTooltip}
             />
         </div>
 
@@ -401,6 +302,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                     </span>
                 }
+                iconTooltip={activeCountersTooltip}
             />
         </div>
       </div>
