@@ -386,7 +386,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     { 
       id: 'actions', 
       header: '', 
-      meta: { align: 'right', width: 100 },
+      meta: { align: 'end', width: 100 },
       enableSorting: false,
       cell: (info) => {
         const c = info.row.original;

@@ -510,7 +510,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       header: '',
       size: 220,
       meta: {
-        align: 'right'
+        align: 'end'
       },
       cell: info => {
         const s = info.row.original;

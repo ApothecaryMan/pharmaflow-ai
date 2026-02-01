@@ -779,7 +779,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({ inventory, onU
                   </div>
               );
           },
-          meta: { align: 'right', width: 160 }
+          meta: { align: 'end', width: 160 }
       }
   ], [t, handleApprove, handleReject]);
 

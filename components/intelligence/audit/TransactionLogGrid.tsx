@@ -11,7 +11,7 @@ import { AuditTransaction } from '../../../types/intelligence';
 
 declare module '@tanstack/react-table' {
     interface ColumnMeta<TData extends RowData, TValue> {
-        align?: 'left' | 'right' | 'center' | 'start' | 'end';
+        align?: 'start' | 'center' | 'end';
         width?: number;
         flex?: boolean; // Column absorbs remaining space
         dir?: 'ltr' | 'rtl';
@@ -63,7 +63,7 @@ export const TransactionLogGrid: React.FC<TransactionLogGridProps> = ({ data, on
     columnHelper.accessor('product_name', {
       header: 'المنتج',
       meta: {
-        align: 'left',
+        align: 'start',
         flex: true // This column absorbs remaining space
       },
     }),
@@ -132,8 +132,6 @@ export const TransactionLogGrid: React.FC<TransactionLogGridProps> = ({ data, on
                                     className={`px-4 py-3 font-medium cursor-pointer bg-gray-200 dark:bg-gray-950 border-b border-gray-100 dark:border-gray-700 group 
                                         ${header.column.columnDef.meta?.align === 'center' ? 'text-center' : 
                                           header.column.columnDef.meta?.align === 'end' ? 'text-end' : 
-                                          header.column.columnDef.meta?.align === 'left' ? 'text-left' :
-                                          header.column.columnDef.meta?.align === 'right' ? 'text-right' :
                                           'text-start'}
                                         ${header.column.columnDef.meta?.flex ? '' : 'w-[1%] whitespace-nowrap'}`}
                                     onClick={header.column.getToggleSortingHandler()}
@@ -143,11 +141,8 @@ export const TransactionLogGrid: React.FC<TransactionLogGridProps> = ({ data, on
                                     }`}>
                                         {typeof header.column.columnDef.header === 'function' ? header.column.columnDef.header(header.getContext()) : header.column.columnDef.header}
                                         <span className={`absolute top-1/2 -translate-y-1/2 flex items-center
-                                            ${header.column.columnDef.meta?.align === 'left' ? 'left-full pl-1' :
-                                              header.column.columnDef.meta?.align === 'right' ? 'right-full pr-1 opacity-100' :
-                                              isRtl && header.column.columnDef.meta?.align === 'start' ? 'right-full pr-1' :
-                                              !isRtl && header.column.columnDef.meta?.align === 'start' ? 'left-full pl-1' :
-                                              'left-full pl-1'}
+                                            ${header.column.columnDef.meta?.align === 'end' ? 'ltr:right-full ltr:pr-1 rtl:left-full rtl:pl-1 opacity-100' :
+                                              'ltr:left-full ltr:pl-1 rtl:right-full rtl:pr-1'}
                                         `}>
                                             {{
                                                 asc: <span className="material-symbols-rounded text-xl leading-none text-current opacity-70">arrow_drop_up</span>,
@@ -173,8 +168,6 @@ export const TransactionLogGrid: React.FC<TransactionLogGridProps> = ({ data, on
                                     className={`px-4 py-3 text-gray-700 dark:text-gray-300
                                         ${cell.column.columnDef.meta?.align === 'center' ? 'text-center' : 
                                           cell.column.columnDef.meta?.align === 'end' ? 'text-end' : 
-                                          cell.column.columnDef.meta?.align === 'left' ? 'text-left' :
-                                          cell.column.columnDef.meta?.align === 'right' ? 'text-right' :
                                           'text-start'}
                                         ${cell.column.columnDef.meta?.flex ? '' : 'whitespace-nowrap'}`}
                                     dir={cell.column.columnDef.meta?.dir}

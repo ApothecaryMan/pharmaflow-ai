@@ -101,7 +101,7 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
       accessorKey: 'total',
       header: t.customerHistory?.table.total || 'Total',
       cell: (info) => `$${info.row.original.total?.toFixed(2)}`,
-      meta: { align: 'right', isNumeric: true, width: 90 }
+      meta: { align: 'end', isNumeric: true, width: 90 }
     },
     {
       accessorKey: 'status',
@@ -146,7 +146,7 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
         accessorKey: 'totalRefund',
         header: t.customerHistory?.table.refundAmount || 'Refund',
         cell: (info) => `$${info.row.original.totalRefund?.toFixed(2)}`,
-        meta: { align: 'right', isNumeric: true, width: 90 }
+        meta: { align: 'end', isNumeric: true, width: 90 }
       },
       {
           accessorKey: 'reason',

@@ -183,7 +183,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
     }),
     productColumnHelper.accessor('cogs', {
         header: t?.intelligence?.financials?.productGrid?.columns?.cost || 'Cost',
-        meta: { align: 'right' },
+        meta: { align: 'end' },
         cell: info => <span className="text-gray-600 dark:text-gray-400">{formatCurrency(info.getValue())}</span>,
     }),
     productColumnHelper.accessor('gross_profit', {
