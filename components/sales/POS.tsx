@@ -2109,6 +2109,8 @@ export const POS: React.FC<POSProps> = ({
                 }}
                 activeIndex={activeIndex}
                 enableTopToolbar={false}
+                enablePagination={true}
+                enableShowAll={true}
               />
           </div>
         </div>

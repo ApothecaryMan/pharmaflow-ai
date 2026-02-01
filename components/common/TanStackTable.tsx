@@ -187,7 +187,8 @@ export function TanStackTable<TData, TValue>({
   initialSorting = [],
   enablePagination = false,
   pageSize = 20,
-}: TanStackTableProps<TData, TValue> & { enableTopToolbar?: boolean }) {
+  enableShowAll = false,
+}: TanStackTableProps<TData, TValue> & { enableTopToolbar?: boolean, enableShowAll?: boolean }) {
   // Detect RTL direction
   const isRtl = typeof document !== 'undefined' && document.dir === 'rtl';
 
@@ -222,6 +223,7 @@ export function TanStackTable<TData, TValue>({
   
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [internalGlobalFilter, setInternalGlobalFilter] = useState('');
+  const [isShowAll, setIsShowAll] = useState(false);
   
   const globalFilter = externalGlobalFilter !== undefined ? externalGlobalFilter : internalGlobalFilter;
   const setGlobalFilter = (val: string) => {
@@ -308,6 +310,11 @@ export function TanStackTable<TData, TValue>({
      });
   }, [persistSettings, columnAlignment]);
 
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: pageSize,
+  });
+
   const table = useReactTable({
     data,
     columns,
@@ -315,10 +322,14 @@ export function TanStackTable<TData, TValue>({
       sorting,
       globalFilter,
       columnVisibility,
+      pagination: isShowAll 
+        ? { pageIndex: 0, pageSize: data.length || 1 } 
+        : pagination,
     },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: handleColumnVisibilityChange,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -326,11 +337,6 @@ export function TanStackTable<TData, TValue>({
     globalFilterFn: fuzzyFilter,
     enableSorting: true,
     manualFiltering, // Enable manual filtering if prop is true
-    initialState: {
-        pagination: {
-            pageSize: pageSize,
-        },
-    }
   });
 
   /* State specific for Context Menu tracking to enable live updates */
@@ -736,17 +742,36 @@ export function TanStackTable<TData, TValue>({
       </div>
 
       {/* Pagination Footer */}
-      {enablePagination && table.getPageCount() > 1 && (
+      {(enablePagination && (table.getPageCount() > 1 || enableShowAll)) && (
         <div
-          className="flex items-center justify-between h-6 border-t  bg-[var(--bg-secondary)] border-[var(--border-primary)]"
+          dir="ltr"
+          className="flex items-center justify-between h-8 border-t bg-[var(--bg-secondary)] border-[var(--border-primary)] px-2"
         >
           {/* Left: Info */}
-          <div className="flex items-center px-2 text-[10px] font-bold tracking-wide text-gray-500 uppercase h-full">
+          <div className="flex items-center gap-4 text-[10px] font-bold tracking-wide text-gray-500 uppercase h-full">
+            <div className="flex items-center">
              {t.global?.table?.page || 'Page'} <span className="mx-1 text-gray-900 dark:text-gray-100">{table.getState().pagination.pageIndex + 1}</span> {t.global?.table?.of || 'of'} <span className="ml-1 text-gray-900 dark:text-gray-100">{table.getPageCount()}</span>
+            </div>
+
+            {enableShowAll && (
+              <button
+                onClick={() => setIsShowAll(!isShowAll)}
+                className={`flex items-center justify-center w-6 h-6 rounded-md border transition-all ${
+                  isShowAll 
+                    ? `bg-${color}-50 border-${color}-200 text-${color}-700 dark:bg-${color}-900/20 dark:border-${color}-800 dark:text-${color}-400`
+                    : 'bg-transparent border-gray-200 dark:border-gray-700 text-gray-500 hover:text-gray-700'
+                }`}
+                title={isShowAll ? 'Show Less' : (t.global?.table?.showAll || 'Show All')}
+              >
+                  <span className="material-symbols-rounded text-[18px]">
+                    {isShowAll ? 'keyboard_double_arrow_up' : 'keyboard_double_arrow_down'}
+                  </span>
+              </button>
+            )}
           </div>
 
           {/* Right: Controls */}
-          <div className="flex items-center h-full">
+          <div className={`flex items-center h-full ${isShowAll ? 'opacity-30 pointer-events-none' : ''}`}>
              <button
                onClick={() => table.setPageIndex(0)}
                disabled={!table.getCanPreviousPage()}

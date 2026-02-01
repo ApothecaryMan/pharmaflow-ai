@@ -98,7 +98,8 @@ export const TRANSLATIONS = {
         manageColumnsHint: 'Right-click anywhere to manage columns',
         loadingData: 'Loading data...',
         page: 'Page',
-        of: 'of'
+        of: 'of',
+        showAll: 'Show All'
       }
     },
     login: {
@@ -2109,7 +2110,8 @@ export const TRANSLATIONS = {
         manageColumnsHint: 'انقر بزر الماوس الأيمن في أي مكان لإدارة الأعمدة',
         loadingData: 'جاري تحميل البيانات...',
         page: 'صفحة',
-        of: 'من'
+        of: 'من',
+        showAll: 'عرض الكل'
       }
     },
     login: {
