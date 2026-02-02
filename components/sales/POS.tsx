@@ -80,6 +80,7 @@ interface POSProps {
     // Extended properties
     deliveryEmployeeId?: string;
     status?: 'completed' | 'pending' | 'with_delivery' | 'on_way' | 'cancelled';
+    processingTimeMinutes?: number;
   }) => void;
   color: string;
   t: typeof TRANSLATIONS.EN.pos;
@@ -455,6 +456,12 @@ export const POS: React.FC<POSProps> = ({
     initialQuantity: number = 1
   ) => {
     if (drug.stock <= 0) return;
+    
+    // Track when first item is added (for accurate processing time)
+    if (cart.length === 0 && !activeTab?.firstItemAt) {
+      updateTab(activeTabId, { firstItemAt: Date.now() });
+    }
+    
     setCart((prev) => {
       // Calculate Validation Logic (Total Units)
       const currentCartItems = prev.filter(i => i.id === drug.id);
@@ -878,6 +885,26 @@ export const POS: React.FC<POSProps> = ({
       type: 'success'
     });
 
+    // Calculate processing time from first item added to checkout
+    // Use firstItemAt if available (more accurate), otherwise fall back to createdAt
+    let processingTimeMinutes: number | undefined;
+    const startTime = activeTab?.firstItemAt || activeTab?.createdAt;
+    
+    console.log('[POS Checkout] activeTab:', { 
+      firstItemAt: activeTab?.firstItemAt, 
+      createdAt: activeTab?.createdAt,
+      startTime,
+      now: Date.now()
+    });
+    
+    if (startTime) {
+      // Use decimal minutes (1 decimal place) for sub-minute accuracy
+      const rawMinutes = Math.round((Date.now() - startTime) / 6000) / 10; // e.g., 0.5, 1.2, etc.
+      // Cap at 60 minutes to handle edge cases (idle carts), minimum of 0.1
+      processingTimeMinutes = Math.max(0.1, Math.min(rawMinutes, 60));
+      console.log('[POS Checkout] processingTimeMinutes:', processingTimeMinutes, 'rawMinutes:', rawMinutes);
+    }
+
     onCompleteSale({
       items: cart,
       customerName: customerName || "Guest Customer",
@@ -919,7 +946,8 @@ export const POS: React.FC<POSProps> = ({
       total: cartTotal + deliveryFee,
       // @ts-ignore - Extended properties handled by parent
       deliveryEmployeeId: saleType === 'delivery' ? deliveryEmployeeId : undefined,
-      status: isPending ? 'pending' : (saleType === 'delivery' ? (deliveryEmployeeId ? 'with_delivery' : 'pending') : 'completed')
+      status: isPending ? 'pending' : (saleType === 'delivery' ? (deliveryEmployeeId ? 'with_delivery' : 'pending') : 'completed'),
+      processingTimeMinutes
     });
 
     // Auto-Print Receipt Logic
