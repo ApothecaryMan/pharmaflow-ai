@@ -206,14 +206,16 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     handleAddEmployee,
     handleUpdateEmployee, 
     handleDeleteEmployee, 
-    handleCreatePurchaseReturn
+    handleCreatePurchaseReturn,
+    getVerifiedDate
   }), [
     setInventory, setPurchases, setPurchaseReturns, handleAddDrug, handleUpdateDrug,
     handleDeleteDrug, handleCompleteSale, handleUpdateSale, handleProcessReturn,
     handleAddCustomer, handleUpdateCustomer, handleDeleteCustomer, setSuppliers,
     handleAddSupplier, handleUpdateSupplier, handleDeleteSupplier, handlePurchaseComplete,
     handleApprovePurchase, handleRejectPurchase, handleRestock, handleAddEmployee,
-    handleUpdateEmployee, handleDeleteEmployee, handleCreatePurchaseReturn
+    handleUpdateEmployee, handleDeleteEmployee, handleCreatePurchaseReturn,
+    getVerifiedDate
   ]);
 
   const data = React.useMemo(() => ({

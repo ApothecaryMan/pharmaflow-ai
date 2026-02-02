@@ -154,6 +154,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   if (requiredProps.includes('onViewChange')) props.onViewChange = handleNavigate;
   if (requiredProps.includes('onLoginSuccess')) props.onLoginSuccess = handleLoginSuccess;
   if (requiredProps.includes('navigationParams')) props.navigationParams = navigationParams;
+  if (requiredProps.includes('getVerifiedDate')) props.getVerifiedDate = handlers.getVerifiedDate;
 
   // Special translations mapping
   const viewTranslations: Record<string, any> = {

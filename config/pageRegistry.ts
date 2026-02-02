@@ -407,7 +407,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'نظرة عامة على الموظفين',
     icon: 'supervisor_account',
     category: 'hr-dashboard',
-    requiredProps: ['sales', 'employees', 'customers', 'color', 't', 'language'],
+    requiredProps: ['sales', 'employees', 'customers', 'color', 't', 'language', 'getVerifiedDate'],
     permission: 'users.view'
   },
 };
