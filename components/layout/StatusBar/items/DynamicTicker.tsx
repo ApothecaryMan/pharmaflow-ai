@@ -48,7 +48,12 @@ export interface DynamicTickerProps {
     lowStockCount: number;
     shortagesCount: number;
     newCustomersToday: number;
-    topSeller: { name: string; count: number } | null;
+    topSeller: { 
+      name: string; 
+      count: number;
+      revenue: number;
+      avgTime: number;
+    } | null;
   };
   /** Visibility controls for individual slides */
   showSales?: boolean;
@@ -76,7 +81,7 @@ const defaultData = {
   lowStockCount: 7,
   shortagesCount: 2,
   newCustomersToday: 5,
-  topSeller: { name: 'أحمد', count: 15 },
+  topSeller: { name: 'أحمد', count: 15, revenue: 1450.5, avgTime: 3.5 },
 };
 
 export const DynamicTicker: React.FC<DynamicTickerProps> = ({
@@ -224,9 +229,11 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
           : `New Customers: ${data.newCustomersToday} new customers registered today`;
       
       case 'topSeller':
+        if (!data.topSeller) return slide.label;
+        const revenueStr = data.topSeller.revenue.toLocaleString('en-US', { maximumFractionDigits: 0 });
         return language === 'AR'
-          ? `الأكثر مبيعاً: ${data.topSeller?.name || '—'} (${data.topSeller?.count || 0} ${t.invoices || 'فاتورة'})`
-          : `Top Seller: ${data.topSeller?.name || '—'} (${data.topSeller?.count || 0} ${t.invoices || 'Invoices'})`;
+          ? `الأكثر مبيعاً: ${data.topSeller.name} (${data.topSeller.count} فاتورة | ${revenueStr} دولار)`
+          : `Top Seller: ${data.topSeller.name} (${data.topSeller.count} Invoices | $${revenueStr})`;
       
       default:
         return slide.label;

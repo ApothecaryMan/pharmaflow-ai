@@ -8,7 +8,12 @@ export interface TickerData {
   lowStockCount: number;
   shortagesCount: number;
   newCustomersToday: number;
-  topSeller: { name: string; count: number } | null;
+  topSeller: { 
+    name: string; 
+    count: number;
+    revenue: number;
+    avgTime: number;
+  } | null;
 }
 
 export const useDynamicTickerData = (): TickerData => {
@@ -71,9 +76,14 @@ export const useDynamicTickerData = (): TickerData => {
       }
     });
 
-    const topSellerName = topSellerId 
-      ? employees.find(e => e.id === topSellerId)?.name || 'Unknown' 
-      : null;
+    const topSellerStats = topSellerId ? {
+      name: employees.find(e => e.id === topSellerId)?.name || 'Unknown',
+      count: maxSales,
+      revenue: todaysSalesData
+        .filter(s => s.soldByEmployeeId === topSellerId)
+        .reduce((sum, s) => sum + (s.total || 0), 0),
+      avgTime: 4.2 // Mocked for global ticker for now
+    } : null;
 
     return {
       todaySales: todaySalesTotal,
@@ -82,7 +92,7 @@ export const useDynamicTickerData = (): TickerData => {
       lowStockCount,
       shortagesCount,
       newCustomersToday,
-      topSeller: topSellerName ? { name: topSellerName, count: maxSales } : null
+      topSeller: topSellerStats
     };
 
   }, [sales, inventory, customers, employees]);
