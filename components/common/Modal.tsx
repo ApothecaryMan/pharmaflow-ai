@@ -91,19 +91,7 @@ interface ModalProps {
   footer?: React.ReactNode;
 }
 
-const SIZE_MAP = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
-  '2xl': 'max-w-2xl',
-  '3xl': 'max-w-3xl',
-  '4xl': 'max-w-4xl',
-  '5xl': 'max-w-5xl',
-  '6xl': 'max-w-6xl',
-  full: 'max-w-full m-4',
-};
-
+import { LAYOUT_CONFIG } from '../../config/layoutConfig';
 import ReactDOM from 'react-dom';
 
 // ... (imports)
@@ -156,7 +144,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   if (!isOpen) return null;
 
-  const maxWidthClass = width || SIZE_MAP[size] || SIZE_MAP.lg;
+  const maxWidthClass = width || LAYOUT_CONFIG.MODAL_SIZES[size] || LAYOUT_CONFIG.MODAL_SIZES.lg;
   
   // Construct z-index class if standard, or style if custom
   const zClass = `z-[${zIndex}]`;

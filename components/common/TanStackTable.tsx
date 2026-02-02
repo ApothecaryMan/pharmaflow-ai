@@ -655,8 +655,9 @@ export function TanStackTable<TData, TValue>({
                       const colId = cell.column.id.toLowerCase();
                       const isIdColumn = colId.includes('id') || colId.includes('code');
                       
-                      // Date Detection & Formatting
-                      const isDateColumn = ['date', 'time', 'at', 'timestamp'].some(key => colId.includes(key));
+                      // Date Detection & Formatting (Avoiding false positives like 'csat')
+                      const isDateColumn = ['date', 'time', 'timestamp'].some(key => colId.includes(key)) || 
+                                           (colId.includes('at') && !colId.includes('csat') && !colId.includes('cat'));
                       const cellValue = cell.getValue();
                       
                       const renderCellContent = () => {
