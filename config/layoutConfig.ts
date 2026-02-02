@@ -8,10 +8,18 @@ export const LAYOUT_CONFIG = {
   MAX_CONTENT_WIDTH: '110rem',
   
   // Breakpoint-specific horizontal padding
-  HORIZONTAL_PADDING: 'px-4 md:px-[50px]',
+  HORIZONTAL_PADDING: 'px-4',
   
-  // Bottom padding for mobile navigation clearance
-  MOBILE_NAV_PADDING: 'pb-32 md:pb-[3px]',
+  // Page Spacing Configuration (Single source of truth)
+  // You can use any CSS value here (px, rem, %, etc.)
+  SPACING: {
+    DESKTOP_TOP: '15px',    // Space from the top (Desktop)
+    DESKTOP_SIDES: '15px',  // General side space (Desktop)
+    DASHBOARD_DESKTOP_SIDES: '160px', // Specific side space for Dashboards (Desktop)
+    DESKTOP_BOTTOM: '10px', // Space from the bottom (Desktop)
+    MOBILE: '0px',         // Horizontal space (Mobile)
+    MOBILE_BOTTOM: '70px', // Bottom buffer for floating navbar (Mobile)
+  },
 
   // Sidebar width
   SIDEBAR_WIDTH: 'w-72',
@@ -47,12 +55,14 @@ export const getContentContainerClasses = (view: string, isStandalone: boolean):
     return `${base} w-full`;
   }
 
+  const horizontal = LAYOUT_CONFIG.HORIZONTAL_PADDING;
+
   // 2. Full-bleed functional views (POS, Purchases)
   const isFullBleed = view.includes('pos') || view.includes('purchases');
   if (isFullBleed) {
-    return `${base} w-full ${LAYOUT_CONFIG.HORIZONTAL_PADDING} pt-8 ${LAYOUT_CONFIG.MOBILE_NAV_PADDING}`;
+    return `${base} w-full ${horizontal}`;
   }
 
   // 3. Standard maximum-width views (Dashboards, Settings, CRM)
-  return `${base} w-full max-w-[${LAYOUT_CONFIG.MAX_CONTENT_WIDTH}] mx-auto ${LAYOUT_CONFIG.HORIZONTAL_PADDING} pt-5 ${LAYOUT_CONFIG.MOBILE_NAV_PADDING}`;
+  return `${base} w-full max-w-[${LAYOUT_CONFIG.MAX_CONTENT_WIDTH}] mx-auto ${horizontal}`;
 };

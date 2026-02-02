@@ -181,8 +181,46 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
             {/* Actual Page Surface */}
             <main className={`flex-1 h-full overflow-hidden relative ${isStandalone ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r border-gray-200 dark:border-gray-800 bg-[#f3f4f6] dark:bg-black shadow-inner'}`}>
-               <div className={getContentContainerClasses(view, isStandalone)}>
-                  {children}
+               <div 
+                 className={getContentContainerClasses(view, isStandalone)}
+                 style={{
+                   '--mobile-sides': LAYOUT_CONFIG.SPACING.MOBILE,
+                   '--mobile-bottom': LAYOUT_CONFIG.SPACING.MOBILE_BOTTOM,
+                   '--desktop-top': LAYOUT_CONFIG.SPACING.DESKTOP_TOP,
+                   '--desktop-sides': activeModule === 'dashboard' ? LAYOUT_CONFIG.SPACING.DASHBOARD_DESKTOP_SIDES : LAYOUT_CONFIG.SPACING.DESKTOP_SIDES,
+                   '--desktop-bottom': LAYOUT_CONFIG.SPACING.DESKTOP_BOTTOM,
+                 } as React.CSSProperties}
+               >
+                  <style dangerouslySetInnerHTML={{ __html: `
+                    /* Mobile Styles (Base) */
+                    .main-content-surface {
+                      padding-left: var(--mobile-sides) !important;
+                      padding-right: var(--mobile-sides) !important;
+                      padding-bottom: var(--mobile-bottom) !important;
+                      padding-top: 0 !important;
+                    }
+                    
+                    /* Desktop Styles (768px+) */
+                    @media (min-width: 768px) {
+                      .main-content-surface {
+                        padding-top: var(--desktop-top) !important;
+                        padding-left: var(--desktop-sides) !important;
+                        padding-right: var(--desktop-sides) !important;
+                        padding-bottom: var(--desktop-bottom) !important;
+                      }
+                    }
+
+                    /* Small Desktop / Tablet Landscape (768px to 900px) */
+                    @media (min-width: 768px) and (max-width: 900px) {
+                      .main-content-surface {
+                        padding-left: 10px !important;
+                        padding-right: 10px !important;
+                      }
+                    }
+                  `}} />
+                  <div className="main-content-surface h-full w-full">
+                    {children}
+                  </div>
                </div>
             </main>
           </div>
