@@ -33,6 +33,7 @@ import { Login } from '../components/auth/Login';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
 import { LoginAuditList } from '../components/reports/LoginAuditList';
 import { LandingPage } from '../components/layout/LandingPage';
+import { StaffOverview } from '../components/hr/StaffOverview';
 
 // Skeletons
 import { DashboardSkeleton } from '../components/dashboard/DashboardSkeletons';
@@ -398,6 +399,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'home',
     category: 'system',
     requiredProps: ['color', 'language', 'darkMode']
+  },
+  'staff-overview': {
+    id: 'staff-overview',
+    component: StaffOverview,
+    menuLabel: 'Staff Overview',
+    menuLabelAr: 'نظرة عامة على الموظفين',
+    icon: 'supervisor_account',
+    category: 'hr-dashboard',
+    requiredProps: ['sales', 'employees', 'customers', 'color', 't', 'language'],
+    permission: 'users.view'
   },
 };
 

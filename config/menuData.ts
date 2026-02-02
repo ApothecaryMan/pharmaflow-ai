@@ -167,7 +167,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "employee-dashboard",
         label: "Employee Dashboard",
         items: [
-          { label: "Staff Overview", icon: "badge" },
+          { label: "Staff Overview", view: "staff-overview", icon: "supervisor_account" },
           { label: "Attendance Today", icon: "how_to_reg" },
           { label: "Active Staff Members", icon: "people" },
           { label: "Leave Requests", icon: "event_busy" },
@@ -844,6 +844,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "employee-management",
         label: "Employee Management",
         items: [
+          { label: "Staff Overview", view: "staff-overview", icon: "supervisor_account" },
           { label: "Employee List", view: "employee-list", icon: "people" },
           { label: "Add Employee", icon: "person_add" },
           { label: "Employee Profile", view: "employee-profile", icon: "account_circle" },
