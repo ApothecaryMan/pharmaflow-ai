@@ -15,6 +15,7 @@ import { SettingsMenu } from './StatusBar/items/SettingsMenu';
 import { PrinterSettings } from '../settings/PrinterSettings';
 
 import { useSettings } from '../../context';
+import { ContextMenuTrigger } from '../common/ContextMenu';
 
 interface NavbarProps {
   menuItems: MenuItem[];
@@ -276,38 +277,46 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
           return (
             <div key={module.id} className="relative group/item" onMouseLeave={handleMouseLeave}>
-                <button
-                onMouseEnter={(e) => handleMouseEnter(module.id, e)}
-                onClick={(e) => handleModuleClick(module.id, hasPage, e)}
-                disabled={isEffectivelyDisabled}
-                className={`main-nav-tab flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all duration-200 whitespace-nowrap relative type-interactive
-                    ${isEffectivelyDisabled
-                            ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
-                            : isActive 
-                                ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold shadow-sm`
-                                : isDropdownOpen
-                                    ? `bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 font-medium`
-                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-800 dark:hover:text-gray-200'
+                <ContextMenuTrigger
+                  actions={[
+                    { 
+                      label: t.global.actions.openInWindow, 
+                      icon: 'open_in_new', 
+                      action: () => { /* Placeholder */ } 
                     }
-                `}
-                title={!hasPage && navStyle !== 2 ? t.settings.comingSoon : ''}
+                  ]}
                 >
-            <span className={`flex items-center justify-center ${(isActive || isDropdownOpen) && hasPage ? 'icon-filled' : ''}`}>
-                <span className={`material-symbols-rounded text-[20px] ${module.id === 'dashboard' ? 'text-[22px]' : ''}`}>
-                    {module.icon}
-                </span>
-            </span>
+                  <button
+                    onMouseEnter={(e) => handleMouseEnter(module.id, e)}
+                    onClick={(e) => handleModuleClick(module.id, hasPage, e)}
+                    disabled={isEffectivelyDisabled}
+                    className={`main-nav-tab flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all duration-200 whitespace-nowrap relative type-interactive
+                      ${isEffectivelyDisabled
+                              ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
+                              : isActive 
+                                  ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold shadow-sm`
+                                  : isDropdownOpen
+                                      ? `bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 font-medium`
+                                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-800 dark:hover:text-gray-200'
+                      }
+                    `}
+                    title={!hasPage && navStyle !== 2 ? t.settings.comingSoon : ''}
+                  >
+                    <span className={`flex items-center justify-center ${(isActive || isDropdownOpen) && hasPage ? 'icon-filled' : ''}`}>
+                      <span className={`material-symbols-rounded text-[20px] ${module.id === 'dashboard' ? 'text-[22px]' : ''}`}>
+                        {module.icon}
+                      </span>
+                    </span>
 
-                <span className="text-sm font-medium">
-                    {getMenuTranslation(module.label, language)}
-                </span>
-                
+                    <span className="text-sm font-medium">
+                      {getMenuTranslation(module.label, language)}
+                    </span>
 
-
-                {isActive && hasPage && navStyle !== 2 && (
-                    <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-${theme}-600 rounded-full`}></div>
-                )}
-                </button>
+                    {isActive && hasPage && navStyle !== 2 && (
+                      <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-${theme}-600 rounded-full`}></div>
+                    )}
+                  </button>
+                </ContextMenuTrigger>
 
                 {/* Dropdown Menu */}
                 {isDropdownOpen && navStyle === 2 && (
@@ -380,24 +389,34 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
             return (
                 <div className="relative group/settings" onMouseLeave={handleMouseLeave}>
-                    <button
-                        onMouseEnter={(e) => handleMouseEnter(settingsModule.id, e)}
-                        onClick={(e) => handleModuleClick(settingsModule.id, hasPage, e)}
-                        disabled={isEffectivelyDisabled}
-                        className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors relative
-                            ${isActive 
-                                ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-600 dark:text-${theme}-400`
-                                : isDropdownOpen
-                                    ? `bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200`
-                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                            }
-                        `}
-                        title={getMenuTranslation(settingsModule.label, language)}
+                    <ContextMenuTrigger
+                      actions={[
+                        { 
+                          label: t.global.actions.openInWindow, 
+                          icon: 'open_in_new', 
+                          action: () => { /* Placeholder */ } 
+                        }
+                      ]}
                     >
-                        <span className={`material-symbols-rounded text-[22px] ${isActive || isDropdownOpen ? 'icon-filled' : ''}`}>
-                            {settingsModule.icon}
-                        </span>
-                    </button>
+                      <button
+                          onMouseEnter={(e) => handleMouseEnter(settingsModule.id, e)}
+                          onClick={(e) => handleModuleClick(settingsModule.id, hasPage, e)}
+                          disabled={isEffectivelyDisabled}
+                          className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors relative
+                              ${isActive 
+                                  ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-600 dark:text-${theme}-400`
+                                  : isDropdownOpen
+                                      ? `bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200`
+                                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                              }
+                          `}
+                          title={getMenuTranslation(settingsModule.label, language)}
+                      >
+                          <span className={`material-symbols-rounded text-[22px] ${isActive || isDropdownOpen ? 'icon-filled' : ''}`}>
+                              {settingsModule.icon}
+                          </span>
+                      </button>
+                    </ContextMenuTrigger>
 
                      {/* Dropdown Menu for Settings */}
                     {isDropdownOpen && navStyle === 2 && (

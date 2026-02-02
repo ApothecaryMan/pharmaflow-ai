@@ -1,6 +1,8 @@
 import React from 'react';
 import { MenuItem } from '../../config/menuData';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
+import { ContextMenuTrigger } from '../common/ContextMenu';
+import { TRANSLATIONS } from '../../i18n/translations';
 
 interface SidebarDropdownProps {
   module: MenuItem;
@@ -118,37 +120,47 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                         const isActive = itemView === currentView;
 
                         return (
-                            <button
+                            <ContextMenuTrigger
                                 key={idx}
-                                disabled={!isImplemented}
-                                onClick={() => {
-                                    if (itemView) {
-                                        onNavigate(itemView);
-                                        onClose();
+                                actions={[
+                                    { 
+                                        label: TRANSLATIONS[language].global.actions.openInWindow, 
+                                        icon: 'open_in_new', 
+                                        action: () => { /* Placeholder */ } 
                                     }
-                                }}
-                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all text-start ${
-                                    !isImplemented 
-                                        ? 'opacity-50 cursor-not-allowed text-gray-400' 
-                                        : isActive
-                                            ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold`
-                                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-700'
-                                }`}
+                                ]}
                             >
-                                <div className="flex items-center gap-2.5">
-                                    {itemIcon && (
-                                        <span className={`material-symbols-rounded text-[18px] ${isActive ? '' : 'opacity-70 group-hover:opacity-100'}`}>
-                                            {itemIcon}
+                                <button
+                                    disabled={!isImplemented}
+                                    onClick={() => {
+                                        if (itemView) {
+                                            onNavigate(itemView);
+                                            onClose();
+                                        }
+                                    }}
+                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all text-start ${
+                                        !isImplemented 
+                                            ? 'opacity-50 cursor-not-allowed text-gray-400' 
+                                            : isActive
+                                                ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold`
+                                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-700'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        {itemIcon && (
+                                            <span className={`material-symbols-rounded text-[18px] ${isActive ? '' : 'opacity-70 group-hover:opacity-100'}`}>
+                                                {itemIcon}
+                                            </span>
+                                        )}
+                                        <span>{getMenuTranslation(itemLabel, language)}</span>
+                                    </div>
+                                    {!isImplemented && (
+                                        <span className="text-[10px] items-center px-1.5 py-0.5 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-400">
+                                            Soon
                                         </span>
-                                    )}
-                                    <span>{getMenuTranslation(itemLabel, language)}</span>
-                                </div>
-                                {!isImplemented && (
-                                    <span className="text-[10px] items-center px-1.5 py-0.5 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-400">
-                                        Soon
-                                    </span>
-                                )}    
-                            </button>
+                                    )}    
+                                </button>
+                            </ContextMenuTrigger>
                         );
                     })}
                 </div>

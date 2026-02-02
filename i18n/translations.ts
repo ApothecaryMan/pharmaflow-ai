@@ -79,7 +79,8 @@ export const TRANSLATIONS = {
         desc: 'Descending',
         all: 'All',
         import: 'Import',
-        print: 'Print'
+        print: 'Print',
+        openInWindow: 'Open in Window'
       },
       datePicker: {
         cancel: 'Cancel',
@@ -2091,7 +2092,8 @@ export const TRANSLATIONS = {
         actions: 'إجراءات',
         all: 'الكل',
         import: 'استيراد',
-        print: 'طباعة'
+        print: 'طباعة',
+        openInWindow: 'فتح في نافذة'
       },
       datePicker: {
         cancel: 'إلغاء',
