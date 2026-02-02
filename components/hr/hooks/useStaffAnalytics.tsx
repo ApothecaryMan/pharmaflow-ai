@@ -5,7 +5,9 @@ import {
   PerformanceMetrics,
   StaffStats,
   ChampionTooltipData,
-  Achievement
+  Achievement,
+  UseStaffAnalyticsParams,
+  UseStaffAnalyticsReturn
 } from '../types/staffOverview.types';
 import {
   TRUST_SCORE_WEIGHTS,
@@ -22,21 +24,6 @@ import {
 } from '../config/trustScoreConfig';
 import { formatCurrency } from '../../../utils/currency';
 
-interface UseStaffAnalyticsParams {
-  todaysSales: Sale[];
-  employees: Employee[];
-  customers: Customer[];
-  language: 'AR' | 'EN';
-  color: ThemeColor;
-  getInitials: (name: string) => string;
-}
-
-interface UseStaffAnalyticsReturn {
-  staffStats: StaffStats[];
-  achievements: Achievement[];
-  performanceColumns: ColumnDef<StaffStats>[];
-}
-
 /**
  * Custom hook for staff performance analytics
  * Calculates TrustScore, metrics, champions, and table columns
@@ -47,7 +34,8 @@ export const useStaffAnalytics = ({
   customers,
   language,
   color,
-  getInitials
+  getInitials,
+  getVerifiedDate
 }: UseStaffAnalyticsParams): UseStaffAnalyticsReturn => {
   return useMemo(() => {
     const perfMap: Record<string, PerformanceMetrics> = {};
@@ -234,7 +222,7 @@ export const useStaffAnalytics = ({
     });
 
     // Calculate loyalty (new customers registered today)
-    const today = new Date();
+    const today = getVerifiedDate();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today.getTime() + 86400000);
 
@@ -566,7 +554,7 @@ export const useStaffAnalytics = ({
         accessorKey: 'csat',
         cell: ({ getValue }) => (
           <div className="flex items-center justify-center gap-1 text-violet-500 font-bold">
-            <span className="material-symbols-rounded text-sm">star</span>
+          <span className="material-symbols-rounded text-sm">star</span>
             {(getValue() as number).toFixed(1)}
           </div>
         ),
@@ -586,5 +574,5 @@ export const useStaffAnalytics = ({
     ];
 
     return { staffStats, achievements, performanceColumns };
-  }, [todaysSales, employees, customers, language, color, getInitials]);
+  }, [todaysSales, employees, customers, language, color, getInitials, getVerifiedDate]);
 };

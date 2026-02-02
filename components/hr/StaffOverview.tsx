@@ -3,17 +3,8 @@ import { Sale, Employee, Customer, ThemeColor } from '../../types';
 import { TanStackTable } from '../common/TanStackTable';
 import { StaffSpotlightTicker } from './StaffSpotlightTicker';
 import { useStaffAnalytics } from './hooks/useStaffAnalytics';
-import { TranslationFunction } from './types/staffOverview.types';
+import { StaffOverviewProps } from './types/staffOverview.types';
 import { ErrorBoundary } from '../common/ErrorBoundary';
-
-interface StaffOverviewProps {
-  sales: Sale[];
-  employees: Employee[];
-  customers: Customer[];
-  color: ThemeColor;
-  t: TranslationFunction;
-  language: 'AR' | 'EN';
-}
 
 /**
  * Staff Overview - Dedicated dashboard for employee performance analytics
@@ -25,7 +16,8 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
   customers,
   color,
   t,
-  language
+  language,
+  getVerifiedDate
 }) => {
   const isRTL = language === 'AR';
 
@@ -43,14 +35,14 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
 
   // Filter to today's sales
   const todaysSales = useMemo(() => {
-    const today = new Date();
+    const today = getVerifiedDate();
     today.setHours(0, 0, 0, 0);
     
     return sales.filter(s => {
       const d = new Date(s.date);
       return d >= today && d < new Date(today.getTime() + 86400000);
     });
-  }, [sales]);
+  }, [sales, getVerifiedDate]);
 
   // Staff Performance Analysis (extracted to hook)
   const staffAnalysis = useStaffAnalytics({
@@ -59,7 +51,8 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
     customers,
     language,
     color,
-    getInitials
+    getInitials,
+    getVerifiedDate
   });
 
   const sortedStaffStats = useMemo(() => 

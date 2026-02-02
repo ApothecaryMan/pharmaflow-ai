@@ -1,4 +1,5 @@
-import { ThemeColor } from '../../../types';
+import { ColumnDef } from '@tanstack/react-table';
+import { Sale, Employee, Customer, ThemeColor } from '../../../types';
 
 /**
  * Core performance metrics tracked for each employee
@@ -66,4 +67,39 @@ export interface StaffSpotlightTickerProps {
   achievements: Achievement[];
   language: 'AR' | 'EN';
   color: ThemeColor;
+}
+
+/**
+ * Props for StaffOverview component
+ */
+export interface StaffOverviewProps {
+  sales: Sale[];
+  employees: Employee[];
+  customers: Customer[];
+  color: ThemeColor;
+  t: TranslationFunction;
+  language: 'AR' | 'EN';
+  getVerifiedDate: () => Date;
+}
+
+/**
+ * Parameters for useStaffAnalytics hook
+ */
+export interface UseStaffAnalyticsParams {
+  todaysSales: Sale[];
+  employees: Employee[];
+  customers: Customer[];
+  language: 'AR' | 'EN';
+  color: ThemeColor;
+  getInitials: (name: string) => string;
+  getVerifiedDate: () => Date;
+}
+
+/**
+ * Return type for useStaffAnalytics hook
+ */
+export interface UseStaffAnalyticsReturn {
+  staffStats: StaffStats[];
+  achievements: Achievement[];
+  performanceColumns: ColumnDef<StaffStats>[];
 }
