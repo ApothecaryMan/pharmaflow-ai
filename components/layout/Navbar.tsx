@@ -237,7 +237,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
   return (
     <nav 
-      className="h-12 flex items-center px-4 sticky top-0 z-50"
+      className="h-12 flex items-center justify-between w-full px-4 sticky top-0 z-50"
       style={{
         backgroundColor: 'var(--bg-primary)'
       }}
@@ -363,7 +363,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       </div>
 
       {/* Mobile: Hamburger Menu & Settings */}
-      <div className="md:hidden ltr:ml-auto rtl:mr-auto flex items-center gap-1">
+      <div className="md:hidden flex items-center gap-1">
         <SettingsMenu 
           userRole={userRole} 
           dropDirection="down" 
