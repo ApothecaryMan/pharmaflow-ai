@@ -116,6 +116,19 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
   const [blurOptionsExpanded, setBlurOptionsExpanded] = useState(false);
 
+  // Mobile Detection
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.matchMedia('(max-width: 768px)').matches);
+    };
+    
+    checkMobile(); // Initial check
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Reset submenu when main menu is closed
   useEffect(() => {
     if (!isOpen) {
@@ -226,11 +239,16 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 </div>
                 </div>
 
-                {/* Submenu (Side Pop-out) */}
+                {/* Submenu (Hybrid: Pop-out on Desktop, Accordion on Mobile) */}
                 {themeExpanded && (
                 <div 
-                    className={`absolute w-48 rounded-lg shadow-xl border z-[120] p-3 space-y-3 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
-                    style={{
+                    className={`
+                        ${isMobile 
+                            ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-3 rounded-lg' 
+                            : `absolute w-48 rounded-lg shadow-xl border z-[120] p-3 space-y-3 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                        }
+                    `}
+                    style={isMobile ? {} : {
                         backgroundColor: 'var(--bg-primary)',
                         borderColor: 'var(--border-primary)',
                         // Dynamic Horizontal
@@ -317,8 +335,13 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 {/* Blur Options Submenu */}
                 {blurOptionsExpanded && (
                     <div 
-                        className={`absolute w-56 rounded-lg shadow-xl border z-[120] p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
-                        style={{
+                        className={`
+                            ${isMobile 
+                                ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-1.5 rounded-lg' 
+                                : `absolute w-56 rounded-lg shadow-xl border z-[120] p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                            }
+                        `}
+                        style={isMobile ? {} : {
                             backgroundColor: 'var(--bg-primary)',
                             borderColor: 'var(--border-primary)',
                             [blurOptionsPos.side === 'left' ? 'right' : 'left']: '100%',
@@ -454,8 +477,13 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 {/* Typography Submenu */}
                 {typographyExpanded && (
                     <div 
-                        className={`absolute w-56 rounded-lg shadow-xl border z-[120] p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
-                        style={{
+                        className={`
+                            ${isMobile 
+                                ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-3 rounded-lg' 
+                                : `absolute w-56 rounded-lg shadow-xl border z-[120] p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                            }
+                        `}
+                        style={isMobile ? {} : {
                             backgroundColor: 'var(--bg-primary)',
                             borderColor: 'var(--border-primary)',
                             [typographyPos.side === 'left' ? 'right' : 'left']: '100%',
@@ -585,11 +613,16 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     </div>
                   </div>
 
-                  {/* Submenu (Side Pop-out) */}
+                  {/* Submenu (Hybrid: Pop-out on Desktop, Accordion on Mobile) */}
                   {statusBarExpanded && showTicker && (
                     <div 
-                        className={`absolute w-48 rounded-lg shadow-xl border z-[120] p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`}
-                        style={{
+                        className={`
+                            ${isMobile 
+                                ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-2 space-y-1 rounded-lg' 
+                                : `absolute w-48 rounded-lg shadow-xl border z-[120] p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                            }
+                        `}
+                        style={isMobile ? {} : {
                             backgroundColor: 'var(--bg-primary)',
                             borderColor: 'var(--border-primary)',
                             // Dynamic Horizontal
