@@ -81,6 +81,7 @@ export interface SaleData {
   globalDiscount: number;
   subtotal: number;
   total: number;
+  processingTimeMinutes?: number;
 }
 
 interface UseEntityHandlersParams {
@@ -280,10 +281,22 @@ export function useEntityHandlers({
         error('Permission denied: Cannot add customers');
         return;
     }
-    setCustomers(prev => [...prev, customer]);
+    
+    // Ensure critical tracking fields are present
+    const enhancedCustomer: Customer = {
+      ...customer,
+      createdAt: customer.createdAt || getVerifiedDate().toISOString(),
+      registeredByEmployeeId: customer.registeredByEmployeeId || currentEmployeeId || undefined
+    };
+
+    setCustomers(prev => [...prev, enhancedCustomer]);
     success('Customer added successfully');
-    auditService.log('customer.add', { userId: currentEmployeeId, details: `Added customer: ${customer.name}`, entityId: customer.id });
-  }, [setCustomers, success, currentEmployeeId, employees, error]);
+    auditService.log('customer.add', { 
+      userId: currentEmployeeId || 'System', 
+      details: `Added customer: ${customer.name}`, 
+      entityId: customer.id 
+    });
+  }, [setCustomers, success, currentEmployeeId, employees, error, getVerifiedDate]);
 
   const handleUpdateCustomer = useCallback((customer: Customer) => {
     if (!canPerformAction(employees?.find(e => e.id === currentEmployeeId)?.role, 'customer.update')) {
