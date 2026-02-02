@@ -3,6 +3,7 @@ import { ViewState } from './types';
 import { TRANSLATIONS } from './i18n/translations';
 import { MainLayout } from './components/layout/MainLayout';
 import { PageRouter } from './components/layout/PageRouter';
+import { Modal } from './components/common/Modal';
 import { PAGE_REGISTRY } from './config/pageRegistry';
 import { useTheme } from './hooks/useTheme';
 import { useData } from './services';
@@ -67,6 +68,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     profileImage, setProfileImage,
     currentEmployeeId, setCurrentEmployeeId,
     navigationParams, setNavigationParams,
+    windowedView, setWindowedView,
     
     // Auth State
     isAuthenticated, isAuthChecking, handleLogout, resolveView, setIsAuthenticated, user
@@ -258,6 +260,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       setCurrentEmployeeId={handleSelectEmployee}
       employees={employees}
       dashboardSubView={dashboardSubView}
+      onOpenInWindow={setWindowedView}
     >
       <PageRouter 
         view={view}
@@ -273,6 +276,41 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
         handlers={handlers}
         data={data}
       />
+
+      {/* Windowed Mode Modal */}
+      <Modal
+        isOpen={!!windowedView}
+        onClose={() => setWindowedView(null)}
+        size="full"
+        title={windowedView ? (t.nav as any)[windowedView.replace(/-/, '_')] || t.nav[windowedView as keyof typeof t.nav] || windowedView : ''}
+        icon={windowedView ? PAGE_REGISTRY[windowedView]?.icon : 'window'}
+        className="!bg-[#f3f4f6] dark:!bg-black"
+      >
+        <div className="h-[80vh]">
+          {windowedView && (
+            <PageRouter 
+                view={windowedView}
+                currentEmployeeId={currentEmployeeId}
+                userRole={userRole}
+                isLoading={false} // No skeleton for windowed
+                t={t}
+                setView={(v) => {
+                    setWindowedView(null);
+                    setView(v);
+                }}
+                handleNavigate={(v) => {
+                    setWindowedView(null);
+                    handleNavigate(v);
+                }}
+                handleLoginSuccess={handleLoginSuccess}
+                navigationParams={null}
+                currentShift={currentShift}
+                handlers={handlers}
+                data={data}
+            />
+          )}
+        </div>
+      </Modal>
     </MainLayout>
   );
 };

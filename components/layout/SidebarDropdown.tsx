@@ -16,6 +16,7 @@ interface SidebarDropdownProps {
   blur?: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  onOpenInWindow?: (view: string) => void;
 }
 
 export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
@@ -29,7 +30,8 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
   anchorEl,
   blur = false,
   onMouseEnter,
-  onMouseLeave
+  onMouseLeave,
+  onOpenInWindow
 }) => {
   const [position, setPosition] = React.useState<{ top: number; left?: number; right?: number } | null>(null);
 
@@ -126,7 +128,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                                     { 
                                         label: TRANSLATIONS[language].global.actions.openInWindow, 
                                         icon: 'open_in_new', 
-                                        action: () => { /* Placeholder */ } 
+                                        action: () => itemView && onOpenInWindow?.(itemView) 
                                     }
                                 ]}
                             >

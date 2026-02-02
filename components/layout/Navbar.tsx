@@ -34,6 +34,7 @@ interface NavbarProps {
   setCurrentEmployeeId?: (id: string | null) => void;
   onLogout?: () => void;
   userRole?: UserRole;
+  onOpenInWindow?: (view: string) => void;
 }
 
 /**
@@ -58,7 +59,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   currentEmployeeId,
   setCurrentEmployeeId,
   onLogout,
-  userRole
+  userRole,
+  onOpenInWindow
 }) => {
   const {
     language,
@@ -277,15 +279,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
           return (
             <div key={module.id} className="relative group/item" onMouseLeave={handleMouseLeave}>
-                <ContextMenuTrigger
-                  actions={[
-                    { 
-                      label: t.global.actions.openInWindow, 
-                      icon: 'open_in_new', 
-                      action: () => { /* Placeholder */ } 
-                    }
-                  ]}
-                >
                   <button
                     onMouseEnter={(e) => handleMouseEnter(module.id, e)}
                     onClick={(e) => handleModuleClick(module.id, hasPage, e)}
@@ -316,7 +309,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                       <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-${theme}-600 rounded-full`}></div>
                     )}
                   </button>
-                </ContextMenuTrigger>
 
                 {/* Dropdown Menu */}
                 {isDropdownOpen && navStyle === 2 && (
@@ -345,6 +337,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         anchorEl={activeAnchor}
                         onMouseEnter={cancelClose}
                         onMouseLeave={handleMouseLeave}
+                        onOpenInWindow={onOpenInWindow}
                     />
                 )}
             </div>
@@ -389,15 +382,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
             return (
                 <div className="relative group/settings" onMouseLeave={handleMouseLeave}>
-                    <ContextMenuTrigger
-                      actions={[
-                        { 
-                          label: t.global.actions.openInWindow, 
-                          icon: 'open_in_new', 
-                          action: () => { /* Placeholder */ } 
-                        }
-                      ]}
-                    >
                       <button
                           onMouseEnter={(e) => handleMouseEnter(settingsModule.id, e)}
                           onClick={(e) => handleModuleClick(settingsModule.id, hasPage, e)}
@@ -416,7 +400,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                               {settingsModule.icon}
                           </span>
                       </button>
-                    </ContextMenuTrigger>
 
                      {/* Dropdown Menu for Settings */}
                     {isDropdownOpen && navStyle === 2 && (
@@ -440,6 +423,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                             anchorEl={activeAnchor}
                             onMouseEnter={cancelClose}
                             onMouseLeave={handleMouseLeave}
+                            onOpenInWindow={onOpenInWindow}
                         />
                     )}
                 </div>

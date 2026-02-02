@@ -32,6 +32,7 @@ interface MainLayoutProps {
   setCurrentEmployeeId: (id: string | null) => void;
   employees: any[];
   dashboardSubView: string;
+  onOpenInWindow: (view: string) => void;
 }
 
 const STANDALONE_VIEWS = [ROUTES.LOGIN];
@@ -74,7 +75,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   filteredMenuItems, handleModuleChange, handleNavigate, handleViewChange,
   profileImage, setProfileImage,
   currentEmployeeId, setCurrentEmployeeId,
-  employees, dashboardSubView
+  employees, dashboardSubView, onOpenInWindow
 }) => {
   const { 
     theme, setTheme, language, darkMode, 
@@ -131,6 +132,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               setCurrentEmployeeId={setCurrentEmployeeId}
               onLogout={onLogout}
               userRole={userRole}
+              onOpenInWindow={onOpenInWindow}
             />
           )}
 
@@ -175,6 +177,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               userRole={userRole}
               isStandalone={isStandalone}
               profileImage={profileImage}
+              onOpenInWindow={onOpenInWindow}
             />
 
             {/* Actual Page Surface */}

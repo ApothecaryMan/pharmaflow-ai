@@ -29,6 +29,8 @@ export interface AppState {
   setProfileImage: React.Dispatch<React.SetStateAction<string | null>>;
   currentEmployeeId: string | null;
   setCurrentEmployeeId: React.Dispatch<React.SetStateAction<string | null>>;
+  windowedView: string | null;
+  setWindowedView: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 /**
@@ -48,6 +50,7 @@ export function useAppState(): AppState {
   // --- User/Session State ---
   const [profileImage, setProfileImage] = usePersistedState<string | null>(StorageKeys.PROFILE_IMAGE, null);
   const [currentEmployeeId, setCurrentEmployeeId] = usePersistedState<string | null>(StorageKeys.CURRENT_EMPLOYEE_ID, null);
+  const [windowedView, setWindowedView] = useState<string | null>(null);
 
   return {
     // View state
@@ -69,5 +72,7 @@ export function useAppState(): AppState {
     setProfileImage,
     currentEmployeeId,
     setCurrentEmployeeId,
+    windowedView,
+    setWindowedView,
   };
 }
