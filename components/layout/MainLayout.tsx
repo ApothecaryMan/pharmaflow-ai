@@ -177,7 +177,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               userRole={userRole}
               isStandalone={isStandalone}
               profileImage={profileImage}
-              onOpenInWindow={onOpenInWindow}
             />
 
             {/* Actual Page Surface */}
