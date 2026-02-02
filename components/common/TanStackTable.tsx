@@ -705,13 +705,15 @@ export function TanStackTable<TData, TValue>({
                                 width: isFlex ? 'auto' : cell.column.columnDef.meta?.width,
                                 minWidth: cell.column.columnDef.meta?.minWidth
                            }}
-                           dir={cell.column.columnDef.meta?.dir || (isIdColumn ? 'ltr' : undefined)}
+                           dir={cell.column.columnDef.meta?.dir}
                         >
-                          <div className={`flex items-center w-full ${justifyClass} ${isIdColumn && align === 'start' ? '-ms-3' : ''} ${isIdColumn && align === 'end' ? '-me-3' : ''}`}>
+                          <div className={`flex items-center gap-1.5 w-full ${justifyClass} ${isIdColumn && align === 'start' ? '-ms-3' : ''} ${isIdColumn && align === 'end' ? '-me-3' : ''}`}>
                              {isIdColumn && (
-                               <span className={`material-symbols-rounded text-base text-gray-400 shrink-0 ${isRtl ? 'ms-1.5 order-1' : 'me-1.5'}`}>tag</span>
+                               <span className="material-symbols-rounded text-base text-gray-400 shrink-0">tag</span>
                              )}
-                             {renderCellContent()}
+                             <span dir={isIdColumn ? 'ltr' : undefined}>
+                                {renderCellContent()}
+                             </span>
                           </div>
                         </td>
                       );
