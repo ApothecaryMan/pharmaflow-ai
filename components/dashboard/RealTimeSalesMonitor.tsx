@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Sale, Drug, Customer, ThemeColor, Return } from '../../types';
+import { Sale, Drug, Customer, ThemeColor, Return, Employee } from '../../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, RadialBarChart, RadialBar, Legend } from 'recharts';
 import { ExpandedModal } from '../common/ExpandedModal';
 import { REALTIME_SALES_MONITOR_HELP } from '../../i18n/helpInstructions';
@@ -34,28 +34,13 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
   // === REAL-TIME ANALYTICS HOOK ===
   const {
-    // Tooltip Data
+    revenue, transactions, itemsSold, todaysSales, revenueChange,
+    hourlyAnalysis, customerAnalysis, paymentAnalysis, highValueAnalysis,
+    itemsAnalysis, orderTypeAnalysis, topProducts, activeCountersStats,
     revenueTooltip: revenueTooltipData,
     transactionsTooltip: transactionsTooltipData,
     itemsSoldTooltip: itemsSoldTooltipData,
-    activeCountersTooltip: activeCountersTooltipData,
-    
-    // Core Metrics
-    revenue,
-    transactions,
-    itemsSold,
-    todaysSales,
-    revenueChange,
-    
-    // Analysis Objects
-    hourlyAnalysis,
-    customerAnalysis,
-    paymentAnalysis,
-    highValueAnalysis,
-    itemsAnalysis,
-    orderTypeAnalysis,
-    topProducts,
-    activeCountersStats
+    activeCountersTooltip: activeCountersTooltipData
   } = useRealTimeSalesAnalytics({ sales, customers, products, language });
 
   // Create tooltip elements
@@ -958,3 +943,4 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     </div>
   );
 };
+

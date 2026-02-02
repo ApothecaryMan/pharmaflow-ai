@@ -24,6 +24,7 @@ interface CustomerManagementProps {
   darkMode?: boolean;
   userRole: UserRole;
   onViewChange?: (view: string, params?: Record<string, any>) => void;
+  currentEmployeeId?: string;
 }
 
 export const CustomerManagement: React.FC<CustomerManagementProps> = ({
@@ -36,7 +37,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   language,
   darkMode,
   userRole,
-  onViewChange
+  onViewChange,
+  currentEmployeeId
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const [mode, setMode] = useState<'list' | 'add'>('list');
@@ -189,7 +191,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       onAddCustomer({
         id: getVerifiedDate().getTime().toString(),
         ...formData,
-        serialId: formData.serialId || getNextSerialId()
+        serialId: formData.serialId || getNextSerialId(),
+        registeredByEmployeeId: currentEmployeeId
       } as Customer);
       
       if (isKioskMode) {
