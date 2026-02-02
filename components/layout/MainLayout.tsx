@@ -7,6 +7,7 @@ import { ContextMenuProvider } from '../common/ContextMenu';
 import { useSettings, THEMES } from '../../context';
 import { ROUTES } from '../../config/routes';
 import { UserRole, canPerformAction } from '../../config/permissions';
+import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutConfig';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -138,7 +139,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             {/* Sidebar */}
             {!isStandalone && (
                <aside 
-                 className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col w-72 ${sidebarBlur ? 'backdrop-blur-xl' : ''} transition-all duration-300 ease-in-out`}
+                 className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col ${LAYOUT_CONFIG.SIDEBAR_WIDTH} ${sidebarBlur ? 'backdrop-blur-xl' : ''} transition-all duration-300 ease-in-out`}
                  style={{ backgroundColor: 'var(--bg-primary)' }}
                >
                  <SidebarContent 
@@ -178,7 +179,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
             {/* Actual Page Surface */}
             <main className={`flex-1 h-full overflow-hidden relative ${isStandalone ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r border-gray-200 dark:border-gray-800 bg-[#f3f4f6] dark:bg-black shadow-inner'}`}>
-               <div className={`h-full overflow-y-auto scrollbar-hide main-content-scroll ${isStandalone ? 'w-full' : (view.includes('pos') || view.includes('purchases')) ? 'w-full px-4 md:px-[50px] pt-8 pb-32 md:pb-[2px]' : 'w-full max-w-[90rem] mx-auto px-4 md:px-[50px] pt-5 pb-32 md:pb-[3px]'}`}>
+               <div className={getContentContainerClasses(view, isStandalone)}>
                   {children}
                </div>
             </main>

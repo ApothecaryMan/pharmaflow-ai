@@ -135,6 +135,8 @@ export interface Customer {
   status: 'active' | 'inactive';
   createdAt?: string; // ISO Date of creation
   vip?: boolean;
+  /** Employee ID who registered this customer */
+  registeredByEmployeeId?: string;
 }
 
 /**
@@ -259,6 +261,8 @@ export interface SaleTab {
   searchQuery?: string;
   /** Associated customer code */
   customerCode?: string;
+  /** Timestamp when first item was added to cart (for accurate processing time) */
+  firstItemAt?: number;
 }
 
 /**
@@ -348,6 +352,8 @@ export interface Sale {
    * Used for audit trail and order history display.
    */
   modificationHistory?: OrderModificationRecord[];
+  /** Time in minutes from tab creation to checkout completion */
+  processingTimeMinutes?: number;
 }
 
 /** Type of return/refund operation */
