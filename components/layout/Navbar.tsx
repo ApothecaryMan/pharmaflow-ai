@@ -17,6 +17,7 @@ import { PrinterSettings } from '../settings/PrinterSettings';
 import { useSettings } from '../../context';
 import { ContextMenuTrigger } from '../common/ContextMenu';
 
+
 interface NavbarProps {
   menuItems: MenuItem[];
   activeModule: string;
@@ -296,9 +297,25 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     title={!hasPage && navStyle !== 2 ? t.settings.comingSoon : ''}
                   >
                     <span className={`flex items-center justify-center ${(isActive || isDropdownOpen) && hasPage ? 'icon-filled' : ''}`}>
-                      <span className={`material-symbols-rounded text-[20px] ${module.id === 'dashboard' ? 'text-[22px]' : ''}`}>
-                        {module.icon}
-                      </span>
+                      {module.id === 'sales' ? (
+                        <svg 
+                          className="w-5 h-5"
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          strokeWidth="2" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
+                        >
+                          <path d="M4 4h3l1 10h10l1-10H7" />
+                          <circle cx="9" cy="19" r="1.5" />
+                          <circle cx="17" cy="19" r="1.5" />
+                        </svg>
+                      ) : (
+                        <span className={`material-symbols-rounded text-[20px] ${module.id === 'dashboard' ? 'text-[22px]' : ''}`}>
+                          {module.icon}
+                        </span>
+                      )}
                     </span>
 
                     <span className="text-sm font-medium">

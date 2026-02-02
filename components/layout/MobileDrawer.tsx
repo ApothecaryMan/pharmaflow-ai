@@ -9,6 +9,7 @@ import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { useSettings } from '../../context';
 import { MenuItem } from '../../config/menuData';
 
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -297,15 +298,31 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                   aria-current={isActive ? 'page' : undefined}
                   type="button"
                 >
-                  <span
-                    className={`
-                      material-symbols-rounded text-[26px] transition-all duration-500
-                      ${isActive ? 'font-fill scale-110' : ''}
-                    `}
-                    aria-hidden="true"
-                  >
-                    {module.icon}
-                  </span>
+                  {module.id === 'sales' ? (
+                    <svg 
+                      className={`w-[26px] h-[26px] transition-all duration-500 ${isActive ? 'scale-110' : ''}`}
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <path d="M4 4h3l1 10h10l1-10H7" />
+                      <circle cx="9" cy="19" r="1.5" />
+                      <circle cx="17" cy="19" r="1.5" />
+                    </svg>
+                  ) : (
+                    <span
+                      className={`
+                        material-symbols-rounded text-[26px] transition-all duration-500
+                        ${isActive ? 'font-fill scale-110' : ''}
+                      `}
+                      aria-hidden="true"
+                    >
+                      {module.icon}
+                    </span>
+                  )}
                   <span
                     className={`text-[10px] mt-1.5 font-bold whitespace-nowrap overflow-hidden text-ellipsis max-w-[60px] ${
                       isActive ? 'opacity-100' : 'opacity-60'

@@ -207,14 +207,30 @@ const DockButton = React.memo<DockButtonProps>(({
       aria-current={isActive ? 'page' : undefined}
       type="button"
     >
-      <span
-        className={`material-symbols-rounded text-[24px] ${
-          isActive ? 'font-fill' : ''
-        }`}
-        aria-hidden="true"
-      >
-        {icon}
-      </span>
+      {view === 'pos' ? (
+        <svg 
+          className={`w-[24px] h-[24px] ${isActive ? '' : 'opacity-70'}`}
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        >
+          <path d="M4 4h3l1 10h10l1-10H7" />
+          <circle cx="9" cy="19" r="1.5" />
+          <circle cx="17" cy="19" r="1.5" />
+        </svg>
+      ) : (
+        <span
+          className={`material-symbols-rounded text-[24px] ${
+            isActive ? 'font-fill' : ''
+          }`}
+          aria-hidden="true"
+        >
+          {icon}
+        </span>
+      )}
       <div className={`${isActive ? 'flex' : 'hidden'} items-center animate-word-entrance overflow-hidden`}>
         <div className="whitespace-nowrap font-bold text-sm truncate max-w-[80px]">
           {label}
