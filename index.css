@@ -1,6 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100..700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100..700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:GRAD,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC,opsz,slnt,wdth,wght@-200..150,323..603,25..135,649..854,-305..-98,560..788,416..570,528..760,8..144,-10..0,25..151,100..1000&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100;200;300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,slnt,wdth,wght@8..144,-10..0,25..151,100..1000&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,8 +32,8 @@
 :root {
   --border-color: #e5e7eb; /* gray-200 */
   --text-secondary: #6b7280; /* gray-500 */
-  --font-en: "Inter";
-  --font-ar: "Cairo";
+  --font-en: "IBM Plex Sans";
+  --font-ar: "IBM Plex Sans Arabic";
 }
 
 .dark {
@@ -295,15 +295,8 @@ body {
   font-variation-settings:
     "wght" var(--font-weight),
     "wdth" var(--font-width),
-    "GRAD" var(--font-grade),
-    "slnt" var(--font-slant),
-    "XTRA" var(--font-xtra),
-    "YOPQ" var(--font-yopq),
-    "YTAS" var(--font-ytas),
-    "YTDE" var(--font-ytde),
-    "YTFI" var(--font-ytfi),
-    "YTLC" var(--font-ytlc),
-    "YTUC" var(--font-ytuc);
+    "slnt" var(--font-slant);
+  /* Note: GRAD, XTRA, YOPQ, etc. are currently disabled as they are not reliably supported in the Google Fonts CSS2 variable range API for this font. */
 
   /* Smooth "Breathe" Transitions */
   transition: font-variation-settings 0.3s cubic-bezier(0.2, 0, 0, 1);
