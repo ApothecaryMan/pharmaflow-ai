@@ -6,14 +6,14 @@ export interface FontOption {
 
 export const AVAILABLE_FONTS_EN: FontOption[] = [
   {
-    label: 'SF Pro',
-    value: '-apple-system, BlinkMacSystemFont',
+    label: 'System Default',
+    value: 'En-Firewall',
     url: '',
   },
   {
-    label: 'Google Sans Flex',
-    value: '"Google Sans Flex"',
-    url: 'https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght,wdth,slnt,GRAD@8..144,100..1000,25..151,-10..0,-200..150&display=swap',
+    label: 'Roboto Flex',
+    value: '"Roboto Flex"',
+    url: 'https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,slnt,wdth,wght,GRAD,XTRA,YOPQ,YTAS,YTDE,YTFI,YTLC,YTUC@8..144,-10..0,25..151,100..1000,-200..150,323..603,25..135,649..854,98..305,560..788,416..570,528..760&display=swap',
   },
   {
     label: 'Inter',
@@ -49,14 +49,14 @@ export const AVAILABLE_FONTS_EN: FontOption[] = [
 
 export const AVAILABLE_FONTS_AR: FontOption[] = [
   {
-    label: 'SF Pro',
-    value: '-apple-system, BlinkMacSystemFont',
+    label: 'System Default',
+    value: 'Ar-Firewall',
     url: '',
   },
   {
     label: 'IBM Plex Sans Arabic',
     value: '"IBM Plex Sans Arabic"',
-    url: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100;200;300;400;500;600;700&display=swap',
+    url: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100..700&display=swap',
   },
   {
     label: 'Cairo',

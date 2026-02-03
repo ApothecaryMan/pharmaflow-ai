@@ -51,9 +51,9 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
 
-    <title>Zinc</title>
+    <!-- Core Typography System (Google Fonts v2) -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght,wdth,slnt,GRAD@8..144,100..1000,25..151,-10..0,-200..150&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
       rel="stylesheet"
     />
     <link
@@ -61,18 +61,14 @@
       rel="stylesheet"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Extended&family=Libre+Barcode+39+Extended+Text&family=Libre+Barcode+39+Text&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100..900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap"
       rel="stylesheet"
     />
     <!-- IBM Plex Sans Arabic removed (Inlined in CSS with unicode-range) -->
     <style>
       body {
         font-family:
-          -apple-system, BlinkMacSystemFont, "Google Sans Flex", sans-serif;
+          var(--font-en), var(--font-ar), "Inter", "Cairo", sans-serif;
       }
       /* Universal Theme System - CSS Variables */
       :root {

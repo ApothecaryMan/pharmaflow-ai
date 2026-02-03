@@ -98,16 +98,13 @@ export interface SettingsContextType extends SettingsState {
   availableLanguages: { code: Language; label: string }[];
 }
 
-// Default Settings Logic
-const isApple = typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/.test(navigator.platform);
-
 // Default Settings
 const defaultSettings: SettingsState = {
   theme: THEMES[0],
   darkMode: false,
-  language: 'EN', // Default English
-  fontFamilyEN: isApple ? '-apple-system, BlinkMacSystemFont' : 'Inter', 
-  fontFamilyAR: isApple ? '-apple-system, BlinkMacSystemFont' : 'Cairo', 
+  language: 'AR', // Default English
+  fontFamilyEN: 'En-Firewall', 
+  fontFamilyAR: 'Ar-Firewall', 
   textTransform: 'uppercase',
   navStyle: 2,
   dropdownBlur: false,
@@ -201,7 +198,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     // 2. Load English Font
     const enFont = AVAILABLE_FONTS_EN.find(f => f.value === settings.fontFamilyEN);
-    if (enFont) {
+    if (enFont && enFont.url) {
         const linkId = `font-en-${settings.fontFamilyEN.replace(/[^a-zA-Z0-9]/g, '')}`;
         if (!document.getElementById(linkId)) {
             const link = document.createElement('link');
@@ -214,7 +211,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     // 3. Load Arabic Font
     const arFont = AVAILABLE_FONTS_AR.find(f => f.value === settings.fontFamilyAR);
-    if (arFont) {
+    if (arFont && arFont.url) {
          const linkId = `font-ar-${settings.fontFamilyAR.replace(/[^a-zA-Z0-9]/g, '')}`;
          if (!document.getElementById(linkId)) {
              const link = document.createElement('link');

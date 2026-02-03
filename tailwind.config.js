@@ -26,10 +26,12 @@ export default {
       fontFamily: {
         sans: [
           'var(--font-en)',
+          'Inter',
           'var(--font-ar)',
+          'Cairo',
           '-apple-system',
           'BlinkMacSystemFont',
-          '"Google Sans Flex"',
+          '"Roboto Flex"',
           'sans-serif',
         ],
       },

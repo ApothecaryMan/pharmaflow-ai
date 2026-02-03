@@ -162,7 +162,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   };
 
   return (
-    <div className={`relative font-cairo ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`} ref={dropdownRef}>
+    <div className={`relative ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`} ref={dropdownRef}>
       {/* Settings Button */}
       {showTrigger && (
         triggerVariant === 'statusBar' ? (
