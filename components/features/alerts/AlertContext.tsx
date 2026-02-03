@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import type React from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
 
 export type AlertType = 'success' | 'error' | 'info' | 'warning';
 
@@ -27,41 +28,37 @@ export const AlertProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const addAlert = useCallback((options: Omit<AlertData, 'id'>) => {
     const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
     const newAlert = { ...options, id };
-    
+
     // Set current alert for the status bar
     setCurrentAlert(newAlert);
 
     // Clear current alert reference after duration (roughly)
     if (options.duration && options.duration > 0) {
       setTimeout(() => {
-        setCurrentAlert(prev => prev?.id === id ? null : prev);
+        setCurrentAlert((prev) => (prev?.id === id ? null : prev));
       }, options.duration);
     }
   }, []);
 
   const removeAlert = useCallback((id: string) => {
-    setCurrentAlert(prev => prev?.id === id ? null : prev);
+    setCurrentAlert((prev) => (prev?.id === id ? null : prev));
   }, []);
 
   const helpers = {
     alert: addAlert, // Generic internal helper
-    success: (message: string, title?: string, duration?: number) => 
+    success: (message: string, title?: string, duration?: number) =>
       addAlert({ type: 'success', message, title, duration }),
-    error: (message: string, title?: string, duration?: number) => 
+    error: (message: string, title?: string, duration?: number) =>
       addAlert({ type: 'error', message, title, duration }),
-    warning: (message: string, title?: string, duration?: number) => 
+    warning: (message: string, title?: string, duration?: number) =>
       addAlert({ type: 'warning', message, title, duration }),
-    info: (message: string, title?: string, duration?: number) => 
+    info: (message: string, title?: string, duration?: number) =>
       addAlert({ type: 'info', message, title, duration }),
     removeAlert,
-    currentAlert
+    currentAlert,
   };
 
-  return (
-    <AlertContext.Provider value={helpers}>
-      {children}
-    </AlertContext.Provider>
-  );
+  return <AlertContext.Provider value={helpers}>{children}</AlertContext.Provider>;
 };
 
 export const useAlert = () => {

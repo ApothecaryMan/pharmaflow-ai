@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from '@google/genai';
 
 /**
  * Gemini Service - Hybrid Client
@@ -7,36 +7,36 @@ import { GoogleGenAI } from "@google/genai";
  */
 
 export interface EmployeePerformanceData {
-    employeeName: string;
-    period: string;
-    totalSales: number;
-    netProfit: number;
-    profitMargin: number;
-    itemsSold: number;
-    transactionCount: number;
-    topProduct?: string;
-    salesTrend?: number;
-    profitTrend?: number;
+  employeeName: string;
+  period: string;
+  totalSales: number;
+  netProfit: number;
+  profitMargin: number;
+  itemsSold: number;
+  transactionCount: number;
+  topProduct?: string;
+  salesTrend?: number;
+  profitTrend?: number;
 }
 
 const callAI = async (action: string, data: any, language: 'AR' | 'EN' = 'EN'): Promise<string> => {
-    if (import.meta.env.DEV) {
-        try {
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) throw new Error("VITE_GEMINI_API_KEY is missing in .env");
-            
-            const ai = new GoogleGenAI({ apiKey });
-            
-            let prompt = '';
-            
-            if (action === 'analyzeEmployeePerformance') {
-                const perfData = data as EmployeePerformanceData & { mode?: 'short' | 'detailed' };
-                const isArabic = language === 'AR';
-                const isShort = perfData.mode === 'short';
-                
-                if (isShort) {
-                    prompt = isArabic 
-                    ? `أنت مدير صيدلية متمرس بخبرة 15+ سنة في تحليل الأداء المالي.
+  if (import.meta.env.DEV) {
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error('VITE_GEMINI_API_KEY is missing in .env');
+
+      const ai = new GoogleGenAI({ apiKey });
+
+      let prompt = '';
+
+      if (action === 'analyzeEmployeePerformance') {
+        const perfData = data as EmployeePerformanceData & { mode?: 'short' | 'detailed' };
+        const isArabic = language === 'AR';
+        const isShort = perfData.mode === 'short';
+
+        if (isShort) {
+          prompt = isArabic
+            ? `أنت مدير صيدلية متمرس بخبرة 15+ سنة في تحليل الأداء المالي.
 
 البيانات المالية:
 - الموظف: ${perfData.employeeName}
@@ -55,7 +55,7 @@ const callAI = async (action: string, data: any, language: 'AR' | 'EN' = 'EN'): 
 4. غير ذلك → قيّم الأداء الإجمالي
 
 التنسيق: نص عادي، بدون رموز، بدون نجوم، لغة مهنية مباشرة. لا تذكر اسم الموظف في الجملة.`
-                    : `You are a seasoned pharmacy manager with 15+ years in financial performance analysis.
+            : `You are a seasoned pharmacy manager with 15+ years in financial performance analysis.
 
 Financial Data:
 - Employee: ${perfData.employeeName}
@@ -74,11 +74,10 @@ Required: ONE evaluative sentence (15-25 words) focusing on the most critical KP
 4. Otherwise → Evaluate overall performance
 
 Format: Plain text, no emojis, no asterisks, professional direct language. Do not mention the employee name.`;
-                    
-                } else {
-                    // DETAILED MODE - تحليل احترافي متعمق
-                    prompt = isArabic 
-                    ? `أنت صيدلي إكلينيكي ومدير مالي بخبرة 20+ سنة. حلل الأداء التالي بعمق:
+        } else {
+          // DETAILED MODE - تحليل احترافي متعمق
+          prompt = isArabic
+            ? `أنت صيدلي إكلينيكي ومدير مالي بخبرة 20+ سنة. حلل الأداء التالي بعمق:
 
 البيانات المالية الخام:
 الموظف: ${perfData.employeeName}
@@ -111,7 +110,7 @@ Format: Plain text, no emojis, no asterisks, professional direct language. Do no
 بناءً على أضعف مؤشر، اقترح خطة عمل محددة وقابلة للتطبيق فوراً.
 
 تحذيرات: لا تستخدم كلمات عامة بدون أرقام. اربط كل تقييم برقم محدد. لا رموز تعبيرية. استخدم ** للعناوين الأربعة فقط.`
-                    : `You are a clinical pharmacist and financial manager with 20+ years of experience. Provide deep analysis:
+            : `You are a clinical pharmacist and financial manager with 20+ years of experience. Provide deep analysis:
 
 Raw Financial Data:
 Employee: ${perfData.employeeName}
@@ -144,14 +143,13 @@ Analyze UPT (Excellent: 4+ items, Good: 3-4 items, Poor: <3 items).
 Based on weakest KPI, propose specific action plan that's immediately actionable.
 
 Requirements: Never use generic terms without numbers. Link every evaluation to specific data points. No emojis. Use ** for four section headers only.`;
-                }
-                
-            } else if (action === 'analyzeDrugInteraction') {
-                const { drugName, context } = data;
-                const isArabic = language === 'AR';
-                
-                prompt = isArabic
-                ? `أنت صيدلي إكلينيكي استشاري. 
+        }
+      } else if (action === 'analyzeDrugInteraction') {
+        const { drugName, context } = data;
+        const isArabic = language === 'AR';
+
+        prompt = isArabic
+          ? `أنت صيدلي إكلينيكي استشاري. 
 
 الدواء: "${drugName}"
 السياق: "${context}"
@@ -163,7 +161,7 @@ Requirements: Never use generic terms without numbers. Link every evaluation to 
 **التوصية النهائية:** هل الدواء مناسب؟ وما البديل إن لزم؟
 
 التنسيق: استخدم ** للعناوين الأربعة فقط. بدون رموز تعبيرية.`
-                : `You are a Board-Certified Clinical Pharmacy Specialist.
+          : `You are a Board-Certified Clinical Pharmacy Specialist.
 
 Drug: "${drugName}"
 Context: "${context}"
@@ -175,100 +173,107 @@ Required:
 **Final Recommendation:** Is drug appropriate? Alternative if needed?
 
 Format: Use ** for four section headers only. No emojis.`;
-            } else if (action === 'generateHealthTip') {
-                prompt = "Write 1 short, catchy pharmacy health tip (max 15 words). No introspection.";
-            }
+      } else if (action === 'generateHealthTip') {
+        prompt = 'Write 1 short, catchy pharmacy health tip (max 15 words). No introspection.';
+      }
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.0-flash-exp',
-                contents: prompt,
-            });
-            return response.text || "No response";
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.0-flash-exp',
+        contents: prompt,
+      });
+      return response.text || 'No response';
+    } catch (error: any) {
+      console.error('Local AI Error:', error);
 
-        } catch (error: any) {
-            console.error('Local AI Error:', error);
-            
-            // Detect specific error types
-            const errorMessage = error?.message || error?.toString() || '';
-            
-            if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
-                throw new Error('QUOTA_EXCEEDED');
-            } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError') || errorMessage.includes('net::')) {
-                throw new Error('NETWORK_ERROR');
-            } else if (errorMessage.includes('API_KEY') || errorMessage.includes('INVALID_ARGUMENT')) {
-                throw new Error('API_KEY_INVALID');
-            }
-            
-            throw error;
-        }
+      // Detect specific error types
+      const errorMessage = error?.message || error?.toString() || '';
+
+      if (
+        errorMessage.includes('429') ||
+        errorMessage.includes('RESOURCE_EXHAUSTED') ||
+        errorMessage.includes('quota')
+      ) {
+        throw new Error('QUOTA_EXCEEDED');
+      } else if (
+        errorMessage.includes('Failed to fetch') ||
+        errorMessage.includes('NetworkError') ||
+        errorMessage.includes('net::')
+      ) {
+        throw new Error('NETWORK_ERROR');
+      } else if (errorMessage.includes('API_KEY') || errorMessage.includes('INVALID_ARGUMENT')) {
+        throw new Error('API_KEY_INVALID');
+      }
+
+      throw error;
+    }
+  }
+
+  // PRODUCTION MODE: Call Netlify Function Proxy
+  try {
+    const response = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, data, language }),
+    });
+
+    if (!response.ok) {
+      console.warn('AI Proxy Error Status:', response.status);
+      throw new Error('AI service unreachable');
     }
 
-    // PRODUCTION MODE: Call Netlify Function Proxy
-    try {
-        const response = await fetch('/api/ai', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action, data, language })
-        });
-
-        if (!response.ok) {
-            console.warn('AI Proxy Error Status:', response.status);
-            throw new Error('AI service unreachable'); 
-        }
-
-        const result = await response.json();
-        return result.result || 'No response';
-    } catch (error) {
-        console.error('AI Service Error:', error);
-        throw error;
-    }
+    const result = await response.json();
+    return result.result || 'No response';
+  } catch (error) {
+    console.error('AI Service Error:', error);
+    throw error;
+  }
 };
 
-export const analyzeDrugInteraction = async (drugName: string, context: string): Promise<string> => {
-    try {
-        return await callAI('analyzeDrugInteraction', { drugName, context });
-    } catch (error) {
-        return "Sorry, I couldn't retrieve the drug information right now.";
-    }
+export const analyzeDrugInteraction = async (
+  drugName: string,
+  context: string
+): Promise<string> => {
+  try {
+    return await callAI('analyzeDrugInteraction', { drugName, context });
+  } catch (error) {
+    return "Sorry, I couldn't retrieve the drug information right now.";
+  }
 };
 
 export const generateHealthTip = async (): Promise<string> => {
-    try {
-        return await callAI('generateHealthTip', {});
-    } catch (e) {
-        return "Health is wealth.";
-    }
+  try {
+    return await callAI('generateHealthTip', {});
+  } catch (e) {
+    return 'Health is wealth.';
+  }
 };
 
 export const analyzeEmployeePerformance = async (
-    data: EmployeePerformanceData, 
-    language: 'AR' | 'EN' = 'EN',
-    mode: 'short' | 'detailed' = 'detailed'
+  data: EmployeePerformanceData,
+  language: 'AR' | 'EN' = 'EN',
+  mode: 'short' | 'detailed' = 'detailed'
 ): Promise<string> => {
-    try {
-        return await callAI('analyzeEmployeePerformance', { ...data, mode }, language);
-    } catch (error: any) {
-        const errorType = error?.message || '';
-        let friendlyMessage = "";
-        
-        if (errorType === 'QUOTA_EXCEEDED') {
-            friendlyMessage = language === 'AR' 
-                ? "⚠️ تجاوزت الحد اليومي (Quota). يرجى المحاولة لاحقاً."
-                : "⚠️ Daily quota exceeded. Please try again later.";
-        } else if (errorType === 'NETWORK_ERROR') {
-            friendlyMessage = language === 'AR' 
-                ? "🌐 مشكلة في الاتصال بالشبكة."
-                : "🌐 Network connection error.";
-        } else if (errorType === 'API_KEY_INVALID') {
-            friendlyMessage = language === 'AR' 
-                ? "🔑 مفتاح API غير صالح."
-                : "🔑 Invalid API key.";
-        } else {
-            friendlyMessage = language === 'AR' 
-                ? "❌ خطأ غير متوقع في خدمة AI."
-                : "❌ Unexpected AI service error.";
-        }
-        
-        throw new Error(friendlyMessage);
+  try {
+    return await callAI('analyzeEmployeePerformance', { ...data, mode }, language);
+  } catch (error: any) {
+    const errorType = error?.message || '';
+    let friendlyMessage = '';
+
+    if (errorType === 'QUOTA_EXCEEDED') {
+      friendlyMessage =
+        language === 'AR'
+          ? '⚠️ تجاوزت الحد اليومي (Quota). يرجى المحاولة لاحقاً.'
+          : '⚠️ Daily quota exceeded. Please try again later.';
+    } else if (errorType === 'NETWORK_ERROR') {
+      friendlyMessage =
+        language === 'AR' ? '🌐 مشكلة في الاتصال بالشبكة.' : '🌐 Network connection error.';
+    } else if (errorType === 'API_KEY_INVALID') {
+      friendlyMessage = language === 'AR' ? '🔑 مفتاح API غير صالح.' : '🔑 Invalid API key.';
+    } else {
+      friendlyMessage =
+        language === 'AR' ? '❌ خطأ غير متوقع في خدمة AI.' : '❌ Unexpected AI service error.';
     }
+
+    throw new Error(friendlyMessage);
+  }
 };

@@ -1,13 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { TRANSLATIONS } from '../../../../i18n/translations';
-import { UserRole, canPerformAction } from '../../../../config/permissions';
-import { StatusBarItem } from '../StatusBarItem';
-import { Switch } from '../../../common/Switch';
-import { SegmentedControl } from '../../../common/SegmentedControl';
-import { ThemeColor, Language } from '../../../../types';
-import { useSmartPosition } from '../../../../hooks/useSmartPosition';
-import { AVAILABLE_FONTS_EN, AVAILABLE_FONTS_AR } from '../../../../config/fonts';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../../../../config/fonts';
+import { canPerformAction, type UserRole } from '../../../../config/permissions';
 import { useSettings } from '../../../../context';
+import { useSmartPosition } from '../../../../hooks/useSmartPosition';
+import { TRANSLATIONS } from '../../../../i18n/translations';
+import { type Language, ThemeColor } from '../../../../types';
+import { SegmentedControl } from '../../../common/SegmentedControl';
+import { Switch } from '../../../common/Switch';
+import { StatusBarItem } from '../StatusBarItem';
 
 /**
  * ARCHITECTURE NOTE:
@@ -23,13 +24,13 @@ export interface SettingsMenuProps {
   triggerSize?: number;
 }
 
-export const SettingsMenu: React.FC<SettingsMenuProps> = ({ 
+export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   userRole,
   dropDirection = 'up',
   showTrigger = true,
   align = 'start',
   triggerVariant = 'statusBar',
-  triggerSize = 24
+  triggerSize = 24,
 }) => {
   const {
     language,
@@ -81,37 +82,37 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
   const [themeExpanded, setThemeExpanded] = useState(false);
   const [typographyExpanded, setTypographyExpanded] = useState(false);
-  
+
   // Use Custom Hook for Themes Position
-  const { 
-    ref: themesRef, 
-    position: themesPos, 
+  const {
+    ref: themesRef,
+    position: themesPos,
     checkPosition: checkThemesPos,
-    resetPosition: resetThemesPos
+    resetPosition: resetThemesPos,
   } = useSmartPosition({ defaultAlign: 'top' });
 
   // Use Custom Hook for Quick Statuses Position
-  const { 
-    ref: quickStatusesRef, 
-    position: quickStatusesPos, 
+  const {
+    ref: quickStatusesRef,
+    position: quickStatusesPos,
     checkPosition: checkInfoPos,
-    resetPosition: resetInfoPos
+    resetPosition: resetInfoPos,
   } = useSmartPosition({ defaultAlign: 'bottom' });
 
   // Use Custom Hook for Typography Position
-  const { 
-    ref: typographyRef, 
-    position: typographyPos, 
+  const {
+    ref: typographyRef,
+    position: typographyPos,
     checkPosition: checkTypographyPos,
-    resetPosition: resetTypographyPos
+    resetPosition: resetTypographyPos,
   } = useSmartPosition({ defaultAlign: 'top' });
 
   // Use Custom Hook for Blur Options Position
-  const { 
-    ref: blurOptionsRef, 
-    position: blurOptionsPos, 
+  const {
+    ref: blurOptionsRef,
+    position: blurOptionsPos,
     checkPosition: checkBlurOptionsPos,
-    resetPosition: resetBlurOptionsPos
+    resetPosition: resetBlurOptionsPos,
   } = useSmartPosition({ defaultAlign: 'top' });
 
   const [blurOptionsExpanded, setBlurOptionsExpanded] = useState(false);
@@ -123,7 +124,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     const checkMobile = () => {
       setIsMobile(window.matchMedia('(max-width: 768px)').matches);
     };
-    
+
     checkMobile(); // Initial check
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -162,12 +163,15 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   };
 
   return (
-    <div className={`relative ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`} ref={dropdownRef}>
+    <div
+      className={`relative ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`}
+      ref={dropdownRef}
+    >
       {/* Settings Button */}
-      {showTrigger && (
-        triggerVariant === 'statusBar' ? (
+      {showTrigger &&
+        (triggerVariant === 'statusBar' ? (
           <StatusBarItem
-            icon="settings"
+            icon='settings'
             tooltip={t.settings}
             variant={isOpen ? 'info' : 'default'}
             onClick={() => setIsOpen(!isOpen)}
@@ -177,368 +181,474 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             onClick={() => setIsOpen(!isOpen)}
             className={`flex items-center justify-center w-10 h-10 transition-colors ${isOpen ? 'text-blue-500' : 'text-gray-600 dark:text-gray-300'}`}
           >
-            <span className="material-symbols-rounded" style={{ fontSize: `${triggerSize}px` }}>settings</span>
+            <span className='material-symbols-rounded' style={{ fontSize: `${triggerSize}px` }}>
+              settings
+            </span>
           </button>
-        )
-      )}
+        ))}
 
       {/* Settings Dropdown */}
       {isOpen && (
-        <div 
+        <div
           className={`
             absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
             ${align === 'start' ? 'start-0 origin-top-start' : 'end-0 origin-top-end'}
             w-64 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-800 
             backdrop-blur-sm z-[110] animate-fade-in
           `}
-          style={{ 
+          style={{
             backgroundColor: 'var(--bg-primary)',
             borderColor: 'var(--border-primary)',
           }}
         >
           {/* Header */}
-          <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-primary)' }}>
-            <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+          <div className='px-3 py-2 border-b' style={{ borderColor: 'var(--border-primary)' }}>
+            <span className='text-xs font-bold' style={{ color: 'var(--text-primary)' }}>
               {t.settings}
             </span>
           </div>
 
           {/* Settings Content */}
-          <div className="p-3 space-y-3" style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}>
-            
+          <div className='p-3 space-y-3' style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}>
             {/* --- Group 1: Appearance --- */}
-            
+
             {/* Themes Nested Menu (Replaces old selector) */}
-            <div className="space-y-1 relative" ref={themesRef}>
-                {/* Main Row */}
-                <div className="w-full flex items-center justify-between py-1 transition-colors">
+            <div className='space-y-1 relative' ref={themesRef}>
+              {/* Main Row */}
+              <div className='w-full flex items-center justify-between py-1 transition-colors'>
                 {/* Left Side: Icon + Label */}
-                <div className="flex items-center gap-2">
-                    <span className="material-symbols-rounded text-[16px]" style={{ color: 'var(--text-secondary)' }}>palette</span>
-                    <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{t.themesMenu}</span>
+                <div className='flex items-center gap-2'>
+                  <span
+                    className='material-symbols-rounded text-[16px]'
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    palette
+                  </span>
+                  <span className='text-xs font-medium' style={{ color: 'var(--text-primary)' }}>
+                    {t.themesMenu}
+                  </span>
                 </div>
 
                 {/* Right Side: Arrow */}
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => {
-                          checkThemesPos(); // Check position
-                          setThemeExpanded(!themeExpanded);
-                          if (!themeExpanded) setStatusBarExpanded(false);
-                        }}
-                        className="transition-colors"
-                        type="button"
+                <div className='flex items-center gap-2'>
+                  <button
+                    onClick={() => {
+                      checkThemesPos(); // Check position
+                      setThemeExpanded(!themeExpanded);
+                      if (!themeExpanded) setStatusBarExpanded(false);
+                    }}
+                    className='transition-colors'
+                    type='button'
+                  >
+                    <span
+                      className={`material-symbols-rounded text-[16px] transition-transform ${themeExpanded ? 'rotate-180' : ''}`}
+                      style={{ color: 'var(--text-tertiary)' }}
                     >
-                    <span 
-                        className={`material-symbols-rounded text-[16px] transition-transform ${themeExpanded ? 'rotate-180' : ''}`}
-                        style={{ color: 'var(--text-tertiary)' }}
-                    >
-                        {themesPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
+                      {themesPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
                     </span>
-                    </button>
+                  </button>
                 </div>
-                </div>
+              </div>
 
-                {/* Submenu (Hybrid: Pop-out on Desktop, Accordion on Mobile) */}
-                {themeExpanded && (
-                <div 
-                    className={`
-                        ${isMobile 
-                            ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-3 rounded-lg' 
+              {/* Submenu (Hybrid: Pop-out on Desktop, Accordion on Mobile) */}
+              {themeExpanded && (
+                <div
+                  className={`
+                        ${
+                          isMobile
+                            ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-3 rounded-lg'
                             : `absolute w-48 rounded-lg shadow-xl border z-[120] p-3 space-y-3 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                         }
                     `}
-                    style={isMobile ? {} : {
-                        backgroundColor: 'var(--bg-primary)',
-                        borderColor: 'var(--border-primary)',
-                        // Dynamic Horizontal
-                        [themesPos.side === 'left' ? 'right' : 'left']: '100%',
-                        [themesPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
-                    }}
+                  style={
+                    isMobile
+                      ? {}
+                      : {
+                          backgroundColor: 'var(--bg-primary)',
+                          borderColor: 'var(--border-primary)',
+                          // Dynamic Horizontal
+                          [themesPos.side === 'left' ? 'right' : 'left']: '100%',
+                          [themesPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
+                        }
+                  }
                 >
-                    {/* Theme Selector */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>{t.theme}</label>
-                        <div className="flex gap-1.5 flex-wrap">
-                            {availableThemes.map((themeOption) => (
-                            <button
-                                key={themeOption.name}
-                                onClick={() => setTheme(themeOption)}
-                                className={`w-6 h-6 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${currentTheme.name === themeOption.name ? 'ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-600 scale-110' : ''}`}
-                                style={{ backgroundColor: themeOption.hex }}
-                                title={themeOption.name}
-                            >
-                                {currentTheme.name === themeOption.name && (
-                                <span className="material-symbols-rounded text-white text-[12px] drop-shadow-md">check</span>
-                                )}
-                            </button>
-                            ))}
-                        </div>
+                  {/* Theme Selector */}
+                  <div className='space-y-1.5'>
+                    <label
+                      className='text-[10px] font-bold uppercase'
+                      style={{ color: 'var(--text-tertiary)' }}
+                    >
+                      {t.theme}
+                    </label>
+                    <div className='flex gap-1.5 flex-wrap'>
+                      {availableThemes.map((themeOption) => (
+                        <button
+                          key={themeOption.name}
+                          onClick={() => setTheme(themeOption)}
+                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${currentTheme.name === themeOption.name ? 'ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-600 scale-110' : ''}`}
+                          style={{ backgroundColor: themeOption.hex }}
+                          title={themeOption.name}
+                        >
+                          {currentTheme.name === themeOption.name && (
+                            <span className='material-symbols-rounded text-white text-[12px] drop-shadow-md'>
+                              check
+                            </span>
+                          )}
+                        </button>
+                      ))}
                     </div>
+                  </div>
 
-                    {/* Dark Mode Toggle */}
-                    <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                            <span className="material-symbols-rounded text-[14px]" style={{ color: 'var(--text-secondary)' }}>dark_mode</span>
-                            {t.darkMode}
-                        </label>
-                        <Switch 
-                            checked={darkMode}
-                            onChange={setDarkMode}
-                            theme={currentTheme.name.toLowerCase()}
-                            activeColor={currentTheme.hex}
-                        />
-                    </div>
+                  {/* Dark Mode Toggle */}
+                  <div className='flex items-center justify-between'>
+                    <label
+                      className='text-xs font-medium flex items-center gap-1.5'
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      <span
+                        className='material-symbols-rounded text-[14px]'
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        dark_mode
+                      </span>
+                      {t.darkMode}
+                    </label>
+                    <Switch
+                      checked={darkMode}
+                      onChange={setDarkMode}
+                      theme={currentTheme.name.toLowerCase()}
+                      activeColor={currentTheme.hex}
+                    />
+                  </div>
                 </div>
-                )}
+              )}
             </div>
 
             {/* Blur Options Nested Menu */}
-            <div className="space-y-1 relative" ref={blurOptionsRef}>
-                {/* Main Row */}
-                <div className="w-full flex items-center justify-between py-1 transition-colors">
-                    <div className="flex items-center gap-2">
-                        <span className="material-symbols-rounded text-[16px]" style={{ color: 'var(--text-secondary)' }}>blur_on</span>
-                        <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{t.dropdownBlur}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <Switch 
-                            checked={dropdownBlur || false}
-                            onChange={(val) => setDropdownBlur?.(val)}
-                            theme={currentTheme.name.toLowerCase()}
-                            activeColor={currentTheme.hex}
-                        />
-                        <button
-                            onClick={() => {
-                                checkBlurOptionsPos();
-                                setBlurOptionsExpanded(!blurOptionsExpanded);
-                                if (!blurOptionsExpanded) {
-                                    setStatusBarExpanded(false);
-                                    setThemeExpanded(false);
-                                    setTypographyExpanded(false);
-                                }
-                            }}
-                            className="transition-colors"
-                            type="button"
-                        >
-                            <span 
-                                className={`material-symbols-rounded text-[16px] transition-transform ${blurOptionsExpanded ? 'rotate-180' : ''}`}
-                                style={{ color: 'var(--text-tertiary)' }}
-                            >
-                                {blurOptionsPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
-                            </span>
-                        </button>
-                    </div>
+            <div className='space-y-1 relative' ref={blurOptionsRef}>
+              {/* Main Row */}
+              <div className='w-full flex items-center justify-between py-1 transition-colors'>
+                <div className='flex items-center gap-2'>
+                  <span
+                    className='material-symbols-rounded text-[16px]'
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    blur_on
+                  </span>
+                  <span className='text-xs font-medium' style={{ color: 'var(--text-primary)' }}>
+                    {t.dropdownBlur}
+                  </span>
                 </div>
 
-                {/* Blur Options Submenu */}
-                {blurOptionsExpanded && (
-                    <div 
-                        className={`
-                            ${isMobile 
-                                ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-1.5 rounded-lg' 
+                <div className='flex items-center gap-2'>
+                  <Switch
+                    checked={dropdownBlur || false}
+                    onChange={(val) => setDropdownBlur?.(val)}
+                    theme={currentTheme.name.toLowerCase()}
+                    activeColor={currentTheme.hex}
+                  />
+                  <button
+                    onClick={() => {
+                      checkBlurOptionsPos();
+                      setBlurOptionsExpanded(!blurOptionsExpanded);
+                      if (!blurOptionsExpanded) {
+                        setStatusBarExpanded(false);
+                        setThemeExpanded(false);
+                        setTypographyExpanded(false);
+                      }
+                    }}
+                    className='transition-colors'
+                    type='button'
+                  >
+                    <span
+                      className={`material-symbols-rounded text-[16px] transition-transform ${blurOptionsExpanded ? 'rotate-180' : ''}`}
+                      style={{ color: 'var(--text-tertiary)' }}
+                    >
+                      {blurOptionsPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Blur Options Submenu */}
+              {blurOptionsExpanded && (
+                <div
+                  className={`
+                            ${
+                              isMobile
+                                ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-1.5 rounded-lg'
                                 : `absolute w-56 rounded-lg shadow-xl border z-[120] p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}
-                        style={isMobile ? {} : {
-                            backgroundColor: 'var(--bg-primary)',
-                            borderColor: 'var(--border-primary)',
-                            [blurOptionsPos.side === 'left' ? 'right' : 'left']: '100%',
-                            [blurOptionsPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
-                        }}
-                    >
-                        {/* Summary Label */}
-                        <label className="text-[10px] font-bold uppercase mb-1 block" style={{ color: 'var(--text-tertiary)' }}>{t.dropdownBlur}</label>
-                        
-                        {/* Sidebar Blur */}
-                        <div className="flex items-center justify-between py-1">
-                            <span className="text-xs" style={{ color: 'var(--text-primary)' }}>{t.sidebarBlur}</span>
-                            <Switch 
-                                checked={sidebarBlur || false}
-                                onChange={(val) => setSidebarBlur?.(val)}
-                                theme={currentTheme.name.toLowerCase()}
-                                activeColor={currentTheme.hex}
-                            />
-                        </div>
+                  style={
+                    isMobile
+                      ? {}
+                      : {
+                          backgroundColor: 'var(--bg-primary)',
+                          borderColor: 'var(--border-primary)',
+                          [blurOptionsPos.side === 'left' ? 'right' : 'left']: '100%',
+                          [blurOptionsPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
+                        }
+                  }
+                >
+                  {/* Summary Label */}
+                  <label
+                    className='text-[10px] font-bold uppercase mb-1 block'
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
+                    {t.dropdownBlur}
+                  </label>
 
-                        {/* Menu Blur */}
-                        <div className="flex items-center justify-between py-1">
-                            <span className="text-xs" style={{ color: 'var(--text-primary)' }}>{t.menuBlur}</span>
-                            <Switch 
-                                checked={menuBlur || false}
-                                onChange={(val) => setMenuBlur?.(val)}
-                                theme={currentTheme.name.toLowerCase()}
-                                activeColor={currentTheme.hex}
-                            />
-                        </div>
+                  {/* Sidebar Blur */}
+                  <div className='flex items-center justify-between py-1'>
+                    <span className='text-xs' style={{ color: 'var(--text-primary)' }}>
+                      {t.sidebarBlur}
+                    </span>
+                    <Switch
+                      checked={sidebarBlur || false}
+                      onChange={(val) => setSidebarBlur?.(val)}
+                      theme={currentTheme.name.toLowerCase()}
+                      activeColor={currentTheme.hex}
+                    />
+                  </div>
 
-                        {/* Tooltip Blur */}
-                        <div className="flex items-center justify-between py-1">
-                            <span className="text-xs" style={{ color: 'var(--text-primary)' }}>{t.tooltipBlur}</span>
-                            <Switch 
-                                checked={tooltipBlur || false}
-                                onChange={(val) => setTooltipBlur?.(val)}
-                                theme={currentTheme.name.toLowerCase()}
-                                activeColor={currentTheme.hex}
-                            />
-                        </div>
-                    </div>
-                )}
+                  {/* Menu Blur */}
+                  <div className='flex items-center justify-between py-1'>
+                    <span className='text-xs' style={{ color: 'var(--text-primary)' }}>
+                      {t.menuBlur}
+                    </span>
+                    <Switch
+                      checked={menuBlur || false}
+                      onChange={(val) => setMenuBlur?.(val)}
+                      theme={currentTheme.name.toLowerCase()}
+                      activeColor={currentTheme.hex}
+                    />
+                  </div>
+
+                  {/* Tooltip Blur */}
+                  <div className='flex items-center justify-between py-1'>
+                    <span className='text-xs' style={{ color: 'var(--text-primary)' }}>
+                      {t.tooltipBlur}
+                    </span>
+                    <Switch
+                      checked={tooltipBlur || false}
+                      onChange={(val) => setTooltipBlur?.(val)}
+                      theme={currentTheme.name.toLowerCase()}
+                      activeColor={currentTheme.hex}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Nav Style Switch */}
             {setNavStyle && (
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>
+              <div className='space-y-1.5'>
+                <label
+                  className='text-[10px] font-bold uppercase'
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
                   {t.designStyle}
                 </label>
                 <SegmentedControl
                   value={navStyle || 1}
                   onChange={(val) => setNavStyle(val as 1 | 2 | 3)}
                   color={currentTheme.name.toLowerCase()}
-                  size="xs"
+                  size='xs'
                   options={[
                     { label: t.designStyleFull, value: 1 },
-                    { label: t.designStyleNavbar, value: 2 }
+                    { label: t.designStyleNavbar, value: 2 },
                   ]}
                 />
               </div>
             )}
 
             {/* Separator */}
-            <div className="border-t border-gray-100 dark:border-gray-800 my-1 opacity-50" />
+            <div className='border-t border-gray-100 dark:border-gray-800 my-1 opacity-50' />
 
             {/* --- Group 2: Language & Text --- */}
             {/* Language Selector */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>{t.language}</label>
+            <div className='space-y-1.5'>
+              <label
+                className='text-[10px] font-bold uppercase'
+                style={{ color: 'var(--text-tertiary)' }}
+              >
+                {t.language}
+              </label>
               <SegmentedControl
                 value={language}
                 onChange={(val) => setLanguage(val as Language)}
                 color={currentTheme.name.toLowerCase()}
-                size="xs"
-                options={availableLanguages.map(lang => ({
+                size='xs'
+                options={availableLanguages.map((lang) => ({
                   label: lang.label,
-                  value: lang.code
+                  value: lang.code,
                 }))}
               />
             </div>
-            
+
             {/* Text Transform Toggle */}
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                <span className="material-symbols-rounded text-[14px]" style={{ color: 'var(--text-secondary)' }}>text_fields</span>
+            <div className='flex items-center justify-between'>
+              <label
+                className='text-xs font-medium flex items-center gap-1.5'
+                style={{ color: 'var(--text-primary)' }}
+              >
+                <span
+                  className='material-symbols-rounded text-[14px]'
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  text_fields
+                </span>
                 {t.textTransform}
               </label>
-              <Switch 
+              <Switch
                 checked={textTransform === 'uppercase'}
-                onChange={() => setTextTransform(textTransform === 'normal' ? 'uppercase' : 'normal')}
+                onChange={() =>
+                  setTextTransform(textTransform === 'normal' ? 'uppercase' : 'normal')
+                }
                 theme={currentTheme.name.toLowerCase()}
                 activeColor={currentTheme.hex}
               />
             </div>
 
-      {/* Separator */}
-            <div className="border-t border-gray-100 dark:border-gray-800 my-1 opacity-50" />
+            {/* Separator */}
+            <div className='border-t border-gray-100 dark:border-gray-800 my-1 opacity-50' />
 
             {/* --- Group 3: Typography --- */}
-            <div className="space-y-1 relative" ref={typographyRef}>
-                {/* Main Row */}
-                <div className="w-full flex items-center justify-between py-1 transition-colors">
-                    <div className="flex items-center gap-2">
-                        <span className="material-symbols-rounded text-[16px]" style={{ color: 'var(--text-secondary)' }}>font_download</span>
-                        <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{t.typography}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => {
-                                checkTypographyPos();
-                                setTypographyExpanded(!typographyExpanded);
-                                if (!typographyExpanded) {
-                                    setStatusBarExpanded(false);
-                                    setThemeExpanded(false);
-                                }
-                            }}
-                            className="transition-colors"
-                            type="button"
-                        >
-                            <span 
-                                className={`material-symbols-rounded text-[16px] transition-transform ${typographyExpanded ? 'rotate-180' : ''}`}
-                                style={{ color: 'var(--text-tertiary)' }}
-                            >
-                                {typographyPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
-                            </span>
-                        </button>
-                    </div>
+            <div className='space-y-1 relative' ref={typographyRef}>
+              {/* Main Row */}
+              <div className='w-full flex items-center justify-between py-1 transition-colors'>
+                <div className='flex items-center gap-2'>
+                  <span
+                    className='material-symbols-rounded text-[16px]'
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    font_download
+                  </span>
+                  <span className='text-xs font-medium' style={{ color: 'var(--text-primary)' }}>
+                    {t.typography}
+                  </span>
                 </div>
 
-                {/* Typography Submenu */}
-                {typographyExpanded && (
-                    <div 
-                        className={`
-                            ${isMobile 
-                                ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-3 rounded-lg' 
+                <div className='flex items-center gap-2'>
+                  <button
+                    onClick={() => {
+                      checkTypographyPos();
+                      setTypographyExpanded(!typographyExpanded);
+                      if (!typographyExpanded) {
+                        setStatusBarExpanded(false);
+                        setThemeExpanded(false);
+                      }
+                    }}
+                    className='transition-colors'
+                    type='button'
+                  >
+                    <span
+                      className={`material-symbols-rounded text-[16px] transition-transform ${typographyExpanded ? 'rotate-180' : ''}`}
+                      style={{ color: 'var(--text-tertiary)' }}
+                    >
+                      {typographyPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Typography Submenu */}
+              {typographyExpanded && (
+                <div
+                  className={`
+                            ${
+                              isMobile
+                                ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-3 rounded-lg'
                                 : `absolute w-56 rounded-lg shadow-xl border z-[120] p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}
-                        style={isMobile ? {} : {
-                            backgroundColor: 'var(--bg-primary)',
-                            borderColor: 'var(--border-primary)',
-                            [typographyPos.side === 'left' ? 'right' : 'left']: '100%',
-                            [typographyPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
-                        }}
+                  style={
+                    isMobile
+                      ? {}
+                      : {
+                          backgroundColor: 'var(--bg-primary)',
+                          borderColor: 'var(--border-primary)',
+                          [typographyPos.side === 'left' ? 'right' : 'left']: '100%',
+                          [typographyPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
+                        }
+                  }
+                >
+                  {/* English Font Selection */}
+                  <div className='space-y-1.5'>
+                    <label
+                      className='text-[10px] font-bold uppercase'
+                      style={{ color: 'var(--text-tertiary)' }}
                     >
-                        {/* English Font Selection */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>{t.fontEN}</label>
-                            <select 
-                                value={fontFamilyEN}
-                                onChange={(e) => setFontFamilyEN(e.target.value)}
-                                className="w-full text-xs bg-transparent border rounded-md px-2 py-1 outline-none transition-colors hover:border-blue-400 focus:border-blue-500"
-                                style={{ color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-                            >
-                                {AVAILABLE_FONTS_EN.map(font => (
-                                    <option key={font.value} value={font.value} style={{ backgroundColor: 'var(--bg-primary)' }}>
-                                        {font.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                      {t.fontEN}
+                    </label>
+                    <select
+                      value={fontFamilyEN}
+                      onChange={(e) => setFontFamilyEN(e.target.value)}
+                      className='w-full text-xs bg-transparent border rounded-md px-2 py-1 outline-none transition-colors hover:border-blue-400 focus:border-blue-500'
+                      style={{ color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                    >
+                      {AVAILABLE_FONTS_EN.map((font) => (
+                        <option
+                          key={font.value}
+                          value={font.value}
+                          style={{ backgroundColor: 'var(--bg-primary)' }}
+                        >
+                          {font.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                        {/* Arabic Font Selection */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>{t.fontAR}</label>
-                            <select 
-                                value={fontFamilyAR}
-                                onChange={(e) => setFontFamilyAR(e.target.value)}
-                                className="w-full text-xs bg-transparent border rounded-md px-2 py-1 outline-none transition-colors hover:border-blue-400 focus:border-blue-500"
-                                style={{ color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-                            >
-                                {AVAILABLE_FONTS_AR.map(font => (
-                                    <option key={font.value} value={font.value} style={{ backgroundColor: 'var(--bg-primary)' }}>
-                                        {font.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                )}
+                  {/* Arabic Font Selection */}
+                  <div className='space-y-1.5'>
+                    <label
+                      className='text-[10px] font-bold uppercase'
+                      style={{ color: 'var(--text-tertiary)' }}
+                    >
+                      {t.fontAR}
+                    </label>
+                    <select
+                      value={fontFamilyAR}
+                      onChange={(e) => setFontFamilyAR(e.target.value)}
+                      className='w-full text-xs bg-transparent border rounded-md px-2 py-1 outline-none transition-colors hover:border-blue-400 focus:border-blue-500'
+                      style={{ color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
+                    >
+                      {AVAILABLE_FONTS_AR.map((font) => (
+                        <option
+                          key={font.value}
+                          value={font.value}
+                          style={{ backgroundColor: 'var(--bg-primary)' }}
+                        >
+                          {font.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Separator */}
-            <div className="border-t border-gray-100 dark:border-gray-800 my-1 opacity-50" />
+            <div className='border-t border-gray-100 dark:border-gray-800 my-1 opacity-50' />
 
             {/* --- Group 4: Workspace --- */}
             {/* Focus Mode Toggle */}
             {setHideInactiveModules && (
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                  <span className="material-symbols-rounded text-[14px]" style={{ color: 'var(--text-secondary)' }}>filter_center_focus</span>
+              <div className='flex items-center justify-between'>
+                <label
+                  className='text-xs font-medium flex items-center gap-1.5'
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  <span
+                    className='material-symbols-rounded text-[14px]'
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    filter_center_focus
+                  </span>
                   {t.focusMode}
                 </label>
-                <Switch 
+                <Switch
                   checked={hideInactiveModules || false}
                   onChange={(val) => setHideInactiveModules(val)}
                   theme={currentTheme.name.toLowerCase()}
@@ -549,12 +659,20 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
             {/* Developer Mode Toggle */}
             {setDeveloperMode && userRole === 'admin' && (
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                  <span className="material-symbols-rounded text-[14px]" style={{ color: 'var(--text-secondary)' }}>science</span>
+              <div className='flex items-center justify-between'>
+                <label
+                  className='text-xs font-medium flex items-center gap-1.5'
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  <span
+                    className='material-symbols-rounded text-[14px]'
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    science
+                  </span>
                   {t.developerMode}
                 </label>
-                <Switch 
+                <Switch
                   checked={developerMode || false}
                   onChange={(val) => setDeveloperMode(val)}
                   theme={currentTheme.name.toLowerCase()}
@@ -565,30 +683,43 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
             {/* Separator */}
             {setShowTicker && (
-              <div className="border-t border-gray-100 dark:border-gray-800 my-1 opacity-50" />
+              <div className='border-t border-gray-100 dark:border-gray-800 my-1 opacity-50' />
             )}
 
             {/* --- Status Bar Settings (Collapsible) --- */}
             {setShowTicker && (
-              <div className="space-y-1">
+              <div className='space-y-1'>
                 {/* Section Header */}
-                <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-tertiary)' }}>
+                <label
+                  className='text-[10px] font-bold uppercase'
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
                   {t.statusBarSettings}
                 </label>
 
                 {/* Quick Statuses Row with Arrow */}
-                <div className="space-y-1 relative" ref={quickStatusesRef}>
-                   {/* Main Row */}
-                  <div className="w-full flex items-center justify-between py-1 transition-colors">
+                <div className='space-y-1 relative' ref={quickStatusesRef}>
+                  {/* Main Row */}
+                  <div className='w-full flex items-center justify-between py-1 transition-colors'>
                     {/* Left Side: Icon + Label */}
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-rounded text-[16px]" style={{ color: 'var(--text-secondary)' }}>speed</span>
-                      <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{t.quickStatuses}</span>
+                    <div className='flex items-center gap-2'>
+                      <span
+                        className='material-symbols-rounded text-[16px]'
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        speed
+                      </span>
+                      <span
+                        className='text-xs font-medium'
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        {t.quickStatuses}
+                      </span>
                     </div>
 
                     {/* Right Side: Switch + Arrow */}
-                    <div className="flex items-center gap-2">
-                      <Switch 
+                    <div className='flex items-center gap-2'>
+                      <Switch
                         checked={showTicker || false}
                         onChange={(val) => setShowTicker(val)}
                         theme={currentTheme.name.toLowerCase()}
@@ -600,10 +731,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           setStatusBarExpanded(!statusBarExpanded);
                           if (!statusBarExpanded) setThemeExpanded(false);
                         }}
-                        className="transition-colors"
-                        type="button"
+                        className='transition-colors'
+                        type='button'
                       >
-                        <span 
+                        <span
                           className={`material-symbols-rounded text-[16px] transition-transform ${statusBarExpanded ? 'rotate-180' : ''}`}
                           style={{ color: 'var(--text-tertiary)' }}
                         >
@@ -615,28 +746,37 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
                   {/* Submenu (Hybrid: Pop-out on Desktop, Accordion on Mobile) */}
                   {statusBarExpanded && showTicker && (
-                    <div 
-                        className={`
-                            ${isMobile 
-                                ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-2 space-y-1 rounded-lg' 
+                    <div
+                      className={`
+                            ${
+                              isMobile
+                                ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-2 space-y-1 rounded-lg'
                                 : `absolute w-48 rounded-lg shadow-xl border z-[120] p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}
-                        style={isMobile ? {} : {
-                            backgroundColor: 'var(--bg-primary)',
-                            borderColor: 'var(--border-primary)',
-                            // Dynamic Horizontal
-                            [quickStatusesPos.side === 'left' ? 'right' : 'left']: '100%',
-                            [quickStatusesPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
-                        }}
+                      style={
+                        isMobile
+                          ? {}
+                          : {
+                              backgroundColor: 'var(--bg-primary)',
+                              borderColor: 'var(--border-primary)',
+                              // Dynamic Horizontal
+                              [quickStatusesPos.side === 'left' ? 'right' : 'left']: '100%',
+                              [quickStatusesPos.side === 'left' ? 'marginRight' : 'marginLeft']:
+                                '12px',
+                            }
+                      }
                     >
                       {/* Sales */}
                       {setShowTickerSales && canPerformAction(userRole, 'sale.view_history') && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                          <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+                        <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50'>
+                          <span
+                            className='text-[11px] font-medium'
+                            style={{ color: 'var(--text-secondary)' }}
+                          >
                             {t.showSales}
                           </span>
-                          <Switch 
+                          <Switch
                             checked={showTickerSales ?? true}
                             onChange={(val) => setShowTickerSales(val)}
                             theme={currentTheme.name.toLowerCase()}
@@ -645,26 +785,33 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         </div>
                       )}
                       {/* Inventory */}
-                      {setShowTickerInventory && canPerformAction(userRole, 'reports.view_inventory') && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                          <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
-                            {t.showInventory}
-                          </span>
-                          <Switch 
-                            checked={showTickerInventory ?? true}
-                            onChange={(val) => setShowTickerInventory(val)}
-                            theme={currentTheme.name.toLowerCase()}
-                            activeColor={currentTheme.hex}
-                          />
-                        </div>
-                      )}
+                      {setShowTickerInventory &&
+                        canPerformAction(userRole, 'reports.view_inventory') && (
+                          <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50'>
+                            <span
+                              className='text-[11px] font-medium'
+                              style={{ color: 'var(--text-secondary)' }}
+                            >
+                              {t.showInventory}
+                            </span>
+                            <Switch
+                              checked={showTickerInventory ?? true}
+                              onChange={(val) => setShowTickerInventory(val)}
+                              theme={currentTheme.name.toLowerCase()}
+                              activeColor={currentTheme.hex}
+                            />
+                          </div>
+                        )}
                       {/* Customers */}
                       {setShowTickerCustomers && canPerformAction(userRole, 'customer.view') && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                          <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+                        <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50'>
+                          <span
+                            className='text-[11px] font-medium'
+                            style={{ color: 'var(--text-secondary)' }}
+                          >
                             {t.showCustomers}
                           </span>
-                          <Switch 
+                          <Switch
                             checked={showTickerCustomers ?? true}
                             onChange={(val) => setShowTickerCustomers(val)}
                             theme={currentTheme.name.toLowerCase()}
@@ -673,19 +820,23 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         </div>
                       )}
                       {/* Top Seller */}
-                      {setShowTickerTopSeller && canPerformAction(userRole, 'reports.view_financial') && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                          <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
-                            {t.showTopSeller}
-                          </span>
-                          <Switch 
-                            checked={showTickerTopSeller ?? true}
-                            onChange={(val) => setShowTickerTopSeller(val)}
-                            theme={currentTheme.name.toLowerCase()}
-                            activeColor={currentTheme.hex}
-                          />
-                        </div>
-                      )}
+                      {setShowTickerTopSeller &&
+                        canPerformAction(userRole, 'reports.view_financial') && (
+                          <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50'>
+                            <span
+                              className='text-[11px] font-medium'
+                              style={{ color: 'var(--text-secondary)' }}
+                            >
+                              {t.showTopSeller}
+                            </span>
+                            <Switch
+                              checked={showTickerTopSeller ?? true}
+                              onChange={(val) => setShowTickerTopSeller(val)}
+                              theme={currentTheme.name.toLowerCase()}
+                              activeColor={currentTheme.hex}
+                            />
+                          </div>
+                        )}
                     </div>
                   )}
                 </div>

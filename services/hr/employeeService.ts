@@ -2,11 +2,10 @@
  * Employee Service - Employee management
  */
 
-import { Employee } from '../../types';
-
-import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
+import type { Employee } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
+import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
 
 // Export interface so it can be used if needed
@@ -28,12 +27,12 @@ export const createEmployeeService = (): EmployeeService => ({
     const all = getRawAll();
     const settings = await settingsService.getAll();
     const branchCode = settings.branchCode;
-    return all.filter(e => !e.branchId || e.branchId === branchCode);
+    return all.filter((e) => !e.branchId || e.branchId === branchCode);
   },
 
   getById: async (id: string): Promise<Employee | null> => {
     const all = await employeeService.getAll();
-    return all.find(e => e.id === id) || null;
+    return all.find((e) => e.id === id) || null;
   },
 
   create: async (employee: Employee): Promise<Employee> => {
@@ -41,11 +40,11 @@ export const createEmployeeService = (): EmployeeService => ({
     const settings = await settingsService.getAll();
     // Assign ID if missing
     if (!employee.id) {
-       employee.id = idGenerator.generate('employees');
+      employee.id = idGenerator.generate('employees');
     }
     // Inject branchId
     employee.branchId = settings.branchCode;
-    
+
     all.push(employee);
     storage.set(StorageKeys.EMPLOYEES, all);
     return employee;
@@ -53,22 +52,22 @@ export const createEmployeeService = (): EmployeeService => ({
 
   update: async (id: string, updates: Partial<Employee>): Promise<Employee> => {
     const all = getRawAll();
-    const index = all.findIndex(e => e.id === id);
+    const index = all.findIndex((e) => e.id === id);
     if (index === -1) throw new Error('Employee not found');
-    
+
     // Merge updates
     const updated = { ...all[index], ...updates };
     all[index] = updated;
-    
+
     storage.set(StorageKeys.EMPLOYEES, all);
     return updated;
   },
 
   delete: async (id: string): Promise<boolean> => {
     const all = getRawAll();
-    const filtered = all.filter(e => e.id !== id);
+    const filtered = all.filter((e) => e.id !== id);
     if (filtered.length === all.length) return false;
-    
+
     storage.set(StorageKeys.EMPLOYEES, filtered);
     return true;
   },
@@ -77,10 +76,10 @@ export const createEmployeeService = (): EmployeeService => ({
     const all = getRawAll();
     const settings = await settingsService.getAll();
     const branchCode = settings.branchCode;
-    const otherBranchItems = all.filter(e => e.branchId && e.branchId !== branchCode);
+    const otherBranchItems = all.filter((e) => e.branchId && e.branchId !== branchCode);
     const merged = [...otherBranchItems, ...employees];
     storage.set(StorageKeys.EMPLOYEES, merged);
-  }
+  },
 });
 
 export const employeeService = createEmployeeService();

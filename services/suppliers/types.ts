@@ -2,7 +2,7 @@
  * Supplier Types - Supplier management
  */
 
-import { Supplier } from '../../types';
+import type { Supplier } from '../../types';
 
 export type { Supplier };
 

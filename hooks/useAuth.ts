@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ViewState } from '../types';
-import { authService, UserSession } from '../services/auth/authService';
+import { useCallback, useEffect, useState } from 'react';
 import { ROUTES, TEST_ROUTES } from '../config/routes';
 import { useAlert } from '../context';
+import { authService, type UserSession } from '../services/auth/authService';
+import type { ViewState } from '../types';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -25,7 +25,7 @@ interface UseAuthParams {
 export function useAuth({ view, setView }: UseAuthParams): AuthState {
   // Use Alert Hook
   const { error } = useAlert();
-  
+
   // Optimistic Init: Check session synchronously to prevent "flash of loading"
   const [isAuthenticated, setIsAuthenticated] = useState(() => authService.hasSession());
   const [user, setUser] = useState<UserSession | null>(() => {
@@ -53,24 +53,27 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
   }, [setView]);
 
   // Centralized Guard Function
-  const resolveView = useCallback((targetView: ViewState): ViewState => {
-    // A. Production Guard
-    if (import.meta.env.PROD && TEST_ROUTES.includes(targetView)) {
-      if (targetView !== ROUTES.LOGIN) return ROUTES.DASHBOARD;
-    }
+  const resolveView = useCallback(
+    (targetView: ViewState): ViewState => {
+      // A. Production Guard
+      if (import.meta.env.PROD && TEST_ROUTES.includes(targetView)) {
+        if (targetView !== ROUTES.LOGIN) return ROUTES.DASHBOARD;
+      }
 
-    // B. Auth Guard
-    if (!isAuthenticated && targetView !== ROUTES.LOGIN) {
-      return ROUTES.LOGIN;
-    }
+      // B. Auth Guard
+      if (!isAuthenticated && targetView !== ROUTES.LOGIN) {
+        return ROUTES.LOGIN;
+      }
 
-    // C. Already Logged In Guard (Prevent seeing login page)
-    if (isAuthenticated && targetView === ROUTES.LOGIN) {
-      return ROUTES.DASHBOARD;
-    }
+      // C. Already Logged In Guard (Prevent seeing login page)
+      if (isAuthenticated && targetView === ROUTES.LOGIN) {
+        return ROUTES.DASHBOARD;
+      }
 
-    return targetView;
-  }, [isAuthenticated]);
+      return targetView;
+    },
+    [isAuthenticated]
+  );
 
   // Auth check on mount
   useEffect(() => {
@@ -80,7 +83,7 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
         const isUserAuth = !!user;
         setUser(user);
         setIsAuthenticated(isUserAuth);
-        
+
         if (!isUserAuth) {
           if (view !== ROUTES.LOGIN) {
             setView(ROUTES.LOGIN);
@@ -96,23 +99,23 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
         setIsAuthChecking(false);
       }
     };
-    
+
     checkAuth();
   }, []); // Only on mount
 
   // Watch for view changes and redirect if needed
   useEffect(() => {
     if (isAuthChecking) return;
-    
+
     const correctView = resolveView(view);
     if (correctView !== view) {
       if (import.meta.env.DEV) {
         console.warn(`[Auth] Redirecting from ${view} to ${correctView}`);
       }
       if (import.meta.env.PROD && TEST_ROUTES.includes(view)) {
-      if (import.meta.env.PROD && TEST_ROUTES.includes(view)) {
-        error('Access Denied: Developer routes are disabled.');
-      }
+        if (import.meta.env.PROD && TEST_ROUTES.includes(view)) {
+          error('Access Denied: Developer routes are disabled.');
+        }
       }
       setView(correctView);
     }

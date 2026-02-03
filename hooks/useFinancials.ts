@@ -1,12 +1,15 @@
 /**
  * useFinancials - Hook for fetching financial intelligence data
- * 
+ *
  * Provides KPIs and product financials from real sales data
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { FinancialKPIs, ProductFinancialItem } from '../types/intelligence';
-import { intelligenceService, FinancialPeriod } from '../services/intelligence/intelligenceService';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  type FinancialPeriod,
+  intelligenceService,
+} from '../services/intelligence/intelligenceService';
+import type { FinancialKPIs, ProductFinancialItem } from '../types/intelligence';
 
 interface UseFinancialsResult {
   kpis: FinancialKPIs | null;
@@ -25,13 +28,13 @@ export function useFinancials(period: FinancialPeriod = 'this_month'): UseFinanc
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const [kpisData, productsData] = await Promise.all([
         intelligenceService.getFinancialKPIs(period),
-        intelligenceService.getProductFinancials(period)
+        intelligenceService.getProductFinancials(period),
       ]);
-      
+
       setKpis(kpisData);
       setProducts(productsData);
     } catch (err) {
@@ -51,6 +54,6 @@ export function useFinancials(period: FinancialPeriod = 'this_month'): UseFinanc
     products,
     loading,
     error,
-    refresh: fetchData
+    refresh: fetchData,
   };
 }

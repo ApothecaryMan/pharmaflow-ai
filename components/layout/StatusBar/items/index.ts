@@ -1,7 +1,8 @@
 // StatusBar Items - Individual Components
-export { ConnectionStatus } from './ConnectionStatus';
-export { NotificationBell } from './NotificationBell';
+
 export { AnnouncementBanner } from './AnnouncementBanner';
-export { UserInfo } from './UserInfo';
+export { ConnectionStatus } from './ConnectionStatus';
 export { DateTime } from './DateTime';
+export { NotificationBell } from './NotificationBell';
+export { UserInfo } from './UserInfo';
 export { VersionInfo } from './VersionInfo';

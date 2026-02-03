@@ -2,14 +2,13 @@
  * Inventory Service - Drug/Product CRUD operations
  */
 
-import { Drug } from '../../types';
-import { InventoryService, InventoryFilters, InventoryStats } from './types';
-import { settingsService } from '../settings/settingsService';
+import { StorageKeys } from '../../config/storageKeys';
+import type { Drug } from '../../types';
+import { idGenerator } from '../../utils/idGenerator';
 
 import { storage } from '../../utils/storage';
-import { StorageKeys } from '../../config/storageKeys';
-
-import { idGenerator } from '../../utils/idGenerator';
+import { settingsService } from '../settings/settingsService';
+import type { InventoryFilters, InventoryService, InventoryStats } from './types';
 
 const getRawAll = (): Drug[] => {
   return storage.get<Drug[]>(StorageKeys.INVENTORY, []);
@@ -20,49 +19,49 @@ export const createInventoryService = (): InventoryService => ({
     const all = getRawAll();
     const settings = await settingsService.getAll();
     const branchCode = settings.branchCode;
-    return all.filter(d => !d.branchId || d.branchId === branchCode);
+    return all.filter((d) => !d.branchId || d.branchId === branchCode);
   },
 
   getById: async (id: string): Promise<Drug | null> => {
     const all = await inventoryService.getAll();
-    return all.find(d => d.id === id) || null;
+    return all.find((d) => d.id === id) || null;
   },
 
   getByBarcode: async (barcode: string): Promise<Drug | null> => {
     const all = await inventoryService.getAll();
-    return all.find(d => d.barcode === barcode) || null;
+    return all.find((d) => d.barcode === barcode) || null;
   },
 
   search: async (query: string): Promise<Drug[]> => {
     const all = await inventoryService.getAll();
     const q = query.toLowerCase();
-    return all.filter(d => 
-      d.name.toLowerCase().includes(q) ||
-      d.genericName?.toLowerCase().includes(q) ||
-      d.barcode?.includes(q) ||
-      d.internalCode?.toLowerCase().includes(q)
+    return all.filter(
+      (d) =>
+        d.name.toLowerCase().includes(q) ||
+        d.genericName?.toLowerCase().includes(q) ||
+        d.barcode?.includes(q) ||
+        d.internalCode?.toLowerCase().includes(q)
     );
   },
 
   filter: async (filters: InventoryFilters): Promise<Drug[]> => {
     let results = await inventoryService.getAll();
-    
+
     if (filters.category) {
-      results = results.filter(d => d.category === filters.category);
+      results = results.filter((d) => d.category === filters.category);
     }
     if (filters.lowStock) {
-      results = results.filter(d => d.stock < 10);
+      results = results.filter((d) => d.stock < 10);
     }
     if (filters.expiringSoon) {
       const threshold = new Date();
       threshold.setDate(threshold.getDate() + filters.expiringSoon);
-      results = results.filter(d => new Date(d.expiryDate) <= threshold);
+      results = results.filter((d) => new Date(d.expiryDate) <= threshold);
     }
     if (filters.search) {
       const q = filters.search.toLowerCase();
-      results = results.filter(d => 
-        d.name.toLowerCase().includes(q) ||
-        d.genericName?.toLowerCase().includes(q)
+      results = results.filter(
+        (d) => d.name.toLowerCase().includes(q) || d.genericName?.toLowerCase().includes(q)
       );
     }
     return results;
@@ -71,10 +70,10 @@ export const createInventoryService = (): InventoryService => ({
   create: async (drug: Omit<Drug, 'id'>): Promise<Drug> => {
     const all = getRawAll();
     const settings = await settingsService.getAll();
-    const newDrug: Drug = { 
-      ...drug, 
+    const newDrug: Drug = {
+      ...drug,
       id: idGenerator.generate('inventory'),
-      branchId: settings.branchCode
+      branchId: settings.branchCode,
     } as Drug;
     all.push(newDrug);
     storage.set(StorageKeys.INVENTORY, all);
@@ -83,7 +82,7 @@ export const createInventoryService = (): InventoryService => ({
 
   update: async (id: string, updates: Partial<Drug>): Promise<Drug> => {
     const all = getRawAll();
-    const index = all.findIndex(d => d.id === id);
+    const index = all.findIndex((d) => d.id === id);
     if (index === -1) throw new Error('Drug not found');
     all[index] = { ...all[index], ...updates };
     storage.set(StorageKeys.INVENTORY, all);
@@ -92,14 +91,14 @@ export const createInventoryService = (): InventoryService => ({
 
   delete: async (id: string): Promise<boolean> => {
     const all = getRawAll();
-    const filtered = all.filter(d => d.id !== id);
+    const filtered = all.filter((d) => d.id !== id);
     storage.set(StorageKeys.INVENTORY, filtered);
     return true;
   },
 
   updateStock: async (id: string, quantity: number): Promise<Drug> => {
     const all = getRawAll();
-    const index = all.findIndex(d => d.id === id);
+    const index = all.findIndex((d) => d.id === id);
     if (index === -1) throw new Error('Drug not found');
     all[index].stock += quantity;
     storage.set(StorageKeys.INVENTORY, all);
@@ -110,37 +109,37 @@ export const createInventoryService = (): InventoryService => ({
     const all = await inventoryService.getAll();
     const now = new Date();
     const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    
+
     return {
       totalProducts: all.length,
-      totalValue: all.reduce((sum, d) => sum + (d.price * d.stock), 0),
-      lowStockCount: all.filter(d => d.stock < 10 && d.stock > 0).length,
-      expiringSoonCount: all.filter(d => new Date(d.expiryDate) <= thirtyDays).length,
-      outOfStockCount: all.filter(d => d.stock === 0).length
+      totalValue: all.reduce((sum, d) => sum + d.price * d.stock, 0),
+      lowStockCount: all.filter((d) => d.stock < 10 && d.stock > 0).length,
+      expiringSoonCount: all.filter((d) => new Date(d.expiryDate) <= thirtyDays).length,
+      outOfStockCount: all.filter((d) => d.stock === 0).length,
     };
   },
 
   getLowStock: async (threshold = 10): Promise<Drug[]> => {
     const all = await inventoryService.getAll();
-    return all.filter(d => d.stock < threshold);
+    return all.filter((d) => d.stock < threshold);
   },
 
   getExpiringSoon: async (days = 30): Promise<Drug[]> => {
     const all = await inventoryService.getAll();
     const threshold = new Date();
     threshold.setDate(threshold.getDate() + days);
-    return all.filter(d => new Date(d.expiryDate) <= threshold);
+    return all.filter((d) => new Date(d.expiryDate) <= threshold);
   },
 
   save: async (inventory: Drug[]): Promise<void> => {
     const all = getRawAll();
     const settings = await settingsService.getAll();
     const branchCode = settings.branchCode;
-    const otherBranchItems = all.filter(d => d.branchId && d.branchId !== branchCode);
-    
+    const otherBranchItems = all.filter((d) => d.branchId && d.branchId !== branchCode);
+
     const merged = [...otherBranchItems, ...inventory];
     storage.set(StorageKeys.INVENTORY, merged);
-  }
+  },
 });
 
 export const inventoryService = createInventoryService();

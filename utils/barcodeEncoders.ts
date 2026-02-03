@@ -1,12 +1,12 @@
 /**
  * Barcode Encoder Utilities
- * 
+ *
  * Specifically designed for "Libre Barcode 128" font.
- * 
+ *
  * Supports:
  * - Code 128 Set B (Standard ASCII 32-126)
  * - Code 128 Set C (Numeric Pairs 00-99, High Density)
- * 
+ *
  * Logic:
  * Automatically selects Set C if the input is purely numeric and has an even length (>= 4 digits).
  * Otherwise, falls back to Set B.
@@ -17,9 +17,9 @@ const START_CODE_C = 105;
 const STOP_CODE = 106;
 
 /**
- * Maps a Code 128 value (0-106) to the specific character used by the 
+ * Maps a Code 128 value (0-106) to the specific character used by the
  * "Libre Barcode 128" font.
- * 
+ *
  * Mapping Reference:
  * Values 0-94   -> ASCII 32-126 (' ' to '~')
  * Values 95-106 -> ASCII 195-206 (Ã to Î)
@@ -36,7 +36,7 @@ const mapValueToChar = (value: number): string => {
 
 /**
  * Encodes a string into Code 128 (Set B or C) for use with "Libre Barcode 128" font.
- * 
+ *
  * @param text - The content to encode
  * @returns The encoded string ready for display with the barcode font
  */
@@ -61,12 +61,11 @@ export const encodeCode128 = (text: string): string => {
     for (let i = 0; i < text.length; i += 2) {
       const pair = text.substring(i, i + 2);
       const value = parseInt(pair, 10);
-      
+
       encoded += mapValueToChar(value);
       checksum += value * position;
       position++;
     }
-
   } else {
     // --- Set B Encoding (Standard ASCII) ---
     // Sanitize: Only allow ASCII 32-126

@@ -1,36 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { StockMovement } from '../../services/inventory/stockMovement/types';
+import type { StockMovement } from '../../services/inventory/stockMovement/types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 
 interface StockAdjustmentPrintProps {
-    isRTL: boolean;
-    t: any;
-    pharmacyName: string;
-    activeView: 'adjust' | 'history';
-    data: StockMovement[];
+  isRTL: boolean;
+  t: any;
+  pharmacyName: string;
+  activeView: 'adjust' | 'history';
+  data: StockMovement[];
 }
 
 export const StockAdjustmentPrint: React.FC<StockAdjustmentPrintProps> = ({
-    isRTL,
-    t,
-    pharmacyName,
-    activeView,
-    data
+  isRTL,
+  t,
+  pharmacyName,
+  activeView,
+  data,
 }) => {
-    const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-    useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
-    }, []);
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
-    if (!mounted) return null;
+  if (!mounted) return null;
 
-    return createPortal(
-        <>
-            <style type="text/css" media="print">
-                {`
+  return createPortal(
+    <>
+      <style type='text/css' media='print'>
+        {`
                     @media print {
                         /* 1. Hide the entire app */
                         body > *:not(.stock-adjustment-print-portal) {
@@ -82,92 +83,142 @@ export const StockAdjustmentPrint: React.FC<StockAdjustmentPrintProps> = ({
                         .print-text-xl { font-size: 14pt !important; }
                     }
                 `}
-            </style>
-            
-            {/* Unique class for the portal wrapper */}
-            <div className="stock-adjustment-print-portal hidden print:block bg-white text-black" dir={isRTL ? 'rtl' : 'ltr'}>
-                <div className="stock-adjustment-print-content min-h-screen flex flex-col">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="text-left">
-                            <h1 className="print-text-xl font-bold text-black mb-1">{pharmacyName} - Inventory Count</h1>
-                            <p className="print-text-sm text-black">Generated on {new Date().toLocaleString(isRTL ? 'ar-EG' : 'en-US')}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                             <img src="/logo_icon_black.svg" alt="App Logo" className="h-6 w-auto" />
-                             <img src="/logo_word_black.svg" alt="Zinc" className="h-4 w-auto mt-0.5" />
-                        </div>
-                    </div>
-                    
-                    <table className="w-full text-start border-collapse mb-4 print-text-sm">
-                        <thead>
-                            <tr className="border-b border-black text-black">
-                                <th className="py-1 text-start font-bold w-[30%]">{t.stockAdjustment?.table?.product || "Product"}</th>
-                                <th className="py-1 text-center font-bold">{t.barcodePrinter?.tableHeaders?.expiry || "Expiry"}</th>
-                                <th className="py-1 text-center font-bold">{t.stockAdjustment?.table?.current || "Current"}</th>
-                                <th className="py-1 text-center font-bold">{t.stockAdjustment?.table?.new || "New"}</th>
-                                <th className="py-1 text-center font-bold">{t.stockAdjustment?.table?.diff || "Diff"}</th>
-                                <th className="py-1 text-start font-bold">{t.stockAdjustment?.table?.reason || "Reason"}</th>
-                                <th className="py-1 text-start font-bold">{t.stockAdjustment?.table?.notes || "Notes"}</th>
-                                <th className="py-1 text-start font-bold">{t.intelligence?.audit?.columns?.employee || "User"}</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-black">
-                            {data.length > 0 ? (
-                                data.map((item) => (
-                                    <tr 
-                                        key={item.id} 
-                                        className={`border-b border-black/5 ${item.newStock === 0 ? 'bg-[#f0f0f0]' : ''}`} 
-                                        style={{ pageBreakInside: 'avoid' }}
-                                    >
-                                        <td className="py-0.5 font-bold text-start leading-tight">
-                                            <div className="line-clamp-2 overflow-hidden">
-                                                {getDisplayName({ name: item.drugName || item.drugId || 'Unknown Product' })}
-                                            </div>
-                                        </td>
-                                        <td className="py-0.5 text-center font-bold text-black whitespace-nowrap">
-                                            {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('en-US', { month: 'numeric', year: 'numeric' }) : '-'}
-                                        </td>
-                                        <td className="py-0.5 text-center text-black tabular-nums">{item.previousStock}</td>
-                                        <td className="py-0.5 text-center text-black tabular-nums">{item.newStock}</td>
-                                        <td className="py-0.5 text-center" dir="ltr">
-                                            <span className={`inline-block font-bold tabular-nums min-w-[45px] text-center border rounded-md px-1 ${
-                                                item.quantity > 0 ? 'text-green-700 border-green-700' : 'text-red-700 border-red-700'
-                                            }`}>
-                                                {item.quantity >= 0 ? '+' : ''}{item.quantity}
-                                            </span>
-                                        </td>
-                                        <td className="py-0.5 italic text-black text-start truncate max-w-[80px]">{item.reason}</td>
-                                        <td className="py-0.5 text-black text-start truncate max-w-[80px]">{item.notes || '-'}</td>
-                                        <td className="py-0.5 text-black font-medium text-start whitespace-nowrap">
-                                            {item.performedByName || item.performedBy}
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan={8} className="py-8 text-center text-black italic">
-                                        {activeView === 'history' 
-                                            ? (t.stockAdjustment?.noHistory || "No history records found for the selected period.")
-                                            : (t.stockAdjustment?.noRecent || "No recent transaction to print. Perform an adjustment first.")}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+      </style>
 
-                    <div className="signature-block mt-auto pb-4 flex justify-between items-end" style={{ pageBreakInside: 'avoid' }}>
-                        <div className="text-center">
-                            <div className="w-40 border-b border-gray-400 mb-1"></div>
-                            <p className="print-text-sm font-bold text-black">{t.stockAdjustment?.managerSignature || "Manager Signature"}</p>
-                        </div>
-                        <div className="text-center">
-                            <div className="w-40 border-b border-gray-400 mb-1"></div>
-                            <p className="print-text-sm font-bold text-black">{t.stockAdjustment?.auditorSignature || "Auditor Signature"}</p>
-                        </div>
-                    </div>
-                </div>
+      {/* Unique class for the portal wrapper */}
+      <div
+        className='stock-adjustment-print-portal hidden print:block bg-white text-black'
+        dir={isRTL ? 'rtl' : 'ltr'}
+      >
+        <div className='stock-adjustment-print-content min-h-screen flex flex-col'>
+          <div className='flex justify-between items-start mb-4'>
+            <div className='text-left'>
+              <h1 className='print-text-xl font-bold text-black mb-1'>
+                {pharmacyName} - Inventory Count
+              </h1>
+              <p className='print-text-sm text-black'>
+                Generated on {new Date().toLocaleString(isRTL ? 'ar-EG' : 'en-US')}
+              </p>
             </div>
-        </>,
-        document.body
-    );
+            <div className='flex items-center gap-2'>
+              <img src='/logo_icon_black.svg' alt='App Logo' className='h-6 w-auto' />
+              <img src='/logo_word_black.svg' alt='Zinc' className='h-4 w-auto mt-0.5' />
+            </div>
+          </div>
+
+          <table className='w-full text-start border-collapse mb-4 print-text-sm'>
+            <thead>
+              <tr className='border-b border-black text-black'>
+                <th className='py-1 text-start font-bold w-[30%]'>
+                  {t.stockAdjustment?.table?.product || 'Product'}
+                </th>
+                <th className='py-1 text-center font-bold'>
+                  {t.barcodePrinter?.tableHeaders?.expiry || 'Expiry'}
+                </th>
+                <th className='py-1 text-center font-bold'>
+                  {t.stockAdjustment?.table?.current || 'Current'}
+                </th>
+                <th className='py-1 text-center font-bold'>
+                  {t.stockAdjustment?.table?.new || 'New'}
+                </th>
+                <th className='py-1 text-center font-bold'>
+                  {t.stockAdjustment?.table?.diff || 'Diff'}
+                </th>
+                <th className='py-1 text-start font-bold'>
+                  {t.stockAdjustment?.table?.reason || 'Reason'}
+                </th>
+                <th className='py-1 text-start font-bold'>
+                  {t.stockAdjustment?.table?.notes || 'Notes'}
+                </th>
+                <th className='py-1 text-start font-bold'>
+                  {t.intelligence?.audit?.columns?.employee || 'User'}
+                </th>
+              </tr>
+            </thead>
+            <tbody className='text-black'>
+              {data.length > 0 ? (
+                data.map((item) => (
+                  <tr
+                    key={item.id}
+                    className={`border-b border-black/5 ${item.newStock === 0 ? 'bg-[#f0f0f0]' : ''}`}
+                    style={{ pageBreakInside: 'avoid' }}
+                  >
+                    <td className='py-0.5 font-bold text-start leading-tight'>
+                      <div className='line-clamp-2 overflow-hidden'>
+                        {getDisplayName({
+                          name: item.drugName || item.drugId || 'Unknown Product',
+                        })}
+                      </div>
+                    </td>
+                    <td className='py-0.5 text-center font-bold text-black whitespace-nowrap'>
+                      {item.expiryDate
+                        ? new Date(item.expiryDate).toLocaleDateString('en-US', {
+                            month: 'numeric',
+                            year: 'numeric',
+                          })
+                        : '-'}
+                    </td>
+                    <td className='py-0.5 text-center text-black tabular-nums'>
+                      {item.previousStock}
+                    </td>
+                    <td className='py-0.5 text-center text-black tabular-nums'>{item.newStock}</td>
+                    <td className='py-0.5 text-center' dir='ltr'>
+                      <span
+                        className={`inline-block font-bold tabular-nums min-w-[45px] text-center border rounded-md px-1 ${
+                          item.quantity > 0
+                            ? 'text-green-700 border-green-700'
+                            : 'text-red-700 border-red-700'
+                        }`}
+                      >
+                        {item.quantity >= 0 ? '+' : ''}
+                        {item.quantity}
+                      </span>
+                    </td>
+                    <td className='py-0.5 italic text-black text-start truncate max-w-[80px]'>
+                      {item.reason}
+                    </td>
+                    <td className='py-0.5 text-black text-start truncate max-w-[80px]'>
+                      {item.notes || '-'}
+                    </td>
+                    <td className='py-0.5 text-black font-medium text-start whitespace-nowrap'>
+                      {item.performedByName || item.performedBy}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className='py-8 text-center text-black italic'>
+                    {activeView === 'history'
+                      ? t.stockAdjustment?.noHistory ||
+                        'No history records found for the selected period.'
+                      : t.stockAdjustment?.noRecent ||
+                        'No recent transaction to print. Perform an adjustment first.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          <div
+            className='signature-block mt-auto pb-4 flex justify-between items-end'
+            style={{ pageBreakInside: 'avoid' }}
+          >
+            <div className='text-center'>
+              <div className='w-40 border-b border-gray-400 mb-1'></div>
+              <p className='print-text-sm font-bold text-black'>
+                {t.stockAdjustment?.managerSignature || 'Manager Signature'}
+              </p>
+            </div>
+            <div className='text-center'>
+              <div className='w-40 border-b border-gray-400 mb-1'></div>
+              <p className='print-text-sm font-bold text-black'>
+                {t.stockAdjustment?.auditorSignature || 'Auditor Signature'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>,
+    document.body
+  );
 };

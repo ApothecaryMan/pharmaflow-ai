@@ -1,65 +1,54 @@
-import React, {
-  useState,
-  useMemo,
-  useRef,
-  useEffect,
-  useCallback,
-} from "react";
-import { useContextMenu } from "../common/ContextMenu";
-import { Drug, CartItem, Sale, Customer, Language, Shift, Employee } from "../../types";
-
-import { useFilterDropdown } from "../../hooks/useFilterDropdown";
-import { getLocationName } from "../../data/locations";
-import { usePOSTabs } from "../../hooks/usePOSTabs";
-import { useStatusBar } from "../layout/StatusBar";
-import { UserRole, canPerformAction } from "../../config/permissions";
-import { useAlert } from "../../context";
-
-import { SmartAutocomplete } from "../common/SmartInputs";
-import { SearchInput } from "../common/SearchInput";
-import { SegmentedControl } from "../common/SegmentedControl";
-import { TabBar } from "../layout/TabBar";
-import { parseSearchTerm } from "../../utils/searchUtils";
 import {
-  generateInvoiceHTML,
-  InvoiceTemplateOptions,
-  getActiveReceiptSettings,
-} from "../sales/InvoiceTemplate";
-import { formatStock } from "../../utils/inventory";
-import { getPrinterSettings, printReceiptSilently } from "../../utils/qzPrinter";
-import { FilterDropdown } from "../common/FilterDropdown";
-import {
-  createColumnHelper,
-  ColumnDef,
-} from "@tanstack/react-table";
-import { TanStackTable, PriceDisplay } from "../common/TanStackTable";
-import { CARD_MD } from "../../utils/themeStyles";
-import { Modal } from "../common/Modal";
-import {
-  DndContext,
   closestCenter,
+  DndContext,
+  type DragEndEvent,
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
+} from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-
-import { TRANSLATIONS } from "../../i18n/translations";
-import { usePosSounds } from "../../components/common/hooks/usePosSounds";
-import { usePosShortcuts } from "../../components/common/hooks/usePosShortcuts";
-import { SortableCartItem, calculateItemTotal } from "../sales/SortableCartItem";
-import { storage } from "../../utils/storage";
-import { StorageKeys } from "../../config/storageKeys";
-import { DeliveryOrdersModal } from "./DeliveryOrdersModal";
-import { getDisplayName } from "../../utils/drugDisplayName";
+} from '@dnd-kit/sortable';
+import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { usePosShortcuts } from '../../components/common/hooks/usePosShortcuts';
+import { usePosSounds } from '../../components/common/hooks/usePosSounds';
+import { canPerformAction, type UserRole } from '../../config/permissions';
+import { StorageKeys } from '../../config/storageKeys';
+import { useAlert } from '../../context';
+import { getLocationName } from '../../data/locations';
+import { useFilterDropdown } from '../../hooks/useFilterDropdown';
+import { usePOSTabs } from '../../hooks/usePOSTabs';
+import type { TRANSLATIONS } from '../../i18n/translations';
+import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../types';
+import { getDisplayName } from '../../utils/drugDisplayName';
+import { formatStock } from '../../utils/inventory';
+import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
+import { parseSearchTerm } from '../../utils/searchUtils';
+import { storage } from '../../utils/storage';
+import { CARD_MD } from '../../utils/themeStyles';
+import { useContextMenu } from '../common/ContextMenu';
+import { FilterDropdown } from '../common/FilterDropdown';
+import { Modal } from '../common/Modal';
+import { SearchInput } from '../common/SearchInput';
+import { SegmentedControl } from '../common/SegmentedControl';
+import { SmartAutocomplete } from '../common/SmartInputs';
+import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
+import { useStatusBar } from '../layout/StatusBar';
+import { TabBar } from '../layout/TabBar';
+import {
+  generateInvoiceHTML,
+  getActiveReceiptSettings,
+  InvoiceTemplateOptions,
+} from '../sales/InvoiceTemplate';
+import { calculateItemTotal, SortableCartItem } from '../sales/SortableCartItem';
+import { DeliveryOrdersModal } from './DeliveryOrdersModal';
 
 // --- Main POS Component ---
 interface POSProps {
@@ -71,8 +60,8 @@ interface POSProps {
     customerPhone?: string;
     customerAddress?: string;
     customerStreetAddress?: string;
-    paymentMethod: "cash" | "visa";
-    saleType?: "walk-in" | "delivery";
+    paymentMethod: 'cash' | 'visa';
+    saleType?: 'walk-in' | 'delivery';
     deliveryFee?: number;
     globalDiscount: number;
     subtotal: number;
@@ -100,7 +89,7 @@ export const POS: React.FC<POSProps> = ({
   color,
   t,
   customers,
-  language = "EN",
+  language = 'EN',
   darkMode,
   employees = [],
   sales = [],
@@ -133,8 +122,7 @@ export const POS: React.FC<POSProps> = ({
   const cart = activeTab?.cart || [];
   const setCart = useCallback(
     (newCart: CartItem[] | ((prev: CartItem[]) => CartItem[])) => {
-      const updatedCart =
-        typeof newCart === "function" ? newCart(cart) : newCart;
+      const updatedCart = typeof newCart === 'function' ? newCart(cart) : newCart;
       updateTab(activeTabId, { cart: updatedCart });
     },
     [cart, activeTabId, updateTab]
@@ -142,10 +130,7 @@ export const POS: React.FC<POSProps> = ({
 
   // Derived state: Group cart items by Drug ID (Visual Merging)
   const mergedCartItems = useMemo(() => {
-    const map = new Map<
-      string,
-      { pack?: CartItem; unit?: CartItem; order: number }
-    >();
+    const map = new Map<string, { pack?: CartItem; unit?: CartItem; order: number }>();
     cart.forEach((item, index) => {
       if (!map.has(item.id)) {
         map.set(item.id, { order: index });
@@ -162,7 +147,7 @@ export const POS: React.FC<POSProps> = ({
     }));
   }, [cart]);
 
-  const customerName = activeTab?.customerName || "";
+  const customerName = activeTab?.customerName || '';
   const setCustomerName = useCallback(
     (name: string) => {
       updateTab(activeTabId, { customerName: name });
@@ -184,11 +169,11 @@ export const POS: React.FC<POSProps> = ({
 
   // Rest of the state remains the same
   // Use active tab's search query
-  const search = activeTab?.searchQuery || "";
+  const search = activeTab?.searchQuery || '';
   const setSearch = useCallback(
     (query: string | ((prev: string) => string)) => {
       updateTab(activeTabId, (prevTab) => {
-        const newQuery = typeof query === "function" ? query(prevTab.searchQuery) : query;
+        const newQuery = typeof query === 'function' ? query(prevTab.searchQuery) : query;
         return { searchQuery: newQuery };
       });
     },
@@ -220,46 +205,38 @@ export const POS: React.FC<POSProps> = ({
   });
 
   // Enhanced Customer UX State
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null
-  );
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showCodeDropdown, setShowCodeDropdown] = useState(false);
   const [filteredByCode, setFilteredByCode] = useState<Customer[]>([]);
   // Selected category state key: 'All', 'Medicine', 'Cosmetics', 'Non-Medicine'
 
-  const customerCode = activeTab?.customerCode || "";
+  const customerCode = activeTab?.customerCode || '';
   const setCustomerCode = useCallback(
     (code: string) => {
       updateTab(activeTabId, { customerCode: code });
     },
     [activeTabId, updateTab]
   );
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "visa">("cash");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [mobileTab, setMobileTab] = useState<"products" | "cart">("products");
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'visa'>('cash');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
 
-  const [selectedUnits, setSelectedUnits] = useState<
-    Record<string, "pack" | "unit">
-  >({});
+  const [selectedUnits, setSelectedUnits] = useState<Record<string, 'pack' | 'unit'>>({});
   const [openUnitDropdown, setOpenUnitDropdown] = useState<string | null>(null);
-  const [selectedBatches, setSelectedBatches] = useState<
-    Record<string, string>
-  >({}); // drugId -> batchId
-  const [openBatchDropdown, setOpenBatchDropdown] = useState<string | null>(
-    null
-  );
+  const [selectedBatches, setSelectedBatches] = useState<Record<string, string>>({}); // drugId -> batchId
+  const [openBatchDropdown, setOpenBatchDropdown] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0); // For grid navigation
   const searchInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Delivery State
-  const [deliveryEmployeeId, setDeliveryEmployeeId] = useState<string>("");
+  const [deliveryEmployeeId, setDeliveryEmployeeId] = useState<string>('');
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
 
   // checkout state for inline calculator
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
   const [isDeliveryMode, setIsDeliveryMode] = useState(false);
-  const [amountPaid, setAmountPaid] = useState("");
+  const [amountPaid, setAmountPaid] = useState('');
 
   // Global Keydown Listener for Scanner
   // Keyboard Shortcuts & Sounds
@@ -271,16 +248,16 @@ export const POS: React.FC<POSProps> = ({
 
   // Check for Out of Stock events
   useEffect(() => {
-    inventory.forEach(drug => {
+    inventory.forEach((drug) => {
       const prevStock = prevStockRef.current.get(drug.id);
-      
+
       // If we had stock before (or it's the first run but we want to track it)
       // Actually, only notify if we TRANSITION from > 0 to <= 0.
       if (prevStock !== undefined && prevStock > 0 && drug.stock <= 0) {
         addNotification({
           messageKey: 'outOfStock',
           messageParams: { name: drug.name, form: drug.dosageForm || '' },
-          type: 'out_of_stock'
+          type: 'out_of_stock',
         });
         playError(); // Use error sound for attention
       }
@@ -301,14 +278,12 @@ export const POS: React.FC<POSProps> = ({
     }
   }, [mergedCartItems.length]);
 
-
-
   // Global Keydown (Simple Alphanumeric for Scanner / Search Focus)
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (
-        document.activeElement?.tagName === "INPUT" ||
-        document.activeElement?.tagName === "TEXTAREA"
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA'
       ) {
         return;
       }
@@ -320,13 +295,11 @@ export const POS: React.FC<POSProps> = ({
         setSearch((prev) => prev + e.key);
       }
     };
-    window.addEventListener("keydown", handleGlobalKeyDown);
-    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [setSearch]);
 
-  const [stockFilter, setStockFilter] = useState<
-    "all" | "in_stock" | "out_of_stock"
-  >("in_stock");
+  const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'out_of_stock'>('in_stock');
 
   // Shift validation - check if there's an open shift
   const [hasOpenShift, setHasOpenShift] = useState<boolean>(true);
@@ -339,7 +312,7 @@ export const POS: React.FC<POSProps> = ({
           setHasOpenShift(false);
           return;
         }
-        const openShift = savedShifts.find((s) => s.status === "open");
+        const openShift = savedShifts.find((s) => s.status === 'open');
         setHasOpenShift(!!openShift);
       } catch {
         setHasOpenShift(false);
@@ -356,16 +329,16 @@ export const POS: React.FC<POSProps> = ({
       }
     };
 
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
-  const [activeFilterDropdown, setActiveFilterDropdown] = useState<
-    "category" | "stock" | null
-  >(null);
+  const [activeFilterDropdown, setActiveFilterDropdown] = useState<'category' | 'stock' | null>(
+    null
+  );
 
   // Sidebar Resize Logic
   const [sidebarWidth, setSidebarWidth] = useState(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       const saved = storage.get<number | null>(StorageKeys.POS_SIDEBAR_WIDTH, null);
       // Handle the case where the saved value might be a string in localStorage if not using storage.set previously
       // But storage.get handles JSON parse. If it's a raw string '350', JSON.parse('350') is 350.
@@ -380,28 +353,25 @@ export const POS: React.FC<POSProps> = ({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef(false);
 
-  const startResizing = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      isResizing.current = true;
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
-    },
-    []
-  );
+  const startResizing = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    isResizing.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, []);
 
   const stopResizing = useCallback(() => {
     isResizing.current = false;
-    document.body.style.cursor = "";
-    document.body.style.userSelect = "";
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
   }, []);
 
   const resize = useCallback((e: MouseEvent | TouchEvent) => {
     if (isResizing.current && sidebarRef.current) {
-      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
       const rect = sidebarRef.current.getBoundingClientRect();
       const isRTL =
-        document.documentElement.dir === "rtl" ||
-        document.documentElement.getAttribute("dir") === "rtl";
+        document.documentElement.dir === 'rtl' ||
+        document.documentElement.getAttribute('dir') === 'rtl';
 
       let newWidth;
       if (isRTL) {
@@ -421,70 +391,66 @@ export const POS: React.FC<POSProps> = ({
   }, []);
 
   useEffect(() => {
-    window.addEventListener("mousemove", resize);
-    window.addEventListener("mouseup", stopResizing);
-    window.addEventListener("touchmove", resize);
-    window.addEventListener("touchend", stopResizing);
+    window.addEventListener('mousemove', resize);
+    window.addEventListener('mouseup', stopResizing);
+    window.addEventListener('touchmove', resize);
+    window.addEventListener('touchend', stopResizing);
     return () => {
-      window.removeEventListener("mousemove", resize);
-      window.removeEventListener("mouseup", stopResizing);
-      window.removeEventListener("touchmove", resize);
-      window.removeEventListener("touchend", stopResizing);
+      window.removeEventListener('mousemove', resize);
+      window.removeEventListener('mouseup', stopResizing);
+      window.removeEventListener('touchmove', resize);
+      window.removeEventListener('touchend', stopResizing);
     };
   }, [resize, stopResizing]);
 
   const categories = [
-    { id: "All", label: t.categories.all },
-    { id: "Medicine", label: t.categories.medicine },
-    { id: "Cosmetics", label: t.categories.cosmetics },
-    { id: "General", label: t.categories.general },
+    { id: 'All', label: t.categories.all },
+    { id: 'Medicine', label: t.categories.medicine },
+    { id: 'Cosmetics', label: t.categories.cosmetics },
+    { id: 'General', label: t.categories.general },
   ];
 
   // Helper to map specific categories to broad groups
   const getBroadCategory = (category: string): string => {
-    const cosmetics = ["Skin Care", "Personal Care"];
-    const general = ["Medical Equipment", "Medical Supplies", "Baby Care"];
+    const cosmetics = ['Skin Care', 'Personal Care'];
+    const general = ['Medical Equipment', 'Medical Supplies', 'Baby Care'];
 
-    if (cosmetics.includes(category)) return "Cosmetics";
-    if (general.includes(category)) return "General";
-    return "Medicine";
+    if (cosmetics.includes(category)) return 'Cosmetics';
+    if (general.includes(category)) return 'General';
+    return 'Medicine';
   };
 
-  const addToCart = (
-    drug: Drug,
-    isUnitMode: boolean = false,
-    initialQuantity: number = 1
-  ) => {
+  const addToCart = (drug: Drug, isUnitMode: boolean = false, initialQuantity: number = 1) => {
     if (drug.stock <= 0) return;
-    
+
     // Track when first item is added (for accurate processing time)
     if (cart.length === 0 && !activeTab?.firstItemAt) {
       updateTab(activeTabId, { firstItemAt: Date.now() });
     }
-    
+
     setCart((prev) => {
       // Calculate Validation Logic (Total Units)
-      const currentCartItems = prev.filter(i => i.id === drug.id);
+      const currentCartItems = prev.filter((i) => i.id === drug.id);
       let totalUnitsInCart = 0;
-      
-      currentCartItems.forEach(i => {
-          if (i.isUnit) totalUnitsInCart += i.quantity;
-          else totalUnitsInCart += i.quantity * (drug.unitsPerPack || 1);
+
+      currentCartItems.forEach((i) => {
+        if (i.isUnit) totalUnitsInCart += i.quantity;
+        else totalUnitsInCart += i.quantity * (drug.unitsPerPack || 1);
       });
-      
+
       // Calculate Units attempting to add
       const unitsToAdd = isUnitMode ? initialQuantity : initialQuantity * (drug.unitsPerPack || 1);
-      
+
       if (totalUnitsInCart + unitsToAdd > drug.stock) {
-          // Toast or error could be shown here
-          return prev; 
+        // Toast or error could be shown here
+        return prev;
       }
 
       // Existing Item Logic
       const existingIndex = prev.findIndex(
         (item) => item.id === drug.id && !!item.isUnit === isUnitMode
       );
-      
+
       if (existingIndex >= 0) {
         const existing = prev[existingIndex];
         const updated = [...prev];
@@ -497,7 +463,12 @@ export const POS: React.FC<POSProps> = ({
 
       return [
         ...prev,
-        { ...drug, quantity: initialQuantity, discount: prev.find(i => i.id === drug.id && !!i.isUnit !== isUnitMode)?.discount || 0, isUnit: isUnitMode },
+        {
+          ...drug,
+          quantity: initialQuantity,
+          discount: prev.find((i) => i.id === drug.id && !!i.isUnit !== isUnitMode)?.discount || 0,
+          isUnit: isUnitMode,
+        },
       ];
     });
   };
@@ -519,10 +490,7 @@ export const POS: React.FC<POSProps> = ({
           .filter((c) => c.id === d.id) // Get all entries for this batch (unit + pack)
           .reduce(
             (sum, c) =>
-              sum +
-              (c.isUnit && c.unitsPerPack
-                ? c.quantity / c.unitsPerPack
-                : c.quantity),
+              sum + (c.isUnit && c.unitsPerPack ? c.quantity / c.unitsPerPack : c.quantity),
             0
           );
         return d.stock - inCart > 0;
@@ -530,15 +498,13 @@ export const POS: React.FC<POSProps> = ({
     }
 
     if (targetBatch) {
-      const unitMode = selectedUnits[firstDrug.id] === "unit";
+      const unitMode = selectedUnits[firstDrug.id] === 'unit';
       addToCart(targetBatch, unitMode);
     }
   };
 
   const removeFromCart = (id: string, isUnit: boolean) => {
-    setCart((prev) =>
-      prev.filter((item) => !(item.id === id && !!item.isUnit === isUnit))
-    );
+    setCart((prev) => prev.filter((item) => !(item.id === id && !!item.isUnit === isUnit)));
   };
 
   const removeDrugFromCart = (id: string) => {
@@ -560,27 +526,28 @@ export const POS: React.FC<POSProps> = ({
     // Remove old entries for this drug
     setCart((prev) => {
       // Find insertion index (first occurrence)
-      const insertionIndex = prev.findIndex((item) => item.name === currentItem.name && item.dosageForm === currentItem.dosageForm);
-      
-      const filtered = prev.filter((item) => !(item.name === currentItem.name && item.dosageForm === currentItem.dosageForm));
-      
+      const insertionIndex = prev.findIndex(
+        (item) => item.name === currentItem.name && item.dosageForm === currentItem.dosageForm
+      );
+
+      const filtered = prev.filter(
+        (item) => !(item.name === currentItem.name && item.dosageForm === currentItem.dosageForm)
+      );
+
       // Calculate what we need to add
       const newItems: CartItem[] = [];
       let remainingPacks = packQty;
       let remainingUnits = unitQty;
-      
+
       // Start from the selected batch, then continue with others
-      const orderedBatches = [
-        newBatch,
-        ...allBatches.filter((b) => b.id !== newBatch.id)
-      ];
-      
+      const orderedBatches = [newBatch, ...allBatches.filter((b) => b.id !== newBatch.id)];
+
       for (const batch of orderedBatches) {
         if (remainingPacks <= 0 && remainingUnits <= 0) break;
-        
+
         const unitsPerPack = batch.unitsPerPack || 1;
         const stockInPacks = Math.floor(batch.stock / unitsPerPack);
-        
+
         // Calculate how much we can take from this batch
         if (remainingPacks > 0) {
           const packsTake = Math.min(remainingPacks, stockInPacks);
@@ -594,11 +561,13 @@ export const POS: React.FC<POSProps> = ({
             remainingPacks -= packsTake;
           }
         }
-        
+
         // Calculate remaining stock after packs for units
-        const usedPacks = newItems.filter(i => i.id === batch.id && !i.isUnit).reduce((s, i) => s + i.quantity, 0);
+        const usedPacks = newItems
+          .filter((i) => i.id === batch.id && !i.isUnit)
+          .reduce((s, i) => s + i.quantity, 0);
         const remainingStockForUnits = (stockInPacks - usedPacks) * unitsPerPack;
-        
+
         if (remainingUnits > 0 && unitsPerPack > 1) {
           const unitsTake = Math.min(remainingUnits, remainingStockForUnits);
           if (unitsTake > 0) {
@@ -612,7 +581,7 @@ export const POS: React.FC<POSProps> = ({
           }
         }
       }
-      
+
       if (insertionIndex !== -1) {
         const result = [...filtered];
         result.splice(insertionIndex, 0, ...newItems);
@@ -651,18 +620,13 @@ export const POS: React.FC<POSProps> = ({
         newPackQty = newQty;
       }
 
-      const totalUnitsUsed =
-        (newPackQty * unitsPerPack) + newUnitQty;
+      const totalUnitsUsed = newPackQty * unitsPerPack + newUnitQty;
       const isStockValid = totalUnitsUsed <= stock;
 
       // Min qty validation
       // If ONLY pack mode (no dual), pack must be >= 1
       // If dual mode, either can be 0 as long as the other has value (handled by UI delete)
-      const minQtyValid = hasDualMode
-        ? newQty >= 0
-        : isUnit
-        ? newQty >= 0
-        : newQty >= 1;
+      const minQtyValid = hasDualMode ? newQty >= 0 : isUnit ? newQty >= 0 : newQty >= 1;
 
       if (minQtyValid && isStockValid) {
         return prev.map((item) => {
@@ -678,9 +642,7 @@ export const POS: React.FC<POSProps> = ({
 
   const toggleUnitMode = (id: string, currentIsUnit: boolean) => {
     setCart((prev) => {
-      const itemIndex = prev.findIndex(
-        (i) => i.id === id && !!i.isUnit === currentIsUnit
-      );
+      const itemIndex = prev.findIndex((i) => i.id === id && !!i.isUnit === currentIsUnit);
       if (itemIndex === -1) return prev;
 
       const item = prev[itemIndex];
@@ -694,22 +656,22 @@ export const POS: React.FC<POSProps> = ({
         // Pack -> Unit
         // Check if there is already a Unit item to merge into
         const existingUnitIndex = prev.findIndex((i) => i.id === id && i.isUnit);
-        
+
         const convertedQty = item.quantity * unitsPerPack;
-        
+
         let updated = [...prev];
-        
+
         if (existingUnitIndex >= 0) {
-            // Merge into existing Unit item
-            updated[existingUnitIndex] = {
-                ...updated[existingUnitIndex],
-                quantity: updated[existingUnitIndex].quantity + convertedQty
-            };
-            // Remove the Pack item
-            updated = updated.filter((_, idx) => idx !== itemIndex);
+          // Merge into existing Unit item
+          updated[existingUnitIndex] = {
+            ...updated[existingUnitIndex],
+            quantity: updated[existingUnitIndex].quantity + convertedQty,
+          };
+          // Remove the Pack item
+          updated = updated.filter((_, idx) => idx !== itemIndex);
         } else {
-            // Just convert this item to Unit
-            updated[itemIndex] = { ...item, isUnit: true, quantity: convertedQty };
+          // Just convert this item to Unit
+          updated[itemIndex] = { ...item, isUnit: true, quantity: convertedQty };
         }
         return updated;
       }
@@ -718,32 +680,28 @@ export const POS: React.FC<POSProps> = ({
       if (unitsPerPack <= 1) return prev;
 
       const convertedPacks = item.quantity / unitsPerPack; // Allow float
-      
+
       const existingPackIndex = prev.findIndex((i) => i.id === id && !i.isUnit);
       let updated = [...prev];
 
       if (existingPackIndex >= 0) {
-          // Merge into existing Pack item
-          updated[existingPackIndex] = {
-              ...updated[existingPackIndex],
-              quantity: updated[existingPackIndex].quantity + convertedPacks
-          };
-          // Remove the Unit item
-          updated = updated.filter((_, idx) => idx !== itemIndex);
+        // Merge into existing Pack item
+        updated[existingPackIndex] = {
+          ...updated[existingPackIndex],
+          quantity: updated[existingPackIndex].quantity + convertedPacks,
+        };
+        // Remove the Unit item
+        updated = updated.filter((_, idx) => idx !== itemIndex);
       } else {
-          // Convert to Pack
-          updated[itemIndex] = { ...item, isUnit: false, quantity: convertedPacks };
+        // Convert to Pack
+        updated[itemIndex] = { ...item, isUnit: false, quantity: convertedPacks };
       }
 
       return updated;
     });
   };
 
-  const updateItemDiscount = (
-    id: string,
-    isUnit: boolean,
-    discount: number
-  ) => {
+  const updateItemDiscount = (id: string, isUnit: boolean, discount: number) => {
     if (!canPerformAction(userRole, 'sale.discount')) {
       showToastError('Permission Denied: Cannot apply item discount');
       return;
@@ -751,9 +709,7 @@ export const POS: React.FC<POSProps> = ({
     const validDiscount = Math.min(100, Math.max(0, discount));
     setCart((prev) =>
       prev.map((item) =>
-        item.id === id && !!item.isUnit === isUnit
-          ? { ...item, discount: validDiscount }
-          : item
+        item.id === id && !!item.isUnit === isUnit ? { ...item, discount: validDiscount } : item
       )
     );
   };
@@ -815,8 +771,6 @@ export const POS: React.FC<POSProps> = ({
     }
   };
 
-
-
   // Calculations
   // calculateItemTotal logic moved to SortableCartItem (imported)
 
@@ -825,117 +779,106 @@ export const POS: React.FC<POSProps> = ({
     if (item.isUnit && item.unitsPerPack) {
       unitPrice = item.price / item.unitsPerPack;
     }
-    return sum + (unitPrice * item.quantity);
+    return sum + unitPrice * item.quantity;
   }, 0);
 
-  const netItemTotal = cart.reduce(
-    (sum, item) => sum + calculateItemTotal(item),
-    0
-  );
+  const netItemTotal = cart.reduce((sum, item) => sum + calculateItemTotal(item), 0);
 
   // Cart Total is Net Item Total - Global Discount
   const cartTotal = netItemTotal * (1 - (globalDiscount || 0) / 100);
-  
+
   // Calculate total discount amount (Gross - Net)
   const totalDiscountAmount = grossSubtotal - cartTotal;
   const orderDiscountPercent = grossSubtotal > 0 ? (totalDiscountAmount / grossSubtotal) * 100 : 0;
-  
+
   // Alias for backward compatibility / API usage
   const subtotal = grossSubtotal;
 
   const isValidOrder =
     cart.length > 0 &&
-    mergedCartItems.every(
-      (item) => (item.pack?.quantity || 0) + (item.unit?.quantity || 0) > 0
-    );
+    mergedCartItems.every((item) => (item.pack?.quantity || 0) + (item.unit?.quantity || 0) > 0);
   const totalItems = mergedCartItems.filter(
     (item) => (item.pack?.quantity || 0) + (item.unit?.quantity || 0) > 0
   ).length;
 
-
-
-  const handleCheckout = (saleType: "walk-in" | "delivery" = "walk-in", isPending: boolean = false) => {
+  const handleCheckout = (
+    saleType: 'walk-in' | 'delivery' = 'walk-in',
+    isPending: boolean = false
+  ) => {
     if (!canPerformAction(userRole, 'sale.create')) {
-        showToastError('Permission Denied: Cannot perform checkout');
-        return;
+      showToastError('Permission Denied: Cannot perform checkout');
+      return;
     }
     if (!isValidOrder) return;
 
     let deliveryFee = 0;
-    if (saleType === "delivery") {
+    if (saleType === 'delivery') {
       deliveryFee = 5;
     }
 
     // Validate Delivery Man if Delivery Type
-    if (saleType === "delivery" && !deliveryEmployeeId && !isPending) {
-         // Maybe allow pending without driver? Let's say yes for "Pending", but usually we assign driver.
-         // If "Send to Delivery" (Pending), maybe we don't need driver yet?
-         // User requirement: "delivery with employee then change order to them... status be pending"
-         // So likely select driver first.
-         if (!deliveryEmployeeId) {
-             alert(t.selectDriver || "Please select a delivery man");
-             return;
-         }
+    if (saleType === 'delivery' && !deliveryEmployeeId && !isPending) {
+      // Maybe allow pending without driver? Let's say yes for "Pending", but usually we assign driver.
+      // If "Send to Delivery" (Pending), maybe we don't need driver yet?
+      // User requirement: "delivery with employee then change order to them... status be pending"
+      // So likely select driver first.
+      if (!deliveryEmployeeId) {
+        alert(t.selectDriver || 'Please select a delivery man');
+        return;
+      }
     }
 
     // Notify StatusBar
     addNotification({
       messageKey: 'saleComplete',
       messageParams: { total: cartTotal.toFixed(2) },
-      type: 'success'
+      type: 'success',
     });
 
     // Calculate processing time from first item added to checkout
     // Use firstItemAt if available (more accurate), otherwise fall back to createdAt
     let processingTimeMinutes: number | undefined;
     const startTime = activeTab?.firstItemAt || activeTab?.createdAt;
-    
-    console.log('[POS Checkout] activeTab:', { 
-      firstItemAt: activeTab?.firstItemAt, 
+
+    console.log('[POS Checkout] activeTab:', {
+      firstItemAt: activeTab?.firstItemAt,
       createdAt: activeTab?.createdAt,
       startTime,
-      now: Date.now()
+      now: Date.now(),
     });
-    
+
     if (startTime) {
       // Use decimal minutes (1 decimal place) for sub-minute accuracy
       const rawMinutes = Math.round((Date.now() - startTime) / 6000) / 10; // e.g., 0.5, 1.2, etc.
       // Cap at 60 minutes to handle edge cases (idle carts), minimum of 0.1
       processingTimeMinutes = Math.max(0.1, Math.min(rawMinutes, 60));
-      console.log('[POS Checkout] processingTimeMinutes:', processingTimeMinutes, 'rawMinutes:', rawMinutes);
+      console.log(
+        '[POS Checkout] processingTimeMinutes:',
+        processingTimeMinutes,
+        'rawMinutes:',
+        rawMinutes
+      );
     }
 
     onCompleteSale({
       items: cart,
-      customerName: customerName || "Guest Customer",
+      customerName: customerName || 'Guest Customer',
       customerCode,
       customerPhone: selectedCustomer?.phone,
       customerAddress: selectedCustomer
         ? [
             selectedCustomer.area
-              ? getLocationName(
-                  selectedCustomer.area,
-                  "area",
-                  language as "EN" | "AR"
-                )
-              : "",
+              ? getLocationName(selectedCustomer.area, 'area', language as 'EN' | 'AR')
+              : '',
             selectedCustomer.city
-              ? getLocationName(
-                  selectedCustomer.city,
-                  "city",
-                  language as "EN" | "AR"
-                )
-              : "",
+              ? getLocationName(selectedCustomer.city, 'city', language as 'EN' | 'AR')
+              : '',
             selectedCustomer.governorate
-              ? getLocationName(
-                  selectedCustomer.governorate,
-                  "gov",
-                  language as "EN" | "AR"
-                )
-              : "",
+              ? getLocationName(selectedCustomer.governorate, 'gov', language as 'EN' | 'AR')
+              : '',
           ]
             .filter(Boolean)
-            .join(", ")
+            .join(', ')
         : undefined,
       customerStreetAddress: selectedCustomer?.streetAddress,
       paymentMethod,
@@ -944,123 +887,110 @@ export const POS: React.FC<POSProps> = ({
       globalDiscount,
       subtotal,
       total: cartTotal + deliveryFee,
-      // @ts-ignore - Extended properties handled by parent
+      // @ts-expect-error - Extended properties handled by parent
       deliveryEmployeeId: saleType === 'delivery' ? deliveryEmployeeId : undefined,
-      status: isPending ? 'pending' : (saleType === 'delivery' ? (deliveryEmployeeId ? 'with_delivery' : 'pending') : 'completed'),
-      processingTimeMinutes
+      status: isPending
+        ? 'pending'
+        : saleType === 'delivery'
+          ? deliveryEmployeeId
+            ? 'with_delivery'
+            : 'pending'
+          : 'completed',
+      processingTimeMinutes,
     });
 
     // Auto-Print Receipt Logic
     try {
       const opts = getActiveReceiptSettings();
-      const isDelivery = saleType === "delivery";
-      
-      const shouldPrint =
-        (isDelivery && opts.autoPrintOnDelivery) ||
-        opts.autoPrintOnComplete;
+      const isDelivery = saleType === 'delivery';
+
+      const shouldPrint = (isDelivery && opts.autoPrintOnDelivery) || opts.autoPrintOnComplete;
 
       if (shouldPrint) {
-            // Construct a temporary Sale object for printing
-            // Since onCompleteSale is an event, we don't have the final DB ID yet.
-            // We'll use a placeholder or handle it gracefully.
-            // Use verified time for receipt
-            const verifiedDate = getVerifiedDate();
-            const mockSale: Sale = {
-              id: "TRX-" + verifiedDate.getTime().toString().slice(-6),
-              date: verifiedDate.toISOString(),
-              dailyOrderNumber: 0, // Placeholder
-              items: cart,
-              subtotal,
-              globalDiscount: globalDiscount, // global discount amount? No, Sale interface says globalDiscount is number.
-              // In POS state, globalDiscount is number (percent).
-              // In Sale interface: globalDiscount is number.
-              // But wait, cartTotal calculation uses it as percent: subtotal * (1 - (globalDiscount / 100))
-              // So we pass it as is.
-              total: cartTotal + deliveryFee,
-              paymentMethod,
-              saleType,
-              deliveryFee,
-              status: "completed",
-              customerName: customerName || "Guest Customer",
-              customerCode,
-              customerPhone: selectedCustomer?.phone,
-              customerAddress: selectedCustomer
-                ? [
-                    selectedCustomer.area
-                      ? getLocationName(
-                          selectedCustomer.area,
-                          "area",
-                          language as "EN" | "AR"
-                        )
-                      : "",
-                    selectedCustomer.city
-                      ? getLocationName(
-                          selectedCustomer.city,
-                          "city",
-                          language as "EN" | "AR"
-                        )
-                      : "",
-                    selectedCustomer.governorate
-                      ? getLocationName(
-                          selectedCustomer.governorate,
-                          "gov",
-                          language as "EN" | "AR"
-                        )
-                      : "",
-                  ]
-                    .filter(Boolean)
-                    .join(", ")
-                : undefined,
-              customerStreetAddress: selectedCustomer?.streetAddress,
-            };
+        // Construct a temporary Sale object for printing
+        // Since onCompleteSale is an event, we don't have the final DB ID yet.
+        // We'll use a placeholder or handle it gracefully.
+        // Use verified time for receipt
+        const verifiedDate = getVerifiedDate();
+        const mockSale: Sale = {
+          id: 'TRX-' + verifiedDate.getTime().toString().slice(-6),
+          date: verifiedDate.toISOString(),
+          dailyOrderNumber: 0, // Placeholder
+          items: cart,
+          subtotal,
+          globalDiscount: globalDiscount, // global discount amount? No, Sale interface says globalDiscount is number.
+          // In POS state, globalDiscount is number (percent).
+          // In Sale interface: globalDiscount is number.
+          // But wait, cartTotal calculation uses it as percent: subtotal * (1 - (globalDiscount / 100))
+          // So we pass it as is.
+          total: cartTotal + deliveryFee,
+          paymentMethod,
+          saleType,
+          deliveryFee,
+          status: 'completed',
+          customerName: customerName || 'Guest Customer',
+          customerCode,
+          customerPhone: selectedCustomer?.phone,
+          customerAddress: selectedCustomer
+            ? [
+                selectedCustomer.area
+                  ? getLocationName(selectedCustomer.area, 'area', language as 'EN' | 'AR')
+                  : '',
+                selectedCustomer.city
+                  ? getLocationName(selectedCustomer.city, 'city', language as 'EN' | 'AR')
+                  : '',
+                selectedCustomer.governorate
+                  ? getLocationName(selectedCustomer.governorate, 'gov', language as 'EN' | 'AR')
+                  : '',
+              ]
+                .filter(Boolean)
+                .join(', ')
+            : undefined,
+          customerStreetAddress: selectedCustomer?.streetAddress,
+        };
 
-            const html = generateInvoiceHTML(mockSale, opts);
+        const html = generateInvoiceHTML(mockSale, opts);
 
-            // Try QZ Tray silent printing first
-            const printerSettings = getPrinterSettings();
-            const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
-            
-            if (shouldTrySilent) {
-              (async () => {
-                try {
-                  const silentPrinted = await printReceiptSilently(html);
-                  if (silentPrinted) {
-                    console.log('Receipt printed silently via QZ Tray');
-                    return;
-                  }
-                } catch (silentErr) {
-                  console.warn('QZ Tray silent print failed, falling back to browser print:', silentErr);
-                  if (printerSettings.silentMode !== 'fallback') {
-                    return; // Don't fall back if not in fallback mode
-                  }
-                }
-                
-                // Fallback to browser print
-                const printWindow = window.open(
-                  "",
-                  "_blank",
-                  "width=400,height=600"
-                );
-                if (printWindow) {
-                  printWindow.document.write(html);
-                  printWindow.document.close();
-                }
-              })();
-            } else {
-              // Browser print (original behavior)
-              const printWindow = window.open(
-                "",
-                "_blank",
-                "width=400,height=600"
+        // Try QZ Tray silent printing first
+        const printerSettings = getPrinterSettings();
+        const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
+
+        if (shouldTrySilent) {
+          (async () => {
+            try {
+              const silentPrinted = await printReceiptSilently(html);
+              if (silentPrinted) {
+                console.log('Receipt printed silently via QZ Tray');
+                return;
+              }
+            } catch (silentErr) {
+              console.warn(
+                'QZ Tray silent print failed, falling back to browser print:',
+                silentErr
               );
-              if (printWindow) {
-                printWindow.document.write(html);
-                printWindow.document.close();
+              if (printerSettings.silentMode !== 'fallback') {
+                return; // Don't fall back if not in fallback mode
               }
             }
+
+            // Fallback to browser print
+            const printWindow = window.open('', '_blank', 'width=400,height=600');
+            if (printWindow) {
+              printWindow.document.write(html);
+              printWindow.document.close();
+            }
+          })();
+        } else {
+          // Browser print (original behavior)
+          const printWindow = window.open('', '_blank', 'width=400,height=600');
+          if (printWindow) {
+            printWindow.document.write(html);
+            printWindow.document.close();
           }
+        }
+      }
     } catch (e) {
-      console.error("Auto-print failed:", e);
+      console.error('Auto-print failed:', e);
     }
 
     // Close the current tab after successful checkout
@@ -1073,12 +1003,12 @@ export const POS: React.FC<POSProps> = ({
       if (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'س')) {
         e.preventDefault();
         if (isValidOrder) {
-          handleCheckout("walk-in");
+          handleCheckout('walk-in');
         }
       }
     };
-    window.addEventListener("keydown", handleAltS);
-    return () => window.removeEventListener("keydown", handleAltS);
+    window.addEventListener('keydown', handleAltS);
+    return () => window.removeEventListener('keydown', handleAltS);
   }, [isValidOrder, handleCheckout]);
 
   // Filter customers when name changes
@@ -1109,8 +1039,7 @@ export const POS: React.FC<POSProps> = ({
           selectedCustomer.serialId?.toString() !== customerCode))
     ) {
       const found = customers.find(
-        (c) =>
-          c.code === customerCode || c.serialId?.toString() === customerCode
+        (c) => c.code === customerCode || c.serialId?.toString() === customerCode
       );
       if (found) {
         setSelectedCustomer(found);
@@ -1122,15 +1051,15 @@ export const POS: React.FC<POSProps> = ({
 
   const handleCustomerSelect = (customer: Customer) => {
     setCustomerName(customer.name);
-    setCustomerCode(customer.code || customer.serialId?.toString() || "");
+    setCustomerCode(customer.code || customer.serialId?.toString() || '');
     setSelectedCustomer(customer);
     setShowCustomerDropdown(false);
     setShowCodeDropdown(false);
   };
 
   const clearCustomerSelection = () => {
-    setCustomerName("");
-    setCustomerCode("");
+    setCustomerName('');
+    setCustomerCode('');
     setSelectedCustomer(null);
   };
 
@@ -1138,7 +1067,7 @@ export const POS: React.FC<POSProps> = ({
   useEffect(() => {
     const activeRow = document.getElementById(`drug-row-${activeIndex}`);
     if (activeRow) {
-      activeRow.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      activeRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [activeIndex]);
 
@@ -1147,7 +1076,7 @@ export const POS: React.FC<POSProps> = ({
     if (highlightedIndex !== -1) {
       const activeCartRow = document.getElementById(`cart-item-${highlightedIndex}`);
       if (activeCartRow) {
-        activeCartRow.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        activeCartRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     }
   }, [highlightedIndex]);
@@ -1156,33 +1085,29 @@ export const POS: React.FC<POSProps> = ({
   const prevCartLengthRef = useRef(cart.length);
   useEffect(() => {
     if (cart.length > prevCartLengthRef.current) {
-        // Item added - highlight the last one (which is usually at the bottom or top depending on sort? assumption: bottom/end of merged list)
-        // mergedCartItems syncs with cart? Yes.
-        // Wait, mergedCartItems might not be updated immediately in this render cycle if it depends on cart state which just updated?
-        // mergedCartItems is a useMemo on [cart]. So it updates when cart updates.
-        // So safe to set index to length - 1.
-        if (mergedCartItems.length > 0) {
-            setHighlightedIndex(mergedCartItems.length - 1);
-        }
+      // Item added - highlight the last one (which is usually at the bottom or top depending on sort? assumption: bottom/end of merged list)
+      // mergedCartItems syncs with cart? Yes.
+      // Wait, mergedCartItems might not be updated immediately in this render cycle if it depends on cart state which just updated?
+      // mergedCartItems is a useMemo on [cart]. So it updates when cart updates.
+      // So safe to set index to length - 1.
+      if (mergedCartItems.length > 0) {
+        setHighlightedIndex(mergedCartItems.length - 1);
+      }
     }
     prevCartLengthRef.current = cart.length;
   }, [cart.length, mergedCartItems.length]);
 
-
-
   const filteredDrugs = useMemo(() => {
     const { mode, regex } = parseSearchTerm(search);
     const trimmedSearch = search.trim();
-    
+
     // Get search term without @ prefix for length check
-    const searchTermForLength = mode === 'generic' 
-      ? search.trimStart().substring(1).trim() 
-      : trimmedSearch;
+    const searchTermForLength =
+      mode === 'generic' ? search.trimStart().substring(1).trim() : trimmedSearch;
 
     return inventory.filter((d) => {
       const drugBroadCat = getBroadCategory(d.category);
-      const matchesCategory =
-        selectedCategory === "All" || drugBroadCat === selectedCategory;
+      const matchesCategory = selectedCategory === 'All' || drugBroadCat === selectedCategory;
 
       let matchesSearch = false;
 
@@ -1196,9 +1121,8 @@ export const POS: React.FC<POSProps> = ({
       }
       // Text search requires minimum 2 characters
       else if (searchTermForLength.length >= 2) {
-        if (mode === "generic") {
-          matchesSearch =
-            !!d.genericName && regex.test(d.genericName);
+        if (mode === 'generic') {
+          matchesSearch = !!d.genericName && regex.test(d.genericName);
         } else {
           const searchableText = [
             d.name,
@@ -1209,16 +1133,16 @@ export const POS: React.FC<POSProps> = ({
             ...(Array.isArray(d.activeIngredients) ? d.activeIngredients : []),
           ]
             .filter(Boolean)
-            .join(" ");
+            .join(' ');
 
           matchesSearch = regex.test(searchableText);
         }
       }
 
       const matchesStock =
-        stockFilter === "all" ||
-        (stockFilter === "in_stock" && d.stock > 0) ||
-        (stockFilter === "out_of_stock" && d.stock <= 0);
+        stockFilter === 'all' ||
+        (stockFilter === 'in_stock' && d.stock > 0) ||
+        (stockFilter === 'out_of_stock' && d.stock <= 0);
 
       return matchesCategory && matchesSearch && matchesStock;
     });
@@ -1228,30 +1152,30 @@ export const POS: React.FC<POSProps> = ({
   const searchSuggestions = useMemo(() => {
     const trimmed = search.trim();
     const isGenericMode = search.trimStart().startsWith('@');
-    const searchTermLength = isGenericMode 
-      ? search.trimStart().substring(1).trim().length 
+    const searchTermLength = isGenericMode
+      ? search.trimStart().substring(1).trim().length
       : trimmed.length;
-    
+
     // Only show suggestions after 2 characters
     if (searchTermLength < 2) return [];
-    
+
     // Check if uppercase mode is enabled
     const settings = storage.get<any>(StorageKeys.SETTINGS, {});
     const isUppercase = settings.textTransform === 'uppercase';
-    
+
     let suggestions: string[];
     if (isGenericMode) {
       const generics = new Set<string>();
-      inventory.forEach(d => {
+      inventory.forEach((d) => {
         if (d.genericName) generics.add(`@${d.genericName}`);
       });
       suggestions = Array.from(generics);
     } else {
-      suggestions = inventory.map(d => `${d.name} ${d.dosageForm}`);
+      suggestions = inventory.map((d) => `${d.name} ${d.dosageForm}`);
     }
-    
+
     // Apply uppercase transform if enabled
-    return isUppercase ? suggestions.map(s => s.toUpperCase()) : suggestions;
+    return isUppercase ? suggestions.map((s) => s.toUpperCase()) : suggestions;
   }, [search, inventory]);
 
   // Group drugs by name and sort batches by expiry
@@ -1266,10 +1190,7 @@ export const POS: React.FC<POSProps> = ({
 
     // Sort batches by expiry date (asc)
     Object.values(groups).forEach((group) => {
-      group.sort(
-        (a, b) =>
-          new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
-      );
+      group.sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
     });
 
     return Object.values(groups);
@@ -1302,11 +1223,11 @@ export const POS: React.FC<POSProps> = ({
   useEffect(() => {
     // Transition: was table focused, now not focused -> move to cart
     if (prevIsTableFocusedRef.current && !isTableFocused && mergedCartItems.length > 0) {
-        setHighlightedIndex(0);
+      setHighlightedIndex(0);
     }
     // Also handle initial case: table never focused and cart has items
     if (!isTableFocused && mergedCartItems.length > 0 && highlightedIndex === -1) {
-        setHighlightedIndex(0);
+      setHighlightedIndex(0);
     }
     prevIsTableFocusedRef.current = isTableFocused;
   }, [isTableFocused, mergedCartItems.length, highlightedIndex]);
@@ -1315,37 +1236,37 @@ export const POS: React.FC<POSProps> = ({
     enabled: true,
     focusMode: isTableFocused ? 'table' : 'cart',
     onTableNavigate: (direction) => {
-        setActiveIndex((prev) => {
-            const next = direction === "up" ? prev - 1 : prev + 1;
-            const clamped = Math.max(0, Math.min(next, tableData.length - 1));
-            return clamped;
-        });
+      setActiveIndex((prev) => {
+        const next = direction === 'up' ? prev - 1 : prev + 1;
+        const clamped = Math.max(0, Math.min(next, tableData.length - 1));
+        return clamped;
+      });
     },
     onAddFromTable: () => {
-        if (tableData[activeIndex]) {
-            addGroupToCart(tableData[activeIndex].group);
-            // Replicate existing behavior on selection: clear search and reset focus
-            setSearch("");
-            setActiveIndex(0);
-            searchInputRef.current?.focus();
-        }
+      if (tableData[activeIndex]) {
+        addGroupToCart(tableData[activeIndex].group);
+        // Replicate existing behavior on selection: clear search and reset focus
+        setSearch('');
+        setActiveIndex(0);
+        searchInputRef.current?.focus();
+      }
     },
     onTab: () => {
-        // Find the active cart item row and focus its first input
-        if (highlightedIndex !== -1) {
-            const row = document.getElementById(`cart-item-${highlightedIndex}`);
-            if (row) {
-                const firstInput = row.querySelector('input, button');
-                if (firstInput) {
-                    (firstInput as HTMLElement).focus();
-                }
-            }
+      // Find the active cart item row and focus its first input
+      if (highlightedIndex !== -1) {
+        const row = document.getElementById(`cart-item-${highlightedIndex}`);
+        if (row) {
+          const firstInput = row.querySelector('input, button');
+          if (firstInput) {
+            (firstInput as HTMLElement).focus();
+          }
         }
+      }
     },
     onNavigate: (direction) => {
       if (mergedCartItems.length === 0) return;
       setHighlightedIndex((prev) => {
-        const next = direction === "up" ? prev - 1 : prev + 1;
+        const next = direction === 'up' ? prev - 1 : prev + 1;
         const clamped = Math.max(0, Math.min(next, mergedCartItems.length - 1));
         if (clamped !== prev) {
           playClick();
@@ -1375,7 +1296,7 @@ export const POS: React.FC<POSProps> = ({
     onCheckout: () => {
       if (cart.length > 0) {
         playSuccess();
-        handleCheckout("walk-in");
+        handleCheckout('walk-in');
       } else {
         playError();
       }
@@ -1390,154 +1311,142 @@ export const POS: React.FC<POSProps> = ({
 
   const tableColumns = useMemo<ColumnDef<(typeof tableData)[0], any>[]>(
     () => [
-
-      columnHelper.accessor("barcode", {
+      columnHelper.accessor('barcode', {
         header: t.code,
         size: 95,
         cell: (info) => (
-          <span
-            className="text-sm font-bold text-gray-700 dark:text-gray-300"
-          >
+          <span className='text-sm font-bold text-gray-700 dark:text-gray-300'>
             {info.row.original.internalCode || info.row.original.barcode}
           </span>
         ),
       }),
-      columnHelper.accessor("name", {
+      columnHelper.accessor('name', {
         header: t.name,
         size: 400,
         cell: (info) => (
           <div
             className={`flex flex-col w-full min-w-0 ${language === 'AR' ? 'items-end text-end' : 'items-start text-start'}`}
           >
-            <span className="font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate">
+            <span className='font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate'>
               {getDisplayName(info.row.original)}
             </span>
-            <span className="text-xs text-gray-500 whitespace-normal break-words" dir="ltr">
-              {info.row.original.genericName && info.row.original.genericName.length > 35 
+            <span className='text-xs text-gray-500 whitespace-normal break-words' dir='ltr'>
+              {info.row.original.genericName && info.row.original.genericName.length > 35
                 ? `${info.row.original.genericName.slice(0, 35)}…`
                 : info.row.original.genericName}
             </span>
           </div>
         ),
       }),
-      columnHelper.accessor("category", {
+      columnHelper.accessor('category', {
         header: t.category,
         size: 120,
         cell: (info) => (
-          <span className="text-xs text-gray-600 dark:text-gray-400">
-            {info.getValue()}
-          </span>
+          <span className='text-xs text-gray-600 dark:text-gray-400'>{info.getValue()}</span>
         ),
       }),
-      columnHelper.accessor("price", {
+      columnHelper.accessor('price', {
         header: t.price,
         size: 100,
         cell: (info) => (
-          <span
-            className="font-bold text-sm text-gray-700 dark:text-gray-300 tabular-nums"
-          >
+          <span className='font-bold text-sm text-gray-700 dark:text-gray-300 tabular-nums'>
             <PriceDisplay value={info.getValue()} />
           </span>
         ),
       }),
-      columnHelper.accessor("totalStock", {
-        id: "stock",
+      columnHelper.accessor('totalStock', {
+        id: 'stock',
         header: t.stock,
         size: 100,
         cell: (info) => {
           const row = info.row.original;
-          const mode = selectedUnits[row.id] || "pack";
+          const mode = selectedUnits[row.id] || 'pack';
           const unitsPerPack = row.unitsPerPack || 1;
-          
+
           if (info.getValue() <= 0) {
             return (
-              <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-lg border border-red-200 dark:border-red-800">
-                {t.outOfStock || "Out of Stock"}
+              <span className='inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-lg border border-red-200 dark:border-red-800'>
+                {t.outOfStock || 'Out of Stock'}
               </span>
             );
           }
 
           let displayValue;
           if (mode === 'unit') {
-             displayValue = info.getValue(); // Show total units
+            displayValue = info.getValue(); // Show total units
           } else {
-             // Show fractional packs
-             const packs = info.getValue() / unitsPerPack;
-             displayValue = parseFloat(packs.toFixed(2));
+            // Show fractional packs
+            const packs = info.getValue() / unitsPerPack;
+            displayValue = parseFloat(packs.toFixed(2));
           }
 
           return (
-            <span className="text-sm font-bold text-gray-700 dark:text-gray-300 tabular-nums">
+            <span className='text-sm font-bold text-gray-700 dark:text-gray-300 tabular-nums'>
               {displayValue}
             </span>
           );
         },
       }),
       columnHelper.display({
-        id: "unit",
+        id: 'unit',
         header: t.unit,
         size: 120,
         cell: (info) => {
           const row = info.row.original;
           return (
-            <div className="w-full h-full overflow-visible">
+            <div className='w-full h-full overflow-visible'>
               {row.unitsPerPack && row.unitsPerPack > 1 ? (
                 <FilterDropdown
-                  items={["pack", "unit"]}
-                  selectedItem={selectedUnits[row.id] || "pack"}
+                  items={['pack', 'unit']}
+                  selectedItem={selectedUnits[row.id] || 'pack'}
                   isOpen={openUnitDropdown === row.id}
                   onToggle={() => {
-                    setOpenUnitDropdown(
-                      openUnitDropdown === row.id ? null : row.id
-                    );
+                    setOpenUnitDropdown(openUnitDropdown === row.id ? null : row.id);
                     setOpenBatchDropdown(null);
                   }}
                   onSelect={(item) =>
                     setSelectedUnits((prev) => ({
                       ...prev,
-                      [row.id]: item as "pack" | "unit",
+                      [row.id]: item as 'pack' | 'unit',
                     }))
                   }
                   keyExtractor={(item) => item as string}
                   renderItem={(item) => (
-                    <div className="w-full px-2 py-1 text-sm font-bold text-center text-gray-700 dark:text-gray-300">
-                      {item === "pack" ? t.pack : t.unit}
+                    <div className='w-full px-2 py-1 text-sm font-bold text-center text-gray-700 dark:text-gray-300'>
+                      {item === 'pack' ? t.pack : t.unit}
                     </div>
                   )}
                   renderSelected={(item) => (
-                    <div className="w-full min-w-0 px-2 py-1 text-sm font-bold text-center truncate text-gray-700 dark:text-gray-300">
-                      {item === "pack" ? t.pack : t.unit}
+                    <div className='w-full min-w-0 px-2 py-1 text-sm font-bold text-center truncate text-gray-700 dark:text-gray-300'>
+                      {item === 'pack' ? t.pack : t.unit}
                     </div>
                   )}
                   color={color}
-                  className="h-9 w-20"
-                  variant="input"
+                  className='h-9 w-20'
+                  variant='input'
                   floating
                   minHeight={32}
-                  zIndexHigh="z-[60]"
+                  zIndexHigh='z-[60]'
                   autoHideArrow
                 />
               ) : (
-                <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                  {t.pack}
-                </span>
+                <span className='text-sm font-bold text-gray-700 dark:text-gray-300'>{t.pack}</span>
               )}
             </div>
           );
         },
       }),
       columnHelper.display({
-        id: "batches",
+        id: 'batches',
         header: t.batches,
         size: 150,
         cell: (info) => {
           const row = info.row.original;
           if (!row.group || row.group.length === 0)
-            return <span className="text-xs text-gray-400">-</span>;
+            return <span className='text-xs text-gray-400'>-</span>;
 
           const selectedBatchId = selectedBatches[row.id];
-          const defaultBatch =
-            row.group.find((d: Drug) => d.stock > 0) || row.group[0];
+          const defaultBatch = row.group.find((d: Drug) => d.stock > 0) || row.group[0];
           const displayBatch = selectedBatchId
             ? row.group.find((d: Drug) => d.id === selectedBatchId)
             : defaultBatch;
@@ -1545,31 +1454,33 @@ export const POS: React.FC<POSProps> = ({
           if (row.group.length === 1) {
             const i = displayBatch;
             return (
-              <div className="w-full h-full">
-                <div className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                  {i
-                      ? (i.expiryDate
-                        ? new Date(i.expiryDate).toLocaleDateString("en-US", {
-                            month: "2-digit",
-                            year: "2-digit",
-                          })
-                        : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
-                    : <span className="inline-flex items-center px-2 py-0.5 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 rounded border border-red-100 dark:border-red-800/50">{t.noStock}</span>}
+              <div className='w-full h-full'>
+                <div className='text-sm font-bold text-gray-700 dark:text-gray-300'>
+                  {i ? (
+                    (i.expiryDate
+                      ? new Date(i.expiryDate).toLocaleDateString('en-US', {
+                          month: '2-digit',
+                          year: '2-digit',
+                        })
+                      : '-') + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
+                  ) : (
+                    <span className='inline-flex items-center px-2 py-0.5 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 rounded border border-red-100 dark:border-red-800/50'>
+                      {t.noStock}
+                    </span>
+                  )}
                 </div>
               </div>
             );
           }
 
           return (
-            <div className="w-full h-full overflow-visible">
+            <div className='w-full h-full overflow-visible'>
               <FilterDropdown
                 items={row.group}
                 selectedItem={displayBatch}
                 isOpen={openBatchDropdown === row.id}
                 onToggle={() => {
-                  setOpenBatchDropdown(
-                    openBatchDropdown === row.id ? null : row.id
-                  );
+                  setOpenBatchDropdown(openBatchDropdown === row.id ? null : row.id);
                   setOpenUnitDropdown(null);
                 }}
                 onSelect={(item) =>
@@ -1582,43 +1493,47 @@ export const POS: React.FC<POSProps> = ({
                 renderSelected={(item) => {
                   const i = item as Drug | undefined;
                   return (
-                    <div className="w-full px-2 py-1 text-sm font-bold text-center truncate text-gray-700 dark:text-gray-300">
-                      {i
-                        ? (i.expiryDate
-                            ? new Date(i.expiryDate).toLocaleDateString(
-                                "en-US",
-                                { month: "2-digit", year: "2-digit" }
-                              )
-                            : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
-                        : <span className="text-red-500">{t.noStock}</span>}
+                    <div className='w-full px-2 py-1 text-sm font-bold text-center truncate text-gray-700 dark:text-gray-300'>
+                      {i ? (
+                        (i.expiryDate
+                          ? new Date(i.expiryDate).toLocaleDateString('en-US', {
+                              month: '2-digit',
+                              year: '2-digit',
+                            })
+                          : '-') +
+                        ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
+                      ) : (
+                        <span className='text-red-500'>{t.noStock}</span>
+                      )}
                     </div>
                   );
                 }}
                 renderItem={(item) => {
                   const i = item as Drug;
                   return (
-                    <div className="w-full px-2 py-1 text-sm font-bold text-center text-gray-700 dark:text-gray-300">
+                    <div className='w-full px-2 py-1 text-sm font-bold text-center text-gray-700 dark:text-gray-300'>
                       {(i.expiryDate
-                        ? new Date(i.expiryDate).toLocaleDateString("en-US", {
-                            month: "2-digit",
-                            year: "2-digit",
+                        ? new Date(i.expiryDate).toLocaleDateString('en-US', {
+                            month: '2-digit',
+                            year: '2-digit',
                           })
-                        : "-") + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
+                        : '-') +
+                        ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
                     </div>
                   );
                 }}
                 onEnter={() => {
                   addGroupToCart(row.group);
-                  setSearch("");
+                  setSearch('');
                   setActiveIndex(0);
                   searchInputRef.current?.focus();
                 }}
-                className="h-10 w-30"
+                className='h-10 w-30'
                 color={color}
-                variant="input"
+                variant='input'
                 floating
                 minHeight={32}
-                zIndexHigh="z-[60]"
+                zIndexHigh='z-[60]'
                 autoHideArrow
               />
             </div>
@@ -1626,7 +1541,7 @@ export const POS: React.FC<POSProps> = ({
         },
       }),
       columnHelper.display({
-        id: "inCart",
+        id: 'inCart',
         header: t.inCart,
         size: 80,
         meta: { align: 'center' },
@@ -1643,35 +1558,25 @@ export const POS: React.FC<POSProps> = ({
         },
       }),
     ],
-    [
-      color,
-      t,
-      language,
-      selectedUnits,
-      openUnitDropdown,
-      selectedBatches,
-      openBatchDropdown,
-    ]
+    [color, t, language, selectedUnits, openUnitDropdown, selectedBatches, openBatchDropdown]
   );
 
   return (
-    <div className="h-full flex flex-col gap-2">
-      <div className="flex items-center gap-4 px-2 h-12 shrink-0">
+    <div className='h-full flex flex-col gap-2'>
+      <div className='flex items-center gap-4 px-2 h-12 shrink-0'>
         {/* Header - Compact */}
-        <h2 className="text-xl font-bold tracking-tight type-expressive shrink-0">
-          {t.posTitle}
-        </h2>
-        
+        <h2 className='text-xl font-bold tracking-tight type-expressive shrink-0'>{t.posTitle}</h2>
+
         <button
-            onClick={() => setShowDeliveryModal(true)}
-            className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent hover:bg-${color}-600 dark:hover:bg-${color}-500 hover:text-white dark:hover:text-white hover:border-${color}-600 dark:hover:border-${color}-500 transition-all duration-200 cursor-pointer shadow-sm`}
+          onClick={() => setShowDeliveryModal(true)}
+          className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent hover:bg-${color}-600 dark:hover:bg-${color}-500 hover:text-white dark:hover:text-white hover:border-${color}-600 dark:hover:border-${color}-500 transition-all duration-200 cursor-pointer shadow-sm`}
         >
-            <span className="material-symbols-rounded text-sm">local_shipping</span>
-            {t.deliveryOrders || "Delivery Orders"}
+          <span className='material-symbols-rounded text-sm'>local_shipping</span>
+          {t.deliveryOrders || 'Delivery Orders'}
         </button>
 
         {/* Tab Bar - Takes remaining space */}
-        <div className="flex-1 min-w-0">
+        <div className='flex-1 min-w-0'>
           <TabBar
             tabs={tabs}
             activeTabId={activeTabId}
@@ -1689,112 +1594,93 @@ export const POS: React.FC<POSProps> = ({
       </div>
 
       {/* Main POS Content */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-3 animate-fade-in relative overflow-hidden">
+      <div className='flex-1 flex flex-col lg:flex-row gap-3 animate-fade-in relative overflow-hidden'>
         {/* Product Grid - Hidden on Mobile if Cart Tab is active */}
         <div
           className={`flex-1 flex flex-col gap-2 h-full overflow-hidden ${
-            mobileTab === "cart" ? "hidden lg:flex" : "flex"
+            mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'
           }`}
         >
           {/* Customer Details */}
-          <div
-            className={`${CARD_MD} p-3 border border-gray-200 dark:border-gray-800`}
-          >
+          <div className={`${CARD_MD} p-3 border border-gray-200 dark:border-gray-800`}>
             {selectedCustomer ? (
               // Locked Customer Card
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in">
-                <div className="flex items-center gap-3">
+              <div className='flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in'>
+                <div className='flex items-center gap-3'>
                   <div
                     className={`w-12 h-12 rounded-full bg-${color}-100 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-600 dark:text-${color}-400`}
                   >
-                    <span className="material-symbols-rounded text-[24px]">
-                      person
-                    </span>
+                    <span className='material-symbols-rounded text-[24px]'>person</span>
                   </div>
-                  <div className="flex flex-col gap-0">
-                    <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg leading-none mb-0.5">
+                  <div className='flex flex-col gap-0'>
+                    <h3 className='font-bold text-gray-800 dark:text-gray-100 text-lg leading-none mb-0.5'>
                       {selectedCustomer.name}
                     </h3>
-                    <div className="leading-none">
-                      <span className="text-xs font-bold font-mono text-gray-500 dark:text-gray-400">
-                        {selectedCustomer.code ||
-                          `#${selectedCustomer.serialId}`}
+                    <div className='leading-none'>
+                      <span className='text-xs font-bold font-mono text-gray-500 dark:text-gray-400'>
+                        {selectedCustomer.code || `#${selectedCustomer.serialId}`}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500 leading-tight mt-0.5">
-                      <span dir="ltr">{selectedCustomer.phone}</span>
+                    <p className='text-sm text-gray-500 leading-tight mt-0.5'>
+                      <span dir='ltr'>{selectedCustomer.phone}</span>
                     </p>
                   </div>
                 </div>
 
-                <div className="flex-1 border-s-2 border-gray-100 dark:border-gray-700 ps-6 ms-2 hidden sm:block">
-                  <p className="text-xs font-bold text-gray-400 uppercase mb-1 flex items-center gap-1">
-                    <span className="material-symbols-rounded text-[14px]">
-                      location_on
-                    </span>
+                <div className='flex-1 border-s-2 border-gray-100 dark:border-gray-700 ps-6 ms-2 hidden sm:block'>
+                  <p className='text-xs font-bold text-gray-400 uppercase mb-1 flex items-center gap-1'>
+                    <span className='material-symbols-rounded text-[14px]'>location_on</span>
                     {t.address}
                   </p>
-                  <div className="flex flex-col leading-snug">
+                  <div className='flex flex-col leading-snug'>
                     {selectedCustomer.streetAddress && (
-                      <span className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-0.5">
+                      <span className='text-sm font-bold text-gray-800 dark:text-gray-200 mb-0.5'>
                         {selectedCustomer.streetAddress}
                       </span>
                     )}
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className='text-xs text-gray-500 dark:text-gray-400'>
                       {selectedCustomer.area
-                        ? getLocationName(
-                            selectedCustomer.area,
-                            "area",
-                            language as Language
-                          )
-                        : ""}
-                      {selectedCustomer.area && selectedCustomer.city
-                        ? " - "
-                        : ""}
+                        ? getLocationName(selectedCustomer.area, 'area', language as Language)
+                        : ''}
+                      {selectedCustomer.area && selectedCustomer.city ? ' - ' : ''}
                       {selectedCustomer.city
-                        ? getLocationName(
-                            selectedCustomer.city,
-                            "city",
-                            language as Language
-                          )
-                        : ""}
+                        ? getLocationName(selectedCustomer.city, 'city', language as Language)
+                        : ''}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 min-w-[140px]">
-                  <div className="flex items-center justify-between gap-2">
-                    <label className="block text-xs font-bold text-gray-400 uppercase">
-                        {t.paymentMethod}
+                <div className='flex flex-col gap-2 min-w-[140px]'>
+                  <div className='flex items-center justify-between gap-2'>
+                    <label className='block text-xs font-bold text-gray-400 uppercase'>
+                      {t.paymentMethod}
                     </label>
                     <button
-                        onClick={clearCustomerSelection}
-                        className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors flex items-center justify-center bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-5 h-5 rounded-md"
-                        title={t.changeCustomer}
+                      onClick={clearCustomerSelection}
+                      className='text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors flex items-center justify-center bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-5 h-5 rounded-md'
+                      title={t.changeCustomer}
                     >
-                        <span className="material-symbols-rounded text-[16px]">
-                        close
-                        </span>
+                      <span className='material-symbols-rounded text-[16px]'>close</span>
                     </button>
                   </div>
                   <SegmentedControl
                     value={paymentMethod}
-                    onChange={(val) => setPaymentMethod(val as "cash" | "visa")}
+                    onChange={(val) => setPaymentMethod(val as 'cash' | 'visa')}
                     color={color}
-                    size="xs"
-                    variant="onPage"
+                    size='xs'
+                    variant='onPage'
                     options={[
                       {
-                        label: t.cash || "Cash",
-                        value: "cash",
-                        icon: "payments",
-                        activeColor: "green",
+                        label: t.cash || 'Cash',
+                        value: 'cash',
+                        icon: 'payments',
+                        activeColor: 'green',
                       },
                       {
-                        label: t.visa || "Visa",
-                        value: "visa",
-                        icon: "credit_card",
-                        activeColor: "blue",
+                        label: t.visa || 'Visa',
+                        value: 'visa',
+                        icon: 'credit_card',
+                        activeColor: 'blue',
                       },
                     ]}
                   />
@@ -1802,12 +1688,9 @@ export const POS: React.FC<POSProps> = ({
               </div>
             ) : (
               // Search Inputs
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div
-                  className="flex-1 relative"
-                  onBlur={customerDropdownHook.handleBlur}
-                >
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
+              <div className='flex flex-col sm:flex-row gap-3'>
+                <div className='flex-1 relative' onBlur={customerDropdownHook.handleBlur}>
+                  <label className='block text-xs font-bold text-gray-400 uppercase mb-1'>
                     {t.customerInfo}
                   </label>
                   <SearchInput
@@ -1820,42 +1703,37 @@ export const POS: React.FC<POSProps> = ({
                     onFocus={() => setShowCustomerDropdown(true)}
                     onKeyDown={customerDropdownHook.handleKeyDown}
                     placeholder={t.customerSearchPlaceholder}
-                    icon="person"
-                     color={color}
-                     className=""
+                    icon='person'
+                    color={color}
+                    className=''
                   />
                   {/* Customer Dropdown */}
                   {showCustomerDropdown && filteredCustomers.length > 0 && (
-                    <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-50 max-h-48 overflow-y-auto">
+                    <div className='absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-50 max-h-48 overflow-y-auto'>
                       {filteredCustomers.map((customer, index) => (
                         <div
                           key={customer.id}
                           className={`px-3 py-2 cursor-pointer border-b border-gray-50 dark:border-gray-700 last:border-0 flex flex-col ${
                             index === highlightedCustomerIndex
-                              ? "bg-blue-50 dark:bg-blue-900/30"
-                              : "hover:bg-gray-50 dark:hover:bg-gray-700"
+                              ? 'bg-blue-50 dark:bg-blue-900/30'
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                           }`}
                           onMouseDown={(e) => {
                             e.preventDefault(); // Prevent input blur which would close dropdown
                             handleCustomerSelect(customer);
                           }}
-                          onMouseEnter={() =>
-                            setHighlightedCustomerIndex(index)
-                          }
+                          onMouseEnter={() => setHighlightedCustomerIndex(index)}
                         >
                           <span
                             className={`text-sm font-bold ${
                               index === highlightedCustomerIndex
-                                ? "text-blue-700 dark:text-blue-300"
-                                : "text-gray-800 dark:text-gray-200"
+                                ? 'text-blue-700 dark:text-blue-300'
+                                : 'text-gray-800 dark:text-gray-200'
                             }`}
                           >
                             {customer.name}
                           </span>
-                          <div
-                            className="flex gap-2 text-xs text-gray-500"
-                            dir="ltr"
-                          >
+                          <div className='flex gap-2 text-xs text-gray-500' dir='ltr'>
                             <span>{customer.phone}</span>
                             {customer.code && <span>• {customer.code}</span>}
                           </div>
@@ -1865,28 +1743,28 @@ export const POS: React.FC<POSProps> = ({
                   )}
                 </div>
 
-                <div className="flex-none">
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
+                <div className='flex-none'>
+                  <label className='block text-xs font-bold text-gray-400 uppercase mb-1'>
                     {t.paymentMethod}
                   </label>
                   <SegmentedControl
                     value={paymentMethod}
-                    onChange={(val) => setPaymentMethod(val as "cash" | "visa")}
+                    onChange={(val) => setPaymentMethod(val as 'cash' | 'visa')}
                     color={color}
-                    size="sm"
-                    variant="onPage"
+                    size='sm'
+                    variant='onPage'
                     options={[
                       {
-                        label: t.cash || "Cash",
-                        value: "cash",
-                        icon: "payments",
-                        activeColor: "green",
+                        label: t.cash || 'Cash',
+                        value: 'cash',
+                        icon: 'payments',
+                        activeColor: 'green',
                       },
                       {
-                        label: t.visa || "Visa",
-                        value: "visa",
-                        icon: "credit_card",
-                        activeColor: "blue",
+                        label: t.visa || 'Visa',
+                        value: 'visa',
+                        icon: 'credit_card',
+                        activeColor: 'blue',
                       },
                     ]}
                   />
@@ -1895,9 +1773,9 @@ export const POS: React.FC<POSProps> = ({
             )}
           </div>
           {/* Search & Filter - No Card Container */}
-          <div className="w-full flex flex-col sm:flex-row gap-1 shrink-0">
+          <div className='w-full flex flex-col sm:flex-row gap-1 shrink-0'>
             {/* search length */}
-            <div className="relative flex-[6]"> 
+            <div className='relative flex-[6]'>
               <SmartAutocomplete
                 inputRef={searchInputRef}
                 value={search}
@@ -1907,33 +1785,30 @@ export const POS: React.FC<POSProps> = ({
                 suggestions={searchSuggestions}
                 placeholder={t.searchPlaceholder}
                 color={color}
-                className=""
+                className=''
                 onKeyDown={(e) => {
                   const term = search.trim();
 
                   // --- Grid Navigation ---
-                  if (e.key === "ArrowDown") {
+                  if (e.key === 'ArrowDown') {
                     e.preventDefault();
                     if (groupedDrugs.length > 0) {
-                      setActiveIndex(
-                        (prev) => (prev + 1) % groupedDrugs.length
-                      );
+                      setActiveIndex((prev) => (prev + 1) % groupedDrugs.length);
                     }
                     return;
                   }
-                  if (e.key === "ArrowUp") {
+                  if (e.key === 'ArrowUp') {
                     e.preventDefault();
                     if (groupedDrugs.length > 0) {
                       setActiveIndex(
-                        (prev) =>
-                          (prev - 1 + groupedDrugs.length) % groupedDrugs.length
+                        (prev) => (prev - 1 + groupedDrugs.length) % groupedDrugs.length
                       );
                     }
                     return;
                   }
 
                   // --- Execution (Enter) ---
-                  if (e.key === "Enter") {
+                  if (e.key === 'Enter') {
                     e.preventDefault();
                     if (!term) return;
 
@@ -1942,13 +1817,11 @@ export const POS: React.FC<POSProps> = ({
 
                     if (isBarcodeLike) {
                       const match = inventory.find(
-                        (d) =>
-                          d.barcode === term ||
-                          (d.internalCode && d.internalCode === term)
+                        (d) => d.barcode === term || (d.internalCode && d.internalCode === term)
                       );
                       if (match) {
                         addToCart(match);
-                        setSearch("");
+                        setSearch('');
                         return;
                       }
                     }
@@ -1957,7 +1830,7 @@ export const POS: React.FC<POSProps> = ({
                     if (groupedDrugs.length > 0) {
                       const activeGroup = groupedDrugs[activeIndex];
                       addGroupToCart(activeGroup);
-                      setSearch("");
+                      setSearch('');
                       setActiveIndex(0);
                       // Ensure focus remains/returns to search (though it's already there)
                     }
@@ -1972,22 +1845,21 @@ export const POS: React.FC<POSProps> = ({
                       ? [
                           {
                             label: t.copy,
-                            icon: "content_copy",
-                            action: () =>
-                              navigator.clipboard.writeText(selection),
+                            icon: 'content_copy',
+                            action: () => navigator.clipboard.writeText(selection),
                             danger: false,
                           },
                         ]
                       : []),
                     {
                       label: t.paste,
-                      icon: "content_paste",
+                      icon: 'content_paste',
                       action: async () => {
                         try {
                           const text = await navigator.clipboard.readText();
                           setSearch((prev) => prev + text);
                         } catch (err) {
-                          console.error("Failed to read clipboard", err);
+                          console.error('Failed to read clipboard', err);
                         }
                       },
                       danger: false,
@@ -1995,201 +1867,195 @@ export const POS: React.FC<POSProps> = ({
                     { separator: true } as any,
                     {
                       label: t.clear,
-                      icon: "backspace",
-                      action: () => setSearch(""),
+                      icon: 'backspace',
+                      action: () => setSearch(''),
                       danger: false,
                     },
                   ]);
                 }}
               />
               {/* Results Count Badge */}
-              {search.trim().length >= 2 && (() => {
-                const searchDir = /[\u0600-\u06FF]/.test(search) ? 'rtl' : 'ltr';
-                return (
-                  <div className={`absolute inset-y-0 flex items-center pointer-events-none ${searchDir === 'rtl' ? 'left-3' : 'right-3'}`}>
-                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent shadow-sm`}>
-                      <span className="material-symbols-rounded text-sm">inventory_2</span>
-                      {filteredDrugs.length}
-                    </span>
-                  </div>
-                );
-              })()}
+              {search.trim().length >= 2 &&
+                (() => {
+                  const searchDir = /[\u0600-\u06FF]/.test(search) ? 'rtl' : 'ltr';
+                  return (
+                    <div
+                      className={`absolute inset-y-0 flex items-center pointer-events-none ${searchDir === 'rtl' ? 'left-3' : 'right-3'}`}
+                    >
+                      <span
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent shadow-sm`}
+                      >
+                        <span className='material-symbols-rounded text-sm'>inventory_2</span>
+                        {filteredDrugs.length}
+                      </span>
+                    </div>
+                  );
+                })()}
             </div>
-            <div className="relative flex-1 h-[42px]">
+            <div className='relative flex-1 h-[42px]'>
               <FilterDropdown
-                variant="input"
+                variant='input'
                 onBackground={true}
                 items={categories}
                 selectedItem={categories.find((c) => c.id === selectedCategory)}
-                isOpen={activeFilterDropdown === "category"}
+                isOpen={activeFilterDropdown === 'category'}
                 onToggle={() =>
-                  setActiveFilterDropdown(
-                    activeFilterDropdown === "category" ? null : "category"
-                  )
+                  setActiveFilterDropdown(activeFilterDropdown === 'category' ? null : 'category')
                 }
                 onSelect={(item) => setSelectedCategory(item.id)}
                 keyExtractor={(item) => item.id}
                 renderSelected={(item) => item?.label || selectedCategory}
                 renderItem={(item) => item.label}
                 color={color}
-                className="w-full"
+                className='w-full'
               />
             </div>
-            <div className="relative flex-1 h-[42px]">
+            <div className='relative flex-1 h-[42px]'>
               <FilterDropdown
-                variant="input"
+                variant='input'
                 onBackground={true}
-                items={["all", "in_stock", "out_of_stock"]}
+                items={['all', 'in_stock', 'out_of_stock']}
                 selectedItem={stockFilter}
-                isOpen={activeFilterDropdown === "stock"}
+                isOpen={activeFilterDropdown === 'stock'}
                 onToggle={() =>
-                  setActiveFilterDropdown(
-                    activeFilterDropdown === "stock" ? null : "stock"
-                  )
+                  setActiveFilterDropdown(activeFilterDropdown === 'stock' ? null : 'stock')
                 }
                 onSelect={(item) => setStockFilter(item as any)}
                 keyExtractor={(item) => item as string}
                 renderSelected={(item) => {
-                  if (item === "all") return t.allStock || "All Stock";
-                  if (item === "in_stock") return t.inStock || "In Stock";
-                  if (item === "out_of_stock")
-                    return t.outOfStock || "Out of Stock";
+                  if (item === 'all') return t.allStock || 'All Stock';
+                  if (item === 'in_stock') return t.inStock || 'In Stock';
+                  if (item === 'out_of_stock') return t.outOfStock || 'Out of Stock';
                   return item as string;
                 }}
                 renderItem={(item) => {
-                  if (item === "all") return t.allStock || "All Stock";
-                  if (item === "in_stock") return t.inStock || "In Stock";
-                  if (item === "out_of_stock")
-                    return t.outOfStock || "Out of Stock";
+                  if (item === 'all') return t.allStock || 'All Stock';
+                  if (item === 'in_stock') return t.inStock || 'In Stock';
+                  if (item === 'out_of_stock') return t.outOfStock || 'Out of Stock';
                   return item as string;
                 }}
                 color={color}
-                className="w-full"
+                className='w-full'
               />
             </div>
           </div>
 
           {/* Grid */}
-          <div className="flex-1 flex flex-col overflow-hidden pb-24 lg:pb-0">
-              <TanStackTable
-                tableId="pos-products-table-v2"
-                data={tableData}
-                columns={tableColumns}
-                color={color}
-                onRowClick={(item) => addGroupToCart(item.group)}
-                onRowLongPress={(e, item) => {
-                  showMenu(e.touches[0].clientX, e.touches[0].clientY, [
-                    {
-                      label: t.addToCart,
-                      icon: "add_shopping_cart",
-                      action: () => addGroupToCart(item.group),
-                      danger: false,
-                    },
-                    {
-                      label: t.viewDetails,
-                      icon: "info",
-                      action: () => setViewingDrug(item.group[0]),
-                    },
-                  ]);
-                }}
-                onRowContextMenu={(e, item) => {
-                  showMenu(e.clientX, e.clientY, [
-                    {
-                      label: t.addToCart,
-                      icon: "add_shopping_cart",
-                      action: () => addGroupToCart(item.group),
-                      danger: false,
-                    },
-                    {
-                      label: t.viewDetails,
-                      icon: "info",
-                      action: () => setViewingDrug(item.group[0]),
-                    },
-                  ]);
-                }}
-                searchPlaceholder={t.searchPlaceholder}
-                emptyMessage={t.noResults}
-                customEmptyState={
-                  search.trim() === "" ? (
-                    <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-3 p-8 select-none">
-                      <span className="material-symbols-rounded text-6xl opacity-20">
-                        search
-                      </span>
-                      <h2 className="text-2xl font-bold tracking-tight type-expressive">
-                        {t.searchPlaceholder}
-                      </h2>
-                      <p className="text-xs text-center max-w-xs opacity-70">
-                        {t.startSearching ||
-                          "Start searching for products to add them to cart"}
-                      </p>
-                    </div>
-                  ) : undefined
-                }
-                defaultHiddenColumns={["category", "inCart"]}
-                defaultColumnAlignment={{ 
-                  barcode: 'start',
-                  name: language === 'AR' ? 'end' : 'start', 
-                  category: 'center', 
-                  price: 'center', 
-                  stock: 'center', 
-                  unit: 'center', 
-                  batches: 'center' 
-                }}
-                activeIndex={activeIndex}
-                enableTopToolbar={false}
-                enablePagination={true}
-                enableShowAll={true}
-              />
+          <div className='flex-1 flex flex-col overflow-hidden pb-24 lg:pb-0'>
+            <TanStackTable
+              tableId='pos-products-table-v2'
+              data={tableData}
+              columns={tableColumns}
+              color={color}
+              onRowClick={(item) => addGroupToCart(item.group)}
+              onRowLongPress={(e, item) => {
+                showMenu(e.touches[0].clientX, e.touches[0].clientY, [
+                  {
+                    label: t.addToCart,
+                    icon: 'add_shopping_cart',
+                    action: () => addGroupToCart(item.group),
+                    danger: false,
+                  },
+                  {
+                    label: t.viewDetails,
+                    icon: 'info',
+                    action: () => setViewingDrug(item.group[0]),
+                  },
+                ]);
+              }}
+              onRowContextMenu={(e, item) => {
+                showMenu(e.clientX, e.clientY, [
+                  {
+                    label: t.addToCart,
+                    icon: 'add_shopping_cart',
+                    action: () => addGroupToCart(item.group),
+                    danger: false,
+                  },
+                  {
+                    label: t.viewDetails,
+                    icon: 'info',
+                    action: () => setViewingDrug(item.group[0]),
+                  },
+                ]);
+              }}
+              searchPlaceholder={t.searchPlaceholder}
+              emptyMessage={t.noResults}
+              customEmptyState={
+                search.trim() === '' ? (
+                  <div className='h-full flex flex-col items-center justify-center text-gray-400 space-y-3 p-8 select-none'>
+                    <span className='material-symbols-rounded text-6xl opacity-20'>search</span>
+                    <h2 className='text-2xl font-bold tracking-tight type-expressive'>
+                      {t.searchPlaceholder}
+                    </h2>
+                    <p className='text-xs text-center max-w-xs opacity-70'>
+                      {t.startSearching || 'Start searching for products to add them to cart'}
+                    </p>
+                  </div>
+                ) : undefined
+              }
+              defaultHiddenColumns={['category', 'inCart']}
+              defaultColumnAlignment={{
+                barcode: 'start',
+                name: language === 'AR' ? 'end' : 'start',
+                category: 'center',
+                price: 'center',
+                stock: 'center',
+                unit: 'center',
+                batches: 'center',
+              }}
+              activeIndex={activeIndex}
+              enableTopToolbar={false}
+              enablePagination={true}
+              enableShowAll={true}
+            />
           </div>
         </div>
 
         {/* Mobile Floating Cart Summary (Only in Products View) */}
         <div
           className={`lg:hidden fixed bottom-20 left-4 right-4 z-20 ${
-            mobileTab === "products" && cart.length > 0 ? "block" : "hidden"
+            mobileTab === 'products' && cart.length > 0 ? 'block' : 'hidden'
           }`}
         >
           <button
-            onClick={() => setMobileTab("cart")}
+            onClick={() => setMobileTab('cart')}
             className={`w-full p-3 rounded-2xl bg-${color}-600 text-white shadow-xl shadow-${color}-200 dark:shadow-none flex items-center justify-between animate-slide-up active:scale-95 transition-transform`}
           >
-            <div className="flex items-center gap-3">
-              <span className="bg-white/20 px-2 py-0.5 rounded-lg text-xs font-bold">
+            <div className='flex items-center gap-3'>
+              <span className='bg-white/20 px-2 py-0.5 rounded-lg text-xs font-bold'>
                 {totalItems}
               </span>
-              <span className="font-medium text-sm">{t.viewCart}</span>
+              <span className='font-medium text-sm'>{t.viewCart}</span>
             </div>
-            <span className="font-bold text-base tabular-nums"><PriceDisplay value={cartTotal} /></span>
+            <span className='font-bold text-base tabular-nums'>
+              <PriceDisplay value={cartTotal} />
+            </span>
           </button>
         </div>
 
         {/* Resize Handle (Desktop Only) */}
         <div
-          className="hidden lg:flex w-4 h-full items-center justify-center cursor-col-resize group z-10 -mx-2"
+          className='hidden lg:flex w-4 h-full items-center justify-center cursor-col-resize group z-10 -mx-2'
           onMouseDown={startResizing}
           onTouchStart={startResizing}
         >
-          <div className="w-1 h-16 rounded-full bg-gray-200 dark:bg-gray-700 group-hover:bg-blue-500 transition-colors"></div>
+          <div className='w-1 h-16 rounded-full bg-gray-200 dark:bg-gray-700 group-hover:bg-blue-500 transition-colors'></div>
         </div>
 
         {/* Cart Sidebar - Hidden on Mobile if Products Tab is active */}
         <div
           ref={sidebarRef}
-          style={
-            { "--sidebar-width": `${sidebarWidth}px` } as React.CSSProperties
-          }
+          style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}
           className={`w-full lg:w-[var(--sidebar-width)] ${CARD_MD} border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden h-full ${
-            mobileTab === "products" ? "hidden lg:flex" : "flex"
+            mobileTab === 'products' ? 'hidden lg:flex' : 'flex'
           }`}
         >
-          <div className="p-3 space-y-2 shrink-0">
-            <div className="flex items-center justify-between">
+          <div className='p-3 space-y-2 shrink-0'>
+            <div className='flex items-center justify-between'>
               <h2
                 className={`text-sm font-bold text-${color}-900 dark:text-${color}-100 flex items-center gap-2`}
               >
-                <span className="material-symbols-rounded text-[18px]">
-                  shopping_cart
-                </span>
+                <span className='material-symbols-rounded text-[18px]'>shopping_cart</span>
                 {t.cartTitle}
                 {totalItems > 0 && (
                   <span
@@ -2202,22 +2068,20 @@ export const POS: React.FC<POSProps> = ({
 
               {/* Mobile Back Button */}
               <button
-                onClick={() => setMobileTab("products")}
-                className="lg:hidden p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500"
+                onClick={() => setMobileTab('products')}
+                className='lg:hidden p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500'
               >
-                <span className="material-symbols-rounded text-[18px]">
-                  close
-                </span>
+                <span className='material-symbols-rounded text-[18px]'>close</span>
               </button>
             </div>
           </div>
 
-          <div 
+          <div
             className={`flex-1 p-2 space-y-2 cart-scroll ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
-            dir="ltr"
+            dir='ltr'
             style={{
-                scrollbarWidth: 'thin',
-                scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
             }}
           >
             <style>{`
@@ -2239,13 +2103,13 @@ export const POS: React.FC<POSProps> = ({
                 }
             `}</style>
             {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-2">
-                <span className="material-symbols-rounded text-4xl opacity-20">
+              <div className='h-full flex flex-col items-center justify-center text-gray-400 space-y-2'>
+                <span className='material-symbols-rounded text-4xl opacity-20'>
                   remove_shopping_cart
                 </span>
-                <p className="text-xs">{t.emptyCart}</p>
+                <p className='text-xs'>{t.emptyCart}</p>
                 <button
-                  onClick={() => setMobileTab("products")}
+                  onClick={() => setMobileTab('products')}
                   className={`lg:hidden px-3 py-1.5 rounded-full bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 font-medium text-xs`}
                 >
                   {t.backToProducts}
@@ -2265,10 +2129,10 @@ export const POS: React.FC<POSProps> = ({
                     // Using Drug ID as the sortable ID logic, assuming unique per drug
                     const itemId = group.id; // Or simple 'group.id' if unique
                     return (
-                      <div 
-                        key={itemId} 
-                        id={`cart-item-${index}`} 
-                        className="w-full"
+                      <div
+                        key={itemId}
+                        id={`cart-item-${index}`}
+                        className='w-full'
                         onClick={() => setHighlightedIndex(index)}
                         onMouseDown={() => setHighlightedIndex(index)}
                       >
@@ -2295,16 +2159,15 @@ export const POS: React.FC<POSProps> = ({
                             )
                             .sort(
                               (a, b) =>
-                                new Date(a.expiryDate).getTime() -
-                                new Date(b.expiryDate).getTime()
+                                new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
                             )}
                           onSelectBatch={switchBatchWithAutoSplit}
                           isHighlighted={index === highlightedIndex}
                           currentLang={currentLang as 'en' | 'ar'}
                           globalDiscount={globalDiscount}
                           onSearchInTable={(term) => {
-                             setSearch(term);
-                             searchInputRef.current?.focus();
+                            setSearch(term);
+                            searchInputRef.current?.focus();
                           }}
                           userRole={userRole}
                         />
@@ -2316,36 +2179,48 @@ export const POS: React.FC<POSProps> = ({
             )}
           </div>
 
-          <div className="px-3 py-2 border-t border-gray-200 dark:border-gray-800 space-y-2 shrink-0">
+          <div className='px-3 py-2 border-t border-gray-200 dark:border-gray-800 space-y-2 shrink-0'>
             {/* Summary Row - Horizontal Layout like Purchases */}
-            <div className="flex items-center justify-between gap-2">
-              {/* Subtotal - Only show if different from total (i.e. if there's a discount or fee) */
-              grossSubtotal !== cartTotal && (
-              <div className="flex items-center gap-2 ps-3">
-                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.subtotal}:</span>
-                <span className="font-medium text-sm text-gray-700 dark:text-gray-300 tabular-nums"><PriceDisplay value={grossSubtotal} /></span>
-              </div>
-              )}
+            <div className='flex items-center justify-between gap-2'>
+              {
+                /* Subtotal - Only show if different from total (i.e. if there's a discount or fee) */
+                grossSubtotal !== cartTotal && (
+                  <div className='flex items-center gap-2 ps-3'>
+                    <span className='text-[10px] text-gray-500 font-medium uppercase'>
+                      {t.subtotal}:
+                    </span>
+                    <span className='font-medium text-sm text-gray-700 dark:text-gray-300 tabular-nums'>
+                      <PriceDisplay value={grossSubtotal} />
+                    </span>
+                  </div>
+                )
+              }
 
               {/* Discount */}
               {/* Discount - Only show if > 0 */}
               {orderDiscountPercent > 0 && (
-              <div className="flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3">
-                <span className="text-[10px] text-gray-500 font-medium uppercase">{t.orderDiscount}:</span>
-                
-                {/* Order Discount % */}
-                <div className="flex items-center gap-1">
-                  <span className="font-medium text-sm text-gray-700 dark:text-gray-300 tabular-nums">
-                    {orderDiscountPercent.toFixed(1)}%
+                <div className='flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3'>
+                  <span className='text-[10px] text-gray-500 font-medium uppercase'>
+                    {t.orderDiscount}:
                   </span>
+
+                  {/* Order Discount % */}
+                  <div className='flex items-center gap-1'>
+                    <span className='font-medium text-sm text-gray-700 dark:text-gray-300 tabular-nums'>
+                      {orderDiscountPercent.toFixed(1)}%
+                    </span>
+                  </div>
                 </div>
-              </div>
               )}
 
               {/* Total */}
-              <div className="flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3">
-                <span className="text-xs text-gray-500 font-bold uppercase whitespace-nowrap">{t.total}:</span>
-                <span className={`text-2xl font-black text-${color}-600 dark:text-${color}-400 h-8 flex items-center tabular-nums`}>
+              <div className='flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3'>
+                <span className='text-xs text-gray-500 font-bold uppercase whitespace-nowrap'>
+                  {t.total}:
+                </span>
+                <span
+                  className={`text-2xl font-black text-${color}-600 dark:text-${color}-400 h-8 flex items-center tabular-nums`}
+                >
                   <PriceDisplay value={cartTotal} />
                 </span>
               </div>
@@ -2355,172 +2230,188 @@ export const POS: React.FC<POSProps> = ({
 
             {/* Checkout Area Container */}
             {!hasOpenShift ? (
-              <div className="flex h-[42px] items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
-                <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
-                  <span className="material-symbols-rounded text-[18px]">
-                    warning
-                  </span>
-                  <p className="text-xs font-medium">
-                    {t.noOpenShift || "Open a shift before completing sales"}
+              <div className='flex h-[42px] items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900'>
+                <div className='flex items-center gap-2 text-red-700 dark:text-red-300'>
+                  <span className='material-symbols-rounded text-[18px]'>warning</span>
+                  <p className='text-xs font-medium'>
+                    {t.noOpenShift || 'Open a shift before completing sales'}
                   </p>
                 </div>
               </div>
             ) : (
-            <div className="flex h-[42px] overflow-hidden">
-              
-               {/* Standard Mode - Shrinks to 0 width when checkout or delivery active */}
-               <div 
-                 className={`flex gap-2 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
-                   (isCheckoutMode || isDeliveryMode) ? 'w-0 opacity-0 overflow-hidden' : 'w-full opacity-100'
-                 }`}
-               >
-                 <button
-                   onClick={() => {
-                     setIsCheckoutMode(true);
-                     setIsDeliveryMode(false);
-                     setAmountPaid("");
-                   }}
-                   disabled={!isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')}
-                   className={`flex-1 py-2.5 rounded-xl bg-${color}-600 enabled:hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
-                 >
-                   <span className="material-symbols-rounded text-[18px]">
-                     payments
-                   </span>
-                   {t.completeOrder}
-                 </button>
-                 <button
-                   onClick={() => {
-                     setIsDeliveryMode(true);
-                     setIsCheckoutMode(false);
-                   }}
-                   disabled={!isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')}
-                   className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 enabled:hover:bg-${color}-200 dark:enabled:hover:bg-${color}-900/50 disabled:opacity-50 disabled:pointer-events-none transition-colors flex justify-center items-center shrink-0`}
-                   title={t.deliveryOrder}
-                 >
-                   <span className="material-symbols-rounded text-[20px]">
-                     local_shipping
-                   </span>
-                 </button>
-               </div>
-
-               {/* Checkout Mode - Expands from 0 to full width */}
-               <div 
-                  className={`flex gap-2 items-stretch transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
-                     isCheckoutMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
+              <div className='flex h-[42px] overflow-hidden'>
+                {/* Standard Mode - Shrinks to 0 width when checkout or delivery active */}
+                <div
+                  className={`flex gap-2 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                    isCheckoutMode || isDeliveryMode
+                      ? 'w-0 opacity-0 overflow-hidden'
+                      : 'w-full opacity-100'
                   }`}
-               >
-                 {/* Amount Input */}
-                 <div className={`flex-1 bg-white dark:bg-gray-900 border border-${color}-500 dark:border-${color}-400 rounded-xl flex items-center px-3 gap-1 overflow-hidden whitespace-nowrap shadow-sm`}>
-                   <input
-                     ref={(el) => { if (el && isCheckoutMode) setTimeout(() => el.focus(), 50); }}
-                     type="number"
-                     inputMode="decimal"
-                     value={amountPaid}
-                     onChange={(e) => setAmountPaid(e.target.value)}
-                     placeholder={cartTotal.toString()}
-                     className="flex-1 min-w-0 bg-transparent border-none focus:outline-none focus:ring-0 font-bold text-base text-gray-900 dark:text-white p-0 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                     onKeyDown={(e) => {
-                       if (e.key === 'Enter') {
-                         handleCheckout("walk-in");
-                         setIsCheckoutMode(false);
-                         setAmountPaid("");
-                       }
-                       if (e.key === 'Escape') {
-                         setIsCheckoutMode(false);
-                         setAmountPaid("");
-                       }
-                     }}
-                   />
-                 </div>
+                >
+                  <button
+                    onClick={() => {
+                      setIsCheckoutMode(true);
+                      setIsDeliveryMode(false);
+                      setAmountPaid('');
+                    }}
+                    disabled={
+                      !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
+                    }
+                    className={`flex-1 py-2.5 rounded-xl bg-${color}-600 enabled:hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
+                  >
+                    <span className='material-symbols-rounded text-[18px]'>payments</span>
+                    {t.completeOrder}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsDeliveryMode(true);
+                      setIsCheckoutMode(false);
+                    }}
+                    disabled={
+                      !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
+                    }
+                    className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 enabled:hover:bg-${color}-200 dark:enabled:hover:bg-${color}-900/50 disabled:opacity-50 disabled:pointer-events-none transition-colors flex justify-center items-center shrink-0`}
+                    title={t.deliveryOrder}
+                  >
+                    <span className='material-symbols-rounded text-[20px]'>local_shipping</span>
+                  </button>
+                </div>
 
-                 {/* Change Display */}
-                 <div className={`flex flex-col justify-center px-2 rounded-xl border min-w-[70px] transition-colors overflow-hidden whitespace-nowrap ${
-                   (parseFloat(amountPaid) || 0) >= cartTotal
-                     ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-700`
-                     : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-                 }`}>
-                   <span className="text-[8px] text-gray-500 uppercase font-bold text-center">{t.remainder || "Change"}</span>
-                   <span className={`text-sm font-bold text-center tabular-nums ${
-                     (parseFloat(amountPaid) || 0) >= cartTotal
-                       ? `text-${color}-600 dark:text-${color}-400`
-                       : 'text-gray-400'
-                   }`}>
-                     <PriceDisplay value={Math.max(0, (parseFloat(amountPaid) || 0) - cartTotal)} />
-                   </span>
-                 </div>
-
-                 {/* Confirm Button */}
-                 <button
-                   onClick={() => {
-                     handleCheckout("walk-in");
-                     setIsCheckoutMode(false);
-                     setAmountPaid("");
-                   }}
-                   className={`w-11 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white flex items-center justify-center transition-colors shrink-0`}
-                 >
-                   <span className="material-symbols-rounded">check</span>
-                 </button>
-
-                 {/* Cancel Button */}
-                 <button
-                   onClick={() => {
-                     setIsCheckoutMode(false);
-                     setAmountPaid("");
-                   }}
-                   className="w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0"
-                 >
-                   <span className="material-symbols-rounded text-[18px]">close</span>
-                 </button>
-               </div>
-
-               {/* Delivery Driver Mode - Expands from 0 to full width */}
-               <div 
+                {/* Checkout Mode - Expands from 0 to full width */}
+                <div
                   className={`flex gap-2 items-stretch transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
-                     isDeliveryMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
+                    isCheckoutMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
                   }`}
-               >
-                 {/* Driver Select */}
-                 <div className={`flex-1 overflow-hidden relative`}>
-                    <select
-                        value={deliveryEmployeeId}
-                        onChange={(e) => setDeliveryEmployeeId(e.target.value)}
-                        className={`w-full h-full bg-white dark:bg-gray-900 border border-${color}-400 dark:border-${color}-500/50 rounded-xl text-sm px-3 focus:ring-0 focus:outline-none appearance-none cursor-pointer font-bold tabular-nums shadow-sm transition-all`}
-                        style={{
-                            backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
-                            backgroundRepeat: 'no-repeat',
-                            backgroundPosition: isRTL ? 'left .7em top 50%' : 'right .7em top 50%',
-                            backgroundSize: '.65em auto'
-                        }}
+                >
+                  {/* Amount Input */}
+                  <div
+                    className={`flex-1 bg-white dark:bg-gray-900 border border-${color}-500 dark:border-${color}-400 rounded-xl flex items-center px-3 gap-1 overflow-hidden whitespace-nowrap shadow-sm`}
+                  >
+                    <input
+                      ref={(el) => {
+                        if (el && isCheckoutMode) setTimeout(() => el.focus(), 50);
+                      }}
+                      type='number'
+                      inputMode='decimal'
+                      value={amountPaid}
+                      onChange={(e) => setAmountPaid(e.target.value)}
+                      placeholder={cartTotal.toString()}
+                      className='flex-1 min-w-0 bg-transparent border-none focus:outline-none focus:ring-0 font-bold text-base text-gray-900 dark:text-white p-0 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleCheckout('walk-in');
+                          setIsCheckoutMode(false);
+                          setAmountPaid('');
+                        }
+                        if (e.key === 'Escape') {
+                          setIsCheckoutMode(false);
+                          setAmountPaid('');
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* Change Display */}
+                  <div
+                    className={`flex flex-col justify-center px-2 rounded-xl border min-w-[70px] transition-colors overflow-hidden whitespace-nowrap ${
+                      (parseFloat(amountPaid) || 0) >= cartTotal
+                        ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-700`
+                        : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                    }`}
+                  >
+                    <span className='text-[8px] text-gray-500 uppercase font-bold text-center'>
+                      {t.remainder || 'Change'}
+                    </span>
+                    <span
+                      className={`text-sm font-bold text-center tabular-nums ${
+                        (parseFloat(amountPaid) || 0) >= cartTotal
+                          ? `text-${color}-600 dark:text-${color}-400`
+                          : 'text-gray-400'
+                      }`}
                     >
-                        <option value="">{t.selectDriver || "Select Driver (Optional)"}</option>
-                        {employees.filter(e => e.role === 'delivery').map(e => (
-                            <option key={e.id} value={e.id}>{e.name}</option>
+                      <PriceDisplay
+                        value={Math.max(0, (parseFloat(amountPaid) || 0) - cartTotal)}
+                      />
+                    </span>
+                  </div>
+
+                  {/* Confirm Button */}
+                  <button
+                    onClick={() => {
+                      handleCheckout('walk-in');
+                      setIsCheckoutMode(false);
+                      setAmountPaid('');
+                    }}
+                    className={`w-11 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white flex items-center justify-center transition-colors shrink-0`}
+                  >
+                    <span className='material-symbols-rounded'>check</span>
+                  </button>
+
+                  {/* Cancel Button */}
+                  <button
+                    onClick={() => {
+                      setIsCheckoutMode(false);
+                      setAmountPaid('');
+                    }}
+                    className='w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'
+                  >
+                    <span className='material-symbols-rounded text-[18px]'>close</span>
+                  </button>
+                </div>
+
+                {/* Delivery Driver Mode - Expands from 0 to full width */}
+                <div
+                  className={`flex gap-2 items-stretch transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                    isDeliveryMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
+                  }`}
+                >
+                  {/* Driver Select */}
+                  <div className={`flex-1 overflow-hidden relative`}>
+                    <select
+                      value={deliveryEmployeeId}
+                      onChange={(e) => setDeliveryEmployeeId(e.target.value)}
+                      className={`w-full h-full bg-white dark:bg-gray-900 border border-${color}-400 dark:border-${color}-500/50 rounded-xl text-sm px-3 focus:ring-0 focus:outline-none appearance-none cursor-pointer font-bold tabular-nums shadow-sm transition-all`}
+                      style={{
+                        backgroundImage:
+                          'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: isRTL ? 'left .7em top 50%' : 'right .7em top 50%',
+                        backgroundSize: '.65em auto',
+                      }}
+                    >
+                      <option value=''>{t.selectDriver || 'Select Driver (Optional)'}</option>
+                      {employees
+                        .filter((e) => e.role === 'delivery')
+                        .map((e) => (
+                          <option key={e.id} value={e.id}>
+                            {e.name}
+                          </option>
                         ))}
                     </select>
-                 </div>
+                  </div>
 
-                 {/* Confirm Button */}
-                 <button
-                   onClick={() => {
-                     handleCheckout("delivery", true);
-                     setIsDeliveryMode(false);
-                   }}
-                   className={`w-11 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white flex items-center justify-center transition-colors shrink-0`}
-                 >
-                   <span className="material-symbols-rounded">check</span>
-                 </button>
+                  {/* Confirm Button */}
+                  <button
+                    onClick={() => {
+                      handleCheckout('delivery', true);
+                      setIsDeliveryMode(false);
+                    }}
+                    className={`w-11 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white flex items-center justify-center transition-colors shrink-0`}
+                  >
+                    <span className='material-symbols-rounded'>check</span>
+                  </button>
 
-                 {/* Cancel Button */}
-                 <button
-                   onClick={() => {
-                     setIsDeliveryMode(false);
-                   }}
-                   className="w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0"
-                 >
-                   <span className="material-symbols-rounded text-[18px]">close</span>
-                 </button>
-               </div>
-            </div>
+                  {/* Cancel Button */}
+                  <button
+                    onClick={() => {
+                      setIsDeliveryMode(false);
+                    }}
+                    className='w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'
+                  >
+                    <span className='material-symbols-rounded text-[18px]'>close</span>
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -2530,93 +2421,81 @@ export const POS: React.FC<POSProps> = ({
           <Modal
             isOpen={true}
             onClose={() => setViewingDrug(null)}
-            size="md"
+            size='md'
             zIndex={50}
             title={t.productDetails}
-            icon="info"
+            icon='info'
           >
-            <div className="space-y-4">
+            <div className='space-y-4'>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {viewingDrug.name}{" "}
+                <h2 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
+                  {viewingDrug.name}{' '}
                   {viewingDrug.dosageForm ? (
-                    <span className="text-lg text-gray-500 font-normal">
+                    <span className='text-lg text-gray-500 font-normal'>
                       ({viewingDrug.dosageForm})
                     </span>
                   ) : (
-                    ""
+                    ''
                   )}
                 </h2>
-                <p className="text-gray-500 font-medium">
-                  {viewingDrug.genericName}
-                </p>
+                <p className='text-gray-500 font-medium'>{viewingDrug.genericName}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-800">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">
-                    {t.modal?.stock || "Stock"}
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='p-3 rounded-2xl bg-gray-50 dark:bg-gray-800'>
+                  <label className='text-[10px] font-bold text-gray-400 uppercase'>
+                    {t.modal?.stock || 'Stock'}
                   </label>
                   <p
                     className={`text-xl font-bold ${
-                      viewingDrug.stock === 0
-                        ? "text-red-500"
-                        : "text-gray-700 dark:text-gray-300"
+                      viewingDrug.stock === 0 ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'
                     }`}
                   >
                     {viewingDrug.stock}
                   </p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-800">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">
-                    {t.modal?.price || "Price"}
+                <div className='p-3 rounded-2xl bg-gray-50 dark:bg-gray-800'>
+                  <label className='text-[10px] font-bold text-gray-400 uppercase'>
+                    {t.modal?.price || 'Price'}
                   </label>
-                  <p className="text-xl font-bold text-gray-700 dark:text-gray-300 tabular-nums">
+                  <p className='text-xl font-bold text-gray-700 dark:text-gray-300 tabular-nums'>
                     <PriceDisplay value={viewingDrug.price} />
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-2 text-sm border-t border-gray-100 dark:border-gray-800 pt-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">
-                    {t.modal?.category || "Category"}
-                  </span>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
+              <div className='space-y-2 text-sm border-t border-gray-100 dark:border-gray-800 pt-3'>
+                <div className='flex justify-between'>
+                  <span className='text-gray-500'>{t.modal?.category || 'Category'}</span>
+                  <span className='font-medium text-gray-900 dark:text-gray-100'>
                     {viewingDrug.category}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">
-                    {t.modal?.expiry || "Expiry"}
-                  </span>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                <div className='flex justify-between'>
+                  <span className='text-gray-500'>{t.modal?.expiry || 'Expiry'}</span>
+                  <span className='font-medium text-gray-900 dark:text-gray-100'>
                     {new Date(viewingDrug.expiryDate).toLocaleDateString()}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">
-                    {t.modal?.location || "Location"}
-                  </span>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                    {t.modal?.shelf || "Shelf"} A-2
+                <div className='flex justify-between'>
+                  <span className='text-gray-500'>{t.modal?.location || 'Location'}</span>
+                  <span className='font-medium text-gray-900 dark:text-gray-100'>
+                    {t.modal?.shelf || 'Shelf'} A-2
                   </span>
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">
-                  {t.modal?.description || "Description"}
+                <label className='text-[10px] font-bold text-gray-400 uppercase mb-1 block'>
+                  {t.modal?.description || 'Description'}
                 </label>
-                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl">
-                  {viewingDrug.description ||
-                    t.modal?.noDescription ||
-                    "No description available."}
+                <p className='text-sm text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl'>
+                  {viewingDrug.description || t.modal?.noDescription || 'No description available.'}
                 </p>
               </div>
             </div>
 
-            <div className="p-4 bg-gray-50 dark:bg-gray-950/50 border-t border-gray-100 dark:border-gray-800">
+            <div className='p-4 bg-gray-50 dark:bg-gray-950/50 border-t border-gray-100 dark:border-gray-800'>
               <button
                 onClick={() => setViewingDrug(null)}
                 className={`w-full py-3 rounded-xl font-bold text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-colors`}
@@ -2635,9 +2514,9 @@ export const POS: React.FC<POSProps> = ({
           employees={employees}
           inventory={inventory}
           onUpdateSale={(saleId, updates) => {
-             if (onUpdateSale) {
-                 onUpdateSale(saleId, updates);
-             }
+            if (onUpdateSale) {
+              onUpdateSale(saleId, updates);
+            }
           }}
           color={color}
           t={t}
@@ -2649,4 +2528,3 @@ export const POS: React.FC<POSProps> = ({
     </div>
   );
 };
-

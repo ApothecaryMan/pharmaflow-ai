@@ -1,14 +1,14 @@
 /**
  * Invoice Template Generator
- * 
+ *
  * This module contains the receipt/invoice HTML template generation logic.
  * Used by SalesHistory and other components for printing receipts.
  */
 
-import { Sale, CartItem } from '../../types';
+import { StorageKeys } from '../../config/storageKeys';
+import { CartItem, type Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { storage } from '../../utils/storage';
-import { StorageKeys } from '../../config/storageKeys';
 
 export interface InvoiceTemplateOptions {
   /** Store name to display in header */
@@ -48,7 +48,7 @@ export const defaultOptions: InvoiceTemplateOptions = {
   storeSubtitle: 'Pharmacy Management System',
   footerMessage: 'Thank you for choosing Zinc.<br>We wish you good health!',
   footerInquiry: 'For inquiries, please keep this receipt.',
-  language: 'EN'
+  language: 'EN',
 };
 
 /**
@@ -59,16 +59,17 @@ export function getActiveReceiptSettings(): InvoiceTemplateOptions {
   try {
     const templates = storage.get<any[]>(StorageKeys.RECEIPT_TEMPLATES, []);
     const activeId = storage.get<string | null>(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, null);
-    
-    const activeTemplate = templates.find((t: any) => t.id === activeId) || 
-                          templates.find((t: any) => t.isDefault) || 
-                          templates[0];
-                          
+
+    const activeTemplate =
+      templates.find((t: any) => t.id === activeId) ||
+      templates.find((t: any) => t.isDefault) ||
+      templates[0];
+
     if (activeTemplate?.options) {
       return { ...defaultOptions, ...activeTemplate.options };
     }
   } catch (e) {
-    console.error("Failed to load active receipt settings", e);
+    console.error('Failed to load active receipt settings', e);
   }
   return defaultOptions;
 }
@@ -78,19 +79,19 @@ export const INVOICE_DEFAULTS = {
     address: '123 Abu Hamous',
     area: 'Beheira',
     hotline: '19099',
-    terms: `Refrigerated medicines, cosmetics & strips are non-refundable<br>Medicines & devices refundable within 14 days<br>30-day warranty on devices`
+    terms: `Refrigerated medicines, cosmetics & strips are non-refundable<br>Medicines & devices refundable within 14 days<br>30-day warranty on devices`,
   },
   AR: {
     address: '١٢٣ ابوحمص',
     area: 'مدينة البحيرة',
     hotline: '19099',
-    terms: `ادوية التلاجة ومستحضرات التجميل وشرايط الدواء لا ترجع<br>استرجاع الادوية والاجهزة السليمة خلال 14 يوم<br>ضمان 30 يوم على الاجهزة`
-  }
+    terms: `ادوية التلاجة ومستحضرات التجميل وشرايط الدواء لا ترجع<br>استرجاع الادوية والاجهزة السليمة خلال 14 يوم<br>ضمان 30 يوم على الاجهزة`,
+  },
 };
 
 /**
  * Generates the HTML content for a printable receipt/invoice.
- * 
+ *
  * @param sale - The sale object containing all transaction details
  * @param opts - Optional configuration for the template
  * @returns Complete HTML string for the receipt
@@ -98,9 +99,9 @@ export const INVOICE_DEFAULTS = {
 export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {}): string {
   const lang = opts.language || 'EN';
   const isRTL = lang === 'AR';
-  
+
   // Default fallbacks if keys are missing but allow empty string if explicitly set?
-  // We use || which means empty string falls back to default. 
+  // We use || which means empty string falls back to default.
   // If user wants completely empty, they might need a way, but simple || is safer for now.
   const currentDefaults = INVOICE_DEFAULTS[lang];
 
@@ -196,11 +197,12 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
     </head>
     <body>
       <div class="header">
-        ${opts.logoSvgCode 
-          ? `<div class="store-logo" style="width: 40mm; max-height: 15mm; overflow: hidden; margin: 0 auto 5px auto;">${opts.logoSvgCode}</div>` 
-          : opts.logoBase64 
-            ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" style="width: 40mm; max-height: 15mm; object-fit: contain;" />`
-            : `<img src="/app_icon.svg" alt="Logo" class="store-logo" style="width: 60px;" />`
+        ${
+          opts.logoSvgCode
+            ? `<div class="store-logo" style="width: 40mm; max-height: 15mm; overflow: hidden; margin: 0 auto 5px auto;">${opts.logoSvgCode}</div>`
+            : opts.logoBase64
+              ? `<img src="${opts.logoBase64}" alt="Logo" class="store-logo" style="width: 40mm; max-height: 15mm; object-fit: contain;" />`
+              : `<img src="/app_icon.svg" alt="Logo" class="store-logo" style="width: 60px;" />`
         }
         <div class="store-name">${opts.storeName ?? (lang === 'AR' ? 'ZINC' : 'ZINC')}</div>
         <div class="store-info">${opts.storeSubtitle ?? (lang === 'AR' ? 'نظام إدارة الصيدليات' : 'Pharmacy Management System')}</div>
@@ -218,43 +220,54 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
       
       <div class="info-row">
         <span>ORDR ${sale.id}</span>
-        <span>${new Date(sale.date).toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit', year: 'numeric'})} ${new Date(sale.date).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: true})}</span>
+        <span>${new Date(sale.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${new Date(sale.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
       </div>
       
       <hr class="divider">
       <div style="text-align: center; margin: 5px 0;">
         ${sale.saleType === 'delivery' ? 'DELIVERY' : 'WALK-IN'}
       </div>
-      ${sale.saleType === 'delivery' && (sale.customerPhone || sale.customerAddress || sale.customerStreetAddress) ? `
+      ${
+        sale.saleType === 'delivery' &&
+        (sale.customerPhone || sale.customerAddress || sale.customerStreetAddress)
+          ? `
       <div class="customer-section" style="text-align: center; margin: 4px 0;">
         ${sale.customerPhone ? `<div class="customer-detail" dir="ltr" style="unicode-bidi: embed;">Tel: ${sale.customerPhone}</div>` : ''}
         ${sale.customerAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerAddress.replace(/\n/g, '<br>')}</div>` : ''}
         ${sale.customerStreetAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerStreetAddress.replace(/\n/g, '<br>')}</div>` : ''}
       </div>
-      ` : ''}
+      `
+          : ''
+      }
       <hr class="divider">
 
       <table>
         <tbody>
-          ${sale.items.map(item => {
-            const effectivePrice = (item.isUnit && item.unitsPerPack) 
-              ? item.price / item.unitsPerPack 
-              : item.price;
-            const lineTotal = (effectivePrice * item.quantity) * (1 - (item.discount || 0)/100);
-              
-            return `
+          ${sale.items
+            .map((item) => {
+              const effectivePrice =
+                item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price;
+              const lineTotal = effectivePrice * item.quantity * (1 - (item.discount || 0) / 100);
+
+              return `
             <tr>
               <td colspan="2">${getDisplayName(item)}${item.isUnit ? ' (UNIT)' : ''}</td>
               <td class="right">${item.quantity} x ${effectivePrice.toFixed(2)}</td>
             </tr>
-            ${item.discount && item.discount > 0 ? `
+            ${
+              item.discount && item.discount > 0
+                ? `
             <tr>
               <td></td>
               <td class="discount">  -${item.discount}% DISC</td>
-              <td class="right">-${(effectivePrice * item.quantity * item.discount / 100).toFixed(2)}</td>
+              <td class="right">-${((effectivePrice * item.quantity * item.discount) / 100).toFixed(2)}</td>
             </tr>
-            ` : ''}
-          `}).join('')}
+            `
+                : ''
+            }
+          `;
+            })
+            .join('')}
         </tbody>
       </table>
 
@@ -265,16 +278,24 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
           <span>SUBTOTAL</span>
           <span>${(sale.subtotal || 0).toFixed(2)}</span>
         </div>
-        ${sale.globalDiscount ? `
+        ${
+          sale.globalDiscount
+            ? `
         <div class="total-row">
           <span>DISCOUNT (${sale.globalDiscount}%)</span>
-          <span>-${((sale.subtotal || 0) * sale.globalDiscount / 100).toFixed(2)}</span>
-        </div>` : ''}
-        ${sale.deliveryFee && sale.deliveryFee > 0 ? `
+          <span>-${(((sale.subtotal || 0) * sale.globalDiscount) / 100).toFixed(2)}</span>
+        </div>`
+            : ''
+        }
+        ${
+          sale.deliveryFee && sale.deliveryFee > 0
+            ? `
         <div class="total-row">
           <span>DELIVERY</span>
           <span>${sale.deliveryFee.toFixed(2)}</span>
-        </div>` : ''}
+        </div>`
+            : ''
+        }
         <div class="total-row">
           <span>TAX</span>
           <span>0.00</span>
@@ -287,26 +308,38 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
           <span>TOTAL</span>
           <span>${sale.total.toFixed(2)}</span>
         </div>
-        ${(sale.hasReturns || (sale.netTotal !== undefined && sale.netTotal < sale.total)) ? `
+        ${
+          sale.hasReturns || (sale.netTotal !== undefined && sale.netTotal < sale.total)
+            ? `
         <div style="margin-top: 8px; padding-top: 4px;">
           <div style="text-align: center; margin-bottom: 4px;">↩ RETURNS</div>
-          ${sale.itemReturnedQuantities ? Object.entries(sale.itemReturnedQuantities)
-            .filter(([_, qty]) => qty > 0)
-            .map(([lineKey, qty]) => {
-              // lineKey can be "drugId_index" or just "drugId"
-              const parts = lineKey.split('_');
-              const drugId = parts[0];
-              const index = parts.length > 1 ? parseInt(parts[1]) : 0;
-              const item = sale.items.find((it, idx) => it.id === drugId && (parts.length > 1 ? idx === index : true));
-              if (!item) return '';
-              const effectivePrice = (item.isUnit && item.unitsPerPack) ? item.price / item.unitsPerPack : item.price;
-              const returnedAmount = effectivePrice * qty * (1 - (item.discount || 0) / 100);
-              return `
+          ${
+            sale.itemReturnedQuantities
+              ? Object.entries(sale.itemReturnedQuantities)
+                  .filter(([_, qty]) => qty > 0)
+                  .map(([lineKey, qty]) => {
+                    // lineKey can be "drugId_index" or just "drugId"
+                    const parts = lineKey.split('_');
+                    const drugId = parts[0];
+                    const index = parts.length > 1 ? parseInt(parts[1]) : 0;
+                    const item = sale.items.find(
+                      (it, idx) => it.id === drugId && (parts.length > 1 ? idx === index : true)
+                    );
+                    if (!item) return '';
+                    const effectivePrice =
+                      item.isUnit && item.unitsPerPack
+                        ? item.price / item.unitsPerPack
+                        : item.price;
+                    const returnedAmount = effectivePrice * qty * (1 - (item.discount || 0) / 100);
+                    return `
           <div style="display: flex; justify-content: space-between; font-size: 11px; color: #000; margin: 2px 0;">
             <span>${item.name} x${qty}</span>
             <span>-${returnedAmount.toFixed(2)}</span>
           </div>`;
-            }).join('') : ''}
+                  })
+                  .join('')
+              : ''
+          }
           <div class="total-row" style="border-top: 1px dashed #000; padding-top: 5px; margin-top: 4px;">
             <span>RETURNED TOTAL</span>
             <span>-${(sale.total - (sale.netTotal ?? sale.total)).toFixed(2)}</span>
@@ -316,22 +349,23 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
             <span>${(sale.netTotal ?? sale.total).toFixed(2)}</span>
           </div>
         </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
       
       <div style="text-align: center; margin: 10px 0 8px 0; line-height: 1.5;">
-         ${opts.footerInquiry 
-           ? `<p style="margin: 2px 0;">${opts.footerInquiry}</p>`
-           : ''}
+         ${opts.footerInquiry ? `<p style="margin: 2px 0;">${opts.footerInquiry}</p>` : ''}
          <div style="margin-top: 4px;">
            ${opts.termsCondition ?? currentDefaults.terms}
          </div>
       </div>
       
       <div class="footer">
-        ${opts.footerMessage 
-          ? `<p style="margin: 2px 0;">${opts.footerMessage}</p>`
-          : `<p style="margin: 2px 0;">THANKS FOR CHOOSING ${opts.storeName || 'US'}</p>`
+        ${
+          opts.footerMessage
+            ? `<p style="margin: 2px 0;">${opts.footerMessage}</p>`
+            : `<p style="margin: 2px 0;">THANKS FOR CHOOSING ${opts.storeName || 'US'}</p>`
         }
       </div>
       
@@ -362,7 +396,7 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
 
 /**
  * Opens a print window with the generated invoice HTML.
- * 
+ *
  * @param sale - The sale object to print
  * @param options - Optional template configuration
  */

@@ -1,11 +1,11 @@
 /**
  * Theme Colors Configuration
- * 
+ *
  * Central source of truth for all theme colors used across the application.
  * Import from here instead of defining colors in multiple places.
  */
 
-import { ThemeColor } from '../types';
+import type { ThemeColor } from '../types';
 
 /**
  * Complete color palette with hex values

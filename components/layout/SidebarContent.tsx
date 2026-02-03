@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { PHARMACY_MENU } from '../../config/menuData';
 import { SidebarMenu } from './SidebarMenu';
 
@@ -27,11 +27,11 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
   theme,
   t,
   language,
-  hideInactiveModules = false
+  hideInactiveModules = false,
 }) => {
   return (
     <>
-      <SidebarMenu 
+      <SidebarMenu
         menuItems={menuItems}
         activeModule={activeModule}
         currentView={activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view}

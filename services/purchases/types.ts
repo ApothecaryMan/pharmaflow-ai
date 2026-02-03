@@ -2,7 +2,7 @@
  * Purchase Types - Purchase orders management
  */
 
-import { Purchase } from '../../types';
+import type { Purchase } from '../../types';
 
 export type { Purchase };
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
 import { timeService } from '../../../services/timeService';
 
 // Types
@@ -73,12 +73,12 @@ const loadNotifications = (): Notification[] => {
 /*
  * STATUS BAR CONTEXT & LOGIC
  * ==========================
- * 
+ *
  * This context acts as the "BRAIN" of the status bar system.
- * 
+ *
  * CORE RESPONSIBILITIES:
  * 1. UI STATE: Manages Notifications (Ephemeral), Announcements (Sticky), Connection Status.
- * 2. TIME VERIFICATION: 
+ * 2. TIME VERIFICATION:
  *    - Integrates with `timeService` to provide calculating 'Verified Time'.
  *    - Prevents tampering by using server offsets rather than local system time.
  * 3. MONOTONICITY CHECKS:
@@ -116,45 +116,43 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
       id: timeService.getVerifiedDate().getTime().toString(),
       timestamp: timeService.getVerifiedDate(),
     };
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       notifications: [newNotification, ...prev.notifications].slice(0, 50), // Keep max 50
     }));
   }, []);
 
   const removeNotification = useCallback((id: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      notifications: prev.notifications.filter(n => n.id !== id),
+      notifications: prev.notifications.filter((n) => n.id !== id),
     }));
   }, []);
 
   const clearNotifications = useCallback(() => {
-    setState(prev => ({ ...prev, notifications: [] }));
+    setState((prev) => ({ ...prev, notifications: [] }));
   }, []);
 
   const markAsRead = useCallback((id: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      notifications: prev.notifications.map(n => 
-        n.id === id ? { ...n, read: true } : n
-      ),
+      notifications: prev.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
     }));
   }, []);
 
   // Announcement handlers
   const setAnnouncement = useCallback((message: string | null) => {
-    setState(prev => ({ ...prev, announcement: message }));
+    setState((prev) => ({ ...prev, announcement: message }));
   }, []);
 
   // Connection status
   const setOnlineStatus = useCallback((status: boolean) => {
-    setState(prev => ({ ...prev, isOnline: status }));
+    setState((prev) => ({ ...prev, isOnline: status }));
   }, []);
 
   // Custom items for extensibility
   const registerItem = useCallback((key: string, component: React.ReactNode) => {
-    setState(prev => {
+    setState((prev) => {
       const newItems = new Map(prev.customItems);
       newItems.set(key, component);
       return { ...prev, customItems: newItems };
@@ -162,7 +160,7 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, []);
 
   const unregisterItem = useCallback((key: string) => {
-    setState(prev => {
+    setState((prev) => {
       const newItems = new Map(prev.customItems);
       newItems.delete(key);
       return { ...prev, customItems: newItems };
@@ -173,10 +171,10 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
   React.useEffect(() => {
     const handleOnline = () => setOnlineStatus(true);
     const handleOffline = () => setOnlineStatus(false);
-    
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
@@ -189,7 +187,7 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, []);
 
   const updateLastTransactionTime = useCallback((timestamp: number) => {
-    setState(prev => ({ ...prev, lastTransactionTime: timestamp }));
+    setState((prev) => ({ ...prev, lastTransactionTime: timestamp }));
     localStorage.setItem(LAST_TRANSACTION_KEY, timestamp.toString());
   }, []);
 
@@ -198,33 +196,36 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
    * ---------------------------------
    * Checks if a proposed transaction time is chronologically valid.
    * Prevents users from rolling back system clock to falsify transaction dates.
-   * 
+   *
    * @param proposedTime The verified time of the current action
    * @returns {valid: boolean, message?: string}
    */
-  const validateTransactionTime = useCallback((proposedTime: Date): { valid: boolean; message?: string } => {
-    const proposedTimestamp = proposedTime.getTime();
-    const lastTimestamp = state.lastTransactionTime;
+  const validateTransactionTime = useCallback(
+    (proposedTime: Date): { valid: boolean; message?: string } => {
+      const proposedTimestamp = proposedTime.getTime();
+      const lastTimestamp = state.lastTransactionTime;
 
-    // Allow 5 seconds tolerance for concurrent transactions
-    const tolerance = 5000;
-    
-    if (lastTimestamp > 0 && proposedTimestamp < (lastTimestamp - tolerance)) {
-      return {
-        valid: false,
-        message: `Transaction time (${proposedTime.toLocaleString()}) is before last transaction. Possible date tampering detected.`
-      };
-    }
+      // Allow 5 seconds tolerance for concurrent transactions
+      const tolerance = 5000;
 
-    return { valid: true };
-  }, [state.lastTransactionTime]);
+      if (lastTimestamp > 0 && proposedTimestamp < lastTimestamp - tolerance) {
+        return {
+          valid: false,
+          message: `Transaction time (${proposedTime.toLocaleString()}) is before last transaction. Possible date tampering detected.`,
+        };
+      }
+
+      return { valid: true };
+    },
+    [state.lastTransactionTime]
+  );
 
   const syncTime = useCallback(async (): Promise<boolean> => {
     const success = await timeService.syncTime();
-    setState(prev => ({ 
-      ...prev, 
+    setState((prev) => ({
+      ...prev,
       timeSynced: success,
-      lastSyncTime: timeService.getLastSyncTime()?.getTime() || null
+      lastSyncTime: timeService.getLastSyncTime()?.getTime() || null,
     }));
     return success;
   }, []);
@@ -236,41 +237,40 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   }, [state.isOnline, syncTime]);
 
-  const value = React.useMemo<StatusBarContextType>(() => ({
-    state,
-    addNotification,
-    removeNotification,
-    clearNotifications,
-    markAsRead,
-    setAnnouncement,
-    setOnlineStatus,
-    registerItem,
-    unregisterItem,
-    getVerifiedDate,
-    updateLastTransactionTime,
-    validateTransactionTime,
-    syncTime,
-  }), [
-    state,
-    addNotification,
-    removeNotification,
-    clearNotifications,
-    markAsRead,
-    setAnnouncement,
-    setOnlineStatus,
-    registerItem,
-    unregisterItem,
-    getVerifiedDate,
-    updateLastTransactionTime,
-    validateTransactionTime,
-    syncTime,
-  ]);
-
-  return (
-    <StatusBarContext.Provider value={value}>
-      {children}
-    </StatusBarContext.Provider>
+  const value = React.useMemo<StatusBarContextType>(
+    () => ({
+      state,
+      addNotification,
+      removeNotification,
+      clearNotifications,
+      markAsRead,
+      setAnnouncement,
+      setOnlineStatus,
+      registerItem,
+      unregisterItem,
+      getVerifiedDate,
+      updateLastTransactionTime,
+      validateTransactionTime,
+      syncTime,
+    }),
+    [
+      state,
+      addNotification,
+      removeNotification,
+      clearNotifications,
+      markAsRead,
+      setAnnouncement,
+      setOnlineStatus,
+      registerItem,
+      unregisterItem,
+      getVerifiedDate,
+      updateLastTransactionTime,
+      validateTransactionTime,
+      syncTime,
+    ]
   );
+
+  return <StatusBarContext.Provider value={value}>{children}</StatusBarContext.Provider>;
 };
 
 export const useStatusBar = (): StatusBarContextType => {

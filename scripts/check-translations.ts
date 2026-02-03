@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { TRANSLATIONS } from '../i18n/translations.ts';
 import { MENU_TRANSLATIONS } from '../i18n/menuTranslations.ts';
+import { TRANSLATIONS } from '../i18n/translations.ts';
 
 interface ValidationResult {
   file: string;
@@ -34,55 +34,72 @@ interface DetailedReport {
 }
 
 const colors = {
-  reset: "\x1b[0m",
-  red: "\x1b[31m",
-  green: "\x1b[32m",
-  yellow: "\x1b[33m",
-  blue: "\x1b[34m",
-  cyan: "\x1b[36m",
-  magenta: "\x1b[35m",
-  bold: "\x1b[1m"
+  reset: '\x1b[0m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  cyan: '\x1b[36m',
+  magenta: '\x1b[35m',
+  bold: '\x1b[1m',
 };
 
 // أنماط للبحث عن نصوص بدون ترجمة
 const HARDCODE_PATTERNS = [
   // جميع النصوص بين علامات الاقتباس
-  /"([^"]{3,})"(?![\s]*:)/g,        // "text"
-  /'([^']{3,})'(?![\s]*:)/g,        // 'text'
-  />([A-Z][^<]{3,})</g,             // >Text<
+  /"([^"]{3,})"(?![\s]*:)/g, // "text"
+  /'([^']{3,})'(?![\s]*:)/g, // 'text'
+  />([A-Z][^<]{3,})</g, // >Text<
 ];
 
 // الاستثناءات (لا تحتاج ترجمة)
 const IGNORED_PATTERNS = [
-  /^[0-9]+$/,                       // أرقام فقط
-  /^[A-Z0-9\-._]+$/,                // IDs, UUIDs
-  /^https?:\/\//,                   // URLs
+  /^[0-9]+$/, // أرقام فقط
+  /^[A-Z0-9\-._]+$/, // IDs, UUIDs
+  /^https?:\/\//, // URLs
   /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, // Emails
-  /^\+?[0-9\-\s()]+$/,              // Phone numbers
-  /^[A-Z]{2,}$/,                    // اختصارات مثل OK, AR, EN
-  /^[a-z]{1,3}$/,                   // متغيرات قصيرة (id, key, val, etc)
-  /^[a-zA-Z_$][a-zA-Z0-9_$]*$/,     // أسماء المتغيرات
-  /^true|false|null|undefined$/i,   // القيم البرمجية
-  /^\.{3}$/,                        // علامات الحذف
+  /^\+?[0-9\-\s()]+$/, // Phone numbers
+  /^[A-Z]{2,}$/, // اختصارات مثل OK, AR, EN
+  /^[a-z]{1,3}$/, // متغيرات قصيرة (id, key, val, etc)
+  /^[a-zA-Z_$][a-zA-Z0-9_$]*$/, // أسماء المتغيرات
+  /^true|false|null|undefined$/i, // القيم البرمجية
+  /^\.{3}$/, // علامات الحذف
 ];
 
 // الكلمات الشائعة التي قد تكون متغيرات برمجية
 const COMMON_TECHNICAL_WORDS = [
-  'data', 'error', 'loading', 'success', 'warning', 'info', 'debug',
-  'value', 'name', 'type', 'status', 'state', 'props', 'children',
-  'className', 'style', 'onClick', 'onChange', 'disabled', 'required',
+  'data',
+  'error',
+  'loading',
+  'success',
+  'warning',
+  'info',
+  'debug',
+  'value',
+  'name',
+  'type',
+  'status',
+  'state',
+  'props',
+  'children',
+  'className',
+  'style',
+  'onClick',
+  'onChange',
+  'disabled',
+  'required',
 ];
 
 class TranslationValidator {
   private results: ValidationResult[] = [];
   private hardcodeIssues: CodeHardcodeIssue[] = [];
-  private stats = { 
-    total: 0, 
-    valid: 0, 
-    failed: 0, 
-    totalErrors: 0, 
+  private stats = {
+    total: 0,
+    valid: 0,
+    failed: 0,
+    totalErrors: 0,
     totalWarnings: 0,
-    hardcodedTextFound: 0 
+    hardcodedTextFound: 0,
   };
   private reportPath: string;
   private componentPath: string;
@@ -93,24 +110,28 @@ class TranslationValidator {
   }
 
   validate(): boolean {
-    console.log(`${colors.cyan}${colors.bold}🔍 بدء الفحص الشامل للترجمات والنصوص المدمجة...${colors.reset}\n`);
+    console.log(
+      `${colors.cyan}${colors.bold}🔍 بدء الفحص الشامل للترجمات والنصوص المدمجة...${colors.reset}\n`
+    );
 
     // 1. فحص ملفات الترجمة
     this.validateTranslationFiles();
 
     // 2. فحص النصوص المدمجة في الكود
-    console.log(`${colors.magenta}${colors.bold}\n🔎 فحص النصوص المدمجة في الكود...${colors.reset}\n`);
+    console.log(
+      `${colors.magenta}${colors.bold}\n🔎 فحص النصوص المدمجة في الكود...${colors.reset}\n`
+    );
     this.scanForHardcodedText();
 
     this.printReport();
     this.exportReport();
-    
+
     return this.stats.failed === 0 && this.stats.hardcodedTextFound === 0;
   }
 
   private validateTranslationFiles(): void {
     console.log(`${colors.bold}📋 فحص ملفات الترجمة...${colors.reset}`);
-    
+
     this.validateFile('translations.ts', TRANSLATIONS.EN, TRANSLATIONS.AR);
     this.validateFile('menuTranslations.ts', MENU_TRANSLATIONS.EN, MENU_TRANSLATIONS.AR);
   }
@@ -122,7 +143,7 @@ class TranslationValidator {
       typeErrors: [],
       warnings: [],
       extraKeys: [],
-      isValid: true
+      isValid: true,
     };
 
     this.compareObjects(enObj, arObj, 'root', result);
@@ -152,7 +173,7 @@ class TranslationValidator {
     for (const key of enKeys) {
       const path = currentPath === 'root' ? key : `${currentPath}.${key}`;
 
-      if (!arObj.hasOwnProperty(key)) {
+      if (!Object.hasOwn(arObj, key)) {
         result.missing.push(path);
         result.isValid = false;
         continue;
@@ -194,12 +215,14 @@ class TranslationValidator {
 
   private scanForHardcodedText(): void {
     if (!fs.existsSync(this.componentPath)) {
-      console.log(`${colors.yellow}⚠️  مجلد المكونات غير موجود: ${this.componentPath}${colors.reset}`);
+      console.log(
+        `${colors.yellow}⚠️  مجلد المكونات غير موجود: ${this.componentPath}${colors.reset}`
+      );
       return;
     }
 
     const files = this.getAllComponentFiles(this.componentPath);
-    
+
     for (const file of files) {
       try {
         const content = fs.readFileSync(file, 'utf-8');
@@ -207,7 +230,11 @@ class TranslationValidator {
 
         lines.forEach((line, index) => {
           // تخطي التعليقات وملفات الترجمة
-          if (line.trim().startsWith('//') || line.trim().startsWith('*') || file.includes('i18n')) {
+          if (
+            line.trim().startsWith('//') ||
+            line.trim().startsWith('*') ||
+            file.includes('i18n')
+          ) {
             return;
           }
 
@@ -223,14 +250,14 @@ class TranslationValidator {
 
           // البحث عن نصوص مدمجة
           const matches = this.findHardcodedStrings(line);
-          
-          matches.forEach(match => {
+
+          matches.forEach((match) => {
             if (!this.isIgnored(match)) {
               this.hardcodeIssues.push({
                 file: this.getRelativePath(file),
                 line: index + 1,
                 content: match,
-                severity: this.determineSeverity(match)
+                severity: this.determineSeverity(match),
               });
               this.stats.hardcodedTextFound++;
             }
@@ -244,15 +271,15 @@ class TranslationValidator {
 
   private getAllComponentFiles(dir: string): string[] {
     const files: string[] = [];
-    
+
     const walk = (currentPath: string) => {
       try {
         const items = fs.readdirSync(currentPath);
-        
+
         for (const item of items) {
           const fullPath = path.join(currentPath, item);
           const stat = fs.statSync(fullPath);
-          
+
           if (stat.isDirectory()) {
             if (!['node_modules', '.git', 'dist', 'build'].includes(item)) {
               walk(fullPath);
@@ -265,7 +292,7 @@ class TranslationValidator {
         // تخطي المجلدات التي لا يمكن قراءتها
       }
     };
-    
+
     walk(dir);
     return files;
   }
@@ -295,17 +322,17 @@ class TranslationValidator {
       let match;
       while ((match = pattern.exec(line)) !== null) {
         const text = (match[1] || match[0]).trim();
-        
+
         // تخطي import/export statements
         if (line.includes('import') || line.includes('export') || line.includes('from')) {
           continue;
         }
-        
+
         // تخطي الخصائص البرمجية (file paths, URLs في attributes)
         if (text.includes('/') || text.includes('.') || text.includes('http')) {
           continue;
         }
-        
+
         // تخطي الكود
         if (text.includes('=>') || text.includes('${') || text.includes('function')) {
           continue;
@@ -324,7 +351,7 @@ class TranslationValidator {
     const lowerText = text.toLowerCase();
 
     // فحص الأنماط
-    if (IGNORED_PATTERNS.some(pattern => pattern.test(text))) {
+    if (IGNORED_PATTERNS.some((pattern) => pattern.test(text))) {
       return true;
     }
 
@@ -350,7 +377,7 @@ class TranslationValidator {
   private determineSeverity(text: string): 'error' | 'warning' {
     // نصوص طويلة = خطأ أكيد
     if (text.length > 15) return 'error';
-    
+
     // نصوص قصيرة قد تكون متغيرات أو أشياء أخرى = تحذير
     return 'warning';
   }
@@ -365,11 +392,12 @@ class TranslationValidator {
     // عرض مشاكل الترجمات
     console.log(`${colors.bold}📋 تقرير ملفات الترجمة:${colors.reset}`);
     for (const result of this.results) {
-      const status = result.isValid && result.warnings.length === 0
-        ? `${colors.green}✅${colors.reset}`
-        : result.isValid
-        ? `${colors.yellow}⚠️${colors.reset}`
-        : `${colors.red}❌${colors.reset}`;
+      const status =
+        result.isValid && result.warnings.length === 0
+          ? `${colors.green}✅${colors.reset}`
+          : result.isValid
+            ? `${colors.yellow}⚠️${colors.reset}`
+            : `${colors.red}❌${colors.reset}`;
 
       console.log(`  ${status} ${result.file}`);
 
@@ -387,13 +415,13 @@ class TranslationValidator {
     // عرض النصوص المدمجة
     if (this.hardcodeIssues.length > 0) {
       console.log(`\n${colors.magenta}${colors.bold}🔴 نصوص مدمجة بدون ترجمة:${colors.reset}`);
-      
-      const errors = this.hardcodeIssues.filter(i => i.severity === 'error');
-      const warnings = this.hardcodeIssues.filter(i => i.severity === 'warning');
+
+      const errors = this.hardcodeIssues.filter((i) => i.severity === 'error');
+      const warnings = this.hardcodeIssues.filter((i) => i.severity === 'warning');
 
       if (errors.length > 0) {
         console.log(`${colors.red}  أخطاء حرجة (${errors.length}):${colors.reset}`);
-        errors.slice(0, 10).forEach(issue => {
+        errors.slice(0, 10).forEach((issue) => {
           console.log(`     ${colors.red}→${colors.reset} ${issue.file}:${issue.line}`);
           console.log(`       "${issue.content}"`);
         });
@@ -404,8 +432,10 @@ class TranslationValidator {
 
       if (warnings.length > 0) {
         console.log(`${colors.yellow}  تحذيرات (${warnings.length}):${colors.reset}`);
-        warnings.slice(0, 5).forEach(issue => {
-          console.log(`     ${colors.yellow}→${colors.reset} ${issue.file}:${issue.line} - "${issue.content}"`);
+        warnings.slice(0, 5).forEach((issue) => {
+          console.log(
+            `     ${colors.yellow}→${colors.reset} ${issue.file}:${issue.line} - "${issue.content}"`
+          );
         });
         if (warnings.length > 5) {
           console.log(`     ... و ${warnings.length - 5} تحذيرات أخرى`);
@@ -425,11 +455,13 @@ class TranslationValidator {
     console.log(`  ${colors.red}🔴 نصوص مدمجة: ${this.stats.hardcodedTextFound}${colors.reset}`);
     console.log(`  ${colors.yellow}🟡 تحذيرات: ${this.stats.totalWarnings}${colors.reset}\n`);
 
-    const hasErrors = this.stats.failed > 0 || 
-                      this.hardcodeIssues.filter(i => i.severity === 'error').length > 0;
+    const hasErrors =
+      this.stats.failed > 0 || this.hardcodeIssues.filter((i) => i.severity === 'error').length > 0;
 
     if (!hasErrors) {
-      console.log(`${colors.green}${colors.bold}✨ جميع الترجمات سليمة والكود نظيف!${colors.reset}\n`);
+      console.log(
+        `${colors.green}${colors.bold}✨ جميع الترجمات سليمة والكود نظيف!${colors.reset}\n`
+      );
       process.exit(0);
     } else {
       console.log(`${colors.red}${colors.bold}❌ توجد مشاكل في الترجمات${colors.reset}`);
@@ -443,16 +475,14 @@ class TranslationValidator {
       timestamp: new Date().toISOString(),
       results: this.results,
       hardcodeIssues: this.hardcodeIssues,
-      stats: this.stats
+      stats: this.stats,
     };
 
     try {
-      fs.writeFileSync(
-        this.reportPath,
-        JSON.stringify(report, null, 2),
-        'utf-8'
+      fs.writeFileSync(this.reportPath, JSON.stringify(report, null, 2), 'utf-8');
+      console.log(
+        `${colors.cyan}📄 التقرير محفوظ: ${path.resolve(this.reportPath)}${colors.reset}`
       );
-      console.log(`${colors.cyan}📄 التقرير محفوظ: ${path.resolve(this.reportPath)}${colors.reset}`);
     } catch (error) {
       console.error(`${colors.red}خطأ في الحفظ${colors.reset}`, error);
     }

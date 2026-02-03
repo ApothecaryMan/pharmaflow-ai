@@ -8,12 +8,12 @@ export const TRUST_SCORE_WEIGHTS = {
   LOYALTY: 1.0,
   BASKET: 0.3,
   SPEED: 0.5,
-  BASE: 2.5
+  BASE: 2.5,
 } as const;
 
 export const TRUST_SCORE_RANGE = {
   MIN: 1.0,
-  MAX: 5.0
+  MAX: 5.0,
 } as const;
 
 export const LOYALTY_THRESHOLDS = {
@@ -21,7 +21,7 @@ export const LOYALTY_THRESHOLDS = {
   STRONG: 0.5,
   GOOD: 0.35,
   FAIR: 0.2,
-  POOR: 0.1
+  POOR: 0.1,
 } as const;
 
 export const LOYALTY_SCORES = {
@@ -30,7 +30,7 @@ export const LOYALTY_SCORES = {
   GOOD: 0.5,
   FAIR: 0.2,
   POOR: 0,
-  CRITICAL: -0.4
+  CRITICAL: -0.4,
 } as const;
 
 export const RETURN_THRESHOLDS = {
@@ -40,7 +40,7 @@ export const RETURN_THRESHOLDS = {
   FAIR: 1.0,
   ACCEPTABLE: 1.2,
   WARNING: 1.5,
-  CRITICAL: 2.0
+  CRITICAL: 2.0,
 } as const;
 
 export const RETURN_SCORES = {
@@ -51,14 +51,14 @@ export const RETURN_SCORES = {
   ACCEPTABLE: 0,
   WARNING: -0.3,
   CRITICAL: -0.6,
-  SEVERE: -1.0
+  SEVERE: -1.0,
 } as const;
 
 export const BASKET_THRESHOLDS = {
   LARGE: 1.4,
   ABOVE_AVG: 1.1,
   AVERAGE: 0.8,
-  BELOW_AVG: 0.6
+  BELOW_AVG: 0.6,
 } as const;
 
 export const BASKET_SCORES = {
@@ -66,7 +66,7 @@ export const BASKET_SCORES = {
   ABOVE_AVG: 0.15,
   AVERAGE: 0,
   BELOW_AVG: -0.1,
-  SMALL: -0.2
+  SMALL: -0.2,
 } as const;
 
 export const SPEED_THRESHOLDS = {
@@ -75,7 +75,7 @@ export const SPEED_THRESHOLDS = {
   GOOD: 55,
   FAIR: 75,
   AVERAGE: 100,
-  SLOW: 130
+  SLOW: 130,
 } as const;
 
 export const SPEED_SCORES = {
@@ -86,16 +86,16 @@ export const SPEED_SCORES = {
     FAIR: 0.1,
     AVERAGE: 0,
     SLOW: -0.15,
-    VERY_SLOW: -0.3
+    VERY_SLOW: -0.3,
   },
   UNHEALTHY: {
     FAST: -0.1,
     AVERAGE: 0,
-    SLOW: -0.2
-  }
+    SLOW: -0.2,
+  },
 } as const;
 
 export const MEDIAN_FALLBACKS = {
   RETURN_BASELINE: 0.001,
-  AVG_BASKET: 1
+  AVG_BASKET: 1,
 } as const;

@@ -4,12 +4,11 @@ import App from './App';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
+  throw new Error('Could not find root element to mount to');
 }
 
-import { SettingsProvider, AlertProvider } from './context';
 import { StatusBarProvider } from './components/layout/StatusBar';
-
+import { AlertProvider, SettingsProvider } from './context';
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(

@@ -1,18 +1,17 @@
 /**
  * LabelPrinter - Reusable Label Printing Utility
- * 
+ *
  * Provides batch printing functionality using templates from BarcodeStudio.
  * Can print single drugs with quantities or multiple drugs with different expiry dates.
  */
 
-import { Drug } from '../../types';
+import { StorageKeys } from '../../config/storageKeys';
+import type { Drug } from '../../types';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
+import { getDisplayName } from '../../utils/drugDisplayName';
 import { getPrinterSettings, printLabelSilently } from '../../utils/qzPrinter';
 import { storage } from '../../utils/storage';
-import { StorageKeys } from '../../config/storageKeys';
-
-import { LabelElement, LabelDesign, SavedTemplate } from './studio/types';
-import { getDisplayName } from '../../utils/drugDisplayName';
+import type { LabelDesign, LabelElement, SavedTemplate } from './studio/types';
 
 export type { LabelElement, LabelDesign, SavedTemplate };
 
@@ -22,29 +21,28 @@ export type { LabelElement, LabelDesign, SavedTemplate };
  * Data required to print a label for a specific item.
  */
 export interface PrintLabelItem {
-
-    /** The drug entity containing data to be rendered */
-    drug: Drug;
-    /** Number of copies to print */
-    quantity: number;
-    /** Optional date string to override the drug's default expiry */
-    expiryDateOverride?: string;
+  /** The drug entity containing data to be rendered */
+  drug: Drug;
+  /** Number of copies to print */
+  quantity: number;
+  /** Optional date string to override the drug's default expiry */
+  expiryDateOverride?: string;
 }
 
 /**
  * Global configuration options for the printing process.
  */
 export interface PrintOptions {
-    /** Skip local storage lookups and use hardcoded basic style */
-    forceBasicTemplate?: boolean;
-    /** Enable visualization of label boundaries (useful for testing) */
-    showBorders?: boolean;
-    /** UNUSED: Legacy property for dual-roll grouping (now handled automatically) */
-    pairedLabels?: boolean;
-    /** Use a specific design instead of searching local storage */
-    design?: LabelDesign;
-    /** Overrides for specific element visibility by ID */
-    elementVisibility?: Record<string, boolean>;
+  /** Skip local storage lookups and use hardcoded basic style */
+  forceBasicTemplate?: boolean;
+  /** Enable visualization of label boundaries (useful for testing) */
+  showBorders?: boolean;
+  /** UNUSED: Legacy property for dual-roll grouping (now handled automatically) */
+  pairedLabels?: boolean;
+  /** Use a specific design instead of searching local storage */
+  design?: LabelDesign;
+  /** Overrides for specific element visibility by ID */
+  elementVisibility?: Record<string, boolean>;
 }
 
 // --- Constants ---
@@ -54,7 +52,7 @@ export interface PrintOptions {
  * Values are in millimeters (mm).
  */
 export const LABEL_PRESETS: Record<string, { w: number; h: number; label: string }> = {
-    '38x25': { w: 38, h: 25, label: '38×25 mm (Double)' }
+  '38x25': { w: 38, h: 25, label: '38×25 mm (Double)' },
 };
 
 /**
@@ -64,18 +62,18 @@ export const LABEL_PRESETS: Record<string, { w: number; h: number; label: string
  * @returns Object with width (w) and height (h) in mm
  */
 export const getPresetDimensions = (
-    presetKey: string, 
-    customDims?: { w: number; h: number }
+  presetKey: string,
+  customDims?: { w: number; h: number }
 ): { w: number; h: number } => {
-    if (presetKey === 'custom' && customDims) return customDims;
-    return LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x25'];
+  if (presetKey === 'custom' && customDims) return customDims;
+  return LABEL_PRESETS[presetKey] || LABEL_PRESETS['38x25'];
 };
 
 /** Configuration for the popup window used to trigger the browser's print dialog */
 const PRINT_WINDOW_CONFIG = {
-    width: 800,
-    height: 1000,
-    features: 'width=800,height=1000,scrollbars=yes,resizable=yes'
+  width: 800,
+  height: 1000,
+  features: 'width=800,height=1000,scrollbars=yes,resizable=yes',
 } as const;
 
 /**
@@ -84,14 +82,14 @@ const PRINT_WINDOW_CONFIG = {
  * @returns HTML-safe string
  */
 const escapeHtml = (text: string): string => {
-    const map: Record<string, string> = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
 };
 
 /**
@@ -100,12 +98,7 @@ const escapeHtml = (text: string): string => {
  * @returns True if valid, false otherwise
  */
 const validateDrug = (drug: Drug): boolean => {
-    return !!(
-        drug &&
-        (drug.id || drug.internalCode) &&
-        drug.name &&
-        typeof drug.price === 'number'
-    );
+  return !!(drug && (drug.id || drug.internalCode) && drug.name && typeof drug.price === 'number');
 };
 
 /**
@@ -118,36 +111,46 @@ const validateDrug = (drug: Drug): boolean => {
  * @returns The final string content to display in the element
  */
 export const getLabelElementContent = (
-    el: LabelElement,
-    drug: Drug,
-    receiptSettings: { storeName: string; hotline: string },
-    expiryOverride?: string,
-    currency: 'L.E' | 'USD' = 'L.E',
-    barcodeSource: 'global' | 'internal' = 'global'
+  el: LabelElement,
+  drug: Drug,
+  receiptSettings: { storeName: string; hotline: string },
+  expiryOverride?: string,
+  currency: 'L.E' | 'USD' = 'L.E',
+  barcodeSource: 'global' | 'internal' = 'global'
 ): string => {
-    if (el.content) return el.content;
-    if (!el.field) return el.label;
+  if (el.content) return el.content;
+  if (!el.field) return el.label;
 
-    switch (el.field as string) {
-        case 'store': return receiptSettings.storeName;
-        case 'hotline': return receiptSettings.hotline || '19099';
-        case 'name': return getDisplayName(drug);
-        case 'price': return `${Number(drug.price).toFixed(2)} ${currency === 'L.E' ? 'L.E' : '$'}`;
-        case 'barcode': return barcodeSource === 'internal' 
-            ? (drug.internalCode || drug.id) 
-            : (drug.barcode || drug.id);
-        case 'type': return (drug as any).type || '';
-        case 'unit': return (drug as any).unit || '';
-        case 'expiryDate': 
-            if (expiryOverride) return expiryOverride;
-             // If drug has expiry date, use it, otherwise show generic format MM/YYYY
-            return drug.expiryDate ? new Date(drug.expiryDate).toLocaleDateString('en-GB', { month: '2-digit', year: 'numeric' }) : 'MM/YYYY';
-        case 'genericName': return drug.genericName || '';
-        default: return el.content || el.label || '';
-    }
+  switch (el.field as string) {
+    case 'store':
+      return receiptSettings.storeName;
+    case 'hotline':
+      return receiptSettings.hotline || '19099';
+    case 'name':
+      return getDisplayName(drug);
+    case 'price':
+      return `${Number(drug.price).toFixed(2)} ${currency === 'L.E' ? 'L.E' : '$'}`;
+    case 'barcode':
+      return barcodeSource === 'internal' ? drug.internalCode || drug.id : drug.barcode || drug.id;
+    case 'type':
+      return (drug as any).type || '';
+    case 'unit':
+      return (drug as any).unit || '';
+    case 'expiryDate':
+      if (expiryOverride) return expiryOverride;
+      // If drug has expiry date, use it, otherwise show generic format MM/YYYY
+      return drug.expiryDate
+        ? new Date(drug.expiryDate).toLocaleDateString('en-GB', {
+            month: '2-digit',
+            year: 'numeric',
+          })
+        : 'MM/YYYY';
+    case 'genericName':
+      return drug.genericName || '';
+    default:
+      return el.content || el.label || '';
+  }
 };
-
-
 
 /**
  * Retrieves global store branding from Storage (receipt module shared settings).
@@ -155,30 +158,31 @@ export const getLabelElementContent = (
  * @returns Object with storeName and hotline
  */
 export const getReceiptSettings = (): { storeName: string; hotline: string } => {
-    const defaultSettings = { storeName: 'ZINC', hotline: '19099' };
-    
-    try {
-        const templates = storage.get<any[]>(StorageKeys.RECEIPT_TEMPLATES, []);
-        if (templates.length === 0) {
-            return defaultSettings;
-        }
-        
-        const activeId = storage.get<string | null>(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, null);
-        const activeTemplate = templates.find((t: any) => t?.id === activeId) ||
-            templates.find((t: any) => t?.isDefault) ||
-            templates[0];
-        
-        if (activeTemplate?.options) {
-            return {
-                storeName: activeTemplate.options.storeName || defaultSettings.storeName,
-                hotline: activeTemplate.options.headerHotline || defaultSettings.hotline
-            };
-        }
-    } catch (e) { 
-        console.error('Failed to read receipt settings:', e);
+  const defaultSettings = { storeName: 'ZINC', hotline: '19099' };
+
+  try {
+    const templates = storage.get<any[]>(StorageKeys.RECEIPT_TEMPLATES, []);
+    if (templates.length === 0) {
+      return defaultSettings;
     }
-    
-    return defaultSettings;
+
+    const activeId = storage.get<string | null>(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, null);
+    const activeTemplate =
+      templates.find((t: any) => t?.id === activeId) ||
+      templates.find((t: any) => t?.isDefault) ||
+      templates[0];
+
+    if (activeTemplate?.options) {
+      return {
+        storeName: activeTemplate.options.storeName || defaultSettings.storeName,
+        hotline: activeTemplate.options.headerHotline || defaultSettings.hotline,
+      };
+    }
+  } catch (e) {
+    console.error('Failed to read receipt settings:', e);
+  }
+
+  return defaultSettings;
 };
 
 /**
@@ -187,29 +191,29 @@ export const getReceiptSettings = (): { storeName: string; hotline: string } => 
  * @returns The saved design or null if no custom design is found
  */
 const getDefaultTemplate = (): { design: LabelDesign } | null => {
-    try {
-        const defaultTemplateId = storage.get<string | null>(StorageKeys.LABEL_DEFAULT_TEMPLATE, null);
-        const savedTemplates = storage.get<any[]>(StorageKeys.LABEL_TEMPLATES, []);
-        
-        if (defaultTemplateId && savedTemplates.length > 0) {
-            const defaultTemplate = savedTemplates.find((t: any) => t.id === defaultTemplateId);
-            if (defaultTemplate?.design) {
-                return defaultTemplate;
-            }
-        }
-        
-        // Fallback to autosaved design
-        const savedDesign = storage.get<any | null>(StorageKeys.LABEL_DESIGN, null);
-        if (savedDesign) {
-             // parsed is already an object because storage.get parses JSON
-            if (savedDesign.elements && savedDesign.elements.length > 0) {
-                return { design: savedDesign };
-            }
-        }
-    } catch (e) {
-        console.error('Error loading template', e);
+  try {
+    const defaultTemplateId = storage.get<string | null>(StorageKeys.LABEL_DEFAULT_TEMPLATE, null);
+    const savedTemplates = storage.get<any[]>(StorageKeys.LABEL_TEMPLATES, []);
+
+    if (defaultTemplateId && savedTemplates.length > 0) {
+      const defaultTemplate = savedTemplates.find((t: any) => t.id === defaultTemplateId);
+      if (defaultTemplate?.design) {
+        return defaultTemplate;
+      }
     }
-    return null;
+
+    // Fallback to autosaved design
+    const savedDesign = storage.get<any | null>(StorageKeys.LABEL_DESIGN, null);
+    if (savedDesign) {
+      // parsed is already an object because storage.get parses JSON
+      if (savedDesign.elements && savedDesign.elements.length > 0) {
+        return { design: savedDesign };
+      }
+    }
+  } catch (e) {
+    console.error('Error loading template', e);
+  }
+  return null;
 };
 
 /**
@@ -217,16 +221,16 @@ const getDefaultTemplate = (): { design: LabelDesign } | null => {
  * @returns Offset object in millimeters
  */
 const getPrintOffsets = (): { x: number; y: number } => {
-    try {
-        const savedDesign = storage.get<any | null>(StorageKeys.LABEL_DESIGN, null);
-        if (savedDesign) {
-            return {
-                x: savedDesign.printOffsetX || 0,
-                y: savedDesign.printOffsetY || 0
-            };
-        }
-    } catch (e) {}
-    return { x: 0, y: 0 };
+  try {
+    const savedDesign = storage.get<any | null>(StorageKeys.LABEL_DESIGN, null);
+    if (savedDesign) {
+      return {
+        x: savedDesign.printOffsetX || 0,
+        y: savedDesign.printOffsetY || 0,
+      };
+    }
+  } catch (e) {}
+  return { x: 0, y: 0 };
 };
 
 /**
@@ -235,18 +239,20 @@ const getPrintOffsets = (): { x: number; y: number } => {
  * @param design - The design to generate CSS for
  * @returns Object containing the CSS string and a map of element IDs to class names
  */
-export const generateTemplateCSS = (design: LabelDesign): { css: string, classNameMap: Record<string, string> } => {
-    let css = '';
-    const classNameMap: Record<string, string> = {};
+export const generateTemplateCSS = (
+  design: LabelDesign
+): { css: string; classNameMap: Record<string, string> } => {
+  let css = '';
+  const classNameMap: Record<string, string> = {};
 
-    design.elements.forEach(el => {
-        const className = `lbl-el-${el.id}`;
-        classNameMap[el.id] = className;
+  design.elements.forEach((el) => {
+    const className = `lbl-el-${el.id}`;
+    classNameMap[el.id] = className;
 
-        const alignTransform = el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0';
-        const rotationCSS = el.rotation ? ` rotate(${el.rotation}deg)` : '';
-        
-        css += `
+    const alignTransform = el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0';
+    const rotationCSS = el.rotation ? ` rotate(${el.rotation}deg)` : '';
+
+    css += `
             .${className} {
                 position: absolute;
                 left: ${el.x}mm;
@@ -263,18 +269,19 @@ export const generateTemplateCSS = (design: LabelDesign): { css: string, classNa
             }
         `;
 
-        if (el.type === 'barcode') {
-             const format = el.barcodeFormat || 'code128';
-             let fontFamily = 'Libre Barcode 39 Text';
-             if (format === 'code39') fontFamily = 'Libre Barcode 39';
-             else if (format === 'code39-text') fontFamily = 'Libre Barcode 39 Text';
-             else if (format.startsWith('code128')) fontFamily = format === 'code128-text' ? 'Libre Barcode 128 Text' : 'Libre Barcode 128';
-             
-             css += `.${className} { font-family: '${fontFamily}'; line-height: 0.8; padding-top: 1px; }`;
-        }
-    });
+    if (el.type === 'barcode') {
+      const format = el.barcodeFormat || 'code128';
+      let fontFamily = 'Libre Barcode 39 Text';
+      if (format === 'code39') fontFamily = 'Libre Barcode 39';
+      else if (format === 'code39-text') fontFamily = 'Libre Barcode 39 Text';
+      else if (format.startsWith('code128'))
+        fontFamily = format === 'code128-text' ? 'Libre Barcode 128 Text' : 'Libre Barcode 128';
 
-    return { css, classNameMap };
+      css += `.${className} { font-family: '${fontFamily}'; line-height: 0.8; padding-top: 1px; }`;
+    }
+  });
+
+  return { css, classNameMap };
 };
 
 /**
@@ -290,76 +297,84 @@ export const generateTemplateCSS = (design: LabelDesign): { css: string, classNa
  * @returns HTML string for the individual label
  */
 export const generateLabelHTML = (
-    drug: Drug,
-    design: LabelDesign,
-    dims: { w: number; h: number },
-    receiptSettings: { storeName: string; hotline: string },
-    expiryOverride?: string,
-    qrDataUrl?: string,
-    logoDataUrl?: string,
-    classNameMap?: Record<string, string>
+  drug: Drug,
+  design: LabelDesign,
+  dims: { w: number; h: number },
+  receiptSettings: { storeName: string; hotline: string },
+  expiryOverride?: string,
+  qrDataUrl?: string,
+  logoDataUrl?: string,
+  classNameMap?: Record<string, string>
 ): string => {
-    const barcodeSource = design.barcodeSource || 'global';
-    const barcodeValue = barcodeSource === 'internal'
-        ? (drug.internalCode || drug.id)
-        : (drug.barcode || drug.id);
-    const barcodeText = `*${barcodeValue.replace(/\s/g, '').toUpperCase()}*`;
+  const barcodeSource = design.barcodeSource || 'global';
+  const barcodeValue =
+    barcodeSource === 'internal' ? drug.internalCode || drug.id : drug.barcode || drug.id;
+  const barcodeText = `*${barcodeValue.replace(/\s/g, '').toUpperCase()}*`;
 
-    const getElementContent = (el: LabelElement): string => {
-        return getLabelElementContent(el, drug, receiptSettings, expiryOverride, design.currency || 'L.E', design.barcodeSource);
-    };
+  const getElementContent = (el: LabelElement): string => {
+    return getLabelElementContent(
+      el,
+      drug,
+      receiptSettings,
+      expiryOverride,
+      design.currency || 'L.E',
+      design.barcodeSource
+    );
+  };
 
-    const generateElementHTML = (el: LabelElement): string => {
-        if (!el.isVisible) return '';
-        const content = getElementContent(el);
-        
-        let styleAttr = '';
-        let classAttr = '';
+  const generateElementHTML = (el: LabelElement): string => {
+    if (!el.isVisible) return '';
+    const content = getElementContent(el);
 
-        if (classNameMap && classNameMap[el.id]) {
-            classAttr = `class="${classNameMap[el.id]}"`;
-        } else {
-             const alignTransform = el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0';
-             styleAttr = `style="position: absolute; left: ${el.x}mm; top: ${el.y}mm; transform: translate(${alignTransform}, 0); `;
-             
-             if (el.type === 'text') {
-                 styleAttr += `font-size: ${el.fontSize}px; font-weight: ${el.fontWeight || 'normal'}; color: ${el.color || 'black'}; white-space: nowrap;"`;
-             } else if (el.type === 'barcode') {
-                const format = el.barcodeFormat || 'code128';
-                let fontFamily = 'Libre Barcode 39 Text';
-                if (format === 'code39') fontFamily = 'Libre Barcode 39';
-                else if (format === 'code39-text') fontFamily = 'Libre Barcode 39 Text';
-                else if (format.startsWith('code128')) fontFamily = format === 'code128-text' ? 'Libre Barcode 128 Text' : 'Libre Barcode 128';
-                styleAttr += `font-family: '${fontFamily}'; font-size: ${el.fontSize}px; line-height: 0.8; padding-top: 1px; white-space: nowrap;"`;
-             } else {
-                styleAttr += `width: ${el.width || 10}mm; height: ${el.height || 10}mm; object-fit: contain;"`;
-             }
-        }
+    let styleAttr = '';
+    let classAttr = '';
 
-        if (el.type === 'text') {
-            return `<div ${classAttr} ${styleAttr}>${escapeHtml(content)}</div>`;
-        }
-        if (el.type === 'barcode') {
-             const format = el.barcodeFormat || 'code128';
-             let encoded = barcodeText;
-             if (format.startsWith('code128')) {
-                  const rawVal = barcodeSource === 'internal' ? (drug.internalCode || drug.id) : (drug.barcode || drug.id);
-                  encoded = encodeCode128(rawVal);
-             }
-            return `<div ${classAttr} ${styleAttr}>${encoded}</div>`;
-        }
-        if (el.type === 'qrcode' && qrDataUrl) {
-            return `<img src="${qrDataUrl}" ${classAttr} ${styleAttr} />`;
-        }
-        if (el.type === 'image') {
-            const src = el.id === 'logo' ? logoDataUrl : el.content;
-            if (src) return `<img src="${src}" ${classAttr} ${styleAttr} />`;
-        }
-        return '';
-    };
+    if (classNameMap && classNameMap[el.id]) {
+      classAttr = `class="${classNameMap[el.id]}"`;
+    } else {
+      const alignTransform = el.align === 'center' ? '-50%' : el.align === 'right' ? '-100%' : '0';
+      styleAttr = `style="position: absolute; left: ${el.x}mm; top: ${el.y}mm; transform: translate(${alignTransform}, 0); `;
 
-    const showBorders = design.showPrintBorders ?? false;
-    const labelContainerStyle = `
+      if (el.type === 'text') {
+        styleAttr += `font-size: ${el.fontSize}px; font-weight: ${el.fontWeight || 'normal'}; color: ${el.color || 'black'}; white-space: nowrap;"`;
+      } else if (el.type === 'barcode') {
+        const format = el.barcodeFormat || 'code128';
+        let fontFamily = 'Libre Barcode 39 Text';
+        if (format === 'code39') fontFamily = 'Libre Barcode 39';
+        else if (format === 'code39-text') fontFamily = 'Libre Barcode 39 Text';
+        else if (format.startsWith('code128'))
+          fontFamily = format === 'code128-text' ? 'Libre Barcode 128 Text' : 'Libre Barcode 128';
+        styleAttr += `font-family: '${fontFamily}'; font-size: ${el.fontSize}px; line-height: 0.8; padding-top: 1px; white-space: nowrap;"`;
+      } else {
+        styleAttr += `width: ${el.width || 10}mm; height: ${el.height || 10}mm; object-fit: contain;"`;
+      }
+    }
+
+    if (el.type === 'text') {
+      return `<div ${classAttr} ${styleAttr}>${escapeHtml(content)}</div>`;
+    }
+    if (el.type === 'barcode') {
+      const format = el.barcodeFormat || 'code128';
+      let encoded = barcodeText;
+      if (format.startsWith('code128')) {
+        const rawVal =
+          barcodeSource === 'internal' ? drug.internalCode || drug.id : drug.barcode || drug.id;
+        encoded = encodeCode128(rawVal);
+      }
+      return `<div ${classAttr} ${styleAttr}>${encoded}</div>`;
+    }
+    if (el.type === 'qrcode' && qrDataUrl) {
+      return `<img src="${qrDataUrl}" ${classAttr} ${styleAttr} />`;
+    }
+    if (el.type === 'image') {
+      const src = el.id === 'logo' ? logoDataUrl : el.content;
+      if (src) return `<img src="${src}" ${classAttr} ${styleAttr} />`;
+    }
+    return '';
+  };
+
+  const showBorders = design.showPrintBorders ?? false;
+  const labelContainerStyle = `
         width: ${dims.w}mm; height: ${dims.h}mm;
         position: relative; overflow: hidden;
         background: white;
@@ -371,7 +386,7 @@ export const generateLabelHTML = (
         line-height: 0;
     `;
 
-    return `<div style="${labelContainerStyle}">${design.elements.map(generateElementHTML).join('')}</div>`;
+  return `<div style="${labelContainerStyle}">${design.elements.map(generateElementHTML).join('')}</div>`;
 };
 
 // --- Default Design Configuration ---
@@ -380,47 +395,140 @@ export const generateLabelHTML = (
  * Standard factory fallback design for 38x25mm labels.
  */
 export const DEFAULT_LABEL_DESIGN: LabelDesign = {
-    selectedPreset: '38x25',
-    elements: [
-        { id: 'store', type: 'text', label: 'Store Name', x: 19, y: 0.7, fontSize: 4, align: 'center', isVisible: true, field: 'store', hitboxOffsetX: 0.0, hitboxOffsetY: -1.0, hitboxWidth: 10, hitboxHeight: 2 },
-        { id: 'name', type: 'text', label: 'Drug Name', x: 19, y: 1.8, fontSize: 7, fontWeight: 'bold', align: 'center', isVisible: true, field: 'name', hitboxOffsetX: 0.0, hitboxOffsetY: -0.9, hitboxWidth: 14, hitboxHeight: 2 },
-        { id: 'barcode', type: 'barcode', label: 'Barcode', x: 19, y: 5.5, fontSize: 24, align: 'center', isVisible: true, width: 36, barcodeFormat: 'code128', hitboxOffsetX: -1.1, hitboxOffsetY: -0.1, hitboxWidth: 34, hitboxHeight: 3 },
-        { id: 'barcodeNumber', type: 'text', label: 'Barcode Number', x: 19, y: 8.5, fontSize: 4, align: 'center', isVisible: false, field: 'barcode' },
-        { id: 'price', type: 'text', label: 'Price', x: 1.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'left', isVisible: true, field: 'price', hitboxOffsetX: 0.1, hitboxOffsetY: -1.3, hitboxWidth: 8, hitboxHeight: 2 },
-        { id: 'expiry', type: 'text', label: 'Expiry', x: 36.5, y: 9.8, fontSize: 6, fontWeight: 'bold', align: 'right', isVisible: true, field: 'expiryDate', hitboxOffsetX: 0.2, hitboxOffsetY: -1.3, hitboxWidth: 7, hitboxHeight: 2 },
-        { id: 'hotline', type: 'text', label: 'Hotline', x: 19, y: 11, fontSize: 4, align: 'center', isVisible: false, field: 'hotline' }
-    ]
+  selectedPreset: '38x25',
+  elements: [
+    {
+      id: 'store',
+      type: 'text',
+      label: 'Store Name',
+      x: 19,
+      y: 0.7,
+      fontSize: 4,
+      align: 'center',
+      isVisible: true,
+      field: 'store',
+      hitboxOffsetX: 0.0,
+      hitboxOffsetY: -1.0,
+      hitboxWidth: 10,
+      hitboxHeight: 2,
+    },
+    {
+      id: 'name',
+      type: 'text',
+      label: 'Drug Name',
+      x: 19,
+      y: 1.8,
+      fontSize: 7,
+      fontWeight: 'bold',
+      align: 'center',
+      isVisible: true,
+      field: 'name',
+      hitboxOffsetX: 0.0,
+      hitboxOffsetY: -0.9,
+      hitboxWidth: 14,
+      hitboxHeight: 2,
+    },
+    {
+      id: 'barcode',
+      type: 'barcode',
+      label: 'Barcode',
+      x: 19,
+      y: 5.5,
+      fontSize: 24,
+      align: 'center',
+      isVisible: true,
+      width: 36,
+      barcodeFormat: 'code128',
+      hitboxOffsetX: -1.1,
+      hitboxOffsetY: -0.1,
+      hitboxWidth: 34,
+      hitboxHeight: 3,
+    },
+    {
+      id: 'barcodeNumber',
+      type: 'text',
+      label: 'Barcode Number',
+      x: 19,
+      y: 8.5,
+      fontSize: 4,
+      align: 'center',
+      isVisible: false,
+      field: 'barcode',
+    },
+    {
+      id: 'price',
+      type: 'text',
+      label: 'Price',
+      x: 1.5,
+      y: 9.8,
+      fontSize: 6,
+      fontWeight: 'bold',
+      align: 'left',
+      isVisible: true,
+      field: 'price',
+      hitboxOffsetX: 0.1,
+      hitboxOffsetY: -1.3,
+      hitboxWidth: 8,
+      hitboxHeight: 2,
+    },
+    {
+      id: 'expiry',
+      type: 'text',
+      label: 'Expiry',
+      x: 36.5,
+      y: 9.8,
+      fontSize: 6,
+      fontWeight: 'bold',
+      align: 'right',
+      isVisible: true,
+      field: 'expiryDate',
+      hitboxOffsetX: 0.2,
+      hitboxOffsetY: -1.3,
+      hitboxWidth: 7,
+      hitboxHeight: 2,
+    },
+    {
+      id: 'hotline',
+      type: 'text',
+      label: 'Hotline',
+      x: 19,
+      y: 11,
+      fontSize: 4,
+      align: 'center',
+      isVisible: false,
+      field: 'hotline',
+    },
+  ],
 };
 
 // --- Main API ---
 
 /**
  * Triggers the browser's print dialog for a batch of drug labels.
- * 
+ *
  * Process:
  * 1. Validates input data
  * 2. Opens a blank popup window
  * 3. Resolves the correct label design (template or manual override)
  * 4. Generates HTML/CSS with grouping logic (2 labels per page for dual-roll)
  * 5. Writes content to window and calls window.print()
- * 
+ *
  * @param items - List of drugs and quantities to print
  * @param options - UI/Rendering overrides
- * 
+ *
  * @example
  * // Print 5 labels for a single drug
  * printLabels([{ drug: myDrug, quantity: 5 }]);
  */
 
-
 export const generatePageHTML = (
-    contentHTML: string,
-    css: string,
-    dims: { w: number; h: number },
-    pageHeight: number,
-    offsets: { x: number; y: number } = { x: 0, y: 0 }
+  contentHTML: string,
+  css: string,
+  dims: { w: number; h: number },
+  pageHeight: number,
+  offsets: { x: number; y: number } = { x: 0, y: 0 }
 ): string => {
-    const fullCSS = `
+  const fullCSS = `
             ${css}
             @page { size: ${dims.w}mm ${pageHeight}mm; margin: 0; }
             * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -448,7 +556,7 @@ export const generatePageHTML = (
             }
         `;
 
-    return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
             <html><head><title>Print Labels</title>
             <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&family=Libre+Barcode+128+Text&family=Libre+Barcode+39&family=Libre+Barcode+39+Text&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
             <style>${fullCSS}</style></head><body>
@@ -467,157 +575,163 @@ export const generatePageHTML = (
             </body></html>`;
 };
 
-export const printLabels = async (items: PrintLabelItem[], options: PrintOptions = {}): Promise<void> => {
-    const validItems = items.filter(item => {
-        if (!validateDrug(item.drug)) {
-            console.warn('Invalid drug data skipped:', item.drug);
-            return false;
-        }
-        if (item.quantity <= 0) return false;
-        return true;
-    });
+export const printLabels = async (
+  items: PrintLabelItem[],
+  options: PrintOptions = {}
+): Promise<void> => {
+  const validItems = items.filter((item) => {
+    if (!validateDrug(item.drug)) {
+      console.warn('Invalid drug data skipped:', item.drug);
+      return false;
+    }
+    if (item.quantity <= 0) return false;
+    return true;
+  });
 
-    if (validItems.length === 0) {
-        console.warn('No valid items to print');
-        return;
+  if (validItems.length === 0) {
+    console.warn('No valid items to print');
+    return;
+  }
+
+  // 1. Ensure fonts are fully loaded in the main window context before starting.
+  // This warms the cache and reduces the chance of missing barcode fonts in the print window.
+  try {
+    await document.fonts.ready;
+  } catch (fontErr) {
+    console.warn('Font loading check failed, proceeding anyway:', fontErr);
+  }
+
+  // Check if QZ Tray silent printing should be attempted
+  const printerSettings = getPrinterSettings();
+  const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
+
+  let printWindow: Window | null = null;
+
+  try {
+    const template = options.forceBasicTemplate ? null : getDefaultTemplate();
+    // Deep clone to prevent mutation when applying overrides
+    const design = JSON.parse(
+      JSON.stringify(options.design || (template?.design as LabelDesign) || DEFAULT_LABEL_DESIGN)
+    );
+
+    // Apply dynamic visibility overrides
+    if (options.elementVisibility) {
+      design.elements.forEach((el: LabelElement) => {
+        if (options.elementVisibility![el.id] !== undefined) {
+          el.isVisible = options.elementVisibility![el.id];
+        }
+      });
     }
 
-    // 1. Ensure fonts are fully loaded in the main window context before starting.
-    // This warms the cache and reduces the chance of missing barcode fonts in the print window.
-    try {
-        await document.fonts.ready;
-    } catch (fontErr) {
-        console.warn('Font loading check failed, proceeding anyway:', fontErr);
+    const dims =
+      design.selectedPreset === 'custom'
+        ? design.customDims || { w: 38, h: 25 }
+        : LABEL_PRESETS[design.selectedPreset] || { w: 38, h: 25 };
+
+    const receiptSettings = getReceiptSettings();
+    const offsets = getPrintOffsets();
+    const printOffsetX = offsets.x;
+    const printOffsetY = offsets.y;
+
+    // Dimensions and Pitch logic
+    // For the 38x25 double label, we have: [12mm label] + [1mm inner gap] + [12mm label] + [3mm outer gap]
+    // This results in a 28mm total pitch (page height)
+    const isDouble = design.selectedPreset === '38x25';
+    const labelsPerPage = isDouble ? 2 : 1;
+
+    // Configuration for the specific double-label system
+    const labelHeight = isDouble ? 12 : dims.h;
+    const innerGap = isDouble ? 1 : 0;
+    const outerGap = isDouble ? 3 : design.labelGap || 0; // Always 3mm for 38x25 as per roll specs
+
+    // The effective height of the page (from top of one pair to top of next pair)
+    const pageHeight = isDouble
+      ? labelHeight * 2 + innerGap + outerGap // (12*2) + 1 + 3 = 28mm
+      : labelHeight + outerGap;
+
+    // Correct dimensions for the individual label HTML generation
+    const renderDims = { w: dims.w, h: labelHeight };
+
+    const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
+
+    const labelFragments: string[] = [];
+    for (const item of validItems) {
+      const singleLabel = generateLabelHTML(
+        item.drug,
+        design,
+        renderDims, // Use 12mm for individual label content
+        receiptSettings,
+        item.expiryDateOverride,
+        undefined,
+        undefined,
+        classNameMap
+      );
+
+      for (let i = 0; i < item.quantity; i++) {
+        labelFragments.push(singleLabel);
+      }
     }
 
-    // Check if QZ Tray silent printing should be attempted
-    const printerSettings = getPrinterSettings();
-    const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
+    const innerGapDivider = innerGap > 0 ? `<div style="height: ${innerGap}mm;"></div>` : '';
+    const pages: string[] = [];
 
-    let printWindow: Window | null = null;
+    for (let i = 0; i < labelFragments.length; i += labelsPerPage) {
+      const pageLabels = labelFragments.slice(i, i + labelsPerPage);
+      const isLastPage = i + labelsPerPage >= labelFragments.length;
 
-    try {
-        const template = options.forceBasicTemplate ? null : getDefaultTemplate();
-        // Deep clone to prevent mutation when applying overrides
-        let design = JSON.parse(JSON.stringify(
-            options.design || (template?.design as LabelDesign) || DEFAULT_LABEL_DESIGN
-        ));
+      // Join labels with the internal gap (1mm)
+      const labelsContent = pageLabels.join(innerGapDivider);
 
-        // Apply dynamic visibility overrides
-        if (options.elementVisibility) {
-            design.elements.forEach((el: LabelElement) => {
-                if (options.elementVisibility![el.id] !== undefined) {
-                    el.isVisible = options.elementVisibility![el.id];
-                }
-            });
-        }
-
-        const dims = design.selectedPreset === 'custom'
-            ? (design.customDims || { w: 38, h: 25 })
-            : (LABEL_PRESETS[design.selectedPreset] || { w: 38, h: 25 });
-
-        const receiptSettings = getReceiptSettings();
-        const offsets = getPrintOffsets();
-        const printOffsetX = offsets.x;
-        const printOffsetY = offsets.y;
-
-        // Dimensions and Pitch logic
-        // For the 38x25 double label, we have: [12mm label] + [1mm inner gap] + [12mm label] + [3mm outer gap]
-        // This results in a 28mm total pitch (page height)
-        const isDouble = design.selectedPreset === '38x25';
-        const labelsPerPage = isDouble ? 2 : 1;
-        
-        // Configuration for the specific double-label system
-        const labelHeight = isDouble ? 12 : dims.h;
-        const innerGap = isDouble ? 1 : 0;
-        const outerGap = isDouble ? 3 : (design.labelGap || 0); // Always 3mm for 38x25 as per roll specs
-        
-        // The effective height of the page (from top of one pair to top of next pair)
-        const pageHeight = isDouble 
-            ? (labelHeight * 2) + innerGap + outerGap // (12*2) + 1 + 3 = 28mm
-            : labelHeight + outerGap;
-
-        // Correct dimensions for the individual label HTML generation
-        const renderDims = { w: dims.w, h: labelHeight };
-
-        const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
-
-        const labelFragments: string[] = [];
-        for (const item of validItems) {
-            const singleLabel = generateLabelHTML(
-                item.drug,
-                design,
-                renderDims, // Use 12mm for individual label content
-                receiptSettings,
-                item.expiryDateOverride,
-                undefined,
-                undefined,
-                classNameMap
-            );
-            
-            for (let i = 0; i < item.quantity; i++) {
-                labelFragments.push(singleLabel);
-            }
-        }
-        
-        const innerGapDivider = innerGap > 0 ? `<div style="height: ${innerGap}mm;"></div>` : '';
-        const pages: string[] = [];
-        
-        for (let i = 0; i < labelFragments.length; i += labelsPerPage) {
-            const pageLabels = labelFragments.slice(i, i + labelsPerPage);
-            const isLastPage = i + labelsPerPage >= labelFragments.length;
-            
-            // Join labels with the internal gap (1mm)
-            const labelsContent = pageLabels.join(innerGapDivider);
-            
-            // The container height includes ONLY the labels and the inner gap.
-            // The outer gap is handled by the pageHeight (Pitch) and transform logic.
-            const pageHTML = `<div class="page-container" style="height: ${pageHeight - outerGap}mm; page-break-after: ${isLastPage ? 'auto' : 'always'};">
+      // The container height includes ONLY the labels and the inner gap.
+      // The outer gap is handled by the pageHeight (Pitch) and transform logic.
+      const pageHTML = `<div class="page-container" style="height: ${pageHeight - outerGap}mm; page-break-after: ${isLastPage ? 'auto' : 'always'};">
                 ${labelsContent}
             </div>`;
-            pages.push(pageHTML);
+      pages.push(pageHTML);
+    }
+
+    const allPagesHTML = pages.join('');
+
+    const htmlContent = generatePageHTML(allPagesHTML, templateCSS, dims, pageHeight, {
+      x: printOffsetX,
+      y: printOffsetY,
+    });
+
+    // Try silent printing via QZ Tray first
+    if (shouldTrySilent) {
+      try {
+        const silentPrinted = await printLabelSilently(htmlContent, {
+          width: dims.w,
+          height: dims.h,
+        });
+        if (silentPrinted) {
+          console.log('Labels printed silently via QZ Tray');
+          return; // Success - no need for browser popup
         }
-        
-        const allPagesHTML = pages.join('');
+      } catch (silentErr: any) {
+        console.warn('QZ Tray silent print failed:', silentErr);
 
-        const htmlContent = generatePageHTML(
-            allPagesHTML,
-            templateCSS,
-            dims,
-            pageHeight,
-            { x: printOffsetX, y: printOffsetY }
-        );
-
-        // Try silent printing via QZ Tray first
-        if (shouldTrySilent) {
-            try {
-                const silentPrinted = await printLabelSilently(htmlContent, { width: dims.w, height: dims.h });
-                if (silentPrinted) {
-                    console.log('Labels printed silently via QZ Tray');
-                    return; // Success - no need for browser popup
-                }
-            } catch (silentErr: any) {
-                console.warn('QZ Tray silent print failed:', silentErr);
-                
-                // If the user explicitly requested silent printing (no fallback), we must inform them of the failure.
-                if (printerSettings.silentMode === 'on') {
-                    alert(`Silent printing failed: ${silentErr?.message || 'Check QZ Tray connection'}.`);
-                    return;
-                }
-                // Otherwise (fallback mode), we proceed to browser print below.
-            }
+        // If the user explicitly requested silent printing (no fallback), we must inform them of the failure.
+        if (printerSettings.silentMode === 'on') {
+          alert(`Silent printing failed: ${silentErr?.message || 'Check QZ Tray connection'}.`);
+          return;
         }
+        // Otherwise (fallback mode), we proceed to browser print below.
+      }
+    }
 
-        // Browser print fallback
-        printWindow = window.open('', '', PRINT_WINDOW_CONFIG.features);
-        
-        if (!printWindow) {
-            alert('Popup blocked! Please allow popups for this site to enable manual printing.');
-            return;
-        }
+    // Browser print fallback
+    printWindow = window.open('', '', PRINT_WINDOW_CONFIG.features);
 
-        // Add the print script for browser print
-        const browserHtmlContent = htmlContent.replace('</body></html>', `
+    if (!printWindow) {
+      alert('Popup blocked! Please allow popups for this site to enable manual printing.');
+      return;
+    }
+
+    // Add the print script for browser print
+    const browserHtmlContent = htmlContent.replace(
+      '</body></html>',
+      `
             <script>
                 // Double-confirmation for font readiness in the new window context
                 Promise.all([
@@ -632,15 +746,16 @@ export const printLabels = async (items: PrintLabelItem[], options: PrintOptions
                     window.print();
                 });
             </script>
-            </body></html>`);
+            </body></html>`
+    );
 
-        printWindow.document.write(browserHtmlContent);
-        printWindow.document.close();
-    } catch (e: any) {
-        console.error('Print process failed:', e);
-        if (printWindow) printWindow.close();
-        alert(`An unexpected error occurred during printing: ${e?.message || 'Unknown error'}`);
-    }
+    printWindow.document.write(browserHtmlContent);
+    printWindow.document.close();
+  } catch (e: any) {
+    console.error('Print process failed:', e);
+    if (printWindow) printWindow.close();
+    alert(`An unexpected error occurred during printing: ${e?.message || 'Unknown error'}`);
+  }
 };
 
 /**
@@ -649,6 +764,10 @@ export const printLabels = async (items: PrintLabelItem[], options: PrintOptions
  * @param quantity - Number of labels (defaults to 1)
  * @param expiryDateOverride - Optional custom expiry date
  */
-export const printSingleLabel = (drug: Drug, quantity: number = 1, expiryDateOverride?: string): void => {
-    printLabels([{ drug, quantity, expiryDateOverride }]);
+export const printSingleLabel = (
+  drug: Drug,
+  quantity: number = 1,
+  expiryDateOverride?: string
+): void => {
+  printLabels([{ drug, quantity, expiryDateOverride }]);
 };

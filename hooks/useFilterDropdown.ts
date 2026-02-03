@@ -1,4 +1,4 @@
-import { KeyboardEvent, FocusEvent, MouseEvent } from 'react';
+import type { FocusEvent, KeyboardEvent, MouseEvent } from 'react';
 
 export interface UseFilterDropdownProps<T> {
   items: T[];
@@ -24,15 +24,14 @@ export function useFilterDropdown<T>({
   preventDefaultOnSpace = true,
   onEscape,
 }: UseFilterDropdownProps<T>) {
-  
   const handleKeyDown = (e: KeyboardEvent) => {
     e.stopPropagation(); // Prevent row actions (like add to cart) from triggering on keydown
-    
+
     // Escape
     if (e.key === 'Escape') {
-        if (onEscape) onEscape();
-        else if (isOpen) onToggle();
-        return;
+      if (onEscape) onEscape();
+      else if (isOpen) onToggle();
+      return;
     }
 
     // Space to Toggle
@@ -47,7 +46,7 @@ export function useFilterDropdown<T>({
     // Enter Actions
     if (e.key === 'Enter') {
       e.preventDefault();
-      
+
       if (isOpen) {
         // Confirm selection and close
         onToggle();
@@ -61,24 +60,24 @@ export function useFilterDropdown<T>({
     // Navigation
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
-      
+
       // Calculate next index
       const currentKey = selectedItem ? keyExtractor(selectedItem) : null;
-      const currentIndex = currentKey 
-        ? items.findIndex(item => keyExtractor(item) === currentKey) 
+      const currentIndex = currentKey
+        ? items.findIndex((item) => keyExtractor(item) === currentKey)
         : -1;
 
       let nextIndex;
       if (currentIndex === -1) {
-          nextIndex = 0; // Start at 0 if nothing selected
+        nextIndex = 0; // Start at 0 if nothing selected
       } else {
-          if (e.key === 'ArrowDown') {
-            nextIndex = (currentIndex + 1) % items.length;
-          } else {
-            nextIndex = (currentIndex - 1 + items.length) % items.length;
-          }
+        if (e.key === 'ArrowDown') {
+          nextIndex = (currentIndex + 1) % items.length;
+        } else {
+          nextIndex = (currentIndex - 1 + items.length) % items.length;
+        }
       }
-      
+
       const nextItem = items[nextIndex];
       if (nextItem) {
         onSelect(nextItem);
@@ -108,6 +107,6 @@ export function useFilterDropdown<T>({
     handleKeyDown,
     handleBlur,
     handleClick,
-    handleOptionClick
+    handleOptionClick,
   };
 }

@@ -290,13 +290,23 @@ export const CITIES: City[] = [
   { id: '2009', governorate_id: '20', name_ar: 'ههيا', name_en: 'Hehia' },
   { id: '2010', governorate_id: '20', name_ar: 'أبو كبير', name_en: 'Abu Kabir' },
   { id: '2011', governorate_id: '20', name_ar: 'فاقوس', name_en: 'Faccus' },
-  { id: '2012', governorate_id: '20', name_ar: 'الصالحية الجديدة', name_en: 'El Salihia El Gedida' },
+  {
+    id: '2012',
+    governorate_id: '20',
+    name_ar: 'الصالحية الجديدة',
+    name_en: 'El Salihia El Gedida',
+  },
   { id: '2013', governorate_id: '20', name_ar: 'الإبراهيمية', name_en: 'Al Ibrahimiyah' },
   { id: '2014', governorate_id: '20', name_ar: 'ديرب نجم', name_en: 'Deirb Negm' },
   { id: '2015', governorate_id: '20', name_ar: 'كفر صقر', name_en: 'Kafr Saqr' },
   { id: '2016', governorate_id: '20', name_ar: 'أولاد صقر', name_en: 'Awlad Saqr' },
   { id: '2017', governorate_id: '20', name_ar: 'الحسينية', name_en: 'Husseiniya' },
-  { id: '2018', governorate_id: '20', name_ar: 'صان الحجر القبلية', name_en: 'San El Hagar El Qabliya' },
+  {
+    id: '2018',
+    governorate_id: '20',
+    name_ar: 'صان الحجر القبلية',
+    name_en: 'San El Hagar El Qabliya',
+  },
   { id: '2019', governorate_id: '20', name_ar: 'منشأة أبو عمر', name_en: 'Manshayat Abu Omar' },
 
   // South Sinai (21)
@@ -373,7 +383,7 @@ export const CITIES: City[] = [
   { id: '2704', governorate_id: '27', name_ar: 'أخميم الجديدة', name_en: 'Akhmim El Gedida' },
   { id: '2705', governorate_id: '27', name_ar: 'البلينا', name_en: 'Albalina' },
   { id: '2706', governorate_id: '27', name_ar: 'المراغة', name_en: 'El Maragha' },
-  { id: '2707', governorate_id: '27', name_ar: 'المنشأة', name_en: 'al-Munsha\'a' },
+  { id: '2707', governorate_id: '27', name_ar: 'المنشأة', name_en: "al-Munsha'a" },
   { id: '2708', governorate_id: '27', name_ar: 'دار السلام', name_en: 'Dar El Salam' },
   { id: '2709', governorate_id: '27', name_ar: 'جرجا', name_en: 'Gerga' },
   { id: '2710', governorate_id: '27', name_ar: 'جهينة', name_en: 'Juhayna' },
@@ -386,15 +396,30 @@ export const CITIES: City[] = [
 // Generate generic areas for cities that don't have specific data
 const generateGenericAreas = (): Area[] => {
   const genericAreas: Area[] = [];
-  const specificCityIds = new Set(SPECIFIC_AREAS.map(a => a.city_id));
+  const specificCityIds = new Set(SPECIFIC_AREAS.map((a) => a.city_id));
 
-  CITIES.forEach(city => {
+  CITIES.forEach((city) => {
     if (!specificCityIds.has(city.id)) {
       genericAreas.push(
         { id: `${city.id}01`, city_id: city.id, name_ar: 'وسط البلد', name_en: 'City Center' },
-        { id: `${city.id}02`, city_id: city.id, name_ar: 'الحي البحري', name_en: 'Northern District' },
-        { id: `${city.id}03`, city_id: city.id, name_ar: 'الحي القبلي', name_en: 'Southern District' },
-        { id: `${city.id}04`, city_id: city.id, name_ar: 'المنطقة الصناعية', name_en: 'Industrial Zone' },
+        {
+          id: `${city.id}02`,
+          city_id: city.id,
+          name_ar: 'الحي البحري',
+          name_en: 'Northern District',
+        },
+        {
+          id: `${city.id}03`,
+          city_id: city.id,
+          name_ar: 'الحي القبلي',
+          name_en: 'Southern District',
+        },
+        {
+          id: `${city.id}04`,
+          city_id: city.id,
+          name_ar: 'المنطقة الصناعية',
+          name_en: 'Industrial Zone',
+        },
         { id: `${city.id}05`, city_id: city.id, name_ar: 'الزهراء', name_en: 'Al Zahraa' }
       );
     }
@@ -410,7 +435,7 @@ export const getLocationName = (id: string, type: 'gov' | 'city' | 'area', lang:
   if (type === 'gov') list = GOVERNORATES;
   if (type === 'city') list = CITIES;
   if (type === 'area') list = AREAS;
-  
-  const item = list.find(i => i.id === id);
+
+  const item = list.find((i) => i.id === id);
   return item ? (lang === 'AR' ? item.name_ar : item.name_en) : '';
 };

@@ -1,13 +1,14 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Drug } from '../../types';
-import { SearchInput } from '../common/SearchInput';
-import { SearchDropdown } from '../common/SearchDropdown';
-import { printLabels, PrintLabelItem } from './LabelPrinter';
-import { useSmartDirection } from '../common/SmartInputs';
+import type React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { Drug } from '../../types';
+import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { useContextMenu } from '../common/ContextMenu';
 import { usePosSounds } from '../common/hooks/usePosSounds';
-import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
+import { SearchDropdown } from '../common/SearchDropdown';
+import { SearchInput } from '../common/SearchInput';
+import { useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
+import { type PrintLabelItem, printLabels } from './LabelPrinter';
 
 interface BarcodePrinterProps {
   inventory: Drug[];
@@ -21,7 +22,13 @@ interface QueueItem extends PrintLabelItem {
   id: string; // Unique ID for the queue item (e.g. timestamp)
 }
 
-export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color, t, language, textTransform }) => {
+export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
+  inventory,
+  color,
+  t,
+  language,
+  textTransform,
+}) => {
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
   const { playBeep } = usePosSounds();
@@ -31,46 +38,53 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
   const [printConfig, setPrintConfig] = useState({
-      store: true,
-      name: true,
-      price: true,
-      expiry: true,
-      barcode: true,
-      hotline: false
+    store: true,
+    name: true,
+    price: true,
+    expiry: true,
+    barcode: true,
+    hotline: false,
   });
-  
+
   // Smart direction for search
-  const dir = useSmartDirection(search, t.barcodePrinter?.searchPlaceholder || 'Search product to print...');
+  const dir = useSmartDirection(
+    search,
+    t.barcodePrinter?.searchPlaceholder || 'Search product to print...'
+  );
 
   // Search logic
   const searchResults = useMemo(() => {
     const trimmed = search.trim();
     // Reset selection when search changes
     setSelectedSuggestionIndex(-1);
-    
+
     if (!trimmed) return [];
-    
+
     const { mode, regex } = parseSearchTerm(search);
 
-    return inventory.filter(d => {
+    return inventory
+      .filter((d) => {
         // Exact code match (no regex needed)
         if (d.barcode === trimmed || d.internalCode === trimmed) return true;
 
         if (mode === 'ingredient') {
-            return d.activeIngredients?.some(ing => regex.test(ing));
+          return d.activeIngredients?.some((ing) => regex.test(ing));
         }
 
         const searchableText = [
-            d.name,
-            d.genericName,
-            d.dosageForm,
-            d.category,
-            d.description,
-            ...(Array.isArray(d.activeIngredients) ? d.activeIngredients : []),
-        ].filter(Boolean).join(" ");
+          d.name,
+          d.genericName,
+          d.dosageForm,
+          d.category,
+          d.description,
+          ...(Array.isArray(d.activeIngredients) ? d.activeIngredients : []),
+        ]
+          .filter(Boolean)
+          .join(' ');
 
         return regex.test(searchableText);
-    }).slice(0, 10);
+      })
+      .slice(0, 10);
   }, [search, inventory]);
 
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -82,13 +96,13 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       // 1. Ignore if already in an input
       if (
-        document.activeElement?.tagName === "INPUT" ||
-        document.activeElement?.tagName === "TEXTAREA"
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA'
       ) {
         // Handle Escape to blur
         if (e.key === 'Escape') {
-            (document.activeElement as HTMLElement).blur();
-            setShowSuggestions(false);
+          (document.activeElement as HTMLElement).blur();
+          setShowSuggestions(false);
         }
         return;
       }
@@ -105,47 +119,44 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
       // 3. Shortcuts
       // Alt+P: Print
       if (e.altKey && (e.key === 'p' || e.key === 'P' || e.key === 'ح')) {
-          e.preventDefault();
-          if (queue.length > 0) handlePrint();
-          return;
+        e.preventDefault();
+        if (queue.length > 0) handlePrint();
+        return;
       }
       // Alt+C: Clear
       if (e.altKey && (e.key === 'c' || e.key === 'C' || e.key === 'ؤ')) {
-          e.preventDefault();
-          if (queue.length > 0) clearQueue();
-          return;
+        e.preventDefault();
+        if (queue.length > 0) clearQueue();
+        return;
       }
     };
-    window.addEventListener("keydown", handleGlobalKeyDown);
-    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [queue.length]); // Re-bind when queue length changes for shortcuts
 
   // Auto-fill on exact barcode match
   useEffect(() => {
-     let trimmed = search.trim();
-     let scanQty = 1;
+    let trimmed = search.trim();
+    let scanQty = 1;
 
-     // Support qty*barcode format (e.g. 10*123456)
-     if (trimmed.includes('*')) {
-         const parts = trimmed.split('*');
-         if (parts.length === 2 && !isNaN(parseInt(parts[0]))) {
-             scanQty = Math.max(1, parseInt(parts[0]));
-             trimmed = parts[1].trim();
-         }
-     }
+    // Support qty*barcode format (e.g. 10*123456)
+    if (trimmed.includes('*')) {
+      const parts = trimmed.split('*');
+      if (parts.length === 2 && !isNaN(parseInt(parts[0]))) {
+        scanQty = Math.max(1, parseInt(parts[0]));
+        trimmed = parts[1].trim();
+      }
+    }
 
-     if (trimmed.length < 4) return; // Min length for auto-detect
+    if (trimmed.length < 4) return; // Min length for auto-detect
 
-     const match = inventory.find(d => 
-        (d.barcode === trimmed) || 
-        (d.internalCode === trimmed)
-     );
+    const match = inventory.find((d) => d.barcode === trimmed || d.internalCode === trimmed);
 
-     if (match) {
-         addToQueue(match, scanQty);
-         setSearch('');
-         setShowSuggestions(false);
-     }
+    if (match) {
+      addToQueue(match, scanQty);
+      setSearch('');
+      setShowSuggestions(false);
+    }
   }, [search, inventory]);
 
   // Close suggestions on click outside
@@ -162,7 +173,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
   const addToQueue = (drug: Drug, initialQty: number = 1) => {
     // Play sound callback
     playBeep();
-    
+
     // Format expiry date to MM/YY
     let formattedExpiry = '';
     if (drug.expiryDate) {
@@ -175,33 +186,32 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
         formattedExpiry = drug.expiryDate;
       }
     }
-    
-    setQueue(prev => {
+
+    setQueue((prev) => {
       // Check if item already exists with same drug ID and expiry
-      const existingIndex = prev.findIndex(item => 
-          item.drug.id === drug.id && 
-          item.expiryDateOverride === formattedExpiry
+      const existingIndex = prev.findIndex(
+        (item) => item.drug.id === drug.id && item.expiryDateOverride === formattedExpiry
       );
 
       if (existingIndex >= 0) {
-          // Update quantity of existing item
-          const updated = [...prev];
-          const existingId = updated[existingIndex].id;
-          updated[existingIndex] = {
-              ...updated[existingIndex],
-              quantity: updated[existingIndex].quantity + 1
-          };
-          setLastAddedId(existingId);
-          return updated;
+        // Update quantity of existing item
+        const updated = [...prev];
+        const existingId = updated[existingIndex].id;
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: updated[existingIndex].quantity + 1,
+        };
+        setLastAddedId(existingId);
+        return updated;
       }
 
       // Add new item
       const newId = getVerifiedDate().getTime().toString();
       const newItem: QueueItem = {
-          id: newId,
-          drug,
-          quantity: initialQty,
-          expiryDateOverride: formattedExpiry
+        id: newId,
+        drug,
+        quantity: initialQty,
+        expiryDateOverride: formattedExpiry,
       };
       setLastAddedId(newId);
       return [...prev, newItem];
@@ -212,11 +222,13 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
   };
 
   const removeFromQueue = (id: string) => {
-    setQueue(prev => prev.filter(item => item.id !== id));
+    setQueue((prev) => prev.filter((item) => item.id !== id));
   };
 
   const updateQuantity = (id: string, qty: number) => {
-    setQueue(prev => prev.map(item => item.id === id ? { ...item, quantity: Math.max(1, qty) } : item));
+    setQueue((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, quantity: Math.max(1, qty) } : item))
+    );
   };
 
   const updateExpiryAndBatch = (id: string, newBatch: Drug) => {
@@ -230,38 +242,38 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
       }
     }
 
-    setQueue(prev => prev.map(item => 
-        item.id === id 
-            ? { ...item, drug: newBatch, expiryDateOverride: formattedExpiry } 
-            : item
-    ));
+    setQueue((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, drug: newBatch, expiryDateOverride: formattedExpiry } : item
+      )
+    );
   };
 
   const handlePrint = () => {
     if (queue.length === 0) return;
     setIsPrinting(true);
-    
+
     // Convert QueueItem to PrintLabelItem (strip internal ID if needed, though extra props are usually fine)
     const itemsToPrint: PrintLabelItem[] = queue.map(({ drug, quantity, expiryDateOverride }) => ({
-        drug,
-        quantity,
-        expiryDateOverride
+      drug,
+      quantity,
+      expiryDateOverride,
     }));
 
     // Try to load current design from localStorage
     let currentDesign: any = null;
     try {
-        const saved = localStorage.getItem('pharma_label_design');
-        if (saved) currentDesign = JSON.parse(saved);
+      const saved = localStorage.getItem('pharma_label_design');
+      if (saved) currentDesign = JSON.parse(saved);
     } catch (e) {
-        console.error('Failed to load current design', e);
+      console.error('Failed to load current design', e);
     }
 
-    printLabels(itemsToPrint, { 
-        design: currentDesign,
-        elementVisibility: printConfig
+    printLabels(itemsToPrint, {
+      design: currentDesign,
+      elementVisibility: printConfig,
     });
-    
+
     // Optional: Clear queue after print? Or keep for re-print?
     // Let's keep it for now, user can clear manually if they want.
     setIsPrinting(false);
@@ -272,284 +284,307 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({ inventory, color
   };
 
   return (
-    <div className="h-full flex flex-col gap-4 overflow-hidden animate-fade-in">
+    <div className='h-full flex flex-col gap-4 overflow-hidden animate-fade-in'>
       {/* Dynamic Header & Toolbar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-1">
+      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-1'>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-2">
-            <span className="material-symbols-rounded text-2xl">print</span>
+          <h1 className='text-2xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-2'>
+            <span className='material-symbols-rounded text-2xl'>print</span>
             {t.barcodePrinter?.title || 'Barcode Printer'}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className='text-sm text-gray-500 dark:text-gray-400'>
             {t.barcodePrinter?.subtitle || 'Queue and print product labels'}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className='flex items-center gap-2'>
           {queue.length > 0 && (
-            <button 
+            <button
               onClick={clearQueue}
-              className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+              className='px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors'
             >
               {t.barcodePrinter?.clearQueue || 'Clear Queue'}
             </button>
           )}
-          <button 
+          <button
             onClick={handlePrint}
             disabled={queue.length === 0}
             className={`px-5 py-2.5 bg-${color}-600 hover:bg-${color}-700 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:grayscale disabled:shadow-none font-semibold`}
           >
-            <span className="material-symbols-rounded">print</span>
+            <span className='material-symbols-rounded'>print</span>
             {t.barcodePrinter?.printLabels || 'Print Labels'}
           </button>
         </div>
       </div>
 
       {/* Main Filter/Search Toolbar */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row items-center gap-4">
+      <div className='bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row items-center gap-4'>
         {/* Search Input Container */}
-        <div className="relative z-20 flex-1 w-full" ref={searchRef}>
+        <div className='relative z-20 flex-1 w-full' ref={searchRef}>
           <SearchInput
             ref={searchInputRef}
             value={search}
             onSearchChange={(val) => {
-                setSearch(val);
-                setShowSuggestions(true);
-                setSelectedSuggestionIndex(-1);
+              setSearch(val);
+              setShowSuggestions(true);
+              setSelectedSuggestionIndex(-1);
             }}
             onKeyDown={(e) => {
-                if (searchResults.length > 0) {
-                    if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        setSelectedSuggestionIndex(prev => (prev + 1) % searchResults.length);
-                    } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        setSelectedSuggestionIndex(prev => (prev - 1 + searchResults.length) % searchResults.length);
-                    } else if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (selectedSuggestionIndex >= 0) {
-                            addToQueue(searchResults[selectedSuggestionIndex]);
-                        } else if (searchResults.length === 1) {
-                            addToQueue(searchResults[0]);
-                        }
-                    }
+              if (searchResults.length > 0) {
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  setSelectedSuggestionIndex((prev) => (prev + 1) % searchResults.length);
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  setSelectedSuggestionIndex(
+                    (prev) => (prev - 1 + searchResults.length) % searchResults.length
+                  );
+                } else if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (selectedSuggestionIndex >= 0) {
+                    addToQueue(searchResults[selectedSuggestionIndex]);
+                  } else if (searchResults.length === 1) {
+                    addToQueue(searchResults[0]);
+                  }
                 }
+              }
             }}
             onClear={() => setSearch('')}
             placeholder={t.barcodePrinter?.searchPlaceholder || 'Search product to print...'}
             color={color}
-            autoComplete="off"
+            autoComplete='off'
             onFocus={() => setShowSuggestions(true)}
           />
-        
+
           <SearchDropdown
-              results={searchResults}
-              onSelect={(drug) => {
-                  addToQueue(drug);
-                  setSearch('');
-              }}
-              columns={[
-                  {
-                      header: t.inventory?.headers?.codes || 'Codes',
-                      width: 'w-32 shrink-0',
-                      className: 'text-gray-900 dark:text-gray-400',
-                      render: (drug: Drug) => drug.internalCode || drug.barcode || drug.id
-                  },
-                  {
-                      header: t.stockAdjustment?.table?.product || 'Name',
-                      width: 'flex-1',
-                      className: 'text-gray-900 dark:text-gray-400 font-bold',
-                      render: (drug: Drug) => (
-                          <span className={`${textTransform === 'uppercase' ? 'uppercase' : ''}`}>
-                              {drug.name} <span className="opacity-75 font-normal text-xs">{drug.dosageForm}</span>
-                          </span>
-                      )
-                  },
-                  {
-                      header: t.inventory?.headers?.expiry || 'Expiry',
-                      width: 'w-24 shrink-0',
-                      className: 'text-center justify-center text-gray-900 dark:text-gray-400',
-                      render: (drug: Drug) => {
-                          if (!drug.expiryDate) return null;
-                          const date = new Date(drug.expiryDate);
-                          if (isNaN(date.getTime())) return drug.expiryDate;
-                          return (
-                              <span className="text-xs whitespace-nowrap">
-                                  {`${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getFullYear()).slice(-2)}`}
-                              </span>
-                          );
-                      }
-                  }
-              ]}
-              isVisible={showSuggestions && !!search.trim()}
-              emptyMessage={t.pos?.noResults}
+            results={searchResults}
+            onSelect={(drug) => {
+              addToQueue(drug);
+              setSearch('');
+            }}
+            columns={[
+              {
+                header: t.inventory?.headers?.codes || 'Codes',
+                width: 'w-32 shrink-0',
+                className: 'text-gray-900 dark:text-gray-400',
+                render: (drug: Drug) => drug.internalCode || drug.barcode || drug.id,
+              },
+              {
+                header: t.stockAdjustment?.table?.product || 'Name',
+                width: 'flex-1',
+                className: 'text-gray-900 dark:text-gray-400 font-bold',
+                render: (drug: Drug) => (
+                  <span className={`${textTransform === 'uppercase' ? 'uppercase' : ''}`}>
+                    {drug.name}{' '}
+                    <span className='opacity-75 font-normal text-xs'>{drug.dosageForm}</span>
+                  </span>
+                ),
+              },
+              {
+                header: t.inventory?.headers?.expiry || 'Expiry',
+                width: 'w-24 shrink-0',
+                className: 'text-center justify-center text-gray-900 dark:text-gray-400',
+                render: (drug: Drug) => {
+                  if (!drug.expiryDate) return null;
+                  const date = new Date(drug.expiryDate);
+                  if (isNaN(date.getTime())) return drug.expiryDate;
+                  return (
+                    <span className='text-xs whitespace-nowrap'>
+                      {`${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getFullYear()).slice(-2)}`}
+                    </span>
+                  );
+                },
+              },
+            ]}
+            isVisible={showSuggestions && !!search.trim()}
+            emptyMessage={t.pos?.noResults}
           />
         </div>
 
         {/* Labels Summary & Settings */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="h-8 w-[1px] bg-gray-100 dark:bg-gray-800 hidden md:block" />
-          
-          <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-100 dark:border-gray-800">
-            <div className="flex flex-col items-center">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+        <div className='flex items-center gap-3 shrink-0'>
+          <div className='h-8 w-[1px] bg-gray-100 dark:bg-gray-800 hidden md:block' />
+
+          <div className='flex items-center gap-4 bg-gray-50 dark:bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-100 dark:border-gray-800'>
+            <div className='flex flex-col items-center'>
+              <span className='text-[10px] font-bold text-gray-400 uppercase tracking-tighter'>
                 {t.barcodePrinter?.totalLabels || 'Total Labels'}
               </span>
-              <span className={`text-sm font-bold text-${color}-600 dark:text-${color}-400 tabular-nums`}>
+              <span
+                className={`text-sm font-bold text-${color}-600 dark:text-${color}-400 tabular-nums`}
+              >
                 {queue.reduce((acc, item) => acc + item.quantity, 0)}
               </span>
             </div>
-            
+
             <button
               onClick={(e) => {
-                  e.stopPropagation();
-                  const menuItems = [
-                      { 
-                          label: t.barcodePrinter?.settings?.store || 'Pharmacy Name', 
-                          icon: printConfig.store ? 'check' : undefined, 
-                          action: () => setPrintConfig(p => ({ ...p, store: !p.store })) 
-                      },
-                      { 
-                          label: t.barcodePrinter?.settings?.name || 'Drug Name', 
-                          icon: printConfig.name ? 'check' : undefined, 
-                          action: () => setPrintConfig(p => ({ ...p, name: !p.name })) 
-                      },
-                      { 
-                          label: t.barcodePrinter?.settings?.price || 'Price', 
-                          icon: printConfig.price ? 'check' : undefined, 
-                          action: () => setPrintConfig(p => ({ ...p, price: !p.price })) 
-                      },
-                      { 
-                          label: t.barcodePrinter?.settings?.expiry || 'Expiry Date', 
-                          icon: printConfig.expiry ? 'check' : undefined, 
-                          action: () => setPrintConfig(p => ({ ...p, expiry: !p.expiry })) 
-                      },
-                      { 
-                          label: t.barcodePrinter?.settings?.barcode || 'Barcode', 
-                          icon: printConfig.barcode ? 'check' : undefined, 
-                          action: () => setPrintConfig(p => ({ ...p, barcode: !p.barcode })) 
-                      },
-                      { 
-                          label: t.barcodePrinter?.settings?.hotline || 'Hotline', 
-                          icon: printConfig.hotline ? 'check' : undefined, 
-                          action: () => setPrintConfig(p => ({ ...p, hotline: !p.hotline })) 
-                      }
-                  ];
-                  showMenu(e.clientX, e.clientY, menuItems);
+                e.stopPropagation();
+                const menuItems = [
+                  {
+                    label: t.barcodePrinter?.settings?.store || 'Pharmacy Name',
+                    icon: printConfig.store ? 'check' : undefined,
+                    action: () => setPrintConfig((p) => ({ ...p, store: !p.store })),
+                  },
+                  {
+                    label: t.barcodePrinter?.settings?.name || 'Drug Name',
+                    icon: printConfig.name ? 'check' : undefined,
+                    action: () => setPrintConfig((p) => ({ ...p, name: !p.name })),
+                  },
+                  {
+                    label: t.barcodePrinter?.settings?.price || 'Price',
+                    icon: printConfig.price ? 'check' : undefined,
+                    action: () => setPrintConfig((p) => ({ ...p, price: !p.price })),
+                  },
+                  {
+                    label: t.barcodePrinter?.settings?.expiry || 'Expiry Date',
+                    icon: printConfig.expiry ? 'check' : undefined,
+                    action: () => setPrintConfig((p) => ({ ...p, expiry: !p.expiry })),
+                  },
+                  {
+                    label: t.barcodePrinter?.settings?.barcode || 'Barcode',
+                    icon: printConfig.barcode ? 'check' : undefined,
+                    action: () => setPrintConfig((p) => ({ ...p, barcode: !p.barcode })),
+                  },
+                  {
+                    label: t.barcodePrinter?.settings?.hotline || 'Hotline',
+                    icon: printConfig.hotline ? 'check' : undefined,
+                    action: () => setPrintConfig((p) => ({ ...p, hotline: !p.hotline })),
+                  },
+                ];
+                showMenu(e.clientX, e.clientY, menuItems);
               }}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 transition-colors"
+              className='w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 transition-colors'
             >
-                <span className="material-symbols-rounded text-lg">settings</span>
+              <span className='material-symbols-rounded text-lg'>settings</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Queue Container */}
-      <div className="flex-1 min-h-0 bg-white dark:bg-gray-900/40 rounded-2xl shadow-inner border border-gray-100 dark:border-gray-800 flex flex-col overflow-hidden">
+      <div className='flex-1 min-h-0 bg-white dark:bg-gray-900/40 rounded-2xl shadow-inner border border-gray-100 dark:border-gray-800 flex flex-col overflow-hidden'>
         {/* Queue Items - 2 Column Grid Layout */}
-        <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
+        <div className='flex-1 overflow-y-auto p-3 custom-scrollbar'>
           {queue.length > 0 ? (
-            <div className="grid grid-cols-2 gap-2">
+            <div className='grid grid-cols-2 gap-2'>
               {queue.map((item) => (
-                <div 
-                  key={item.id} 
+                <div
+                  key={item.id}
                   className={`border transition-colors group gap-3 flex items-center p-3 rounded-xl ${
-                      lastAddedId === item.id 
-                      ? `bg-${color}-500/10 dark:bg-${color}-400/10 border-${color}-200 dark:border-${color}-700/50` 
+                    lastAddedId === item.id
+                      ? `bg-${color}-500/10 dark:bg-${color}-400/10 border-${color}-200 dark:border-${color}-700/50`
                       : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-800'
                   }`}
-                  dir="ltr"
+                  dir='ltr'
                 >
                   {/* Name Section */}
-                  <div className="flex-1 min-w-0">
-                    <h4 className={`font-bold text-sm text-gray-900 dark:text-white leading-tight truncate ${textTransform === 'uppercase' ? 'uppercase' : ''}`}>
+                  <div className='flex-1 min-w-0'>
+                    <h4
+                      className={`font-bold text-sm text-gray-900 dark:text-white leading-tight truncate ${textTransform === 'uppercase' ? 'uppercase' : ''}`}
+                    >
                       {item.drug.name} {item.drug.dosageForm}
                     </h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>
                       {item.drug.internalCode || item.drug.barcode}
                     </p>
                   </div>
 
                   {/* Expiry Badge with Context Menu */}
-                  <div className="flex items-center gap-1">
-                      <span
-                          className={`text-[10px] font-bold text-white px-3 h-7 flex items-center justify-center rounded-lg shadow-sm cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
-                              if (!item.drug.expiryDate) return 'bg-gray-400';
-                              const today = new Date();
-                              const expiry = new Date(item.drug.expiryDate);
-                              const monthDiff = (expiry.getFullYear() - today.getFullYear()) * 12 + (expiry.getMonth() - today.getMonth());
-                              if (monthDiff <= 0) return "bg-red-500";
-                              if (monthDiff <= 3) return "bg-orange-500";
-                              return "bg-gray-500 dark:bg-gray-600";
-                          })()}`}
-                          onClick={(e) => {
-                              e.stopPropagation();
-                              const normalize = (s: string | undefined) => (s || '').toLowerCase().trim();
-                              
-                              const sameNameBatches = inventory.filter(d => {
-                                // 1. Strong Match: Same Barcode
-                                if (d.barcode && item.drug.barcode && d.barcode === item.drug.barcode) return true;
-                                
-                                // 2. Fallback: Same Name & Dosage Form (normalized)
-                                return normalize(d.name) === normalize(item.drug.name) && 
-                                       normalize(d.dosageForm) === normalize(item.drug.dosageForm);
-                              }).sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+                  <div className='flex items-center gap-1'>
+                    <span
+                      className={`text-[10px] font-bold text-white px-3 h-7 flex items-center justify-center rounded-lg shadow-sm cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
+                        if (!item.drug.expiryDate) return 'bg-gray-400';
+                        const today = new Date();
+                        const expiry = new Date(item.drug.expiryDate);
+                        const monthDiff =
+                          (expiry.getFullYear() - today.getFullYear()) * 12 +
+                          (expiry.getMonth() - today.getMonth());
+                        if (monthDiff <= 0) return 'bg-red-500';
+                        if (monthDiff <= 3) return 'bg-orange-500';
+                        return 'bg-gray-500 dark:bg-gray-600';
+                      })()}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const normalize = (s: string | undefined) => (s || '').toLowerCase().trim();
 
-                              const batchMenuItems = sameNameBatches.map((batch) => ({
-                                  label: `${new Date(batch.expiryDate).toLocaleDateString("en-US", { month: "2-digit", year: "2-digit" })} • ${batch.stock} ${t.menu?.pack || 'Pack'}`,
-                                  icon: batch.id === item.drug.id ? 'check_circle' : undefined,
-                                  disabled: batch.stock <= 0,
-                                  action: () => {
-                                      updateExpiryAndBatch(item.id, batch);
-                                  },
-                              }));
-                              showMenu(e.clientX, e.clientY, batchMenuItems);
-                          }}
-                          title={t.clickToSelectBatch || 'Click to select batch'}
-                      >
-                          {item.expiryDateOverride || 'N/A'}
-                      </span>
+                        const sameNameBatches = inventory
+                          .filter((d) => {
+                            // 1. Strong Match: Same Barcode
+                            if (d.barcode && item.drug.barcode && d.barcode === item.drug.barcode)
+                              return true;
+
+                            // 2. Fallback: Same Name & Dosage Form (normalized)
+                            return (
+                              normalize(d.name) === normalize(item.drug.name) &&
+                              normalize(d.dosageForm) === normalize(item.drug.dosageForm)
+                            );
+                          })
+                          .sort(
+                            (a, b) =>
+                              new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
+                          );
+
+                        const batchMenuItems = sameNameBatches.map((batch) => ({
+                          label: `${new Date(batch.expiryDate).toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' })} • ${batch.stock} ${t.menu?.pack || 'Pack'}`,
+                          icon: batch.id === item.drug.id ? 'check_circle' : undefined,
+                          disabled: batch.stock <= 0,
+                          action: () => {
+                            updateExpiryAndBatch(item.id, batch);
+                          },
+                        }));
+                        showMenu(e.clientX, e.clientY, batchMenuItems);
+                      }}
+                      title={t.clickToSelectBatch || 'Click to select batch'}
+                    >
+                      {item.expiryDateOverride || 'N/A'}
+                    </span>
                   </div>
 
                   {/* Quantity Controls */}
-                  <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 h-7 overflow-hidden">
-                    <button 
+                  <div className='flex items-center bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 h-7 overflow-hidden'>
+                    <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="w-6 h-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+                      className='w-6 h-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors'
                     >
-                      <span className="material-symbols-rounded text-[14px]">remove</span>
+                      <span className='material-symbols-rounded text-[14px]'>remove</span>
                     </button>
-                    <input 
-                      type="number"
+                    <input
+                      type='number'
                       value={item.quantity}
                       onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
-                      className="w-8 h-full text-center bg-transparent text-xs font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      min="1"
+                      className='w-8 h-full text-center bg-transparent text-xs font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+                      min='1'
                     />
-                    <button 
+                    <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="w-6 h-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+                      className='w-6 h-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors'
                     >
-                      <span className="material-symbols-rounded text-[14px]">add</span>
+                      <span className='material-symbols-rounded text-[14px]'>add</span>
                     </button>
                   </div>
 
                   {/* Delete Button */}
-                  <button 
+                  <button
                     onClick={() => removeFromQueue(item.id)}
-                    className="w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-60 group-hover:opacity-100"
+                    className='w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-60 group-hover:opacity-100'
                   >
-                    <span className="material-symbols-rounded text-[16px]">close</span>
+                    <span className='material-symbols-rounded text-[16px]'>close</span>
                   </button>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 py-12">
-              <span className="material-symbols-rounded text-6xl mb-4 bg-gray-50 dark:bg-gray-800 p-6 rounded-full">print_disabled</span>
-              <p className="text-lg font-medium">{t.barcodePrinter?.alerts?.queueEmpty || 'Print queue is empty'}</p>
-              <p className="text-sm mt-1">{t.barcodePrinter?.subtitle || 'Add items to start printing labels'}</p>
+            <div className='flex-1 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 py-12'>
+              <span className='material-symbols-rounded text-6xl mb-4 bg-gray-50 dark:bg-gray-800 p-6 rounded-full'>
+                print_disabled
+              </span>
+              <p className='text-lg font-medium'>
+                {t.barcodePrinter?.alerts?.queueEmpty || 'Print queue is empty'}
+              </p>
+              <p className='text-sm mt-1'>
+                {t.barcodePrinter?.subtitle || 'Add items to start printing labels'}
+              </p>
             </div>
           )}
         </div>

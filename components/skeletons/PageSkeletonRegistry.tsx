@@ -13,7 +13,7 @@ export const PageSkeletonRegistry = ({ view }: { view: string }) => {
   const skeletonProps = config?.skeletonProps || {};
 
   return (
-    <div className="animate-fade-in transition-opacity duration-300">
+    <div className='animate-fade-in transition-opacity duration-300'>
       <Skeleton {...skeletonProps} />
     </div>
   );

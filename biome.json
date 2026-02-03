@@ -1,0 +1,48 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.13/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 100,
+    "attributePosition": "auto"
+  },
+
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noRestrictedElements": {
+          "level": "error",
+          "options": {
+            "elements": {
+              "select": "FORBIDDEN: Do not use <select> elements. Use PosDropdown component with useExpandingDropdown hook instead. See docs/dropdown-usage.md for examples.",
+              "option": "FORBIDDEN: Do not use <option> elements. Use PosDropdown component with useExpandingDropdown hook instead. See docs/dropdown-usage.md for examples."
+            }
+          }
+        }
+      },
+
+      "style": {
+        "noNonNullAssertion": "warn"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "single",
+      "semicolons": "always",
+      "trailingCommas": "es5"
+    }
+  }
+}

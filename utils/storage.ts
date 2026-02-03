@@ -1,4 +1,4 @@
-import { StorageKeys } from '../config/storageKeys';
+import type { StorageKeys } from '../config/storageKeys';
 
 /**
  * Type-safe interface for storage operations
@@ -12,11 +12,11 @@ export const storage = {
   get: <T>(key: StorageKeys | string, defaultValue: T): T => {
     // Check if localStorage is available (Browser or Node with mock)
     if (typeof localStorage === 'undefined') return defaultValue;
-    
+
     try {
       const item = localStorage.getItem(key);
       if (item === null) return defaultValue;
-      
+
       return JSON.parse(item) as T;
     } catch (error) {
       console.warn(`Error reading storage key "${key}":`, error);
@@ -34,10 +34,10 @@ export const storage = {
 
     try {
       localStorage.setItem(key, JSON.stringify(value));
-      
+
       // Dispatch a custom event to notify other components/tabs if needed
       // (The standard 'storage' event only fires in other tabs, not the current one)
-      // if (typeof window !== 'undefined') window.dispatchEvent(new Event('local-storage')); 
+      // if (typeof window !== 'undefined') window.dispatchEvent(new Event('local-storage'));
     } catch (error) {
       console.error(`Error writing storage key "${key}":`, error);
       // Optional: Handle quota exceeded
@@ -60,5 +60,5 @@ export const storage = {
   clear: (): void => {
     if (typeof localStorage === 'undefined') return;
     localStorage.clear();
-  }
+  },
 };

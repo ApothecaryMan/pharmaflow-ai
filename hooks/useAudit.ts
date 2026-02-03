@@ -1,12 +1,12 @@
 /**
  * useAudit - Hook for fetching audit/transaction log data
- * 
+ *
  * Provides transaction history from real sales and returns data
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { AuditTransaction } from '../types/intelligence';
+import { useCallback, useEffect, useState } from 'react';
 import { intelligenceService } from '../services/intelligence/intelligenceService';
+import type { AuditTransaction } from '../types/intelligence';
 
 interface UseAuditResult {
   transactions: AuditTransaction[];
@@ -23,7 +23,7 @@ export function useAudit(limit: number = 100): UseAuditResult {
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const data = await intelligenceService.getAuditTransactions(limit);
       setTransactions(data);
@@ -43,6 +43,6 @@ export function useAudit(limit: number = 100): UseAuditResult {
     transactions,
     loading,
     error,
-    refresh: fetchData
+    refresh: fetchData,
   };
 }

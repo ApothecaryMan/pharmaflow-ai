@@ -2,7 +2,7 @@
  * Sales Types - Sales transactions and management
  */
 
-import { Sale, CartItem } from '../../types';
+import type { CartItem, Sale } from '../../types';
 
 export type { Sale, CartItem };
 

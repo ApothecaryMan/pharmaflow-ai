@@ -1,50 +1,50 @@
 /**
  * usePrinter Hook
- * 
+ *
  * React hook for managing QZ Tray printer integration.
  * Provides printer status, connection management, and print functions.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  PrinterStatus,
-  PrinterSettings,
-  SilentMode,
   connect,
   disconnect,
-  isConnected,
-  getStatus,
-  getPrinters,
   getDefaultPrinter,
   getPrinterSettings,
-  savePrinterSettings,
+  getPrinters,
+  getStatus,
+  isConnected,
+  loadQzTray,
+  type PrinterSettings,
+  type PrinterStatus,
   printLabelSilently,
   printReceiptSilently,
-  loadQzTray
+  type SilentMode,
+  savePrinterSettings,
 } from '../utils/qzPrinter';
 
 export interface UsePrinterResult {
   // Connection status
   status: PrinterStatus;
   isConnecting: boolean;
-  
+
   // Connection actions
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
-  
+
   // Printer list
   printers: string[];
   isLoadingPrinters: boolean;
   refreshPrinters: () => Promise<void>;
-  
+
   // Settings
   settings: PrinterSettings;
   updateSettings: (updates: Partial<PrinterSettings>) => void;
-  
+
   // Print functions
   printLabel: (html: string, size: { width: number; height: number }) => Promise<boolean>;
   printReceipt: (html: string) => Promise<boolean>;
-  
+
   // Test print
   testPrintLabel: () => Promise<void>;
   testPrintReceipt: () => Promise<void>;
@@ -55,7 +55,7 @@ const DEFAULT_SETTINGS: PrinterSettings = {
   enabled: false,
   labelPrinter: null,
   receiptPrinter: null,
-  silentMode: 'fallback' as SilentMode
+  silentMode: 'fallback' as SilentMode,
 };
 
 /**
@@ -67,20 +67,20 @@ export const usePrinter = (): UsePrinterResult => {
   const [printers, setPrinters] = useState<string[]>([]);
   const [isLoadingPrinters, setIsLoadingPrinters] = useState(false);
   const [settings, setSettings] = useState<PrinterSettings>(DEFAULT_SETTINGS);
-  
+
   // Track if mounted
   const isMounted = useRef(true);
-  
+
   // Load settings on mount
   useEffect(() => {
     const savedSettings = getPrinterSettings();
     setSettings(savedSettings);
-    
+
     return () => {
       isMounted.current = false;
     };
   }, []);
-  
+
   // Auto-connect if enabled, disconnect if disabled
   useEffect(() => {
     if (settings.enabled) {
@@ -89,7 +89,7 @@ export const usePrinter = (): UsePrinterResult => {
       handleDisconnect();
     }
   }, [settings.enabled]);
-  
+
   // Periodic status check
   useEffect(() => {
     const checkStatus = () => {
@@ -97,29 +97,29 @@ export const usePrinter = (): UsePrinterResult => {
         setStatus(getStatus());
       }
     };
-    
+
     // Check immediately
     checkStatus();
-    
+
     // Check every 5 seconds
     const interval = setInterval(checkStatus, 5000);
-    
+
     return () => clearInterval(interval);
   }, []);
-  
+
   /**
    * Connect to QZ Tray
    */
   const handleConnect = useCallback(async () => {
     if (isConnecting || isConnected()) return;
-    
+
     setIsConnecting(true);
     setStatus('connecting');
-    
+
     try {
       await loadQzTray();
       await connect();
-      
+
       if (isMounted.current) {
         setStatus('connected');
         // Refresh printer list on connect
@@ -127,10 +127,10 @@ export const usePrinter = (): UsePrinterResult => {
       }
     } catch (err: any) {
       const errorMsg = err?.message || String(err);
-      
+
       // Handle known connection errors quietly
       if (
-        errorMsg.includes('Connection blocked by client') || 
+        errorMsg.includes('Connection blocked by client') ||
         errorMsg.includes('Connection refused') ||
         errorMsg.includes('failed to connect')
       ) {
@@ -138,7 +138,7 @@ export const usePrinter = (): UsePrinterResult => {
       } else {
         console.error('Failed to connect to QZ Tray:', err);
       }
-      
+
       if (isMounted.current) {
         setStatus('not_installed');
       }
@@ -148,7 +148,7 @@ export const usePrinter = (): UsePrinterResult => {
       }
     }
   }, [isConnecting]);
-  
+
   /**
    * Disconnect from QZ Tray
    */
@@ -162,43 +162,43 @@ export const usePrinter = (): UsePrinterResult => {
       console.error('Failed to disconnect from QZ Tray:', err);
     }
   }, []);
-  
+
   /**
    * Refresh the list of available printers
    */
   const handleRefreshPrinters = useCallback(async () => {
     if (isLoadingPrinters) return;
-    
+
     setIsLoadingPrinters(true);
-    
+
     try {
       if (!isConnected()) {
         await connect();
       }
-      
+
       const printerList = await getPrinters();
-      
+
       if (isMounted.current) {
         setPrinters(printerList);
-        
+
         // Auto-select default printer if none selected
         if (printerList.length > 0) {
           const current = getPrinterSettings();
           let needsUpdate = false;
           const updates: Partial<PrinterSettings> = {};
-          
+
           if (!current.labelPrinter || !printerList.includes(current.labelPrinter)) {
             const defaultPrinter = await getDefaultPrinter();
             updates.labelPrinter = defaultPrinter || printerList[0];
             needsUpdate = true;
           }
-          
+
           if (!current.receiptPrinter || !printerList.includes(current.receiptPrinter)) {
             const defaultPrinter = await getDefaultPrinter();
             updates.receiptPrinter = defaultPrinter || printerList[0];
             needsUpdate = true;
           }
-          
+
           if (needsUpdate) {
             handleUpdateSettings(updates);
           }
@@ -206,12 +206,15 @@ export const usePrinter = (): UsePrinterResult => {
       }
     } catch (err: any) {
       const errorMsg = err?.message || String(err);
-      if (errorMsg.includes('Connection blocked by client') || errorMsg.includes('Connection refused')) {
+      if (
+        errorMsg.includes('Connection blocked by client') ||
+        errorMsg.includes('Connection refused')
+      ) {
         console.warn(`[Printer] Could not refresh printers: QZ Tray unreachable.`);
       } else {
         console.error('Failed to get printers:', err);
       }
-      
+
       if (isMounted.current) {
         setPrinters([]);
       }
@@ -221,7 +224,7 @@ export const usePrinter = (): UsePrinterResult => {
       }
     }
   }, [isLoadingPrinters]);
-  
+
   /**
    * Update printer settings
    */
@@ -229,18 +232,18 @@ export const usePrinter = (): UsePrinterResult => {
     const updated = savePrinterSettings(updates);
     setSettings(updated);
   }, []);
-  
+
   /**
    * Print label (with fallback to browser)
    * @returns true if printed via QZ, false if should use browser fallback
    */
-  const handlePrintLabel = useCallback(async (
-    html: string,
-    size: { width: number; height: number }
-  ): Promise<boolean> => {
-    return await printLabelSilently(html, size);
-  }, []);
-  
+  const handlePrintLabel = useCallback(
+    async (html: string, size: { width: number; height: number }): Promise<boolean> => {
+      return await printLabelSilently(html, size);
+    },
+    []
+  );
+
   /**
    * Print receipt (with fallback to browser)
    * @returns true if printed via QZ, false if should use browser fallback
@@ -248,7 +251,7 @@ export const usePrinter = (): UsePrinterResult => {
   const handlePrintReceipt = useCallback(async (html: string): Promise<boolean> => {
     return await printReceiptSilently(html);
   }, []);
-  
+
   /**
    * Test print a sample label
    */
@@ -260,10 +263,10 @@ export const usePrinter = (): UsePrinterResult => {
         <div style="font-size: 5px; color: gray;">${new Date().toLocaleString()}</div>
       </div>
     `;
-    
+
     await printLabelSilently(testHtml, { width: 38, height: 12 });
   }, []);
-  
+
   /**
    * Test print a sample receipt
    */
@@ -283,10 +286,10 @@ export const usePrinter = (): UsePrinterResult => {
         </div>
       </div>
     `;
-    
+
     await printReceiptSilently(testHtml);
   }, []);
-  
+
   return {
     status,
     isConnecting,
@@ -300,7 +303,7 @@ export const usePrinter = (): UsePrinterResult => {
     printLabel: handlePrintLabel,
     printReceipt: handlePrintReceipt,
     testPrintLabel: handleTestPrintLabel,
-    testPrintReceipt: handleTestPrintReceipt
+    testPrintReceipt: handleTestPrintReceipt,
   };
 };
 

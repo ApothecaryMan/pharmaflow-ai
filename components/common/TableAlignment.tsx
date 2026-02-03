@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 export type Alignment = 'start' | 'center' | 'end';
 
@@ -10,15 +10,18 @@ interface AlignButtonProps {
 }
 
 export const AlignButton: React.FC<AlignButtonProps> = ({ align, isActive, onClick, isRtl }) => {
-  const activeClass = 'bg-emerald-500 dark:bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-400 dark:ring-emerald-500';
-  const inactiveClass = 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50';
+  const activeClass =
+    'bg-emerald-500 dark:bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-400 dark:ring-emerald-500';
+  const inactiveClass =
+    'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50';
 
   let iconName = '';
   if (align === 'center') {
     iconName = 'align_horizontal_center';
   } else if (align === 'start') {
     iconName = isRtl ? 'align_horizontal_right' : 'align_horizontal_left';
-  } else { // end
+  } else {
+    // end
     iconName = isRtl ? 'align_horizontal_left' : 'align_horizontal_right';
   }
 
@@ -34,11 +37,7 @@ export const AlignButton: React.FC<AlignButtonProps> = ({ align, isActive, onCli
         isActive ? activeClass : inactiveClass
       }`}
     >
-      <span 
-        className="material-symbols-rounded text-[18px]" 
-      >
-        {iconName}
-      </span>
+      <span className='material-symbols-rounded text-[18px]'>{iconName}</span>
     </button>
   );
 };
@@ -56,14 +55,9 @@ export const getHeaderJustifyClass = (align: Alignment) => {
 };
 
 export const getTextAlignClass = (align: Alignment) => {
-  return align === 'center' 
-    ? 'text-center' 
-    : align === 'end' ? 'text-end' : 'text-start';
+  return align === 'center' ? 'text-center' : align === 'end' ? 'text-end' : 'text-start';
 };
 
 export const getItemsAlignClass = (align: Alignment) => {
-  return align === 'center' 
-    ? 'items-center' 
-    : align === 'end' ? 'items-end' : 'items-start';
+  return align === 'center' ? 'items-center' : align === 'end' ? 'items-end' : 'items-start';
 };
-

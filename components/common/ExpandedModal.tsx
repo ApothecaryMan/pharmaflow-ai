@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Modal } from './Modal';
 
 interface ExpandedModalProps {
@@ -11,29 +11,26 @@ interface ExpandedModalProps {
   t?: any;
 }
 
-export const ExpandedModal: React.FC<ExpandedModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  title, 
-  children, 
+export const ExpandedModal: React.FC<ExpandedModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  children,
   actions,
   color,
-  t
+  t,
 }) => {
   return (
     <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size="6xl"
-        zIndex={100}
-        title={title}
-        headerActions={actions}
+      isOpen={isOpen}
+      onClose={onClose}
+      size='6xl'
+      zIndex={100}
+      title={title}
+      headerActions={actions}
     >
-
-        {/* Content */}
-        <div className="h-full">
-          {children}
-        </div>
+      {/* Content */}
+      <div className='h-full'>{children}</div>
     </Modal>
   );
 };

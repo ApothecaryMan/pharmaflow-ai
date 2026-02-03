@@ -1,13 +1,13 @@
-import React from 'react';
+import type React from 'react';
+import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutConfig';
+import { canPerformAction, type UserRole } from '../../config/permissions';
+import { ROUTES } from '../../config/routes';
+import { THEMES, useSettings } from '../../context';
+import { ContextMenuProvider } from '../common/ContextMenu';
+import { MobileNavigation } from './MobileNavigation';
 import { Navbar } from './Navbar';
 import { SidebarContent } from './SidebarContent';
-import { MobileNavigation } from './MobileNavigation';
 import { StatusBar } from './StatusBar';
-import { ContextMenuProvider } from '../common/ContextMenu';
-import { useSettings, THEMES } from '../../context';
-import { ROUTES } from '../../config/routes';
-import { UserRole, canPerformAction } from '../../config/permissions';
-import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutConfig';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -40,17 +40,17 @@ const STANDALONE_VIEWS = [ROUTES.LOGIN];
 import { useContextMenu } from '../common/ContextMenu';
 
 // --- Global Context Menu Wrapper ---
-const GlobalContextMenuWrapper: React.FC<{ 
-  children: React.ReactNode; 
-  t: any; 
-  toggleTheme: () => void; 
+const GlobalContextMenuWrapper: React.FC<{
+  children: React.ReactNode;
+  t: any;
+  toggleTheme: () => void;
   toggleFullscreen: () => void;
 }> = ({ children, t, toggleTheme, toggleFullscreen }) => {
   const { showMenu } = useContextMenu();
-  
+
   return (
-    <div 
-      className="w-full h-full"
+    <div
+      className='w-full h-full'
       onContextMenu={(e) => {
         if (e.defaultPrevented) return;
         e.preventDefault();
@@ -58,8 +58,16 @@ const GlobalContextMenuWrapper: React.FC<{
           { label: t.global.actions.theme, icon: 'palette', action: toggleTheme },
           { label: t.global.actions.fullscreen, icon: 'fullscreen', action: toggleFullscreen },
           { separator: true },
-          { label: t.global.actions.reload, icon: 'refresh', action: () => window.location.reload() },
-          { label: t.global.actions.help, icon: 'help', action: () => alert('Help & Support\n\nContact support@zinc.ai for assistance.') }
+          {
+            label: t.global.actions.reload,
+            icon: 'refresh',
+            action: () => window.location.reload(),
+          },
+          {
+            label: t.global.actions.help,
+            icon: 'help',
+            action: () => alert('Help & Support\n\nContact support@zinc.ai for assistance.'),
+          },
         ]);
       }}
     >
@@ -69,24 +77,43 @@ const GlobalContextMenuWrapper: React.FC<{
 };
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
-  children, view, activeModule, t, userRole,
-  onLogout, 
-  mobileMenuOpen, setMobileMenuOpen,
-  filteredMenuItems, handleModuleChange, handleNavigate, handleViewChange,
-  profileImage, setProfileImage,
-  currentEmployeeId, setCurrentEmployeeId,
-  employees, dashboardSubView, onOpenInWindow
+  children,
+  view,
+  activeModule,
+  t,
+  userRole,
+  onLogout,
+  mobileMenuOpen,
+  setMobileMenuOpen,
+  filteredMenuItems,
+  handleModuleChange,
+  handleNavigate,
+  handleViewChange,
+  profileImage,
+  setProfileImage,
+  currentEmployeeId,
+  setCurrentEmployeeId,
+  employees,
+  dashboardSubView,
+  onOpenInWindow,
 }) => {
-  const { 
-    theme, setTheme, language, darkMode, 
-    sidebarVisible, setSidebarVisible, sidebarBlur,
-    menuBlur, navStyle, hideInactiveModules
+  const {
+    theme,
+    setTheme,
+    language,
+    darkMode,
+    sidebarVisible,
+    setSidebarVisible,
+    sidebarBlur,
+    menuBlur,
+    navStyle,
+    hideInactiveModules,
   } = useSettings();
 
   const isStandalone = STANDALONE_VIEWS.includes(view);
 
   const toggleTheme = () => {
-    const currentIndex = THEMES.findIndex(th => th.name === theme.name);
+    const currentIndex = THEMES.findIndex((th) => th.name === theme.name);
     const nextIndex = (currentIndex + 1) % THEMES.length;
     setTheme(THEMES[nextIndex]);
   };
@@ -101,22 +128,18 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   return (
     <ContextMenuProvider enableGlassEffect={menuBlur}>
-      <GlobalContextMenuWrapper 
-        t={t} 
-        toggleTheme={toggleTheme} 
-        toggleFullscreen={toggleFullscreen}
-      >
-        <div 
-          className="h-screen flex flex-col transition-colors duration-200 select-none overflow-hidden"
-          style={{ 
+      <GlobalContextMenuWrapper t={t} toggleTheme={toggleTheme} toggleFullscreen={toggleFullscreen}>
+        <div
+          className='h-screen flex flex-col transition-colors duration-200 select-none overflow-hidden'
+          style={{
             backgroundColor: 'var(--bg-primary)',
-            color: 'var(--text-primary)'
+            color: 'var(--text-primary)',
           }}
           dir={language === 'AR' ? 'rtl' : 'ltr'}
         >
           {/* Navbar */}
           {!isStandalone && (
-            <Navbar 
+            <Navbar
               menuItems={filteredMenuItems}
               activeModule={activeModule}
               onModuleChange={handleModuleChange}
@@ -125,9 +148,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               profileImage={profileImage}
               setProfileImage={setProfileImage}
               onLogoClick={() => setSidebarVisible(!sidebarVisible)}
-              currentView={activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view}
+              currentView={
+                activeModule === 'dashboard' && view === 'dashboard' ? dashboardSubView : view
+              }
               onNavigate={handleNavigate}
-              employees={employees.map(e => ({ id: e.id, name: e.name, employeeCode: e.employeeCode }))}
+              employees={employees.map((e) => ({
+                id: e.id,
+                name: e.name,
+                employeeCode: e.employeeCode,
+              }))}
               currentEmployeeId={currentEmployeeId}
               setCurrentEmployeeId={setCurrentEmployeeId}
               onLogout={onLogout}
@@ -137,30 +166,33 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           )}
 
           {/* Main Content Area */}
-          <div className="flex flex-1 overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
+          <div
+            className='flex flex-1 overflow-hidden'
+            style={{ backgroundColor: 'var(--bg-primary)' }}
+          >
             {/* Sidebar */}
             {!isStandalone && (
-               <aside 
-                 className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col ${LAYOUT_CONFIG.SIDEBAR_WIDTH} ${sidebarBlur ? 'backdrop-blur-xl' : ''} transition-all duration-300 ease-in-out`}
-                 style={{ backgroundColor: 'var(--bg-primary)' }}
-               >
-                 <SidebarContent 
-                   menuItems={filteredMenuItems}
-                   activeModule={activeModule}
-                   view={view}
-                   dashboardSubView={dashboardSubView}
-                   onNavigate={handleNavigate}
-                   onViewChange={handleViewChange}
-                   theme={theme}
-                   t={t}
-                   language={language}
-                   hideInactiveModules={hideInactiveModules}
-                 />
-               </aside>
+              <aside
+                className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col ${LAYOUT_CONFIG.SIDEBAR_WIDTH} ${sidebarBlur ? 'backdrop-blur-xl' : ''} transition-all duration-300 ease-in-out`}
+                style={{ backgroundColor: 'var(--bg-primary)' }}
+              >
+                <SidebarContent
+                  menuItems={filteredMenuItems}
+                  activeModule={activeModule}
+                  view={view}
+                  dashboardSubView={dashboardSubView}
+                  onNavigate={handleNavigate}
+                  onViewChange={handleViewChange}
+                  theme={theme}
+                  t={t}
+                  language={language}
+                  hideInactiveModules={hideInactiveModules}
+                />
+              </aside>
             )}
 
             {/* Mobile Navigation (Drawer & Bottom Bar) */}
-            <MobileNavigation 
+            <MobileNavigation
               mobileMenuOpen={mobileMenuOpen}
               setMobileMenuOpen={setMobileMenuOpen}
               filteredMenuItems={filteredMenuItems}
@@ -180,18 +212,27 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             />
 
             {/* Actual Page Surface */}
-            <main className={`flex-1 h-full overflow-hidden relative ${isStandalone ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r border-gray-200 dark:border-gray-800 bg-[#f3f4f6] dark:bg-black shadow-inner'}`}>
-               <div 
-                 className={getContentContainerClasses(view, isStandalone)}
-                 style={{
-                   '--mobile-sides': LAYOUT_CONFIG.SPACING.MOBILE,
-                   '--mobile-bottom': LAYOUT_CONFIG.SPACING.MOBILE_BOTTOM,
-                   '--desktop-top': LAYOUT_CONFIG.SPACING.DESKTOP_TOP,
-                   '--desktop-sides': activeModule === 'dashboard' ? LAYOUT_CONFIG.SPACING.DASHBOARD_DESKTOP_SIDES : LAYOUT_CONFIG.SPACING.DESKTOP_SIDES,
-                   '--desktop-bottom': LAYOUT_CONFIG.SPACING.DESKTOP_BOTTOM,
-                 } as React.CSSProperties}
-               >
-                  <style dangerouslySetInnerHTML={{ __html: `
+            <main
+              className={`flex-1 h-full overflow-hidden relative ${isStandalone ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r border-gray-200 dark:border-gray-800 bg-[#f3f4f6] dark:bg-black shadow-inner'}`}
+            >
+              <div
+                className={getContentContainerClasses(view, isStandalone)}
+                style={
+                  {
+                    '--mobile-sides': LAYOUT_CONFIG.SPACING.MOBILE,
+                    '--mobile-bottom': LAYOUT_CONFIG.SPACING.MOBILE_BOTTOM,
+                    '--desktop-top': LAYOUT_CONFIG.SPACING.DESKTOP_TOP,
+                    '--desktop-sides':
+                      activeModule === 'dashboard'
+                        ? LAYOUT_CONFIG.SPACING.DASHBOARD_DESKTOP_SIDES
+                        : LAYOUT_CONFIG.SPACING.DESKTOP_SIDES,
+                    '--desktop-bottom': LAYOUT_CONFIG.SPACING.DESKTOP_BOTTOM,
+                  } as React.CSSProperties
+                }
+              >
+                <style
+                  dangerouslySetInnerHTML={{
+                    __html: `
                     /* Mobile Styles (Base) */
                     .main-content-surface {
                       padding-left: var(--mobile-sides) !important;
@@ -217,17 +258,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                         padding-right: 10px !important;
                       }
                     }
-                  `}} />
-                  <div className="main-content-surface h-full w-full">
-                    {children}
-                  </div>
-               </div>
+                  `,
+                  }}
+                />
+                <div className='main-content-surface h-full w-full'>{children}</div>
+              </div>
             </main>
           </div>
 
           {/* Status Bar */}
           {!isStandalone && (
-            <StatusBar 
+            <StatusBar
               t={t.statusBar}
               currentEmployeeId={currentEmployeeId}
               userRole={userRole}

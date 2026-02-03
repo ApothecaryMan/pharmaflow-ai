@@ -1,6 +1,6 @@
 /**
  * SettingsContext - Centralized application settings management
- * 
+ *
  * This context manages all application preferences including:
  * - Theme settings (color, dark mode)
  * - Language settings (current language, text transform)
@@ -9,12 +9,20 @@
  * - Status bar settings (ticker visibility)
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { Language } from '../types';
-import { THEMES, COLOR_HEX_MAP } from '../config/themeColors';
-import { AVAILABLE_FONTS_EN, AVAILABLE_FONTS_AR } from '../config/fonts';
+import type React from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../config/fonts';
+import { COLOR_HEX_MAP, THEMES } from '../config/themeColors';
+import type { Language, ThemeColor } from '../types';
 import { storage } from '../utils/storage';
-import type { ThemeColor } from '../types';
 
 // Re-export for convenience
 export { THEMES } from '../config/themeColors';
@@ -22,13 +30,12 @@ export { THEMES } from '../config/themeColors';
 /**
  * ARCHITECTURE NOTE:
  * This context is the Single Source of Truth for all application-wide settings.
- * 
+ *
  * DESIGN PATTERN: Hook-based Consumption (Anti Prop-Drilling)
  * - DO NOT pass settings properties (like darkMode, language, blur) as props through layout components.
  * - Components (even deeply nested ones) should use the `useSettings()` hook directly.
  * - This decouples layout components (Navbar, StatusBar, etc.) from the configuration state.
  */
-
 
 // Available Languages
 export const LANGUAGES: { code: Language; label: string }[] = [
@@ -103,8 +110,8 @@ const defaultSettings: SettingsState = {
   theme: THEMES[0],
   darkMode: false,
   language: 'AR', // Default English
-  fontFamilyEN: 'En-Firewall', 
-  fontFamilyAR: 'Ar-Firewall', 
+  fontFamilyEN: 'En-Firewall',
+  fontFamilyAR: 'Ar-Firewall',
   textTransform: 'uppercase',
   navStyle: 2,
   dropdownBlur: false,
@@ -124,13 +131,13 @@ const defaultSettings: SettingsState = {
 // Load settings from storage
 const loadSettings = (): SettingsState => {
   if (typeof window === 'undefined') return defaultSettings;
-  
+
   // Try loading unified settings object first
   const saved = storage.get<SettingsState | null>(STORAGE_KEY, null);
   if (saved) {
     return { ...defaultSettings, ...saved };
   }
-  
+
   // Backward compatibility: Migrate from old individual keys
   try {
     const theme = storage.get('pharma_theme', null);
@@ -144,10 +151,14 @@ const loadSettings = (): SettingsState => {
     const sidebarVisible = storage.get('pharma_sidebarVisible', null);
     const hideInactiveModules = storage.get('pharma_hideInactiveModules', null);
     const developerMode = storage.get('pharma_developerMode', null);
-    
+
     return {
       ...defaultSettings,
-      theme: theme ? (typeof theme === 'string' ? JSON.parse(theme) : theme) : defaultSettings.theme,
+      theme: theme
+        ? typeof theme === 'string'
+          ? JSON.parse(theme)
+          : theme
+        : defaultSettings.theme,
       darkMode: darkMode ?? defaultSettings.darkMode,
       language: (language as Language) || defaultSettings.language,
       fontFamilyEN: fontFamilyEN || defaultSettings.fontFamilyEN,
@@ -165,7 +176,7 @@ const loadSettings = (): SettingsState => {
   } catch (e) {
     console.warn('Failed to migrate old settings:', e);
   }
-  
+
   return defaultSettings;
 };
 
@@ -197,36 +208,38 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     document.documentElement.style.setProperty('--font-ar', settings.fontFamilyAR);
 
     // 2. Load English Font
-    const enFont = AVAILABLE_FONTS_EN.find(f => f.value === settings.fontFamilyEN);
+    const enFont = AVAILABLE_FONTS_EN.find((f) => f.value === settings.fontFamilyEN);
     if (enFont && enFont.url) {
-        const linkId = `font-en-${settings.fontFamilyEN.replace(/[^a-zA-Z0-9]/g, '')}`;
-        if (!document.getElementById(linkId)) {
-            const link = document.createElement('link');
-            link.id = linkId;
-            link.href = enFont.url;
-            link.rel = 'stylesheet';
-            document.head.appendChild(link);
-        }
+      const linkId = `font-en-${settings.fontFamilyEN.replace(/[^a-zA-Z0-9]/g, '')}`;
+      if (!document.getElementById(linkId)) {
+        const link = document.createElement('link');
+        link.id = linkId;
+        link.href = enFont.url;
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+      }
     }
 
     // 3. Load Arabic Font
-    const arFont = AVAILABLE_FONTS_AR.find(f => f.value === settings.fontFamilyAR);
+    const arFont = AVAILABLE_FONTS_AR.find((f) => f.value === settings.fontFamilyAR);
     if (arFont && arFont.url) {
-         const linkId = `font-ar-${settings.fontFamilyAR.replace(/[^a-zA-Z0-9]/g, '')}`;
-         if (!document.getElementById(linkId)) {
-             const link = document.createElement('link');
-             link.id = linkId;
-             link.href = arFont.url;
-             link.rel = 'stylesheet';
-             document.head.appendChild(link);
-         }
+      const linkId = `font-ar-${settings.fontFamilyAR.replace(/[^a-zA-Z0-9]/g, '')}`;
+      if (!document.getElementById(linkId)) {
+        const link = document.createElement('link');
+        link.id = linkId;
+        link.href = arFont.url;
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+      }
     }
   }, [settings.fontFamilyEN, settings.fontFamilyAR]);
 
-
   // Apply text transform
   useEffect(() => {
-    document.documentElement.style.setProperty('--text-transform', settings.textTransform === 'uppercase' ? 'uppercase' : 'none');
+    document.documentElement.style.setProperty(
+      '--text-transform',
+      settings.textTransform === 'uppercase' ? 'uppercase' : 'none'
+    );
     if (settings.textTransform === 'uppercase') {
       document.body.classList.add('uppercase-mode');
     } else {
@@ -236,133 +249,132 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // Setters
   const setTheme = useCallback((theme: ThemeColor) => {
-    setSettings(prev => ({ ...prev, theme }));
+    setSettings((prev) => ({ ...prev, theme }));
   }, []);
 
   const setDarkMode = useCallback((darkMode: boolean) => {
-    setSettings(prev => ({ ...prev, darkMode }));
+    setSettings((prev) => ({ ...prev, darkMode }));
   }, []);
 
   const setLanguage = useCallback((language: Language) => {
-    setSettings(prev => ({ ...prev, language }));
+    setSettings((prev) => ({ ...prev, language }));
   }, []);
 
   const setFontFamilyEN = useCallback((fontFamilyEN: string) => {
-    setSettings(prev => ({ ...prev, fontFamilyEN }));
+    setSettings((prev) => ({ ...prev, fontFamilyEN }));
   }, []);
 
   const setFontFamilyAR = useCallback((fontFamilyAR: string) => {
-      setSettings(prev => ({ ...prev, fontFamilyAR }));
+    setSettings((prev) => ({ ...prev, fontFamilyAR }));
   }, []);
 
   const setTextTransform = useCallback((textTransform: 'normal' | 'uppercase') => {
-    setSettings(prev => ({ ...prev, textTransform }));
+    setSettings((prev) => ({ ...prev, textTransform }));
   }, []);
 
   const setNavStyle = useCallback((navStyle: 1 | 2 | 3) => {
-    setSettings(prev => ({ ...prev, navStyle }));
+    setSettings((prev) => ({ ...prev, navStyle }));
   }, []);
 
   const setDropdownBlur = useCallback((dropdownBlur: boolean) => {
-    setSettings(prev => ({ 
-      ...prev, 
+    setSettings((prev) => ({
+      ...prev,
       dropdownBlur,
       sidebarBlur: dropdownBlur,
       menuBlur: dropdownBlur,
-      tooltipBlur: dropdownBlur
+      tooltipBlur: dropdownBlur,
     }));
   }, []);
 
   const setSidebarBlur = useCallback((sidebarBlur: boolean) => {
-    setSettings(prev => ({ ...prev, sidebarBlur }));
+    setSettings((prev) => ({ ...prev, sidebarBlur }));
   }, []);
 
   const setMenuBlur = useCallback((menuBlur: boolean) => {
-    setSettings(prev => ({ ...prev, menuBlur }));
+    setSettings((prev) => ({ ...prev, menuBlur }));
   }, []);
 
   const setTooltipBlur = useCallback((tooltipBlur: boolean) => {
-    setSettings(prev => ({ ...prev, tooltipBlur }));
+    setSettings((prev) => ({ ...prev, tooltipBlur }));
   }, []);
 
   const setSidebarVisible = useCallback((sidebarVisible: boolean) => {
-    setSettings(prev => ({ ...prev, sidebarVisible }));
+    setSettings((prev) => ({ ...prev, sidebarVisible }));
   }, []);
 
   const setHideInactiveModules = useCallback((hideInactiveModules: boolean) => {
-    setSettings(prev => ({ ...prev, hideInactiveModules }));
+    setSettings((prev) => ({ ...prev, hideInactiveModules }));
   }, []);
 
   const setDeveloperMode = useCallback((developerMode: boolean) => {
-    setSettings(prev => ({ ...prev, developerMode }));
+    setSettings((prev) => ({ ...prev, developerMode }));
   }, []);
 
   const setShowTicker = useCallback((showTicker: boolean) => {
-    setSettings(prev => ({ ...prev, showTicker }));
+    setSettings((prev) => ({ ...prev, showTicker }));
   }, []);
 
   const setShowTickerSales = useCallback((showTickerSales: boolean) => {
-    setSettings(prev => ({ ...prev, showTickerSales }));
+    setSettings((prev) => ({ ...prev, showTickerSales }));
   }, []);
 
   const setShowTickerInventory = useCallback((showTickerInventory: boolean) => {
-    setSettings(prev => ({ ...prev, showTickerInventory }));
+    setSettings((prev) => ({ ...prev, showTickerInventory }));
   }, []);
 
   const setShowTickerCustomers = useCallback((showTickerCustomers: boolean) => {
-    setSettings(prev => ({ ...prev, showTickerCustomers }));
+    setSettings((prev) => ({ ...prev, showTickerCustomers }));
   }, []);
 
   const setShowTickerTopSeller = useCallback((showTickerTopSeller: boolean) => {
-    setSettings(prev => ({ ...prev, showTickerTopSeller }));
+    setSettings((prev) => ({ ...prev, showTickerTopSeller }));
   }, []);
 
-  const value = useMemo<SettingsContextType>(() => ({
-    ...settings,
-    setTheme,
-    setDarkMode,
-    setLanguage,
-    setTextTransform,
-    setNavStyle,
-    setDropdownBlur,
-    setSidebarBlur,
-    setMenuBlur,
-    setTooltipBlur,
-    setSidebarVisible,
-    setHideInactiveModules,
-    setDeveloperMode,
-    setShowTicker,
-    setShowTickerSales,
-    setShowTickerInventory,
-    setShowTickerCustomers,
-    setShowTickerTopSeller,
-    setFontFamilyEN,
-    setFontFamilyAR,
-    availableThemes: THEMES,
-    availableLanguages: LANGUAGES,
-  }), [
-    settings,
-    setTheme,
-    setDarkMode,
-    setLanguage,
-    setTextTransform,
-    setNavStyle,
-    setDropdownBlur,
-    setSidebarVisible,
-    setHideInactiveModules,
-    setDeveloperMode,
-    setShowTicker,
-    setShowTickerSales,
-    setShowTickerInventory,
-    setShowTickerCustomers,
-    setShowTickerTopSeller,
-  ]);
-
-  return (
-    <SettingsContext.Provider value={value}>
-      {children}
-    </SettingsContext.Provider>
+  const value = useMemo<SettingsContextType>(
+    () => ({
+      ...settings,
+      setTheme,
+      setDarkMode,
+      setLanguage,
+      setTextTransform,
+      setNavStyle,
+      setDropdownBlur,
+      setSidebarBlur,
+      setMenuBlur,
+      setTooltipBlur,
+      setSidebarVisible,
+      setHideInactiveModules,
+      setDeveloperMode,
+      setShowTicker,
+      setShowTickerSales,
+      setShowTickerInventory,
+      setShowTickerCustomers,
+      setShowTickerTopSeller,
+      setFontFamilyEN,
+      setFontFamilyAR,
+      availableThemes: THEMES,
+      availableLanguages: LANGUAGES,
+    }),
+    [
+      settings,
+      setTheme,
+      setDarkMode,
+      setLanguage,
+      setTextTransform,
+      setNavStyle,
+      setDropdownBlur,
+      setSidebarVisible,
+      setHideInactiveModules,
+      setDeveloperMode,
+      setShowTicker,
+      setShowTickerSales,
+      setShowTickerInventory,
+      setShowTickerCustomers,
+      setShowTickerTopSeller,
+    ]
   );
+
+  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 };
 
 // Hook

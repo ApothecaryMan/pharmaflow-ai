@@ -1,12 +1,20 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
-import { Shift, CashTransaction } from '../types';
-
-import { storage } from '../utils/storage';
+import type React from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { StorageKeys } from '../config/storageKeys';
+import type { CashTransaction, Shift } from '../types';
+import { storage } from '../utils/storage';
 
 /**
  * ShiftContext
- * 
+ *
  * Provides global shift state management across the app.
  * All components consuming this context will see the same state and updates in real-time.
  */
@@ -50,7 +58,7 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // but here we have specific parsing logic.
     // The storage utility dispatches 'local-storage' event for same-tab updates,
     // and we can listen to window 'storage' for other tabs.
-    
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === StorageKeys.SHIFTS && e.newValue) {
         // Deep equality check to prevent loops
@@ -61,7 +69,7 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           const parsed: Shift[] = JSON.parse(e.newValue);
           setShifts(parsed);
         } catch (err) {
-          console.error("Failed to parse shift update", err);
+          console.error('Failed to parse shift update', err);
         }
       }
     };
@@ -89,9 +97,7 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   const endShift = useCallback((closedShift: Shift) => {
-    setShifts((prev) =>
-      prev.map((s) => (s.id === closedShift.id ? closedShift : s))
-    );
+    setShifts((prev) => prev.map((s) => (s.id === closedShift.id ? closedShift : s)));
   }, []);
 
   const addTransaction = useCallback(
@@ -149,16 +155,12 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     refreshShifts,
   };
 
-  return (
-    <ShiftContext.Provider value={value}>
-      {children}
-    </ShiftContext.Provider>
-  );
+  return <ShiftContext.Provider value={value}>{children}</ShiftContext.Provider>;
 };
 
 /**
  * useShift Hook
- * 
+ *
  * Use this hook to access shift state from anywhere in the app.
  * Requires ShiftProvider to be an ancestor in the component tree.
  */

@@ -1,12 +1,12 @@
 /**
  * useRisk - Hook for fetching risk/expiry intelligence data
- * 
+ *
  * Provides risk summary and expiring batch items from real data
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { RiskSummary, ExpiryRiskItem } from '../types/intelligence';
+import { useCallback, useEffect, useState } from 'react';
 import { intelligenceService } from '../services/intelligence/intelligenceService';
+import type { ExpiryRiskItem, RiskSummary } from '../types/intelligence';
 
 interface UseRiskResult {
   summary: RiskSummary | null;
@@ -25,13 +25,13 @@ export function useRisk(): UseRiskResult {
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const [summaryData, itemsData] = await Promise.all([
         intelligenceService.getRiskSummary(),
-        intelligenceService.getExpiryRiskItems()
+        intelligenceService.getExpiryRiskItems(),
       ]);
-      
+
       setSummary(summaryData);
       setItems(itemsData);
     } catch (err) {
@@ -51,6 +51,6 @@ export function useRisk(): UseRiskResult {
     items,
     loading,
     error,
-    refresh: fetchData
+    refresh: fetchData,
   };
 }

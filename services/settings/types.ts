@@ -2,7 +2,7 @@
  * Settings Types - User preferences and app configuration
  */
 
-import type { ThemeColor, Language } from '../../types/index';
+import type { Language, ThemeColor } from '../../types/index';
 
 export interface AppSettings {
   theme: ThemeColor;

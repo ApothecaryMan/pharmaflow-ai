@@ -1,11 +1,11 @@
 /**
  * API Client - Base HTTP client for backend communication
- * 
+ *
  * Currently uses storage utility, can be swapped for real API calls
  */
 
-import { storage } from '../../utils/storage';
 import { idGenerator } from '../../utils/idGenerator';
+import { storage } from '../../utils/storage';
 
 export interface ApiConfig {
   baseUrl: string;
@@ -37,17 +37,17 @@ export interface ApiClient {
 export const createMockApiClient = (): ApiClient => ({
   get: async <T>(endpoint: string): Promise<ApiResponse<T>> => {
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const key = `pharma_${endpoint.replace(/^\//, '').replace(/\//g, '_')}`;
     const data = storage.get<T>(key, [] as unknown as T);
     return {
       data: data,
-      status: 200
+      status: 200,
     };
   },
 
   post: async <T>(endpoint: string, data: unknown): Promise<ApiResponse<T>> => {
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const key = `pharma_${endpoint.replace(/^\//, '').replace(/\//g, '_')}`;
     const items = storage.get<any[]>(key, []);
     const newItem = { ...(data as object), id: idGenerator.generate('generic') };
@@ -57,7 +57,7 @@ export const createMockApiClient = (): ApiClient => ({
   },
 
   put: async <T>(endpoint: string, data: unknown): Promise<ApiResponse<T>> => {
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const [resource, id] = endpoint.replace(/^\//, '').split('/');
     const key = `pharma_${resource}`;
     const items = storage.get<any[]>(key, []);
@@ -72,7 +72,7 @@ export const createMockApiClient = (): ApiClient => ({
 
   patch: async <T>(endpoint: string, data: unknown): Promise<ApiResponse<T>> => {
     // Same as put for mock
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const [resource, id] = endpoint.replace(/^\//, '').split('/');
     const key = `pharma_${resource}`;
     const items = storage.get<any[]>(key, []);
@@ -86,14 +86,14 @@ export const createMockApiClient = (): ApiClient => ({
   },
 
   delete: async <T>(endpoint: string): Promise<ApiResponse<T>> => {
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const [resource, id] = endpoint.replace(/^\//, '').split('/');
     const key = `pharma_${resource}`;
     const items = storage.get<any[]>(key, []);
     const filtered = items.filter((item: { id: string }) => item.id !== id);
     storage.set(key, filtered);
     return { data: { success: true } as unknown as T, status: 200 };
-  }
+  },
 });
 
 // Real API client (for future use)
@@ -107,7 +107,7 @@ export const createRealApiClient = (config: ApiConfig): ApiClient => ({
     }
     const response = await fetch(url.toString(), {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json', ...config.headers }
+      headers: { 'Content-Type': 'application/json', ...config.headers },
     });
     const data = await response.json();
     return { data, status: response.status };
@@ -117,7 +117,7 @@ export const createRealApiClient = (config: ApiConfig): ApiClient => ({
     const response = await fetch(`${config.baseUrl}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...config.headers },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
     const result = await response.json();
     return { data: result, status: response.status };
@@ -127,7 +127,7 @@ export const createRealApiClient = (config: ApiConfig): ApiClient => ({
     const response = await fetch(`${config.baseUrl}${endpoint}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', ...config.headers },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
     const result = await response.json();
     return { data: result, status: response.status };
@@ -137,7 +137,7 @@ export const createRealApiClient = (config: ApiConfig): ApiClient => ({
     const response = await fetch(`${config.baseUrl}${endpoint}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...config.headers },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
     const result = await response.json();
     return { data: result, status: response.status };
@@ -146,11 +146,11 @@ export const createRealApiClient = (config: ApiConfig): ApiClient => ({
   delete: async <T>(endpoint: string): Promise<ApiResponse<T>> => {
     const response = await fetch(`${config.baseUrl}${endpoint}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', ...config.headers }
+      headers: { 'Content-Type': 'application/json', ...config.headers },
     });
     const result = await response.json();
     return { data: result, status: response.status };
-  }
+  },
 });
 
 // Default client instance

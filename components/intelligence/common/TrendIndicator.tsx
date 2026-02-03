@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 interface TrendIndicatorProps {
   direction: 'up' | 'down' | 'unchanged';
@@ -13,7 +13,7 @@ export const TrendIndicator: React.FC<TrendIndicatorProps> = ({
   value,
   showValue = false,
   className = '',
-  reverseColor = false
+  reverseColor = false,
 }) => {
   let colorClass = 'text-gray-500';
   let Icon = 'remove';
@@ -31,10 +31,8 @@ export const TrendIndicator: React.FC<TrendIndicatorProps> = ({
 
   return (
     <span className={`inline-flex items-center gap-1 font-medium ${colorClass} ${className}`}>
-      <span className="material-symbols-rounded text-base">{Icon}</span>
-      {showValue && value !== undefined && (
-        <span className="text-xs">{Math.abs(value)}%</span>
-      )}
+      <span className='material-symbols-rounded text-base'>{Icon}</span>
+      {showValue && value !== undefined && <span className='text-xs'>{Math.abs(value)}%</span>}
     </span>
   );
 };

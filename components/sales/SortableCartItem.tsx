@@ -1,12 +1,12 @@
-import React from "react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { Drug, CartItem } from "../../types";
-import { TRANSLATIONS } from "../../i18n/translations";
-import { getLocalizedProductType } from "../../data/productCategories";
-import { useLongPress } from "../../hooks/useLongPress";
-import { UserRole, canPerformAction } from "../../config/permissions";
-import { getDisplayName } from "../../utils/drugDisplayName";
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type React from 'react';
+import { canPerformAction, type UserRole } from '../../config/permissions';
+import { getLocalizedProductType } from '../../data/productCategories';
+import { useLongPress } from '../../hooks/useLongPress';
+import type { TRANSLATIONS } from '../../i18n/translations';
+import type { CartItem, Drug } from '../../types';
+import { getDisplayName } from '../../utils/drugDisplayName';
 
 export interface SortableCartItemProps {
   packItem?: CartItem;
@@ -65,27 +65,22 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
   onSearchInTable,
   userRole,
 }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: itemId });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: itemId,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.6 : 1,
-    zIndex: isDragging ? 50 : "auto",
+    zIndex: isDragging ? 50 : 'auto',
   };
 
   // Use common item for shared props like name, expiry, etc.
   // BUT: Look up the fresh batch data from allBatches to ensure we have the latest maxDiscount/costPrice
   // The cart item might be a stale copy.
   const staleItem = commonItem;
-  const freshBatch = allBatches.find(b => b.id === staleItem.id) || staleItem;
+  const freshBatch = allBatches.find((b) => b.id === staleItem.id) || staleItem;
   // Merge to ensure we have latest props, and unify discount from pack/unit
   const unifiedDiscount = Math.max(packItem?.discount || 0, unitItem?.discount || 0);
   const item = { ...staleItem, ...freshBatch, discount: unifiedDiscount }; // Use unified discount for display
@@ -96,7 +91,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
     const actions: any[] = [
       {
         label: t.removeItem,
-        icon: "delete",
+        icon: 'delete',
         action: () => removeFromCart(item.id, !!item.isUnit),
         danger: true,
       },
@@ -114,12 +109,12 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
 
     // When switching, we need to know the CURRENT state of THIS item being clicked
     // The item passed to this function is the one that triggered the menu/action.
-    
+
     if (canSwitchToUnit) {
       actions.push({ separator: true });
       actions.push({
         label: t.switchToUnit,
-        icon: "swap_horiz",
+        icon: 'swap_horiz',
         action: () => toggleUnitMode(item.id, false), // false = currently is Pack
         danger: false,
       });
@@ -129,7 +124,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
       actions.push({ separator: true });
       actions.push({
         label: t.switchToPack,
-        icon: "swap_horiz",
+        icon: 'swap_horiz',
         action: () => toggleUnitMode(item.id, true), // true = currently is Unit
         danger: false,
       });
@@ -139,11 +134,11 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
     if (canPerformAction(userRole, 'sale.discount')) {
       actions.push({
         label: t.actions.discount,
-        icon: "percent",
+        icon: 'percent',
         action: () => {
           const disc = prompt(
-            "Enter discount percentage (0-100):",
-            item.discount?.toString() || "0"
+            'Enter discount percentage (0-100):',
+            item.discount?.toString() || '0'
           );
           if (disc !== null) {
             const val = parseFloat(disc);
@@ -161,11 +156,11 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
         danger: false,
       });
     }
-    
+
     // Search in table option
     actions.push({
-      label: t.actions?.searchInTable || "Search in Table",
-      icon: "search",
+      label: t.actions?.searchInTable || 'Search in Table',
+      icon: 'search',
       action: () => {
         onSearchInTable(item.name);
       },
@@ -202,35 +197,35 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
     const totalGlobalStock = allBatches.reduce((sum, b) => sum + b.stock, 0);
     const unitsPerPack = item.unitsPerPack || 1;
     const totalStockUnits = totalGlobalStock * unitsPerPack;
-    
+
     // Existing totals
     const currentPackQty = packItem ? packItem.quantity : 0;
     const currentUnitQty = unitItem ? unitItem.quantity : 0;
-    
+
     // New totals based on input
     let newPackQty = !isUnit ? val : currentPackQty;
     let newUnitQty = isUnit ? val : currentUnitQty;
-    
+
     // Validate Total Request <= Total Stock
-    const requestedTotalUnits = (newPackQty * unitsPerPack) + newUnitQty;
-    
+    const requestedTotalUnits = newPackQty * unitsPerPack + newUnitQty;
+
     if (requestedTotalUnits > totalStockUnits) {
-       // Clamp to Max
-       // If changing Pack: reduce Pack to max possible given current Unit
-       if (!isUnit) {
-          const maxPack = Math.floor((totalStockUnits - currentUnitQty) / unitsPerPack);
-          newPackQty = Math.max(0, maxPack);
-       } else {
-          // If changing Unit: reduce Unit to max possible given current Pack
-          const maxUnit = totalStockUnits - (currentPackQty * unitsPerPack);
-          newUnitQty = Math.max(0, maxUnit);
-       }
+      // Clamp to Max
+      // If changing Pack: reduce Pack to max possible given current Unit
+      if (!isUnit) {
+        const maxPack = Math.floor((totalStockUnits - currentUnitQty) / unitsPerPack);
+        newPackQty = Math.max(0, maxPack);
+      } else {
+        // If changing Unit: reduce Unit to max possible given current Pack
+        const maxUnit = totalStockUnits - currentPackQty * unitsPerPack;
+        newUnitQty = Math.max(0, maxUnit);
+      }
     }
-    
+
     // If we have any existing item, use it as the "target batch" preference
     // If not (creating new), use commonItem (which has batch info)
-    const targetBatch = (packItem || unitItem || commonItem) as Drug; 
-    
+    const targetBatch = (packItem || unitItem || commonItem) as Drug;
+
     if (val < 0) return;
 
     onSelectBatch(item, targetBatch, newPackQty, newUnitQty);
@@ -243,15 +238,11 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
       {...attributes}
       {...listeners}
       className={`flex flex-col p-2 rounded-xl bg-white dark:bg-gray-900 border transition-all touch-manipulation relative group outline-none
-        ${
-          isDragging
-            ? "shadow-xl ring-2 ring-blue-500 scale-[1.02] z-50 opacity-90"
-            : ""
-        }
+        ${isDragging ? 'shadow-xl ring-2 ring-blue-500 scale-[1.02] z-50 opacity-90' : ''}
         ${
           isHighlighted
             ? `border-gray-100 dark:border-gray-800 bg-${color}-50 dark:bg-${color}-900/20`
-            : "border-gray-100 dark:border-gray-800"
+            : 'border-gray-100 dark:border-gray-800'
         }`}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -263,15 +254,15 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
       onTouchMove={onLongPressTouchMove}
     >
       {/* Drag Handle */}
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-full flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className='absolute left-0 top-1/2 -translate-y-1/2 w-3 h-full flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity'>
         <div className={`w-1 h-3/5 rounded-full bg-${color}-100 dark:bg-${color}-800`}></div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 relative pl-3">
+      <div className='flex flex-wrap items-center justify-between gap-x-2 gap-y-2 relative pl-3'>
         {/* Name Section */}
-        <div className="flex-1 min-w-[120px]">
+        <div className='flex-1 min-w-[120px]'>
           <h4
-            className="font-bold text-xs text-gray-900 dark:text-gray-100 leading-tight line-clamp-2 drug-name"
+            className='font-bold text-xs text-gray-900 dark:text-gray-100 leading-tight line-clamp-2 drug-name'
             title={getDisplayName(item)}
           >
             {getDisplayName(item)}
@@ -279,9 +270,9 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
         </div>
 
         {/* Unified 'Rest' Section: Date, Controls, Price */}
-        <div className="flex items-center gap-2 shrink-0 ml-auto">
+        <div className='flex items-center gap-2 shrink-0 ml-auto'>
           {/* Expiry Date Badge with Batch Details */}
-          <div className="flex items-center gap-1">
+          <div className='flex items-center gap-1'>
             <span
               className={`text-[9px] font-bold text-white w-[38px] h-[18px] flex items-center justify-center rounded shadow-sm cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
                 const today = new Date();
@@ -289,14 +280,14 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                 const monthDiff =
                   (expiry.getFullYear() - today.getFullYear()) * 12 +
                   (expiry.getMonth() - today.getMonth());
-                if (monthDiff <= 0) return "bg-red-500";
-                if (monthDiff <= 3) return "bg-orange-500";
-                return "bg-gray-500 dark:bg-gray-600";
+                if (monthDiff <= 0) return 'bg-red-500';
+                if (monthDiff <= 3) return 'bg-orange-500';
+                return 'bg-gray-500 dark:bg-gray-600';
               })()}`}
               onClick={(e) => {
                 e.stopPropagation();
                 const batchMenuItems = allBatches.map((batch) => ({
-                  label: `${new Date(batch.expiryDate).toLocaleDateString("en-US", { month: "2-digit", year: "2-digit" })} • ${batch.stock} ${t.pack || 'Pack'}`,
+                  label: `${new Date(batch.expiryDate).toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' })} • ${batch.stock} ${t.pack || 'Pack'}`,
                   icon: batch.id === item.id ? 'check_circle' : undefined,
                   disabled: batch.stock <= 0,
                   action: () => {
@@ -306,103 +297,101 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                     onSelectBatch(item, batch, currentPackQty, currentUnitQty);
                   },
                 }));
-                showMenu(e.clientX, e.clientY, [
-                  ...batchMenuItems,
-                ]);
+                showMenu(e.clientX, e.clientY, [...batchMenuItems]);
               }}
               onPointerDown={(e) => e.stopPropagation()}
             >
-              {new Date(item.expiryDate).toLocaleDateString("en-US", {
-                month: "2-digit",
-                year: "2-digit",
+              {new Date(item.expiryDate).toLocaleDateString('en-US', {
+                month: '2-digit',
+                year: '2-digit',
               })}
             </span>
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-1">
+          <div className='flex items-center gap-1'>
             {/* Smart Discount Logic Info */}
             {(() => {
-               const cost = item.costPrice || 0;
-               const price = item.price || 0;
-               const margin = price > 0 ? ((price - cost) / price) * 100 : 0;
-               
-               // "Default max is 10%, if margin < 20% then max is floor(margin/2)"
-               let calculatedMax = 10;
-               if (margin < 20) {
-                 calculatedMax = Math.floor(margin / 2);
-               }
-               
-               // If item defines an explicit max (e.g. 5% or 50%), use it? 
-               // User said "logic I calculate... is written", implying this dynamic logic IS the rule.
-               // But let's respect explicit overrides if they exist and are non-zero.
-               // Or simple fallback:
-               const effectiveMax = (item.maxDiscount && item.maxDiscount > 0) 
-                  ? item.maxDiscount 
-                  : calculatedMax;
+              const cost = item.costPrice || 0;
+              const price = item.price || 0;
+              const margin = price > 0 ? ((price - cost) / price) * 100 : 0;
 
-               // Hide discount control if global discount is active and > 0, OR if user lacks permission
-               if ((globalDiscount && globalDiscount > 0) || !canPerformAction(userRole, 'sale.discount')) return null;
+              // "Default max is 10%, if margin < 20% then max is floor(margin/2)"
+              let calculatedMax = 10;
+              if (margin < 20) {
+                calculatedMax = Math.floor(margin / 2);
+              }
 
-               return (
-            <div
-              title={`Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`}
-              className={`flex items-center rounded-lg border shadow-sm h-6 overflow-hidden transition-colors w-14 shrink-0 ${
-                (item.discount || 0) > 0
-                  ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
-                  : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-              }`}
-            >
-              <button
-                tabIndex={-1}
-                onClick={() => {
-                  const currentDiscount = item.discount || 0;
-                  // Toggle: Apply Max / Clear
-                  const newVal = currentDiscount === 0 ? effectiveMax : 0;
-                  
-                  if (packItem) updateItemDiscount(packItem.id, false, newVal);
-                  if (unitItem) updateItemDiscount(unitItem.id, true, newVal);
-                  if (newVal > 0) setGlobalDiscount(0);
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-                className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
-                  (item.discount || 0) > 0
-                    ? "text-green-600 dark:text-green-400"
-                    : "text-gray-400"
-                }`}
-              >
-                <span className="material-symbols-rounded text-[12px]">
-                  percent
-                </span>
-              </button>
-              <input
-                type="number"
-                value={item.discount || ""}
-                placeholder="0"
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  const valid = !isNaN(val) && val >= 0;
-                  // Clamp to Effective Max
-                  let finalVal = valid ? val : 0;
-                  
-                  if (finalVal > effectiveMax) finalVal = effectiveMax;
+              // If item defines an explicit max (e.g. 5% or 50%), use it?
+              // User said "logic I calculate... is written", implying this dynamic logic IS the rule.
+              // But let's respect explicit overrides if they exist and are non-zero.
+              // Or simple fallback:
+              const effectiveMax =
+                item.maxDiscount && item.maxDiscount > 0 ? item.maxDiscount : calculatedMax;
 
-                  if (packItem)
-                    updateItemDiscount(packItem.id, false, finalVal);
-                  if (unitItem) updateItemDiscount(unitItem.id, true, finalVal);
-                  if (finalVal > 0) setGlobalDiscount(0);
-                }}
-                className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                  (item.discount || 0) > 0
-                    ? "text-green-700 dark:text-green-300 placeholder-green-300"
-                    : "text-gray-900 dark:text-gray-100 placeholder-gray-400"
-                }`}
-              />
-            </div>
-               );
+              // Hide discount control if global discount is active and > 0, OR if user lacks permission
+              if (
+                (globalDiscount && globalDiscount > 0) ||
+                !canPerformAction(userRole, 'sale.discount')
+              )
+                return null;
+
+              return (
+                <div
+                  title={`Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`}
+                  className={`flex items-center rounded-lg border shadow-sm h-6 overflow-hidden transition-colors w-14 shrink-0 ${
+                    (item.discount || 0) > 0
+                      ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                      : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
+                  }`}
+                >
+                  <button
+                    tabIndex={-1}
+                    onClick={() => {
+                      const currentDiscount = item.discount || 0;
+                      // Toggle: Apply Max / Clear
+                      const newVal = currentDiscount === 0 ? effectiveMax : 0;
+
+                      if (packItem) updateItemDiscount(packItem.id, false, newVal);
+                      if (unitItem) updateItemDiscount(unitItem.id, true, newVal);
+                      if (newVal > 0) setGlobalDiscount(0);
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
+                      (item.discount || 0) > 0
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-gray-400'
+                    }`}
+                  >
+                    <span className='material-symbols-rounded text-[12px]'>percent</span>
+                  </button>
+                  <input
+                    type='number'
+                    value={item.discount || ''}
+                    placeholder='0'
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      const valid = !isNaN(val) && val >= 0;
+                      // Clamp to Effective Max
+                      let finalVal = valid ? val : 0;
+
+                      if (finalVal > effectiveMax) finalVal = effectiveMax;
+
+                      if (packItem) updateItemDiscount(packItem.id, false, finalVal);
+                      if (unitItem) updateItemDiscount(unitItem.id, true, finalVal);
+                      if (finalVal > 0) setGlobalDiscount(0);
+                    }}
+                    className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                      (item.discount || 0) > 0
+                        ? 'text-green-700 dark:text-green-300 placeholder-green-300'
+                        : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
+                    }`}
+                  />
+                </div>
+              );
             })()}
 
             {/* Dual Qty Control: [ Pack | Unit ] - Fixed width matching discount */}
@@ -411,85 +400,70 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                 hasDualMode &&
                 (!packItem || packItem.quantity === 0) &&
                 (!unitItem || unitItem.quantity === 0)
-                  ? "border-yellow-400 dark:border-yellow-500 ring-1 ring-yellow-400/20"
-                  : "border-gray-200 dark:border-gray-700"
+                  ? 'border-yellow-400 dark:border-yellow-500 ring-1 ring-yellow-400/20'
+                  : 'border-gray-200 dark:border-gray-700'
               }`}
             >
               {/* Pack Input */}
               <input
-                type="number"
-                min={hasDualMode ? "0" : "1"}
-                step="any" // Allow decimals
-                placeholder={hasDualMode ? "P" : "1"}
-                value={packItem?.quantity === 0 ? "" : packItem?.quantity || ""}
+                type='number'
+                min={hasDualMode ? '0' : '1'}
+                step='any' // Allow decimals
+                placeholder={hasDualMode ? 'P' : '1'}
+                value={packItem?.quantity === 0 ? '' : packItem?.quantity || ''}
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 onWheel={(e) => (e.target as HTMLInputElement).blur()}
                 onChange={(e) => {
                   const val =
-                    e.target.value === ""
-                      ? hasDualMode
-                        ? 0
-                        : 1
-                      : parseFloat(e.target.value); // Use parseFloat to allow fractional packs
+                    e.target.value === '' ? (hasDualMode ? 0 : 1) : parseFloat(e.target.value); // Use parseFloat to allow fractional packs
                   if (isNaN(val)) return;
                   const minVal = hasDualMode ? 0 : 1;
                   const clampedVal = Math.max(minVal, val);
                   if (packItem) {
-                    updateQuantity(
-                      packItem.id,
-                      false,
-                      clampedVal - packItem.quantity
-                    );
+                    updateQuantity(packItem.id, false, clampedVal - packItem.quantity);
                   } else if (clampedVal > 0) {
                     addToCart(item, false, clampedVal);
                   }
                 }}
                 className={`h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 shrink-0 min-w-0 ${
-                  hasDualMode ? "w-7" : "w-full"
+                  hasDualMode ? 'w-7' : 'w-full'
                 }`}
               />
 
               {/* Separator */}
               {hasDualMode && (
-                <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0"></div>
+                <div className='w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0'></div>
               )}
 
               {/* Unit Input */}
               {hasDualMode && (
                 <input
-                  type="number"
-                  min="0"
-                  placeholder="U"
+                  type='number'
+                  min='0'
+                  placeholder='U'
                   title={`1 Pack = ${item.unitsPerPack || 1} Units`}
-                  value={
-                    unitItem?.quantity === 0 ? "" : unitItem?.quantity || ""
-                  }
+                  value={unitItem?.quantity === 0 ? '' : unitItem?.quantity || ''}
                   onClick={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}
                   onWheel={(e) => (e.target as HTMLInputElement).blur()}
                   onChange={(e) => {
-                    const val =
-                      e.target.value === "" ? 0 : parseInt(e.target.value);
+                    const val = e.target.value === '' ? 0 : parseInt(e.target.value);
                     if (isNaN(val)) return;
                     const clampedVal = Math.max(0, val);
                     if (unitItem) {
-                      updateQuantity(
-                        unitItem.id,
-                        true,
-                        clampedVal - unitItem.quantity
-                      );
+                      updateQuantity(unitItem.id, true, clampedVal - unitItem.quantity);
                     } else if (clampedVal > 0) {
                       addToCart(item, true, clampedVal);
                     }
                   }}
-                  className="w-7 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-blue-600 dark:text-blue-400 placeholder-blue-200 shrink-0"
+                  className='w-7 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-blue-600 dark:text-blue-400 placeholder-blue-200 shrink-0'
                 />
               )}
             </div>
 
             {/* Total Price (Sum of both) */}
-            <div className="text-sm font-bold text-gray-900 dark:text-white w-16 shrink-0 text-end tabular-nums">
+            <div className='text-sm font-bold text-gray-900 dark:text-white w-16 shrink-0 text-end tabular-nums'>
               $
               {(
                 (packItem ? calculateItemTotal(packItem) : 0) +
@@ -506,11 +480,9 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                 removeDrugFromCart(item.id);
               }}
               onPointerDown={(e) => e.stopPropagation()}
-              className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors focus:outline-none focus:bg-red-50 dark:focus:bg-red-900/30 focus:text-red-500"
+              className='w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors focus:outline-none focus:bg-red-50 dark:focus:bg-red-900/30 focus:text-red-500'
             >
-              <span className="material-symbols-rounded text-[16px]">
-                close
-              </span>
+              <span className='material-symbols-rounded text-[16px]'>close</span>
             </button>
           </div>
         </div>

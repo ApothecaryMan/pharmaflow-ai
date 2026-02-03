@@ -8,8 +8,8 @@ export interface TickerData {
   lowStockCount: number;
   shortagesCount: number;
   newCustomersToday: number;
-  topSeller: { 
-    name: string; 
+  topSeller: {
+    name: string;
     count: number;
     revenue: number;
     avgTime: number;
@@ -24,23 +24,23 @@ export const useDynamicTickerData = (): TickerData => {
     const today = now.toDateString();
 
     // 1. Sales Metrics (Today)
-    const todaysSalesData = sales.filter(s => {
+    const todaysSalesData = sales.filter((s) => {
       const saleDate = new Date(s.updatedAt || s.date);
       return saleDate.toDateString() === today;
     });
     const todaySalesTotal = todaysSalesData.reduce((sum, s) => sum + (s.total || 0), 0);
-    const completedInvoices = todaysSalesData.filter(s => s.status === 'completed').length;
-    
+    const completedInvoices = todaysSalesData.filter((s) => s.status === 'completed').length;
+
     // Active/Pending orders (all that need attention)
-    const pendingInvoices = sales.filter(s => 
-      s.status === 'pending' || s.status === 'with_delivery' || s.status === 'on_way'
+    const pendingInvoices = sales.filter(
+      (s) => s.status === 'pending' || s.status === 'with_delivery' || s.status === 'on_way'
     ).length;
 
     // 2. Inventory Metrics
     let lowStockCount = 0;
     let shortagesCount = 0;
 
-    inventory.forEach(item => {
+    inventory.forEach((item) => {
       // Logic: Shortage if 0, Low if <= 10 (or item specific threshold if we had one)
       // Assuming 10 as generic low stock threshold for now
       if (item.stock <= 0) {
@@ -52,13 +52,13 @@ export const useDynamicTickerData = (): TickerData => {
 
     // 3. Customer Metrics (New Today)
     // Check if createdAt exists on Customer type, if not fallback (customers usually have it)
-    const newCustomersToday = customers.filter(c => 
-      c.createdAt && new Date(c.createdAt).toDateString() === today
+    const newCustomersToday = customers.filter(
+      (c) => c.createdAt && new Date(c.createdAt).toDateString() === today
     ).length;
 
     // 4. Top Seller (Today)
     const salesByEmployee: Record<string, number> = {};
-    todaysSalesData.forEach(sale => {
+    todaysSalesData.forEach((sale) => {
       if (sale.soldByEmployeeId) {
         salesByEmployee[sale.soldByEmployeeId] = (salesByEmployee[sale.soldByEmployeeId] || 0) + 1; // Count of invoices
         // Or should it be by Amount? Requirements usually vary. Ticker usually shows "Count" or just name.
@@ -76,14 +76,16 @@ export const useDynamicTickerData = (): TickerData => {
       }
     });
 
-    const topSellerStats = topSellerId ? {
-      name: employees.find(e => e.id === topSellerId)?.name || 'Unknown',
-      count: maxSales,
-      revenue: todaysSalesData
-        .filter(s => s.soldByEmployeeId === topSellerId)
-        .reduce((sum, s) => sum + (s.total || 0), 0),
-      avgTime: 4.2 // Mocked for global ticker for now
-    } : null;
+    const topSellerStats = topSellerId
+      ? {
+          name: employees.find((e) => e.id === topSellerId)?.name || 'Unknown',
+          count: maxSales,
+          revenue: todaysSalesData
+            .filter((s) => s.soldByEmployeeId === topSellerId)
+            .reduce((sum, s) => sum + (s.total || 0), 0),
+          avgTime: 4.2, // Mocked for global ticker for now
+        }
+      : null;
 
     return {
       todaySales: todaySalesTotal,
@@ -92,9 +94,8 @@ export const useDynamicTickerData = (): TickerData => {
       lowStockCount,
       shortagesCount,
       newCustomersToday,
-      topSeller: topSellerStats
+      topSeller: topSellerStats,
     };
-
   }, [sales, inventory, customers, employees]);
 
   return metrics;

@@ -1,8 +1,8 @@
 /**
  * SegmentedControl Component
- * 
+ *
  * A modern, animated segmented control with sliding indicator.
- * 
+ *
  * @example
  * ```tsx
  * <SegmentedControl
@@ -16,22 +16,23 @@
  *   color="emerald"
  * />
  * ```
- * 
+ *
  * SIZE GUIDE:
  * - xs: Compact size for tight spaces (py-1, text-xs, icon-16px)
  *   Use in: Filters, compact toolbars, mobile headers
- * 
+ *
  * - sm: Small size for secondary controls (py-1.5, text-sm, icon-18px) [DEFAULT]
  *   Use in: Settings panels, sidebars, secondary navigation
- * 
+ *
  * - md: Medium size for primary controls (py-2, text-base, icon-20px)
  *   Use in: Main forms, primary navigation, modal dialogs
- * 
+ *
  * - lg: Large size for prominent controls (py-2.5, text-lg, icon-22px)
  *   Use in: Hero sections, landing pages, call-to-action areas
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface SegmentedControlOption<T> {
   label: string;
@@ -65,20 +66,20 @@ interface SegmentedControlProps<T> {
 const SIZE_CLASSES = {
   xs: {
     button: 'py-1 px-2 text-xs',
-    icon: 'text-[16px]'
+    icon: 'text-[16px]',
   },
   sm: {
     button: 'py-1.5 px-3 text-sm',
-    icon: 'text-[18px]'
+    icon: 'text-[18px]',
   },
   md: {
     button: 'py-2.5 px-4 text-base',
-    icon: 'text-[20px]'
+    icon: 'text-[20px]',
   },
   lg: {
     button: 'py-3 px-5 text-lg',
-    icon: 'text-[22px]'
-  }
+    icon: 'text-[22px]',
+  },
 };
 
 // Use centralized color map from config/themeColors.ts
@@ -93,7 +94,7 @@ export function SegmentedControl<T extends string | number | boolean>({
   size = 'sm',
   fullWidth = true,
   shape = 'rounded',
-  variant = 'onCard'
+  variant = 'onCard',
 }: SegmentedControlProps<T>) {
   const isPill = shape === 'pill';
   const containerRound = isPill ? 'rounded-full' : 'rounded-xl';
@@ -103,8 +104,8 @@ export function SegmentedControl<T extends string | number | boolean>({
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
-  
-  const activeOption = options.find(o => o.value === value);
+
+  const activeOption = options.find((o) => o.value === value);
   const activeColor = activeOption?.activeColor || color;
   const sizeClasses = SIZE_CLASSES[size];
 
@@ -113,16 +114,18 @@ export function SegmentedControl<T extends string | number | boolean>({
       const container = containerRef.current;
       if (!container) return;
 
-      const activeSegment = container.querySelector<HTMLButtonElement>(`button[data-active="true"]`);
-      
+      const activeSegment = container.querySelector<HTMLButtonElement>(
+        `button[data-active="true"]`
+      );
+
       if (activeSegment) {
         setIndicatorStyle({
           width: activeSegment.offsetWidth,
           height: activeSegment.offsetHeight,
           top: activeSegment.offsetTop,
-          left: activeSegment.offsetLeft
+          left: activeSegment.offsetLeft,
         });
-        
+
         isFirstRender.current = false;
       }
     };
@@ -136,20 +139,24 @@ export function SegmentedControl<T extends string | number | boolean>({
   }, [value, options]);
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      dir="ltr"
+      dir='ltr'
       className={`relative flex p-1 gap-1 bg-gray-200/50 dark:bg-gray-700/50 ${containerRound} shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] isolate ${className}`}
     >
       {indicatorStyle && (
-        <div 
+        <div
           className={`absolute ${isPill ? '' : 'bg-white dark:bg-gray-700'} ${indicatorRound} pointer-events-none z-0 ${
-            !isFirstRender.current ? 'transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]' : ''
+            !isFirstRender.current
+              ? 'transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]'
+              : ''
           }`}
           style={{
             ...indicatorStyle,
-            boxShadow: isPill ? '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)' : 'rgba(0, 0, 0, 0.09) 0px 3px 12px',
-            backgroundColor: isPill ? (COLOR_HEX_MAP[color] || '#059669') : undefined
+            boxShadow: isPill
+              ? '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)'
+              : 'rgba(0, 0, 0, 0.09) 0px 3px 12px',
+            backgroundColor: isPill ? COLOR_HEX_MAP[color] || '#059669' : undefined,
           }}
         />
       )}
@@ -161,17 +168,15 @@ export function SegmentedControl<T extends string | number | boolean>({
           <button
             key={String(option.value)}
             onClick={() => onChange(option.value)}
-            type="button"
+            type='button'
             data-active={isActive}
             style={{ WebkitAppearance: 'none', appearance: 'none' }}
             className={`${fullWidth ? 'flex-1' : 'flex-none'} ${sizeClasses.button} ${buttonRound} transition-colors z-10 relative flex items-center justify-center gap-2 whitespace-nowrap ${
-              isPill 
-                ? (isActive ? 'font-bold' : 'font-medium') 
-                : 'font-bold'
+              isPill ? (isActive ? 'font-bold' : 'font-medium') : 'font-bold'
             } ${
               isActive
-                ? isPill 
-                  ? 'text-white' 
+                ? isPill
+                  ? 'text-white'
                   : 'text-gray-900 dark:text-white'
                 : isPill
                   ? 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
@@ -183,13 +188,15 @@ export function SegmentedControl<T extends string | number | boolean>({
             )}
             {option.label}
             {option.count !== undefined && (
-              <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold leading-none ${
-                isActive 
-                  ? isPill 
-                    ? 'bg-white/20 text-white' 
-                    : 'bg-white/50 text-gray-900 dark:bg-black/20 dark:text-white'
-                  : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-              }`}>
+              <span
+                className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold leading-none ${
+                  isActive
+                    ? isPill
+                      ? 'bg-white/20 text-white'
+                      : 'bg-white/50 text-gray-900 dark:bg-black/20 dark:text-white'
+                    : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                }`}
+              >
                 {option.count}
               </span>
             )}

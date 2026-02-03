@@ -1,3 +1,8 @@
 // Configuration
 export { PHARMACY_MENU } from './menuData';
-export { PAGE_REGISTRY, getPageConfig, getAllPageIds, getMenuTranslationsFromRegistry } from './pageRegistry';
+export {
+  getAllPageIds,
+  getMenuTranslationsFromRegistry,
+  getPageConfig,
+  PAGE_REGISTRY,
+} from './pageRegistry';

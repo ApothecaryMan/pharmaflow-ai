@@ -1,4 +1,5 @@
-import React, { ReactNode, useState, useRef, useEffect } from 'react';
+import type React from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSettings } from '../../context';
 
@@ -18,20 +19,20 @@ interface TooltipProps {
   delay?: number;
 }
 
-export const Tooltip: React.FC<TooltipProps> = ({ 
-  children, 
-  content, 
+export const Tooltip: React.FC<TooltipProps> = ({
+  children,
+  content,
   position = 'top',
-  className = "",
-  tooltipClassName = "",
-  triggerClassName = "",
-  delay = 300
+  className = '',
+  tooltipClassName = '',
+  triggerClassName = '',
+  delay = 300,
 }) => {
   const { tooltipBlur } = useSettings();
   const [isVisible, setIsVisible] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, arrowLeft: 0 });
   const [placement, setPlacement] = useState<'top' | 'bottom'>(position);
-  
+
   const triggerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -39,7 +40,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
-        setIsVisible(true);
+      setIsVisible(true);
     }, delay);
   };
 
@@ -51,24 +52,24 @@ export const Tooltip: React.FC<TooltipProps> = ({
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
   const updatePosition = () => {
     if (!triggerRef.current || !isVisible) return;
-    
+
     // ... existing logic ...
     const triggerRect = triggerRef.current.getBoundingClientRect();
     const tooltipRect = tooltipRef.current?.getBoundingClientRect() || { width: 0, height: 0 };
-    
+
     // Gap between trigger and tooltip
     const gap = 8;
-    
+
     // Preferred calculation
     let top = 0;
-    let left = triggerRect.left + (triggerRect.width / 2) - (tooltipRect.width / 2); // Center horizontally
-    
+    let left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2; // Center horizontally
+
     // Vertical Logic (Flip if no space)
     const spaceAbove = triggerRect.top;
     const spaceBelow = window.innerHeight - triggerRect.bottom;
@@ -79,16 +80,16 @@ export const Tooltip: React.FC<TooltipProps> = ({
     // If preferred is top but not enough space, and there is space below -> flip to bottom
     if (position === 'top' && spaceAbove < requiredHeight && spaceBelow > requiredHeight) {
       finalPlacement = 'bottom';
-    } 
+    }
     // If preferred is bottom but not enough space, and there is space above -> flip to top
     else if (position === 'bottom' && spaceBelow < requiredHeight && spaceAbove > requiredHeight) {
       finalPlacement = 'top';
     }
 
     if (finalPlacement === 'top') {
-        top = triggerRect.top - tooltipRect.height - gap;
+      top = triggerRect.top - tooltipRect.height - gap;
     } else {
-        top = triggerRect.bottom + gap;
+      top = triggerRect.bottom + gap;
     }
 
     // Horizontal Logic (Viewport Constrained)
@@ -97,12 +98,12 @@ export const Tooltip: React.FC<TooltipProps> = ({
     if (left < 10) left = 10;
     // Prevent right overflow
     if (left + tooltipRect.width > viewportWidth - 10) {
-        left = viewportWidth - tooltipRect.width - 10;
+      left = viewportWidth - tooltipRect.width - 10;
     }
 
     // Arrow Logic: Arrow should point to center of trigger
     // Arrow Left relative to Tooltip = (Trigger Center X) - (Tooltip Left X)
-    const triggerCenter = triggerRect.left + (triggerRect.width / 2);
+    const triggerCenter = triggerRect.left + triggerRect.width / 2;
     let arrowL = triggerCenter - left;
 
     // Clamp arrow to be within tooltip (minus border radius/padding)
@@ -130,20 +131,20 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
   // Initial layout measurement
   useEffect(() => {
-     if (isVisible && tooltipRef.current) {
-         updatePosition();
-     }
+    if (isVisible && tooltipRef.current) {
+      updatePosition();
+    }
   }, [isVisible]);
 
   return (
     // Wrapper must not affect layout too much, but preserves className prop
-    <div 
-        className={`relative w-fit ${className}`}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+    <div
+      className={`relative w-fit ${className}`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Trigger Container */}
-      <div 
+      <div
         ref={triggerRef}
         className={`cursor-help flex items-center min-w-0 max-w-full ${triggerClassName}`}
       >
@@ -151,14 +152,16 @@ export const Tooltip: React.FC<TooltipProps> = ({
       </div>
 
       {/* Portal Tooltip Content */}
-      {isVisible && createPortal(
-        <div 
+      {isVisible &&
+        createPortal(
+          <div
             ref={tooltipRef}
             className={`
                 fixed px-2 py-1 
-                ${tooltipBlur 
-                  ? 'backdrop-blur-xl bg-white/70 dark:bg-gray-800/75 saturate-150 border-white/40 dark:border-white/10 shadow-xl' 
-                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/50 shadow-2xl'
+                ${
+                  tooltipBlur
+                    ? 'backdrop-blur-xl bg-white/70 dark:bg-gray-800/75 saturate-150 border-white/40 dark:border-white/10 shadow-xl'
+                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/50 shadow-2xl'
                 }
                 text-gray-900 dark:text-white text-[10px] 
                 rounded-lg z-[9999] border
@@ -166,34 +169,35 @@ export const Tooltip: React.FC<TooltipProps> = ({
                 transition-opacity duration-200
                 ${tooltipClassName}
             `}
-            style={{ 
-                top: coords.top, 
-                left: coords.left,
-                opacity: coords.top === 0 ? 0 : 1 // Hide until positioned
+            style={{
+              top: coords.top,
+              left: coords.left,
+              opacity: coords.top === 0 ? 0 : 1, // Hide until positioned
             }}
-        >
+          >
             {content}
-            
+
             {/* Arrow - Hidden when blur is active for a cleaner look */}
             {!tooltipBlur && (
-              <div 
-                  className={`
+              <div
+                className={`
                     absolute w-2 h-2 
                     bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/50
-                    ${placement === 'top' 
-                      ? 'top-full -mt-1 border-b border-r' 
-                      : 'bottom-full -mb-1 border-t border-l'
+                    ${
+                      placement === 'top'
+                        ? 'top-full -mt-1 border-b border-r'
+                        : 'bottom-full -mb-1 border-t border-l'
                     }
                   `}
-                  style={{
-                      left: coords.arrowLeft,
-                      transform: 'translateX(-50%) rotate(45deg)' // Center and rotate for diamond shape
-                  }}
+                style={{
+                  left: coords.arrowLeft,
+                  transform: 'translateX(-50%) rotate(45deg)', // Center and rotate for diamond shape
+                }}
               />
             )}
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

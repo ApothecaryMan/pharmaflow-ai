@@ -1,4 +1,4 @@
-import { Area } from './locations';
+import type { Area } from './locations';
 
 export const AREAS: Area[] = [
   // --- CAIRO (1) ---
@@ -117,7 +117,12 @@ export const AREAS: Area[] = [
   { id: '20303', city_id: '203', name_ar: 'شارع شهاب', name_en: 'Shehab St' },
   { id: '20304', city_id: '203', name_ar: 'شارع جزيرة العرب', name_en: 'Geziret El Arab St' },
   { id: '20305', city_id: '203', name_ar: 'ميدان سفنكس', name_en: 'Sphinx Square' },
-  { id: '20306', city_id: '203', name_ar: 'شارع البطل أحمد عبد العزيز', name_en: 'Batal Ahmed Abdel Aziz' },
+  {
+    id: '20306',
+    city_id: '203',
+    name_ar: 'شارع البطل أحمد عبد العزيز',
+    name_en: 'Batal Ahmed Abdel Aziz',
+  },
 
   // Dokki (204)
   { id: '20401', city_id: '204', name_ar: 'ميدان الدقي', name_en: 'Dokki Square' },
@@ -364,10 +369,26 @@ export const AREAS: Area[] = [
 const generateGenericAreas = () => {
   const genericAreas: Area[] = [];
   // Range of IDs to skip (already defined above)
-  const definedCityIds = ['101', '102', '103', '104', '105', '106', '118', '201', '202', '203', '204', '205', '206', '301', '302', '303'];
-  
+  const definedCityIds = [
+    '101',
+    '102',
+    '103',
+    '104',
+    '105',
+    '106',
+    '118',
+    '201',
+    '202',
+    '203',
+    '204',
+    '205',
+    '206',
+    '301',
+    '302',
+    '303',
+  ];
+
   // We need to import CITIES to iterate, but we can't import circularly.
   // So we will rely on the consumer to merge or we define a list of ALL city IDs here?
   // Better approach: We export a function to merge generic areas at runtime or we hardcode the generic generation logic in locations.ts
 };
-

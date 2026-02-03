@@ -1,5 +1,5 @@
-import { ColumnDef } from '@tanstack/react-table';
-import { Sale, Employee, Customer, ThemeColor } from '../../../types';
+import type { ColumnDef } from '@tanstack/react-table';
+import type { Customer, Employee, Sale, ThemeColor } from '../../../types';
 
 /**
  * Core performance metrics tracked for each employee
@@ -56,9 +56,7 @@ export interface Achievement {
 /**
  * Translation function type
  */
-export interface TranslationFunction {
-  (key: string): string;
-}
+export type TranslationFunction = (key: string) => string;
 
 /**
  * Props for StaffSpotlightTicker component

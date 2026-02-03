@@ -1,4 +1,5 @@
-import React, { InputHTMLAttributes, useState, useEffect, useRef, useMemo } from 'react';
+import type React from 'react';
+import { type InputHTMLAttributes, useEffect, useMemo, useRef, useState } from 'react';
 
 /**
  * @module SmartInputs
@@ -23,21 +24,24 @@ import React, { InputHTMLAttributes, useState, useEffect, useRef, useMemo } from
 
 /**
  * A hook that automatically detects the text direction ('ltr' or 'rtl') based on the content.
- * 
+ *
  * @usage
  * Use this hook when building custom components that need to adapt to user input language.
- * 
+ *
  * @example
  * ```tsx
  * const dir = useSmartDirection(value, placeholder);
  * <input dir={dir} ... />
  * ```
- * 
+ *
  * @param text - The primary text to analyze (usually the input value).
  * @param placeholder - Fallback text to analyze if the primary text is empty.
  * @returns 'rtl' if Arabic characters are detected, otherwise 'ltr'.
  */
-export const useSmartDirection = (text: string | undefined | null, placeholder?: string | undefined | null): 'rtl' | 'ltr' => {
+export const useSmartDirection = (
+  text: string | undefined | null,
+  placeholder?: string | undefined | null
+): 'rtl' | 'ltr' => {
   return useMemo(() => {
     if (text) return /[\u0600-\u06FF]/.test(text) ? 'rtl' : 'ltr';
     if (placeholder) return /[\u0600-\u06FF]/.test(placeholder) ? 'rtl' : 'ltr';
@@ -49,7 +53,7 @@ export const useSmartDirection = (text: string | undefined | null, placeholder?:
 
 /**
  * Validates an email address against the RFC 5322 official standard.
- * 
+ *
  * @usage Use this for all email validation logic in the app.
  * @param email - The email string to validate.
  * @returns `true` if valid, `false` otherwise.
@@ -65,7 +69,7 @@ export const isValidEmail = (email: string): boolean => {
  * Validates a phone number format.
  * Allows digits, spaces, and the characters: +, -, (, ).
  * Enforces a length between 5 and 20 characters.
- * 
+ *
  * @usage Use this for all phone number validation logic.
  * @param phone - The phone string to validate.
  * @returns `true` if valid, `false` otherwise.
@@ -79,7 +83,7 @@ export const isValidPhone = (phone: string): boolean => {
 
 /**
  * Strips all non-numeric characters from a phone string, preserving only the leading '+'.
- * 
+ *
  * @usage Use this before sending phone numbers to the API.
  * @param phone - The raw phone input string.
  * @returns A clean string containing only digits and optional leading '+'.
@@ -97,21 +101,21 @@ interface SmartInputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 /**
  * **SmartInput Component**
- * 
+ *
  * A wrapper around the native input element that automatically sets the `dir` attribute (LTR/RTL)
  * based on the input value.
- * 
+ *
  * @usage
  * Use this component for **ALL** generic free-text fields where the user might type in English or Arabic.
  * Examples: Customer Name, Address, Product Description, Notes, Comments.
- * 
+ *
  * @example
- * <SmartInput 
- *   value={name} 
- *   onChange={(e) => setName(e.target.value)} 
- *   placeholder={t.enterName} 
+ * <SmartInput
+ *   value={name}
+ *   onChange={(e) => setName(e.target.value)}
+ *   placeholder={t.enterName}
  * />
- * 
+ *
  * @restricted
  * Do NOT use this for:
  * - Emails (Use `SmartEmailInput`)
@@ -119,12 +123,20 @@ interface SmartInputProps extends InputHTMLAttributes<HTMLInputElement> {
  * - Numeric Codes/Barcodes (Use standard `<input dir="ltr" />`)
  * - Search with autocomplete (Use `SmartAutocomplete`)
  */
-export const SmartInput: React.FC<SmartInputProps> = ({ value, className, placeholder, ...props }) => {
-  // We cast value to string to keep useSmartDirection happy, 
+export const SmartInput: React.FC<SmartInputProps> = ({
+  value,
+  className,
+  placeholder,
+  ...props
+}) => {
+  // We cast value to string to keep useSmartDirection happy,
   // though it handles non-string types gracefully if they are falsy.
   // If value is undefined, it defaults to LTR.
   // Now also passes placeholder so empty inputs with Arabic placeholders show RTL
-  const dir = useSmartDirection(typeof value === 'string' ? value : String(value || ''), placeholder);
+  const dir = useSmartDirection(
+    typeof value === 'string' ? value : String(value || ''),
+    placeholder
+  );
 
   return (
     <input
@@ -148,13 +160,13 @@ interface SmartDateInputProps {
 
 /**
  * **SmartDateInput Component**
- * 
+ *
  * A masked input component for handling dates in `MM/YY` format, which converts to `YYYY-MM-DD`.
  * Ideal for Expiry Dates (Credit Cards, Drug Expiration) where day is assumed to be end-of-month.
- * 
+ *
  * @usage
  * Use for credit card expiry or simple month/year inputs.
- * 
+ *
  * @param value - ISO Date String (YYYY-MM-DD)
  * @param onChange - Returns the full ISO Date String (YYYY-MM-DD)
  */
@@ -164,7 +176,7 @@ export const SmartDateInput: React.FC<SmartDateInputProps> = ({
   className,
   required,
   placeholder,
-  style
+  style,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [displayValue, setDisplayValue] = useState('');
@@ -210,17 +222,17 @@ export const SmartDateInput: React.FC<SmartDateInputProps> = ({
 
   const handleBlur = () => {
     setIsFocused(false);
-    
+
     // Parse the input value (MMYY)
     const cleanValue = displayValue.replace(/\D/g, ''); // Remove non-digits
-    
+
     if (cleanValue.length === 4) {
       const monthStr = cleanValue.slice(0, 2);
       const yearStr = cleanValue.slice(2);
-      
+
       const month = parseInt(monthStr, 10);
       const year = 2000 + parseInt(yearStr, 10); // Assume 20xx
-      
+
       if (month >= 1 && month <= 12) {
         // Get last day of the month
         const lastDay = new Date(year, month, 0).getDate();
@@ -230,12 +242,12 @@ export const SmartDateInput: React.FC<SmartDateInputProps> = ({
         return;
       }
     }
-    
+
     // If invalid or empty, revert/clear
     if (!cleanValue) {
       onChange('');
     } else {
-      // If invalid format but not empty, maybe keep it or reset? 
+      // If invalid format but not empty, maybe keep it or reset?
       // For now, let's reset to previous valid value if parsing fails
       setDisplayValue(formatToDisplay(value));
     }
@@ -250,12 +262,12 @@ export const SmartDateInput: React.FC<SmartDateInputProps> = ({
   return (
     <input
       ref={inputRef}
-      type="text"
-      inputMode="numeric"
+      type='text'
+      inputMode='numeric'
       className={className}
       style={style}
       required={required}
-      placeholder={isFocused ? "MMYY" : (placeholder || "MM/YY")}
+      placeholder={isFocused ? 'MMYY' : placeholder || 'MM/YY'}
       value={displayValue}
       onChange={handleChange}
       onFocus={handleFocus}
@@ -265,33 +277,39 @@ export const SmartDateInput: React.FC<SmartDateInputProps> = ({
   );
 };
 
-interface SmartSpecializedInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface SmartSpecializedInputProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   value: string;
   onChange: (value: string) => void;
 }
 
 /**
  * **SmartPhoneInput Component**
- * 
+ *
  * An input designed specifically for phone numbers.
  * - Enforces **LTR** direction always.
  * - Automatically finds invalid characters and strips them out.
  * - Allows only: digits, spaces, `+`, `-`, `(`, `)`.
- * 
+ *
  * @usage
  * **ALWAYS** use this component for phone number fields.
  */
-export const SmartPhoneInput: React.FC<SmartSpecializedInputProps> = ({ value, onChange, className, ...props }) => {
+export const SmartPhoneInput: React.FC<SmartSpecializedInputProps> = ({
+  value,
+  onChange,
+  className,
+  ...props
+}) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     // Regex: Optional + at start, then digits, spaces, or dashes, parens
     // This regex checks the *entire* string logic we want to ALLOW during typing.
     // However, for strict input masking, it's better to replace invalid chars.
-    
+
     // Strategy: Remove any character that is NOT in the allowed set.
     // Allowed: 0-9, space, +, -, (, )
     const validVal = val.replace(/[^0-9\s+\-()]/g, '');
-    
+
     // Call parent with cleansed value
     onChange(validVal);
   };
@@ -299,8 +317,8 @@ export const SmartPhoneInput: React.FC<SmartSpecializedInputProps> = ({ value, o
   return (
     <input
       {...props}
-      type="tel" // optimized mobile keyboard
-      dir="ltr"
+      type='tel' // optimized mobile keyboard
+      dir='ltr'
       value={value}
       onChange={handleChange}
       className={className}
@@ -310,31 +328,36 @@ export const SmartPhoneInput: React.FC<SmartSpecializedInputProps> = ({ value, o
 
 /**
  * **SmartEmailInput Component**
- * 
+ *
  * An input designed specifically for email addresses.
  * - Enforces **LTR** direction always.
  * - Automatically finds invalid characters and strips them out.
  * - Allows only: English letters, numbers, `@`, `.`, `_`, `-`, `+`.
- * 
+ *
  * @usage
  * **ALWAYS** use this component for email fields.
  */
-export const SmartEmailInput: React.FC<SmartSpecializedInputProps> = ({ value, onChange, className, ...props }) => {
+export const SmartEmailInput: React.FC<SmartSpecializedInputProps> = ({
+  value,
+  onChange,
+  className,
+  ...props
+}) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    
+
     // Strategy: Remove any character that is NOT in the allowed set.
     // Allowed: a-z, A-Z, 0-9, @, ., _, -, +
     const validVal = val.replace(/[^a-zA-Z0-9@._\-+]/g, '');
-    
+
     onChange(validVal);
   };
 
   return (
     <input
       {...props}
-      type="email"
-      dir="ltr"
+      type='email'
+      dir='ltr'
       value={value}
       onChange={handleChange}
       className={className}
@@ -344,7 +367,8 @@ export const SmartEmailInput: React.FC<SmartSpecializedInputProps> = ({ value, o
 
 // --- Smart Autocomplete ---
 
-export interface SmartAutocompleteProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+export interface SmartAutocompleteProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   value: string;
   onChange: (value: string) => void;
   suggestions: string[];
@@ -361,16 +385,16 @@ export interface SmartAutocompleteProps extends Omit<InputHTMLAttributes<HTMLInp
 
 /**
  * **SmartAutocomplete Component**
- * 
+ *
  * An intelligent autocomplete input with ghost text suggestions.
  * - Shows inline suggestion as semi-transparent text overlay
  * - Automatically detects RTL/LTR direction
  * - Keyboard shortcuts: Tab/→ to accept, Escape to reject
  * - Debounced suggestion calculation
- * 
+ *
  * @usage
  * Use for search fields where you want to provide inline suggestions.
- * 
+ *
  * @example
  * <SmartAutocomplete
  *   value={search}
@@ -399,7 +423,7 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
   const internalRef = useRef<HTMLInputElement>(null);
   const inputRef = externalRef || internalRef;
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // Auto-detect text direction
   const dir = useSmartDirection(value, placeholder);
 
@@ -417,8 +441,8 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
     if (!debouncedValue || disabled) return '';
 
     const searchValue = caseSensitive ? debouncedValue : debouncedValue.toLowerCase();
-    
-    const match = suggestions.find(s => {
+
+    const match = suggestions.find((s) => {
       const suggestionValue = caseSensitive ? s : s.toLowerCase();
       return suggestionValue.startsWith(searchValue) && suggestionValue !== searchValue;
     });
@@ -455,32 +479,32 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
   // Calculate ghost text (the remaining part of the suggestion)
   const ghostText = useMemo(() => {
     if (!currentSuggestion || !value) return '';
-    
+
     const valueToCompare = caseSensitive ? value : value.toLowerCase();
     const suggestionToCompare = caseSensitive ? currentSuggestion : currentSuggestion.toLowerCase();
-    
+
     if (suggestionToCompare.startsWith(valueToCompare)) {
       return currentSuggestion.slice(value.length);
     }
-    
+
     return '';
   }, [currentSuggestion, value, caseSensitive]);
 
   return (
-    <div ref={containerRef} className="relative inline-block w-full">
+    <div ref={containerRef} className='relative inline-block w-full'>
       {/* Actual Input with Smart Direction */}
       <input
         {...restProps}
         ref={inputRef}
-        type="text"
-        autoComplete="off"
+        type='text'
+        autoComplete='off'
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
         dir={dir}
-        spellCheck="false"
+        spellCheck='false'
         className={`
           w-full px-3 py-2.5 rounded-xl
           bg-white dark:bg-gray-900
@@ -493,7 +517,7 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
           shadow-sm ${className}
         `}
       />
-      
+
       {/* Ghost Text Overlay - Badge Style */}
       {ghostText && (
         <div
@@ -505,17 +529,19 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
           }}
         >
           {/* Invisible spacer matching the actual input value */}
-          <span className="invisible whitespace-pre">{value}</span>
-          
+          <span className='invisible whitespace-pre'>{value}</span>
+
           {/* Visible ghost text as a Badge */}
-          <span className={`
+          <span
+            className={`
             inline-flex items-center px-0.5 py-0.5 ms-1
             rounded-lg border border-gray-200 dark:border-gray-800 
             bg-gray-50/50 dark:bg-gray-800/50 
             text-sm font-bold tracking-tight
             text-gray-400 dark:text-gray-500 
             transition-all animate-in fade-in zoom-in duration-200
-          `}>
+          `}
+          >
             {ghostText}
           </span>
         </div>
@@ -533,15 +559,15 @@ export interface DrugSearchInputProps extends Omit<SmartAutocompleteProps, 'onKe
 
 /**
  * **DrugSearchInput Component**
- * 
+ *
  * A specialized search input for drug/product searches.
  * - Wraps SmartAutocomplete with Enter-to-add callback
  * - Autocomplete suggestions (optional)
  * - RTL/LTR auto-detection
- * 
+ *
  * @usage
  * Use for all drug search fields in POS and Purchases.
- * 
+ *
  * @example
  * <DrugSearchInput
  *   value={search}
@@ -559,7 +585,7 @@ export const DrugSearchInput: React.FC<DrugSearchInputProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Call custom handler first
     onKeyDown?.(e);
-    
+
     // Then handle Enter
     if (e.key === 'Enter' && onEnter) {
       e.preventDefault();
@@ -567,10 +593,5 @@ export const DrugSearchInput: React.FC<DrugSearchInputProps> = ({
     }
   };
 
-  return (
-    <SmartAutocomplete
-      {...props}
-      onKeyDown={handleKeyDown}
-    />
-  );
+  return <SmartAutocomplete {...props} onKeyDown={handleKeyDown} />;
 };

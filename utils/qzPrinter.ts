@@ -1,9 +1,9 @@
 /**
  * QZ Tray Printer Utilities
- * 
+ *
  * Provides direct communication with QZ Tray for silent printing.
  * QZ Tray is a local print server that bridges web apps with system printers.
- * 
+ *
  * @see https://qz.io/
  */
 
@@ -42,14 +42,14 @@ export interface PrintConfig {
 
 // --- Constants ---
 
-import { storage } from './storage';
 import { StorageKeys } from '../config/storageKeys';
+import { storage } from './storage';
 
 const DEFAULT_SETTINGS: PrinterSettings = {
-  enabled: false,        // Disable by default - avoid errors if not installed
+  enabled: false, // Disable by default - avoid errors if not installed
   labelPrinter: null,
   receiptPrinter: null,
-  silentMode: 'fallback' // Try silent first, fallback to browser if fails
+  silentMode: 'fallback', // Try silent first, fallback to browser if fails
 };
 
 // QZ Tray script URL (CDN)
@@ -67,11 +67,11 @@ export const loadQzTray = (): Promise<void> => {
   if (qzLoaded && typeof qz !== 'undefined') {
     return Promise.resolve();
   }
-  
+
   if (qzLoadPromise) {
     return qzLoadPromise;
   }
-  
+
   qzLoadPromise = new Promise((resolve, reject) => {
     // Check if already loaded
     if (typeof qz !== 'undefined') {
@@ -79,11 +79,11 @@ export const loadQzTray = (): Promise<void> => {
       resolve();
       return;
     }
-    
+
     const script = document.createElement('script');
     script.src = QZ_SCRIPT_URL;
     script.async = true;
-    
+
     script.onload = () => {
       qzLoaded = true;
 
@@ -105,15 +105,15 @@ export const loadQzTray = (): Promise<void> => {
 
       resolve();
     };
-    
+
     script.onerror = () => {
       qzLoadPromise = null;
       reject(new Error('Failed to load QZ Tray script'));
     };
-    
+
     document.head.appendChild(script);
   });
-  
+
   return qzLoadPromise;
 };
 
@@ -136,11 +136,11 @@ export const isConnected = (): boolean => {
  */
 export const connect = async (): Promise<void> => {
   await loadQzTray();
-  
+
   if (isConnected()) {
     return;
   }
-  
+
   try {
     // Set up promise handler for connection
     await qz.websocket.connect();
@@ -160,7 +160,7 @@ export const disconnect = async (): Promise<void> => {
   if (!isConnected()) {
     return;
   }
-  
+
   try {
     await qz.websocket.disconnect();
   } catch (err) {
@@ -177,7 +177,7 @@ export const getStatus = (): PrinterStatus => {
   if (!qzLoaded || typeof qz === 'undefined') {
     return 'not_installed';
   }
-  
+
   try {
     return qz.websocket.isActive() ? 'connected' : 'disconnected';
   } catch {
@@ -195,7 +195,7 @@ export const getPrinters = async (): Promise<string[]> => {
   if (!isConnected()) {
     await connect();
   }
-  
+
   try {
     const printers = await qz.printers.find();
     return Array.isArray(printers) ? printers : [];
@@ -215,7 +215,7 @@ export const getDefaultPrinter = async (): Promise<string | null> => {
   if (!isConnected()) {
     await connect();
   }
-  
+
   try {
     const printer = await qz.printers.getDefault();
     return printer || null;
@@ -243,22 +243,24 @@ export const printHTML = async (
   if (!isConnected()) {
     await connect();
   }
-  
+
   const printerConfig = qz.configs.create(printerName, {
     size: config.size ? { width: config.size.width, height: config.size.height } : undefined,
     margins: config.margins,
     copies: config.copies || 1,
     colorType: config.colorType || 'grayscale',
     orientation: config.orientation || 'portrait',
-    scaleContent: true
+    scaleContent: true,
   });
-  
-  const data = [{
-    type: 'html',
-    format: 'plain',
-    data: html
-  }];
-  
+
+  const data = [
+    {
+      type: 'html',
+      format: 'plain',
+      data: html,
+    },
+  ];
+
   await qz.print(printerConfig, data);
 };
 
@@ -267,22 +269,19 @@ export const printHTML = async (
  * @param printerName - Name of target printer
  * @param commands - Array of raw commands
  */
-export const printRaw = async (
-  printerName: string,
-  commands: string[]
-): Promise<void> => {
+export const printRaw = async (printerName: string, commands: string[]): Promise<void> => {
   if (!isConnected()) {
     await connect();
   }
-  
+
   const printerConfig = qz.configs.create(printerName);
-  
-  const data = commands.map(cmd => ({
+
+  const data = commands.map((cmd) => ({
     type: 'raw',
     format: 'plain',
-    data: cmd
+    data: cmd,
   }));
-  
+
   await qz.print(printerConfig, data);
 };
 
@@ -302,9 +301,9 @@ export const getPrinterSettings = (): PrinterSettings => {
 export const savePrinterSettings = (settings: Partial<PrinterSettings>): PrinterSettings => {
   const current = getPrinterSettings();
   const updated = { ...current, ...settings };
-  
+
   storage.set(StorageKeys.PRINTER_SETTINGS, updated);
-  
+
   return updated;
 };
 
@@ -320,33 +319,33 @@ export const printLabelSilently = async (
   labelSize: { width: number; height: number }
 ): Promise<boolean> => {
   const settings = getPrinterSettings();
-  
+
   if (!settings.enabled || settings.silentMode === 'off') {
     return false;
   }
-  
+
   if (!settings.labelPrinter) {
     if (import.meta.env.DEV) {
       console.warn('[QZ] No label printer configured');
     }
     return false;
   }
-  
+
   try {
     await printHTML(settings.labelPrinter, html, {
       size: labelSize,
-      margins: { top: 0, right: 0, bottom: 0, left: 0 }
+      margins: { top: 0, right: 0, bottom: 0, left: 0 },
     });
     return true;
   } catch (err) {
     if (import.meta.env.DEV) {
       console.error('[QZ] Label print failed:', err);
     }
-    
+
     if (settings.silentMode === 'fallback') {
       return false; // Signal to use browser print
     }
-    
+
     throw err;
   }
 };
@@ -358,33 +357,33 @@ export const printLabelSilently = async (
  */
 export const printReceiptSilently = async (html: string): Promise<boolean> => {
   const settings = getPrinterSettings();
-  
+
   if (!settings.enabled || settings.silentMode === 'off') {
     return false;
   }
-  
+
   if (!settings.receiptPrinter) {
     if (import.meta.env.DEV) {
       console.warn('[QZ] No receipt printer configured');
     }
     return false;
   }
-  
+
   try {
     await printHTML(settings.receiptPrinter, html, {
       size: { width: 80, height: 297 }, // 80mm thermal paper, variable height
-      margins: { top: 0, right: 0, bottom: 0, left: 0 }
+      margins: { top: 0, right: 0, bottom: 0, left: 0 },
     });
     return true;
   } catch (err) {
     if (import.meta.env.DEV) {
       console.error('[QZ] Receipt print failed:', err);
     }
-    
+
     if (settings.silentMode === 'fallback') {
       return false; // Signal to use browser print
     }
-    
+
     throw err;
   }
 };

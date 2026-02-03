@@ -1,12 +1,12 @@
 /**
  * useProcurement - Hook for fetching procurement intelligence data
- * 
+ *
  * Provides procurement summary and items from real inventory/sales data
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ProcurementSummary, ProcurementItem } from '../types/intelligence';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { intelligenceService } from '../services/intelligence/intelligenceService';
+import type { ProcurementItem, ProcurementSummary } from '../types/intelligence';
 
 interface UseProcurementFilters {
   supplierId?: string;
@@ -34,13 +34,13 @@ export function useProcurement(filters: UseProcurementFilters = {}): UseProcurem
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const [summaryData, itemsData] = await Promise.all([
         intelligenceService.getProcurementSummary(),
-        intelligenceService.getProcurementItems()
+        intelligenceService.getProcurementItems(),
       ]);
-      
+
       setSummary(summaryData);
       setItems(itemsData);
     } catch (err) {
@@ -58,28 +58,28 @@ export function useProcurement(filters: UseProcurementFilters = {}): UseProcurem
   // Extract unique suppliers and categories
   const suppliers = useMemo(() => {
     const map = new Map<string, string>();
-    items.forEach(item => map.set(item.supplier_id, item.supplier_name));
+    items.forEach((item) => map.set(item.supplier_id, item.supplier_name));
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [items]);
 
   const categories = useMemo(() => {
     const map = new Map<string, string>();
-    items.forEach(item => map.set(item.category_id, item.category_name));
+    items.forEach((item) => map.set(item.category_id, item.category_name));
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [items]);
 
   // Apply filters
   const filteredItems = useMemo(() => {
     let result = items;
-    
+
     if (filters.supplierId && filters.supplierId !== 'all') {
-      result = result.filter(i => i.supplier_id === filters.supplierId);
+      result = result.filter((i) => i.supplier_id === filters.supplierId);
     }
-    
+
     if (filters.categoryId && filters.categoryId !== 'all') {
-      result = result.filter(i => i.category_id === filters.categoryId);
+      result = result.filter((i) => i.category_id === filters.categoryId);
     }
-    
+
     return result;
   }, [items, filters.supplierId, filters.categoryId]);
 
@@ -91,6 +91,6 @@ export function useProcurement(filters: UseProcurementFilters = {}): UseProcurem
     error,
     refresh: fetchData,
     suppliers,
-    categories
+    categories,
   };
 }

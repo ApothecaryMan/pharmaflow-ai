@@ -1,45 +1,43 @@
-import { ComponentType } from 'react';
-import { PermissionAction } from './permissions';
-import { Dashboard } from '../components/dashboard/Dashboard';
-import { Inventory } from '../components/inventory/Inventory';
-import { POS } from '../components/sales/POS';
-import { SalesHistory } from '../components/sales/SalesHistory';
-import { ReturnHistory } from '../components/sales/ReturnHistory';
-import { SuppliersList } from '../components/purchases/SuppliersList';
-import { Purchases } from '../components/purchases/Purchases';
-import { PurchaseReturns } from '../components/purchases/PurchaseReturns';
-import { BarcodePrinter } from '../components/inventory/BarcodePrinter';
-import { BarcodeStudio } from '../components/inventory/BarcodeStudio';
-import { CustomerManagement } from '../components/customers/CustomerManagement';
-import { CustomerOverview } from '../components/customers/CustomerOverview';
-import { CustomerLoyaltyOverview } from '../components/customers/CustomerLoyaltyOverview';
+import type { ComponentType } from 'react';
+import { Login } from '../components/auth/Login';
 import { CustomerHistory } from '../components/customers/CustomerHistory';
 import { CustomerLoyaltyLookup } from '../components/customers/CustomerLoyaltyLookup';
-import { StockAdjustment } from '../components/inventory/StockAdjustment';
-import { RealTimeSalesMonitor } from '../components/dashboard/RealTimeSalesMonitor';
-import { InventoryManagement } from '../components/inventory/InventoryManagement';
-import { PendingApproval } from '../components/purchases/PendingApproval';
-import { CashRegister } from '../components/sales/CashRegister';
-import { ShiftHistory } from '../components/sales/ShiftHistory';
-import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
-import { POSTest } from '../components/test/POSTest';
-import { PurchasesTest } from '../components/test/PurchasesTest';
-import { DashboardExperiments } from '../components/experiments/DashboardExperiments';
-import { AdvancedSmCard } from '../components/experiments/AdvancedSmCard';
-import { ModalTests } from '../components/test/ModalTests';
-import { EmployeeList } from '../components/hr/EmployeeList';
-import { EmployeeProfile } from '../components/hr/EmployeeProfile';
-import { Login } from '../components/auth/Login';
-import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
-import { LoginAuditList } from '../components/reports/LoginAuditList';
-import { LandingPage } from '../components/layout/LandingPage';
-import { StaffOverview } from '../components/hr/StaffOverview';
-
-
+import { CustomerLoyaltyOverview } from '../components/customers/CustomerLoyaltyOverview';
+import { CustomerManagement } from '../components/customers/CustomerManagement';
+import { CustomerOverview } from '../components/customers/CustomerOverview';
+import { Dashboard } from '../components/dashboard/Dashboard';
 // Skeletons
 import { DashboardSkeleton } from '../components/dashboard/DashboardSkeletons';
+import { RealTimeSalesMonitor } from '../components/dashboard/RealTimeSalesMonitor';
+import { AdvancedSmCard } from '../components/experiments/AdvancedSmCard';
+import { DashboardExperiments } from '../components/experiments/DashboardExperiments';
+import { EmployeeList } from '../components/hr/EmployeeList';
+import { EmployeeProfile } from '../components/hr/EmployeeProfile';
+import { StaffOverview } from '../components/hr/StaffOverview';
+import { BarcodePrinter } from '../components/inventory/BarcodePrinter';
+import { BarcodeStudio } from '../components/inventory/BarcodeStudio';
+import { Inventory } from '../components/inventory/Inventory';
+import { InventoryManagement } from '../components/inventory/InventoryManagement';
+import { StockAdjustment } from '../components/inventory/StockAdjustment';
+import { LandingPage } from '../components/layout/LandingPage';
+import { PendingApproval } from '../components/purchases/PendingApproval';
+import { PurchaseReturns } from '../components/purchases/PurchaseReturns';
+import { Purchases } from '../components/purchases/Purchases';
+import { SuppliersList } from '../components/purchases/SuppliersList';
+import { LoginAuditList } from '../components/reports/LoginAuditList';
+import { CashRegister } from '../components/sales/CashRegister';
+import { POS } from '../components/sales/POS';
+import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
+import { ReturnHistory } from '../components/sales/ReturnHistory';
+import { SalesHistory } from '../components/sales/SalesHistory';
+import { ShiftHistory } from '../components/sales/ShiftHistory';
 import { InventorySkeleton } from '../components/skeletons/InventorySkeleton';
 import { POSSkeleton } from '../components/skeletons/POSSkeleton';
+import { ModalTests } from '../components/test/ModalTests';
+import { POSTest } from '../components/test/POSTest';
+import { PurchasesTest } from '../components/test/PurchasesTest';
+import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
+import type { PermissionAction } from './permissions';
 
 export interface PageConfig {
   id: string;
@@ -55,7 +53,7 @@ export interface PageConfig {
 }
 
 export const PAGE_REGISTRY: Record<string, PageConfig> = {
-  'dashboard': {
+  dashboard: {
     id: 'dashboard',
     component: Dashboard,
     menuLabel: 'Dashboard Overview',
@@ -63,11 +61,20 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'dashboard',
     category: 'main-dashboard',
 
-    requiredProps: ['sales', 'inventory', 'purchases', 'customers', 'color', 't', 'language', 'onViewChange'],
+    requiredProps: [
+      'sales',
+      'inventory',
+      'purchases',
+      'customers',
+      'color',
+      't',
+      'language',
+      'onViewChange',
+    ],
     skeleton: DashboardSkeleton,
-    permission: 'dashboard.view'
+    permission: 'dashboard.view',
   },
-  'inventory': {
+  inventory: {
     id: 'inventory',
     component: Inventory,
     menuLabel: 'Inventory',
@@ -75,9 +82,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'inventory_2',
     category: 'inventory',
 
-    requiredProps: ['inventory', 'onAddDrug', 'onUpdateDrug', 'onDeleteDrug', 'color', 't', 'language'],
+    requiredProps: [
+      'inventory',
+      'onAddDrug',
+      'onUpdateDrug',
+      'onDeleteDrug',
+      'color',
+      't',
+      'language',
+    ],
     skeleton: InventorySkeleton,
-    permission: 'inventory.view'
+    permission: 'inventory.view',
   },
   'inventory-beta': {
     id: 'inventory-beta',
@@ -89,9 +104,9 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
 
     requiredProps: ['inventory', 'color', 't', 'language'],
     skeleton: InventorySkeleton,
-    permission: 'inventory.view_beta'
+    permission: 'inventory.view_beta',
   },
-  'pos': {
+  pos: {
     id: 'pos',
     component: POS,
     menuLabel: 'Point of Sale',
@@ -99,9 +114,20 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'point_of_sale',
     category: 'sales',
 
-    requiredProps: ['inventory', 'customers', 'onCompleteSale', 'color', 't', 'language', 'onAddCustomer', 'sales', 'employees', 'onUpdateSale'],
+    requiredProps: [
+      'inventory',
+      'customers',
+      'onCompleteSale',
+      'color',
+      't',
+      'language',
+      'onAddCustomer',
+      'sales',
+      'employees',
+      'onUpdateSale',
+    ],
     skeleton: POSSkeleton,
-    permission: 'sale.create'
+    permission: 'sale.create',
   },
   'sales-history': {
     id: 'sales-history',
@@ -110,8 +136,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل المبيعات',
     icon: 'receipt_long',
     category: 'sales',
-    requiredProps: ['sales', 'returns', 'onProcessReturn', 'color', 't', 'language', 'currentShift'],
-    permission: 'sale.view_history'
+    requiredProps: [
+      'sales',
+      'returns',
+      'onProcessReturn',
+      'color',
+      't',
+      'language',
+      'currentShift',
+    ],
+    permission: 'sale.view_history',
   },
   'return-history': {
     id: 'return-history',
@@ -121,9 +155,9 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'assignment_return',
     category: 'sales',
     requiredProps: ['returns', 'sales', 'color', 't', 'language'],
-    permission: 'sale.refund'
+    permission: 'sale.refund',
   },
-  'suppliers': {
+  suppliers: {
     id: 'suppliers',
     component: SuppliersList,
     menuLabel: 'Supplier List',
@@ -131,17 +165,28 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'local_shipping',
     category: 'purchase',
     requiredProps: ['suppliers', 'setSuppliers', 'color', 't', 'language'],
-    permission: 'supplier.view'
+    permission: 'supplier.view',
   },
-  'purchases': {
+  purchases: {
     id: 'purchases',
     component: Purchases,
     menuLabel: 'Purchases',
     menuLabelAr: 'المشتريات',
     icon: 'shopping_cart',
     category: 'purchase',
-    requiredProps: ['inventory', 'suppliers', 'purchases', 'purchaseReturns', 'onCompletePurchase', 'drugs', 'setDrugs', 'color', 't', 'language'],
-    permission: 'purchase.view'
+    requiredProps: [
+      'inventory',
+      'suppliers',
+      'purchases',
+      'purchaseReturns',
+      'onCompletePurchase',
+      'drugs',
+      'setDrugs',
+      'color',
+      't',
+      'language',
+    ],
+    permission: 'purchase.view',
   },
   'pending-approval': {
     id: 'pending-approval',
@@ -151,7 +196,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'pending_actions',
     category: 'purchase',
     requiredProps: ['color', 't', 'purchases', 'onApprovePurchase', 'onRejectPurchase', 'language'],
-    permission: 'purchase.approve'
+    permission: 'purchase.approve',
   },
   'purchase-returns': {
     id: 'purchase-returns',
@@ -160,8 +205,18 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'مرتجعات المشتريات',
     icon: 'assignment_return',
     category: 'purchase',
-    requiredProps: ['purchases', 'purchaseReturns', 'setPurchaseReturns', 'drugs', 'setDrugs', 'color', 't', 'language', 'onCreatePurchaseReturn'],
-    permission: 'purchase.view'
+    requiredProps: [
+      'purchases',
+      'purchaseReturns',
+      'setPurchaseReturns',
+      'drugs',
+      'setDrugs',
+      'color',
+      't',
+      'language',
+      'onCreatePurchaseReturn',
+    ],
+    permission: 'purchase.view',
   },
   'barcode-printer': {
     id: 'barcode-printer',
@@ -171,7 +226,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'print',
     category: 'tools',
     requiredProps: ['inventory', 'color', 't', 'language', 'textTransform'],
-    permission: 'inventory.update'
+    permission: 'inventory.update',
   },
   'barcode-studio': {
     id: 'barcode-studio',
@@ -181,17 +236,26 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'qr_code_2',
     category: 'tools',
     requiredProps: ['inventory', 'color', 't', 'language'],
-    permission: 'inventory.update'
+    permission: 'inventory.update',
   },
-  'customers': {
+  customers: {
     id: 'customers',
     component: CustomerManagement,
     menuLabel: 'All Customers',
     menuLabelAr: 'جميع العملاء',
     icon: 'group',
     category: 'customers',
-    requiredProps: ['customers', 'onAddCustomer', 'onUpdateCustomer', 'onDeleteCustomer', 'color', 't', 'language', 'onViewChange'],
-    permission: 'customer.view'
+    requiredProps: [
+      'customers',
+      'onAddCustomer',
+      'onUpdateCustomer',
+      'onDeleteCustomer',
+      'color',
+      't',
+      'language',
+      'onViewChange',
+    ],
+    permission: 'customer.view',
   },
   'customer-overview': {
     id: 'customer-overview',
@@ -201,7 +265,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'analytics',
     category: 'customer-dashboard',
     requiredProps: ['customers', 'sales', 'color', 't', 'language'],
-    permission: 'customer.view'
+    permission: 'customer.view',
   },
   'customer-history': {
     id: 'customer-history',
@@ -211,7 +275,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'manage_search',
     category: 'customers',
     requiredProps: ['customers', 'sales', 'returns', 'color', 't', 'language', 'navigationParams'],
-    permission: 'customer.view'
+    permission: 'customer.view',
   },
   'loyalty-overview': {
     id: 'loyalty-overview',
@@ -221,7 +285,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'stars',
     category: 'customer-dashboard',
     requiredProps: ['customers', 'sales', 'color', 't', 'language'],
-    permission: 'customer.view_loyalty'
+    permission: 'customer.view_loyalty',
   },
   'loyalty-lookup': {
     id: 'loyalty-lookup',
@@ -231,7 +295,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'person_search',
     category: 'customer-dashboard',
     requiredProps: ['customers', 'sales', 'color', 't', 'language'],
-    permission: 'customer.view_loyalty'
+    permission: 'customer.view_loyalty',
   },
   'real-time-sales': {
     id: 'real-time-sales',
@@ -241,7 +305,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'monitoring',
     category: 'sales-dashboard',
     requiredProps: ['sales', 'customers', 'products', 'color', 't', 'language'],
-    permission: 'reports.view_financial'
+    permission: 'reports.view_financial',
   },
   'add-product': {
     id: 'add-product',
@@ -250,8 +314,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'إضافة منتج جديد',
     icon: 'add_box',
     category: 'inventory',
-    requiredProps: ['inventory', 'onAddDrug', 'onUpdateDrug', 'onDeleteDrug', 'color', 't', 'language', 'initialMode'],
-    permission: 'inventory.add'
+    requiredProps: [
+      'inventory',
+      'onAddDrug',
+      'onUpdateDrug',
+      'onDeleteDrug',
+      'color',
+      't',
+      'language',
+      'initialMode',
+    ],
+    permission: 'inventory.add',
   },
   'cash-register': {
     id: 'cash-register',
@@ -261,7 +334,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'point_of_sale',
     category: 'sales',
     requiredProps: ['color', 't', 'language'],
-    permission: 'shift.open'
+    permission: 'shift.open',
   },
   'shift-history': {
     id: 'shift-history',
@@ -271,7 +344,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'history',
     category: 'sales',
     requiredProps: ['color', 't', 'language'],
-    permission: 'shift.reports'
+    permission: 'shift.reports',
   },
   'stock-adjustment': {
     id: 'stock-adjustment',
@@ -281,17 +354,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'inventory',
     category: 'inventory',
     requiredProps: ['inventory', 'onUpdateInventory', 'color', 't'],
-    permission: 'inventory.adjust'
+    permission: 'inventory.adjust',
   },
   'receipt-designer': {
     id: 'receipt-designer',
     component: ReceiptDesigner,
     menuLabel: 'Receipt Design',
     menuLabelAr: 'تصميم الفاتورة',
-    icon: 'brush', 
+    icon: 'brush',
     category: 'sales',
     requiredProps: ['color', 't', 'language'],
-    permission: 'settings.update'
+    permission: 'settings.update',
   },
   'dashboard-experiments': {
     id: 'dashboard-experiments',
@@ -301,7 +374,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'science',
     category: 'test',
     requiredProps: ['color', 't', 'language'],
-    permission: 'system.debug'
+    permission: 'system.debug',
   },
   'pos-test': {
     id: 'pos-test',
@@ -310,8 +383,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'نقطة بيع (اختبار)',
     icon: 'science',
     category: 'test',
-    requiredProps: ['inventory', 'customers', 'onCompleteSale', 'color', 't', 'language', 'onAddCustomer'],
-    permission: 'system.debug'
+    requiredProps: [
+      'inventory',
+      'customers',
+      'onCompleteSale',
+      'color',
+      't',
+      'language',
+      'onAddCustomer',
+    ],
+    permission: 'system.debug',
   },
   'purchases-test': {
     id: 'purchases-test',
@@ -320,8 +401,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'انشاء امر شراء (تيست)',
     icon: 'shopping_cart',
     category: 'test',
-    requiredProps: ['inventory', 'suppliers', 'purchases', 'purchaseReturns', 'onCompletePurchase', 'color', 't', 'language'],
-    permission: 'system.debug'
+    requiredProps: [
+      'inventory',
+      'suppliers',
+      'purchases',
+      'purchaseReturns',
+      'onCompletePurchase',
+      'color',
+      't',
+      'language',
+    ],
+    permission: 'system.debug',
   },
   'advanced-sm-card': {
     id: 'advanced-sm-card',
@@ -331,7 +421,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'dashboard_customize',
     category: 'test',
     requiredProps: ['color', 't', 'language'],
-    permission: 'system.debug'
+    permission: 'system.debug',
   },
   'modal-tests': {
     id: 'modal-tests',
@@ -341,7 +431,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'dialogs',
     category: 'test',
     requiredProps: ['color', 't', 'language'],
-    permission: 'system.debug'
+    permission: 'system.debug',
   },
   'employee-list': {
     id: 'employee-list',
@@ -350,8 +440,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'قائمة الموظفين',
     icon: 'badge',
     category: 'hr',
-    requiredProps: ['employees', 'onAddEmployee', 'onUpdateEmployee', 'onDeleteEmployee', 'color', 't', 'language'],
-    permission: 'users.view'
+    requiredProps: [
+      'employees',
+      'onAddEmployee',
+      'onUpdateEmployee',
+      'onDeleteEmployee',
+      'color',
+      't',
+      'language',
+    ],
+    permission: 'users.view',
   },
   'employee-profile': {
     id: 'employee-profile',
@@ -361,18 +459,18 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'id_card',
     category: 'hr',
     requiredProps: ['sales', 'employees', 'color', 't', 'language'],
-    permission: 'users.view'
+    permission: 'users.view',
   },
-  'login': {
+  login: {
     id: 'login',
     component: Login,
     menuLabel: 'Login',
     menuLabelAr: 'تسجيل الدخول',
     icon: 'lock',
     category: 'system',
-    requiredProps: ['color', 't', 'language', 'onViewChange', 'onLoginSuccess']
+    requiredProps: ['color', 't', 'language', 'onViewChange', 'onLoginSuccess'],
   },
-  'intelligence': {
+  intelligence: {
     id: 'intelligence',
     component: IntelligenceDashboard,
     menuLabel: 'Business Intelligence',
@@ -380,7 +478,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'auto_graph',
     category: 'reports',
     requiredProps: ['color', 't', 'language'],
-    permission: 'reports.view_financial'
+    permission: 'reports.view_financial',
   },
   'login-audit': {
     id: 'login-audit',
@@ -390,16 +488,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'history',
     category: 'reports',
     requiredProps: ['language'],
-    permission: 'reports.view_financial'
+    permission: 'reports.view_financial',
   },
-  'landing': {
+  landing: {
     id: 'landing',
     component: LandingPage as any,
     menuLabel: 'Welcome',
     menuLabelAr: 'ترحيب',
     icon: 'home',
     category: 'system',
-    requiredProps: ['color', 'language', 'darkMode']
+    requiredProps: ['color', 'language', 'darkMode'],
   },
   'staff-overview': {
     id: 'staff-overview',
@@ -409,9 +507,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'supervisor_account',
     category: 'hr-dashboard',
     requiredProps: ['sales', 'employees', 'customers', 'color', 't', 'language', 'getVerifiedDate'],
-    permission: 'users.view'
+    permission: 'users.view',
   },
-
 };
 
 // Helper function to get page config
@@ -427,7 +524,7 @@ export const getAllPageIds = (): string[] => {
 // Helper function to get menu translations
 export const getMenuTranslationsFromRegistry = (): Record<string, string> => {
   const translations: Record<string, string> = {};
-  Object.values(PAGE_REGISTRY).forEach(page => {
+  Object.values(PAGE_REGISTRY).forEach((page) => {
     translations[page.menuLabel] = page.menuLabelAr;
   });
   return translations;

@@ -2,18 +2,18 @@
 // REFACTORED: MobileNavigation.tsx - Production-Ready Implementation
 // ============================================================================
 
-import React, { useMemo, useCallback } from 'react';
-import { canPerformAction, UserRole } from '../../config/permissions';
-import { MobileDrawer } from './MobileDrawer';
-import { PHARMACY_MENU, MenuItem } from '../../config/menuData';
+import React, { useCallback, useMemo } from 'react';
+import { type MenuItem, PHARMACY_MENU } from '../../config/menuData';
+import { canPerformAction, type UserRole } from '../../config/permissions';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
+import { MobileDrawer } from './MobileDrawer';
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
 const STATIC_DOCK_VIEWS = ['dashboard', 'pos', 'inventory', 'purchases'] as const;
-type StaticDockView = typeof STATIC_DOCK_VIEWS[number];
+type StaticDockView = (typeof STATIC_DOCK_VIEWS)[number];
 
 const DEFAULT_ICON = 'circle';
 const DEFAULT_LABEL = 'View';
@@ -76,10 +76,7 @@ interface MobileNavigationProps {
 // UTILITY: Build View Lookup Map (Module-level cache)
 // ============================================================================
 
-const buildViewLookupMap = (
-  items: MenuItem[],
-  depth = 0
-): Map<string, ViewMetadata> => {
+const buildViewLookupMap = (items: MenuItem[], depth = 0): Map<string, ViewMetadata> => {
   const map = new Map<string, ViewMetadata>();
 
   if (depth > MAX_RECURSION_DEPTH) {
@@ -90,7 +87,7 @@ const buildViewLookupMap = (
   for (const item of items) {
     // Skip string items (dividers)
     if (typeof item === 'string') continue;
-    
+
     // Type guard: ensure item has required properties
     if (typeof item === 'object' && item && 'view' in item && item.view && 'label' in item) {
       const viewId = item.view as string;
@@ -136,10 +133,7 @@ const VIEW_LOOKUP_MAP = buildViewLookupMap(PHARMACY_MENU);
 // UTILITY: Get Dynamic Tab
 // ============================================================================
 
-const getDynamicTab = (
-  view: string,
-  language: 'EN' | 'AR'
-): DynamicTab | null => {
+const getDynamicTab = (view: string, language: 'EN' | 'AR'): DynamicTab | null => {
   if (STATIC_DOCK_VIEWS.includes(view as StaticDockView)) {
     return null;
   }
@@ -179,22 +173,23 @@ interface DockButtonProps {
   'aria-label'?: string;
 }
 
-const DockButton = React.memo<DockButtonProps>(({
-  view,
-  currentView,
-  icon,
-  label,
-  theme,
-  onClick,
-  isDynamic = false,
-  'aria-label': ariaLabel,
-}) => {
-  const isActive = view === currentView;
+const DockButton = React.memo<DockButtonProps>(
+  ({
+    view,
+    currentView,
+    icon,
+    label,
+    theme,
+    onClick,
+    isDynamic = false,
+    'aria-label': ariaLabel,
+  }) => {
+    const isActive = view === currentView;
 
-  return (
-    <button
-      onClick={onClick}
-      className={`
+    return (
+      <button
+        onClick={onClick}
+        className={`
         h-12 flex items-center justify-center rounded-[1.5rem] transition-fluid
         ${
           isActive
@@ -203,42 +198,41 @@ const DockButton = React.memo<DockButtonProps>(({
         }
         ${isDynamic ? 'animate-scale-in' : ''}
       `}
-      aria-label={ariaLabel || label}
-      aria-current={isActive ? 'page' : undefined}
-      type="button"
-    >
-      {view === 'pos' ? (
-        <svg 
-          className={`w-[24px] h-[24px] ${isActive ? '' : 'opacity-70'}`}
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
+        aria-label={ariaLabel || label}
+        aria-current={isActive ? 'page' : undefined}
+        type='button'
+      >
+        {view === 'pos' ? (
+          <svg
+            className={`w-[24px] h-[24px] ${isActive ? '' : 'opacity-70'}`}
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+          >
+            <path d='M4 4h3l1 10h10l1-10H7' />
+            <circle cx='9' cy='19' r='1.5' />
+            <circle cx='17' cy='19' r='1.5' />
+          </svg>
+        ) : (
+          <span
+            className={`material-symbols-rounded text-[24px] ${isActive ? 'font-fill' : ''}`}
+            aria-hidden='true'
+          >
+            {icon}
+          </span>
+        )}
+        <div
+          className={`${isActive ? 'flex' : 'hidden'} items-center animate-word-entrance overflow-hidden`}
         >
-          <path d="M4 4h3l1 10h10l1-10H7" />
-          <circle cx="9" cy="19" r="1.5" />
-          <circle cx="17" cy="19" r="1.5" />
-        </svg>
-      ) : (
-        <span
-          className={`material-symbols-rounded text-[24px] ${
-            isActive ? 'font-fill' : ''
-          }`}
-          aria-hidden="true"
-        >
-          {icon}
-        </span>
-      )}
-      <div className={`${isActive ? 'flex' : 'hidden'} items-center animate-word-entrance overflow-hidden`}>
-        <div className="whitespace-nowrap font-bold text-sm truncate max-w-[80px]">
-          {label}
+          <div className='whitespace-nowrap font-bold text-sm truncate max-w-[80px]'>{label}</div>
         </div>
-      </div>
-    </button>
-  );
-});
+      </button>
+    );
+  }
+);
 
 DockButton.displayName = 'DockButton';
 
@@ -265,10 +259,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   profileImage,
 }) => {
   // Memoize dynamic tab
-  const dynamicTab = useMemo(
-    () => getDynamicTab(view, language),
-    [view, language]
-  );
+  const dynamicTab = useMemo(() => getDynamicTab(view, language), [view, language]);
 
   // Memoize callbacks
   const handleDrawerClose = useCallback(() => {
@@ -318,8 +309,8 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
       {/* Mobile Floating Dock Navigation */}
       <nav
-        className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[92%] max-w-[400px] safe-area-bottom"
-        aria-label="Primary navigation"
+        className='md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[92%] max-w-[400px] safe-area-bottom'
+        aria-label='Primary navigation'
       >
         <div
           className={`
@@ -333,9 +324,9 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
           {/* Static Dock Items */}
           {canPerformAction(userRole, 'reports.view_inventory') && (
             <DockButton
-              view="dashboard"
+              view='dashboard'
               currentView={view}
-              icon="dashboard_customize"
+              icon='dashboard_customize'
               label={t.nav?.dashboard || 'Dashboard'}
               theme={theme}
               onClick={handleDashboardClick}
@@ -344,9 +335,9 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
           {canPerformAction(userRole, 'sale.create') && (
             <DockButton
-              view="pos"
+              view='pos'
               currentView={view}
-              icon="point_of_sale"
+              icon='point_of_sale'
               label={t.nav?.sales || 'Sales'}
               theme={theme}
               onClick={handlePosClick}
@@ -355,9 +346,9 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
           {canPerformAction(userRole, 'inventory.view') && (
             <DockButton
-              view="inventory"
+              view='inventory'
               currentView={view}
-              icon="package_2"
+              icon='package_2'
               label={t.nav?.inventory || 'Inventory'}
               theme={theme}
               onClick={handleInventoryClick}
@@ -366,9 +357,9 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
           {canPerformAction(userRole, 'purchase.view') && (
             <DockButton
-              view="purchases"
+              view='purchases'
               currentView={view}
-              icon="shopping_cart_checkout"
+              icon='shopping_cart_checkout'
               label={t.nav?.purchase || 'Purchase'}
               theme={theme}
               onClick={handlePurchasesClick}

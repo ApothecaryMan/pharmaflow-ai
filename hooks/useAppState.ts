@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { ViewState } from '../types';
-import { usePersistedState } from './usePersistedState';
-import { StorageKeys } from '../config/storageKeys';
+import { useEffect, useState } from 'react';
 import { ROUTES } from '../config/routes';
+import { StorageKeys } from '../config/storageKeys';
+import type { ViewState } from '../types';
+import { usePersistedState } from './usePersistedState';
 
 export interface ToastState {
   message: string;
@@ -19,11 +19,11 @@ export interface AppState {
   setDashboardSubView: React.Dispatch<React.SetStateAction<string>>;
   navigationParams: Record<string, any> | null;
   setNavigationParams: React.Dispatch<React.SetStateAction<Record<string, any> | null>>;
-  
+
   // UI state
   mobileMenuOpen: boolean;
   setMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  
+
   // User state
   profileImage: string | null;
   setProfileImage: React.Dispatch<React.SetStateAction<string | null>>;
@@ -40,7 +40,10 @@ export interface AppState {
 export function useAppState(): AppState {
   // --- View State ---
   const [view, setView] = usePersistedState<ViewState>(StorageKeys.VIEW, ROUTES.DASHBOARD);
-  const [activeModule, setActiveModule] = usePersistedState<string>(StorageKeys.ACTIVE_MODULE, ROUTES.DASHBOARD);
+  const [activeModule, setActiveModule] = usePersistedState<string>(
+    StorageKeys.ACTIVE_MODULE,
+    ROUTES.DASHBOARD
+  );
   const [dashboardSubView, setDashboardSubView] = useState<string>('dashboard');
   const [navigationParams, setNavigationParams] = useState<Record<string, any> | null>(null);
 
@@ -48,8 +51,14 @@ export function useAppState(): AppState {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // --- User/Session State ---
-  const [profileImage, setProfileImage] = usePersistedState<string | null>(StorageKeys.PROFILE_IMAGE, null);
-  const [currentEmployeeId, setCurrentEmployeeId] = usePersistedState<string | null>(StorageKeys.CURRENT_EMPLOYEE_ID, null);
+  const [profileImage, setProfileImage] = usePersistedState<string | null>(
+    StorageKeys.PROFILE_IMAGE,
+    null
+  );
+  const [currentEmployeeId, setCurrentEmployeeId] = usePersistedState<string | null>(
+    StorageKeys.CURRENT_EMPLOYEE_ID,
+    null
+  );
   const [windowedView, setWindowedView] = useState<string | null>(null);
 
   return {
@@ -62,11 +71,11 @@ export function useAppState(): AppState {
     setDashboardSubView,
     navigationParams,
     setNavigationParams,
-    
+
     // UI state
     mobileMenuOpen,
     setMobileMenuOpen,
-    
+
     // User state
     profileImage,
     setProfileImage,

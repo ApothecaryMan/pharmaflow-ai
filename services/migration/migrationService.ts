@@ -1,5 +1,5 @@
-import { Drug } from '../../types';
 import { StorageKeys } from '../../config/storageKeys';
+import type { Drug } from '../../types';
 import { validateStock } from '../../utils/inventory';
 
 /**
@@ -22,13 +22,13 @@ export function runMigrations(inventory: Drug[]): MigrationResult {
   let hasUpdates = false;
 
   // 1. Code Migration - Convert to 6-digit format
-  const needsCodeMigration = inventory.some(d => 
-    d.internalCode && (
-      !/^\d{6}$/.test(d.internalCode) || 
-      d.internalCode.includes('-') || 
-      d.internalCode.includes('REAL') || 
-      d.internalCode.includes('INT')
-    )
+  const needsCodeMigration = inventory.some(
+    (d) =>
+      d.internalCode &&
+      (!/^\d{6}$/.test(d.internalCode) ||
+        d.internalCode.includes('-') ||
+        d.internalCode.includes('REAL') ||
+        d.internalCode.includes('INT'))
   );
 
   if (needsCodeMigration) {
@@ -39,7 +39,7 @@ export function runMigrations(inventory: Drug[]): MigrationResult {
       if (!d.internalCode || !/^\d{6}$/.test(d.internalCode)) {
         return {
           ...d,
-          internalCode: (index + 1).toString().padStart(6, '0')
+          internalCode: (index + 1).toString().padStart(6, '0'),
         };
       }
       return d;
@@ -49,12 +49,12 @@ export function runMigrations(inventory: Drug[]): MigrationResult {
 
   // 2. Unit-Based Inventory Migration
   const isMigratedToUnits = localStorage.getItem(StorageKeys.MIGRATION_V1_UNITS);
-  
+
   if (!isMigratedToUnits) {
     if (import.meta.env.DEV) {
       console.log('[Migration] STARTING: Converting Stock to Total Units...');
     }
-    
+
     // A. BACKUP
     try {
       localStorage.setItem(StorageKeys.MIGRATION_BACKUP, JSON.stringify(inventory));
@@ -82,9 +82,9 @@ export function runMigrations(inventory: Drug[]): MigrationResult {
     }
 
     // C. MIGRATE LOGIC
-    migratedInventory = migratedInventory.map(d => {
-      const isLikelyPacks = (d.stock < 1000) || !Number.isInteger(d.stock);
-      
+    migratedInventory = migratedInventory.map((d) => {
+      const isLikelyPacks = d.stock < 1000 || !Number.isInteger(d.stock);
+
       if (isLikelyPacks) {
         const units = d.unitsPerPack || 1;
         const newStock = Math.round(d.stock * units); // Convert to Total Units
@@ -92,10 +92,10 @@ export function runMigrations(inventory: Drug[]): MigrationResult {
       }
       return { ...d, stock: validateStock(d.stock) };
     });
-    
+
     hasUpdates = true;
     localStorage.setItem(StorageKeys.MIGRATION_V1_UNITS, 'true');
-    
+
     if (import.meta.env.DEV) {
       console.log('[Migration] Complete:', StorageKeys.MIGRATION_V1_UNITS, '= true');
     }

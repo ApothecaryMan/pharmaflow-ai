@@ -2,7 +2,7 @@
  * Customer Types - Customer management
  */
 
-import { Customer } from '../../types';
+import type { Customer } from '../../types';
 
 export type { Customer };
 

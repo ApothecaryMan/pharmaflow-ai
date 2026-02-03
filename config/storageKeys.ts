@@ -12,7 +12,7 @@ export const StorageKeys = {
   POS_TABS: 'pharma_pos_tabs',
   POS_ACTIVE_TAB_ID: 'pharma_pos_active_tab_id',
   PRINTER_SETTINGS: 'pharma_printer_config',
-  
+
   // Label Printer & Barcode Studio
   RECEIPT_TEMPLATES: 'receipt_templates',
   RECEIPT_ACTIVE_TEMPLATE_ID: 'receipt_active_template_id',
@@ -23,7 +23,7 @@ export const StorageKeys = {
 
   SETTINGS: 'pharma_settings',
   SEQUENCES: 'pharma_sequences',
-  
+
   // Data
   INVENTORY: 'pharma_inventory',
   EMPLOYEES: 'pharma_employees',
@@ -36,7 +36,7 @@ export const StorageKeys = {
   SHIFTS: 'pharma_shifts',
   STOCK_BATCHES: 'pharma_stock_batches',
   STOCK_MOVEMENTS: 'pharma_stock_movements',
-  
+
   // User/Session
   PROFILE_IMAGE: 'pharma_profileImage',
   CURRENT_EMPLOYEE_ID: 'pharma_currentEmployeeId',
@@ -45,10 +45,10 @@ export const StorageKeys = {
   MIGRATION_V1_UNITS: 'pharma_migration_v1_units',
   MIGRATION_BACKUP: 'pharma_backup_pre_migration_v1',
   CSV_LOADED_V5: 'pharma_csv_loaded_v5',
-  
+
   // Time Service
   TIME_OFFSET: 'pharmaflow_time_offset',
   LAST_SYNC: 'pharmaflow_last_sync',
 } as const;
 
-export type StorageKeys = typeof StorageKeys[keyof typeof StorageKeys];
+export type StorageKeys = (typeof StorageKeys)[keyof typeof StorageKeys];

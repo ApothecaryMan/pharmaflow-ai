@@ -1,28 +1,28 @@
-import React, { useState, useRef } from 'react';
-import { SaleTab } from '../../types';
-import { useContextMenu } from '../common/ContextMenu';
-import { useLongPress } from '../../hooks/useLongPress';
 import {
-  DndContext,
   closestCenter,
+  DndContext,
+  type DragEndEvent,
   KeyboardSensor,
+  MouseSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
-  TouchSensor,
-  MouseSensor
 } from '@dnd-kit/core';
 import {
   arrayMove,
+  horizontalListSortingStrategy,
   SortableContext,
   sortableKeyboardCoordinates,
-  horizontalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-import { TRANSLATIONS } from '../../i18n/translations';
+import type React from 'react';
+import { useRef, useState } from 'react';
+import { useLongPress } from '../../hooks/useLongPress';
+import type { TRANSLATIONS } from '../../i18n/translations';
+import type { SaleTab } from '../../types';
+import { useContextMenu } from '../common/ContextMenu';
 
 interface TabBarProps {
   tabs: SaleTab[];
@@ -76,16 +76,12 @@ const SortableTab = ({
   setEditingTabId,
   showMenu,
   onCloseOthers,
-  t
+  t,
 }: SortableTabProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: tab.id, disabled: tab.isPinned });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: tab.id,
+    disabled: tab.isPinned,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -101,25 +97,37 @@ const SortableTab = ({
   // Helper: Get tab context menu actions
   const getTabActions = () => [
     { label: t.tabs?.closeTab || 'Close Tab', icon: 'close', action: () => onTabClose(tab.id) },
-    { label: t.tabs?.closeOthers || 'Close Others', icon: 'tab_close_right', action: () => onCloseOthers(tab.id) },
-    { label: t.tabs?.duplicateTab || 'Duplicate Tab', icon: 'content_copy', action: () => onTabAdd() },
-    { label: tab.isPinned ? (t.tabs?.unpin || 'Unpin') : (t.tabs?.pin || 'Pin'), icon: tab.isPinned ? 'push_pin' : 'keep_off', action: () => onTogglePin(tab.id) },
-    { label: t.tabs?.rename || 'Rename', icon: 'edit', action: () => onRenameStart(tab) }
+    {
+      label: t.tabs?.closeOthers || 'Close Others',
+      icon: 'tab_close_right',
+      action: () => onCloseOthers(tab.id),
+    },
+    {
+      label: t.tabs?.duplicateTab || 'Duplicate Tab',
+      icon: 'content_copy',
+      action: () => onTabAdd(),
+    },
+    {
+      label: tab.isPinned ? t.tabs?.unpin || 'Unpin' : t.tabs?.pin || 'Pin',
+      icon: tab.isPinned ? 'push_pin' : 'keep_off',
+      action: () => onTogglePin(tab.id),
+    },
+    { label: t.tabs?.rename || 'Rename', icon: 'edit', action: () => onRenameStart(tab) },
   ];
 
   const {
     onTouchStart: onTabTouchStart,
     onTouchEnd: onTabTouchEnd,
     onTouchMove: onTabTouchMove,
-    isLongPress: isTabLongPress
+    isLongPress: isTabLongPress,
   } = useLongPress({
     onLongPress: (e) => {
-        // Prevent context menu if dragging
-        if (isDragging) return;
-        
-        const touch = e.touches[0];
-        showMenu(touch.clientX, touch.clientY, getTabActions());
-    }
+      // Prevent context menu if dragging
+      if (isDragging) return;
+
+      const touch = e.touches[0];
+      showMenu(touch.clientX, touch.clientY, getTabActions());
+    },
   });
 
   return (
@@ -131,9 +139,10 @@ const SortableTab = ({
       className={`
         group relative flex items-center gap-2 pl-3 pr-8 py-2 rounded-xl transition-all duration-200 ease-out cursor-pointer
         min-w-[100px] max-w-[180px] touch-manipulation
-        ${isActive 
-          ? `bg-white dark:bg-gray-800 shadow-[0_0_0_1px_rgba(0,0,0,0.06)]` 
-          : 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 text-gray-600 dark:text-gray-400'
+        ${
+          isActive
+            ? `bg-white dark:bg-gray-800 shadow-[0_0_0_1px_rgba(0,0,0,0.06)]`
+            : 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 text-gray-600 dark:text-gray-400'
         }
         ${isDragging ? 'shadow-xl scale-105 ring-2 ring-blue-500 z-50 bg-white dark:bg-gray-800' : ''}
       `}
@@ -142,29 +151,31 @@ const SortableTab = ({
         showMenu(e.clientX, e.clientY, getTabActions());
       }}
       onTouchStart={(e) => {
-          listeners?.onTouchStart?.(e);
-          onTabTouchStart(e);
+        listeners?.onTouchStart?.(e);
+        onTabTouchStart(e);
       }}
       onTouchEnd={(e) => {
-          listeners?.onTouchEnd?.(e);
-          onTabTouchEnd();
+        listeners?.onTouchEnd?.(e);
+        onTabTouchEnd();
       }}
       onTouchMove={(e) => {
-          // listeners might not have onTouchMove if it relies on pointer events, but safe to check
-          // listeners?.onTouchMove?.(e); 
-          onTabTouchMove(e);
+        // listeners might not have onTouchMove if it relies on pointer events, but safe to check
+        // listeners?.onTouchMove?.(e);
+        onTabTouchMove(e);
       }}
       onClick={(e) => {
-          if (isTabLongPress.current) {
-              isTabLongPress.current = false;
-              return;
-          }
-          onTabClick(tab.id);
+        if (isTabLongPress.current) {
+          isTabLongPress.current = false;
+          return;
+        }
+        onTabClick(tab.id);
       }}
     >
       {/* Pin Indicator */}
       {isPinned && (
-        <span className={`material-symbols-rounded text-[14px] ${isActive ? `text-${color}-500` : 'text-gray-400'}`}>
+        <span
+          className={`material-symbols-rounded text-[14px] ${isActive ? `text-${color}-500` : 'text-gray-400'}`}
+        >
           push_pin
         </span>
       )}
@@ -172,7 +183,7 @@ const SortableTab = ({
       {/* Tab Name or Input */}
       {editingTabId === tab.id ? (
         <input
-          type="text"
+          type='text'
           value={editName}
           onChange={(e) => setEditName(e.target.value)}
           onBlur={() => handleRename(tab.id)}
@@ -180,32 +191,37 @@ const SortableTab = ({
             if (e.key === 'Enter') handleRename(tab.id);
             if (e.key === 'Escape') setEditingTabId(null);
           }}
-          className="flex-1 w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-semibold text-gray-900 dark:text-white"
+          className='flex-1 w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-semibold text-gray-900 dark:text-white'
           autoFocus
           onPointerDown={(e) => e.stopPropagation()} // Prevent drag start on input interaction
           onClick={(e) => e.stopPropagation()}
         />
       ) : (
-        <div 
-            className="flex-1 flex items-center gap-2 overflow-hidden"
-            onDoubleClick={() => onRenameStart(tab)}
+        <div
+          className='flex-1 flex items-center gap-2 overflow-hidden'
+          onDoubleClick={() => onRenameStart(tab)}
         >
-            <span className={`text-sm font-semibold truncate ${isActive ? 'text-gray-900 dark:text-white' : ''}`}>
-                {tab.name}
-            </span>
-            
-            {/* Cart Badge */}
-            {hasItems && (
-                <span className={`
+          <span
+            className={`text-sm font-semibold truncate ${isActive ? 'text-gray-900 dark:text-white' : ''}`}
+          >
+            {tab.name}
+          </span>
+
+          {/* Cart Badge */}
+          {hasItems && (
+            <span
+              className={`
                     flex items-center justify-center h-5 min-w-[20px] px-1 rounded-full text-[10px] font-bold
-                    ${isActive 
-                        ? `bg-${color}-100 dark:bg-${color}-900/50 text-${color}-700 dark:text-${color}-300` 
+                    ${
+                      isActive
+                        ? `bg-${color}-100 dark:bg-${color}-900/50 text-${color}-700 dark:text-${color}-300`
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     }
-                `}>
-                    {tab.cart.length}
-                </span>
-            )}
+                `}
+            >
+              {tab.cart.length}
+            </span>
+          )}
         </div>
       )}
 
@@ -225,7 +241,7 @@ const SortableTab = ({
             ${isActive ? 'text-gray-400' : 'text-gray-400'}
           `}
         >
-          <span className="material-symbols-rounded text-[13px]">close</span>
+          <span className='material-symbols-rounded text-[13px]'>close</span>
         </button>
       )}
     </div>
@@ -243,7 +259,7 @@ export const TabBar: React.FC<TabBarProps> = ({
   onTabReorder,
   maxTabs,
   color = 'blue',
-  t
+  t,
 }) => {
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -270,9 +286,9 @@ export const TabBar: React.FC<TabBarProps> = ({
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-        const oldIndex = tabs.findIndex((t) => t.id === active.id);
-        const newIndex = tabs.findIndex((t) => t.id === over.id);
-        onTabReorder(arrayMove(tabs, oldIndex, newIndex));
+      const oldIndex = tabs.findIndex((t) => t.id === active.id);
+      const newIndex = tabs.findIndex((t) => t.id === over.id);
+      onTabReorder(arrayMove(tabs, oldIndex, newIndex));
     }
   };
 
@@ -290,24 +306,17 @@ export const TabBar: React.FC<TabBarProps> = ({
   };
 
   const handleCloseOthers = (tabId: string) => {
-    tabs.forEach(t => {
-        if (t.id !== tabId && !t.isPinned) onTabClose(t.id);
+    tabs.forEach((t) => {
+      if (t.id !== tabId && !t.isPinned) onTabClose(t.id);
     });
   };
 
   return (
-    <DndContext 
-      sensors={sensors} 
-      collisionDetection={closestCenter} 
-      onDragEnd={handleDragEnd}
-    >
-      <div className="flex items-center gap-2 px-3 pb-2 pt-1 overflow-x-auto no-scrollbar select-none touch-pan-x">
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <div className='flex items-center gap-2 px-3 pb-2 pt-1 overflow-x-auto no-scrollbar select-none touch-pan-x'>
         {/* Tabs Container */}
-        <div className="flex items-center gap-2 flex-1">
-          <SortableContext 
-            items={tabs.map(t => t.id)}
-            strategy={horizontalListSortingStrategy}
-          >
+        <div className='flex items-center gap-2 flex-1'>
+          <SortableContext items={tabs.map((t) => t.id)} strategy={horizontalListSortingStrategy}>
             {tabs.map((tab) => (
               <SortableTab
                 key={tab.id}
@@ -343,9 +352,9 @@ export const TabBar: React.FC<TabBarProps> = ({
               text-gray-500 hover:text-${color}-600 dark:text-gray-400 dark:hover:text-${color}-400
               shrink-0
             `}
-            title={t.tabs?.newTab || "New Tab"}
+            title={t.tabs?.newTab || 'New Tab'}
           >
-            <span className="material-symbols-rounded text-[20px]">add</span>
+            <span className='material-symbols-rounded text-[20px]'>add</span>
           </button>
         )}
       </div>

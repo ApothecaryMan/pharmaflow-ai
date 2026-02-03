@@ -28,7 +28,7 @@ export const TRANSLATIONS = {
       totalItems: 'Total Items',
       searchIn: 'Search in',
       pack: 'Pack',
-      unit: 'Unit'
+      unit: 'Unit',
     },
     settings: {
       settings: 'Settings',
@@ -59,14 +59,14 @@ export const TRANSLATIONS = {
       comingSoon: 'Coming Soon',
       typography: 'Typography',
       fontEN: 'English Font',
-      fontAR: 'Arabic Font'
+      fontAR: 'Arabic Font',
     },
 
     profile: {
       role: 'Pharmacist',
       changePhoto: 'Change Photo',
       reset: 'Reset',
-      signOut: 'Sign Out'
+      signOut: 'Sign Out',
     },
     global: {
       actions: {
@@ -80,13 +80,13 @@ export const TRANSLATIONS = {
         all: 'All',
         import: 'Import',
         print: 'Print',
-        openInWindow: 'Open in Window'
+        openInWindow: 'Open in Window',
       },
       datePicker: {
         cancel: 'Cancel',
         ok: 'OK',
         hour: 'Hour',
-        minute: 'Minute'
+        minute: 'Minute',
       },
       currency: 'L.E',
       loading: 'Loading...',
@@ -100,8 +100,8 @@ export const TRANSLATIONS = {
         loadingData: 'Loading data...',
         page: 'Page',
         of: 'of',
-        showAll: 'Show All'
-      }
+        showAll: 'Show All',
+      },
     },
     login: {
       title: 'Welcome back!',
@@ -121,7 +121,7 @@ export const TRANSLATIONS = {
       validationUsernameRequired: 'Username is required',
       validationPasswordRequired: 'Password is required',
       validationPasswordLength: 'Password must be at least 4 characters',
-      authorizedUserNotice: 'By continuing, you verify that you are an authorized user.'
+      authorizedUserNotice: 'By continuing, you verify that you are an authorized user.',
     },
     statusBar: {
       ready: 'Ready',
@@ -136,7 +136,7 @@ export const TRANSLATIONS = {
       shiftSince: 'Since',
       messages: {
         outOfStock: 'Out of Stock: {{name}} {{form}}',
-        saleComplete: 'Sale completed: {{total}} L.E'
+        saleComplete: 'Sale completed: {{total}} L.E',
       },
       ticker: {
         todaySales: 'Today',
@@ -146,8 +146,8 @@ export const TRANSLATIONS = {
         lowStock: 'Low Stock',
         shortages: 'Shortages',
         newCustomers: 'New Customers',
-        topSeller: 'Top Seller'
-      }
+        topSeller: 'Top Seller',
+      },
     },
     loginAudit: {
       title: 'Login Audit Trail',
@@ -163,7 +163,7 @@ export const TRANSLATIONS = {
         logout: 'Logout',
         switch: 'Switch',
         system_login: 'System Access',
-        system_logout: 'System Exit'
+        system_logout: 'System Exit',
       },
       headers: {
         id: 'ID',
@@ -171,7 +171,7 @@ export const TRANSLATIONS = {
         user: 'User',
         action: 'Action',
         branch: 'Branch',
-        details: 'Details'
+        details: 'Details',
       },
       detailPatterns: {
         switchedFrom: 'Switched from {{name}}',
@@ -179,8 +179,8 @@ export const TRANSLATIONS = {
         employeeSignedOut: 'Employee signed out',
         accountLogout: 'Account Logout',
         systemSessionStarted: 'System session started',
-        employeeSessionStarted: 'Employee session started'
-      }
+        employeeSessionStarted: 'Employee session started',
+      },
     },
     inventory: {
       title: 'Inventory',
@@ -217,7 +217,7 @@ export const TRANSLATIONS = {
         printBarcode: 'Print Barcode',
         duplicate: 'Duplicate Drug',
         adjustStock: 'Quick Stock Adjust',
-        printQtyPrompt: 'How many labels to print?'
+        printQtyPrompt: 'How many labels to print?',
       },
       noResults: 'No drugs found matching your search.',
       modal: {
@@ -247,7 +247,7 @@ export const TRANSLATIONS = {
         internalCode: 'Internal Code',
         description: 'Description',
         noDescription: 'No description provided.',
-      }
+      },
     },
     stockAdjustment: {
       title: 'Stock Adjustment',
@@ -268,7 +268,7 @@ export const TRANSLATIONS = {
         diff: 'Difference',
         reason: 'Reason',
         notes: 'Notes',
-        action: 'Action'
+        action: 'Action',
       },
       reasons: {
         damaged: 'Damaged',
@@ -276,14 +276,14 @@ export const TRANSLATIONS = {
         theft: 'Theft / Loss',
         inventory_count: 'Inventory Count',
         correction: 'Data Correction',
-        other: 'Other'
+        other: 'Other',
       },
       success: 'Stock adjustment saved successfully!',
       empty: 'No items to adjust. Search and add products.',
       noHistory: 'No history records found for the selected period.',
       noRecent: 'No recent transaction to print. Perform an adjustment first.',
       historyLog: 'History Log',
-      adjustStock: 'Adjust Stock'
+      adjustStock: 'Adjust Stock',
     },
     barcodePrinter: {
       title: 'Barcode Printer',
@@ -297,12 +297,12 @@ export const TRANSLATIONS = {
         item: 'Item',
         expiry: 'Expiry',
         qty: 'Qty',
-        actions: 'Actions'
+        actions: 'Actions',
       },
       alerts: {
         queueEmpty: 'Print queue is empty. Add items to print.',
         printing: 'Generating labels...',
-        printSuccess: 'Labels sent to printer'
+        printSuccess: 'Labels sent to printer',
       },
       settings: {
         store: 'Pharmacy Name',
@@ -310,8 +310,8 @@ export const TRANSLATIONS = {
         name: 'Drug Name',
         price: 'Price',
         expiry: 'Expiry Date',
-        barcode: 'Barcode'
-      }
+        barcode: 'Barcode',
+      },
     },
     suppliers: {
       title: 'Suppliers',
@@ -336,7 +336,7 @@ export const TRANSLATIONS = {
         companyName: 'Company Name',
         contact: 'Contact Person',
         details: 'Contact Details',
-        actions: 'Actions'
+        actions: 'Actions',
       },
       form: {
         companyInfo: 'Company Information',
@@ -351,7 +351,7 @@ export const TRANSLATIONS = {
         phone: 'Phone',
         phonePlaceholder: '+1234567890',
         email: 'Email',
-        emailPlaceholder: 'email@example.com'
+        emailPlaceholder: 'email@example.com',
       },
       modal: {
         add: 'Add New Supplier',
@@ -372,7 +372,7 @@ export const TRANSLATIONS = {
         saveChanges: 'Save Changes',
         deleteBtn: 'Delete',
         addSupplier: 'Add Supplier',
-        close: 'Close'
+        close: 'Close',
       },
       contextMenu: {
         viewDetails: 'View Details',
@@ -381,18 +381,19 @@ export const TRANSLATIONS = {
         copyName: 'Copy Name',
         copyPhone: 'Copy Phone',
         copyEmail: 'Copy Email',
-        showHideColumns: 'Show/Hide Columns'
+        showHideColumns: 'Show/Hide Columns',
       },
       errors: {
         invalidPhone: 'Invalid phone number',
-        invalidEmail: 'Invalid email address'
+        invalidEmail: 'Invalid email address',
       },
       required: 'required',
-      fillRequired: 'Please fill in all required fields'
+      fillRequired: 'Please fill in all required fields',
     },
     pendingApproval: {
       title: 'Pending Approvals',
-      subtitle: 'Review and approve incoming purchase orders. Orders must be approved before inventory is updated.',
+      subtitle:
+        'Review and approve incoming purchase orders. Orders must be approved before inventory is updated.',
       allCaughtUp: 'All caught up!',
       noPendingOrders: 'No pending purchase orders requiring approval.',
       pendingReview: 'Pending Review',
@@ -415,7 +416,7 @@ export const TRANSLATIONS = {
         reason: 'Reason (Optional)',
         reasonPlaceholder: 'E.g., Incorrect pricing, wrong items...',
         cancel: 'Cancel',
-        reject: 'Reject'
+        reject: 'Reject',
       },
       tableHeaders: {
         item: 'Item',
@@ -424,7 +425,7 @@ export const TRANSLATIONS = {
         cost: 'Cost',
         discount: 'Disc %',
         salePrice: 'Sale Price',
-        total: 'Total'
+        total: 'Total',
       },
       info: {
         supplier: 'Supplier',
@@ -432,8 +433,8 @@ export const TRANSLATIONS = {
         payment: 'Payment',
         totalCost: 'Total Cost',
         cash: 'Cash',
-        credit: 'Credit'
-      }
+        credit: 'Credit',
+      },
     },
     purchases: {
       title: 'New Purchase',
@@ -445,7 +446,7 @@ export const TRANSLATIONS = {
       filters: {
         all: 'All',
         inStock: 'In Stock',
-        outOfStock: 'Out Stock'
+        outOfStock: 'Out Stock',
       },
       // Status filter options
       status: {
@@ -453,13 +454,13 @@ export const TRANSLATIONS = {
         pending: 'Pending',
         completed: 'Completed',
         returned: 'Returned',
-        rejected: 'Rejected'
+        rejected: 'Rejected',
       },
       // Placeholders
       placeholders: {
         searchHistory: 'Search ID, Supplier...',
         searchSupplier: 'Search and select supplier...',
-        enterId: 'Enter ID'
+        enterId: 'Enter ID',
       },
       // Table headers
       tableHeaders: {
@@ -471,14 +472,14 @@ export const TRANSLATIONS = {
         items: 'Items',
         discount: 'Discount',
         total: 'Total',
-        action: 'Action'
+        action: 'Action',
       },
       // Status tooltips
       tooltips: {
         pending: 'Pending Approval',
         rejected: 'Rejected',
         returned: 'Returned',
-        completed: 'Completed'
+        completed: 'Completed',
       },
       // Context menu actions
       contextMenu: {
@@ -492,7 +493,7 @@ export const TRANSLATIONS = {
         copy: 'Copy',
         paste: 'Paste',
         clear: 'Clear',
-        showHideColumns: 'Show/Hide Columns'
+        showHideColumns: 'Show/Hide Columns',
       },
       // Alert messages
       alerts: {
@@ -503,7 +504,7 @@ export const TRANSLATIONS = {
         enterSale: 'Please enter a valid Sale Price for',
         enterExpiry: 'Please enter an Expiry Date for',
         incompleteExpiry: 'Please enter a complete expiry date (4 digits: MMYY)',
-        promptQuantity: 'Enter quantity:'
+        promptQuantity: 'Enter quantity:',
       },
       // Other labels
       unknown: 'Unknown',
@@ -517,13 +518,13 @@ export const TRANSLATIONS = {
       toDate: 'To',
       time: {
         am: 'AM',
-        pm: 'PM'
+        pm: 'PM',
       },
       headers: {
         item: 'Item',
         cost: 'Cost',
         qty: 'Qty',
-        total: 'Total'
+        total: 'Total',
       },
       cartFields: {
         qty: 'Qty',
@@ -533,21 +534,21 @@ export const TRANSLATIONS = {
         sale: 'Sale',
         tax: 'Tax %',
         subtotal: 'Subtotal',
-        totalWithTax: 'Total+Tax'
+        totalWithTax: 'Total+Tax',
       },
       summary: {
         totalItems: 'Total Items',
         totalCost: 'Total Cost',
         confirm: 'Confirm',
         discount: 'Discount',
-        tax: 'Tax'
+        tax: 'Tax',
       },
       historyTitle: 'Purchase History',
       viewHistory: 'View History',
       newPurchase: 'New Purchase',
       actions: {
         viewDetails: 'View Drug Details',
-        editQty: 'Edit Quantity'
+        editQty: 'Edit Quantity',
       },
       // Purchase Details Modal
       detailsModal: {
@@ -570,10 +571,10 @@ export const TRANSLATIONS = {
         // Return labels
         fullReturn: 'Full',
         partialReturn: 'Partial',
-        returnedLabel: 'returned'
+        returnedLabel: 'returned',
       },
       // Empty states
-      noHistory: 'No purchase history found'
+      noHistory: 'No purchase history found',
     },
     purchaseReturns: {
       createReturn: 'Create Return',
@@ -606,7 +607,7 @@ export const TRANSLATIONS = {
         supplier: 'Supplier',
         refund: 'Total Refund',
         status: 'Status',
-        action: 'Action'
+        action: 'Action',
       },
       searchPlaceholder: 'Search returns...',
       reasons: {
@@ -615,36 +616,36 @@ export const TRANSLATIONS = {
         wrong_item: 'Wrong Item',
         defective: 'Defective',
         overage: 'Overage - Entered by Mistake',
-        other: 'Other'
+        other: 'Other',
       },
       conditions: {
         damaged: 'Damaged',
         expired: 'Expired',
-        other: 'Other'
+        other: 'Other',
       },
       status: {
         pending: 'Pending',
         approved: 'Approved',
         completed: 'Completed',
-        rejected: 'Rejected'
+        rejected: 'Rejected',
       },
       messages: {
         selectPurchaseAlert: 'Please select a purchase and add items to return',
         noReturnsFound: 'No returns found matching your search',
-        noReturnsYet: 'No purchase returns yet'
+        noReturnsYet: 'No purchase returns yet',
       },
       packs: 'packs',
       pack: 'pack',
       inReturnList: 'In Return List',
-      available: 'Available'
+      available: 'Available',
     },
     pos: {
       searchPlaceholder: 'Scan barcode, name, desc...',
-      categories: { 
+      categories: {
         all: 'All',
         medicine: 'Medicine',
         cosmetics: 'Cosmetics',
-        general: 'General'
+        general: 'General',
       },
       cartTitle: 'Current Sale',
       emptyCart: 'Cart is empty',
@@ -671,7 +672,7 @@ export const TRANSLATIONS = {
         showSimilar: 'Show Similar',
         discount: 'Apply Discount',
         changeQty: 'Change Quantity',
-        searchInTable: 'Search in Table'
+        searchInTable: 'Search in Table',
       },
       change: 'Change',
       allStock: 'All Stock',
@@ -712,7 +713,7 @@ export const TRANSLATIONS = {
         location: 'Location',
         description: 'Description',
         noDescription: 'No description available.',
-        shelf: 'Shelf'
+        shelf: 'Shelf',
       },
       startSearching: 'Start searching...',
       noResults: 'No drugs found matching your search.',
@@ -724,7 +725,7 @@ export const TRANSLATIONS = {
         duplicateTab: 'Duplicate Tab',
         pin: 'Pin',
         unpin: 'Unpin',
-        rename: 'Rename'
+        rename: 'Rename',
       },
       selectDriver: 'Select Driver',
       assignDriver: 'Assign Driver',
@@ -770,14 +771,14 @@ export const TRANSLATIONS = {
       status: {
         open: 'Shift Open',
         closed: 'Shift Closed',
-        details: 'Shift Details'
+        details: 'Shift Details',
       },
       actions: {
         openShift: 'Open Shift',
         closeShift: 'Close Shift',
         addCash: 'Add Cash (In)',
         removeCash: 'Remove Cash (Out)',
-        printReport: 'Print Report'
+        printReport: 'Print Report',
       },
       summary: {
         openingBalance: 'Opening Balance',
@@ -788,7 +789,7 @@ export const TRANSLATIONS = {
         expectedBalance: 'Expected Balance',
         variance: 'Variance',
         cardSales: 'Card Sales',
-        returns: 'Returns'
+        returns: 'Returns',
       },
       transactions: {
         title: 'Shift Transactions',
@@ -796,7 +797,7 @@ export const TRANSLATIONS = {
         type: 'Type',
         amount: 'Amount',
         reason: 'Reason/Notes',
-        user: 'User'
+        user: 'User',
       },
       modal: {
         openTitle: 'Open New Shift',
@@ -804,7 +805,7 @@ export const TRANSLATIONS = {
         amount: 'Amount',
         notes: 'Notes',
         cancel: 'Cancel',
-        confirm: 'Confirm'
+        confirm: 'Confirm',
       },
       types: {
         opening: 'Opening Balance',
@@ -813,7 +814,7 @@ export const TRANSLATIONS = {
         in: 'Cash In',
         out: 'Cash Out',
         closing: 'Closing Balance',
-        return: 'Return'
+        return: 'Return',
       },
       messages: {
         loading: 'Loading...',
@@ -824,7 +825,7 @@ export const TRANSLATIONS = {
         id: 'ID',
         expected: 'Expected',
         countedCash: 'Counted Cash Amount',
-        optionalNotes: 'Optional notes...'
+        optionalNotes: 'Optional notes...',
       },
       validation: {
         amountRequired: 'Please enter an amount',
@@ -832,9 +833,10 @@ export const TRANSLATIONS = {
         positiveAmount: 'Amount must be greater than zero',
         insufficientBalance: 'Cannot withdraw more than current balance',
         reasonRequired: 'Reason is required for cash withdrawal',
-        protectedBalance: 'Cannot withdraw from opening balance. Only sales and deposits can be withdrawn.'
+        protectedBalance:
+          'Cannot withdraw from opening balance. Only sales and deposits can be withdrawn.',
       },
-      help: '@@import(./cashRegisterHelp.json)'
+      help: '@@import(./cashRegisterHelp.json)',
     },
     shiftHistory: {
       title: 'Shift History',
@@ -851,12 +853,12 @@ export const TRANSLATIONS = {
         duration: 'Duration',
         openingBalance: 'Opening',
         closingBalance: 'Closing',
-        variance: 'Variance'
+        variance: 'Variance',
       },
       summary: {
         totalShifts: 'Total Shifts',
         totalRevenue: 'Total Revenue',
-        avgPerShift: 'Avg/Shift'
+        avgPerShift: 'Avg/Shift',
       },
       details: {
         openedBy: 'Opened By',
@@ -864,8 +866,8 @@ export const TRANSLATIONS = {
         cardSales: 'Card Sales',
         transactions: 'Transactions',
         transactionLog: 'Transaction Log',
-        moreTransactions: 'more transactions'
-      }
+        moreTransactions: 'more transactions',
+      },
     },
     salesHistory: {
       title: 'Sales History',
@@ -886,7 +888,7 @@ export const TRANSLATIONS = {
         payment: 'Payment',
         items: 'Items Count',
         total: 'Total',
-        actions: 'Actions'
+        actions: 'Actions',
       },
       noResults: 'No sales records found.',
       visa: 'Card',
@@ -907,7 +909,7 @@ export const TRANSLATIONS = {
         price: 'Price',
         unitType: 'Type',
         receipt: 'Receipt',
-        return: 'Return'
+        return: 'Return',
       },
       returns: {
         processReturn: 'Process Return',
@@ -924,7 +926,7 @@ export const TRANSLATIONS = {
           damaged: 'Damaged',
           expired: 'Expired',
           defective: 'Defective',
-          other: 'Other'
+          other: 'Other',
         },
         notes: 'Additional Notes',
         refundAmount: 'Refund Amount',
@@ -964,15 +966,15 @@ export const TRANSLATIONS = {
         noItemsAvailable: 'All items have been returned',
         validation: {
           noOpenShift: 'Cannot process return - no open shift',
-          insufficientBalance: 'Return amount exceeds available sales balance'
+          insufficientBalance: 'Return amount exceeds available sales balance',
         },
         item: 'item',
         items: 'items',
         pack: 'pack',
         packs: 'packs',
         unit: 'unit',
-        units: 'units'
-      }
+        units: 'units',
+      },
     },
     dashboard: {
       title: 'Dashboard Overview',
@@ -998,7 +1000,7 @@ export const TRANSLATIONS = {
         title: 'Restock Product',
         qty: 'Quantity to Add',
         cancel: 'Cancel',
-        confirm: 'Add Stock'
+        confirm: 'Add Stock',
       },
       expand: {
         expand: 'Expand',
@@ -1051,8 +1053,8 @@ export const TRANSLATIONS = {
         top20: 'Top 20 Products',
         allItems: 'All Items',
         configureThreshold: 'Configure Threshold',
-        supplierInfo: 'Supplier Info'
-      }
+        supplierInfo: 'Supplier Info',
+      },
     },
     barcodeStudio: {
       title: 'Barcode Studio',
@@ -1086,7 +1088,7 @@ export const TRANSLATIONS = {
       borders: { none: 'None', solid: 'Solid', dashed: 'Dashed' },
       modal: {
         cancel: 'Cancel',
-        save: 'Save'
+        save: 'Save',
       },
       inspector: {
         noSelection: 'Global Settings',
@@ -1107,7 +1109,7 @@ export const TRANSLATIONS = {
         bringToFront: 'Bring to Front',
         sendToBack: 'Send to Back',
         defaultSet: 'Set as Default Template',
-        rotate90: 'Rotate 90°'
+        rotate90: 'Rotate 90°',
       },
       elements: {
         storeName: 'Store Name',
@@ -1121,16 +1123,16 @@ export const TRANSLATIONS = {
         text: 'Custom Text',
         image: 'Image/Logo',
         hotline: 'Hotline',
-        genericName: 'Generic Name'
+        genericName: 'Generic Name',
       },
       mode: {
         edit: 'Edit',
-        truePreview: 'True Preview'
+        truePreview: 'True Preview',
       },
       toolbar: {
         addText: 'Add Text',
         addImage: 'Add Image',
-        resetLayout: 'Reset Layout'
+        resetLayout: 'Reset Layout',
       },
       printSettings: {
         pairedPreview: 'Show paired label preview',
@@ -1145,17 +1147,17 @@ export const TRANSLATIONS = {
         labelGapDesc: 'Vertical spacing between labels on the same page.',
         currency: 'Currency Symbol',
         currencyEGP: 'EGP (ج.م)',
-        currencyUSD: 'USD ($)'
+        currencyUSD: 'USD ($)',
       },
       calibration: {
-          title: 'Screen Calibration',
-          subtitle: 'Adjust scale to match physical size',
-          button: 'Calibrate',
-          reset: 'Reset Default'
+        title: 'Screen Calibration',
+        subtitle: 'Adjust scale to match physical size',
+        button: 'Calibrate',
+        reset: 'Reset Default',
       },
       tooltips: {
-        doubleClickRename: 'Double-click to rename'
-      }
+        doubleClickRename: 'Double-click to rename',
+      },
     },
     returnHistory: {
       title: 'Return History',
@@ -1172,7 +1174,7 @@ export const TRANSLATIONS = {
         reason: 'Reason',
         actions: 'Actions',
         notes: 'Notes',
-        totalRefund: 'Total Refund'
+        totalRefund: 'Total Refund',
       },
       noResults: 'No return records found.',
       reasons: {
@@ -1181,10 +1183,10 @@ export const TRANSLATIONS = {
         damaged: 'Damaged',
         expired: 'Expired',
         defective: 'Defective',
-        other: 'Other'
+        other: 'Other',
       },
       actions: {
-        viewDetails: 'View Details'
+        viewDetails: 'View Details',
       },
       modal: {
         title: 'Return Details',
@@ -1193,8 +1195,8 @@ export const TRANSLATIONS = {
         qty: 'Qty',
         refund: 'Refund',
         unit: 'Unit',
-        pack: 'Pack'
-      }
+        pack: 'Pack',
+      },
     },
     customers: {
       title: 'Customer Management',
@@ -1208,7 +1210,7 @@ export const TRANSLATIONS = {
         points: 'Points',
         lastVisit: 'Last Visit',
         status: 'Status',
-        actions: 'Actions'
+        actions: 'Actions',
       },
       allCustomers: 'All Customers',
       customerAddedSuccess: 'Customer added successfully!',
@@ -1216,7 +1218,7 @@ export const TRANSLATIONS = {
       basicInfo: 'Basic Information',
       status: {
         active: 'Active',
-        inactive: 'Inactive'
+        inactive: 'Inactive',
       },
       conditions: {
         diabetes: 'Diabetes',
@@ -1224,12 +1226,12 @@ export const TRANSLATIONS = {
         asthma: 'Asthma',
         allergies: 'Allergies',
         heartDisease: 'Heart Disease',
-        arthritis: 'Arthritis'
+        arthritis: 'Arthritis',
       },
       contactOptions: {
         phone: 'Phone Call',
         sms: 'SMS / WhatsApp',
-        email: 'Email'
+        email: 'Email',
       },
       modal: {
         add: 'Add New Customer',
@@ -1259,7 +1261,7 @@ export const TRANSLATIONS = {
           streetAddress: '123 Main St, Building 4, Apt 5...',
           johnDoe: 'John Doe',
           phone: '+1 234 567 890',
-          email: 'john@example.com'
+          email: 'john@example.com',
         },
         cancel: 'Cancel',
         save: 'Save Customer',
@@ -1272,7 +1274,7 @@ export const TRANSLATIONS = {
         editProfile: 'Edit Profile',
         close: 'Close',
         copied: 'Code copied to clipboard',
-        kioskDesc: 'Please fill in your details to register with us.'
+        kioskDesc: 'Please fill in your details to register with us.',
       },
       noResults: 'No customers found.',
       customerHistory: {
@@ -1284,11 +1286,11 @@ export const TRANSLATIONS = {
           totalSpent: 'Total Spent',
           totalReturns: 'Total Returns',
           points: 'Loyalty Points',
-          visitCount: 'Total Visits'
+          visitCount: 'Total Visits',
         },
         tabs: {
           invoices: 'Invoices',
-          returns: 'Returns'
+          returns: 'Returns',
         },
         table: {
           date: 'Date',
@@ -1298,9 +1300,9 @@ export const TRANSLATIONS = {
           total: 'Total',
           refundAmount: 'Refund',
           status: 'Status',
-          reason: 'Reason'
-        }
-      }
+          reason: 'Reason',
+        },
+      },
     },
     customerOverview: {
       title: 'Customer Overview',
@@ -1346,7 +1348,7 @@ export const TRANSLATIONS = {
       returnRate: 'Return Rate',
       lastVisit: 'Last Visit',
       expand: 'Expand',
-      exportCSV: 'Export'
+      exportCSV: 'Export',
     },
     loyalty: {
       overview: 'Loyalty Program Overview',
@@ -1375,7 +1377,7 @@ export const TRANSLATIONS = {
       tryAgain: 'Please check the code and try again',
       order: 'Order',
       pts: 'pts',
-      totalSuffix: 'total'
+      totalSuffix: 'total',
     },
     realTimeSales: {
       title: 'Real-time Sales Monitor',
@@ -1409,7 +1411,7 @@ export const TRANSLATIONS = {
       hideDetails: 'Hide Details',
       peakHour: 'Peak Hour',
       slowPeriod: 'Slow Period',
-      salesPerHour: 'sales/hour'
+      salesPerHour: 'sales/hour',
     },
     addProduct: {
       title: 'Add New Product',
@@ -1419,7 +1421,7 @@ export const TRANSLATIONS = {
         codes: 'Product Codes',
         stock: 'Stock Details',
         pricing: 'Pricing',
-        additional: 'Additional Information'
+        additional: 'Additional Information',
       },
       fields: {
         brandName: 'Brand Name',
@@ -1433,27 +1435,27 @@ export const TRANSLATIONS = {
         costPrice: 'Cost Price ($)',
         maxDiscount: 'Max Discount (%)',
         expiryDate: 'Expiry Date',
-        description: 'Description'
+        description: 'Description',
       },
       placeholders: {
         brandName: 'e.g., Panadol Extra',
         genericName: 'e.g., Paracetamol',
         barcode: 'Scan or enter barcode',
         internalCode: 'Auto-generated or custom',
-        description: 'Product description, usage instructions...'
+        description: 'Product description, usage instructions...',
       },
       actions: {
         save: 'Add Product',
         saveAndNew: 'Save & Add Another',
         clear: 'Clear Form',
         cancel: 'Cancel',
-        generateCode: 'Auto-Generate'
+        generateCode: 'Auto-Generate',
       },
       messages: {
         success: 'Product added successfully!',
         error: 'Failed to add product. Please check all fields.',
-        cleared: 'Form cleared'
-      }
+        cleared: 'Form cleared',
+      },
     },
     receiptDesigner: {
       title: 'Receipt Designer',
@@ -1483,8 +1485,8 @@ export const TRANSLATIONS = {
         logo: 'Store Logo (Base64)',
         addressBox: 'Show Address Box',
         delivery: 'Delivery Preview',
-        returns: 'Returns Preview'
-      }
+        returns: 'Returns Preview',
+      },
     },
     printerSettings: {
       title: 'Printer Settings',
@@ -1495,7 +1497,7 @@ export const TRANSLATIONS = {
         connected: 'Connected',
         disconnected: 'Disconnected',
         notInstalled: 'Not Installed',
-        connecting: 'Connecting...'
+        connecting: 'Connecting...',
       },
       reconnect: 'Reconnect',
       download: 'Download QZ Tray',
@@ -1510,20 +1512,20 @@ export const TRANSLATIONS = {
       silentModes: {
         on: 'ON',
         off: 'OFF',
-        fallback: 'FALLBACK'
+        fallback: 'FALLBACK',
       },
       silentHints: {
         on: 'Always print silently (requires QZ Tray)',
         off: 'Always show print dialog',
-        fallback: 'Silent if QZ available, dialog otherwise'
+        fallback: 'Silent if QZ available, dialog otherwise',
       },
       alerts: {
         connected: 'QZ Tray connected successfully',
         disconnected: 'QZ Tray disconnected',
         printSuccess: 'Printed successfully',
         printFailed: 'Print failed',
-        notInstalled: 'QZ Tray is not installed. Please download from qz.io'
-      }
+        notInstalled: 'QZ Tray is not installed. Please download from qz.io',
+      },
     },
     employeeList: {
       title: 'Employee List',
@@ -1539,7 +1541,7 @@ export const TRANSLATIONS = {
         transactions: 'Transactions',
         topProduct: 'Top Product',
         performanceInsight: 'Performance Insight',
-        salesAnalytics: 'Sales Analytics'
+        salesAnalytics: 'Sales Analytics',
       },
       deleteConfirm: 'Delete this employee?',
       name: 'Full Name',
@@ -1558,11 +1560,11 @@ export const TRANSLATIONS = {
       table: {
         code: 'Code',
         name: 'Name',
-        position: 'Position', 
+        position: 'Position',
         department: 'Department',
         phone: 'Phone',
         status: 'Status',
-        actions: 'Actions'
+        actions: 'Actions',
       },
       departments: {
         sales: 'Sales',
@@ -1570,7 +1572,7 @@ export const TRANSLATIONS = {
         marketing: 'Marketing',
         hr: 'Human Resources',
         it: 'IT',
-        logistics: 'Logistics'
+        logistics: 'Logistics',
       },
       roles: {
         pharmacist_owner: 'Pharmacy Owner',
@@ -1584,13 +1586,13 @@ export const TRANSLATIONS = {
         manager: 'Branch Manager',
         delivery: 'Delivery Courier',
         delivery_pharmacist: 'Medical Delivery',
-        officeboy: 'Support Staff'
+        officeboy: 'Support Staff',
       },
       statusOptions: {
         all: 'All',
         active: 'Active',
         inactive: 'Inactive',
-        holiday: 'On Holiday'
+        holiday: 'On Holiday',
       },
       modal: {
         save: 'Save Employee',
@@ -1598,8 +1600,8 @@ export const TRANSLATIONS = {
         deleteTitle: 'Delete Employee',
         successAdd: 'Employee added successfully',
         successUpdate: 'Employee updated successfully',
-        successDelete: 'Employee deleted successfully'
-      }
+        successDelete: 'Employee deleted successfully',
+      },
     },
     intelligence: {
       dashboard: {
@@ -1609,17 +1611,17 @@ export const TRANSLATIONS = {
           procurement: 'Procurement',
           financials: 'Financials',
           risk: 'Risk',
-          audit: 'Audit'
+          audit: 'Audit',
         },
-        loading: 'Loading data...'
+        loading: 'Loading data...',
       },
       common: {
         pagination: {
           showing: 'Showing',
           of: 'of',
           prev: 'Previous',
-          next: 'Next'
-        }
+          next: 'Next',
+        },
       },
       audit: {
         title: 'Audit Log',
@@ -1633,15 +1635,15 @@ export const TRANSLATIONS = {
           quantity: 'Quantity',
           amount: 'Amount',
           employee: 'Employee',
-          notes: 'Notes'
+          notes: 'Notes',
         },
         types: {
           sale: 'Sale',
           return: 'Return',
           void: 'Void',
-          adjustment: 'Adjustment'
+          adjustment: 'Adjustment',
         },
-        alert: 'Alert'
+        alert: 'Alert',
       },
       financials: {
         filters: {
@@ -1652,8 +1654,8 @@ export const TRANSLATIONS = {
             this_month: 'This Month',
             last_month: 'Last Month',
             last_3_months: 'Last 3 Months',
-            this_year: 'This Year'
-          }
+            this_year: 'This Year',
+          },
         },
         kpis: {
           revenue: 'Revenue',
@@ -1661,12 +1663,12 @@ export const TRANSLATIONS = {
           margin: 'Margin %',
           unitsSold: 'Units Sold',
           compare: 'vs previous period',
-          points: 'points'
+          points: 'points',
         },
         sections: {
           productProfitability: 'Product Profitability Details',
           categoryBreakdown: 'Profitability by Category',
-          noData: 'No sales data for this period'
+          noData: 'No sales data for this period',
         },
         productGrid: {
           columns: {
@@ -1675,8 +1677,8 @@ export const TRANSLATIONS = {
             revenue: 'Revenue',
             cost: 'Cost',
             profit: 'Profit',
-            margin: 'Margin %'
-          }
+            margin: 'Margin %',
+          },
         },
         categoryGrid: {
           columns: {
@@ -1685,9 +1687,9 @@ export const TRANSLATIONS = {
             revenue: 'Revenue',
             profit: 'Profit',
             margin: 'Margin',
-            abcDistribution: 'ABC Dist.'
-          }
-        }
+            abcDistribution: 'ABC Dist.',
+          },
+        },
       },
       procurement: {
         filters: {
@@ -1697,20 +1699,20 @@ export const TRANSLATIONS = {
           all: 'All',
         },
         kpis: {
-            needingOrder: 'Needing Order',
-            outOfStock: 'Out Of Stock',
-            lostSales: 'Lost Sales (Est)',
-            pendingPO: 'Pending PO',
-            items: 'items',
-            vsLastWeek: 'vs last week',
-            improved: 'improved'
+          needingOrder: 'Needing Order',
+          outOfStock: 'Out Of Stock',
+          lostSales: 'Lost Sales (Est)',
+          pendingPO: 'Pending PO',
+          items: 'items',
+          vsLastWeek: 'vs last week',
+          improved: 'improved',
         },
         actions: {
-          generatePO: 'Generate PO'
+          generatePO: 'Generate PO',
         },
         empty: {
           title: 'No Products',
-          subtitle: 'No products match the selected filters'
+          subtitle: 'No products match the selected filters',
         },
         grid: {
           columns: {
@@ -1721,28 +1723,28 @@ export const TRANSLATIONS = {
             dailySales: 'Daily Sales',
             suggested: 'Suggested',
             confidence: 'Confidence',
-            perDay: '/day'
+            perDay: '/day',
           },
-          skipped: 'Skipped'
-        }
+          skipped: 'Skipped',
+        },
       },
       risk: {
         sections: {
-          expiryAnalysis: 'Stagnant & Expiring Stock Analysis'
+          expiryAnalysis: 'Stagnant & Expiring Stock Analysis',
         },
         kpis: {
-            valueAtRisk: 'Value at Risk',
-            batchesAtRisk: 'Batches at Risk',
-            total: 'Total',
-            batch: 'batch'
+          valueAtRisk: 'Value at Risk',
+          batchesAtRisk: 'Batches at Risk',
+          total: 'Total',
+          batch: 'batch',
         },
         actions: {
           createReturn: 'Create Return List',
-          applyDiscount: 'Apply Discount Policy'
+          applyDiscount: 'Apply Discount Policy',
         },
         empty: {
           title: 'No At-Risk Batches',
-          subtitle: 'All inventory products are safe from expiry'
+          subtitle: 'All inventory products are safe from expiry',
         },
         grid: {
           columns: {
@@ -1752,17 +1754,17 @@ export const TRANSLATIONS = {
             valueAtRisk: 'Value at Risk',
             riskCategory: 'Risk Category',
             recovery: 'Est. Recovery',
-            action: 'Action'
+            action: 'Action',
           },
           actions: {
             discount50: '50% Off',
             discount25: '25% Off',
             return: 'Return',
-            action: 'Action'
+            action: 'Action',
           },
-          day: 'day'
-        }
-      }
+          day: 'day',
+        },
+      },
     },
   },
   AR: {
@@ -1780,7 +1782,7 @@ export const TRANSLATIONS = {
         transactions: 'عدد الفواتير',
         topProduct: 'المنتج الأكثر مبيعاً',
         performanceInsight: 'تحليل الأداء',
-        salesAnalytics: 'تحليل المبيعات'
+        salesAnalytics: 'تحليل المبيعات',
       },
       deleteConfirm: 'حذف هذا الموظف؟',
       name: 'الاسم بالكامل',
@@ -1799,11 +1801,11 @@ export const TRANSLATIONS = {
       table: {
         code: 'الكود',
         name: 'الاسم',
-        position: 'الوظيفة', 
+        position: 'الوظيفة',
         department: 'القسم',
         phone: 'الهاتف',
         status: 'الحالة',
-        actions: 'إجراءات'
+        actions: 'إجراءات',
       },
       departments: {
         sales: 'المبيعات',
@@ -1811,7 +1813,7 @@ export const TRANSLATIONS = {
         marketing: 'التسويق',
         hr: 'الموارد البشرية',
         it: 'تقنية المعلومات',
-        logistics: 'اللوجستيات / التوصيل'
+        logistics: 'اللوجستيات / التوصيل',
       },
       roles: {
         pharmacist_owner: 'مالك الصيدلية',
@@ -1825,13 +1827,13 @@ export const TRANSLATIONS = {
         manager: 'مدير فرع',
         delivery: 'مندوب توصيل',
         delivery_pharmacist: 'صيدلي توصيل (رعاية منزلية)',
-        officeboy: 'عامل دعم'
+        officeboy: 'عامل دعم',
       },
       statusOptions: {
         all: 'الكل',
         active: 'نشط',
         inactive: 'غير نشط',
-        holiday: 'في إجازة'
+        holiday: 'في إجازة',
       },
       modal: {
         save: 'حفظ الموظف',
@@ -1839,8 +1841,8 @@ export const TRANSLATIONS = {
         deleteTitle: 'حذف الموظف',
         successAdd: 'تم إضافة الموظف بنجاح',
         successUpdate: 'تم تحديث بيانات الموظف بنجاح',
-        successDelete: 'تم حذف الموظف بنجاح'
-      }
+        successDelete: 'تم حذف الموظف بنجاح',
+      },
     },
     intelligence: {
       dashboard: {
@@ -1850,17 +1852,17 @@ export const TRANSLATIONS = {
           procurement: 'المشتريات',
           financials: 'المالية',
           risk: 'المخاطر',
-          audit: 'التدقيق'
+          audit: 'التدقيق',
         },
-        loading: 'جاري تحميل البيانات...'
+        loading: 'جاري تحميل البيانات...',
       },
       common: {
         pagination: {
           showing: 'عرض',
           of: 'من',
           prev: 'السابق',
-          next: 'التالي'
-        }
+          next: 'التالي',
+        },
       },
       audit: {
         title: 'سجل تدقيق العمليات (Audit Log)',
@@ -1874,15 +1876,15 @@ export const TRANSLATIONS = {
           quantity: 'الكمية',
           amount: 'القيمة',
           employee: 'الموظف',
-          notes: 'ملاحظات'
+          notes: 'ملاحظات',
         },
         types: {
           sale: 'بيع',
           return: 'إرجاع',
           void: 'إلغاء',
-          adjustment: 'تعديل'
+          adjustment: 'تعديل',
         },
-        alert: 'تنبيه'
+        alert: 'تنبيه',
       },
       financials: {
         filters: {
@@ -1893,8 +1895,8 @@ export const TRANSLATIONS = {
             this_month: 'هذا الشهر',
             last_month: 'الشهر الماضي',
             last_3_months: 'آخر 3 شهور',
-            this_year: 'هذا العام'
-          }
+            this_year: 'هذا العام',
+          },
         },
         kpis: {
           revenue: 'الإيرادات',
@@ -1902,12 +1904,12 @@ export const TRANSLATIONS = {
           margin: 'نسبة الهامش',
           unitsSold: 'الوحدات المباعة',
           compare: 'مقارنة بالفترة السابقة',
-          points: 'نقاط'
+          points: 'نقاط',
         },
         sections: {
           productProfitability: 'تفاصيل ربحية المنتجات',
           categoryBreakdown: 'تحليل الربحية حسب التصنيف',
-          noData: 'لا توجد بيانات مبيعات لهذه الفترة'
+          noData: 'لا توجد بيانات مبيعات لهذه الفترة',
         },
         productGrid: {
           columns: {
@@ -1916,8 +1918,8 @@ export const TRANSLATIONS = {
             revenue: 'الإيرادات',
             cost: 'التكلفة',
             profit: 'الربح',
-            margin: 'الهامش %'
-          }
+            margin: 'الهامش %',
+          },
         },
         categoryGrid: {
           columns: {
@@ -1926,9 +1928,9 @@ export const TRANSLATIONS = {
             revenue: 'الإيرادات',
             profit: 'الربح',
             margin: 'الهامش',
-            abcDistribution: 'ABC توزيع'
-          }
-        }
+            abcDistribution: 'ABC توزيع',
+          },
+        },
       },
       procurement: {
         filters: {
@@ -1938,20 +1940,20 @@ export const TRANSLATIONS = {
           all: 'الكل',
         },
         kpis: {
-            needingOrder: 'أصناف بحاجة للطلب',
-            outOfStock: 'نواقص (Out of Stock)',
-            lostSales: 'مبيعات ضائعة (متوقع)',
-            pendingPO: 'طلبات معلقة (Pending)',
-            items: 'صنف',
-            vsLastWeek: 'مقارنة بالأسبوع الماضي',
-            improved: 'تحسن'
+          needingOrder: 'أصناف بحاجة للطلب',
+          outOfStock: 'نواقص (Out of Stock)',
+          lostSales: 'مبيعات ضائعة (متوقع)',
+          pendingPO: 'طلبات معلقة (Pending)',
+          items: 'صنف',
+          vsLastWeek: 'مقارنة بالأسبوع الماضي',
+          improved: 'تحسن',
         },
         actions: {
-          generatePO: 'إنشاء طلب شراء'
+          generatePO: 'إنشاء طلب شراء',
         },
         empty: {
           title: 'لا توجد منتجات',
-          subtitle: 'لا توجد منتجات تطابق الفلاتر المحددة'
+          subtitle: 'لا توجد منتجات تطابق الفلاتر المحددة',
         },
         grid: {
           columns: {
@@ -1962,28 +1964,28 @@ export const TRANSLATIONS = {
             dailySales: 'معدل البيع',
             suggested: 'اقتراح الطلب',
             confidence: 'الثقة',
-            perDay: '/يوم'
+            perDay: '/يوم',
           },
-          skipped: 'تم التخطي'
-        }
+          skipped: 'تم التخطي',
+        },
       },
       risk: {
         sections: {
-          expiryAnalysis: 'تحليل المخزون الراكد والمنتهي الصلاحية'
+          expiryAnalysis: 'تحليل المخزون الراكد والمنتهي الصلاحية',
         },
         kpis: {
-            valueAtRisk: 'قيمة معرضة للخطر',
-            batchesAtRisk: 'باتشات تنتهي قريباً',
-            total: 'إجمالي',
-            batch: 'باتش'
+          valueAtRisk: 'قيمة معرضة للخطر',
+          batchesAtRisk: 'باتشات تنتهي قريباً',
+          total: 'إجمالي',
+          batch: 'باتش',
         },
         actions: {
           createReturn: 'إنشاء قائمة إرجاع',
-          applyDiscount: 'تطبيق سياسة التخفيضات'
+          applyDiscount: 'تطبيق سياسة التخفيضات',
         },
         empty: {
           title: 'لا توجد باتشات معرضة للخطر',
-          subtitle: 'جميع المنتجات في المخزون بعيدة عن تاريخ انتهاء الصلاحية'
+          subtitle: 'جميع المنتجات في المخزون بعيدة عن تاريخ انتهاء الصلاحية',
         },
         grid: {
           columns: {
@@ -1993,17 +1995,17 @@ export const TRANSLATIONS = {
             valueAtRisk: 'قيمة المخاطرة',
             riskCategory: 'درجة الخطورة',
             recovery: 'استرداد متوقع',
-            action: 'إجراء مقترح'
+            action: 'إجراء مقترح',
           },
           actions: {
             discount50: 'تخفيض 50%',
             discount25: 'تخفيض 25%',
             return: 'إرجاع للمورد',
-            action: 'إجراء'
+            action: 'إجراء',
           },
-          day: 'يوم'
-        }
-      }
+          day: 'يوم',
+        },
+      },
     },
     appTitle: 'Zinc',
     date: 'التاريخ',
@@ -2029,7 +2031,7 @@ export const TRANSLATIONS = {
       totalItems: 'إجمالي العناصر',
       searchIn: 'بحث في',
       pack: 'عبوة',
-      unit: 'وحدة'
+      unit: 'وحدة',
     },
     settings: {
       settings: 'الإعدادات',
@@ -2060,14 +2062,14 @@ export const TRANSLATIONS = {
       comingSoon: 'قريباً',
       typography: 'التنسيق والخطوط',
       fontEN: 'خط اللغة الإنجليزية',
-      fontAR: 'خط اللغة العربية'
+      fontAR: 'خط اللغة العربية',
     },
 
     profile: {
       role: 'صيدلي',
       changePhoto: 'تغيير الصورة',
       reset: 'إعادة تعيين',
-      signOut: 'تسجيل الخروج'
+      signOut: 'تسجيل الخروج',
     },
     global: {
       actions: {
@@ -2093,13 +2095,13 @@ export const TRANSLATIONS = {
         all: 'الكل',
         import: 'استيراد',
         print: 'طباعة',
-        openInWindow: 'فتح في نافذة'
+        openInWindow: 'فتح في نافذة',
       },
       datePicker: {
         cancel: 'إلغاء',
         ok: 'موافق',
         hour: 'ساعة',
-        minute: 'دقيقة'
+        minute: 'دقيقة',
       },
       currency: 'ج.م',
       loading: 'جاري التحميل...',
@@ -2113,8 +2115,8 @@ export const TRANSLATIONS = {
         loadingData: 'جاري تحميل البيانات...',
         page: 'صفحة',
         of: 'من',
-        showAll: 'عرض الكل'
-      }
+        showAll: 'عرض الكل',
+      },
     },
     login: {
       title: 'مرحباً بعودتك!',
@@ -2134,7 +2136,7 @@ export const TRANSLATIONS = {
       validationUsernameRequired: 'اسم المستخدم مطلوب',
       validationPasswordRequired: 'كلمة المرور مطلوبة',
       validationPasswordLength: 'كلمة المرور يجب أن تكون 4 أحرف على الأقل',
-      authorizedUserNotice: 'بالمتابعة، أنت تؤكد أنك مستخدم مُصرح له.'
+      authorizedUserNotice: 'بالمتابعة، أنت تؤكد أنك مستخدم مُصرح له.',
     },
     statusBar: {
       ready: 'جاهز',
@@ -2149,7 +2151,7 @@ export const TRANSLATIONS = {
       shiftSince: 'منذ',
       messages: {
         outOfStock: 'نفذت الكمية: {{name}} {{form}}',
-        saleComplete: 'تمت عملية بيع: {{total}} ج.م'
+        saleComplete: 'تمت عملية بيع: {{total}} ج.م',
       },
       ticker: {
         todaySales: 'اليوم',
@@ -2159,8 +2161,8 @@ export const TRANSLATIONS = {
         lowStock: 'مخزون منخفض',
         shortages: 'نواقص',
         newCustomers: 'عملاء جدد',
-        topSeller: 'أفضل بائع'
-      }
+        topSeller: 'أفضل بائع',
+      },
     },
     loginAudit: {
       title: 'سجل عمليات الدخول',
@@ -2176,7 +2178,7 @@ export const TRANSLATIONS = {
         logout: 'خروج',
         switch: 'تبديل',
         system_login: 'دخول النظام',
-        system_logout: 'خروج النظام'
+        system_logout: 'خروج النظام',
       },
       headers: {
         id: 'ID',
@@ -2184,7 +2186,7 @@ export const TRANSLATIONS = {
         user: 'المستخدم',
         action: 'العملية',
         branch: 'الفرع',
-        details: 'التفاصيل'
+        details: 'التفاصيل',
       },
       detailPatterns: {
         switchedFrom: 'تحول من {{name}}',
@@ -2192,8 +2194,8 @@ export const TRANSLATIONS = {
         employeeSignedOut: 'قام الموظف بتسجيل الخروج',
         accountLogout: 'تسجيل خروج الحساب',
         systemSessionStarted: 'بداية جلسة النظام',
-        employeeSessionStarted: 'بداية جلسة الموظف'
-      }
+        employeeSessionStarted: 'بداية جلسة الموظف',
+      },
     },
     inventory: {
       title: 'المخزون',
@@ -2218,7 +2220,7 @@ export const TRANSLATIONS = {
         name: 'الاسم',
         codes: 'الأكواد',
         category: 'الفئة',
-       // Warehouse Management Items
+        // Warehouse Management Items
         stock: 'المخزون',
         price: 'سعر البيع',
         cost: 'سعر التكلفة',
@@ -2232,7 +2234,7 @@ export const TRANSLATIONS = {
         printBarcode: 'طباعة الباركود',
         duplicate: 'نسخ الدواء',
         adjustStock: 'تعديل سريع للمخزون',
-        printQtyPrompt: 'كم عدد الملصقات للطباعة؟'
+        printQtyPrompt: 'كم عدد الملصقات للطباعة؟',
       },
       noResults: 'لم يتم العثور على أدوية مطابقة لبحثك.',
       modal: {
@@ -2246,7 +2248,7 @@ export const TRANSLATIONS = {
         cost: 'سعر الشراء ($)',
         stock: 'كمية المخزون',
         desc: 'الوصف',
-       // Returns & Refunds Items
+        // Returns & Refunds Items
         barcode: 'الباركود الدولي',
         internalCode: 'الكود الداخلي',
         unitsPerPack: 'وحدات لكل عبوة',
@@ -2263,7 +2265,7 @@ export const TRANSLATIONS = {
         internalCode: 'الكود الداخلي',
         description: 'الوصف',
         noDescription: 'لا يوجد وصف متاح.',
-      }
+      },
     },
     stockAdjustment: {
       title: 'جرد المخزون',
@@ -2284,7 +2286,7 @@ export const TRANSLATIONS = {
         diff: 'الفارق',
         reason: 'السبب',
         notes: 'ملاحظات',
-        action: 'إجراء'
+        action: 'إجراء',
       },
       reasons: {
         damaged: 'تالف',
@@ -2292,14 +2294,14 @@ export const TRANSLATIONS = {
         theft: 'سرقة / فقدان',
         inventory_count: 'جرد دوري',
         correction: 'تصحيح بيانات',
-        other: 'أخرى'
+        other: 'أخرى',
       },
       success: 'تم حفظ تعديل المخزون بنجاح!',
       empty: 'لا توجد عناصر للتعديل. ابحث وأضف منتجات.',
       noHistory: 'لا توجد سجلات تعديل للفترة المختارة.',
       noRecent: 'لا توجد عملية حديثة للطباعة. قم بإجراء تعديل أولاً.',
       historyLog: 'سجل التعديلات',
-      adjustStock: 'تعديل المخزون'
+      adjustStock: 'تعديل المخزون',
     },
 
     barcodePrinter: {
@@ -2314,12 +2316,12 @@ export const TRANSLATIONS = {
         item: 'المنتج',
         expiry: 'الصلاحية',
         qty: 'الكمية',
-        actions: 'إجراءات'
+        actions: 'إجراءات',
       },
       alerts: {
         queueEmpty: 'قائمة الطباعة فارغة. أضف عناصر للطباعة.',
         printing: 'جاري إنشاء الملصقات...',
-        printSuccess: 'تم إرسال الملصقات للطابعة'
+        printSuccess: 'تم إرسال الملصقات للطابعة',
       },
       settings: {
         store: 'اسم الصيدلية',
@@ -2327,8 +2329,8 @@ export const TRANSLATIONS = {
         name: 'اسم الدواء',
         price: 'السعر',
         expiry: 'تاريخ الانتهاء',
-        barcode: 'الباركود'
-      }
+        barcode: 'الباركود',
+      },
     },
     suppliers: {
       title: 'الموردين',
@@ -2353,7 +2355,7 @@ export const TRANSLATIONS = {
         companyName: 'اسم الشركة',
         contact: 'الشخص المسؤول',
         details: 'بيانات الاتصال',
-        actions: 'إجراءات'
+        actions: 'إجراءات',
       },
       form: {
         companyInfo: 'معلومات الشركة',
@@ -2368,7 +2370,7 @@ export const TRANSLATIONS = {
         phone: 'الهاتف',
         phonePlaceholder: '+966500000000',
         email: 'البريد الإلكتروني',
-        emailPlaceholder: 'email@example.com'
+        emailPlaceholder: 'email@example.com',
       },
       modal: {
         add: 'إضافة مورد جديد',
@@ -2389,7 +2391,7 @@ export const TRANSLATIONS = {
         saveChanges: 'حفظ التغييرات',
         deleteBtn: 'حذف',
         addSupplier: 'إضافة المورد',
-        close: 'إغلاق'
+        close: 'إغلاق',
       },
       contextMenu: {
         viewDetails: 'عرض التفاصيل',
@@ -2398,14 +2400,14 @@ export const TRANSLATIONS = {
         copyName: 'نسخ الاسم',
         copyPhone: 'نسخ الهاتف',
         copyEmail: 'نسخ البريد',
-        showHideColumns: 'إظهار/إخفاء الأعمدة'
+        showHideColumns: 'إظهار/إخفاء الأعمدة',
       },
       errors: {
         invalidPhone: 'رقم الهاتف غير صالح',
-        invalidEmail: 'البريد الإلكتروني غير صالح'
+        invalidEmail: 'البريد الإلكتروني غير صالح',
       },
       required: 'مطلوب',
-      fillRequired: 'الرجاء ملء جميع الحقول المطلوبة'
+      fillRequired: 'الرجاء ملء جميع الحقول المطلوبة',
     },
     pendingApproval: {
       title: 'الموافقات المعلقة',
@@ -2432,7 +2434,7 @@ export const TRANSLATIONS = {
         reason: 'السبب (اختياري)',
         reasonPlaceholder: 'مثال: تسعير خاطئ، عناصر غير صحيحة...',
         cancel: 'إلغاء',
-        reject: 'رفض'
+        reject: 'رفض',
       },
       tableHeaders: {
         item: 'الصنف',
@@ -2441,7 +2443,7 @@ export const TRANSLATIONS = {
         cost: 'التكلفة',
         discount: 'الخصم %',
         salePrice: 'سعر البيع',
-        total: 'الإجمالي'
+        total: 'الإجمالي',
       },
       info: {
         supplier: 'المورد',
@@ -2449,8 +2451,8 @@ export const TRANSLATIONS = {
         payment: 'الدفع',
         totalCost: 'إجمالي التكلفة',
         cash: 'نقدي',
-        credit: 'آجل'
-      }
+        credit: 'آجل',
+      },
     },
     purchases: {
       title: 'شراء جديد',
@@ -2462,7 +2464,7 @@ export const TRANSLATIONS = {
       filters: {
         all: 'الكل',
         inStock: 'متوفر',
-        outOfStock: 'غير متوفر'
+        outOfStock: 'غير متوفر',
       },
       // Status filter options
       status: {
@@ -2470,14 +2472,14 @@ export const TRANSLATIONS = {
         pending: 'معلق',
         completed: 'مكتمل',
         returned: 'مرتجع',
-        rejected: 'مرفوض'
+        rejected: 'مرفوض',
       },
       // Placeholders
       placeholders: {
         searchHistory: 'بحث برقم، مورد...',
         searchSupplier: 'بحث واختيار المورد...',
         enterId: 'أدخل الرقم',
-        searchDrug: 'بحث عن دواء...'
+        searchDrug: 'بحث عن دواء...',
       },
       pack: 'عبوة',
       unit: 'وحدة',
@@ -2491,14 +2493,14 @@ export const TRANSLATIONS = {
         items: 'العناصر',
         discount: 'الخصم',
         total: 'الإجمالي',
-        action: 'إجراء'
+        action: 'إجراء',
       },
       // Status tooltips
       tooltips: {
         pending: 'في انتظار الموافقة',
         rejected: 'مرفوض',
         returned: 'مرتجع',
-        completed: 'مكتمل'
+        completed: 'مكتمل',
       },
       // Context menu actions
       contextMenu: {
@@ -2512,7 +2514,7 @@ export const TRANSLATIONS = {
         copy: 'نسخ',
         paste: 'لصق',
         clear: 'مسح',
-        showHideColumns: 'إظهار/إخفاء الأعمدة'
+        showHideColumns: 'إظهار/إخفاء الأعمدة',
       },
       // Alert messages
       alerts: {
@@ -2523,7 +2525,7 @@ export const TRANSLATIONS = {
         enterSale: 'الرجاء إدخال سعر بيع صالح لـ',
         enterExpiry: 'الرجاء إدخال تاريخ صلاحية لـ',
         incompleteExpiry: 'الرجاء إدخال تاريخ صلاحية كامل (4 أرقام: شهر سنة)',
-        promptQuantity: 'أدخل الكمية:'
+        promptQuantity: 'أدخل الكمية:',
       },
       // Other labels
       unknown: 'غير معروف',
@@ -2537,7 +2539,7 @@ export const TRANSLATIONS = {
       toDate: 'إلى',
       time: {
         am: 'صباحاً',
-        pm: 'مساءً'
+        pm: 'مساءً',
       },
       headers: {
         item: 'الصنف',
@@ -2548,7 +2550,7 @@ export const TRANSLATIONS = {
         codes: 'الأكواد',
         expiry: 'الصلاحية',
         stock: 'المخزون',
-        profit: 'الربح'
+        profit: 'الربح',
       },
       cartFields: {
         qty: 'الكمية',
@@ -2558,21 +2560,21 @@ export const TRANSLATIONS = {
         sale: 'البيع',
         tax: 'ض %',
         subtotal: 'المجموع',
-        totalWithTax: 'الإجمالي+ض'
+        totalWithTax: 'الإجمالي+ض',
       },
       summary: {
         totalItems: 'إجمالي العناصر',
         totalCost: 'إجمالي التكلفة',
         confirm: 'تأكيد واستلام المخزون',
         discount: 'الخصم',
-        tax: 'الضريبة'
+        tax: 'الضريبة',
       },
       historyTitle: 'سجل المشتريات',
       viewHistory: 'عرض السجل',
       newPurchase: 'شراء جديد',
       actions: {
         viewDetails: 'عرض تفاصيل الدواء',
-        editQty: 'تعديل الكمية'
+        editQty: 'تعديل الكمية',
       },
       // Purchase Details Modal
       detailsModal: {
@@ -2595,10 +2597,10 @@ export const TRANSLATIONS = {
         // Return labels
         fullReturn: 'كلي',
         partialReturn: 'جزئي',
-        returnedLabel: 'مرتجع'
+        returnedLabel: 'مرتجع',
       },
       // Empty states
-      noHistory: 'لا يوجد سجل مشتريات'
+      noHistory: 'لا يوجد سجل مشتريات',
     },
     purchaseReturns: {
       createReturn: 'إنشاء إرجاع',
@@ -2631,7 +2633,7 @@ export const TRANSLATIONS = {
         supplier: 'المورد',
         refund: 'إجمالي الاسترداد',
         status: 'الحالة',
-        action: 'إجراء'
+        action: 'إجراء',
       },
       searchPlaceholder: 'بحث في المردودات...',
       reasons: {
@@ -2640,36 +2642,36 @@ export const TRANSLATIONS = {
         wrong_item: 'صنف خاطئ',
         defective: 'معيب',
         overage: 'فائض - أدخل بالخطأ',
-        other: 'أخرى'
+        other: 'أخرى',
       },
       conditions: {
         damaged: 'تالف',
         expired: 'منتهي الصلاحية',
-        other: 'أخرى'
+        other: 'أخرى',
       },
       status: {
         pending: 'قيد الانتظار',
         approved: 'تمت الموافقة',
         completed: 'مكتمل',
-        rejected: 'مرفوض'
+        rejected: 'مرفوض',
       },
       messages: {
         selectPurchaseAlert: 'يرجى اختيار طلب شراء وإضافة عناصر للإرجاع',
         noReturnsFound: 'لم يتم العثور على مردودات تطابق بحثك',
-        noReturnsYet: 'لا توجد مردودات مشتريات حتى الآن'
+        noReturnsYet: 'لا توجد مردودات مشتريات حتى الآن',
       },
       packs: 'عبوات',
       pack: 'عبوة',
       inReturnList: 'في قائمة الإرجاع',
-      available: 'متاح'
+      available: 'متاح',
     },
     pos: {
       searchPlaceholder: 'امسح الباركود، الاسم، الوصف...',
-      categories: { 
+      categories: {
         all: 'الكل',
         medicine: 'أدوية',
         cosmetics: 'تجميل',
-        general: 'عام'
+        general: 'عام',
       },
       cartTitle: 'البيع الحالي',
       emptyCart: 'السلة فارغة',
@@ -2696,7 +2698,7 @@ export const TRANSLATIONS = {
         showSimilar: 'عرض بدائل',
         discount: 'تطبيق خصم',
         changeQty: 'تغيير الكمية',
-        searchInTable: 'بحث في الجدول'
+        searchInTable: 'بحث في الجدول',
       },
       change: 'الباقي',
       allStock: 'كل المخزون',
@@ -2737,7 +2739,7 @@ export const TRANSLATIONS = {
         location: 'الموقع',
         description: 'الوصف',
         noDescription: 'لا يوجد وصف متاح.',
-        shelf: 'الرف'
+        shelf: 'الرف',
       },
       startSearching: 'ابدأ البحث...',
       noResults: 'لم يتم العثور على نتائج.',
@@ -2749,7 +2751,7 @@ export const TRANSLATIONS = {
         duplicateTab: 'تكرار الفاتورة',
         pin: 'تثبيت',
         unpin: 'إلغاء التثبيت',
-        rename: 'إعادة تسمية'
+        rename: 'إعادة تسمية',
       },
       selectDriver: 'اختر السائق',
       assignDriver: 'تعيين السائق',
@@ -2807,7 +2809,7 @@ export const TRANSLATIONS = {
         payment: 'الدفع',
         items: 'عدد العناصر',
         total: 'الإجمالي',
-        actions: 'إجراءات'
+        actions: 'إجراءات',
       },
       noResults: 'لم يتم العثور على سجلات مبيعات.',
       visa: 'كرت',
@@ -2828,7 +2830,7 @@ export const TRANSLATIONS = {
         price: 'السعر',
         unitType: 'النوع',
         receipt: 'الإيصال',
-        return: 'إرجاع'
+        return: 'إرجاع',
       },
       returns: {
         processReturn: 'معالجة الإرجاع',
@@ -2845,7 +2847,7 @@ export const TRANSLATIONS = {
           damaged: 'تالف',
           expired: 'منتهي الصلاحية',
           defective: 'معيب',
-          other: 'أخرى'
+          other: 'أخرى',
         },
         notes: 'ملاحظات إضافية',
         refundAmount: 'مبلغ الاسترداد',
@@ -2885,15 +2887,15 @@ export const TRANSLATIONS = {
         noItemsAvailable: 'تم إرجاع جميع العناصر',
         validation: {
           noOpenShift: 'لا يمكن معالجة المرتجع - لا توجد وردية مفتوحة',
-          insufficientBalance: 'مبلغ المرتجع يتجاوز رصيد المبيعات المتاح'
+          insufficientBalance: 'مبلغ المرتجع يتجاوز رصيد المبيعات المتاح',
         },
         item: 'عنصر',
         items: 'عناصر',
         pack: 'عبوة',
         packs: 'عبوات',
         unit: 'وحدة',
-        units: 'وحدات'
-      }
+        units: 'وحدات',
+      },
     },
     customers: {
       title: 'إدارة العملاء',
@@ -2907,7 +2909,7 @@ export const TRANSLATIONS = {
         points: 'النقاط',
         lastVisit: 'آخر زيارة',
         status: 'الحالة',
-        actions: 'إجراءات'
+        actions: 'إجراءات',
       },
       allCustomers: 'جميع العملاء',
       customerAddedSuccess: 'تم إضافة العميل بنجاح!',
@@ -2915,7 +2917,7 @@ export const TRANSLATIONS = {
       basicInfo: 'المعلومات الأساسية',
       status: {
         active: 'نشط',
-        inactive: 'غير نشط'
+        inactive: 'غير نشط',
       },
       conditions: {
         diabetes: 'السكري',
@@ -2923,12 +2925,12 @@ export const TRANSLATIONS = {
         asthma: 'الربو',
         allergies: 'الحساسية',
         heartDisease: 'أمراض القلب',
-        arthritis: 'التهاب المفاصل'
+        arthritis: 'التهاب المفاصل',
       },
       contactOptions: {
         phone: 'اتصال هاتفي',
         sms: 'رسالة نصية / واتساب',
-        email: 'بريد إلكتروني'
+        email: 'بريد إلكتروني',
       },
       modal: {
         add: 'إضافة عميل جديد',
@@ -2957,7 +2959,7 @@ export const TRANSLATIONS = {
           streetAddress: '١٢٣ شارع الرئيسي، مبنى ٤، شقة ٥...',
           johnDoe: 'أحمد محمد',
           phone: '+966 50 123 4567',
-          email: 'ahmed@example.com'
+          email: 'ahmed@example.com',
         },
         cancel: 'إلغاء',
         save: 'حفظ العميل',
@@ -2970,7 +2972,7 @@ export const TRANSLATIONS = {
         editProfile: 'تعديل الملف الشخصي',
         close: 'إغلاق',
         copied: 'تم نسخ الكود للحافظة',
-        kioskDesc: 'يرجى ملء بياناتك للتسجيل معنا.'
+        kioskDesc: 'يرجى ملء بياناتك للتسجيل معنا.',
       },
       noResults: 'لم يتم العثور على عملاء.',
       customerHistory: {
@@ -2982,11 +2984,11 @@ export const TRANSLATIONS = {
           totalSpent: 'إجمالي المبيعات',
           totalReturns: 'إجمالي المرتجعات',
           points: 'نقاط الولاء',
-          visitCount: 'عدد الزيارات'
+          visitCount: 'عدد الزيارات',
         },
         tabs: {
           invoices: 'الفواتير',
-          returns: 'المرتجعات'
+          returns: 'المرتجعات',
         },
         table: {
           date: 'التاريخ',
@@ -2996,9 +2998,9 @@ export const TRANSLATIONS = {
           total: 'الإجمالي',
           refundAmount: 'المسترد',
           status: 'الحالة',
-          reason: 'السبب'
-        }
-      }
+          reason: 'السبب',
+        },
+      },
     },
     customerOverview: {
       title: 'نظرة عامة على العملاء',
@@ -3045,7 +3047,7 @@ export const TRANSLATIONS = {
       returnRate: 'معدل الإرجاع',
       lastVisit: 'آخر زيارة',
       expand: 'توسيع',
-      exportCSV: 'تصدير'
+      exportCSV: 'تصدير',
     },
     dashboard: {
       title: 'نظرة عامة',
@@ -3071,7 +3073,7 @@ export const TRANSLATIONS = {
         title: 'إعادة تعبئة المنتج',
         qty: 'الكمية المضافة',
         cancel: 'إلغاء',
-        confirm: 'تأكيد الإضافة'
+        confirm: 'تأكيد الإضافة',
       },
       expand: {
         expand: 'توسيع',
@@ -3124,16 +3126,16 @@ export const TRANSLATIONS = {
         top20: 'أفضل 20 منتج',
         allItems: 'جميع العناصر',
         configureThreshold: 'تكوين الحد',
-        supplierInfo: 'معلومات المورد'
-      }
+        supplierInfo: 'معلومات المورد',
+      },
     },
     barcodeStudio: {
       title: 'ستوديو الباركود',
       calibration: {
-          title: 'معايرة الشاشة',
-          subtitle: 'ضبط المقياس لمطابقة الحجم الحقيقي',
-          button: 'معايرة',
-          reset: 'استعادة الافتراضي'
+        title: 'معايرة الشاشة',
+        subtitle: 'ضبط المقياس لمطابقة الحجم الحقيقي',
+        button: 'معايرة',
+        reset: 'استعادة الافتراضي',
       },
       selectProduct: 'اختر المنتج',
       settings: 'إعدادات الملصق',
@@ -3165,7 +3167,7 @@ export const TRANSLATIONS = {
       borders: { none: 'بدون', solid: 'متصل', dashed: 'متقطع' },
       modal: {
         cancel: 'إلغاء',
-        save: 'حفظ'
+        save: 'حفظ',
       },
       inspector: {
         noSelection: 'الإعدادات العامة',
@@ -3186,7 +3188,7 @@ export const TRANSLATIONS = {
         bringToFront: 'إحضار للأمام',
         sendToBack: 'إرسال للخلف',
         defaultSet: 'تعيين كقالب افتراضي',
-        rotate90: 'تدوير 90°'
+        rotate90: 'تدوير 90°',
       },
       elements: {
         storeName: 'اسم المتجر',
@@ -3200,16 +3202,16 @@ export const TRANSLATIONS = {
         text: 'نص مخصص',
         image: 'شعار/صورة',
         hotline: 'الخط الساخن',
-        genericName: 'الاسم العلمي'
+        genericName: 'الاسم العلمي',
       },
       mode: {
         edit: 'تعديل',
-        truePreview: 'معاينة حقيقية'
+        truePreview: 'معاينة حقيقية',
       },
       toolbar: {
         addText: 'إضافة نص',
         addImage: 'إضافة صورة',
-        resetLayout: 'إعادة ضبط التصميم'
+        resetLayout: 'إعادة ضبط التصميم',
       },
       printSettings: {
         pairedPreview: 'عرض معاينة الملصق المزدوج',
@@ -3224,11 +3226,11 @@ export const TRANSLATIONS = {
         labelGapDesc: 'المسافة الرأسية بين الملصقات في نفس الصفحة.',
         currency: 'رمز العملة',
         currencyEGP: 'جنيه (ج.م)',
-        currencyUSD: 'دولار ($)'
+        currencyUSD: 'دولار ($)',
       },
       tooltips: {
-        doubleClickRename: 'انقر مرتين لتغيير الاسم'
-      }
+        doubleClickRename: 'انقر مرتين لتغيير الاسم',
+      },
     },
     returnHistory: {
       title: 'سجل المرتجعات',
@@ -3245,7 +3247,7 @@ export const TRANSLATIONS = {
         reason: 'السبب',
         actions: 'إجراءات',
         notes: 'ملاحظات',
-        totalRefund: 'إجمالي الاسترداد'
+        totalRefund: 'إجمالي الاسترداد',
       },
       noResults: 'لا توجد سجلات مرتجعات.',
       reasons: {
@@ -3254,10 +3256,10 @@ export const TRANSLATIONS = {
         damaged: 'تالف',
         expired: 'منتهي الصلاحية',
         defective: 'معيب',
-        other: 'أخرى'
+        other: 'أخرى',
       },
       actions: {
-        viewDetails: 'عرض التفاصيل'
+        viewDetails: 'عرض التفاصيل',
       },
       modal: {
         title: 'تفاصيل المرتجع',
@@ -3266,8 +3268,8 @@ export const TRANSLATIONS = {
         qty: 'الكمية',
         refund: 'الاسترداد',
         unit: 'وحدة',
-        pack: 'عبوة'
-      }
+        pack: 'عبوة',
+      },
     },
     loyalty: {
       overview: 'نظرة عامة على برنامج الولاء',
@@ -3297,7 +3299,7 @@ export const TRANSLATIONS = {
       tryAgain: 'يرجى التحقق من الكود والمحاولة مرة أخرى',
       order: 'الطلب',
       pts: 'نقطة',
-      totalSuffix: 'إجمالي'
+      totalSuffix: 'إجمالي',
     },
     realTimeSales: {
       title: 'مراقبة المبيعات الفورية',
@@ -3331,7 +3333,7 @@ export const TRANSLATIONS = {
       hideDetails: 'إخفاء التفاصيل',
       peakHour: 'ساعة الذروة',
       slowPeriod: 'فترة هادئة',
-      salesPerHour: 'مبيعات/ساعة'
+      salesPerHour: 'مبيعات/ساعة',
     },
     addProduct: {
       title: 'إضافة منتج جديد',
@@ -3341,7 +3343,7 @@ export const TRANSLATIONS = {
         codes: 'أكواد المنتج',
         stock: 'تفاصيل المخزون',
         pricing: 'التسعير',
-        additional: 'معلومات إضافية'
+        additional: 'معلومات إضافية',
       },
       fields: {
         brandName: 'الاسم التجاري',
@@ -3355,27 +3357,27 @@ export const TRANSLATIONS = {
         costPrice: 'سعر الشراء ($)',
         maxDiscount: 'الحد الأقصى للخصم (%)',
         expiryDate: 'تاريخ الانتهاء',
-        description: 'الوصف'
+        description: 'الوصف',
       },
       placeholders: {
         brandName: 'مثال: بنادول إكسترا',
         genericName: 'مثال: باراسيتامول',
         barcode: 'امسح أو أدخل الباركود',
         internalCode: 'تلقائي أو مخصص',
-        description: 'وصف المنتج، تعليمات الاستخدام...'
+        description: 'وصف المنتج، تعليمات الاستخدام...',
       },
       actions: {
         save: 'إضافة المنتج',
         saveAndNew: 'حفظ وإضافة آخر',
         clear: 'مسح النموذج',
         cancel: 'إلغاء',
-        generateCode: 'توليد تلقائي'
+        generateCode: 'توليد تلقائي',
       },
       messages: {
         success: 'تمت إضافة المنتج بنجاح!',
         error: 'فشل في إضافة المنتج. يرجى التحقق من جميع الحقول.',
-        cleared: 'تم مسح النموذج'
-      }
+        cleared: 'تم مسح النموذج',
+      },
     },
     cashRegister: {
       title: 'سجل النقدية',
@@ -3383,14 +3385,14 @@ export const TRANSLATIONS = {
       status: {
         open: 'الوردية مفتوحة',
         closed: 'الوردية مغلقة',
-        details: 'تفاصيل الوردية'
+        details: 'تفاصيل الوردية',
       },
       actions: {
         openShift: 'فتح وردية',
         closeShift: 'إغلاق وردية',
         addCash: 'إضافة نقد (إيداع)',
         removeCash: 'سحب نقد (صرف)',
-        printReport: 'طباعة التقرير'
+        printReport: 'طباعة التقرير',
       },
       summary: {
         openingBalance: 'الرصيد الافتتاحي',
@@ -3401,7 +3403,7 @@ export const TRANSLATIONS = {
         expectedBalance: 'الرصيد المتوقع',
         variance: 'الفروقات',
         cardSales: 'مبيعات الكرت',
-        returns: 'المرتجعات'
+        returns: 'المرتجعات',
       },
       transactions: {
         title: 'معاملات الوردية',
@@ -3409,7 +3411,7 @@ export const TRANSLATIONS = {
         type: 'النوع',
         amount: 'المبلغ',
         reason: 'السبب/ملاحظات',
-        user: 'المستخدم'
+        user: 'المستخدم',
       },
       modal: {
         openTitle: 'فتح وردية جديدة',
@@ -3417,7 +3419,7 @@ export const TRANSLATIONS = {
         amount: 'المبلغ',
         notes: 'ملاحظات',
         cancel: 'إلغاء',
-        confirm: 'تأكيد'
+        confirm: 'تأكيد',
       },
       types: {
         opening: 'الرصيد الافتتاحي',
@@ -3426,7 +3428,7 @@ export const TRANSLATIONS = {
         in: 'إيداع نقدي',
         out: 'سحب نقدي',
         closing: 'الرصيد الختامي',
-        return: 'مرتجع'
+        return: 'مرتجع',
       },
       messages: {
         loading: 'جاري التحميل...',
@@ -3437,7 +3439,7 @@ export const TRANSLATIONS = {
         id: 'م',
         expected: 'المتوقع',
         countedCash: 'المبلغ المحصل',
-        optionalNotes: 'ملاحظات اختيارية...'
+        optionalNotes: 'ملاحظات اختيارية...',
       },
       validation: {
         amountRequired: 'يرجى إدخال المبلغ',
@@ -3445,9 +3447,9 @@ export const TRANSLATIONS = {
         positiveAmount: 'يجب أن يكون المبلغ أكبر من صفر',
         insufficientBalance: 'لا يمكن سحب أكثر من الرصيد الحالي',
         reasonRequired: 'السبب مطلوب لعمليات السحب',
-        protectedBalance: 'لا يمكن السحب من الرصيد الافتتاحي. يمكن سحب المبيعات والإيداعات فقط.'
+        protectedBalance: 'لا يمكن السحب من الرصيد الافتتاحي. يمكن سحب المبيعات والإيداعات فقط.',
       },
-      help: '@@import(./cashRegisterHelp.json)'
+      help: '@@import(./cashRegisterHelp.json)',
     },
     shiftHistory: {
       title: 'سجل الورديات',
@@ -3464,12 +3466,12 @@ export const TRANSLATIONS = {
         duration: 'المدة',
         openingBalance: 'الافتتاحي',
         closingBalance: 'الختامي',
-        variance: 'الفروقات'
+        variance: 'الفروقات',
       },
       summary: {
         totalShifts: 'إجمالي الورديات',
         totalRevenue: 'إجمالي الإيرادات',
-        avgPerShift: 'متوسط/وردية'
+        avgPerShift: 'متوسط/وردية',
       },
       details: {
         openedBy: 'فتحت بواسطة',
@@ -3477,8 +3479,8 @@ export const TRANSLATIONS = {
         cardSales: 'مبيعات الكرت',
         transactions: 'المعاملات',
         transactionLog: 'سجل المعاملات',
-        moreTransactions: 'معاملة إضافية'
-      }
+        moreTransactions: 'معاملة إضافية',
+      },
     },
     receiptDesigner: {
       title: 'مصمم الفواتير',
@@ -3508,8 +3510,8 @@ export const TRANSLATIONS = {
         logo: 'شعار الصيدلية (Base64)',
         addressBox: 'إظهار مربع العنوان',
         delivery: 'معاينة الدليفري',
-        returns: 'معاينة المرتجع'
-      }
+        returns: 'معاينة المرتجع',
+      },
     },
     printerSettings: {
       title: 'إعدادات الطابعة',
@@ -3520,7 +3522,7 @@ export const TRANSLATIONS = {
         connected: 'متصل',
         disconnected: 'غير متصل',
         notInstalled: 'غير مثبت',
-        connecting: 'جاري الاتصال...'
+        connecting: 'جاري الاتصال...',
       },
       reconnect: 'إعادة الاتصال',
       download: 'تحميل QZ Tray',
@@ -3535,20 +3537,20 @@ export const TRANSLATIONS = {
       silentModes: {
         on: 'تشغيل',
         off: 'إيقاف',
-        fallback: 'تلقائي'
+        fallback: 'تلقائي',
       },
       silentHints: {
         on: 'طباعة صامتة دائماً (يتطلب QZ Tray)',
         off: 'إظهار نافذة الطباعة دائماً',
-        fallback: 'طباعة صامتة إذا توفر QZ، وإلا نافذة الطباعة'
+        fallback: 'طباعة صامتة إذا توفر QZ، وإلا نافذة الطباعة',
       },
       alerts: {
         connected: 'تم الاتصال بـ QZ Tray بنجاح',
         disconnected: 'تم قطع الاتصال بـ QZ Tray',
         printSuccess: 'تمت الطباعة بنجاح',
         printFailed: 'فشلت الطباعة',
-        notInstalled: 'QZ Tray غير مثبت. يرجى التحميل من qz.io'
-      }
-    }
-  }
+        notInstalled: 'QZ Tray غير مثبت. يرجى التحميل من qz.io',
+      },
+    },
+  },
 };

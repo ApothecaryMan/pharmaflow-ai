@@ -2,7 +2,7 @@
  * Inventory Types - Drug/Product management
  */
 
-import { Drug } from '../../types';
+import type { Drug } from '../../types';
 
 export type { Drug };
 

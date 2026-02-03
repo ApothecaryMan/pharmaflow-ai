@@ -2,11 +2,11 @@
  * Settings Service - Manages user preferences and app configuration
  */
 
-import { AppSettings, SettingsService } from './types';
-import { ThemeColor } from '../../types';
+import { StorageKeys } from '../../config/storageKeys';
+import type { ThemeColor } from '../../types';
 
 import { storage } from '../../utils/storage';
-import { StorageKeys } from '../../config/storageKeys';
+import type { AppSettings, SettingsService } from './types';
 
 const DEFAULT_THEME: ThemeColor = { name: 'Blue', primary: 'blue', hex: '#3b82f6' };
 
@@ -21,14 +21,14 @@ const DEFAULT_SETTINGS: AppSettings = {
   profileImage: null,
   activeModule: 'dashboard',
   purchaseTaxRate: 14, // Default 14% tax rate
-  branchCode: 'B1' // Default Branch Code
+  branchCode: 'B1', // Default Branch Code
 };
 
 export const createSettingsService = (): SettingsService => ({
   getAll: async (): Promise<AppSettings> => {
     // Try to get unified settings first
     const unified = storage.get<Partial<AppSettings>>(StorageKeys.SETTINGS, {});
-    
+
     // Merge with defaults
     return { ...DEFAULT_SETTINGS, ...unified };
   },
@@ -52,7 +52,7 @@ export const createSettingsService = (): SettingsService => ({
 
   reset: async (): Promise<void> => {
     storage.remove(StorageKeys.SETTINGS);
-  }
+  },
 });
 
 // Default instance

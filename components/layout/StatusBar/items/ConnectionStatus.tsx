@@ -1,6 +1,6 @@
-import React from 'react';
-import { StatusBarItem } from '../StatusBarItem';
+import type React from 'react';
 import { useStatusBar } from '../StatusBarContext';
+import { StatusBarItem } from '../StatusBarItem';
 
 interface ConnectionStatusProps {
   onlineText?: string;

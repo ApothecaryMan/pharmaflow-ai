@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { Language } from '../types';
 import { batchService } from '../services/inventory/batchService';
+import type { Language } from '../types';
 
 interface GlobalEventHandlersProps {
   language: Language;
@@ -15,14 +15,13 @@ interface GlobalEventHandlersProps {
  * useGlobalEventHandlers centralizes global side-effects and event listeners.
  * This includes document attributes, keyboard shortcuts, and background tasks.
  */
-export const useGlobalEventHandlers = ({ 
-  language, 
-  inventory, 
+export const useGlobalEventHandlers = ({
+  language,
+  inventory,
   isLoading,
   onToggleSidebar,
-  onNavigate 
+  onNavigate,
 }: GlobalEventHandlersProps) => {
-  
   // 1. Document Level Attributes (Lang/Dir)
   useEffect(() => {
     document.documentElement.lang = language.toLowerCase();
@@ -34,11 +33,11 @@ export const useGlobalEventHandlers = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       // Avoid shortcuts when typing in inputs
       const activeElement = document.activeElement as HTMLElement;
-      const isInputActive = activeElement && (
-        activeElement.tagName === 'INPUT' ||
-        activeElement.tagName === 'TEXTAREA' ||
-        activeElement.isContentEditable
-      );
+      const isInputActive =
+        activeElement &&
+        (activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.isContentEditable);
 
       // Global shortcuts (Work even in inputs if needed, but usually not)
       if (e.ctrlKey && e.key.toLowerCase() === 'b') {

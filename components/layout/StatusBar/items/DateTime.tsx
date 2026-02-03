@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { StatusBarItem } from '../StatusBarItem';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { useStatusBar } from '../StatusBarContext';
+import { StatusBarItem } from '../StatusBarItem';
 
 interface DateTimeProps {
   /** Date format: 'date', 'time', 'datetime' */
@@ -19,7 +20,7 @@ interface DateTimeProps {
  * DATE TIME COMPONENT
  * -------------------
  * Visualizes the Verified Time system.
- * 
+ *
  * - Green Check: Online + Synced (Verified)
  * - Orange Check/Shield: Offline + Synced Offset (Trusted)
  * - Red Warning: Unverified System Time
@@ -35,9 +36,12 @@ export const DateTime: React.FC<DateTimeProps> = ({
   const [now, setNow] = useState(getVerifiedDate());
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setNow(getVerifiedDate());
-    }, showSeconds ? 1000 : 60000);
+    const interval = setInterval(
+      () => {
+        setNow(getVerifiedDate());
+      },
+      showSeconds ? 1000 : 60000
+    );
 
     return () => clearInterval(interval);
   }, [showSeconds, getVerifiedDate]);
@@ -69,8 +73,9 @@ export const DateTime: React.FC<DateTimeProps> = ({
 
   const getIcon = () => {
     switch (format) {
-      case 'date': return 'calendar_today';
-      case 'time': 
+      case 'date':
+        return 'calendar_today';
+      case 'time':
       case 'datetime':
       default:
         // Online & Synced = Verified (Green)
@@ -91,7 +96,9 @@ export const DateTime: React.FC<DateTimeProps> = ({
   const getTooltip = () => {
     if (state.isOnline && state.timeSynced) return '✅ Exact time from server';
     if (!state.isOnline && state.timeSynced) {
-      const lastSync = state.lastSyncTime ? new Date(state.lastSyncTime).toLocaleTimeString() : 'Unknown';
+      const lastSync = state.lastSyncTime
+        ? new Date(state.lastSyncTime).toLocaleTimeString()
+        : 'Unknown';
       return `⚠️ Offline Mode (Time Verified) • Last synced: ${lastSync}`;
     }
     return '❌ Unverified Device Time';

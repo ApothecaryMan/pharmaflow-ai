@@ -14,13 +14,13 @@ export const measurePerformance = async <T>(
     if (process.env.NODE_ENV === 'development') {
       console.log(`[PERF] ${name}: ${duration.toFixed(2)}ms`);
     }
-    
+
     if (duration > slowThresholdMs) {
       console.warn(`[PERF_SLOW] ${name} took ${duration.toFixed(2)}ms`);
       // Optionally log to audit service or external monitoring
       auditService.log('system.slow_operation', {
         details: `${name} exceeded threshold: ${duration.toFixed(2)}ms`,
-        entityId: 'perf_monitor'
+        entityId: 'perf_monitor',
       });
     }
   }

@@ -1,6 +1,6 @@
 /**
  * ID Generator Utility
- * 
+ *
  * Implements "Prefix Strategy" (BranchCode-Sequence) for entity IDs.
  * Features:
  * - Centralized sequence management
@@ -10,20 +10,20 @@
  * - No circular dependencies (reads storage directly)
  */
 
-import { storage } from './storage';
 import { StorageKeys } from '../config/storageKeys';
 import type { AppSettings } from '../services/settings/types';
+import { storage } from './storage';
 
 // Supported Entity Types
-export type EntityType = 
-  | 'sales' 
-  | 'inventory' 
-  | 'customers' 
-  | 'suppliers' 
-  | 'employees' 
-  | 'purchases' 
-  | 'returns' 
-  | 'shifts' 
+export type EntityType =
+  | 'sales'
+  | 'inventory'
+  | 'customers'
+  | 'suppliers'
+  | 'employees'
+  | 'purchases'
+  | 'returns'
+  | 'shifts'
   | 'transactions'
   | 'tabs'
   | 'batch'
@@ -91,24 +91,25 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
       case 'purchases':
         data = storage.get(StorageKeys.PURCHASES, []);
         break;
-      case 'returns':
+      case 'returns': {
         // Check both return types
         const salesReturns = storage.get(StorageKeys.RETURNS, []);
         const purchaseReturns = storage.get(StorageKeys.PURCHASE_RETURNS, []);
         data = [...salesReturns, ...purchaseReturns];
         break;
+      }
       case 'shifts':
         data = storage.get(StorageKeys.SHIFTS, []);
         break;
       case 'movement':
         data = storage.get(StorageKeys.STOCK_MOVEMENTS, []);
         break;
-      // Transactions are nested in shifts, harder to heal efficiently, 
+      // Transactions are nested in shifts, harder to heal efficiently,
       // but usually shift IDs are unique enough or we can scan all shifts.
       // For now, we trust the sequence or start from 0 if totally lost.
       // Tabs and Generic might not need strict healing.
     }
-    
+
     maxExisting = findMaxSequence(data);
   } catch (e) {
     console.warn(`Failed to heal sequence for ${type}`, e);
@@ -131,7 +132,7 @@ export const idGenerator = {
 
     // 2. Get current sequences
     const sequences = storage.get<SequenceMap>(StorageKeys.SEQUENCES, {});
-    
+
     // 3. Determine current sequence value
     let currentSeq = sequences[type] || 0;
 
@@ -147,10 +148,10 @@ export const idGenerator = {
     // 6. Save immediately
     storage.set(StorageKeys.SEQUENCES, {
       ...sequences,
-      [type]: nextSeq
+      [type]: nextSeq,
     });
 
     // 7. Format and Return
     return `${branchCode}-${nextSeq.toString().padStart(ID_PADDING, '0')}`;
-  }
+  },
 };

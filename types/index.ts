@@ -1,16 +1,16 @@
 /**
  * @fileoverview PharmaFlow-AI Type Definitions
- * 
+ *
  * This file contains all TypeScript interfaces and types used throughout
  * the pharmacy management system. Types are organized by domain:
- * 
+ *
  * - Inventory: Drug, StockBatch, BatchAllocation
  * - Sales: CartItem, Sale, SaleTab, Return, ReturnItem
  * - Purchases: Purchase, PurchaseItem, PurchaseReturn
  * - People: Customer, Employee, Supplier
  * - Operations: Shift, CashTransaction
  * - Configuration: ThemeColor, ReturnPolicy, Language
- * 
+ *
  * @version 2.0.0
  * @author PharmaFlow Team
  */
@@ -228,7 +228,7 @@ export interface CartItem extends Drug {
   discount?: number;
   /** True if quantity is in units, false/undefined if in packs */
   isUnit?: boolean;
-  /** 
+  /**
    * Tracks which inventory batches were used for this sale.
    * Populated by batchService.allocateStock() during checkout.
    * Used for FEFO (First Expired, First Out) tracking.
@@ -321,7 +321,7 @@ export interface Sale {
   paymentMethod: 'cash' | 'visa';
   saleType?: 'walk-in' | 'delivery';
   deliveryFee?: number;
-  /** 
+  /**
    * @computed Total discount calculated as sum of all item discounts.
    * Formula: sum(item.price * item.quantity * (item.discount/100)) for all items
    */
@@ -346,7 +346,7 @@ export interface Sale {
   status: 'completed' | 'cancelled' | 'pending' | 'with_delivery' | 'on_way';
   /** Delivery driver assigned to this order */
   deliveryEmployeeId?: string;
-  /** 
+  /**
    * Tracks all modifications made to delivery orders.
    * Each record contains timestamp, modifier, and list of changes.
    * Used for audit trail and order history display.
@@ -360,7 +360,7 @@ export interface Sale {
 export type ReturnType = 'full' | 'partial' | 'unit';
 
 /** Reason for product return */
-export type ReturnReason = 
+export type ReturnReason =
   | 'customer_request'
   | 'wrong_item'
   | 'damaged'
@@ -536,7 +536,16 @@ export type ViewState = string;
 export type Language = 'EN' | 'AR';
 
 /** Dashboard widget expand options */
-export type ExpandedView = 'revenue' | 'expenses' | 'profit' | 'lowStock' | 'salesChart' | 'topSelling' | 'expiring' | 'recentSales' | null;
+export type ExpandedView =
+  | 'revenue'
+  | 'expenses'
+  | 'profit'
+  | 'lowStock'
+  | 'salesChart'
+  | 'topSelling'
+  | 'expiring'
+  | 'recentSales'
+  | null;
 
 /** Date range filter for reports */
 export interface DateRange {
@@ -575,7 +584,14 @@ export interface ReturnPolicy {
 }
 
 /** Type of cash register transaction */
-export type CashTransactionType = 'opening' | 'sale' | 'card_sale' | 'in' | 'out' | 'closing' | 'return';
+export type CashTransactionType =
+  | 'opening'
+  | 'sale'
+  | 'card_sale'
+  | 'in'
+  | 'out'
+  | 'closing'
+  | 'return';
 
 /**
  * CashTransaction - individual cash movement record.
@@ -643,40 +659,53 @@ export interface Shift {
 
 export interface Employee {
   // --- Identification ---
-  id: string;              // Unique UUID
+  id: string; // Unique UUID
   branchId?: string;
-  employeeCode: string;    // Auto-generated: EMP-001, EMP-002, etc.
-  
+  employeeCode: string; // Auto-generated: EMP-001, EMP-002, etc.
+
   // --- Personal Info ---
-  name: string;            // Full name (English)
-  phone: string;           // Required, validated by SmartPhoneInput
-  email?: string;          // Optional, validated by SmartEmailInput
-  
+  name: string; // Full name (English)
+  phone: string; // Required, validated by SmartPhoneInput
+  email?: string; // Optional, validated by SmartEmailInput
+
   // --- Employment Details ---
-  position: string;        // Job title (e.g., "Senior Pharmacist")
-  department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics';  // Department
-  role: 'admin' | 'pharmacist_owner' | 'pharmacist_manager' | 'pharmacist' | 'inventory_officer' | 'assistant' | 'hr_manager' | 'cashier' | 'senior_cashier' | 'delivery' | 'delivery_pharmacist' | 'officeboy' | 'manager';      // System role
-  startDate: string;       // ISO date (YYYY-MM-DD)
-  status: 'active' | 'inactive' | 'holiday';  // Employment status
-  
+  position: string; // Job title (e.g., "Senior Pharmacist")
+  department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics'; // Department
+  role:
+    | 'admin'
+    | 'pharmacist_owner'
+    | 'pharmacist_manager'
+    | 'pharmacist'
+    | 'inventory_officer'
+    | 'assistant'
+    | 'hr_manager'
+    | 'cashier'
+    | 'senior_cashier'
+    | 'delivery'
+    | 'delivery_pharmacist'
+    | 'officeboy'
+    | 'manager'; // System role
+  startDate: string; // ISO date (YYYY-MM-DD)
+  status: 'active' | 'inactive' | 'holiday'; // Employment status
+
   // --- Financial (Optional) ---
-  salary?: number;         // Monthly salary
-  
+  salary?: number; // Monthly salary
+
   // --- Additional ---
-  notes?: string;          // Free text notes
-  
+  notes?: string; // Free text notes
+
   // --- Auth ---
-  username?: string;       // Login Username
+  username?: string; // Login Username
   password?: string;
   biometricCredentialId?: string; // WebAuthn Credential ID
-  biometricPublicKey?: string;    // WebAuthn Public Key (Base64)
-  
+  biometricPublicKey?: string; // WebAuthn Public Key (Base64)
+
   // --- Profile ---
-  image?: string;          // Base64 encoded profile image
-  
+  image?: string; // Base64 encoded profile image
+
   // --- Documents ---
-  nationalIdCard?: string;      // Base64 encoded National ID Card (البطاقة الشخصية)
-  nationalIdCardBack?: string;  // Base64 encoded National ID Card Back Side
-  mainSyndicateCard?: string;   // Base64 encoded Main Syndicate Card (كارنية النقابة الرئيسية)
-  subSyndicateCard?: string;    // Base64 encoded Sub Syndicate Card (كارنية النقابة الفرعية)
+  nationalIdCard?: string; // Base64 encoded National ID Card (البطاقة الشخصية)
+  nationalIdCardBack?: string; // Base64 encoded National ID Card Back Side
+  mainSyndicateCard?: string; // Base64 encoded Main Syndicate Card (كارنية النقابة الرئيسية)
+  subSyndicateCard?: string; // Base64 encoded Sub Syndicate Card (كارنية النقابة الفرعية)
 }

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { storage } from '../utils/storage';
 
 interface UseColumnReorderProps {
@@ -7,7 +8,11 @@ interface UseColumnReorderProps {
   defaultHidden?: string[];
 }
 
-export const useColumnReorder = ({ defaultColumns, storageKey, defaultHidden = [] }: UseColumnReorderProps) => {
+export const useColumnReorder = ({
+  defaultColumns,
+  storageKey,
+  defaultHidden = [],
+}: UseColumnReorderProps) => {
   // Column Order State with lazy initialization from storage
   const [columnOrder, setColumnOrder] = useState<string[]>(() => {
     return storage.get<string[]>(`${storageKey}_order`, defaultColumns);
@@ -33,7 +38,7 @@ export const useColumnReorder = ({ defaultColumns, storageKey, defaultHidden = [
   }, [hiddenColumns, storageKey]);
 
   const toggleColumnVisibility = (columnId: string) => {
-    setHiddenColumns(prev => {
+    setHiddenColumns((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(columnId)) {
         newSet.delete(columnId);
@@ -64,10 +69,10 @@ export const useColumnReorder = ({ defaultColumns, storageKey, defaultHidden = [
 
   const handleColumnTouchMove = (e: React.TouchEvent) => {
     if (!draggedColumn) return;
-    
+
     const touch = e.touches[0];
     const element = document.elementFromPoint(touch.clientX, touch.clientY);
-    
+
     if (element && element.tagName === 'TH') {
       const columnId = element.getAttribute('data-column-id');
       if (columnId && columnId !== draggedColumn) {
@@ -94,10 +99,10 @@ export const useColumnReorder = ({ defaultColumns, storageKey, defaultHidden = [
 
   const handleColumnTouchEnd = (e: React.TouchEvent) => {
     if (!draggedColumn) return;
-    
+
     const touch = e.changedTouches[0];
     const element = document.elementFromPoint(touch.clientX, touch.clientY);
-    
+
     if (element && element.tagName === 'TH') {
       const targetColumnId = element.getAttribute('data-column-id');
       if (targetColumnId && targetColumnId !== draggedColumn) {
@@ -111,7 +116,7 @@ export const useColumnReorder = ({ defaultColumns, storageKey, defaultHidden = [
         setColumnOrder(newOrder);
       }
     }
-    
+
     setDraggedColumn(null);
     setDragOverColumn(null);
   };

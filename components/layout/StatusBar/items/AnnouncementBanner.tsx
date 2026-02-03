@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { useStatusBar } from '../StatusBarContext';
 
 interface AnnouncementBannerProps {
@@ -20,30 +21,28 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
   }
 
   return (
-    <div 
-      className="flex-1 flex items-center justify-center overflow-hidden mx-4 relative"
+    <div
+      className='flex-1 flex items-center justify-center overflow-hidden mx-4 relative'
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div 
+      <div
         className={`flex items-center gap-2 text-[11px] whitespace-nowrap ${
           animated && !isHovered ? 'animate-marquee' : ''
         }`}
         style={{ color: 'var(--text-secondary)' }}
       >
-        <span className="material-symbols-rounded text-[14px] text-amber-500">
-          campaign
-        </span>
+        <span className='material-symbols-rounded text-[14px] text-amber-500'>campaign</span>
         <span>{state.announcement}</span>
       </div>
 
       {/* Close button */}
       <button
         onClick={() => setAnnouncement(null)}
-        className="absolute right-0 p-0.5 text-gray-400 hover:text-gray-600 transition-colors opacity-0 hover:opacity-100"
+        className='absolute right-0 p-0.5 text-gray-400 hover:text-gray-600 transition-colors opacity-0 hover:opacity-100'
         style={{ opacity: isHovered ? 1 : 0 }}
       >
-        <span className="material-symbols-rounded text-[12px]">close</span>
+        <span className='material-symbols-rounded text-[12px]'>close</span>
       </button>
 
       <style>{`

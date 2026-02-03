@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Tooltip } from '../../common/Tooltip';
 
 export interface StatusBarItemProps {
@@ -24,25 +24,26 @@ export interface StatusBarItemProps {
  * STYLE & SIZING GUIDELINES
  * -------------------------
  * This component is designed to be the BUILDING BLOCK of the status bar.
- * 
- * 1. HEIGHT MATCHING: 
+ *
+ * 1. HEIGHT MATCHING:
  *    Uses `h-full` to automatically fill the parent's `h-6` (24px).
  *    This guarantees that hover effects and borders span the full height.
- * 
+ *
  * 2. CENTERING:
  *    Uses `flex items-center justify-center` to center content perfectly.
- * 
+ *
  * 3. FONT SPECS:
  *    - Size: text-[10px] (Small but readable)
  *    - Weight: bold (To standout at small size)
  *    - Case: uppercase (Uniform look)
- * 
+ *
  * 4. SPACING:
  *    - Padding: px-2.5 (Horizontal breathing room)
  *    - Gap: gap-1.5 (Space between icon and text)
  */
 const variantStyles: Record<string, string> = {
-  default: 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/10',
+  default:
+    'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/10',
   success: 'text-emerald-500 hover:bg-emerald-500/10',
   warning: 'text-amber-500 hover:bg-amber-500/10',
   error: 'text-red-500 hover:bg-red-500/10',
@@ -66,22 +67,21 @@ export const StatusBarItem: React.FC<StatusBarItemProps> = ({
     ${variantStyles[variant]}
     ${isClickable ? 'cursor-pointer' : 'cursor-default'}
     ${className}
-  `.trim().replace(/\s+/g, ' ');
+  `
+    .trim()
+    .replace(/\s+/g, ' ');
 
   const content = (
     <>
-      {icon && (
-        <span className="material-symbols-rounded text-[14px] leading-none">
-          {icon}
-        </span>
-      )}
-      {label && <span className="pt-[1px]">{label}</span>}
+      {icon && <span className='material-symbols-rounded text-[14px] leading-none'>{icon}</span>}
+      {label && <span className='pt-[1px]'>{label}</span>}
       {children}
       {badge !== undefined && badge !== 0 && (
-        <span 
+        <span
           className={`absolute top-0.5 right-1.5 flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full leading-none pt-[1px] ${
-            (typeof badge === 'number' && badge > 9) || (typeof badge === 'string' && badge.length > 1)
-              ? 'px-0.5 h-[10px] min-w-[10px]' 
+            (typeof badge === 'number' && badge > 9) ||
+            (typeof badge === 'string' && badge.length > 1)
+              ? 'px-0.5 h-[10px] min-w-[10px]'
               : 'w-[10px] h-[10px] aspect-square'
           }`}
         >
@@ -93,11 +93,11 @@ export const StatusBarItem: React.FC<StatusBarItemProps> = ({
 
   if (tooltip) {
     return (
-      <Tooltip 
-        content={tooltip} 
-        className="h-full" 
-        triggerClassName="h-full"
-        tooltipClassName="font-bold uppercase tracking-wider z-[60]"
+      <Tooltip
+        content={tooltip}
+        className='h-full'
+        triggerClassName='h-full'
+        tooltipClassName='font-bold uppercase tracking-wider z-[60]'
       >
         <div
           className={baseClasses}
