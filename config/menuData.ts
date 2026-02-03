@@ -1097,23 +1097,18 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: "feature-testing",
         label: "Feature Testing",
         items: [
-          { label: "POS v2", view: "test-pos-v2", icon: "point_of_sale" },
-          { label: "New Components", view: "test-components", icon: "widgets" },
           { label: "Dashboard Experiments", view: "dashboard-experiments", icon: "dashboard_customize" },
-          { label: "Advanced Sm Card", view: "advanced-sm-card", icon: "badge" }
+          { label: "Advanced Sm Card", view: "advanced-sm-card", icon: "badge" },
+
         ]
       },
       {
         id: "development",
         label: "Development",
         items: [
-          { label: "Data Context Test", view: "test-data-context", icon: "data_object" },
-          { label: "Service Layer Test", view: "test-services", icon: "layers" },
           { label: "POS Test", view: "pos-test", icon: "point_of_sale" },
           { label: "Create PO (Test)", view: "purchases-test", icon: "add_shopping_cart" },
-          { label: "Theme Preview", view: "test-theme", icon: "palette" },
-          { label: "Modal Tests", view: "modal-tests", icon: "dialogs" },
-          { label: "Login Test", view: "login-test", icon: "lock" }
+          { label: "Modal Tests", view: "modal-tests", icon: "dialogs" }
         ]
       }
     ]

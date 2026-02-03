@@ -35,6 +35,7 @@ import { LoginAuditList } from '../components/reports/LoginAuditList';
 import { LandingPage } from '../components/layout/LandingPage';
 import { StaffOverview } from '../components/hr/StaffOverview';
 
+
 // Skeletons
 import { DashboardSkeleton } from '../components/dashboard/DashboardSkeletons';
 import { InventorySkeleton } from '../components/skeletons/InventorySkeleton';
@@ -410,6 +411,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     requiredProps: ['sales', 'employees', 'customers', 'color', 't', 'language', 'getVerifiedDate'],
     permission: 'users.view'
   },
+
 };
 
 // Helper function to get page config

@@ -13,6 +13,7 @@ export const ROUTES = {
   CUSTOMER_HISTORY: 'customer-history' as ViewState,
   RETURN_HISTORY: 'return-history' as ViewState,
   INTELLIGENCE: 'intelligence' as ViewState,
+
 } as const;
 
 export const TEST_ROUTES = [ROUTES.LOGIN, ROUTES.MODAL_TESTS, ROUTES.TEST_THEME];
