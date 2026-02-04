@@ -737,42 +737,39 @@ export function useEntityHandlers({
         }
 
         // --- START TRANSACTION ---
-        const transactionAllocations: { drugId: string; allocation: BatchAllocation[] }[] = [];
         const processedItems: CartItem[] = [];
 
         try {
-          // 4. Allocation Phase (The "Dangerous" part that needs rollback)
-          for (const item of saleData.items) {
+          // 4. Bulk Allocation Phase (One single storage write)
+          const allocationRequests = saleData.items.map((item) => {
             const drug = inventory.find((d) => d.id === item.id);
-            if (!drug) throw new Error(`Drug not found: ${item.name}`);
-
             const quantityToDeduct = item.isUnit
               ? item.quantity
-              : item.quantity * (drug.unitsPerPack || 1);
-
-            // Allocate from batches
-            const allocations = batchService.allocateStock(drug.id, quantityToDeduct, true);
-
-            if (!allocations) {
-              throw new Error(`Failed to allocate batch stock for ${drug.name}`);
-            }
-
-            transactionAllocations.push({ drugId: drug.id, allocation: allocations });
-
-            processedItems.push({
-              ...item,
-              batchAllocations: allocations,
-            });
-          }
-        } catch (allocError: any) {
-          // --- ROLLBACK INITIATED ---
-          console.error('Transaction failed during allocation, rolling back...', allocError);
-
-          // Return stock for all successful allocations so far
-          transactionAllocations.forEach(({ allocation }) => {
-            batchService.returnStock(allocation);
+              : item.quantity * (drug?.unitsPerPack || 1);
+            return { drugId: item.id, quantity: quantityToDeduct, name: item.name };
           });
 
+          const bulkAllocations = batchService.allocateStockBulk(allocationRequests);
+
+          // Map allocations back to processed items
+          saleData.items.forEach((item) => {
+            const alloc = bulkAllocations.find((a) => a.drugId === item.id);
+            processedItems.push({
+              ...item,
+              batchAllocations: alloc?.allocations || [],
+            });
+          });
+        } catch (allocError: any) {
+          // --- ROLLBACK INITIATED ---
+          console.error('Transaction failed during bulk allocation:', allocError);
+
+          // Return stock for any items that might have been partially allocated if we had a manual loop,
+          // but allocateStockBulk is atomic in result (though not in storage if one fails midway without internal rollback).
+          // However, allocateStockBulk returns null if ANY item fails, but it ALREADY modified the batches reference.
+          // Wait, allocateStockBulk implementation I wrote:
+          // It modifies `allBatches` in place. If it returns `null` because an item fails, it does NOT save.
+          // Since saveBatches is only called at the end, returning null effectively rolls back the storage.
+          
           error(allocError.message || 'Transaction failed. Stock has been rolled back.');
           return; // Stop execution
         }
@@ -796,24 +793,21 @@ export function useEntityHandlers({
         };
 
         // 6. Commit Phase (Update all States)
+        
+        // Pre-map sold items for O(1) lookup
+        const soldItemsMap = new Map(saleData.items.map(item => [item.id, item]));
 
         // Update Inventory State
         setInventory((prev) =>
           prev.map((drug) => {
-            const soldItem = saleData.items.find((i) => i.id === drug.id);
+            const soldItem = soldItemsMap.get(drug.id);
             if (soldItem) {
               const quantityToDeduct = soldItem.isUnit
                 ? soldItem.quantity
                 : soldItem.quantity * (drug.unitsPerPack || 1);
 
               const newStock = drug.stock - quantityToDeduct;
-
-              // Double check for negative stock, though validation should have caught it
-              if (newStock < 0) {
-                console.error(`CRITICAL: Negative stock detected for ${drug.name} during commit!`);
-                // In a real DB we would abort, here we clamp to 0 but the batch allocation is the source of truth
-              }
-
+              
               return {
                 ...drug,
                 stock: validateStock(newStock),

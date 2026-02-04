@@ -87,6 +87,63 @@ export const updateBatchQuantity = (batchId: string, delta: number): StockBatch 
  * @param quantityNeeded - Total units needed
  * @param commitChanges - If true, actually deduct from batches. If false, just calculate.
  */
+/**
+ * Allocate stock for multiple items in a single storage transaction
+ * Returns the allocations for all items. Throws error if any item fails.
+ */
+export const allocateStockBulk = (
+  requests: { drugId: string; quantity: number; name?: string }[]
+): { drugId: string; allocations: BatchAllocation[] }[] => {
+  const allBatches = getAllBatchesRaw();
+  const result: { drugId: string; allocations: BatchAllocation[] }[] = [];
+
+  for (const req of requests) {
+    if (req.quantity <= 0 || !Number.isInteger(req.quantity)) continue;
+
+    const drugBatches = allBatches
+      .filter((b) => b.drugId === req.drugId)
+      .filter((b) => {
+        const exp = new Date(b.expiryDate);
+        return !isNaN(exp.getTime()) && exp > new Date();
+      })
+      .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+
+    const totalAvailable = drugBatches.reduce((sum, b) => sum + b.quantity, 0);
+    if (totalAvailable < req.quantity) {
+      const drugName = req.name || req.drugId;
+      throw new Error(`Insufficient stock for: ${drugName} (Available: ${totalAvailable}, Needed: ${req.quantity})`);
+    }
+
+    const allocations: BatchAllocation[] = [];
+    let remaining = req.quantity;
+
+    for (const batch of drugBatches) {
+      if (remaining <= 0) break;
+      const allocateFromThis = Math.min(batch.quantity, remaining);
+      if (allocateFromThis > 0) {
+        allocations.push({
+          batchId: batch.id,
+          quantity: allocateFromThis,
+          expiryDate: batch.expiryDate,
+        });
+        
+        // Update the batch in allBatches reference
+        const rawBatch = allBatches.find(b => b.id === batch.id);
+        if (rawBatch) rawBatch.quantity -= allocateFromThis;
+        
+        remaining -= allocateFromThis;
+      }
+    }
+    result.push({ drugId: req.drugId, allocations });
+  }
+
+  // Remove empty batches once at the end
+  const nonEmpty = allBatches.filter((b) => b.quantity > 0);
+  saveBatches(nonEmpty);
+
+  return result;
+};
+
 export const allocateStock = (
   drugId: string,
   quantityNeeded: number,
@@ -265,6 +322,7 @@ export const batchService = {
   createBatch,
   updateBatchQuantity,
   allocateStock,
+  allocateStockBulk,
   returnStock,
   getTotalStock,
   getEarliestExpiry,
