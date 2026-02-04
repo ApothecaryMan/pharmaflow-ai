@@ -1,5 +1,6 @@
 import React, { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
 import { timeService } from '../../../services/timeService';
+import { storage } from '../../../utils/storage';
 
 // Types
 export interface Notification {
@@ -103,7 +104,7 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
   // Persist notifications to localStorage
   React.useEffect(() => {
     try {
-      localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(state.notifications));
+      storage.set(NOTIFICATIONS_KEY, state.notifications);
     } catch (e) {
       console.warn('Failed to save notifications to localStorage:', e);
     }
@@ -188,7 +189,7 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const updateLastTransactionTime = useCallback((timestamp: number) => {
     setState((prev) => ({ ...prev, lastTransactionTime: timestamp }));
-    localStorage.setItem(LAST_TRANSACTION_KEY, timestamp.toString());
+    storage.set(LAST_TRANSACTION_KEY, timestamp);
   }, []);
 
   /**

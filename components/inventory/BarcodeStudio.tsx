@@ -1182,7 +1182,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
         onClose={() => setShowCalibrationModal(false)}
         onSave={(ratio) => {
           setMmToPx(ratio);
-          localStorage.setItem('pharma_screen_calibration_ratio', ratio.toString());
+          storage.set(StorageKeys.SCREEN_CALIBRATION_RATIO, ratio);
         }}
         initialValue={mmToPx}
         t={t}

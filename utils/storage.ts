@@ -19,6 +19,16 @@ export const storage = {
 
       return JSON.parse(item) as T;
     } catch (error) {
+      // Robustness check: if it's a raw string that's not JSON, return it as-is
+      // this avoids SyntaxErrors for legacy unquoted strings
+      const rawItem = localStorage.getItem(key);
+      if (typeof rawItem === 'string' && rawItem.length > 0) {
+        // If it starts with a quote, it should have been parsed. If not, it's a raw string.
+        if (!rawItem.startsWith('"') && !rawItem.startsWith('{') && !rawItem.startsWith('[')) {
+          return rawItem as unknown as T;
+        }
+      }
+      
       console.warn(`Error reading storage key "${key}":`, error);
       return defaultValue;
     }

@@ -34,6 +34,7 @@ import {
   type VisibilityState,
 } from '@tanstack/react-table';
 import React, { useRef, useState } from 'react';
+import { storage } from '../../utils/storage';
 
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
@@ -157,12 +158,7 @@ interface TanStackTableProps<TData, TValue> {
 
 // Helper to get stored settings
 const getStoredSettings = (tableId: string) => {
-  try {
-    const stored = localStorage.getItem(`table-settings-${tableId}`);
-    return stored ? JSON.parse(stored) : null;
-  } catch {
-    return null;
-  }
+  return storage.get(`table-settings-${tableId}`, null);
 };
 
 // Heuristic for smart alignment
@@ -344,7 +340,7 @@ export function TanStackTable<TData, TValue>({
         columnAlignment: getDiff(newAlign, defaultColumnAlignment),
         pagination: newPagination || pagination,
       };
-      localStorage.setItem(`table-settings-${tableId}`, JSON.stringify(settings));
+      storage.set(`table-settings-${tableId}`, settings);
     },
     [tableId, defaultColumnAlignment, getDiff, pagination]
   );

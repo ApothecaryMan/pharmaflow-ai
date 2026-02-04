@@ -97,8 +97,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   useEffect(() => {
     if (hasMounted) {
       try {
-        localStorage.setItem(StorageKeys.RECEIPT_TEMPLATES, JSON.stringify(templates));
-        localStorage.setItem(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, activeTemplateId);
+        storage.set(StorageKeys.RECEIPT_TEMPLATES, templates);
+        storage.set(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, activeTemplateId);
         setQuotaError(false); // Clear error on successful save
       } catch (error) {
         console.error('Failed to save settings:', error);
@@ -475,8 +475,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 {hasChanges && (
                   <button
                     onClick={() => {
-                      localStorage.setItem('receipt_templates', JSON.stringify(templates));
-                      localStorage.setItem('receipt_active_template_id', activeTemplateId);
+                      storage.set(StorageKeys.RECEIPT_TEMPLATES, templates);
+                      storage.set(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, activeTemplateId);
                       setLastSavedOptions(JSON.stringify(options));
                     }}
                     className='w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all border border-emerald-100 dark:border-emerald-800/50 animate-fadeIn'
