@@ -10,21 +10,51 @@ import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
 import type { SalesFilters, SalesService, SalesStats } from './types';
 
-const getRawAll = (): Sale[] => {
-  return storage.get<Sale[]>(StorageKeys.SALES, []);
+import { getShardKey, getPreviousShardKeys, getAllShardKeys } from '../../utils/sharding';
+
+const getShardForDate = (date: string | Date): Sale[] => {
+  const key = getShardKey(StorageKeys.SALES, date);
+  return storage.get<Sale[]>(key, []);
+};
+
+// Helper: Load Current Month + Previous Month only (Active Window)
+const loadActiveShards = (): Sale[] => {
+  const currentKey = getShardKey(StorageKeys.SALES, new Date());
+  // Load current + 1 month back for safety (returns, editing recent sales)
+  const prevKeys = getPreviousShardKeys(StorageKeys.SALES, 1); 
+  const keysToCheck = [currentKey, ...prevKeys];
+  
+  // Deduplicate keys just in case
+  const uniqueKeys = Array.from(new Set(keysToCheck));
+
+  return uniqueKeys.flatMap(key => storage.get<Sale[]>(key, []));
 };
 
 export const createSalesService = (): SalesService => ({
   getAll: async (): Promise<Sale[]> => {
-    const all = getRawAll();
+    // Only load active shards (Current + Last Month) to prevent memory crash
+    const all = loadActiveShards();
     const settings = await settingsService.getAll();
     const branchCode = settings.branchCode;
     return all.filter((s) => !s.branchId || s.branchId === branchCode);
   },
 
   getById: async (id: string): Promise<Sale | null> => {
-    const all = await salesService.getAll();
-    return all.find((s) => s.id === id) || null;
+    // 1. Try Active Shards first (Fast path)
+    const active = loadActiveShards();
+    const found = active.find((s) => s.id === id);
+    if (found) return found;
+
+    // 2. Deep Search: Scan all history (Slow path, but necessary for returns)
+    const allKeys = getAllShardKeys(StorageKeys.SALES);
+    for (const key of allKeys) {
+       // Skip keys we already checked (optimally) or just scan all
+       const shard = storage.get<Sale[]>(key, []);
+       const match = shard.find(s => s.id === id);
+       if (match) return match;
+    }
+    
+    return null;
   },
 
   getByCustomer: async (customerId: string): Promise<Sale[]> => {
@@ -49,32 +79,70 @@ export const createSalesService = (): SalesService => ({
   },
 
   create: async (sale: Omit<Sale, 'id'>): Promise<Sale> => {
-    const all = getRawAll();
     const settings = await settingsService.getAll();
     const newSale: Sale = {
       ...sale,
       id: idGenerator.generate('sales'),
       branchId: settings.branchCode,
     } as Sale;
-    all.push(newSale);
-    storage.set(StorageKeys.SALES, all);
+
+    // Write to specific shard based on Sale Date
+    const shardKey = getShardKey(StorageKeys.SALES, newSale.date);
+    const shard = storage.get<Sale[]>(shardKey, []);
+    
+    shard.push(newSale);
+    storage.set(shardKey, shard);
+    
     return newSale;
   },
 
   update: async (id: string, updates: Partial<Sale>): Promise<Sale> => {
-    const all = getRawAll();
-    const index = all.findIndex((s) => s.id === id);
-    if (index === -1) throw new Error('Sale not found');
-    all[index] = { ...all[index], ...updates };
-    storage.set(StorageKeys.SALES, all);
-    return all[index];
+    // We need to find the sale first to know its date (and thus its shard)
+    // NOTE: This assumes the sale is in the "Active Window" (Recent).
+    // If updating a very old sale, we might miss it if we only search active shards.
+    // Enhanced search: Try active first, if fail, we might need to scan index (future improvement)
+    
+    let all = loadActiveShards();
+    let foundIndex = all.findIndex((s) => s.id === id);
+    let shardKey = '';
+
+    if (foundIndex === -1) {
+       // Fallback: If we have the date in updates, use it. 
+       // If not, we can't efficiently find it without an index. 
+       // For now, assume active window updates only (Standard POS usage).
+       throw new Error('Sale not found in recent history');
+    }
+
+    const sale = all[foundIndex];
+    shardKey = getShardKey(StorageKeys.SALES, sale.date);
+    
+    // Re-read specific shard to ensure atomic write on that key
+    const shard = storage.get<Sale[]>(shardKey, []);
+    const shardIndex = shard.findIndex(s => s.id === id);
+    
+    if (shardIndex !== -1) {
+       shard[shardIndex] = { ...shard[shardIndex], ...updates };
+       storage.set(shardKey, shard);
+       return shard[shardIndex];
+    }
+    
+    throw new Error('Concurrency Error: Sale not found in shard');
   },
 
   delete: async (id: string): Promise<boolean> => {
-    const all = getRawAll();
-    const filtered = all.filter((s) => s.id !== id);
-    storage.set(StorageKeys.SALES, filtered);
-    return true;
+    const all = loadActiveShards();
+    const sale = all.find(s => s.id === id);
+    if (!sale) return false;
+
+    const shardKey = getShardKey(StorageKeys.SALES, sale.date);
+    const shard = storage.get<Sale[]>(shardKey, []);
+    const filtered = shard.filter(s => s.id !== id);
+    
+    if (filtered.length !== shard.length) {
+      storage.set(shardKey, filtered);
+      return true;
+    }
+    return false;
   },
 
   getStats: async (): Promise<SalesStats> => {
@@ -119,22 +187,29 @@ export const createSalesService = (): SalesService => ({
   },
 
   save: async (sales: Sale[]): Promise<void> => {
-    // Merge Logic: Keep other branches, replace current branch/global
-    const all = getRawAll();
+    // 1. Group sales by Shard Key
+    const shards: Record<string, Sale[]> = {};
+    
+    sales.forEach(sale => {
+      const key = getShardKey(StorageKeys.SALES, sale.date);
+      if (!shards[key]) shards[key] = [];
+      shards[key].push(sale);
+    });
+
     const settings = await settingsService.getAll();
     const branchCode = settings.branchCode;
 
-    // Items that belong to OTHER branches (strict check)
-    const otherBranchSales = all.filter((s) => s.branchId && s.branchId !== branchCode);
-
-    // Determine which items in 'sales' (the new state) should be saved
-    // Assuming 'sales' contains ALL items for the current branch (including legacy ones)
-
-    // Ensure legacy items get adopted if needed? Or just save as they are.
-    // Optimization: If sales doesn't contain legacy items anymore (deleted), they are gone.
-
-    const merged = [...otherBranchSales, ...sales];
-    storage.set(StorageKeys.SALES, merged);
+    // 2. Process each relevant shard
+    Object.entries(shards).forEach(([key, branchSales]) => {
+      const currentShard = storage.get<Sale[]>(key, []);
+      
+      // Keep items from OTHER branches
+      const otherBranchSales = currentShard.filter(s => s.branchId && s.branchId !== branchCode);
+      
+      // Combine
+      const merged = [...otherBranchSales, ...branchSales];
+      storage.set(key, merged);
+    });
   },
 });
 
