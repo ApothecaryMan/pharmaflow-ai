@@ -120,10 +120,11 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       },
       {
         id: 'items',
+        accessorFn: (row) => row.items.length,
         header: t.headers.items,
-        cell: ({ row }) => (
+        cell: ({ getValue }) => (
           <span className='text-sm text-gray-600 dark:text-gray-400'>
-            {row.original.items.length} {t.items || 'items'}
+            {getValue() as number} {t.items || 'items'}
           </span>
         ),
       },
@@ -356,6 +357,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           onRowClick={(sale) => setSelectedSale(sale)}
           emptyMessage={t.noResults}
           lite={true}
+          dense={true}
           initialSorting={[{ id: 'date', desc: true }]}
         />
       </div>
