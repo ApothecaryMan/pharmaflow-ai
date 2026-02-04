@@ -33,6 +33,7 @@ import { returnService } from './returns';
 import { salesService } from './sales';
 import { settingsService } from './settings/settingsService';
 import { supplierService } from './suppliers';
+import { runShardingMigration } from './migration/shardingMigration';
 
 export interface DataState {
   inventory: Drug[];
@@ -139,6 +140,14 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       try {
         // Enforce minimum loading time of 1000ms for better UX
         const minLoadTime = new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // --- Run Migrations ---
+        // Ensure monolithic data is split before services try to read shards
+        try {
+          runShardingMigration();
+        } catch (err) {
+          console.error('Migration Failed:', err);
+        }
 
         const [results, _] = await Promise.all([
           Promise.all([
