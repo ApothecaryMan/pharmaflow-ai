@@ -895,6 +895,8 @@ export function useEntityHandlers({
       setSales,
       success,
       error,
+      currentShift,
+      addTransaction,
     ]
   );
 
@@ -1195,7 +1197,7 @@ export function useEntityHandlers({
 
       setSales((prev) => prev.map((s) => (s.id === saleId ? { ...s, ...finalUpdates } : s)));
     },
-    [sales, inventory, currentEmployeeId, setInventory, setSales]
+    [sales, inventory, currentEmployeeId, setInventory, setSales, currentShift, addTransaction]
   );
 
   const handleProcessReturn = useCallback(
@@ -1321,6 +1323,8 @@ export function useEntityHandlers({
       getVerifiedDate,
       employees,
       currentEmployeeId,
+      currentShift,
+      addTransaction,
     ]
   );
 
