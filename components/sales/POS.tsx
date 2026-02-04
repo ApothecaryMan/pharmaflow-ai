@@ -41,6 +41,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartAutocomplete } from '../common/SmartInputs';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { useStatusBar } from '../layout/StatusBar';
+import { useShift } from '../../hooks/useShift'; // Import useShift
 import { TabBar } from '../layout/TabBar';
 import {
   generateInvoiceHTML,
@@ -70,7 +71,7 @@ interface POSProps {
     deliveryEmployeeId?: string;
     status?: 'completed' | 'pending' | 'with_delivery' | 'on_way' | 'cancelled';
     processingTimeMinutes?: number;
-  }) => void;
+  }) => Promise<boolean>;
   color: string;
   t: typeof TRANSLATIONS.EN.pos;
   customers: Customer[];
@@ -302,36 +303,8 @@ export const POS: React.FC<POSProps> = ({
   const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'out_of_stock'>('in_stock');
 
   // Shift validation - check if there's an open shift
-  const [hasOpenShift, setHasOpenShift] = useState<boolean>(true);
-
-  useEffect(() => {
-    const checkShiftStatus = () => {
-      try {
-        const savedShifts = storage.get<Shift[]>(StorageKeys.SHIFTS, []);
-        if (savedShifts.length === 0) {
-          setHasOpenShift(false);
-          return;
-        }
-        const openShift = savedShifts.find((s) => s.status === 'open');
-        setHasOpenShift(!!openShift);
-      } catch {
-        setHasOpenShift(false);
-      }
-    };
-
-    // Check on mount
-    checkShiftStatus();
-
-    // Listen for storage changes (when shift is opened/closed from CashRegister)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === StorageKeys.SHIFTS) {
-        checkShiftStatus();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  const { currentShift } = useShift();
+  const hasOpenShift = !!currentShift;
   const [activeFilterDropdown, setActiveFilterDropdown] = useState<'category' | 'stock' | null>(
     null
   );
@@ -801,7 +774,7 @@ export const POS: React.FC<POSProps> = ({
     (item) => (item.pack?.quantity || 0) + (item.unit?.quantity || 0) > 0
   ).length;
 
-  const handleCheckout = (
+  const handleCheckout = async (
     saleType: 'walk-in' | 'delivery' = 'walk-in',
     isPending: boolean = false
   ) => {
@@ -860,7 +833,8 @@ export const POS: React.FC<POSProps> = ({
       );
     }
 
-    onCompleteSale({
+    // Await the result of the sale (it returns boolean now)
+    const success = await onCompleteSale({
       items: cart,
       customerName: customerName || 'Guest Customer',
       customerCode,
@@ -887,7 +861,6 @@ export const POS: React.FC<POSProps> = ({
       globalDiscount,
       subtotal,
       total: cartTotal + deliveryFee,
-      // @ts-expect-error - Extended properties handled by parent
       deliveryEmployeeId: saleType === 'delivery' ? deliveryEmployeeId : undefined,
       status: isPending
         ? 'pending'
@@ -898,6 +871,12 @@ export const POS: React.FC<POSProps> = ({
           : 'completed',
       processingTimeMinutes,
     });
+
+    // If sale failed (returned false), STOP here. Do not print, do not clear cart.
+    if (success === false) {
+      console.warn('[POS] Checkout failed. Cart preserved.');
+      return;
+    }
 
     // Auto-Print Receipt Logic
     try {

@@ -59,7 +59,7 @@ export interface EntityHandlers {
   handleRejectPurchase: (purchaseId: string, reason?: string) => void;
 
   // Sale handlers
-  handleCompleteSale: (saleData: SaleData) => Promise<void>;
+  handleCompleteSale: (saleData: SaleData) => Promise<boolean>;
   handleUpdateSale: (saleId: string, updates: Partial<Sale>) => void;
   handleProcessReturn: (returnData: Return) => void;
 
@@ -705,27 +705,27 @@ export function useEntityHandlers({
           // But strict mode suggests enforcing login.
           // Let's enforce login for consistency with strict mode.
           error('Login required to complete sale');
-          return;
+          return false;
         }
         if (
           !canPerformAction(employees?.find((e) => e.id === currentEmployeeId)?.role, 'sale.create')
         ) {
           error('Permission denied: Cannot process sales');
-          return;
+          return false;
         }
 
         // 1. Validate Sale Data
         const dataValidation = validateSaleData(saleData);
         if (!dataValidation.success) {
           error(dataValidation.message || 'Invalid sale data');
-          return;
+          return false;
         }
 
         // 2. Validate Stock Availability (Pre-check)
         const stockValidation = validateStockAvailability(saleData.items, inventory);
         if (!stockValidation.success) {
           error(stockValidation.message || 'Insufficient stock');
-          return;
+          return false;
         }
 
         // 3. Validate Transaction Time
@@ -733,7 +733,7 @@ export function useEntityHandlers({
         const timeValidation = validateTransactionTime(saleDate);
         if (!timeValidation.valid) {
           error(`⚠️ ${timeValidation.message || 'Invalid transaction time'}`);
-          return;
+          return false;
         }
 
         // --- START TRANSACTION ---
@@ -771,7 +771,7 @@ export function useEntityHandlers({
           // Since saveBatches is only called at the end, returning null effectively rolls back the storage.
           
           error(allocError.message || 'Transaction failed. Stock has been rolled back.');
-          return; // Stop execution
+          return false; // Stop execution
         }
 
         // 5. Preparation Phase (Prepare new state objects)
@@ -873,14 +873,19 @@ export function useEntityHandlers({
         });
 
         success(`Order #${serialId} completed!`);
-      } catch (err) {
+        return true;
+      } catch (err: any) {
         console.error('[handleCompleteSale] Fatal error:', err);
+        console.error('Critical Error in handleCompleteSale:', err);
+        
         // Attempt generic rollback if possible (difficult here as we might have partial state updates if logic wasn't clean)
         // Since we separated Allocation (with explicit rollback) from State Commit,
         // the only risk is if setInventory succeeds but setSales fails.
         // React 18 batches these updates, but custom context logic might not.
         // For now, the Allocation Rollback covers the most critical "Inventory Drift" issue.
+        
         error('An unexpected error occurred. Please refresh and try again.');
+        return false;
       }
     },
     [
