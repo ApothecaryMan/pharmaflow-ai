@@ -12,6 +12,7 @@
 
 import { StorageKeys } from '../config/storageKeys';
 import type { AppSettings } from '../services/settings/types';
+import { getAllShardKeys } from './sharding';
 import { storage } from './storage';
 
 // Supported Entity Types
@@ -73,9 +74,19 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
 
   try {
     switch (type) {
-      case 'sales':
-        data = storage.get(StorageKeys.SALES, []);
+      case 'sales': {
+        // Sharded: Scan latest shards to find max ID
+        const keys = getAllShardKeys(StorageKeys.SALES);
+        // keys are typically sorted newest first by getAllShardKeys
+        for (const key of keys) {
+           const shardData = storage.get<any[]>(key, []);
+           if (shardData.length > 0) {
+             data = shardData;
+             break; // Found the latest data, no need to go further back
+           }
+        }
         break;
+      }
       case 'inventory':
         data = storage.get(StorageKeys.INVENTORY, []);
         break;
@@ -98,9 +109,17 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
         data = [...salesReturns, ...purchaseReturns];
         break;
       }
-      case 'shifts':
-        data = storage.get(StorageKeys.SHIFTS, []);
+      case 'shifts': {
+        const keys = getAllShardKeys(StorageKeys.SHIFTS);
+        for (const key of keys) {
+           const shardData = storage.get<any[]>(key, []);
+           if (shardData.length > 0) {
+             data = shardData;
+             break; 
+           }
+        }
         break;
+      }
       case 'movement':
         data = storage.get(StorageKeys.STOCK_MOVEMENTS, []);
         break;
