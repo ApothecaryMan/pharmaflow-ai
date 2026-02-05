@@ -126,6 +126,14 @@ button:disabled,
   }
 }
 
+/* Material Symbols Override - Force Font Family */
+.material-symbols-rounded {
+  font-family: 'Material Symbols Rounded' !important;
+  direction: ltr !important; /* Prevent RTL flipping */
+  display: inline-block;
+  line-height: 1;
+}
+
 /* --- Real-Time Sales Animations --- */
 @keyframes slideIn {
   0% {
