@@ -286,6 +286,24 @@ export const Inventory: React.FC<InventoryProps> = ({
           if (values.includes('out_of_stock')) return d.stock <= 0;
           return true;
         });
+      } else if (groupId === 'expiry_status') {
+        const now = getVerifiedDate();
+        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const nearExpiredLimit = new Date(currentMonthStart);
+        nearExpiredLimit.setMonth(currentMonthStart.getMonth() + 6);
+
+        result = result.filter((d) => {
+          if (!d.expiryDate) return values.includes('all');
+          const expiry = new Date(d.expiryDate);
+
+          if (values.includes('expired')) {
+            return expiry < currentMonthStart;
+          }
+          if (values.includes('near_expired')) {
+            return expiry >= currentMonthStart && expiry < nearExpiredLimit;
+          }
+          return true; // 'all' or other values
+        });
       } else {
         // Generic filter for other columns if added later
         result = result.filter((d) => {
@@ -512,6 +530,19 @@ export const Inventory: React.FC<InventoryProps> = ({
           { label: t.available || 'Available', value: 'in_stock' },
           { label: t.outOfStock || 'Out of Stock', value: 'out_of_stock' },
         ],
+        defaultValue: 'all',
+      },
+      {
+        id: 'expiry_status',
+        label: t.expiryStatus || 'Expiry Status',
+        icon: 'event_busy',
+        mode: 'single',
+        options: [
+          { label: t.allExpiry || 'Show All', value: 'all' },
+          { label: t.nearExpired || 'Near Expired', value: 'near_expired' },
+          { label: t.expired || 'Expired', value: 'expired' },
+        ],
+        defaultValue: 'all',
       },
     ],
     [t]
@@ -525,9 +556,26 @@ export const Inventory: React.FC<InventoryProps> = ({
         id: 'stock_status',
         accessorFn: (row: Drug) => (row.stock > 0 ? 'in_stock' : 'out_of_stock'),
         header: t.headers.stock,
+        meta: { hideFromSettings: true },
+      },
+      {
+        id: 'expiry_status',
+        accessorFn: (row: Drug) => {
+          if (!row.expiryDate) return 'valid';
+          const now = getVerifiedDate();
+          const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          const expiry = new Date(row.expiryDate);
+          if (expiry < currentMonthStart) return 'expired';
+          const nearExpiredLimit = new Date(currentMonthStart);
+          nearExpiredLimit.setMonth(currentMonthStart.getMonth() + 6);
+          if (expiry < nearExpiredLimit) return 'near_expired';
+          return 'valid';
+        },
+        header: t.expiryStatus,
+        meta: { hideFromSettings: true },
       },
     ],
-    [tableColumns, t]
+    [tableColumns, t, getVerifiedDate]
   );
 
   return (
@@ -599,8 +647,8 @@ export const Inventory: React.FC<InventoryProps> = ({
               pageSize={20}
               // New Filter Props
               filterableColumns={filterConfigs}
-              defaultHiddenColumns={['stock_status']} // Hide the helper column
               onFilterChange={setActiveFilters}
+              defaultHiddenColumns={[]} // Helpers are now hidden via metadata
             />
           </div>
         </>
