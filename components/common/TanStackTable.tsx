@@ -234,6 +234,7 @@ interface TanStackTableProps<TData, TValue> {
   filterableColumns?: FilterConfig[]; // Definitions for the pills
   initialFilters?: Record<string, any[]>;
   onFilterChange?: (filters: Record<string, any[]>) => void;
+  enableGlobalSearchFocus?: boolean; // New: capture global keydown for search
 }
 
 // Helper to get stored settings
@@ -305,6 +306,7 @@ export function TanStackTable<TData, TValue>({
   filterableColumns = [],
   initialFilters = {},
   onFilterChange,
+  enableGlobalSearchFocus = true,
 }: TanStackTableProps<TData, TValue> & { enableTopToolbar?: boolean; enableShowAll?: boolean }) {
   // Detect RTL direction
   const isRtl = typeof document !== 'undefined' && document.dir === 'rtl';
@@ -322,6 +324,8 @@ export function TanStackTable<TData, TValue>({
       }
     },
   });
+  
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { language } = useSettings();
   const t = TRANSLATIONS[language];
@@ -375,12 +379,14 @@ export function TanStackTable<TData, TValue>({
 
   const globalFilter =
     externalGlobalFilter !== undefined ? externalGlobalFilter : internalGlobalFilter;
-  const setGlobalFilter = (val: string) => {
+  const setGlobalFilter = (updaterOrValue: string | ((prev: string) => string)) => {
+    const newValue = typeof updaterOrValue === 'function' ? updaterOrValue(globalFilter) : updaterOrValue;
+    
     if (onSearchChange) {
-      onSearchChange(val);
+      onSearchChange(newValue);
     }
     if (externalGlobalFilter === undefined) {
-      setInternalGlobalFilter(val);
+      setInternalGlobalFilter(newValue);
     }
   };
 
@@ -459,6 +465,35 @@ export function TanStackTable<TData, TValue>({
     },
     [tableId, defaultColumnAlignment, getDiff, pagination]
   );
+
+  // Global Keydown Listener for Search Autofocus
+  React.useEffect(() => {
+    if (!enableGlobalSearchFocus || !enableSearch) return;
+
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if user is already in an input
+      if (
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA' ||
+        (document.activeElement as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+
+      // Capture simple alphanumeric for search focus
+      // Also allow space if it's the first character
+      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        // If it's a space and current filter is empty, maybe don't start with it? 
+        // But usually users want to start typing.
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setGlobalFilter((prev: any) => (prev ? prev + e.key : e.key));
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [enableGlobalSearchFocus, enableSearch]);
 
   // React to default prop changes (e.g. Language switch or prop updates)
   React.useEffect(() => {
@@ -608,7 +643,7 @@ export function TanStackTable<TData, TValue>({
           {/* All Columns Visibility */}
           <div className='space-y-1'>
             <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-gray-100 dark:border-gray-800 mb-1'>
-              {t.global.table.columns}
+              {t?.global?.table?.columns || 'Columns'}
             </div>
             {table
               .getAllLeafColumns()
@@ -652,7 +687,7 @@ export function TanStackTable<TData, TValue>({
               <div className='px-3 py-3'>
                 <div className='text-[10px] font-bold tracking-[0.1em] text-gray-400 dark:text-gray-500 uppercase mb-2.5 flex items-center gap-2'>
                   <span className='material-symbols-rounded text-sm opacity-60'>format_align_left</span>
-                  {t.global.table.alignment}
+                  {t?.global?.table?.alignment || 'Alignment'}
                 </div>
                 {/* Unified Alignment */}
                 <div className='bg-gray-50 dark:bg-gray-800/80 p-1.5 rounded-xl border border-gray-100 dark:border-gray-800/50 flex items-center justify-between gap-1'>
@@ -704,6 +739,7 @@ export function TanStackTable<TData, TValue>({
           <div className='w-full max-w-xl'>
             {enableSearch && (
               <SearchInput
+                ref={searchInputRef}
                 value={globalFilter ?? ''}
                 onSearchChange={(val) => setGlobalFilter(val)}
                 onClear={() => setGlobalFilter('')}
