@@ -3,7 +3,7 @@ import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Customer, Sale } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { SearchDropdown, type SearchDropdownColumn } from '../common/SearchDropdown';
+import { SearchDropdown, type SearchDropdownColumn, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { SmallCard } from '../common/SmallCard';
 import { useSmartDirection } from '../common/SmartInputs';
@@ -62,6 +62,13 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
     setSearchTerm('');
     setShowDropdown(false);
   };
+
+  const { highlightedIndex, onKeyDown } = useSearchKeyboardNavigation({
+    results: filteredCustomers,
+    onSelect: handleCustomerSelect,
+    isOpen: showDropdown,
+    onClose: () => setShowDropdown(false),
+  });
 
   const handleClear = () => {
     setSearchTerm('');
@@ -295,7 +302,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
         </h2>
 
         {/* Search Section */}
-        <div className='flex items-center gap-2 flex-1 max-w-md relative z-30'>
+        <div className='flex items-center gap-2 flex-1 max-w-xl relative z-30'>
           <div className='relative flex-1' ref={dropdownRef}>
             <SearchInput
               value={searchTerm}
@@ -304,9 +311,13 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
                 setShowDropdown(true);
               }}
               onFocus={() => setShowDropdown(true)}
+              onKeyDown={(e) => {
+                if (!showDropdown || filteredCustomers.length === 0) return;
+                onKeyDown(e);
+              }}
               icon='person_search'
               placeholder={t.loyalty?.searchPlaceholder || 'Search by name, code, or phone...'}
-              className='pe-4 py-2.5 border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm'
+              className='pe-4'
               style={{ '--tw-ring-color': 'var(--primary-500)' } as any}
             />
 
@@ -315,6 +326,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
               onSelect={handleCustomerSelect}
               columns={dropdownColumns}
               isVisible={showDropdown && !!searchTerm}
+              highlightedIndex={highlightedIndex}
               emptyMessage={t.loyalty?.noCustomerFound || 'No customer found'}
             />
           </div>

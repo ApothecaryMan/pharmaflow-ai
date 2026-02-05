@@ -26,7 +26,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { FloatingInput } from '../common/FloatingInput';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { Modal } from '../common/Modal';
-import { SearchDropdown } from '../common/SearchDropdown';
+import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useSmartDirection } from '../common/SmartInputs';
@@ -97,7 +97,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const [filter, setFilter] = useState<'all' | 'in-stock' | 'out-stock'>('all');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const [selectedCartIndex, setSelectedCartIndex] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('purchases_cart_selected');
@@ -169,6 +168,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     const match = inventory.find((d) => d.barcode === trimmed || d.internalCode === trimmed);
 
+    if (match) {
+      handleAddItem(match);
+      setSearch('');
+      setShowSuggestions(false);
+    }
     if (match) {
       handleAddItem(match);
       setSearch('');
@@ -937,6 +941,43 @@ export const Purchases: React.FC<PurchasesProps> = ({
     );
   }, [suppliers, supplierSearch]);
 
+  const {
+    highlightedIndex: selectedSuggestionIndex,
+    onKeyDown: onDrugSearchKeyDown,
+    setHighlightedIndex: setSelectedSuggestionIndex,
+  } = useSearchKeyboardNavigation({
+    results: filteredDrugs,
+    onSelect: (drug) => {
+      handleAddItem(drug);
+      setSearch('');
+      setShowSuggestions(false);
+    },
+    isOpen: showSuggestions,
+    onClose: () => setShowSuggestions(false),
+    onEnterNoHighlight: () => {
+      if (filteredDrugs.length > 0) {
+        handleAddItem(filteredDrugs[0]);
+        setSearch('');
+        setShowSuggestions(false);
+      }
+    },
+  });
+
+  const {
+    highlightedIndex: selectedSupplierIndex,
+    onKeyDown: onSupplierSearchKeyDown,
+    setHighlightedIndex: setSelectedSupplierIndex,
+  } = useSearchKeyboardNavigation({
+    results: filteredSuppliers,
+    onSelect: (supplier) => {
+      setSelectedSupplierId(supplier.id);
+      setSupplierSearch('');
+      setIsSupplierOpen(false);
+    },
+    isOpen: isSupplierOpen,
+    onClose: () => setIsSupplierOpen(false),
+  });
+
   return (
     <div className='h-full flex flex-col gap-2 animate-fade-in overflow-hidden'>
       {/* Header with toggle */}
@@ -1042,27 +1083,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   onSearchChange={(val) => {
                     setSearch(val);
                     setShowSuggestions(true);
-                    setSelectedSuggestionIndex(-1);
                   }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      if (selectedSuggestionIndex >= 0 && filteredDrugs[selectedSuggestionIndex]) {
-                        handleAddItem(filteredDrugs[selectedSuggestionIndex]);
-                      } else if (filteredDrugs.length > 0) {
-                        handleAddItem(filteredDrugs[0]);
-                      }
-                      setShowSuggestions(false);
-                      setSearch('');
-                    } else if (e.key === 'ArrowDown') {
-                      e.preventDefault();
-                      setSelectedSuggestionIndex((prev) => (prev + 1) % filteredDrugs.length);
-                    } else if (e.key === 'ArrowUp') {
-                      e.preventDefault();
-                      setSelectedSuggestionIndex(
-                        (prev) => (prev - 1 + filteredDrugs.length) % filteredDrugs.length
-                      );
-                    }
-                  }}
+                  onKeyDown={onDrugSearchKeyDown}
                   placeholder={t.placeholders?.searchDrug || 'Search products...'}
                   className={`w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 h-[42px] focus:ring-${color}-500 focus:border-${color}-500`}
                 />
@@ -1111,6 +1133,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     },
                   ]}
                   isVisible={showSuggestions && !!search.trim()}
+                  highlightedIndex={selectedSuggestionIndex}
                   emptyMessage={t.noResults}
                 />
               </div>
@@ -1137,6 +1160,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     if (!isSupplierOpen) setIsSupplierOpen(true);
                   }}
                   onFocus={() => setIsSupplierOpen(true)}
+                  onKeyDown={(e) => {
+                    if (!isSupplierOpen || filteredSuppliers.length === 0) return;
+                    onSupplierSearchKeyDown(e);
+                  }}
                   // Clear handled via value update, explicit functionality if needed
                   dir={supplierSearchDir}
                   placeholder={t.placeholders?.searchSupplier || 'Search and select supplier...'}
@@ -1167,6 +1194,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     },
                   ]}
                   isVisible={isSupplierOpen}
+                  highlightedIndex={selectedSupplierIndex}
                   emptyMessage={t.noResults || 'No suppliers found'}
                 />
               </div>
