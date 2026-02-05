@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { StorageKeys } from '../config/storageKeys';
 import type { CashTransaction, Shift } from '../types';
+import { getPreviousShardKeys, getShardKey } from '../utils/sharding';
 import { storage } from '../utils/storage';
 
 /**
@@ -38,9 +39,18 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // --- Load from storage on mount ---
   useEffect(() => {
     const loadShifts = () => {
-      const savedShifts = storage.get<Shift[]>(StorageKeys.SHIFTS, []);
-      if (savedShifts.length > 0) {
-        const parsed: Shift[] = savedShifts.map((s: any) => ({
+      // Load Current + Previous Month
+      const currentKey = getShardKey(StorageKeys.SHIFTS, new Date());
+      const prevKeys = getPreviousShardKeys(StorageKeys.SHIFTS, 1);
+      const keys = [currentKey, ...prevKeys];
+
+      const loadedShifts = keys.flatMap((key) => storage.get<Shift[]>(key, []));
+
+      // Sort by openTime descending
+      loadedShifts.sort((a, b) => new Date(b.openTime).getTime() - new Date(a.openTime).getTime());
+
+      if (loadedShifts.length > 0) {
+        const parsed: Shift[] = loadedShifts.map((s: any) => ({
           ...s,
           cardSales: s.cardSales ?? 0,
           returns: s.returns ?? 0,
@@ -60,17 +70,14 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // and we can listen to window 'storage' for other tabs.
 
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === StorageKeys.SHIFTS && e.newValue) {
-        // Deep equality check to prevent loops
-        const currentJSON = JSON.stringify(shifts);
-        if (e.newValue === currentJSON) return;
+      // Listen to ANY active shift shard
+      const currentKey = getShardKey(StorageKeys.SHIFTS, new Date());
+      const prevKey = getPreviousShardKeys(StorageKeys.SHIFTS, 1)[0];
 
-        try {
-          const parsed: Shift[] = JSON.parse(e.newValue);
-          setShifts(parsed);
-        } catch (err) {
-          console.error('Failed to parse shift update', err);
-        }
+      if ((e.key === currentKey || e.key === prevKey) && e.newValue) {
+        // Simply reload all if any active shard changes
+        // (Simpler than merging partial updates)
+        refreshShifts();
       }
     };
 
@@ -79,9 +86,23 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [shifts]);
 
   // --- Persist to storage on change ---
+  // --- Persist to storage on change ---
   useEffect(() => {
     if (!isLoading) {
-      storage.set(StorageKeys.SHIFTS, shifts);
+      // Sharded Save: Group by Month
+      const shards: Record<string, Shift[]> = {};
+
+      shifts.forEach((shift) => {
+        // Default to current date if openTime missing (shouldn't happen)
+        const date = shift.openTime || new Date().toISOString();
+        const key = getShardKey(StorageKeys.SHIFTS, date);
+        if (!shards[key]) shards[key] = [];
+        shards[key].push(shift);
+      });
+
+      Object.entries(shards).forEach(([key, items]) => {
+        storage.set(key, items);
+      });
     }
   }, [shifts, isLoading]);
 
@@ -134,9 +155,18 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   );
 
   const refreshShifts = useCallback(() => {
-    const savedShifts = storage.get<Shift[]>(StorageKeys.SHIFTS, []);
-    if (savedShifts.length > 0) {
-      const parsed: Shift[] = savedShifts.map((s: any) => ({
+    // Load Current + Previous Month
+    const currentKey = getShardKey(StorageKeys.SHIFTS, new Date());
+    const prevKeys = getPreviousShardKeys(StorageKeys.SHIFTS, 1);
+    const keys = [currentKey, ...prevKeys];
+
+    const loadedShifts = keys.flatMap((key) => storage.get<Shift[]>(key, []));
+
+    // Sort by openTime descending
+    loadedShifts.sort((a, b) => new Date(b.openTime).getTime() - new Date(a.openTime).getTime());
+
+    if (loadedShifts.length > 0) {
+      const parsed: Shift[] = loadedShifts.map((s: any) => ({
         ...s,
         cardSales: s.cardSales ?? 0,
         returns: s.returns ?? 0,

@@ -25,6 +25,7 @@ import { useAlert } from '../../context';
 import { getLocationName } from '../../data/locations';
 import { useFilterDropdown } from '../../hooks/useFilterDropdown';
 import { usePOSTabs } from '../../hooks/usePOSTabs';
+import { useShift } from '../../hooks/useShift'; // Import useShift
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
@@ -41,7 +42,6 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartAutocomplete } from '../common/SmartInputs';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { useStatusBar } from '../layout/StatusBar';
-import { useShift } from '../../hooks/useShift'; // Import useShift
 import { TabBar } from '../layout/TabBar';
 import {
   generateInvoiceHTML,

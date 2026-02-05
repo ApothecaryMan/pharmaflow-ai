@@ -28,12 +28,12 @@ import type {
 import { customerService } from './customers';
 import { employeeService } from './hr';
 import { inventoryService } from './inventory';
+import { runShardingMigration } from './migration/shardingMigration';
 import { purchaseService } from './purchases';
 import { returnService } from './returns';
 import { salesService } from './sales';
 import { settingsService } from './settings/settingsService';
 import { supplierService } from './suppliers';
-import { runShardingMigration } from './migration/shardingMigration';
 
 export interface DataState {
   inventory: Drug[];

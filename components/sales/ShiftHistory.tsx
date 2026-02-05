@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
+import { useShift } from '../../hooks/useShift';
 import type { Shift } from '../../types';
 import { createSearchRegex } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
@@ -28,16 +29,13 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   const [endDate, setEndDate] = useState('');
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
 
-  // Load shifts from localStorage
+  // Load shifts from useShift hook (sharded storage)
+  const { shifts: allShiftsFromHook, isLoading } = useShift();
+
   const shifts = useMemo(() => {
-    const savedShifts = localStorage.getItem('pharma_shifts');
-    if (savedShifts) {
-      const allShifts: Shift[] = JSON.parse(savedShifts);
-      // Only show closed shifts
-      return allShifts.filter((s) => s.status === 'closed');
-    }
-    return [];
-  }, []);
+    // Only show closed shifts
+    return allShiftsFromHook.filter((s) => s.status === 'closed');
+  }, [allShiftsFromHook]);
 
   const formatRelativeDate = (date: Date) => {
     const now = new Date();
@@ -220,6 +218,19 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
 
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in'>
+      {isLoading && (
+        <div className='absolute inset-0 z-50 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-2xl'>
+          <div className='flex flex-col items-center gap-3'>
+            <div
+              className={`w-10 h-10 border-4 border-${color}-200 border-t-${color}-600 rounded-full animate-spin`}
+            />
+            <p className='text-sm font-medium text-gray-500'>
+              {language === 'AR' ? 'جاري تحميل المناوبات...' : 'Loading shifts...'}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
         <div>

@@ -28,7 +28,7 @@ export const storage = {
           return rawItem as unknown as T;
         }
       }
-      
+
       console.warn(`Error reading storage key "${key}":`, error);
       return defaultValue;
     }

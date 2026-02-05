@@ -148,23 +148,14 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   const handleConfirm = () => {
     // VALIDATION: Check shift status and balance
     try {
-      const savedShifts = localStorage.getItem('pharma_shifts');
-      if (!savedShifts) {
+      if (!currentShift) {
         setValidationError(
           t.returns.validation?.noOpenShift || 'Cannot process return - no open shift'
         );
         return;
       }
 
-      const allShifts: Shift[] = JSON.parse(savedShifts);
-      const openShift = allShifts.find((s) => s.status === 'open');
-
-      if (!openShift) {
-        setValidationError(
-          t.returns.validation?.noOpenShift || 'Cannot process return - no open shift'
-        );
-        return;
-      }
+      const openShift = currentShift;
 
       // --- Pharmacist Threshold Validation ---
       if (userRole === 'pharmacist') {

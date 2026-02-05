@@ -5,12 +5,10 @@
 import { StorageKeys } from '../../config/storageKeys';
 import type { Sale } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
-
+import { getAllShardKeys, getPreviousShardKeys, getShardKey } from '../../utils/sharding';
 import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
 import type { SalesFilters, SalesService, SalesStats } from './types';
-
-import { getShardKey, getPreviousShardKeys, getAllShardKeys } from '../../utils/sharding';
 
 const getShardForDate = (date: string | Date): Sale[] => {
   const key = getShardKey(StorageKeys.SALES, date);
@@ -21,13 +19,13 @@ const getShardForDate = (date: string | Date): Sale[] => {
 const loadActiveShards = (): Sale[] => {
   const currentKey = getShardKey(StorageKeys.SALES, new Date());
   // Load current + 1 month back for safety (returns, editing recent sales)
-  const prevKeys = getPreviousShardKeys(StorageKeys.SALES, 1); 
+  const prevKeys = getPreviousShardKeys(StorageKeys.SALES, 1);
   const keysToCheck = [currentKey, ...prevKeys];
-  
+
   // Deduplicate keys just in case
   const uniqueKeys = Array.from(new Set(keysToCheck));
 
-  return uniqueKeys.flatMap(key => storage.get<Sale[]>(key, []));
+  return uniqueKeys.flatMap((key) => storage.get<Sale[]>(key, []));
 };
 
 export const createSalesService = (): SalesService => ({
@@ -48,12 +46,12 @@ export const createSalesService = (): SalesService => ({
     // 2. Deep Search: Scan all history (Slow path, but necessary for returns)
     const allKeys = getAllShardKeys(StorageKeys.SALES);
     for (const key of allKeys) {
-       // Skip keys we already checked (optimally) or just scan all
-       const shard = storage.get<Sale[]>(key, []);
-       const match = shard.find(s => s.id === id);
-       if (match) return match;
+      // Skip keys we already checked (optimally) or just scan all
+      const shard = storage.get<Sale[]>(key, []);
+      const match = shard.find((s) => s.id === id);
+      if (match) return match;
     }
-    
+
     return null;
   },
 
@@ -89,10 +87,10 @@ export const createSalesService = (): SalesService => ({
     // Write to specific shard based on Sale Date
     const shardKey = getShardKey(StorageKeys.SALES, newSale.date);
     const shard = storage.get<Sale[]>(shardKey, []);
-    
+
     shard.push(newSale);
     storage.set(shardKey, shard);
-    
+
     return newSale;
   },
 
@@ -101,43 +99,43 @@ export const createSalesService = (): SalesService => ({
     // NOTE: This assumes the sale is in the "Active Window" (Recent).
     // If updating a very old sale, we might miss it if we only search active shards.
     // Enhanced search: Try active first, if fail, we might need to scan index (future improvement)
-    
-    let all = loadActiveShards();
-    let foundIndex = all.findIndex((s) => s.id === id);
+
+    const all = loadActiveShards();
+    const foundIndex = all.findIndex((s) => s.id === id);
     let shardKey = '';
 
     if (foundIndex === -1) {
-       // Fallback: If we have the date in updates, use it. 
-       // If not, we can't efficiently find it without an index. 
-       // For now, assume active window updates only (Standard POS usage).
-       throw new Error('Sale not found in recent history');
+      // Fallback: If we have the date in updates, use it.
+      // If not, we can't efficiently find it without an index.
+      // For now, assume active window updates only (Standard POS usage).
+      throw new Error('Sale not found in recent history');
     }
 
     const sale = all[foundIndex];
     shardKey = getShardKey(StorageKeys.SALES, sale.date);
-    
+
     // Re-read specific shard to ensure atomic write on that key
     const shard = storage.get<Sale[]>(shardKey, []);
-    const shardIndex = shard.findIndex(s => s.id === id);
-    
+    const shardIndex = shard.findIndex((s) => s.id === id);
+
     if (shardIndex !== -1) {
-       shard[shardIndex] = { ...shard[shardIndex], ...updates };
-       storage.set(shardKey, shard);
-       return shard[shardIndex];
+      shard[shardIndex] = { ...shard[shardIndex], ...updates };
+      storage.set(shardKey, shard);
+      return shard[shardIndex];
     }
-    
+
     throw new Error('Concurrency Error: Sale not found in shard');
   },
 
   delete: async (id: string): Promise<boolean> => {
     const all = loadActiveShards();
-    const sale = all.find(s => s.id === id);
+    const sale = all.find((s) => s.id === id);
     if (!sale) return false;
 
     const shardKey = getShardKey(StorageKeys.SALES, sale.date);
     const shard = storage.get<Sale[]>(shardKey, []);
-    const filtered = shard.filter(s => s.id !== id);
-    
+    const filtered = shard.filter((s) => s.id !== id);
+
     if (filtered.length !== shard.length) {
       storage.set(shardKey, filtered);
       return true;
@@ -189,8 +187,8 @@ export const createSalesService = (): SalesService => ({
   save: async (sales: Sale[]): Promise<void> => {
     // 1. Group sales by Shard Key
     const shards: Record<string, Sale[]> = {};
-    
-    sales.forEach(sale => {
+
+    sales.forEach((sale) => {
       const key = getShardKey(StorageKeys.SALES, sale.date);
       if (!shards[key]) shards[key] = [];
       shards[key].push(sale);
@@ -202,10 +200,10 @@ export const createSalesService = (): SalesService => ({
     // 2. Process each relevant shard
     Object.entries(shards).forEach(([key, branchSales]) => {
       const currentShard = storage.get<Sale[]>(key, []);
-      
+
       // Keep items from OTHER branches
-      const otherBranchSales = currentShard.filter(s => s.branchId && s.branchId !== branchCode);
-      
+      const otherBranchSales = currentShard.filter((s) => s.branchId && s.branchId !== branchCode);
+
       // Combine
       const merged = [...otherBranchSales, ...branchSales];
       storage.set(key, merged);

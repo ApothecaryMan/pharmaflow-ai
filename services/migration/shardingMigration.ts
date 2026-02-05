@@ -19,11 +19,11 @@ export const runShardingMigration = () => {
   const allSales = storage.get<Sale[]>(StorageKeys.SALES, []);
   if (allSales.length > 0) {
     console.log(`[Migration] Processing ${allSales.length} sales...`);
-    
+
     // Group by Key
     const shards: Record<string, Sale[]> = {};
-    
-    allSales.forEach(sale => {
+
+    allSales.forEach((sale) => {
       const key = getShardKey(StorageKeys.SALES, sale.date);
       if (!shards[key]) shards[key] = [];
       shards[key].push(sale);
@@ -47,7 +47,7 @@ export const runShardingMigration = () => {
 
     const shards: Record<string, Shift[]> = {};
 
-    allShifts.forEach(shift => {
+    allShifts.forEach((shift) => {
       // Use openTime for sharding
       const key = getShardKey(StorageKeys.SHIFTS, shift.openTime);
       if (!shards[key]) shards[key] = [];

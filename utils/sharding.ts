@@ -23,7 +23,7 @@ export const getPreviousShardKeys = (baseKey: string, monthsBack: number = 3): s
 
 export const getAllShardKeys = (baseKey: string): string[] => {
   if (typeof localStorage === 'undefined') return [];
-  
+
   const keys: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);

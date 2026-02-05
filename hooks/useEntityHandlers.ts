@@ -769,7 +769,7 @@ export function useEntityHandlers({
           // Wait, allocateStockBulk implementation I wrote:
           // It modifies `allBatches` in place. If it returns `null` because an item fails, it does NOT save.
           // Since saveBatches is only called at the end, returning null effectively rolls back the storage.
-          
+
           error(allocError.message || 'Transaction failed. Stock has been rolled back.');
           return false; // Stop execution
         }
@@ -793,9 +793,9 @@ export function useEntityHandlers({
         };
 
         // 6. Commit Phase (Update all States)
-        
+
         // Pre-map sold items for O(1) lookup
-        const soldItemsMap = new Map(saleData.items.map(item => [item.id, item]));
+        const soldItemsMap = new Map(saleData.items.map((item) => [item.id, item]));
 
         // Update Inventory State
         setInventory((prev) =>
@@ -807,7 +807,7 @@ export function useEntityHandlers({
                 : soldItem.quantity * (drug.unitsPerPack || 1);
 
               const newStock = drug.stock - quantityToDeduct;
-              
+
               return {
                 ...drug,
                 stock: validateStock(newStock),
@@ -877,13 +877,13 @@ export function useEntityHandlers({
       } catch (err: any) {
         console.error('[handleCompleteSale] Fatal error:', err);
         console.error('Critical Error in handleCompleteSale:', err);
-        
+
         // Attempt generic rollback if possible (difficult here as we might have partial state updates if logic wasn't clean)
         // Since we separated Allocation (with explicit rollback) from State Commit,
         // the only risk is if setInventory succeeds but setSales fails.
         // React 18 batches these updates, but custom context logic might not.
         // For now, the Allocation Rollback covers the most critical "Inventory Drift" issue.
-        
+
         error('An unexpected error occurred. Please refresh and try again.');
         return false;
       }

@@ -79,11 +79,11 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
         const keys = getAllShardKeys(StorageKeys.SALES);
         // keys are typically sorted newest first by getAllShardKeys
         for (const key of keys) {
-           const shardData = storage.get<any[]>(key, []);
-           if (shardData.length > 0) {
-             data = shardData;
-             break; // Found the latest data, no need to go further back
-           }
+          const shardData = storage.get<any[]>(key, []);
+          if (shardData.length > 0) {
+            data = shardData;
+            break; // Found the latest data, no need to go further back
+          }
         }
         break;
       }
@@ -112,11 +112,11 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
       case 'shifts': {
         const keys = getAllShardKeys(StorageKeys.SHIFTS);
         for (const key of keys) {
-           const shardData = storage.get<any[]>(key, []);
-           if (shardData.length > 0) {
-             data = shardData;
-             break; 
-           }
+          const shardData = storage.get<any[]>(key, []);
+          if (shardData.length > 0) {
+            data = shardData;
+            break;
+          }
         }
         break;
       }
