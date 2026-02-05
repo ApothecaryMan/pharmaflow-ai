@@ -45,6 +45,7 @@ declare module '@tanstack/react-table' {
     dir?: 'ltr' | 'rtl';
     disableAlignment?: boolean;
     smartDate?: boolean;
+    hideFromSettings?: boolean;
   }
 }
 
@@ -331,11 +332,23 @@ export function TanStackTable<TData, TValue>({
   // Build default visibility from defaultHiddenColumns
   const defaultVisibility = React.useMemo(() => {
     const visibility: VisibilityState = {};
+
+    // 1. Start with defaultHiddenColumns prop
     defaultHiddenColumns.forEach((colId) => {
       visibility[colId] = false;
     });
+
+    // 2. Add columns marked with hideFromSettings meta
+    columns.forEach((col) => {
+      const colAny = col as any;
+      const id = colAny.id || colAny.accessorKey;
+      if (id && colAny.meta?.hideFromSettings) {
+        visibility[id] = false;
+      }
+    });
+
     return visibility;
-  }, [defaultHiddenColumns]);
+  }, [defaultHiddenColumns, columns]);
 
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [internalGlobalFilter, setInternalGlobalFilter] = useState('');
@@ -599,7 +612,10 @@ export function TanStackTable<TData, TValue>({
             </div>
             {table
               .getAllLeafColumns()
-              .filter((col) => col.id !== 'actions')
+              .filter(
+                (col) =>
+                  col.id !== 'actions' && !(col.columnDef.meta as any)?.hideFromSettings
+              )
               .map((col) => {
                 const headerValue =
                   typeof col.columnDef.header === 'function' ? col.id : col.columnDef.header;
@@ -633,32 +649,31 @@ export function TanStackTable<TData, TValue>({
               <ContextMenuSeparator />
 
               {/* Alignment Controls Container */}
-              <div className='space-y-3 pt-1'>
-                <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase px-3 mb-2'>
+              <div className='px-3 py-3'>
+                <div className='text-[10px] font-bold tracking-[0.1em] text-gray-400 dark:text-gray-500 uppercase mb-2.5 flex items-center gap-2'>
+                  <span className='material-symbols-rounded text-sm opacity-60'>format_align_left</span>
                   {t.global.table.alignment}
                 </div>
                 {/* Unified Alignment */}
-                <div className='px-2'>
-                  <div className='flex bg-gray-100 dark:bg-gray-800 p-1.5 rounded-xl border border-gray-100 dark:border-gray-800'>
-                    <AlignButton
-                      align='start'
-                      isActive={currentAlign === 'start'}
-                      onClick={() => handleAlign('start')}
-                      isRtl={language === 'AR'}
-                    />
-                    <AlignButton
-                      align='center'
-                      isActive={currentAlign === 'center'}
-                      onClick={() => handleAlign('center')}
-                      isRtl={language === 'AR'}
-                    />
-                    <AlignButton
-                      align='end'
-                      isActive={currentAlign === 'end'}
-                      onClick={() => handleAlign('end')}
-                      isRtl={language === 'AR'}
-                    />
-                  </div>
+                <div className='bg-gray-50 dark:bg-gray-800/80 p-1.5 rounded-xl border border-gray-100 dark:border-gray-800/50 flex items-center justify-between gap-1'>
+                  <AlignButton
+                    align='start'
+                    isActive={currentAlign === 'start'}
+                    onClick={() => handleAlign('start')}
+                    isRtl={language === 'AR'}
+                  />
+                  <AlignButton
+                    align='center'
+                    isActive={currentAlign === 'center'}
+                    onClick={() => handleAlign('center')}
+                    isRtl={language === 'AR'}
+                  />
+                  <AlignButton
+                    align='end'
+                    isActive={currentAlign === 'end'}
+                    onClick={() => handleAlign('end')}
+                    isRtl={language === 'AR'}
+                  />
                 </div>
               </div>
             </>
