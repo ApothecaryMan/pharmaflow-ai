@@ -21,6 +21,7 @@ export interface FilterConfig {
   icon: string;
   mode: 'single' | 'multiple';
   options: FilterOption[];
+  defaultValue?: any;
 }
 
 interface FilterPillProps {
@@ -69,10 +70,24 @@ export const FilterPill: React.FC<FilterPillProps> = ({
         {config.options.map((option) => {
           const isSelected = selectedValues.includes(option.value);
 
+          let isDefault = config.defaultValue !== undefined && config.defaultValue === option.value;
+          
+          // Allow label to be just text or text + badge
+          const labelContent = (
+              <div className="flex items-center gap-2">
+                  <span>{option.label}</span>
+                  {isDefault && (
+                       <span className="inline-flex items-center px-1 py-0 rounded border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50 leading-none h-4">
+                          DEF
+                       </span>
+                  )}
+              </div>
+          );
+
           return (
             <ContextMenuCheckboxItem
               key={`${config.id}-${option.value}`}
-              label={option.label}
+              label={labelContent}
               checked={isSelected}
               onCheckedChange={(checked) => {
                 let newValues = [...selectedValues];
@@ -146,7 +161,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
           bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700
           text-gray-700 dark:text-gray-200 
           rounded-lg
-          ${collapsed ? 'px-1.5 py-1.5' : 'ps-2 pe-1 py-1'}
+          ${collapsed ? 'ps-1.5 pe-1 py-1' : 'ps-2 pe-1 py-1'}
           active:scale-95
         `}
       >
@@ -171,7 +186,6 @@ export const FilterPill: React.FC<FilterPillProps> = ({
           </span>
         )}
 
-        {/* Remove Button */}
         <div
           role='button'
           onClick={(e) => {
@@ -179,15 +193,16 @@ export const FilterPill: React.FC<FilterPillProps> = ({
             onRemove();
           }}
           className={`
-            flex items-center justify-center rounded-md 
-            bg-gray-100 dark:bg-gray-700
-            hover:bg-gray-200 dark:hover:bg-gray-600 
-            text-gray-400 hover:text-gray-600 dark:hover:text-gray-200
-            transition-colors
-            ${collapsed ? 'w-3 h-3 -mt-3 -mr-1' : 'w-4 h-4 ml-0.5'}
+            flex items-center justify-center
+            text-gray-400 hover:text-red-500 dark:hover:text-red-400
+            transition-all duration-200
+            ${collapsed ? 'w-4 h-4 ml-0.5' : 'w-4 h-4 ml-0.5'}
+            active:scale-75
           `}
         >
-          <span className='material-symbols-rounded text-[14px] font-bold'>close</span>
+          <span className='material-symbols-rounded text-[14px] font-bold'>
+            close
+          </span>
         </div>
       </div>
     </Tooltip>

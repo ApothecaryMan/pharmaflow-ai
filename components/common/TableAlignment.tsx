@@ -11,9 +11,9 @@ interface AlignButtonProps {
 
 export const AlignButton: React.FC<AlignButtonProps> = ({ align, isActive, onClick, isRtl }) => {
   const activeClass =
-    'bg-emerald-500 dark:bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-400 dark:ring-emerald-500';
+    'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md ring-1 ring-emerald-400/50 dark:ring-emerald-500/50';
   const inactiveClass =
-    'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800';
+    'text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200/50 dark:hover:bg-gray-700/50';
 
   let iconName = '';
   if (align === 'center') {
@@ -33,11 +33,11 @@ export const AlignButton: React.FC<AlignButtonProps> = ({ align, isActive, onCli
       }}
       aria-label={`Align ${align}`}
       aria-pressed={isActive}
-      className={`w-8 h-8 flex items-center justify-center rounded-md transition-all ${
+      className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-200 ${
         isActive ? activeClass : inactiveClass
       }`}
     >
-      <span className='material-symbols-rounded text-[18px]'>{iconName}</span>
+      <span className='material-symbols-rounded text-[20px]'>{iconName}</span>
     </button>
   );
 };
