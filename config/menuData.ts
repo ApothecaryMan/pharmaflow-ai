@@ -217,7 +217,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         items: [
           { label: 'All Notifications', icon: 'notifications' },
           { label: 'Critical Alerts', icon: 'crisis_alert' },
-          { label: 'Stock Alerts', icon: 'inventory' },
+          { label: 'Stock Alerts', icon: 'package_2' },
           { label: 'Expiry Alerts', icon: 'event_busy' },
           { label: 'Payment Reminders', icon: 'payment' },
           { label: 'Low Balance Alerts', icon: 'money_off' },
@@ -291,7 +291,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: 'product-management',
         label: 'Product Management',
         items: [
-          { label: 'Inventory', view: 'inventory', icon: 'inventory' },
+          { label: 'Inventory', view: 'inventory', icon: 'package_2' },
           { label: 'Bulk Import', icon: 'upload_file' },
           { label: 'Bulk Update', icon: 'update' },
           { label: 'Product Categories', icon: 'category' },
@@ -333,7 +333,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: 'stock-control',
         label: 'Stock Control',
         items: [
-          { label: 'Current Stock', icon: 'inventory' },
+          { label: 'Current Stock', icon: 'package_2' },
           { label: 'Stock Adjustment', icon: 'edit', permission: 'inventory.adjust' },
           { label: 'Stock Transfer', icon: 'local_shipping' },
           { label: 'Stock Count', icon: 'checklist' },
