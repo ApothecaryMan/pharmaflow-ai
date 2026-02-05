@@ -1,5 +1,4 @@
-import type React from 'react';
-import { forwardRef, useState } from 'react';
+import React, { forwardRef, useState, useEffect, useMemo } from 'react';
 import { useSettings } from '../../context/SettingsContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { ContextMenuItem, ContextMenuSeparator, useContextMenu } from './ContextMenu';
@@ -18,6 +17,11 @@ interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   badge?: React.ReactNode;
   rounded?: 'xl' | 'full';
   color?: string;
+
+  // Autocomplete Props
+  enableAutocomplete?: boolean;
+  suggestions?: string[];
+  onSuggestionAccept?: (suggestion: string) => void;
 
   // New Filter Props
   filterConfigs?: FilterConfig[];
@@ -42,15 +46,51 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       filterConfigs = [],
       activeFilters = {},
       onUpdateFilter,
+      
+      enableAutocomplete = false,
+      suggestions = [],
+      onSuggestionAccept,
       ...props
     },
     ref
   ) => {
-    const { language } = useSettings();
+    const { language, textTransform } = useSettings();
     const t = TRANSLATIONS[language];
     const dir = useSmartDirection(value, placeholder);
     const showClear = value && onClear;
     const { showMenu, hideMenu } = useContextMenu();
+
+    // --- Autocomplete Logic ---
+    const [currentSuggestion, setCurrentSuggestion] = useState<string>('');
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    // Debounce value for suggestion calculation
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedValue(value), 100);
+        return () => clearTimeout(timer);
+    }, [value]);
+
+    // Calculate suggestion
+    const ghostText = useMemo(() => {
+        if (!enableAutocomplete || !debouncedValue || !suggestions.length) return '';
+        const match = suggestions.find(s => 
+            s.toLowerCase().startsWith(debouncedValue.toLowerCase()) && 
+            s.toLowerCase() !== debouncedValue.toLowerCase()
+        );
+        if (!match) return '';
+        setCurrentSuggestion(match);
+        return match.slice(debouncedValue.length);
+    }, [debouncedValue, suggestions, enableAutocomplete]);
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (ghostText && (e.key === 'ArrowRight' || e.key === 'Tab')) {
+            e.preventDefault();
+            const fullTerm = value + ghostText;
+            onSearchChange(fullTerm);
+            onSuggestionAccept?.(fullTerm);
+        }
+        props.onKeyDown?.(e);
+    };
 
     const activeGroups = Object.keys(activeFilters).filter(
       (k) => activeFilters[k] && activeFilters[k].length > 0
@@ -74,7 +114,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       // But ContextMenu doesn't support nested easily yet.
       // Workaround: Click Filter -> Add "Empty" Pill -> Auto Open its menu?
       // Or: Click Filter -> Set a default value (e.g. first option)
-      if (config.options.length > 0 && onUpdateFilter) {
+      if (config.options.length > 0 && typeof onUpdateFilter === 'function') {
         // select first one as default
         if (config.mode === 'single') {
           onUpdateFilter(config.id, [config.options[0].value]);
@@ -156,24 +196,50 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           <span className='material-symbols-rounded text-[18px]'>{icon}</span>
         </div>
 
-        {/* The Actual Input */}
-        <input
-          ref={ref}
-          type='text'
-          value={value}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder={hasActiveFilters ? placeholder?.split(',')[0] + '...' : placeholder}
-          spellCheck='false'
-          className={`
-            flex-1 min-w-[80px] bg-transparent
-            text-sm text-gray-900 dark:text-gray-100 
-            placeholder-gray-400 outline-none
-            py-2.5
-            ${hasActiveFilters ? 'ms-1' : 'ms-2'}
-            ${className}
-          `}
-          {...props}
-        />
+        {/* The Actual Input Container */}
+        <div className={`
+             relative flex-1 min-w-[80px]
+             ${hasActiveFilters ? 'ms-1' : 'ms-2'}
+        `}>
+            <input
+              ref={ref}
+              {...props}
+              type='text'
+              value={value}
+              onChange={(e) => onSearchChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={hasActiveFilters ? placeholder?.split(',')[0] + '...' : placeholder}
+              spellCheck='false'
+              autoComplete="off"
+              className={`
+                w-full bg-transparent
+                text-sm text-gray-900 dark:text-gray-100 
+                placeholder-gray-400 outline-none
+                py-2.5
+                ${className}
+              `}
+            />
+            {/* Standardized Autocomplete Badge */}
+            {ghostText && (
+                <div className={`absolute inset-y-0 ${dir === 'rtl' ? 'right-0' : 'left-0'} flex items-center pointer-events-none overflow-hidden select-none`}>
+                    <span className="invisible whitespace-pre text-sm py-2.5">{value}</span>
+                    <span className={`
+                        inline-flex items-center gap-1 px-0.5 py-0 ms-1
+                        rounded-lg border backdrop-blur-md 
+                        border-${color}-200/50 dark:border-${color}-800/50
+                        bg-${color}-50/30 dark:bg-${color}-900/20
+                        text-${color}-600 dark:text-${color}-400
+                        text-sm font-bold tracking-wider
+                        ${textTransform === 'uppercase' ? 'uppercase' : ''}
+                        animate-in fade-in zoom-in-95 duration-200
+                        origin-left
+                    `}>
+                        {textTransform === 'uppercase' ? ghostText.toUpperCase() : ghostText}
+                        <span className="material-symbols-rounded text-sm">east</span>
+                    </span>
+                </div>
+            )}
+        </div>
 
         {/* Active Filter Pills */}
         {hasActiveFilters &&
@@ -197,8 +263,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 
         {/* Actions Group */}
         <div className='flex items-center gap-1.5 ms-auto'>
-          {/* Clear Text Button - Only show if NO active filters and has value */}
-          {showClear && !hasActiveFilters && (
+          {/* Clear Text Button - Only show if has value and onClear provided */}
+          {showClear && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -210,14 +276,33 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             </button>
           )}
 
-          {/* Add Filter Button */}
+          {/* Filter Actions Group (Hide/Show Clear All based on state) */}
           {filterConfigs.length > 0 && (
-            <div className='border-s border-gray-200 dark:border-gray-700 ps-2 ms-2 flex items-center'>
+            <div className={`
+              flex items-center gap-0.5 p-0.5 rounded-full
+              border border-gray-200/60 dark:border-gray-700/60
+              bg-gray-50/50 dark:bg-gray-800/50
+              ms-1
+            `}>
+              {/* Clear All Filters Button - Only if active filters exist */}
+              {hasActiveFilters && (
+                <Tooltip content={t.global.table.clearAllFilters}>
+                  <button
+                    type='button'
+                    onClick={handleClearAllFilters}
+                    className='text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center justify-center w-7 h-7 rounded-full hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all duration-200 active:scale-90'
+                  >
+                    <span className='material-symbols-rounded text-[18px]'>filter_list_off</span>
+                  </button>
+                </Tooltip>
+              )}
+
+              {/* Add/Tune Filter Button */}
               <Tooltip content={t.global.table.addFilter}>
                 <button
                   type='button'
                   onClick={handleFilterClick}
-                  className='text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors leading-none flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100/50 dark:hover:bg-gray-800/50'
+                  className='text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center w-7 h-7 rounded-full hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all duration-200 active:scale-95'
                 >
                   <span className='material-symbols-rounded text-[20px]'>tune</span>
                 </button>
