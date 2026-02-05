@@ -36,6 +36,7 @@ import { storage } from '../../utils/storage';
 import { CARD_MD } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
+import { type FilterConfig } from '../common/FilterPill';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -219,7 +220,6 @@ export const POS: React.FC<POSProps> = ({
     [activeTabId, updateTab]
   );
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'visa'>('cash');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
 
@@ -301,6 +301,55 @@ export const POS: React.FC<POSProps> = ({
   }, [setSearch]);
 
   const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'out_of_stock'>('in_stock');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+
+  // Filter configurations for POS
+  const posFilterConfigs = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: 'category',
+        label: t.category,
+        icon: 'category',
+        options: [
+          { id: 'Medicine', label: t.categories.medicine },
+          { id: 'Cosmetics', label: t.categories.cosmetics },
+          { id: 'General', label: t.categories.general },
+          { id: 'All', label: t.categories.all },
+        ].map((c) => ({ label: c.label, value: c.id })),
+        mode: 'single',
+        defaultValue: 'All',
+      },
+      {
+        id: 'stock',
+        label: t.stock,
+        icon: 'inventory_2',
+        options: [
+          { label: t.allStock || 'All Stock', value: 'all' },
+          { label: t.inStock || 'In Stock', value: 'in_stock' },
+          { label: t.outOfStock || 'Out of Stock', value: 'out_of_stock' },
+        ],
+        mode: 'single',
+        defaultValue: 'in_stock',
+      },
+    ],
+    [t]
+  );
+
+  const posActiveFilters = useMemo(
+    () => ({
+      category: selectedCategory === 'All' ? [] : [selectedCategory],
+      stock: stockFilter === 'in_stock' ? [] : [stockFilter],
+    }),
+    [selectedCategory, stockFilter]
+  );
+
+  const handlePosFilterUpdate = useCallback((groupId: string, newValues: any[]) => {
+    if (groupId === 'category') {
+      setSelectedCategory(newValues[0] || 'All');
+    } else if (groupId === 'stock') {
+      setStockFilter(newValues[0] || 'in_stock');
+    }
+  }, []);
 
   // Shift validation - check if there's an open shift
   const { currentShift } = useShift();
@@ -376,12 +425,6 @@ export const POS: React.FC<POSProps> = ({
     };
   }, [resize, stopResizing]);
 
-  const categories = [
-    { id: 'All', label: t.categories.all },
-    { id: 'Medicine', label: t.categories.medicine },
-    { id: 'Cosmetics', label: t.categories.cosmetics },
-    { id: 'General', label: t.categories.general },
-  ];
 
   // Helper to map specific categories to broad groups
   const getBroadCategory = (category: string): string => {
@@ -1142,20 +1185,33 @@ export const POS: React.FC<POSProps> = ({
     const settings = storage.get<any>(StorageKeys.SETTINGS, {});
     const isUppercase = settings.textTransform === 'uppercase';
 
+    // Filter inventory based on active category and stock filters first
+    const filteredBase = inventory.filter((d) => {
+      const drugBroadCat = getBroadCategory(d.category);
+      const matchesCategory = selectedCategory === 'All' || drugBroadCat === selectedCategory;
+
+      const matchesStock =
+        stockFilter === 'all' ||
+        (stockFilter === 'in_stock' && d.stock > 0) ||
+        (stockFilter === 'out_of_stock' && d.stock <= 0);
+
+      return matchesCategory && matchesStock;
+    });
+
     let suggestions: string[];
     if (isGenericMode) {
       const generics = new Set<string>();
-      inventory.forEach((d) => {
+      filteredBase.forEach((d) => {
         if (d.genericName) generics.add(`@${d.genericName}`);
       });
       suggestions = Array.from(generics);
     } else {
-      suggestions = inventory.map((d) => `${d.name} ${d.dosageForm}`);
+      suggestions = filteredBase.map((d) => `${d.name} ${d.dosageForm}`);
     }
 
     // Apply uppercase transform if enabled
     return isUppercase ? suggestions.map((s) => s.toUpperCase()) : suggestions;
-  }, [search, inventory]);
+  }, [search, inventory, selectedCategory, stockFilter]);
 
   // Group drugs by name and sort batches by expiry
   const groupedDrugs = useMemo(() => {
@@ -1751,171 +1807,126 @@ export const POS: React.FC<POSProps> = ({
               </div>
             )}
           </div>
+
           {/* Search & Filter - No Card Container */}
           <div className='w-full flex flex-col sm:flex-row gap-1 shrink-0'>
             {/* search length */}
             <div className='relative flex-[6]'>
-              <SmartAutocomplete
-                inputRef={searchInputRef}
+              <SearchInput
+                ref={searchInputRef}
                 value={search}
-                onChange={(val) => {
+                onSearchChange={(val) => {
                   setSearch(val);
                 }}
+                onClear={() => setSearch('')}
+                enableAutocomplete={true}
                 suggestions={searchSuggestions}
                 placeholder={t.searchPlaceholder}
                 color={color}
                 className=''
-                onKeyDown={(e) => {
-                  const term = search.trim();
-
-                  // --- Grid Navigation ---
-                  if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (groupedDrugs.length > 0) {
-                      setActiveIndex((prev) => (prev + 1) % groupedDrugs.length);
-                    }
-                    return;
-                  }
-                  if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (groupedDrugs.length > 0) {
-                      setActiveIndex(
-                        (prev) => (prev - 1 + groupedDrugs.length) % groupedDrugs.length
-                      );
-                    }
-                    return;
-                  }
-
-                  // --- Execution (Enter) ---
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (!term) return;
-
-                    // 1. Smart Barcode Detection
-                    const isBarcodeLike = /^\d+$/.test(term) && term.length > 3;
-
-                    if (isBarcodeLike) {
-                      const match = inventory.find(
-                        (d) => d.barcode === term || (d.internalCode && d.internalCode === term)
-                      );
-                      if (match) {
-                        addToCart(match);
-                        setSearch('');
+                // Filter Integration
+                filterConfigs={posFilterConfigs}
+                activeFilters={posActiveFilters}
+                onUpdateFilter={handlePosFilterUpdate}
+                badge={
+                  search.trim().length >= 2 ? (
+                    <span
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent shadow-sm`}
+                    >
+                      <span className='material-symbols-rounded text-sm'>inventory_2</span>
+                      {filteredDrugs.length}
+                    </span>
+                  ) : undefined
+                }
+                    
+                    onKeyDown={(e) => {
+                      const term = search.trim();
+    
+                      // --- Grid Navigation ---
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (groupedDrugs.length > 0) {
+                          setActiveIndex((prev) => (prev + 1) % groupedDrugs.length);
+                        }
                         return;
                       }
-                    }
-
-                    // 2. Add Active Item
-                    if (groupedDrugs.length > 0) {
-                      const activeGroup = groupedDrugs[activeIndex];
-                      addGroupToCart(activeGroup);
-                      setSearch('');
-                      setActiveIndex(0);
-                      // Ensure focus remains/returns to search (though it's already there)
-                    }
-                  }
-                }}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const selection = window.getSelection()?.toString();
-                  showMenu(e.clientX, e.clientY, [
-                    ...(selection
-                      ? [
-                          {
-                            label: t.copy,
-                            icon: 'content_copy',
-                            action: () => navigator.clipboard.writeText(selection),
-                            danger: false,
-                          },
-                        ]
-                      : []),
-                    {
-                      label: t.paste,
-                      icon: 'content_paste',
-                      action: async () => {
-                        try {
-                          const text = await navigator.clipboard.readText();
-                          setSearch((prev) => prev + text);
-                        } catch (err) {
-                          console.error('Failed to read clipboard', err);
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if (groupedDrugs.length > 0) {
+                          setActiveIndex(
+                            (prev) => (prev - 1 + groupedDrugs.length) % groupedDrugs.length
+                          );
                         }
-                      },
-                      danger: false,
-                    },
-                    { separator: true } as any,
-                    {
-                      label: t.clear,
-                      icon: 'backspace',
-                      action: () => setSearch(''),
-                      danger: false,
-                    },
-                  ]);
-                }}
-              />
-              {/* Results Count Badge */}
-              {search.trim().length >= 2 &&
-                (() => {
-                  const searchDir = /[\u0600-\u06FF]/.test(search) ? 'rtl' : 'ltr';
-                  return (
-                    <div
-                      className={`absolute inset-y-0 flex items-center pointer-events-none ${searchDir === 'rtl' ? 'left-3' : 'right-3'}`}
-                    >
-                      <span
-                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent shadow-sm`}
-                      >
-                        <span className='material-symbols-rounded text-sm'>inventory_2</span>
-                        {filteredDrugs.length}
-                      </span>
-                    </div>
-                  );
-                })()}
-            </div>
-            <div className='relative flex-1 h-[42px]'>
-              <FilterDropdown
-                variant='input'
-                onBackground={true}
-                items={categories}
-                selectedItem={categories.find((c) => c.id === selectedCategory)}
-                isOpen={activeFilterDropdown === 'category'}
-                onToggle={() =>
-                  setActiveFilterDropdown(activeFilterDropdown === 'category' ? null : 'category')
-                }
-                onSelect={(item) => setSelectedCategory(item.id)}
-                keyExtractor={(item) => item.id}
-                renderSelected={(item) => item?.label || selectedCategory}
-                renderItem={(item) => item.label}
-                color={color}
-                className='w-full'
-              />
-            </div>
-            <div className='relative flex-1 h-[42px]'>
-              <FilterDropdown
-                variant='input'
-                onBackground={true}
-                items={['all', 'in_stock', 'out_of_stock']}
-                selectedItem={stockFilter}
-                isOpen={activeFilterDropdown === 'stock'}
-                onToggle={() =>
-                  setActiveFilterDropdown(activeFilterDropdown === 'stock' ? null : 'stock')
-                }
-                onSelect={(item) => setStockFilter(item as any)}
-                keyExtractor={(item) => item as string}
-                renderSelected={(item) => {
-                  if (item === 'all') return t.allStock || 'All Stock';
-                  if (item === 'in_stock') return t.inStock || 'In Stock';
-                  if (item === 'out_of_stock') return t.outOfStock || 'Out of Stock';
-                  return item as string;
-                }}
-                renderItem={(item) => {
-                  if (item === 'all') return t.allStock || 'All Stock';
-                  if (item === 'in_stock') return t.inStock || 'In Stock';
-                  if (item === 'out_of_stock') return t.outOfStock || 'Out of Stock';
-                  return item as string;
-                }}
-                color={color}
-                className='w-full'
-              />
+                        return;
+                      }
+    
+                      // --- Execution (Enter) ---
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!term) return;
+    
+                        // 1. Smart Barcode Detection
+                        const isBarcodeLike = /^\d+$/.test(term) && term.length > 3;
+    
+                        if (isBarcodeLike) {
+                          const match = inventory.find(
+                            (d) => d.barcode === term || (d.internalCode && d.internalCode === term)
+                          );
+                          if (match) {
+                            addToCart(match);
+                            setSearch('');
+                            return;
+                          }
+                        }
+    
+                        // 2. Add Active Item
+                        if (groupedDrugs.length > 0) {
+                          const activeGroup = groupedDrugs[activeIndex];
+                          addGroupToCart(activeGroup);
+                          setSearch('');
+                          setActiveIndex(0);
+                          // Ensure focus remains/returns to search (though it's already there)
+                        }
+                      }
+                    }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const selection = window.getSelection()?.toString();
+                      showMenu(e.clientX, e.clientY, [
+                        ...(selection
+                          ? [
+                              {
+                                label: t.copy,
+                                icon: 'content_copy',
+                                action: () => navigator.clipboard.writeText(selection),
+                                danger: false,
+                              },
+                            ]
+                          : []),
+                        {
+                          label: t.paste,
+                          icon: 'content_paste',
+                          action: async () => {
+                            try {
+                              const text = await navigator.clipboard.readText();
+                              setSearch((prev) => prev + text);
+                            } catch (err) {
+                              console.error('Failed to read clipboard', err);
+                            }
+                          },
+                          danger: false,
+                        },
+                        { separator: true } as any,
+                        {
+                          label: t.clear,
+                          icon: 'backspace',
+                          action: () => setSearch(''),
+                          danger: false,
+                        },
+                      ]);
+                    }}
+                  />
             </div>
           </div>
 
