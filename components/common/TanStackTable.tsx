@@ -59,6 +59,7 @@ import {
   ContextMenuTrigger,
   useContextMenu,
 } from './ContextMenu';
+import type { FilterConfig } from './FilterPill';
 import { SearchInput } from './SearchInput';
 import {
   AlignButton,
@@ -95,20 +96,93 @@ export const PriceDisplay: React.FC<{
 
 import { createSearchRegex } from '../../utils/searchUtils';
 
-// Define a fuzzy filter function
-const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+// Define a unified filter function
+const unifiedFilterFn: FilterFn<any> = (row, columnId, filterValue, addMeta) => {
+  // filterValue is expected to be { term: string, filters: Record<string, any[]> }
+  // OR just a string if legacy usage
+
+  if (!filterValue) return true;
+
+  let term = '';
+  let activeFilters: Record<string, any[]> = {};
+
+  if (typeof filterValue === 'string') {
+    term = filterValue;
+  } else if (typeof filterValue === 'object') {
+    term = filterValue.term || '';
+    activeFilters = filterValue.filters || {};
+  }
+
+  // 1. Check Active Filters (Structured)
+  // Logic: ALL groups must match (AND). Within a group, ANY value must match (OR).
+  // This requires the filterConfig to map IDs to columns, or we check against specific columns if configured?
+  // Current design: Filter IDs should match Column IDs or we need a proper accessor.
+  // Assumption: FilterConfig.id === ColumnId (accessorKey)
+
+  for (const [filterId, selectedValues] of Object.entries(activeFilters)) {
+    if (!selectedValues || selectedValues.length === 0) continue;
+
+    // Skip filtering if 'all' is selected
+    if (selectedValues.includes('all')) continue;
+
+    const cellValue = row.getValue(filterId);
+    // If cell value is array? (e.g. tags) -> check intersection
+    // If scalar -> check inclusion
+
+    // Complex value handling
+    // If selectedValues contains "All", we skip? (Handled at UI/State level usually, but safeguard here)
+    // Assuming UI sends only specific values.
+
+    // Type coercion for loose matching
+    const match = selectedValues.some((val) => {
+      if (cellValue === val) return true;
+      return String(cellValue) === String(val);
+    });
+
+    if (!match) return false;
+  }
+
+  // 2. Check Text Search (Fuzzy)
+  if (!term) return true;
+
+  // Standard Fuzzy Search on the specific column passed by react-table (usually all columns if global)
+  // But wait, globalFilterFn is called against *each column*? No, only once per row if we implement it correctly?
+  // Actually react-table calls globalFilterFn for the row. columnId might be undefined or specific?
+  // The signature is (row, columnId, value).
+
+  // Re-use existing fuzzy logic for the text part
+  // We need to check if ANY visible column matches the term.
+  // Actually, TanStack table handles the column iteration for global filtering if we use standard setup?
+  // If we provide a custom globalFilter function, we typically iterate columns ourselves or rely on the default behavior?
+  // The default `globalFilterFn` in useReactTable iterates columns.
+  // BUT we are replacing the filter function on the table instance.
+
+  // Wait! If we pass this as `globalFilterFn` to useReactTable, `columnId` is NOT passed?
+  // Custom global filter function signature: (row, columnId, value, addMeta)
+  // Usually it checks the specific columnId? No, global filters check the whole row.
+  // Let's use the provided standard approach: check all columns for the term.
+
+  // We will prioritize the Structured Filters (AND logic). If failed above, we returned false.
+  // Now we return result of Fuzzy Search.
+
   const itemValue = row.getValue(columnId);
   if (itemValue == null) return false;
 
-  const itemString = String(itemValue).toLowerCase();
-  // Should we remove toLowerCase() if regex is case insensitive?
-  // createSearchRegex returns 'i' flag, so yes, regex handles case.
-  // BUT the anchored match '^' in createSearchRegex relies on the input.
-  // createSearchRegex takes 'term'.
-
-  const regex = createSearchRegex(String(value));
+  const regex = createSearchRegex(term);
   return regex.test(String(itemValue));
 };
+
+// We need a wrapper because TanStack calls this PER COLUMN for global filtering?
+// Actually, `globalFilterFn` is called for every column if configured, OR we define it to check all?
+// "If a column has a `enableGlobalFilter: false`, it is ignored."
+// "The default global filter function `auto`..."
+// We want to combine explicit column structured filters with global text search.
+// Better approach: Use `state.columnFilters` for the structured ones (Pills) and `state.globalFilter` for text.
+// This leverages the native architecture correctly!
+// Structured Filters -> Column Filters.
+// Search Text -> Global Filter.
+//
+// So `SearchInput` updates TWO states: `globalFilter` (string) and `columnFilters` (array).
 
 const EMPTY_ALIGNMENT = {};
 
@@ -154,6 +228,11 @@ interface TanStackTableProps<TData, TValue> {
   dense?: boolean; // New: for compact rows
   enablePagination?: boolean;
   pageSize?: number;
+
+  // New Filter Props
+  filterableColumns?: FilterConfig[]; // Definitions for the pills
+  initialFilters?: Record<string, any[]>;
+  onFilterChange?: (filters: Record<string, any[]>) => void;
 }
 
 // Helper to get stored settings
@@ -221,6 +300,10 @@ export function TanStackTable<TData, TValue>({
   enablePagination = false,
   pageSize = 20,
   enableShowAll = false,
+
+  filterableColumns = [],
+  initialFilters = {},
+  onFilterChange,
 }: TanStackTableProps<TData, TValue> & { enableTopToolbar?: boolean; enableShowAll?: boolean }) {
   // Detect RTL direction
   const isRtl = typeof document !== 'undefined' && document.dir === 'rtl';
@@ -256,6 +339,25 @@ export function TanStackTable<TData, TValue>({
 
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [internalGlobalFilter, setInternalGlobalFilter] = useState('');
+  // We manage "Active Pills" as Column Filters
+  const [columnFilters, setColumnFilters] = useState<{ id: string; value: any }[]>([]);
+
+  // Sync initialFilters to columnFilters on mount
+  React.useEffect(() => {
+    if (Object.keys(initialFilters).length > 0) {
+      const newFilters = Object.entries(initialFilters).map(([id, values]) => ({
+        id,
+        value: values,
+      }));
+      setColumnFilters(newFilters);
+
+      // Notify parent initially if needed
+      if (onFilterChange) {
+        onFilterChange(initialFilters);
+      }
+    }
+  }, [initialFilters, onFilterChange]);
+
   const [isShowAll, setIsShowAll] = useState(false);
 
   const globalFilter =
@@ -380,21 +482,56 @@ export function TanStackTable<TData, TValue>({
     state: {
       sorting,
       globalFilter,
+      columnFilters,
       columnVisibility,
       pagination: isShowAll ? { pageIndex: 0, pageSize: data.length || 1 } : pagination,
     },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: handleColumnVisibilityChange,
     onPaginationChange: handlePaginationChange,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
-    globalFilterFn: fuzzyFilter,
+    globalFilterFn: unifiedFilterFn,
     enableSorting: true,
-    manualFiltering, // Enable manual filtering if prop is true
+    manualFiltering,
+    filterFns: {
+      // Custom filter function for our Arrays (Multi-Select)
+      // This function will be utilized if we set the column definition filterFn to 'arrIncludesSome' or custom
+      arrIncludesSome: (row, columnId, value: any[]) => {
+        if (!value || value.length === 0) return true;
+        const cellValue = row.getValue(columnId);
+        return value.includes(cellValue); // Simple check: Row Value exists in Selected Filter Values
+      },
+    },
   });
+
+  // Helper to update our unifying "SearchInput" state
+  const handleFilterUpdate = React.useCallback((groupId: string, newValues: any[]) => {
+    setColumnFilters((prev) => {
+      const other = prev.filter((f) => f.id !== groupId);
+      return newValues.length === 0 ? other : [...other, { id: groupId, value: newValues }];
+    });
+  }, []);
+
+  // Convert columnFilters array back to Record for SearchInput prop
+  const activeFiltersRecord = React.useMemo(() => {
+    const rec: Record<string, any[]> = {};
+    columnFilters.forEach((f) => {
+      rec[f.id] = f.value;
+    });
+    return rec;
+  }, [columnFilters]);
+
+  // Notify parent of filter changes in a stable way
+  React.useEffect(() => {
+    if (onFilterChange) {
+      onFilterChange(activeFiltersRecord);
+    }
+  }, [activeFiltersRecord, onFilterChange]);
 
   /* State specific for Context Menu tracking to enable live updates */
   const menuPosRef = React.useRef<{ x: number; y: number; columnId?: string } | null>(null);
@@ -454,10 +591,10 @@ export function TanStackTable<TData, TValue>({
       const isSorted = column?.getIsSorted();
 
       return (
-        <div className='w-[220px] p-1 font-sans'>
+        <div className='font-sans'>
           {/* All Columns Visibility */}
-          <div className='space-y-1 px-1'>
-            <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-2 px-1'>
+          <div className='space-y-1'>
+            <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-gray-100 dark:border-gray-800 mb-1'>
               {t.global.table.columns}
             </div>
             {table
@@ -496,10 +633,13 @@ export function TanStackTable<TData, TValue>({
               <ContextMenuSeparator />
 
               {/* Alignment Controls Container */}
-              <div className='space-y-3 px-1'>
+              <div className='space-y-3 pt-1'>
+                <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase px-3 mb-2'>
+                  {t.global.table.alignment}
+                </div>
                 {/* Unified Alignment */}
-                <div className='flex items-center justify-between'>
-                  <div className='flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700'>
+                <div className='px-2'>
+                  <div className='flex bg-gray-100 dark:bg-gray-800 p-1.5 rounded-xl border border-gray-100 dark:border-gray-800'>
                     <AlignButton
                       align='start'
                       isActive={currentAlign === 'start'}
@@ -519,9 +659,6 @@ export function TanStackTable<TData, TValue>({
                       isRtl={language === 'AR'}
                     />
                   </div>
-                  <span className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase ml-3'>
-                    {t.global.table.alignment}
-                  </span>
                 </div>
               </div>
             </>
@@ -549,7 +686,7 @@ export function TanStackTable<TData, TValue>({
       {/* Header Controls */}
       {enableTopToolbar && (
         <div className={`flex items-center justify-between ${enableSearch ? 'mb-4' : ''}`}>
-          <div className='w-full max-w-sm'>
+          <div className='w-full max-w-xl'>
             {enableSearch && (
               <SearchInput
                 value={globalFilter ?? ''}
@@ -557,6 +694,10 @@ export function TanStackTable<TData, TValue>({
                 onClear={() => setGlobalFilter('')}
                 placeholder={searchPlaceholder}
                 color={color}
+                // New Integrated Props
+                filterConfigs={filterableColumns}
+                activeFilters={activeFiltersRecord}
+                onUpdateFilter={handleFilterUpdate}
               />
             )}
           </div>
@@ -625,8 +766,15 @@ export function TanStackTable<TData, TValue>({
                             {header.isPlaceholder ? null : (
                               <div className={`flex items-center w-full ${justifyClass}`}>
                                 <div
-                                  className={`relative inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer`}
+                                  className='relative inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer'
                                   onClick={header.column.getToggleSortingHandler()}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      header.column.getToggleSortingHandler()?.(e);
+                                    }
+                                  }}
+                                  role='button'
+                                  tabIndex={0}
                                 >
                                   {flexRender(header.column.columnDef.header, header.getContext())}
 

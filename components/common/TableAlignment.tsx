@@ -13,7 +13,7 @@ export const AlignButton: React.FC<AlignButtonProps> = ({ align, isActive, onCli
   const activeClass =
     'bg-emerald-500 dark:bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-400 dark:ring-emerald-500';
   const inactiveClass =
-    'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50';
+    'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800';
 
   let iconName = '';
   if (align === 'center') {

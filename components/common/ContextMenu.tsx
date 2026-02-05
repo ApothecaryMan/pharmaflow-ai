@@ -56,6 +56,8 @@ interface ContextMenuContextType {
   showMenu: (x: number, y: number, actionsOrContent: ContextMenuAction[] | React.ReactNode) => void;
   /** Hides the currently visible menu. */
   hideMenu: () => void;
+  /** Whether glass effect is currently enabled for the active menu. */
+  isGlass?: boolean;
 }
 
 // --- Context ---
@@ -83,7 +85,7 @@ export const useContextMenu = () => {
  * A simple horizontal separator line for the context menu.
  */
 export const ContextMenuSeparator: React.FC = () => (
-  <div className='h-px bg-gray-100 dark:bg-gray-800 my-1 mx-2' />
+  <div className='h-px bg-gray-100 dark:bg-gray-800 my-1' />
 );
 
 interface ContextMenuItemProps extends Omit<ContextMenuAction, 'action' | 'separator'> {
@@ -105,6 +107,8 @@ export const ContextMenuItem: React.FC<ContextMenuItemProps> = ({
   className = '',
   children,
 }) => {
+  const { isGlass } = useContextMenu();
+
   return (
     <button
       onClick={(e) => {
@@ -114,11 +118,13 @@ export const ContextMenuItem: React.FC<ContextMenuItemProps> = ({
         }
       }}
       disabled={disabled}
-      className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors
+      className={`w-full text-start px-3 py-2 text-sm flex items-center gap-2 transition-all duration-200 type-interactive rounded-xl
                 ${
                   danger
-                    ? 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
-                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                    : isGlass
+                      ? 'text-gray-900 dark:text-gray-100 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:ps-4'
+                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:ps-4'
                 }
                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
                 ${className}
@@ -150,6 +156,8 @@ export const ContextMenuCheckboxItem: React.FC<{
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
 }> = ({ label, checked, onCheckedChange, disabled }) => {
+  const { isGlass } = useContextMenu();
+
   return (
     <button
       onClick={(e) => {
@@ -159,8 +167,14 @@ export const ContextMenuCheckboxItem: React.FC<{
         }
       }}
       disabled={disabled}
-      className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer transition-colors group
-                ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}
+      className={`w-full flex items-center justify-between px-3 py-2 cursor-pointer transition-all duration-200 type-interactive rounded-xl
+                ${
+                  disabled
+                    ? 'opacity-50 cursor-not-allowed'
+                    : isGlass
+                      ? 'hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:ps-4'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-800 hover:ps-4'
+                }
             `}
     >
       <span
@@ -298,7 +312,14 @@ export const ContextMenuProvider: React.FC<{
     setAdjustedPos({ top: y, left: x });
   }, [menu.isVisible, menu.x, menu.y]);
 
-  const value = React.useMemo(() => ({ showMenu, hideMenu }), [showMenu, hideMenu]);
+  const value = React.useMemo(
+    () => ({
+      showMenu,
+      hideMenu,
+      isGlass: enableGlassEffect,
+    }),
+    [showMenu, hideMenu, enableGlassEffect]
+  );
 
   return (
     <ContextMenuContext.Provider value={value}>
@@ -307,7 +328,7 @@ export const ContextMenuProvider: React.FC<{
       {menu.isVisible && (
         <div
           ref={menuRef}
-          className={`fixed z-[9999] min-w-[180px] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 py-1.5 animate-scale-in origin-top-left overflow-hidden
+          className={`fixed z-[9999] min-w-[180px] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 py-1 px-1 animate-scale-in origin-top-left overflow-hidden
                 ${
                   enableGlassEffect
                     ? 'backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-[backdrop-filter]:bg-white/30'
