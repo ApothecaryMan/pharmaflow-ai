@@ -14,7 +14,7 @@ export const LAYOUT_CONFIG = {
   // You can use any CSS value here (px, rem, %, etc.)
   SPACING: {
     DESKTOP_TOP: '15px', // Space from the top (Desktop)
-    DESKTOP_SIDES: '15px', // General side space (Desktop)
+    DESKTOP_SIDES: '150px', // General side space (Desktop)
     DASHBOARD_DESKTOP_SIDES: '160px', // Specific side space for Dashboards (Desktop)
     DESKTOP_BOTTOM: '10px', // Space from the bottom (Desktop)
     MOBILE: '0px', // Horizontal space (Mobile)

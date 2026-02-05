@@ -255,6 +255,10 @@ export const TRANSLATIONS = {
         description: 'Description',
         noDescription: 'No description provided.',
       },
+      expiryStatus: 'Expiry Status',
+      allExpiry: 'Show All',
+      nearExpired: 'Near Expired (6 months)',
+      expired: 'Expired',
     },
     stockAdjustment: {
       title: 'Stock Adjustment',
@@ -2281,6 +2285,10 @@ export const TRANSLATIONS = {
         description: 'الوصف',
         noDescription: 'لا يوجد وصف متاح.',
       },
+      expiryStatus: 'حالة الصلاحية',
+      allExpiry: 'عرض الكل',
+      nearExpired: 'اقترب الانتهاء (6 شهور)',
+      expired: 'منتهي الصلاحية',
     },
     stockAdjustment: {
       title: 'جرد المخزون',
