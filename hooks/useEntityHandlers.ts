@@ -229,7 +229,7 @@ export function useEntityHandlers({
         entityId: drug.id,
       });
     },
-    [setInventory, currentEmployeeId, error]
+    [setInventory, currentEmployeeId, employees, error]
   );
 
   const handleDeleteDrug = useCallback(
@@ -251,7 +251,7 @@ export function useEntityHandlers({
         entityId: id,
       });
     },
-    [setInventory, currentEmployeeId, error]
+    [setInventory, currentEmployeeId, employees, error]
   );
 
   const handleRestock = useCallback(
@@ -565,7 +565,7 @@ export function useEntityHandlers({
 
       success(`PO #${purchase.invoiceId} Approved Successfully`);
     },
-    [purchases, setPurchases, setInventory, success]
+    [purchases, setPurchases, setInventory, success, currentEmployeeId, employees, error]
   );
 
   const handleRejectPurchase = useCallback(
@@ -1202,7 +1202,7 @@ export function useEntityHandlers({
 
       setSales((prev) => prev.map((s) => (s.id === saleId ? { ...s, ...finalUpdates } : s)));
     },
-    [sales, inventory, currentEmployeeId, setInventory, setSales, currentShift, addTransaction]
+    [sales, inventory, currentEmployeeId, setInventory, setSales, currentShift, addTransaction, employees, error]
   );
 
   const handleProcessReturn = useCallback(

@@ -191,6 +191,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'inventory.view',
     'inventory.add',
     'inventory.update',
+    'inventory.delete',
     'inventory.adjust',
     'inventory.approve',
     'inventory.restock',
@@ -327,6 +328,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
   manager: [
     // Generic Branch Manager (if used outside Pharmacy context)
     'inventory.view',
+    'inventory.delete',
     'inventory.approve',
     'sale.view_history',
     'sale.view_details',
