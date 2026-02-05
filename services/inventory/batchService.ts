@@ -111,7 +111,9 @@ export const allocateStockBulk = (
     const totalAvailable = drugBatches.reduce((sum, b) => sum + b.quantity, 0);
     if (totalAvailable < req.quantity) {
       const drugName = req.name || req.drugId;
-      throw new Error(`Insufficient stock for: ${drugName} (Available: ${totalAvailable}, Needed: ${req.quantity})`);
+      throw new Error(
+        `Insufficient stock for: ${drugName} (Available: ${totalAvailable}, Needed: ${req.quantity})`
+      );
     }
 
     const allocations: BatchAllocation[] = [];
@@ -126,11 +128,11 @@ export const allocateStockBulk = (
           quantity: allocateFromThis,
           expiryDate: batch.expiryDate,
         });
-        
+
         // Update the batch in allBatches reference
-        const rawBatch = allBatches.find(b => b.id === batch.id);
+        const rawBatch = allBatches.find((b) => b.id === batch.id);
         if (rawBatch) rawBatch.quantity -= allocateFromThis;
-        
+
         remaining -= allocateFromThis;
       }
     }

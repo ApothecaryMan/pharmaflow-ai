@@ -18,6 +18,7 @@ import {
 import { canPerformAction, type UserRole } from '../../config/permissions';
 import { StorageKeys } from '../../config/storageKeys';
 import { COLOR_HEX_MAP } from '../../config/themeColors';
+import { useShift } from '../../hooks/useShift';
 import { analyzeEmployeePerformance } from '../../services/geminiService';
 import type { Employee, Sale, Shift, ThemeColor } from '../../types';
 import {
@@ -367,6 +368,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   const [showComparison, setShowComparison] = useState(false);
   const [chartType, setChartType] = useState<'area' | 'bar'>('area');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { shifts: allShiftsFromHook } = useShift();
 
   // Add scroll listener for shift badges
   useEffect(() => {
@@ -489,8 +491,8 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
     );
 
     if (dateFilterMode === 'today') {
-      // Load shifts to track shift events
-      const shifts = storage.get<Shift[]>(StorageKeys.SHIFTS, []);
+      // Load shifts from hook (sharded storage)
+      const shifts = allShiftsFromHook;
 
       // Get today's date range
       const today = new Date();

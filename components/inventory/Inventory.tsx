@@ -17,8 +17,8 @@ import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { FilterDropdown, SegmentedControl } from '../common';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
+import type { FilterConfig } from '../common/FilterPill';
 import { Modal } from '../common/Modal';
-import { SearchInput } from '../common/SearchInput';
 import { SmartDateInput, SmartInput } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
 import { useStatusBar } from '../layout/StatusBar';
@@ -58,6 +58,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
 
   // Print Label Modal State
   const [printModalDrug, setPrintModalDrug] = useState<Drug | null>(null);
@@ -256,10 +257,11 @@ export const Inventory: React.FC<InventoryProps> = ({
   const allCategories = getCategories(currentLang);
 
   const filteredInventory = useMemo(() => {
-    const { mode, regex } = parseSearchTerm(searchTerm);
+    // 1. First apply Search Text
+    const { mode: searchMode, regex } = parseSearchTerm(searchTerm);
 
-    return inventory.filter((d) => {
-      if (mode === 'ingredient') {
+    let result = inventory.filter((d) => {
+      if (searchMode === 'ingredient') {
         return d.activeIngredients && d.activeIngredients.some((ing) => regex.test(ing));
       }
 
@@ -272,7 +274,29 @@ export const Inventory: React.FC<InventoryProps> = ({
         (d.internalCode && regex.test(d.internalCode))
       );
     });
-  }, [inventory, searchTerm]);
+
+    // 2. Then apply Active Filters (Pills)
+    Object.entries(activeFilters).forEach(([groupId, values]) => {
+      if (!values || values.length === 0) return;
+
+      if (groupId === 'stock_status') {
+        result = result.filter((d) => {
+          if (values.includes('in_stock') && values.includes('out_of_stock')) return true;
+          if (values.includes('in_stock')) return d.stock > 0;
+          if (values.includes('out_of_stock')) return d.stock <= 0;
+          return true;
+        });
+      } else {
+        // Generic filter for other columns if added later
+        result = result.filter((d) => {
+          const val = (d as any)[groupId];
+          return values.includes(val);
+        });
+      }
+    });
+
+    return result;
+  }, [inventory, searchTerm, activeFilters, t]);
 
   // Helper: Get row context menu actions
   const getRowActions = (drug: Drug) => {
@@ -475,6 +499,37 @@ export const Inventory: React.FC<InventoryProps> = ({
     [color, currentLang, t]
   );
 
+  // Define Filter Config
+  const filterConfigs = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: 'stock_status',
+        label: t.headers.stock || 'Stock',
+        icon: 'package_2',
+        mode: 'single', // Use 'single' for mutually exclusive states "In Stock" vs "Out"
+        options: [
+          { label: t.all || 'All', value: 'all' },
+          { label: t.available || 'Available', value: 'in_stock' },
+          { label: t.outOfStock || 'Out of Stock', value: 'out_of_stock' },
+        ],
+      },
+    ],
+    [t]
+  );
+
+  // Enhanced Columns with Hidden Helper
+  const enhancedColumns = useMemo(
+    () => [
+      ...tableColumns,
+      {
+        id: 'stock_status',
+        accessorFn: (row: Drug) => (row.stock > 0 ? 'in_stock' : 'out_of_stock'),
+        header: t.headers.stock,
+      },
+    ],
+    [tableColumns, t]
+  );
+
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in'>
       {/* Header with toggle */}
@@ -528,7 +583,7 @@ export const Inventory: React.FC<InventoryProps> = ({
           <div className='flex-1 overflow-hidden'>
             <TanStackTable
               data={filteredInventory}
-              columns={tableColumns}
+              columns={enhancedColumns}
               tableId='inventory_table'
               color={color}
               enableTopToolbar={true}
@@ -542,6 +597,10 @@ export const Inventory: React.FC<InventoryProps> = ({
               lite={false} // Use standard card design
               enablePagination={true}
               pageSize={20}
+              // New Filter Props
+              filterableColumns={filterConfigs}
+              defaultHiddenColumns={['stock_status']} // Hide the helper column
+              onFilterChange={setActiveFilters}
             />
           </div>
         </>
@@ -563,10 +622,11 @@ export const Inventory: React.FC<InventoryProps> = ({
 
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    <label htmlFor="brand-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                       {t.modal.brand} *
                     </label>
                     <SmartInput
+                      id="brand-name"
                       required
                       className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
                       placeholder='e.g., Panadol Extra'
@@ -575,10 +635,11 @@ export const Inventory: React.FC<InventoryProps> = ({
                     />
                   </div>
                   <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    <label htmlFor="generic-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                       {t.modal.generic} *
                     </label>
                     <SmartInput
+                      id="generic-name"
                       required
                       className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
                       placeholder='e.g., Paracetamol'
