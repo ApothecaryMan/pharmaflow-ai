@@ -4,7 +4,7 @@ import type { Drug } from '../../types';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { useContextMenu } from '../common/ContextMenu';
 import { usePosSounds } from '../common/hooks/usePosSounds';
-import { SearchDropdown } from '../common/SearchDropdown';
+import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
@@ -35,7 +35,6 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   const [search, setSearch] = useState('');
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [isPrinting, setIsPrinting] = useState(false);
-  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
   const [printConfig, setPrintConfig] = useState({
     store: true,
@@ -55,9 +54,6 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   // Search logic
   const searchResults = useMemo(() => {
     const trimmed = search.trim();
-    // Reset selection when search changes
-    setSelectedSuggestionIndex(-1);
-
     if (!trimmed) return [];
 
     const { mode, regex } = parseSearchTerm(search);
@@ -106,7 +102,6 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
         }
         return;
       }
-
       // 2. Capture Alphanumeric for search focus
       if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
         e.preventDefault();
@@ -115,7 +110,6 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
         setShowSuggestions(true);
         return;
       }
-
       // 3. Shortcuts
       // Alt+P: Print
       if (e.altKey && (e.key === 'p' || e.key === 'P' || e.key === 'ح')) {
@@ -220,6 +214,20 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
     setSearch('');
     setShowSuggestions(false);
   };
+
+  const {
+    highlightedIndex: selectedSuggestionIndex,
+    onKeyDown,
+    setHighlightedIndex: setSelectedSuggestionIndex,
+  } = useSearchKeyboardNavigation({
+    results: searchResults,
+    onSelect: (drug) => {
+      addToQueue(drug);
+      setSearch('');
+    },
+    isOpen: showSuggestions && !!search.trim(),
+    onClose: () => setShowSuggestions(false),
+  });
 
   const removeFromQueue = (id: string) => {
     setQueue((prev) => prev.filter((item) => item.id !== id));
@@ -327,26 +335,10 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
             onSearchChange={(val) => {
               setSearch(val);
               setShowSuggestions(true);
-              setSelectedSuggestionIndex(-1);
             }}
             onKeyDown={(e) => {
               if (searchResults.length > 0) {
-                if (e.key === 'ArrowDown') {
-                  e.preventDefault();
-                  setSelectedSuggestionIndex((prev) => (prev + 1) % searchResults.length);
-                } else if (e.key === 'ArrowUp') {
-                  e.preventDefault();
-                  setSelectedSuggestionIndex(
-                    (prev) => (prev - 1 + searchResults.length) % searchResults.length
-                  );
-                } else if (e.key === 'Enter') {
-                  e.preventDefault();
-                  if (selectedSuggestionIndex >= 0) {
-                    addToQueue(searchResults[selectedSuggestionIndex]);
-                  } else if (searchResults.length === 1) {
-                    addToQueue(searchResults[0]);
-                  }
-                }
+                onKeyDown(e);
               }
             }}
             onClear={() => setSearch('')}
@@ -397,6 +389,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
               },
             ]}
             isVisible={showSuggestions && !!search.trim()}
+            highlightedIndex={selectedSuggestionIndex}
             emptyMessage={t.pos?.noResults}
           />
         </div>

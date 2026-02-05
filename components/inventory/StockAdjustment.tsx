@@ -14,7 +14,7 @@ import { DatePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { Modal } from '../common/Modal'; // Assuming Modal exists, verified in Inventory.tsx
-import { SearchDropdown } from '../common/SearchDropdown';
+import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
@@ -309,6 +309,37 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       .slice(0, 10);
   }, [inventory, searchTerm]);
 
+  const handleAddItem = (drug: Drug) => {
+    // Check if drug has batches.
+    const batches = batchService.getAllBatches(drug.id);
+
+    if (batches.length > 0) {
+      setBatchSelectionDrug(drug);
+      setAvailableBatches(batches);
+      setSearchTerm(''); // Close search
+      return;
+    }
+
+    addAdjustmentItem(drug, null);
+  };
+
+  const {
+    highlightedIndex,
+    onKeyDown,
+    setHighlightedIndex: _setHighlightedIndex,
+  } = useSearchKeyboardNavigation({
+    results: searchResults,
+    onSelect: (item) => {
+      handleAddItem(item);
+    },
+    isOpen: !!searchTerm,
+    onEnterNoHighlight: () => {
+      if (searchTerm) {
+        handleScan(searchTerm);
+      }
+    },
+  });
+
   // Hook to watch searchTerm for instant barcode matches (Like POS)
   React.useEffect(() => {
     if (!searchTerm) return;
@@ -322,24 +353,6 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       setSearchTerm(''); // Clear after scan
     }
   }, [searchTerm, inventory]);
-
-  const handleAddItem = (drug: Drug) => {
-    // Check if already added (simple check by drugId for now, ideally check drugId+batchId combination)
-    // For simplicity, let's allow adding same drug multiple times if different batches,
-    // but current logic filters by drugId in adjustments array.
-    // Let's first check if drug has batches.
-
-    const batches = batchService.getAllBatches(drug.id);
-
-    if (batches.length > 0) {
-      setBatchSelectionDrug(drug);
-      setAvailableBatches(batches);
-      setSearchTerm(''); // Close search
-      return;
-    }
-
-    addAdjustmentItem(drug, null);
-  };
 
   const addAdjustmentItem = (drug: Drug, batch: StockBatch | null) => {
     // If batch provided, use its current stock. Otherwise use drug total stock.
@@ -898,20 +911,18 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         </div>
 
         <div className='flex flex-wrap items-center gap-4 mt-6'>
-          {/* Search Input (Integrated with Scanner) */}
           {activeView === 'adjust' && (
-            <div className='flex-1 relative z-30 flex items-center gap-3'>
+            <div className='flex-1 relative z-30 flex items-center gap-3 max-w-xl'>
               <div className='relative flex-1'>
                 <SearchInput
                   ref={searchInputRef}
                   value={searchTerm}
                   onSearchChange={setSearchTerm}
                   placeholder={t.stockAdjustment.searchPlaceholder}
-                  className={`w-full bg-white dark:bg-gray-900 rounded-xl border-gray-200 dark:border-gray-800 focus:ring-${color}-500 focus:border-${color}-500 shadow-sm`}
+                  className='w-full'
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && searchTerm) {
-                      handleScan(searchTerm);
-                    }
+                    if (!searchTerm || searchResults.length === 0) return;
+                    onKeyDown(e);
                   }}
                 />
                 <SearchDropdown
@@ -920,6 +931,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                   columns={searchColumns}
                   emptyMessage={t.inventory?.noResults}
                   isVisible={!!searchTerm}
+                  highlightedIndex={highlightedIndex}
                 />
               </div>
             </div>
