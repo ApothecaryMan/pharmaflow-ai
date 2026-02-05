@@ -345,7 +345,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           value={search}
           onSearchChange={setSearch}
           placeholder={t.purchaseReturns?.searchPlaceholder || 'Search returns...'}
-          wrapperClassName='w-96'
+          wrapperClassName='w-full max-w-xl'
           className='p-3 rounded-xl border-gray-200 dark:border-gray-700'
           style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
         />

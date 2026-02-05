@@ -174,7 +174,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       <div
         className={`
             relative flex items-center flex-wrap gap-2
-            bg-white dark:bg-gray-800
+            bg-white dark:bg-[#090C14]
             border border-gray-200 dark:border-gray-800
             transition-colors
             focus-within:border-${color}-500 dark:focus-within:border-${color}-400
