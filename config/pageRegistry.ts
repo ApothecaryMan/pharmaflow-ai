@@ -352,7 +352,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'جرد المخزون',
     icon: 'inventory',
     category: 'inventory',
-    requiredProps: ['inventory', 'onUpdateInventory', 'color', 't'],
+    requiredProps: ['inventory', 'batches', 'onUpdateInventory', 'color', 't'],
     permission: 'inventory.adjust',
   },
   'receipt-designer': {

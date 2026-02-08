@@ -125,6 +125,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   if (requiredProps.includes('returns')) props.returns = data.returns;
   if (requiredProps.includes('drugs')) props.drugs = data.inventory;
   if (requiredProps.includes('employees')) props.employees = data.employees;
+  if (requiredProps.includes('batches')) props.batches = data.batches;
   if (requiredProps.includes('currentShift')) props.currentShift = currentShift;
 
   // Handler mapping

@@ -69,7 +69,9 @@ export function SearchDropdown<T extends { id: string | number }>({
         <button
           key={item.id}
           type='button'
-          ref={(el) => (rowRefs.current[index] = el)}
+          ref={(el) => {
+            rowRefs.current[index] = el;
+          }}
           onClick={() => onSelect(item)}
           className={`w-full text-start border-b border-gray-50 dark:border-gray-800 last:border-0 transition-colors group ${
             highlightedIndex === index
