@@ -34,7 +34,6 @@ import { ShiftHistory } from '../components/sales/ShiftHistory';
 import { InventorySkeleton } from '../components/skeletons/InventorySkeleton';
 import { POSSkeleton } from '../components/skeletons/POSSkeleton';
 import { ModalTests } from '../components/test/ModalTests';
-import { POSTest } from '../components/test/POSTest';
 import { PurchasesTest } from '../components/test/PurchasesTest';
 import { IntelligenceDashboard } from '../pages/IntelligenceDashboard';
 import type { PermissionAction } from './permissions';
@@ -333,7 +332,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل النقدية',
     icon: 'point_of_sale',
     category: 'sales',
-    requiredProps: ['color', 't', 'language'],
+    requiredProps: ['color', 't', 'language', 'employees', 'currentEmployeeId'],
     permission: 'shift.open',
   },
   'shift-history': {
@@ -343,7 +342,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل الورديات',
     icon: 'history',
     category: 'sales',
-    requiredProps: ['color', 't', 'language'],
+    requiredProps: ['color', 't', 'language', 'employees'],
     permission: 'shift.reports',
   },
   'stock-adjustment': {
@@ -374,24 +373,6 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'science',
     category: 'test',
     requiredProps: ['color', 't', 'language'],
-    permission: 'system.debug',
-  },
-  'pos-test': {
-    id: 'pos-test',
-    component: POSTest,
-    menuLabel: 'POS Test',
-    menuLabelAr: 'نقطة بيع (اختبار)',
-    icon: 'science',
-    category: 'test',
-    requiredProps: [
-      'inventory',
-      'customers',
-      'onCompleteSale',
-      'color',
-      't',
-      'language',
-      'onAddCustomer',
-    ],
     permission: 'system.debug',
   },
   'purchases-test': {
