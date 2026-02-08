@@ -6,7 +6,7 @@
  * - Centralized sequence management
  * - Self-healing (finds max existing ID on startup/first run)
  * - Zero padding (e.g., B1-0042)
- * - Concurrency safety (reads latest before write)
+ * - Sequential access pattern (single-threaded environment)
  * - No circular dependencies (reads storage directly)
  */
 
@@ -29,6 +29,7 @@ export type EntityType =
   | 'tabs'
   | 'batch'
   | 'movement'
+  | 'returnItem'
   | 'generic';
 
 // Sequence Map Interface
@@ -122,6 +123,9 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
       }
       case 'movement':
         data = storage.get(StorageKeys.STOCK_MOVEMENTS, []);
+        break;
+      case 'batch':
+        data = storage.get(StorageKeys.STOCK_BATCHES, []);
         break;
       // Transactions are nested in shifts, harder to heal efficiently,
       // but usually shift IDs are unique enough or we can scan all shifts.

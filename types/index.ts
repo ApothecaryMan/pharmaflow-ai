@@ -176,6 +176,25 @@ export interface BatchAllocation {
   expiryDate: string;
 }
 
+/** Types for inventory movements */
+export type MovementType = 'sale' | 'purchase' | 'adjustment' | 'return' | 'transfer' | 'damage';
+
+/**
+ * StockMovement - tracks changes to drug stock levels.
+ */
+export interface StockMovement {
+  id: string;
+  drugId: string;
+  type: MovementType;
+  quantity: number; // Positive for additions, negative for deductions
+  previousStock: number;
+  newStock: number;
+  reason?: string;
+  date: string;
+  referenceId?: string; // ID of the sale, purchase, or adjustment
+  employeeId?: string;
+}
+
 /**
  * OrderModification - tracks a single change made to an order.
  * Used in delivery order editing to maintain audit trail.
@@ -270,6 +289,8 @@ export interface SaleTab {
  * Represents drugs being received into inventory.
  */
 export interface PurchaseItem {
+  /** Unique item identifier in cart */
+  id: string;
   /** Drug ID being purchased */
   drugId: string;
   /** Drug name for display */
@@ -471,6 +492,8 @@ export interface Purchase {
  * PurchaseReturnItem - item being returned to supplier.
  */
 export interface PurchaseReturnItem {
+  /** Unique item identifier in return list */
+  id: string;
   /** Drug ID being returned */
   drugId: string;
   /** Drug name for display */
