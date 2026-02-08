@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import type { Drug, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { idGenerator } from '../../utils/idGenerator';
 import { useContextMenu } from '../common/ContextMenu';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
@@ -202,6 +203,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       const refundAmount = quantity * purchaseItem.costPrice;
 
       const newItem: PurchaseReturnItem = {
+        id: idGenerator.generate('returnItem'),
         drugId,
         name: purchaseItem.name,
         quantityReturned: quantity,
@@ -281,6 +283,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
         const returned = getReturnedQuantity(selectedPurchase.id, item.drugId);
         const availableQty = item.quantity - returned;
         return {
+          id: idGenerator.generate('returnItem'),
           drugId: item.drugId,
           name: item.name,
           quantityReturned: availableQty,

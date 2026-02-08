@@ -14,6 +14,7 @@ import {
 import { formatStock } from '../../utils/inventory';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { idGenerator } from '../../utils/idGenerator';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import { DatePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
@@ -782,6 +783,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
       return [
         ...prev,
         {
+          id: idGenerator.generate('generic'),
           drugId: drug.id,
           name: drug.name,
           quantity: 1,
@@ -799,10 +801,10 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
     setSearch(''); // Clear search on add
   };
 
-  const updateItem = (drugId: string, field: keyof PurchaseItem, value: number | string) => {
+  const updateItem = (itemId: string, field: keyof PurchaseItem, value: number | string) => {
     setCart((prev) =>
       prev.map((i) => {
-        if (i.drugId !== drugId) return i;
+        if (i.id !== itemId) return i;
 
         const updatedItem = { ...i, [field]: value };
 
@@ -850,8 +852,8 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
     );
   };
 
-  const removeItem = (drugId: string) => {
-    setCart((prev) => prev.filter((i) => i.drugId !== drugId));
+  const removeItem = (itemId: string) => {
+    setCart((prev) => prev.filter((i) => i.id !== itemId));
   };
 
   // Helper: Generate unique order ID (auto-increment if duplicate)
@@ -1553,7 +1555,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
               ) : (
                 cart.map((item, index) => (
                   <div
-                    key={item.drugId}
+                    key={item.id}
                     dir='ltr'
                     onClick={() => setSelectedCartIndex(index)}
                     className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer transition-all ${
@@ -1578,21 +1580,21 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                           icon: 'edit',
                           action: () => {
                             const qty = prompt('Enter quantity:', item.quantity.toString());
-                            if (qty) updateItem(item.drugId, 'quantity', parseFloat(qty) || 1);
+                            if (qty) updateItem(item.id, 'quantity', parseFloat(qty) || 1);
                           },
                         },
                         { separator: true },
                         {
                           label: t.contextMenu?.removeItem || 'Remove Item',
                           icon: 'delete',
-                          action: () => removeItem(item.drugId),
+                          action: () => removeItem(item.id),
                           danger: true,
                         },
                       ]);
                     }}
                   >
                     <button
-                      onClick={() => removeItem(item.drugId)}
+                      onClick={() => removeItem(item.id)}
                       className='absolute top-1/2 -translate-y-1/2 right-0 w-6 h-full flex items-center justify-center text-gray-400 hover:text-red-500 z-10 opacity-0 group-hover:opacity-100 transition-opacity rounded-r-2xl'
                     >
                       <span className='material-symbols-rounded text-lg'>close</span>
@@ -1629,7 +1631,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                           }}
                           onChange={(e) => {
                             const val = e.target.value.slice(0, 4);
-                            updateItem(item.drugId, 'quantity', parseFloat(val) || 0);
+                            updateItem(item.id, 'quantity', parseFloat(val) || 0);
                           }}
                         />
                       </div>
@@ -1646,7 +1648,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                           maxLength={4}
                           inputClassName={(() => {
                             const isFocused =
-                              focusedInput?.id === item.drugId &&
+                              focusedInput?.id === item.id &&
                               focusedInput?.field === 'expiryDate';
                             const status = checkExpiryStatus(item.expiryDate || '', {
                               checkIncomplete: !isFocused,
@@ -1659,13 +1661,13 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           value={
-                            focusedInput?.id === item.drugId && focusedInput?.field === 'expiryDate'
+                            focusedInput?.id === item.id && focusedInput?.field === 'expiryDate'
                               ? parseExpiryDisplay(item.expiryDate || '')
                               : formatExpiryDisplay(item.expiryDate || '')
                           }
                           onFocus={(e) => {
                             setSelectedCartIndex(index);
-                            setFocusedInput({ id: item.drugId, field: 'expiryDate' });
+                            setFocusedInput({ id: item.id, field: 'expiryDate' });
                             setTimeout(() => e.target.select(), 10);
                           }}
                           onBlur={() => {
@@ -1685,7 +1687,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                               item.expiryDate || ''
                             );
                             if (sanitized !== null) {
-                              updateItem(item.drugId, 'expiryDate', sanitized);
+                              updateItem(item.id, 'expiryDate', sanitized);
                             }
                           }}
                         />
@@ -1711,7 +1713,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                             e.target.select();
                           }}
                           onChange={(e) =>
-                            updateItem(item.drugId, 'costPrice', parseFloat(e.target.value) || 0)
+                            updateItem(item.id, 'costPrice', parseFloat(e.target.value) || 0)
                           }
                         />
                       </div>
