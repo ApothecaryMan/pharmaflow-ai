@@ -104,11 +104,15 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
       {
         accessorKey: 'userId',
         header: t.cashRegister?.transactions?.user || 'User',
-        cell: (info) => (
-          <span className='font-bold text-[10px] text-gray-500'>
-            {(info.getValue() as string) || '-'}
-          </span>
-        ),
+        cell: (info) => {
+          const empId = info.getValue() as string;
+          const employee = employees?.find((e) => e.id === empId);
+          return (
+            <span className='font-bold text-[10px] text-gray-500'>
+              {employee ? employee.name : empId || '-'}
+            </span>
+          );
+        },
       },
       {
         accessorKey: 'reason',
@@ -284,7 +288,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           type: 'opening',
           amount: amount,
           reason: reasonInput || 'Start of shift',
-          userId: userName,
+          userId: currentEmployeeId || 'System',
         },
       ],
     };
@@ -337,7 +341,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           type: 'closing',
           amount: amount,
           reason: 'End of shift',
-          userId: userName,
+          userId: currentEmployeeId || 'System',
         },
       ],
     };
@@ -402,9 +406,12 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
       userId: employees?.find((e) => e.id === currentEmployeeId)?.name || 'System',
     };
 
-    addTransaction(currentShift.id, transaction, {
-      cashIn: type === 'in' ? currentShift.cashIn + amount : currentShift.cashIn,
-      cashOut: type === 'out' ? currentShift.cashOut + amount : currentShift.cashOut,
+    addTransaction(amount, type, {
+      reason: reasonInput,
+      updates: {
+        cashIn: type === 'in' ? currentShift.cashIn + amount : currentShift.cashIn,
+        cashOut: type === 'out' ? currentShift.cashOut + amount : currentShift.cashOut,
+      },
     });
     closeModal();
   };

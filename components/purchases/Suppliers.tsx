@@ -8,7 +8,7 @@ import { SmartEmailInput, useSmartDirection } from '../common/SmartInputs';
 
 interface SuppliersProps {
   suppliers: Supplier[];
-  onAddSupplier: (supplier: Supplier) => void;
+  onAddSupplier: (supplier: Omit<Supplier, 'id' | 'branchId' | 'createdAt' | 'updatedAt'>) => void;
   onUpdateSupplier: (supplier: Supplier) => void;
   onDeleteSupplier: (id: string) => void;
   color: string;
@@ -50,11 +50,9 @@ export const Suppliers: React.FC<SuppliersProps> = ({
     if (editingSupplier) {
       onUpdateSupplier({ ...editingSupplier, ...formData } as Supplier);
     } else {
-      const newSupplier: Supplier = {
-        id: getVerifiedDate().getTime().toString(),
-        ...(formData as Omit<Supplier, 'id'>),
-      };
-      onAddSupplier(newSupplier);
+      // ID Generation Strategy: getVerifiedDate().getTime().toString()
+      // Now delegated to useEntityActions.handleAddSupplier for centralized ID management
+      onAddSupplier(formData as any);
     }
     setIsModalOpen(false);
   };

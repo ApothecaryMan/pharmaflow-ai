@@ -18,6 +18,7 @@ interface ReturnModalProps {
   userRole?: string;
   currentDailyRefunds?: number;
   currentShift: Shift | null;
+  currentEmployeeId?: string;
 }
 
 export const ReturnModal: React.FC<ReturnModalProps> = ({
@@ -31,6 +32,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   userRole,
   currentDailyRefunds = 0,
   currentShift,
+  currentEmployeeId,
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const [step, setStep] = useState(1);
@@ -237,14 +239,15 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         const discountedPrice = itemTotal * (1 - (item.discount || 0) / 100);
 
         returnItems.push({
-          drugId: lineKey, // Use lineKey for unique tracking
-          name: item.name + (item.isUnit ? ' (UNIT)' : ''),
+          drugId: item.id, // Use actual drugId for lookup
+          name: item.name,
           quantityReturned: quantity,
           isUnit: item.isUnit || false,
           originalPrice: effectivePrice,
           refundAmount: discountedPrice,
           reason: returnReason,
           condition: 'sellable',
+          dosageForm: item.dosageForm,
         });
       }
     });
@@ -258,6 +261,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
       totalRefund: calculateRefund,
       reason: returnReason,
       notes: returnNotes,
+      processedBy: currentEmployeeId,
     };
 
     onConfirm(returnData);

@@ -25,7 +25,7 @@ import { useStatusBar } from '../layout/StatusBar';
 
 interface InventoryProps {
   inventory: Drug[];
-  onAddDrug: (drug: Drug) => void;
+  onAddDrug: (drug: Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'>) => void;
   onUpdateDrug: (drug: Drug) => void;
   onDeleteDrug: (id: string) => void;
   color: string;
@@ -126,6 +126,12 @@ export const Inventory: React.FC<InventoryProps> = ({
     setPrintModalDrug(null);
   };
 
+  /**
+   * Generator Strategy Reference:
+   * - Unique code: 'CUST-' + 6-digit random (e.g., CUST-123456)
+   * - Serial ID: Max existing serial + 1
+   * Delegated to: useEntityActions.handleAddCustomer
+   */
   const handleOpenAdd = () => {
     setMode('add');
     setFormData({
@@ -192,11 +198,9 @@ export const Inventory: React.FC<InventoryProps> = ({
       onUpdateDrug({ ...editingDrug, ...submissionData } as Drug);
       setIsModalOpen(false);
     } else {
-      const newDrug: Drug = {
-        id: getVerifiedDate().getTime().toString(),
-        ...(submissionData as Omit<Drug, 'id'>),
-      };
-      onAddDrug(newDrug);
+      // ID Generation Strategy: getVerifiedDate().getTime().toString()
+      // Now delegated to useInventoryActions.handleAddDrug for centralized ID management
+      onAddDrug(submissionData as any);
 
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);

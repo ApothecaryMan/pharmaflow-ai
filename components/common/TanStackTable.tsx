@@ -918,7 +918,7 @@ export function TanStackTable<TData, TValue>({
 
                         // Date Detection & Formatting (Avoiding false positives like 'csat')
                         const isDateColumn =
-                          ['date', 'time', 'timestamp'].some((key) => colId.includes(key)) ||
+                          ['date', 'time', 'timestamp', 'visit'].some((key) => colId.includes(key)) ||
                           (colId.includes('at') &&
                             !colId.includes('csat') &&
                             !colId.includes('cat'));

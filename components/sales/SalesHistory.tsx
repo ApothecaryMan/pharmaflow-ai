@@ -629,6 +629,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           userRole={userRole}
           currentDailyRefunds={currentDailyRefunds}
           currentShift={currentShift}
+          currentEmployeeId={currentEmployeeId}
         />
       )}
 

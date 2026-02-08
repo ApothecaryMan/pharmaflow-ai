@@ -12,11 +12,11 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartEmailInput, SmartPhoneInput, useSmartDirection } from '../common/SmartInputs';
-import { TanStackTable } from '../common/TanStackTable';
+import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 
 interface CustomerManagementProps {
   customers: Customer[];
-  onAddCustomer: (customer: Customer) => void;
+  onAddCustomer: (customer: Omit<Customer, 'id' | 'serialId' | 'code' | 'createdAt' | 'updatedAt'>) => void;
   onUpdateCustomer: (customer: Customer) => void;
   onDeleteCustomer: (id: string) => void;
   color: string;
@@ -104,6 +104,13 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     }
   }, [formData.city]);
 
+
+
+  /**
+   * generateUniqueCode - Generates a random 6-digit numeric code 
+   * prefixed with 'CUST-' (e.g., CUST-123456).
+   * Ensures uniqueness by checking against existing customers.
+   */
   const generateUniqueCode = () => {
     let code;
     let isUnique = false;
@@ -117,12 +124,22 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     return code;
   };
 
+  /**
+   * getNextSerialId - Finds the highest existing serialId 
+   * and returns the next value in the sequence.
+   */
   const getNextSerialId = () => {
     if (customers.length === 0) return 1;
     const maxId = Math.max(...customers.map((c) => c.serialId || 0));
     return maxId + 1;
   };
 
+  /**
+   * Generator Strategy Reference: 
+   * - Unique code: 'CUST-' + 6-digit random (e.g., CUST-123456)
+   * - Serial ID: Max existing serial + 1
+   * Delegated to: useEntityActions.handleAddCustomer for final verification
+   */
   const handleOpenAdd = () => {
     setMode('add');
     setEditingCustomer(null);
@@ -177,27 +194,18 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone || !formData.code) return;
-
-    // Check for unique code if changed or new
-    const existingCode = customers.find(
-      (c) => c.code === formData.code && c.id !== editingCustomer?.id
-    );
-    if (existingCode) {
-      alert('Customer code must be unique!');
-      return;
-    }
+    if (!formData.name || !formData.phone) return;
 
     if (editingCustomer) {
       onUpdateCustomer({ ...editingCustomer, ...formData } as Customer);
       handleCloseModal();
     } else {
+      // Logic for ID, serialId, and code is centralized in useEntityActions,
+      // but we pass our generated/edited values to ensure the UI state matches the result.
       onAddCustomer({
-        id: getVerifiedDate().getTime().toString(),
         ...formData,
         serialId: formData.serialId || getNextSerialId(),
-        registeredByEmployeeId: currentEmployeeId,
-      } as Customer);
+      } as any);
 
       if (isKioskMode) {
         handleCloseModal();
@@ -356,11 +364,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         accessorKey: 'totalPurchases',
         header: t.headers?.purchases || 'Purchases',
         meta: { width: 120, align: 'start' },
-        cell: (info) => (
-          <span className='font-medium text-gray-900 dark:text-white' dir='ltr'>
-            ${info.row.original.totalPurchases.toFixed(2)}
-          </span>
-        ),
+        cell: (info) => <PriceDisplay value={info.row.original.totalPurchases} />,
       },
       {
         accessorKey: 'points',
@@ -619,9 +623,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 }}
               >
                 <span className='material-symbols-rounded text-blue-500 mb-1'>shopping_bag</span>
-                <span className='text-2xl font-bold text-blue-700 dark:text-blue-500'>
-                  {c.totalPurchases?.toFixed(0) || 0}
-                </span>
+                <PriceDisplay value={c.totalPurchases || 0} size="lg" />
                 <span className='text-xs font-medium text-blue-600/70 dark:text-blue-500/70 uppercase tracking-wide'>
                   Total Purchases
                 </span>

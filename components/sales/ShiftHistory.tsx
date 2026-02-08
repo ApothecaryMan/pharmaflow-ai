@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useShift } from '../../hooks/useShift';
-import type { Shift } from '../../types';
+import type { Employee, Shift } from '../../types';
 import { createSearchRegex } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { DatePicker } from '../common/DatePicker';
@@ -15,6 +15,7 @@ interface ShiftHistoryProps {
   t: any;
   language: string;
   datePickerTranslations: any;
+  employees?: Employee[];
 }
 
 export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
@@ -22,6 +23,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   t,
   language,
   datePickerTranslations,
+  employees,
 }) => {
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [searchTerm, setSearchTerm] = useState('');
@@ -455,8 +457,18 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                             {tx.reason}
                           </div>
                           {tx.time && (
-                            <div className='text-[10px] text-gray-400'>
-                              {new Date(tx.time).toLocaleTimeString()}
+                            <div className='text-[10px] text-gray-400 flex items-center gap-2'>
+                              <span>{new Date(tx.time).toLocaleTimeString()}</span>
+                              <span>•</span>
+                              <span>
+                                {employees?.find((e) => e.id === tx.userId)?.name || tx.userId}
+                              </span>
+                              {tx.id && (
+                                <>
+                                  <span>•</span>
+                                  <span className='font-mono opacity-60'>{tx.id.slice(-8)}</span>
+                                </>
+                              )}
                             </div>
                           )}
                         </div>
