@@ -318,8 +318,8 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
               onSearchChange={setSearch}
               placeholder={t.searchPlaceholder || 'Search supplier name, contact...'}
               wrapperClassName='w-full max-w-xl'
-              className='p-3 rounded-xl border-gray-200 dark:border-gray-700'
-              style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+              color={color}
+              className='p-3'
             />
           </div>
           <div className={`flex-1 overflow-hidden ${CARD_BASE} rounded-xl p-0 flex flex-col`}>

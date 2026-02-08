@@ -1086,7 +1086,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   }}
                   onKeyDown={onDrugSearchKeyDown}
                   placeholder={t.placeholders?.searchDrug || 'Search products...'}
-                  className={`w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 h-[42px] focus:ring-${color}-500 focus:border-${color}-500`}
+                  color={color}
+                  className="h-[42px]"
                 />
 
                 <SearchDropdown
@@ -1167,7 +1168,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   // Clear handled via value update, explicit functionality if needed
                   dir={supplierSearchDir}
                   placeholder={t.placeholders?.searchSupplier || 'Search and select supplier...'}
-                  className={`w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 h-[42px] focus:ring-${color}-500 focus:border-${color}-500`}
+                  color={color}
+                  className="h-[42px]"
                 />
 
                 <SearchDropdown
@@ -1766,6 +1768,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 }
                 className={`${historySearch.startsWith('@') ? 'text-left' : ''}`}
                 rounded='xl'
+                color={color}
               />
               <SearchDropdown
                 results={filteredSearchSuggestions}
