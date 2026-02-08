@@ -23,10 +23,11 @@ import { TanStackTable } from '../common/TanStackTable';
 import { StockAdjustmentPrint } from './StockAdjustmentPrint';
 
 interface StockAdjustmentProps {
-  inventory: Drug[];
   onUpdateInventory: (drugs: Drug[]) => void;
   color?: string;
   t: any;
+  inventory: Drug[];
+  batches: StockBatch[];
 }
 
 interface AdjustmentItem {
@@ -50,6 +51,7 @@ interface BatchSelectionModalProps {
 
 export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   inventory,
+  batches,
   onUpdateInventory,
   color = 'blue',
   t,
@@ -207,12 +209,12 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
     }
 
     // 2. Check Batches
-    const batches = batchService.getAllBatches(drug.id);
+    const drugBatches = batches.filter(b => b.drugId === drug.id);
 
-    if (batches.length > 0) {
+    if (drugBatches.length > 0) {
       playBeep(); // Attention needed
       setBatchSelectionDrug(drug);
-      setAvailableBatches(batches);
+      setAvailableBatches(drugBatches);
       return;
     }
 
@@ -251,8 +253,8 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
           // If item has batches, we try to find a matching batch or pick first.
           // For MVP, let's pick first batch if exists.
-          const batches = batchService.getAllBatches(drug.id);
-          const batch = batches.length > 0 ? batches[0] : null;
+          const drugBatches = batches.filter(b => b.drugId === drug.id);
+          const batch = drugBatches.length > 0 ? drugBatches[0] : null;
 
           const currentStock = batch ? batch.quantity : drug.stock;
           const expiry = batch ? batch.expiryDate : drug.expiryDate;
@@ -311,11 +313,11 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
   const handleAddItem = (drug: Drug) => {
     // Check if drug has batches.
-    const batches = batchService.getAllBatches(drug.id);
+    const drugBatches = batches.filter(b => b.drugId === drug.id);
 
-    if (batches.length > 0) {
+    if (drugBatches.length > 0) {
       setBatchSelectionDrug(drug);
-      setAvailableBatches(batches);
+      setAvailableBatches(drugBatches);
       setSearchTerm(''); // Close search
       return;
     }

@@ -406,12 +406,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
       userId: employees?.find((e) => e.id === currentEmployeeId)?.name || 'System',
     };
 
-    addTransaction(amount, type, {
-      reason: reasonInput,
-      updates: {
-        cashIn: type === 'in' ? currentShift.cashIn + amount : currentShift.cashIn,
-        cashOut: type === 'out' ? currentShift.cashOut + amount : currentShift.cashOut,
-      },
+    addTransaction(currentShift.id, transaction, {
+      cashIn: type === 'in' ? currentShift.cashIn + amount : currentShift.cashIn,
+      cashOut: type === 'out' ? currentShift.cashOut + amount : currentShift.cashOut,
     });
     closeModal();
   };
