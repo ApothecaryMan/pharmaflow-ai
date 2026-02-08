@@ -23,11 +23,12 @@ import type {
   PurchaseReturn,
   Return,
   Sale,
+  StockBatch,
   Supplier,
 } from '../types';
 import { customerService } from './customers';
 import { employeeService } from './hr';
-import { inventoryService } from './inventory';
+import { batchService, inventoryService } from './inventory';
 import { runShardingMigration } from './migration/shardingMigration';
 import { purchaseService } from './purchases';
 import { returnService } from './returns';
@@ -44,6 +45,7 @@ export interface DataState {
   returns: Return[];
   customers: Customer[];
   employees: Employee[];
+  batches: StockBatch[];
   isLoading: boolean;
 }
 
@@ -88,6 +90,10 @@ export interface DataActions {
   updateEmployee: (id: string, updates: Partial<Employee>) => Promise<Employee>;
   deleteEmployee: (id: string) => Promise<void>;
 
+  // Batches
+  setBatches: (batches: StockBatch[] | ((prev: StockBatch[]) => StockBatch[])) => void;
+  syncBatches: () => Promise<void>;
+
   // Refresh all data from storage
   refreshAll: () => Promise<void>;
 
@@ -131,6 +137,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   const [returns, setReturnsState] = useState<Return[]>([]);
   const [customers, setCustomersState] = useState<Customer[]>([]);
   const [employees, setEmployeesState] = useState<Employee[]>([]);
+  const [batches, setBatchesState] = useState<StockBatch[]>([]);
 
   // Load initial data
   // Load initial data
@@ -159,11 +166,12 @@ export const DataProvider: React.FC<DataProviderProps> = ({
             returnService.getAllSalesReturns(),
             customerService.getAll(),
             employeeService.getAll(),
+            batchService.getAllBatches(),
           ]),
           minLoadTime,
         ]);
 
-        const [inv, sal, sup, pur, pRet, ret, cust, emp] = results;
+        const [inv, sal, sup, pur, pRet, ret, cust, emp, bat] = results;
 
         // Use initial data if fetched data is empty and initial data is provided
         // We use a stable check here instead of depending on the array reference
@@ -179,6 +187,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         setReturnsState(ret);
         setCustomersState(cust);
         setEmployeesState(emp);
+        setBatchesState(bat);
 
         // Seed SUPER User logic
         const superUser = import.meta.env.VITE_SUPER_USER;
@@ -243,6 +252,18 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   useEffect(() => {
     if (!isLoading) employeeService.save(employees);
   }, [employees, isLoading]);
+  useEffect(() => {
+    if (!isLoading) {
+      // batchService.saveBatches is not exported by bundle usually, 
+      // but we need to ensure localStorage is in sync. 
+      // The batchService uses StorageKeys.STOCK_BATCHES
+      import('../utils/storage').then(({ storage }) => {
+        import('../config/storageKeys').then(({ StorageKeys }) => {
+          storage.set(StorageKeys.STOCK_BATCHES, batches);
+        });
+      });
+    }
+  }, [batches, isLoading]);
 
   // Actions
   const setInventory = useCallback(
@@ -278,6 +299,15 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     (data: Employee[] | ((prev: Employee[]) => Employee[])) => setEmployeesState(data),
     []
   );
+  const setBatches = useCallback(
+    (data: StockBatch[] | ((prev: StockBatch[]) => StockBatch[])) => setBatchesState(data),
+    []
+  );
+
+  const syncBatches = useCallback(async () => {
+    const bat = batchService.getAllBatches();
+    setBatchesState(bat);
+  }, []);
 
   const addProduct = useCallback(async (product: Omit<Drug, 'id'>) => {
     const newProduct = await inventoryService.create(product);
@@ -430,6 +460,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       returns,
       customers,
       employees,
+      batches,
       isLoading,
       // Actions
       setInventory,
@@ -457,6 +488,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       addEmployee,
       updateEmployee,
       deleteEmployee,
+
+      setBatches,
+      syncBatches,
 
       refreshAll,
       switchBranch,
@@ -497,6 +531,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       addEmployee,
       updateEmployee,
       deleteEmployee,
+      setBatches,
+      syncBatches,
       refreshAll,
       switchBranch,
     ]

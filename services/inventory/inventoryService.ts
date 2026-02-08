@@ -3,8 +3,9 @@
  */
 
 import { StorageKeys } from '../../config/storageKeys';
-import type { Drug } from '../../types';
+import type { Drug, MovementType, StockMovement } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
+import * as batchService from './batchService';
 
 import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
@@ -77,6 +78,17 @@ export const createInventoryService = (): InventoryService => ({
     } as Drug;
     all.push(newDrug);
     storage.set(StorageKeys.INVENTORY, all);
+
+    // Create initial stock batch for the new drug
+    batchService.createBatch({
+      drugId: newDrug.id,
+      quantity: newDrug.stock,
+      expiryDate: newDrug.expiryDate,
+      costPrice: newDrug.costPrice,
+      batchNumber: 'INITIAL',
+      dateReceived: new Date().toISOString(),
+    });
+
     return newDrug;
   },
 

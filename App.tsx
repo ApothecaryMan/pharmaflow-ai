@@ -119,6 +119,8 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setCustomers,
     employees,
     setEmployees, // Added setEmployees
+    batches,
+    setBatches,
     isLoading,
   } = useData();
 
@@ -190,6 +192,8 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     employees,
     setEmployees, // Added setEmployees
     isLoading,
+    batches,
+    setBatches,
     getVerifiedDate,
     validateTransactionTime,
     updateLastTransactionTime,
@@ -293,8 +297,9 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       purchaseReturns,
       returns,
       employees,
+      batches,
     }),
-    [sales, inventory, enrichedCustomers, suppliers, purchases, purchaseReturns, returns, employees]
+    [sales, inventory, enrichedCustomers, suppliers, purchases, purchaseReturns, returns, employees, batches]
   );
 
   // --- TRANSITION SKELETON STATE ---

@@ -19,6 +19,7 @@ import type {
   PurchaseReturn,
   Return,
   Sale,
+  StockBatch,
   Supplier,
 } from '../types';
 import { idGenerator } from '../utils/idGenerator';
@@ -110,6 +111,10 @@ interface UseEntityHandlersParams {
   employees: Employee[];
   setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
 
+  // Batches
+  batches: StockBatch[];
+  setBatches: (batches: StockBatch[] | ((prev: StockBatch[]) => StockBatch[])) => void;
+
   // Utilities
   currentEmployeeId: string | null;
   isLoading: boolean;
@@ -141,6 +146,8 @@ export function useEntityHandlers({
   setEmployees,
   currentEmployeeId,
   isLoading,
+  batches,
+  setBatches,
   getVerifiedDate,
   validateTransactionTime,
   updateLastTransactionTime,
@@ -448,25 +455,36 @@ export function useEntityHandlers({
           return;
         }
 
+        // Create batches outside the mapper to avoid side-effects in mappers
+        purchase.items.forEach((purchasedItem) => {
+          const drug = inventory.find((d) => d.id === purchasedItem.drugId);
+          if (drug) {
+            const unitsToAdd = purchasedItem.isUnit
+              ? purchasedItem.quantity
+              : purchasedItem.quantity * (drug.unitsPerPack || 1);
+
+            batchService.createBatch({
+              drugId: drug.id,
+              quantity: unitsToAdd,
+              expiryDate: purchasedItem.expiryDate || drug.expiryDate,
+              costPrice: purchasedItem.costPrice,
+              purchaseId: purchase.id,
+              dateReceived: new Date().toISOString(),
+              batchNumber: purchase.invoiceId,
+            });
+          }
+        });
+
+        // Update batches state reactively
+        setBatches(batchService.getAllBatches());
+
         setInventory((prev) =>
           prev.map((drug) => {
             const purchasedItem = purchase.items.find((i) => i.drugId === drug.id);
             if (purchasedItem) {
-              // Convert purchased packs to units if needed
               const unitsToAdd = purchasedItem.isUnit
                 ? purchasedItem.quantity
                 : purchasedItem.quantity * (drug.unitsPerPack || 1);
-
-              // Create a new batch for this purchase
-              batchService.createBatch({
-                drugId: drug.id,
-                quantity: unitsToAdd,
-                expiryDate: purchasedItem.expiryDate || drug.expiryDate,
-                costPrice: purchasedItem.costPrice,
-                purchaseId: purchase.id,
-                dateReceived: new Date().toISOString(),
-                batchNumber: purchase.invoiceId,
-              });
 
               return {
                 ...drug,
@@ -497,7 +515,7 @@ export function useEntityHandlers({
         });
       }
     },
-    [setPurchases, setInventory, info, currentEmployeeId, employees, error]
+    [setPurchases, setInventory, info, currentEmployeeId, employees, error, setBatches, inventory]
   );
 
   const handleApprovePurchase = useCallback(
@@ -528,7 +546,30 @@ export function useEntityHandlers({
         )
       );
 
-      // 2. Update Inventory and create batches
+      // 2. Create batches outside the mapper
+      purchase.items.forEach((purchasedItem) => {
+        const drug = inventory.find((d) => d.id === purchasedItem.drugId);
+        if (drug) {
+          const unitsToAdd = purchasedItem.isUnit
+            ? purchasedItem.quantity
+            : purchasedItem.quantity * (drug.unitsPerPack || 1);
+
+          batchService.createBatch({
+            drugId: drug.id,
+            quantity: unitsToAdd,
+            expiryDate: purchasedItem.expiryDate || drug.expiryDate,
+            costPrice: purchasedItem.costPrice,
+            purchaseId: purchase.id,
+            dateReceived: new Date().toISOString(),
+            batchNumber: purchase.invoiceId,
+          });
+        }
+      });
+
+      // Update batches state reactively
+      setBatches(batchService.getAllBatches());
+
+      // 3. Update Inventory state
       setInventory((prev) =>
         prev.map((drug) => {
           const purchasedItem = purchase.items.find((i) => i.drugId === drug.id);
@@ -536,17 +577,6 @@ export function useEntityHandlers({
             const unitsToAdd = purchasedItem.isUnit
               ? purchasedItem.quantity
               : purchasedItem.quantity * (drug.unitsPerPack || 1);
-
-            // Create a new batch for this purchase
-            batchService.createBatch({
-              drugId: drug.id,
-              quantity: unitsToAdd,
-              expiryDate: purchasedItem.expiryDate || drug.expiryDate,
-              costPrice: purchasedItem.costPrice,
-              purchaseId: purchase.id,
-              dateReceived: new Date().toISOString(),
-              batchNumber: purchase.invoiceId,
-            });
 
             return {
               ...drug,
@@ -759,6 +789,9 @@ export function useEntityHandlers({
               batchAllocations: alloc?.allocations || [],
             });
           });
+
+          // Update batches state
+          setBatches(batchService.getAllBatches());
         } catch (allocError: any) {
           // --- ROLLBACK INITIATED ---
           console.error('Transaction failed during bulk allocation:', allocError);
@@ -856,7 +889,7 @@ export function useEntityHandlers({
             amount: saleData.total, // Ensure we single this out cleanly
             reason: `Sale #${serialId}`,
             userId: employees?.find((e) => e.id === currentEmployeeId)?.name || 'System',
-            relatedSaleId: serialId,
+            relatedSaleId: serialId.toString(),
           });
         } else {
           console.log(
@@ -1033,6 +1066,7 @@ export function useEntityHandlers({
                   }
 
                   batchService.returnStock(returnsToMake);
+                  setBatches(batchService.getAllBatches());
                 }
 
                 setInventory((prev) =>
@@ -1064,6 +1098,7 @@ export function useEntityHandlers({
                     ...(oldItem.batchAllocations || []),
                     ...newAllocations,
                   ];
+                  setBatches(batchService.getAllBatches());
 
                   setInventory((prev) =>
                     prev.map((d) => {
@@ -1124,6 +1159,7 @@ export function useEntityHandlers({
 
               if (allocations) {
                 newItem.batchAllocations = allocations;
+                setBatches(batchService.getAllBatches());
 
                 setInventory((prev) =>
                   prev.map((d) => {
@@ -1190,7 +1226,7 @@ export function useEntityHandlers({
           amount: sale.total, // Ensure we use the full total
           reason: `Delivery Finalized #${saleId}`,
           userId: employees?.find((e) => e.id === currentEmployeeId)?.name || 'System',
-          relatedSaleId: saleId,
+          relatedSaleId: saleId.toString(),
         });
         console.log(`[Shift] Delivery #${sale.id} completed. Added to shift ${currentShift.id}`);
       }
@@ -1285,6 +1321,30 @@ export function useEntityHandlers({
               quantityToRestore = returnedItem.quantityReturned * (drug.unitsPerPack || 1);
             }
 
+            // Restore stock to batches if we can find the original allocations
+            const sale = sales.find(s => s.id === returnData.saleId);
+            const soldItem = sale?.items.find(i => i.id === drug.id);
+            if (soldItem?.batchAllocations) {
+              // We return a proportional amount of stock to batches
+              // For simplicity in returns, we might return to the latest allocation or spread it.
+              // Here we just return the full amount to the first batch found in allocations for that item (simplified)
+              // Better: use batchService.returnStock with a sliced allocation representing the returned amount.
+              const returnsToMake: BatchAllocation[] = [];
+              let remainingToReturn = quantityToRestore;
+              
+              for (const alloc of soldItem.batchAllocations) {
+                 if (remainingToReturn <= 0) break;
+                 const returnQty = Math.min(alloc.quantity, remainingToReturn);
+                 returnsToMake.push({...alloc, quantity: returnQty});
+                 remainingToReturn -= returnQty;
+              }
+              
+              if (returnsToMake.length > 0) {
+                batchService.returnStock(returnsToMake);
+                setBatches(batchService.getAllBatches());
+              }
+            }
+
             return {
               ...drug,
               stock: validateStock(drug.stock + quantityToRestore),
@@ -1304,7 +1364,7 @@ export function useEntityHandlers({
           amount: returnData.totalRefund,
           reason: `Return for Sale #${returnData.saleId}`,
           userId: employees?.find((e) => e.id === currentEmployeeId)?.name || 'System',
-          relatedSaleId: returnData.saleId,
+          relatedSaleId: returnData.saleId.toString(),
         });
       }
 
