@@ -59,6 +59,8 @@ export const Inventory: React.FC<InventoryProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
+  const [selectedBatches, setSelectedBatches] = useState<Record<string, string>>({}); // groupId -> drugId
+  const [openBatchDropdown, setOpenBatchDropdown] = useState<string | null>(null);
 
   // Print Label Modal State
   const [printModalDrug, setPrintModalDrug] = useState<Drug | null>(null);
@@ -320,54 +322,101 @@ export const Inventory: React.FC<InventoryProps> = ({
     return result;
   }, [inventory, searchTerm, activeFilters, t]);
 
+  const groupedInventory = useMemo(() => {
+    const groups: Record<string, Drug[]> = {};
+
+    filteredInventory.forEach((d) => {
+      // Group by barcode if available, otherwise by name + dosage form
+      const key = d.barcode ? `BARCODE|${d.barcode}` : `NAME|${d.name}|${d.dosageForm || ''}`;
+
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(d);
+    });
+
+    return Object.values(groups).map((group) => {
+      // Sort batches by expiry date (FEFO)
+      const sortedGroup = [...group].sort((a, b) => {
+        if (!a.expiryDate) return 1;
+        if (!b.expiryDate) return -1;
+        const dateA = new Date(a.expiryDate).getTime();
+        const dateB = new Date(b.expiryDate).getTime();
+        return isNaN(dateA) ? 1 : isNaN(dateB) ? -1 : dateA - dateB;
+      });
+
+      // The representative drug for the row's display metadata
+      const first = sortedGroup[0];
+
+      // Calculate total stock for all batches in the group
+      const totalStock = sortedGroup.reduce((sum, d) => sum + d.stock, 0);
+
+      return {
+        ...first,
+        id: first.id, // Group row ID (uses first batch's ID as representative)
+        stock: totalStock, // Summed stock
+        group: sortedGroup, // All batches in this group
+        groupId: first.barcode ? `B-${first.barcode}` : `N-${first.name}-${first.dosageForm || ''}`,
+      };
+    });
+  }, [filteredInventory]);
+
   // Helper: Get row context menu actions
-  const getRowActions = (drug: Drug) => {
-    const actions = [];
+    const getRowActions = (drugRow: any) => {
+      const groupData = drugRow as Drug & { group: Drug[]; groupId: string };
+      const selectedId = selectedBatches[groupData.groupId] || groupData.id;
+      const drug = groupData.group.find((d) => d.id === selectedId) || groupData;
 
-    if (canPerformAction(userRole, 'inventory.update')) {
-      actions.push({ label: t.actionsMenu.edit, icon: 'edit', action: () => handleOpenEdit(drug) });
-    }
+      const actions = [];
 
-    actions.push({
-      label: t.actionsMenu.viewDetails || t.actionsMenu.view,
-      icon: 'visibility',
-      action: () => handleViewDetails(drug.id),
-    });
-    actions.push({ separator: true });
-    actions.push({
-      label: t.actionsMenu.printBarcode,
-      icon: 'print',
-      action: () => handlePrintBarcode(drug),
-    });
-    if (canPerformAction(userRole, 'inventory.add')) {
+      if (canPerformAction(userRole, 'inventory.update')) {
+        actions.push({
+          label: t.actionsMenu.edit,
+          icon: 'edit',
+          action: () => handleOpenEdit(drug),
+        });
+      }
+
       actions.push({
-        label: t.actionsMenu.duplicate,
-        icon: 'content_copy',
-        action: () => handleDuplicate(drug),
+        label: t.actionsMenu.viewDetails || t.actionsMenu.view,
+        icon: 'visibility',
+        action: () => handleViewDetails(drug.id),
       });
-    }
-
-    if (canPerformAction(userRole, 'inventory.restock')) {
       actions.push({ separator: true });
       actions.push({
-        label: t.actionsMenu.adjustStock,
-        icon: 'inventory',
-        action: () => handleQuickStockAdjust(drug),
+        label: t.actionsMenu.printBarcode,
+        icon: 'print',
+        action: () => handlePrintBarcode(drug),
       });
-    }
+      if (canPerformAction(userRole, 'inventory.add')) {
+        actions.push({
+          label: t.actionsMenu.duplicate,
+          icon: 'content_copy',
+          action: () => handleDuplicate(drug),
+        });
+      }
 
-    if (canPerformAction(userRole, 'inventory.delete')) {
-      actions.push({ separator: true });
-      actions.push({
-        label: t.actionsMenu.delete,
-        icon: 'delete',
-        action: () => handleDelete(drug.id),
-        danger: true,
-      });
-    }
+      if (canPerformAction(userRole, 'inventory.restock')) {
+        actions.push({ separator: true });
+        actions.push({
+          label: t.actionsMenu.adjustStock,
+          icon: 'inventory',
+          action: () => handleQuickStockAdjust(drug),
+        });
+      }
 
-    return actions;
-  };
+      if (canPerformAction(userRole, 'inventory.delete')) {
+        actions.push({ separator: true });
+        actions.push({
+          label: t.actionsMenu.delete,
+          icon: 'delete',
+          action: () => handleDelete(drug.id),
+          danger: true,
+        });
+      }
+
+      return actions;
+    };
 
   const tableColumns = useMemo<ColumnDef<Drug>[]>(
     () => [
@@ -396,7 +445,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         cell: ({ row }) => {
           const drug = row.original;
           return (
-            <div className='flex flex-col text-start' dir='ltr'>
+            <div className={`flex flex-col whitespace-normal ${isRTL ? 'text-right' : 'text-left'}`} dir='ltr'>
               <div className='font-medium text-gray-900 dark:text-gray-100 text-sm drug-name'>
                 {getDisplayName({ name: drug.name })}{' '}
                 {drug.dosageForm && (
@@ -407,7 +456,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                   </span>
                 )}
               </div>
-              <div className='text-xs text-gray-500 w-full text-start'>
+              <div className='text-xs text-gray-500'>
                 <span>
                   {drug.genericName?.length > 35
                     ? drug.genericName.substring(0, 35) + '...'
@@ -476,8 +525,12 @@ export const Inventory: React.FC<InventoryProps> = ({
         accessorKey: 'costPrice',
         header: t.headers.cost,
         cell: ({ row }) => {
-          if (!row.original.costPrice) return <span className='text-gray-500 text-sm'>-</span>;
-          const parts = formatCurrencyParts(row.original.costPrice);
+          const groupData = row.original as any;
+          const selectedId = selectedBatches[groupData.groupId] || groupData.id;
+          const drug = groupData.group.find((d: any) => d.id === selectedId) || groupData;
+
+          if (!drug.costPrice) return <span className='text-gray-500 text-sm'>-</span>;
+          const parts = formatCurrencyParts(drug.costPrice);
           return (
             <span className='text-gray-900 dark:text-gray-100 text-sm font-medium'>
               {parts.amount}{' '}
@@ -489,38 +542,89 @@ export const Inventory: React.FC<InventoryProps> = ({
       {
         accessorKey: 'expiryDate',
         header: t.headers.expiry,
-        cell: ({ getValue }) => {
-          const val = getValue() as string;
-          if (!val) return <span className='text-gray-400'>-</span>;
+        cell: ({ row }) => {
+          const groupData = row.original as any;
+          const batches = groupData.group || [groupData];
+          const selectedId = selectedBatches[groupData.groupId] || groupData.id;
+          const drug = batches.find((d: any) => d.id === selectedId) || groupData;
 
-          const date = new Date(val);
-          const now = new Date();
-          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          const sixMonthsFromNow = new Date(today);
-          sixMonthsFromNow.setMonth(today.getMonth() + 6);
+          const renderDateWrapper = (val: string, isDropdownTrigger = false) => {
+            if (!val) return <span className='text-gray-400'>-</span>;
+            const date = new Date(val);
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const sixMonthsFromNow = new Date(today);
+            sixMonthsFromNow.setMonth(today.getMonth() + 6);
+            const expiry = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-          // Remove time part for comparison
-          const expiry = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            let colorClass = 'text-current';
+            if (expiry <= today) {
+              colorClass = 'text-red-500 font-bold';
+            } else if (expiry <= sixMonthsFromNow) {
+              colorClass = 'text-amber-500 font-bold';
+            }
 
-          let colorClass = 'text-gray-900 dark:text-gray-100';
-          if (expiry <= today) {
-            colorClass = 'text-red-500 font-bold';
-          } else if (expiry <= sixMonthsFromNow) {
-            colorClass = 'text-amber-500 font-bold';
+            return (
+              <div
+                className={`flex items-center justify-center w-full gap-1 tabular-nums text-sm ${colorClass} ${isDropdownTrigger ? 'cursor-pointer hover:opacity-70' : ''}`}
+              >
+                {!isNaN(date.getTime())
+                  ? date.toLocaleDateString('en-US', { month: '2-digit', year: 'numeric' })
+                  : val}
+              </div>
+            );
+          };
+
+          if (batches.length > 1) {
+            return (
+              <div className='flex justify-center'>
+                <FilterDropdown
+                  variant='input'
+                  items={batches}
+                  selectedItem={drug}
+                  isOpen={openBatchDropdown === groupData.groupId}
+                  onToggle={() =>
+                    setOpenBatchDropdown(
+                      openBatchDropdown === groupData.groupId ? null : groupData.groupId
+                    )
+                  }
+                  onSelect={(b: any) => {
+                    setSelectedBatches({ ...selectedBatches, [groupData.groupId]: b.id });
+                    setOpenBatchDropdown(null);
+                  }}
+                  keyExtractor={(b: any) => b.id}
+                  renderSelected={(b: any) => (
+                    <div className='flex justify-center items-center w-full px-2 gap-1.5'>
+                      <span>{renderDateWrapper(b.expiryDate, true)}</span>
+                      <span className='text-[10px] text-gray-400 font-normal'>
+                        ({formatStock(b.stock, b.unitsPerPack).replace(/ Packs?/g, '')})
+                      </span>
+                    </div>
+                  )}
+                  renderItem={(b: any) => (
+                    <div className='flex justify-center items-center w-full px-2 gap-2'>
+                      <span>{renderDateWrapper(b.expiryDate)}</span>
+                      <span className='text-[10px] text-gray-400 font-normal'>
+                        ({formatStock(b.stock, b.unitsPerPack).replace(/ Packs?/g, '')})
+                      </span>
+                    </div>
+                  )}
+                  className='h-8 w-[110px] mx-auto'
+                  color={color}
+                  floating
+                  hideArrow={true}
+                  minHeight={32}
+                />
+              </div>
+            );
           }
 
-          return (
-            <span className={`${colorClass} tabular-nums text-sm`}>
-              {!isNaN(date.getTime())
-                ? date.toLocaleDateString('en-US', { month: '2-digit', year: 'numeric' })
-                : val}
-            </span>
-          );
+          return <div className='flex justify-center'>{renderDateWrapper(drug.expiryDate)}</div>;
         },
         meta: { align: 'center', smartDate: false },
       },
     ],
-    [color, currentLang, t]
+    [color, currentLang, t, selectedBatches, openBatchDropdown]
   );
 
   // Define Filter Config
@@ -636,7 +740,7 @@ export const Inventory: React.FC<InventoryProps> = ({
           {/* Table Card - Default Design */}
           <div className='flex-1 overflow-hidden'>
             <TanStackTable
-              data={filteredInventory}
+              data={groupedInventory}
               columns={enhancedColumns}
               tableId='inventory_table'
               color={color}
