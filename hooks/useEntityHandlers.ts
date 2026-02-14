@@ -478,29 +478,72 @@ export function useEntityHandlers({
         // Update batches state reactively
         setBatches(batchService.getAllBatches());
 
-        setInventory((prev) =>
-          prev.map((drug) => {
-            const purchasedItem = purchase.items.find((i) => i.drugId === drug.id);
-            if (purchasedItem) {
-              const unitsToAdd = purchasedItem.isUnit
-                ? purchasedItem.quantity
-                : purchasedItem.quantity * (drug.unitsPerPack || 1);
+        // Update inventory: create new Drug entries for different expiry dates
+        setInventory((prev) => {
+          let updated = [...prev];
+          const newEntries: Drug[] = [];
 
-              return {
-                ...drug,
-                stock: validateStock(drug.stock + unitsToAdd),
+          purchase.items.forEach((purchasedItem) => {
+            const sourceDrug = updated.find((d) => d.id === purchasedItem.drugId);
+            if (!sourceDrug) return;
+
+            const unitsToAdd = purchasedItem.isUnit
+              ? purchasedItem.quantity
+              : purchasedItem.quantity * (sourceDrug.unitsPerPack || 1);
+
+            const purchaseExpiry = purchasedItem.expiryDate || sourceDrug.expiryDate;
+
+            // Check if an existing Drug entry with the same product AND same expiry already exists
+            const sameExpiryEntry = updated.find(
+              (d) =>
+                d.name === sourceDrug.name &&
+                d.dosageForm === sourceDrug.dosageForm &&
+                d.expiryDate === purchaseExpiry
+            );
+
+            if (sameExpiryEntry) {
+              // Same expiry exists → just add stock to that entry
+              updated = updated.map((d) =>
+                d.id === sameExpiryEntry.id
+                  ? {
+                      ...d,
+                      stock: validateStock(d.stock + unitsToAdd),
+                      costPrice: purchasedItem.costPrice,
+                    }
+                  : d
+              );
+            } else {
+              // Different expiry → create a NEW Drug entry (same product, new batch)
+              const newDrugId = idGenerator.generate('inventory');
+              newEntries.push({
+                ...sourceDrug,
+                id: newDrugId,
+                stock: unitsToAdd,
                 costPrice: purchasedItem.costPrice,
-                // Update expiry to earliest if new batch expires sooner
-                expiryDate:
-                  purchasedItem.expiryDate &&
-                  new Date(purchasedItem.expiryDate) < new Date(drug.expiryDate)
-                    ? purchasedItem.expiryDate
-                    : drug.expiryDate,
-              };
+                expiryDate: purchaseExpiry,
+                createdAt: new Date().toISOString(),
+              });
+
+              // Also update the batch's drugId to point to the new Drug entry
+              const allBatches = batchService.getAllBatches();
+              const latestBatch = allBatches
+                .filter(
+                  (b) => b.drugId === sourceDrug.id && b.purchaseId === purchase.id
+                )
+                .sort((a, b) => new Date(b.dateReceived).getTime() - new Date(a.dateReceived).getTime())[0];
+              if (latestBatch) {
+                batchService.updateBatch(latestBatch.id, { drugId: newDrugId });
+              }
             }
-            return drug;
-          })
-        );
+          });
+
+          // Refresh batches after potential drugId updates
+          if (newEntries.length > 0) {
+            setBatches(batchService.getAllBatches());
+          }
+
+          return [...updated, ...newEntries];
+        });
         auditService.log('purchase.complete', {
           userId: currentEmployeeId,
           details: `Completed PO #${purchase.invoiceId}`,
@@ -569,33 +612,76 @@ export function useEntityHandlers({
       // Update batches state reactively
       setBatches(batchService.getAllBatches());
 
-      // 3. Update Inventory state
-      setInventory((prev) =>
-        prev.map((drug) => {
-          const purchasedItem = purchase.items.find((i) => i.drugId === drug.id);
-          if (purchasedItem) {
-            const unitsToAdd = purchasedItem.isUnit
-              ? purchasedItem.quantity
-              : purchasedItem.quantity * (drug.unitsPerPack || 1);
+      // 3. Update inventory: create new Drug entries for different expiry dates
+      setInventory((prev) => {
+        let updated = [...prev];
+        const newEntries: Drug[] = [];
 
-            return {
-              ...drug,
-              stock: validateStock(drug.stock + unitsToAdd),
+        purchase.items.forEach((purchasedItem) => {
+          const sourceDrug = updated.find((d) => d.id === purchasedItem.drugId);
+          if (!sourceDrug) return;
+
+          const unitsToAdd = purchasedItem.isUnit
+            ? purchasedItem.quantity
+            : purchasedItem.quantity * (sourceDrug.unitsPerPack || 1);
+
+          const purchaseExpiry = purchasedItem.expiryDate || sourceDrug.expiryDate;
+
+          // Check if an existing Drug entry with the same product AND same expiry already exists
+          const sameExpiryEntry = updated.find(
+            (d) =>
+              d.name === sourceDrug.name &&
+              d.dosageForm === sourceDrug.dosageForm &&
+              d.expiryDate === purchaseExpiry
+          );
+
+          if (sameExpiryEntry) {
+            // Same expiry exists → just add stock to that entry
+            updated = updated.map((d) =>
+              d.id === sameExpiryEntry.id
+                ? {
+                    ...d,
+                    stock: validateStock(d.stock + unitsToAdd),
+                    costPrice: purchasedItem.costPrice,
+                  }
+                : d
+            );
+          } else {
+            // Different expiry → create a NEW Drug entry (same product, new batch)
+            const newDrugId = idGenerator.generate('inventory');
+            newEntries.push({
+              ...sourceDrug,
+              id: newDrugId,
+              stock: unitsToAdd,
               costPrice: purchasedItem.costPrice,
-              expiryDate:
-                purchasedItem.expiryDate &&
-                new Date(purchasedItem.expiryDate) < new Date(drug.expiryDate)
-                  ? purchasedItem.expiryDate
-                  : drug.expiryDate,
-            };
+              expiryDate: purchaseExpiry,
+              createdAt: new Date().toISOString(),
+            });
+
+            // Also update the batch's drugId to point to the new Drug entry
+            const allBatches = batchService.getAllBatches();
+            const latestBatch = allBatches
+              .filter(
+                (b) => b.drugId === sourceDrug.id && b.purchaseId === purchase.id
+              )
+              .sort((a, b) => new Date(b.dateReceived).getTime() - new Date(a.dateReceived).getTime())[0];
+            if (latestBatch) {
+              batchService.updateBatch(latestBatch.id, { drugId: newDrugId });
+            }
           }
-          return drug;
-        })
-      );
+        });
+
+        // Refresh batches after potential drugId updates
+        if (newEntries.length > 0) {
+          setBatches(batchService.getAllBatches());
+        }
+
+        return [...updated, ...newEntries];
+      });
 
       success(`PO #${purchase.invoiceId} Approved Successfully`);
     },
-    [purchases, setPurchases, setInventory, success, currentEmployeeId, employees, error]
+    [purchases, setPurchases, setInventory, setBatches, inventory, success, currentEmployeeId, employees, error]
   );
 
   const handleRejectPurchase = useCallback(

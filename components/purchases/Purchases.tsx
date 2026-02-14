@@ -688,7 +688,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
         const updatedItem = { ...i, [field]: value };
 
-        // Auto-format expiry date: 1125 -> 11/2025
+        // Auto-format expiry date: 1125 -> 2025-11-01 (ISO format)
         if (
           field === 'expiryDate' &&
           typeof value === 'string' &&
@@ -697,7 +697,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
         ) {
           const month = value.slice(0, 2);
           const year = value.slice(2);
-          updatedItem.expiryDate = `${month}/20${year}`;
+          updatedItem.expiryDate = `20${year}-${month}`;
         }
 
         // Interdependent Calculation Logic
@@ -1108,7 +1108,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                         if (!drug.expiryDate) return '---';
                         const date = new Date(drug.expiryDate);
                         if (isNaN(date.getTime())) return drug.expiryDate;
-                        return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getFullYear()).slice(-2)}`;
+                        return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
                       },
                     },
                     {

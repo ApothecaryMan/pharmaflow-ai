@@ -511,7 +511,9 @@ export const Inventory: React.FC<InventoryProps> = ({
 
           return (
             <span className={`${colorClass} tabular-nums text-sm`}>
-              {date.toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' })}
+              {!isNaN(date.getTime())
+                ? date.toLocaleDateString('en-US', { month: '2-digit', year: 'numeric' })
+                : val}
             </span>
           );
         },
@@ -1084,7 +1086,12 @@ export const Inventory: React.FC<InventoryProps> = ({
                   {t.modal?.expiry}
                 </label>
                 <p className='text-xl font-bold text-gray-700 dark:text-gray-300'>
-                  {new Date(viewingDrug.expiryDate).toLocaleDateString()}
+                  {(() => {
+                    const d = new Date(viewingDrug.expiryDate);
+                    return !isNaN(d.getTime())
+                      ? d.toLocaleDateString('en-US', { month: '2-digit', year: 'numeric' })
+                      : viewingDrug.expiryDate;
+                  })()}
                 </p>
               </div>
             </div>

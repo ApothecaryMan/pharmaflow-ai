@@ -80,6 +80,20 @@ export const updateBatchQuantity = (batchId: string, delta: number): StockBatch 
 };
 
 /**
+ * Update batch fields (e.g., drugId reassignment when creating new Drug entries for different expiries)
+ * Returns the updated batch or null if not found
+ */
+export const updateBatch = (batchId: string, updates: Partial<StockBatch>): StockBatch | null => {
+  const all = getAllBatchesRaw();
+  const index = all.findIndex((b) => b.id === batchId);
+  if (index === -1) return null;
+
+  all[index] = { ...all[index], ...updates };
+  saveBatches(all);
+  return all[index];
+};
+
+/**
  * Allocate stock using FEFO (First Expiry First Out)
  * Returns the batch allocations or null if insufficient stock
  *
@@ -323,6 +337,7 @@ export const batchService = {
   getBatchById,
   createBatch,
   updateBatchQuantity,
+  updateBatch,
   allocateStock,
   allocateStockBulk,
   returnStock,

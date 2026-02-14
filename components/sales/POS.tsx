@@ -1492,12 +1492,14 @@ export const POS: React.FC<POSProps> = ({
               <div className='w-full h-full'>
                 <div className='text-sm font-bold text-gray-700 dark:text-gray-300'>
                   {i ? (
-                    (i.expiryDate
+                    (i.expiryDate && !isNaN(new Date(i.expiryDate).getTime())
                       ? new Date(i.expiryDate).toLocaleDateString('en-US', {
                           month: '2-digit',
                           year: '2-digit',
                         })
-                      : '-') + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
+                      : (i.expiryDate?.includes('/') && i.expiryDate.split('/')[1].length === 4 
+                          ? `${i.expiryDate.split('/')[0]}/${i.expiryDate.split('/')[1].slice(-2)}`
+                          : (i.expiryDate || '-'))) + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                   ) : (
                     <span className='inline-flex items-center px-2 py-0.5 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 rounded border border-red-100 dark:border-red-800/50'>
                       {t.noStock}
@@ -1530,12 +1532,14 @@ export const POS: React.FC<POSProps> = ({
                   return (
                     <div className='w-full px-2 py-1 text-sm font-bold text-center truncate text-gray-700 dark:text-gray-300'>
                       {i ? (
-                        (i.expiryDate
+                        (i.expiryDate && !isNaN(new Date(i.expiryDate).getTime())
                           ? new Date(i.expiryDate).toLocaleDateString('en-US', {
                               month: '2-digit',
                               year: '2-digit',
                             })
-                          : '-') +
+                          : (i.expiryDate?.includes('/') && i.expiryDate.split('/')[1].length === 4 
+                              ? `${i.expiryDate.split('/')[0]}/${i.expiryDate.split('/')[1].slice(-2)}`
+                              : (i.expiryDate || '-'))) +
                         ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                       ) : (
                         <span className='text-red-500'>{t.noStock}</span>
@@ -1547,12 +1551,14 @@ export const POS: React.FC<POSProps> = ({
                   const i = item as Drug;
                   return (
                     <div className='w-full px-2 py-1 text-sm font-bold text-center text-gray-700 dark:text-gray-300'>
-                      {(i.expiryDate
+                      {(i.expiryDate && !isNaN(new Date(i.expiryDate).getTime())
                         ? new Date(i.expiryDate).toLocaleDateString('en-US', {
                             month: '2-digit',
                             year: '2-digit',
                           })
-                        : '-') +
+                        : (i.expiryDate?.includes('/') && i.expiryDate.split('/')[1].length === 4 
+                            ? `${i.expiryDate.split('/')[0]}/${i.expiryDate.split('/')[1].slice(-2)}`
+                            : (i.expiryDate || '-'))) +
                         ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`}
                     </div>
                   );
