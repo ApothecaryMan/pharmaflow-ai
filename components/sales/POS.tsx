@@ -1429,7 +1429,7 @@ export const POS: React.FC<POSProps> = ({
         cell: (info) => {
           const row = info.row.original;
           return (
-            <div className='w-full h-full overflow-visible'>
+            <div className='w-full h-full flex items-center justify-center overflow-visible'>
               {row.unitsPerPack && row.unitsPerPack > 1 ? (
                 <FilterDropdown
                   items={['pack', 'unit']}
@@ -1447,20 +1447,20 @@ export const POS: React.FC<POSProps> = ({
                   }
                   keyExtractor={(item) => item as string}
                   renderItem={(item) => (
-                    <div className='w-full px-2 py-1 text-sm font-bold text-center text-gray-700 dark:text-gray-300'>
+                    <div className='w-full px-2 text-sm font-bold text-center text-gray-700 dark:text-gray-300'>
                       {item === 'pack' ? t.pack : t.unit}
                     </div>
                   )}
                   renderSelected={(item) => (
-                    <div className='w-full min-w-0 px-2 py-1 text-sm font-bold text-center truncate text-gray-700 dark:text-gray-300'>
+                    <div className='w-full min-w-0 px-2 text-sm font-bold text-center truncate transition-colors'>
                       {item === 'pack' ? t.pack : t.unit}
                     </div>
                   )}
                   color={color}
-                  className='h-9 w-20'
+                  className='h-7 w-20 mx-auto'
                   variant='input'
                   floating
-                  minHeight={32}
+                  minHeight={28}
                   zIndexHigh='z-[60]'
                   autoHideArrow
                 />
@@ -1489,7 +1489,7 @@ export const POS: React.FC<POSProps> = ({
           if (row.group.length === 1) {
             const i = displayBatch;
             return (
-              <div className='w-full h-full'>
+              <div className='w-full h-full flex items-center justify-center'>
                 <div className='text-sm font-bold text-gray-700 dark:text-gray-300'>
                   {i ? (
                     (i.expiryDate && !isNaN(new Date(i.expiryDate).getTime())
@@ -1511,7 +1511,7 @@ export const POS: React.FC<POSProps> = ({
           }
 
           return (
-            <div className='w-full h-full overflow-visible'>
+            <div className='w-full h-full flex items-center justify-center overflow-visible'>
               <FilterDropdown
                 items={row.group}
                 selectedItem={displayBatch}
@@ -1530,7 +1530,7 @@ export const POS: React.FC<POSProps> = ({
                 renderSelected={(item) => {
                   const i = item as Drug | undefined;
                   return (
-                    <div className='w-full px-2 py-1 text-sm font-bold text-center truncate text-gray-700 dark:text-gray-300'>
+                    <div className='w-full px-2 text-sm font-bold text-center truncate transition-colors'>
                       {i ? (
                         (i.expiryDate && !isNaN(new Date(i.expiryDate).getTime())
                           ? new Date(i.expiryDate).toLocaleDateString('en-US', {
@@ -1550,7 +1550,7 @@ export const POS: React.FC<POSProps> = ({
                 renderItem={(item) => {
                   const i = item as Drug;
                   return (
-                    <div className='w-full px-2 py-1 text-sm font-bold text-center text-gray-700 dark:text-gray-300'>
+                    <div className='w-full px-2 text-sm font-bold text-center text-gray-700 dark:text-gray-300'>
                       {(i.expiryDate && !isNaN(new Date(i.expiryDate).getTime())
                         ? new Date(i.expiryDate).toLocaleDateString('en-US', {
                             month: '2-digit',
@@ -1569,11 +1569,11 @@ export const POS: React.FC<POSProps> = ({
                   setActiveIndex(0);
                   searchInputRef.current?.focus();
                 }}
-                className='h-10 w-30'
+                className='h-7 w-32 mx-auto'
                 color={color}
                 variant='input'
                 floating
-                minHeight={32}
+                minHeight={28}
                 zIndexHigh='z-[60]'
                 autoHideArrow
               />

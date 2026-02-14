@@ -149,7 +149,7 @@ export function FilterDropdown<T>({
   const outerClasses = `relative inline-block ${className}`;
   const outerStyle = floating && minHeight ? { ...style, height: minHeight, minHeight } : style;
 
-  const innerClasses = `relative w-full flex flex-col overflow-hidden border transition-all duration-300 outline-none
+  const innerClasses = `relative w-full flex flex-col overflow-hidden border transition-all duration-300 outline-none group
                     ${rounded === 'full' ? 'rounded-[20px]' : 'rounded-xl'}
                     ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
                     ${effectiveIsOpen || isAnimating ? zIndexHigh : 'z-0'}
@@ -202,7 +202,7 @@ export function FilterDropdown<T>({
         >
           {isInput ? (
             <>
-              <div className='flex-1 truncate text-sm font-medium text-gray-700 dark:text-gray-200'>
+              <div className={`flex-1 truncate text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors group-hover:text-${color}-600 dark:group-hover:text-${color}-400`}>
                 {renderSelected(selectedItem)}
               </div>
               {!(
@@ -253,7 +253,7 @@ export function FilterDropdown<T>({
                 .map((item) => (
                   <div
                     key={keyExtractor(item)}
-                    className='w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1 transition-colors'
+                    className='w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-1 transition-colors'
                     onClick={(e) => handleOptionClick(e, item)}
                   >
                     {renderItem(item, false)}

@@ -178,7 +178,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             border border-gray-200 dark:border-gray-800
             transition-colors
             focus-within:border-${color}-500 dark:focus-within:border-${color}-400
-            ${rounded === 'full' ? 'rounded-[2rem] px-3' : 'rounded-xl px-3'} 
+            ${rounded === 'full' ? 'rounded-[2rem] px-1' : 'rounded-xl px-1'} 
             ${wrapperClassName}
          `}
         dir={dir}
@@ -270,7 +270,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 e.stopPropagation();
                 onClear();
               }}
-              className='material-symbols-rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-[18px] transition-colors outline-none p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700'
+              className='material-symbols-rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-[18px] transition-colors outline-none p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700'
             >
               close
             </button>
@@ -279,7 +279,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           {/* Filter Actions Group (Hide/Show Clear All based on state) */}
           {filterConfigs.length > 0 && (
             <div className={`
-              flex items-center gap-0.5 p-0.5 rounded-full
+              flex items-center p-1 rounded-xl
               border border-gray-200/60 dark:border-gray-700/60
               bg-gray-50/50 dark:bg-gray-800/50
               ms-1
@@ -290,7 +290,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   <button
                     type='button'
                     onClick={handleClearAllFilters}
-                    className='text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center justify-center w-7 h-7 rounded-full hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all duration-200 active:scale-90'
+                    className='text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center justify-center w-6 h-6 rounded-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all duration-200'
                   >
                     <span className='material-symbols-rounded text-[18px]'>filter_list_off</span>
                   </button>
@@ -302,7 +302,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 <button
                   type='button'
                   onClick={handleFilterClick}
-                  className='text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center w-7 h-7 rounded-full hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all duration-200 active:scale-95'
+                  className='text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center w-6 h-6 rounded-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all duration-200'
                 >
                   <span className='material-symbols-rounded text-[20px]'>tune</span>
                 </button>
