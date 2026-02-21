@@ -67,7 +67,7 @@ export const createPurchaseService = (): PurchaseService => ({
     const settings = await settingsService.getAll();
     const newPurchase: Purchase = {
       ...purchase,
-      id: Date.now().toString(),
+      id: idGenerator.generate('purchases'),
       status: 'pending',
       branchId: settings.branchCode,
     } as Purchase;

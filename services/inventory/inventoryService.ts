@@ -3,8 +3,9 @@
  */
 
 import { StorageKeys } from '../../config/storageKeys';
-import type { Drug, MovementType, StockMovement } from '../../types';
+import type { Drug } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
+import { validateStock } from '../../utils/inventory';
 import * as batchService from './batchService';
 
 import { storage } from '../../utils/storage';
@@ -112,7 +113,7 @@ export const createInventoryService = (): InventoryService => ({
     const all = getRawAll();
     const index = all.findIndex((d) => d.id === id);
     if (index === -1) throw new Error('Drug not found');
-    all[index].stock += quantity;
+    all[index].stock = validateStock(all[index].stock + quantity);
     storage.set(StorageKeys.INVENTORY, all);
     return all[index];
   },
