@@ -39,10 +39,11 @@ import { storage } from '../../utils/storage';
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
     align?: 'start' | 'center' | 'end';
+    headerAlign?: 'start' | 'center' | 'end';
     width?: number;
     minWidth?: number;
     flex?: boolean;
-    dir?: 'ltr' | 'rtl';
+    dir?: 'ltr' | 'rtl' | 'auto';
     disableAlignment?: boolean;
     smartDate?: boolean;
     hideFromSettings?: boolean;
@@ -53,6 +54,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { useLongPress } from '../../hooks/useLongPress';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { formatCurrencyParts } from '../../utils/currency';
+import { getSmartDirection } from './SmartInputs';
 import {
   ContextMenuCheckboxItem,
   ContextMenuItem,
@@ -787,7 +789,8 @@ export function TanStackTable<TData, TValue>({
                       // ... inside TanStackTable ...
 
                       const align =
-                        columnAlignment[header.column.id] ||
+                        header.column.columnDef.meta?.headerAlign ||
+                        (header.column.columnDef.meta?.disableAlignment ? null : columnAlignment[header.column.id]) ||
                         header.column.columnDef.meta?.align ||
                         (lite ? getSmartAlignment(header.column.id) : null) ||
                         'start';
@@ -902,7 +905,7 @@ export function TanStackTable<TData, TValue>({
                     >
                       {row.getVisibleCells().map((cell) => {
                         const align =
-                          columnAlignment[cell.column.id] ||
+                          (cell.column.columnDef.meta?.disableAlignment ? null : columnAlignment[cell.column.id]) ||
                           cell.column.columnDef.meta?.align ||
                           (lite ? getSmartAlignment(cell.column.id) : null) ||
                           'start';
@@ -915,6 +918,7 @@ export function TanStackTable<TData, TValue>({
 
                         const colId = cell.column.id.toLowerCase();
                         const isIdColumn = colId.includes('id') || colId.includes('code');
+                        const isNameColumn = colId.includes('name');
 
                         // Date Detection & Formatting (Avoiding false positives like 'csat')
                         const isDateColumn =
@@ -923,6 +927,11 @@ export function TanStackTable<TData, TValue>({
                             !colId.includes('csat') &&
                             !colId.includes('cat'));
                         const cellValue = cell.getValue();
+
+                        let cellDir = cell.column.columnDef.meta?.dir;
+                        if (cellDir === 'auto' || (!cellDir && isNameColumn && typeof cellValue === 'string')) {
+                          cellDir = getSmartDirection(String(cellValue || ''));
+                        }
 
                         const renderCellContent = () => {
                           // If it's a date column and we have a value and smart formatting is enabled (default)
@@ -993,7 +1002,7 @@ export function TanStackTable<TData, TValue>({
                               width: isFlex ? 'auto' : cell.column.columnDef.meta?.width,
                               minWidth: cell.column.columnDef.meta?.minWidth,
                             }}
-                            dir={cell.column.columnDef.meta?.dir}
+                            dir={cellDir}
                           >
                             <div
                               className={`flex items-center gap-1.5 w-full ${justifyClass} ${isIdColumn && align === 'start' ? '-ms-3' : ''} ${isIdColumn && align === 'end' ? '-me-3' : ''}`}

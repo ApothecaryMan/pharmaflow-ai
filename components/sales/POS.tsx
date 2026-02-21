@@ -1358,14 +1358,16 @@ export const POS: React.FC<POSProps> = ({
       columnHelper.accessor('name', {
         header: t.name,
         size: 400,
+        meta: {
+          headerAlign: language === 'AR' ? 'end' : 'start',
+          disableAlignment: true,
+        },
         cell: (info) => (
-          <div
-            className={`flex flex-col w-full min-w-0 ${language === 'AR' ? 'items-end text-end' : 'items-start text-start'}`}
-          >
+          <div className="flex flex-col w-full min-w-0 items-start text-start">
             <span className='font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate'>
               {getDisplayName(info.row.original)}
             </span>
-            <span className='text-xs text-gray-500 whitespace-normal break-words' dir='ltr'>
+            <span className='text-xs text-gray-500 whitespace-normal break-words w-full text-start' dir='auto'>
               {info.row.original.genericName && info.row.original.genericName.length > 35
                 ? `${info.row.original.genericName.slice(0, 35)}…`
                 : info.row.original.genericName}
@@ -1992,7 +1994,7 @@ export const POS: React.FC<POSProps> = ({
               defaultHiddenColumns={['category', 'inCart']}
               defaultColumnAlignment={{
                 barcode: 'start',
-                name: language === 'AR' ? 'end' : 'start',
+                name: 'start',
                 category: 'center',
                 price: 'center',
                 stock: 'center',
@@ -2001,6 +2003,8 @@ export const POS: React.FC<POSProps> = ({
               }}
               activeIndex={activeIndex}
               enableTopToolbar={false}
+              enableSearch={false}
+              manualFiltering={true}
               enablePagination={true}
               enableShowAll={true}
             />

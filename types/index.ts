@@ -581,6 +581,9 @@ export interface ThemeColor {
   hex: string;
 }
 
+/** Supported UI languages */
+export type Language = 'EN' | 'AR';
+
 // Auto-generated from pageRegistry.ts - no need to manually update!
 // Broken circular dependency
 // import { PAGE_REGISTRY } from './pageRegistry';

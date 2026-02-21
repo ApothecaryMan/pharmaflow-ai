@@ -442,12 +442,15 @@ export const Inventory: React.FC<InventoryProps> = ({
       {
         accessorKey: 'name',
         header: t.headers.name,
+        meta: {
+          headerAlign: isRTL ? 'end' : 'start',
+          disableAlignment: true,
+        },
         cell: ({ row }) => {
           const drug = row.original;
           const displayName = getDisplayName({ name: drug.name });
-          const itemDir = /[\u0600-\u06FF]/.test(displayName) ? 'rtl' : 'ltr';
           return (
-            <div className={`flex flex-col whitespace-normal ${isRTL ? 'text-right' : 'text-left'}`} dir={itemDir}>
+            <div className='flex flex-col whitespace-normal items-start text-start w-full'>
               <div className='font-medium text-gray-900 dark:text-gray-100 text-sm drug-name'>
                 {displayName}{' '}
                 {drug.dosageForm && (
@@ -458,7 +461,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                   </span>
                 )}
               </div>
-              <div className='text-xs text-gray-500'>
+              <div className='text-xs text-gray-500 w-full text-start' dir='auto'>
                 <span>
                   {drug.genericName?.length > 35
                     ? drug.genericName.substring(0, 35) + '...'

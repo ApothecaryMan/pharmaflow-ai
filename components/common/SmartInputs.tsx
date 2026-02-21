@@ -23,6 +23,22 @@ import { type InputHTMLAttributes, useEffect, useMemo, useRef, useState } from '
 // --- Hooks ---
 
 /**
+ * A utility function that automatically detects the text direction ('ltr' or 'rtl') based on the content.
+ *
+ * @param text - The primary text to analyze (usually the input value).
+ * @param placeholder - Fallback text to analyze if the primary text is empty.
+ * @returns 'rtl' if Arabic characters are detected, otherwise 'ltr'.
+ */
+export const getSmartDirection = (
+  text: string | undefined | null,
+  placeholder?: string | undefined | null
+): 'rtl' | 'ltr' => {
+  if (text) return /[\u0600-\u06FF]/.test(text) ? 'rtl' : 'ltr';
+  if (placeholder) return /[\u0600-\u06FF]/.test(placeholder) ? 'rtl' : 'ltr';
+  return 'ltr';
+};
+
+/**
  * A hook that automatically detects the text direction ('ltr' or 'rtl') based on the content.
  *
  * @usage
@@ -42,11 +58,7 @@ export const useSmartDirection = (
   text: string | undefined | null,
   placeholder?: string | undefined | null
 ): 'rtl' | 'ltr' => {
-  return useMemo(() => {
-    if (text) return /[\u0600-\u06FF]/.test(text) ? 'rtl' : 'ltr';
-    if (placeholder) return /[\u0600-\u06FF]/.test(placeholder) ? 'rtl' : 'ltr';
-    return 'ltr';
-  }, [text, placeholder]);
+  return useMemo(() => getSmartDirection(text, placeholder), [text, placeholder]);
 };
 
 // --- Utils ---
