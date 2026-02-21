@@ -48,49 +48,51 @@ export function SearchDropdown<T extends { id: string | number }>({
   }
 
   return (
-    <div
-      ref={scrollContainerRef}
-      className='absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-800 max-h-[400px] overflow-y-auto ring-1 ring-black/5 dark:ring-white/5 z-50'
-    >
-      {/* Header Row */}
-      <div className='flex items-stretch w-full bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold uppercase tracking-wider text-gray-400'>
+    <div className='absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden isolate z-40'>
+      {/* Fixed Header Row */}
+      <div className='flex items-stretch w-full bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold uppercase tracking-wider text-gray-400 rounded-t-xl'>
         {columns.map((col, index) => (
           <div
             key={index}
-            className={`${col.width || 'flex-1'} p-2 border-r border-gray-100 dark:border-gray-800 last:border-0 ${col.className || ''}`}
+            className={`${col.width || 'flex-1'} p-2 border-e border-gray-100 dark:border-gray-800 last:border-e-0 ${col.className || ''}`}
           >
             {col.header}
           </div>
         ))}
       </div>
 
-      {/* Data Rows */}
-      {results.map((item, index) => (
-        <button
-          key={item.id}
-          type='button'
-          ref={(el) => {
-            rowRefs.current[index] = el;
-          }}
-          onClick={() => onSelect(item)}
-          className={`w-full text-start border-b border-gray-50 dark:border-gray-800 last:border-0 transition-colors group ${
-            highlightedIndex === index
-              ? 'bg-blue-50/50 dark:bg-blue-900/20'
-              : 'hover:bg-gray-50 dark:hover:bg-gray-800'
-          }`}
-        >
-          <div className='flex items-stretch w-full text-sm text-gray-500 dark:text-gray-400'>
-            {columns.map((col, colIndex) => (
-              <div
-                key={colIndex}
-                className={`${col.width || 'flex-1'} p-3 border-r border-gray-100 dark:border-gray-800 last:border-0 flex items-center ${col.className || ''}`}
-              >
-                {col.render(item)}
-              </div>
-            ))}
-          </div>
-        </button>
-      ))}
+      {/* Scrollable Data Rows Area */}
+      <div
+        ref={scrollContainerRef}
+        className='max-h-[340px] overflow-y-auto overflow-x-hidden'
+      >
+        {results.map((item, index) => (
+          <button
+            key={item.id}
+            type='button'
+            ref={(el) => {
+              rowRefs.current[index] = el;
+            }}
+            onClick={() => onSelect(item)}
+            className={`w-full text-start border-b border-gray-50 dark:border-gray-800/50 last:border-0 transition-colors group ${
+              highlightedIndex === index
+                ? 'bg-blue-50/50 dark:bg-blue-900/20'
+                : 'hover:bg-gray-50 dark:hover:bg-gray-800/40'
+            }`}
+          >
+            <div className='flex items-stretch w-full text-sm text-gray-600 dark:text-gray-300'>
+              {columns.map((col, colIndex) => (
+                <div
+                  key={colIndex}
+                  className={`${col.width || 'flex-1'} py-1.5 px-3 border-e border-gray-100/80 dark:border-gray-800/80 last:border-e-0 flex items-center ${col.className || ''}`}
+                >
+                  {col.render(item)}
+                </div>
+              ))}
+            </div>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

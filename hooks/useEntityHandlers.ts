@@ -4,6 +4,7 @@ import { StorageKeys } from '../config/storageKeys';
 import { useAlert } from '../context';
 import { auditService } from '../services/auditService';
 import { batchService } from '../services/inventory/batchService';
+import { stockMovementService } from '../services/inventory/stockMovement/stockMovementService';
 import { migrationService } from '../services/migration';
 import { restoreStockForCancelledSale } from '../services/salesHelpers';
 import type { AppSettings } from '../services/settings/types';
@@ -102,6 +103,8 @@ interface UseEntityHandlersParams {
   setSuppliers: React.Dispatch<React.SetStateAction<Supplier[]>>;
   purchases: Purchase[];
   setPurchases: React.Dispatch<React.SetStateAction<Purchase[]>>;
+  purchaseReturns: PurchaseReturn[];
+  setPurchaseReturns: React.Dispatch<React.SetStateAction<PurchaseReturn[]>>;
   returns: Return[];
   setReturns: React.Dispatch<React.SetStateAction<Return[]>>;
   customers: Customer[];
@@ -138,6 +141,8 @@ export function useEntityHandlers({
   setSuppliers,
   purchases,
   setPurchases,
+  purchaseReturns,
+  setPurchaseReturns,
   returns,
   setReturns,
   customers,
@@ -276,9 +281,28 @@ export function useEntityHandlers({
       setInventory((prev) =>
         prev.map((d) => {
           if (d.id === id) {
+            const drug = d;
             // Respect isUnit flag for restock
-            const unitsToAdd = isUnit ? qty : qty * (d.unitsPerPack || 1);
-            return { ...d, stock: validateStock(d.stock + unitsToAdd) };
+            const unitsToAdd = isUnit ? qty : qty * (drug.unitsPerPack || 1);
+            const newStockValue = validateStock(drug.stock + unitsToAdd);
+
+            // Log Stock Movement
+            const performer = employees?.find((e) => e.id === currentEmployeeId);
+            stockMovementService.logMovement({
+              drugId: drug.id,
+              drugName: drug.name,
+              branchId: getBranchCode(),
+              type: 'adjustment',
+              quantity: unitsToAdd,
+              previousStock: drug.stock,
+              newStock: newStockValue,
+              reason: 'Manual Restock / Adjustment',
+              performedBy: currentEmployeeId!,
+              performedByName: performer?.name,
+              status: 'approved',
+            });
+
+            return { ...drug, stock: newStockValue };
           }
           return d;
         })
@@ -564,6 +588,32 @@ export function useEntityHandlers({
           details: `Completed PO #${purchase.invoiceId}`,
           entityId: purchase.id,
         });
+
+        // 4. Log Stock Movement
+        const performer = employees?.find((e) => e.id === currentEmployeeId);
+        purchase.items.forEach((item) => {
+          const drug = inventory.find((d) => d.id === item.drugId);
+          if (drug) {
+            const unitsToAdd = item.isUnit
+              ? item.quantity
+              : item.quantity * (drug.unitsPerPack || 1);
+            
+            stockMovementService.logMovement({
+              drugId: item.drugId,
+              drugName: drug.name,
+              branchId: getBranchCode(),
+              type: 'purchase',
+              quantity: unitsToAdd,
+              previousStock: drug.stock,
+              newStock: validateStock(drug.stock + unitsToAdd),
+              reason: `Immediate Purchase #${purchase.invoiceId}`,
+              referenceId: purchase.id,
+              performedBy: currentEmployeeId!,
+              performedByName: performer?.name,
+              status: 'approved',
+            });
+          }
+        });
       } else {
         info('Purchase Order Saved as Pending');
         auditService.log('purchase.create', {
@@ -709,6 +759,32 @@ export function useEntityHandlers({
         return [...updated, ...newEntries];
       });
 
+      // 4. Log Stock Movement
+      const performer = employees?.find((e) => e.id === currentEmployeeId);
+      purchase.items.forEach((item) => {
+        const drug = inventory.find((d) => d.id === item.drugId);
+        if (drug) {
+          const unitsToAdd = item.isUnit
+            ? item.quantity
+            : item.quantity * (drug.unitsPerPack || 1);
+          
+          stockMovementService.logMovement({
+            drugId: item.drugId,
+            drugName: drug.name,
+            branchId: getBranchCode(),
+            type: 'purchase',
+            quantity: unitsToAdd,
+            previousStock: drug.stock,
+            newStock: validateStock(drug.stock + unitsToAdd),
+            reason: `Purchase Order #${purchase.invoiceId}`,
+            referenceId: purchase.id,
+            performedBy: currentEmployeeId!,
+            performedByName: performer?.name,
+            status: 'approved',
+          });
+        }
+      });
+
       success(`PO #${purchase.invoiceId} Approved Successfully`);
     },
     [purchases, setPurchases, setInventory, setBatches, inventory, success, currentEmployeeId, employees, error]
@@ -750,26 +826,53 @@ export function useEntityHandlers({
         return;
       }
 
-      // Logic to reduce stock would go here if we were stricter,
-      // but typically purchase returns might be for damaged goods already accounted for or waiting to be sent back.
-      // For now, we just log it and save it.
+      setPurchaseReturns((prev) => [returnData, ...prev]);
 
-      // setPurchaseReturns is not passed in props! We need to add it to params.
-      // Actually, checking params... setPurchaseReturns IS NOT in UseEntityHandlersParams currently.
-      // We need to add it.
+      // Reduce inventory
+      setInventory((prev) =>
+        prev.map((drug) => {
+          const returnedItem = returnData.items.find((i) => i.drugId === drug.id);
+          if (returnedItem) {
+            const unitsToRemove = returnedItem.isUnit
+              ? returnedItem.quantityReturned
+              : returnedItem.quantityReturned * (drug.unitsPerPack || 1);
 
-      // Wait, let's fix the params first in a separate edit if needed, or assume I will add it.
-      // I will add it to the destructured params in the top of the function in a separate chunk or this one if I can match it.
-      // I'll skip implementation details dependent on setPurchaseReturns for a moment and focus on Employee handlers which are easier.
+            // Log Stock Movement
+            const performer = employees?.find((e) => e.id === currentEmployeeId);
+            stockMovementService.logMovement({
+              drugId: drug.id,
+              drugName: drug.name,
+              branchId: getBranchCode(),
+              type: 'return_supplier',
+              quantity: -unitsToRemove,
+              previousStock: drug.stock,
+              newStock: validateStock(drug.stock - unitsToRemove),
+              reason: `Purchase Return #${returnData.id}`,
+              referenceId: returnData.id,
+              performedBy: currentEmployeeId!,
+              performedByName: performer?.name,
+              status: 'approved',
+            });
+
+            return {
+              ...drug,
+              stock: validateStock(drug.stock - unitsToRemove),
+            };
+          }
+          return drug;
+        })
+      );
 
       auditService.log('purchase.return', {
         userId: currentEmployeeId || 'System',
         details: `Created Purchase Return #${returnData.id}`,
         entityId: returnData.id,
       });
+
+      success('Purchase return created and inventory updated.');
     },
-    [currentEmployeeId, employees, error]
-  ); // Placeholder until setPurchaseReturns is available
+    [currentEmployeeId, employees, error, setPurchaseReturns, setInventory, success]
+  );
 
   // --- Employee Management ---
   const handleAddEmployee = useCallback(
@@ -1026,6 +1129,30 @@ export function useEntityHandlers({
           entityId: serialId,
         });
 
+        // 7. Log Stock Movement
+        const performer = employees?.find((e) => e.id === currentEmployeeId);
+        newSale.items.forEach((item) => {
+          const drug = inventory.find((d) => d.id === item.id);
+          const quantityToDeduct = item.isUnit
+            ? item.quantity
+            : item.quantity * (drug?.unitsPerPack || 1);
+
+          stockMovementService.logMovement({
+            drugId: item.id,
+            drugName: item.name,
+            branchId: getBranchCode(),
+            type: 'sale',
+            quantity: -quantityToDeduct,
+            previousStock: drug?.stock || 0,
+            newStock: validateStock((drug?.stock || 0) - quantityToDeduct),
+            reason: `Sale Transaction #${serialId}`,
+            referenceId: serialId,
+            performedBy: currentEmployeeId!,
+            performedByName: performer?.name,
+            status: 'approved',
+          });
+        });
+
         success(`Order #${serialId} completed!`);
         return true;
       } catch (err: any) {
@@ -1098,6 +1225,32 @@ export function useEntityHandlers({
           userId: currentEmployeeId,
           details: `Cancelled Sale #${saleId}`,
           entityId: saleId,
+        });
+
+        // Log Stock Movement
+        const performer = employees?.find((e) => e.id === currentEmployeeId);
+        sale.items.forEach((item) => {
+          const drug = inventory.find((d) => d.id === item.id);
+          if (drug) {
+            const unitsToRestore = item.isUnit
+              ? item.quantity
+              : item.quantity * (drug.unitsPerPack || 1);
+
+            stockMovementService.logMovement({
+              drugId: drug.id,
+              drugName: drug.name,
+              branchId: getBranchCode(),
+              type: 'correction', // Cancellation return
+              quantity: unitsToRestore,
+              previousStock: drug.stock,
+              newStock: validateStock(drug.stock + unitsToRestore),
+              reason: `Sale Cancellation #${saleId}`,
+              referenceId: saleId,
+              performedBy: currentEmployeeId!,
+              performedByName: performer?.name,
+              status: 'approved',
+            });
+          }
         });
       }
 
@@ -1493,6 +1646,32 @@ export function useEntityHandlers({
         userId: currentEmployeeId || 'System',
         details: `Processed Return for Sale #${returnData.saleId}`,
         entityId: returnData.id,
+      });
+
+      // Log Stock Movement
+      const performer = employees?.find((e) => e.id === currentEmployeeId);
+      returnData.items.forEach((item) => {
+        const drug = inventory.find((d) => d.id === item.drugId);
+        if (drug) {
+          const unitsToRestore = item.isUnit
+            ? item.quantityReturned
+            : item.quantityReturned * (drug.unitsPerPack || 1);
+
+          stockMovementService.logMovement({
+            drugId: drug.id,
+            drugName: drug.name,
+            branchId: getBranchCode(),
+            type: 'return_customer',
+            quantity: unitsToRestore,
+            previousStock: drug.stock,
+            newStock: validateStock(drug.stock + unitsToRestore),
+            reason: `Return for Sale #${returnData.saleId}`,
+            referenceId: returnData.id,
+            performedBy: currentEmployeeId!,
+            performedByName: performer?.name,
+            status: 'approved',
+          });
+        }
       });
 
       success(`Return processed successfully. Refund: ${returnData.totalRefund.toFixed(2)} L.E`);

@@ -177,22 +177,46 @@ export interface BatchAllocation {
 }
 
 /** Types for inventory movements */
-export type MovementType = 'sale' | 'purchase' | 'adjustment' | 'return' | 'transfer' | 'damage';
+export type StockMovementType =
+  | 'initial' // Initial stock entry
+  | 'sale' // Sold to customer
+  | 'purchase' // Received from supplier
+  | 'return_customer' // Returned by customer
+  | 'return_supplier' // Returned to supplier
+  | 'adjustment' // Manual adjustment (inventory count)
+  | 'damage' // Damaged/Expired
+  | 'transfer_in' // Transfer from another branch
+  | 'transfer_out' // Transfer to another branch
+  | 'correction'; // Data correction
 
-/**
- * StockMovement - tracks changes to drug stock levels.
- */
 export interface StockMovement {
   id: string;
   drugId: string;
-  type: MovementType;
-  quantity: number; // Positive for additions, negative for deductions
+  drugName: string; // Snapshot name
+  branchId: string;
+
+  type: StockMovementType;
+  quantity: number; // Positive for add, Negative for remove
+
   previousStock: number;
   newStock: number;
+
   reason?: string;
-  date: string;
-  referenceId?: string; // ID of the sale, purchase, or adjustment
-  employeeId?: string;
+  notes?: string;
+
+  referenceId?: string; // ID of Sale, Purchase, Return, etc.
+  transactionId?: string; // Grouping ID for bulk adjustments
+  batchId?: string; // If using batch tracking
+
+  performedBy: string; // User ID
+  performedByName?: string; // User Name Snapshot
+  timestamp: string; // ISO Date
+
+  // Approval Workflow
+  status: 'pending' | 'approved' | 'rejected';
+  reviewedBy?: string;
+  reviewedAt?: string;
+  expiryDate?: string; // Optional: snapshot of expiry
 }
 
 /**
@@ -505,6 +529,10 @@ export interface PurchaseReturnItem {
   name: string;
   /** Quantity being returned */
   quantityReturned: number;
+  /** Whether quantity is in units (true) or packs (false) */
+  isUnit?: boolean;
+  /** Units per pack for conversion */
+  unitsPerPack?: number;
   /** Cost price for refund calculation */
   costPrice: number;
   /** Calculated refund amount */
@@ -560,8 +588,8 @@ export interface ThemeColor {
 /** Current view state - used for page routing */
 export type ViewState = string;
 
-/** Application language setting */
-export type Language = 'EN' | 'AR';
+// Export Stock Movement types
+export * from '../services/inventory/stockMovement/types';
 
 /** Dashboard widget expand options */
 export type ExpandedView =
