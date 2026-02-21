@@ -45,6 +45,7 @@ interface PurchasesProps {
   onApprovePurchase?: (purchase: Purchase) => void;
   onRejectPurchase?: (purchase: Purchase) => void;
   language: 'EN' | 'AR';
+  navigationParams?: any;
 }
 
 export const Purchases: React.FC<PurchasesProps> = ({
@@ -59,6 +60,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
   onApprovePurchase,
   onRejectPurchase,
   language,
+  // @ts-ignore
+  navigationParams,
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const { error: showToastError } = useAlert();
@@ -66,6 +69,21 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
   const [supplierSearch, setSupplierSearch] = useState('');
+
+  // Handle Navigation Params (Deep Linking)
+  useEffect(() => {
+    if (navigationParams?.id) {
+      setMode('history');
+      setHistorySearch(navigationParams.id);
+      // Wait for next tick/render to find purchase
+      setTimeout(() => {
+        const purchase = purchases.find(p => p.id === navigationParams.id);
+        if (purchase) {
+          setSelectedPurchase(purchase);
+        }
+      }, 100);
+    }
+  }, [navigationParams, purchases]);
 
   // Helper: Format time with Arabic AM/PM
   const formatTime = (date: Date): string => {

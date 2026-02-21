@@ -30,6 +30,7 @@ interface SalesHistoryProps {
   userRole: UserRole;
   currentEmployeeId?: string;
   currentShift: Shift | null;
+  navigationParams?: any;
 }
 
 export const SalesHistory: React.FC<SalesHistoryProps> = ({
@@ -43,6 +44,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   userRole,
   currentEmployeeId,
   currentShift,
+  // @ts-ignore
+  navigationParams,
 }) => {
   // Determine locale based on language
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
@@ -66,6 +69,19 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       })
       .reduce((sum, r) => sum + r.totalRefund, 0);
   }, [returns, currentEmployeeId, userRole]);
+  
+  // Handle Navigation Params (Deep Linking)
+  React.useEffect(() => {
+    if (navigationParams?.id) {
+      const saleId = navigationParams.id;
+      setSearchTerm(saleId);
+      // Wait for next tick to ensure search term is applied if needed, but here we scan the array directly
+      const sale = sales.find(s => s.id === saleId);
+      if (sale) {
+        setSelectedSale(sale);
+      }
+    }
+  }, [navigationParams, sales]);
 
   // Get help content
   const helpContent = SALES_HISTORY_HELP[language as 'EN' | 'AR'] || SALES_HISTORY_HELP.EN;

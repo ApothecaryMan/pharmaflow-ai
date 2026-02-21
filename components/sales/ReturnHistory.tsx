@@ -19,6 +19,7 @@ interface ReturnHistoryProps {
   t: any;
   language: string;
   datePickerTranslations: any;
+  navigationParams?: any;
 }
 
 export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
@@ -28,8 +29,22 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
   t,
   language,
   datePickerTranslations,
+  // @ts-ignore
+  navigationParams,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Handle Navigation Params (Deep Linking)
+  React.useEffect(() => {
+    if (navigationParams?.id) {
+      setSearchTerm(navigationParams.id);
+      setTimeout(() => {
+        const ret = returns.find(r => r.id === navigationParams.id);
+        if (ret) setSelectedReturn(ret);
+      }, 100);
+    }
+  }, [navigationParams, returns]);
+
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' });
 
   const [selectedReturn, setSelectedReturn] = useState<Return | null>(null);
