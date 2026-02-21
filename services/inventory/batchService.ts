@@ -68,12 +68,13 @@ export const updateBatchQuantity = (batchId: string, delta: number): StockBatch 
 
   all[index].quantity = Math.max(0, all[index].quantity + delta);
 
-  // Remove batch if quantity is 0
-  if (all[index].quantity === 0) {
-    const removed = all.splice(index, 1)[0];
-    saveBatches(all);
-    return removed;
-  }
+  // Note: We intentionally do NOT remove the batch when quantity is 0.
+  // This preserves the record for returns/audits and accurate FEFO tracking.
+  // if (all[index].quantity === 0) {
+  //   const removed = all.splice(index, 1)[0];
+  //   saveBatches(all);
+  //   return removed;
+  // }
 
   saveBatches(all);
   return all[index];
@@ -153,9 +154,9 @@ export const allocateStockBulk = (
     result.push({ drugId: req.drugId, allocations });
   }
 
-  // Remove empty batches once at the end
-  const nonEmpty = allBatches.filter((b) => b.quantity > 0);
-  saveBatches(nonEmpty);
+  // Note: We intentionally preserve empty batches to allow returns
+  // to find their original batches.
+  saveBatches(allBatches);
 
   return result;
 };
@@ -212,9 +213,8 @@ export const allocateStock = (
         batch.quantity -= alloc.quantity;
       }
     }
-    // Remove empty batches
-    const nonEmpty = all.filter((b) => b.quantity > 0);
-    saveBatches(nonEmpty);
+    // Note: We preserve empty batches to allow returns to find their original batches.
+    saveBatches(all);
   }
 
   return allocations;

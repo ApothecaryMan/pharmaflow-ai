@@ -76,17 +76,13 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
   try {
     switch (type) {
       case 'sales': {
-        // Sharded: Scan latest shards to find max ID
+        // Sharded: Scan ALL shards to find max ID over all time
         const keys = getAllShardKeys(StorageKeys.SALES);
-        // keys are typically sorted newest first by getAllShardKeys
         for (const key of keys) {
           const shardData = storage.get<any[]>(key, []);
-          if (shardData.length > 0) {
-            data = shardData;
-            break; // Found the latest data, no need to go further back
-          }
+          maxExisting = Math.max(maxExisting, findMaxSequence(shardData));
         }
-        break;
+        return Math.max(currentSequence, maxExisting);
       }
       case 'inventory':
         data = storage.get(StorageKeys.INVENTORY, []);
@@ -111,15 +107,13 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
         break;
       }
       case 'shifts': {
+        // Sharded: Scan ALL shards
         const keys = getAllShardKeys(StorageKeys.SHIFTS);
         for (const key of keys) {
           const shardData = storage.get<any[]>(key, []);
-          if (shardData.length > 0) {
-            data = shardData;
-            break;
-          }
+          maxExisting = Math.max(maxExisting, findMaxSequence(shardData));
         }
-        break;
+        return Math.max(currentSequence, maxExisting);
       }
       case 'movement':
         data = storage.get(StorageKeys.STOCK_MOVEMENTS, []);
@@ -133,7 +127,7 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
       // Tabs and Generic might not need strict healing.
     }
 
-    maxExisting = findMaxSequence(data);
+    maxExisting = Math.max(maxExisting, findMaxSequence(data));
   } catch (e) {
     console.warn(`Failed to heal sequence for ${type}`, e);
   }

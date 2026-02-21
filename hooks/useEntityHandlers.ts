@@ -274,7 +274,6 @@ export function useEntityHandlers({
       }
       const employee = employees?.find((e) => e.id === currentEmployeeId);
       if (!canPerformAction(employee?.role, 'inventory.update')) {
-        // Restock is an update
         error('Permission denied: Role cannot restock items');
         return;
       }
@@ -282,7 +281,6 @@ export function useEntityHandlers({
         prev.map((d) => {
           if (d.id === id) {
             const drug = d;
-            // Respect isUnit flag for restock
             const unitsToAdd = isUnit ? qty : qty * (drug.unitsPerPack || 1);
             const newStockValue = validateStock(drug.stock + unitsToAdd);
 
@@ -302,6 +300,18 @@ export function useEntityHandlers({
               status: 'approved',
             });
 
+            // Issue 6 Fix: Create an explicit batch for restocked items
+            batchService.createBatch({
+              drugId: drug.id,
+              quantity: unitsToAdd,
+              expiryDate: drug.expiryDate, // Use existing expiry by default
+              costPrice: drug.costPrice,
+              purchaseId: 'RESTOCK',
+              dateReceived: new Date().toISOString(),
+              batchNumber: 'MANUAL_RESTOCK',
+            });
+            setTimeout(() => setBatches(batchService.getAllBatches()), 0);
+
             return { ...drug, stock: newStockValue };
           }
           return d;
@@ -313,7 +323,7 @@ export function useEntityHandlers({
         entityId: id,
       });
     },
-    [setInventory, currentEmployeeId, employees, error]
+    [setInventory, setBatches, currentEmployeeId, employees, error]
   );
 
   // --- Supplier Management ---
@@ -450,6 +460,95 @@ export function useEntityHandlers({
   );
 
   // --- Purchase Management ---
+  const applyPurchaseToInventory = useCallback(
+    (purchase: Purchase) => {
+      const performer = employees?.find((e) => e.id === currentEmployeeId);
+      const branchCode = getBranchCode();
+      
+      let currentInventory = [...inventory];
+      const newEntries: Drug[] = [];
+
+      purchase.items.forEach((purchasedItem) => {
+        const sourceDrug = currentInventory.find((d) => d.id === purchasedItem.drugId);
+        if (!sourceDrug) return;
+
+        const unitsToAdd = purchasedItem.isUnit
+          ? purchasedItem.quantity
+          : purchasedItem.quantity * (sourceDrug.unitsPerPack || 1);
+
+        const purchaseExpiry = purchasedItem.expiryDate || sourceDrug.expiryDate;
+
+        const sameExpiryEntry = currentInventory.find(
+          (d) =>
+            d.name === sourceDrug.name &&
+            d.dosageForm === sourceDrug.dosageForm &&
+            d.expiryDate === purchaseExpiry
+        );
+
+        let targetDrugId = sourceDrug.id;
+        let previousStock = sourceDrug.stock;
+
+        if (sameExpiryEntry) {
+          targetDrugId = sameExpiryEntry.id;
+          previousStock = sameExpiryEntry.stock;
+          
+          currentInventory = currentInventory.map((d) =>
+            d.id === sameExpiryEntry.id
+              ? {
+                  ...d,
+                  stock: validateStock(d.stock + unitsToAdd),
+                  costPrice: purchasedItem.costPrice,
+                }
+              : d
+          );
+        } else {
+          targetDrugId = idGenerator.generate('inventory');
+          previousStock = 0; 
+          newEntries.push({
+            ...sourceDrug,
+            id: targetDrugId,
+            stock: unitsToAdd,
+            costPrice: purchasedItem.costPrice,
+            expiryDate: purchaseExpiry,
+            createdAt: new Date().toISOString(),
+          });
+          currentInventory.push(newEntries[newEntries.length - 1]);
+        }
+
+        // 1. Create Batch (Issue 4 Fix: Centralized logic, Issue 5 Fix: Accurate drugId)
+        batchService.createBatch({
+          drugId: targetDrugId,
+          quantity: unitsToAdd,
+          expiryDate: purchaseExpiry,
+          costPrice: purchasedItem.costPrice,
+          purchaseId: purchase.id,
+          dateReceived: new Date().toISOString(),
+          batchNumber: purchase.invoiceId,
+        });
+
+        // 2. Log Movement (Issue 5 Fix: Accurate previousStock and newStock)
+        stockMovementService.logMovement({
+          drugId: targetDrugId,
+          drugName: sourceDrug.name,
+          branchId: branchCode,
+          type: 'purchase',
+          quantity: unitsToAdd,
+          previousStock: previousStock,
+          newStock: validateStock(previousStock + unitsToAdd),
+          reason: `Purchase Order #${purchase.invoiceId}`,
+          referenceId: purchase.id,
+          performedBy: currentEmployeeId!,
+          performedByName: performer?.name,
+          status: 'approved',
+        });
+      });
+
+      setBatches(batchService.getAllBatches());
+      setInventory(currentInventory);
+    },
+    [inventory, setInventory, setBatches, currentEmployeeId, employees]
+  );
+
   const handlePurchaseComplete = useCallback(
     (purchase: Purchase) => {
       if (
@@ -479,140 +578,12 @@ export function useEntityHandlers({
           return;
         }
 
-        // Create batches outside the mapper to avoid side-effects in mappers
-        purchase.items.forEach((purchasedItem) => {
-          const drug = inventory.find((d) => d.id === purchasedItem.drugId);
-          if (drug) {
-            const unitsToAdd = purchasedItem.isUnit
-              ? purchasedItem.quantity
-              : purchasedItem.quantity * (drug.unitsPerPack || 1);
-
-            batchService.createBatch({
-              drugId: drug.id,
-              quantity: unitsToAdd,
-              expiryDate: purchasedItem.expiryDate || drug.expiryDate,
-              costPrice: purchasedItem.costPrice,
-              purchaseId: purchase.id,
-              dateReceived: new Date().toISOString(),
-              batchNumber: purchase.invoiceId,
-            });
-          }
-        });
-
-        // Update batches state reactively
-        setBatches(batchService.getAllBatches());
-
-        // Update inventory: create new Drug entries for different expiry dates
-        setInventory((prev) => {
-          let updated = [...prev];
-          const newEntries: Drug[] = [];
-
-          purchase.items.forEach((purchasedItem) => {
-            const sourceDrug = updated.find((d) => d.id === purchasedItem.drugId);
-            if (!sourceDrug) return;
-
-            const unitsToAdd = purchasedItem.isUnit
-              ? purchasedItem.quantity
-              : purchasedItem.quantity * (sourceDrug.unitsPerPack || 1);
-
-            const purchaseExpiry = purchasedItem.expiryDate || sourceDrug.expiryDate;
-
-            // Check if an existing Drug entry with the same product AND same expiry already exists
-            const sameExpiryEntry = updated.find(
-              (d) =>
-                d.name === sourceDrug.name &&
-                d.dosageForm === sourceDrug.dosageForm &&
-                d.expiryDate === purchaseExpiry
-            );
-
-            if (sameExpiryEntry) {
-              // Same expiry exists → just add stock to that entry
-              updated = updated.map((d) =>
-                d.id === sameExpiryEntry.id
-                  ? {
-                      ...d,
-                      stock: validateStock(d.stock + unitsToAdd),
-                      costPrice: purchasedItem.costPrice,
-                    }
-                  : d
-              );
-
-              // FIX: The batch was created with drugId = sourceDrug.id
-              // but stock was added to sameExpiryEntry.id. If they differ,
-              // update the batch to point to the correct Drug entry.
-              if (sameExpiryEntry.id !== sourceDrug.id) {
-                const allBatches = batchService.getAllBatches();
-                const mismatchedBatch = allBatches
-                  .filter(
-                    (b) => b.drugId === sourceDrug.id && b.purchaseId === purchase.id
-                  )
-                  .sort((a, b) => new Date(b.dateReceived).getTime() - new Date(a.dateReceived).getTime())[0];
-                if (mismatchedBatch) {
-                  batchService.updateBatch(mismatchedBatch.id, { drugId: sameExpiryEntry.id });
-                }
-              }
-            } else {
-              // Different expiry → create a NEW Drug entry (same product, new batch)
-              const newDrugId = idGenerator.generate('inventory');
-              newEntries.push({
-                ...sourceDrug,
-                id: newDrugId,
-                stock: unitsToAdd,
-                costPrice: purchasedItem.costPrice,
-                expiryDate: purchaseExpiry,
-                createdAt: new Date().toISOString(),
-              });
-
-              // Also update the batch's drugId to point to the new Drug entry
-              const allBatches = batchService.getAllBatches();
-              const latestBatch = allBatches
-                .filter(
-                  (b) => b.drugId === sourceDrug.id && b.purchaseId === purchase.id
-                )
-                .sort((a, b) => new Date(b.dateReceived).getTime() - new Date(a.dateReceived).getTime())[0];
-              if (latestBatch) {
-                batchService.updateBatch(latestBatch.id, { drugId: newDrugId });
-              }
-            }
-          });
-
-          // Refresh batches after potential drugId updates
-          if (newEntries.length > 0) {
-            setBatches(batchService.getAllBatches());
-          }
-
-          return [...updated, ...newEntries];
-        });
+        applyPurchaseToInventory(purchase);
+        
         auditService.log('purchase.complete', {
           userId: currentEmployeeId,
           details: `Completed PO #${purchase.invoiceId}`,
           entityId: purchase.id,
-        });
-
-        // 4. Log Stock Movement
-        const performer = employees?.find((e) => e.id === currentEmployeeId);
-        purchase.items.forEach((item) => {
-          const drug = inventory.find((d) => d.id === item.drugId);
-          if (drug) {
-            const unitsToAdd = item.isUnit
-              ? item.quantity
-              : item.quantity * (drug.unitsPerPack || 1);
-            
-            stockMovementService.logMovement({
-              drugId: item.drugId,
-              drugName: drug.name,
-              branchId: getBranchCode(),
-              type: 'purchase',
-              quantity: unitsToAdd,
-              previousStock: drug.stock,
-              newStock: validateStock(drug.stock + unitsToAdd),
-              reason: `Immediate Purchase #${purchase.invoiceId}`,
-              referenceId: purchase.id,
-              performedBy: currentEmployeeId!,
-              performedByName: performer?.name,
-              status: 'approved',
-            });
-          }
         });
       } else {
         info('Purchase Order Saved as Pending');
@@ -623,7 +594,7 @@ export function useEntityHandlers({
         });
       }
     },
-    [setPurchases, setInventory, info, currentEmployeeId, employees, error, setBatches, inventory]
+    [setPurchases, setInventory, applyPurchaseToInventory, info, currentEmployeeId, employees, error, setBatches, inventory]
   );
 
   const handleApprovePurchase = useCallback(
@@ -654,140 +625,12 @@ export function useEntityHandlers({
         )
       );
 
-      // 2. Create batches outside the mapper
-      purchase.items.forEach((purchasedItem) => {
-        const drug = inventory.find((d) => d.id === purchasedItem.drugId);
-        if (drug) {
-          const unitsToAdd = purchasedItem.isUnit
-            ? purchasedItem.quantity
-            : purchasedItem.quantity * (drug.unitsPerPack || 1);
-
-          batchService.createBatch({
-            drugId: drug.id,
-            quantity: unitsToAdd,
-            expiryDate: purchasedItem.expiryDate || drug.expiryDate,
-            costPrice: purchasedItem.costPrice,
-            purchaseId: purchase.id,
-            dateReceived: new Date().toISOString(),
-            batchNumber: purchase.invoiceId,
-          });
-        }
-      });
-
-      // Update batches state reactively
-      setBatches(batchService.getAllBatches());
-
-      // 3. Update inventory: create new Drug entries for different expiry dates
-      setInventory((prev) => {
-        let updated = [...prev];
-        const newEntries: Drug[] = [];
-
-        purchase.items.forEach((purchasedItem) => {
-          const sourceDrug = updated.find((d) => d.id === purchasedItem.drugId);
-          if (!sourceDrug) return;
-
-          const unitsToAdd = purchasedItem.isUnit
-            ? purchasedItem.quantity
-            : purchasedItem.quantity * (sourceDrug.unitsPerPack || 1);
-
-          const purchaseExpiry = purchasedItem.expiryDate || sourceDrug.expiryDate;
-
-          // Check if an existing Drug entry with the same product AND same expiry already exists
-          const sameExpiryEntry = updated.find(
-            (d) =>
-              d.name === sourceDrug.name &&
-              d.dosageForm === sourceDrug.dosageForm &&
-              d.expiryDate === purchaseExpiry
-          );
-
-          if (sameExpiryEntry) {
-            // Same expiry exists → just add stock to that entry
-            updated = updated.map((d) =>
-              d.id === sameExpiryEntry.id
-                ? {
-                    ...d,
-                    stock: validateStock(d.stock + unitsToAdd),
-                    costPrice: purchasedItem.costPrice,
-                  }
-                : d
-            );
-
-            // FIX: The batch was created with drugId = sourceDrug.id
-            // but stock was added to sameExpiryEntry.id. If they differ,
-            // update the batch to point to the correct Drug entry.
-            if (sameExpiryEntry.id !== sourceDrug.id) {
-              const allBatches = batchService.getAllBatches();
-              const mismatchedBatch = allBatches
-                .filter(
-                  (b) => b.drugId === sourceDrug.id && b.purchaseId === purchase.id
-                )
-                .sort((a, b) => new Date(b.dateReceived).getTime() - new Date(a.dateReceived).getTime())[0];
-              if (mismatchedBatch) {
-                batchService.updateBatch(mismatchedBatch.id, { drugId: sameExpiryEntry.id });
-              }
-            }
-          } else {
-            // Different expiry → create a NEW Drug entry (same product, new batch)
-            const newDrugId = idGenerator.generate('inventory');
-            newEntries.push({
-              ...sourceDrug,
-              id: newDrugId,
-              stock: unitsToAdd,
-              costPrice: purchasedItem.costPrice,
-              expiryDate: purchaseExpiry,
-              createdAt: new Date().toISOString(),
-            });
-
-            // Also update the batch's drugId to point to the new Drug entry
-            const allBatches = batchService.getAllBatches();
-            const latestBatch = allBatches
-              .filter(
-                (b) => b.drugId === sourceDrug.id && b.purchaseId === purchase.id
-              )
-              .sort((a, b) => new Date(b.dateReceived).getTime() - new Date(a.dateReceived).getTime())[0];
-            if (latestBatch) {
-              batchService.updateBatch(latestBatch.id, { drugId: newDrugId });
-            }
-          }
-        });
-
-        // Refresh batches after potential drugId updates
-        if (newEntries.length > 0) {
-          setBatches(batchService.getAllBatches());
-        }
-
-        return [...updated, ...newEntries];
-      });
-
-      // 4. Log Stock Movement
-      const performer = employees?.find((e) => e.id === currentEmployeeId);
-      purchase.items.forEach((item) => {
-        const drug = inventory.find((d) => d.id === item.drugId);
-        if (drug) {
-          const unitsToAdd = item.isUnit
-            ? item.quantity
-            : item.quantity * (drug.unitsPerPack || 1);
-          
-          stockMovementService.logMovement({
-            drugId: item.drugId,
-            drugName: drug.name,
-            branchId: getBranchCode(),
-            type: 'purchase',
-            quantity: unitsToAdd,
-            previousStock: drug.stock,
-            newStock: validateStock(drug.stock + unitsToAdd),
-            reason: `Purchase Order #${purchase.invoiceId}`,
-            referenceId: purchase.id,
-            performedBy: currentEmployeeId!,
-            performedByName: performer?.name,
-            status: 'approved',
-          });
-        }
-      });
+      // 2. Apply inventory logic (deduped)
+      applyPurchaseToInventory({ ...purchase, status: 'completed' });
 
       success(`PO #${purchase.invoiceId} Approved Successfully`);
     },
-    [purchases, setPurchases, setInventory, setBatches, inventory, success, currentEmployeeId, employees, error]
+    [purchases, setPurchases, setInventory, applyPurchaseToInventory, setBatches, inventory, success, currentEmployeeId, employees, error]
   );
 
   const handleRejectPurchase = useCallback(
