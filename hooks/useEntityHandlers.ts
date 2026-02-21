@@ -377,14 +377,23 @@ export function useEntityHandlers({
         error('Permission denied: Cannot delete suppliers');
         return;
       }
+
+      //Delete Guard: Check for orphaned foreign keys
+      const hasPurchases = purchases.some((p) => p.supplierId === id);
+      if (hasPurchases) {
+        error('Cannot delete supplier with existing purchase orders');
+        return;
+      }
+
       setSuppliers((prev) => prev.filter((s) => s.id !== id));
+      success('Supplier deleted successfully');
       auditService.log('supplier.delete', {
-        userId: currentEmployeeId,
+        userId: currentEmployeeId || 'System',
         details: `Deleted supplier ID: ${id}`,
         entityId: id,
       });
     },
-    [setSuppliers, currentEmployeeId, employees, error]
+    [setSuppliers, purchases, success, currentEmployeeId, employees, error]
   );
 
   // --- Customer Management ---
@@ -448,15 +457,23 @@ export function useEntityHandlers({
         error('Permission denied: Cannot delete customers');
         return;
       }
+
+      // 🔴 Delete Guard: Check for orphaned foreign keys
+      const hasSales = sales.some((s) => s.customerCode === id);
+      if (hasSales) {
+        error('Cannot delete customer with existing sales records');
+        return;
+      }
+
       setCustomers((prev) => prev.filter((c) => c.id !== id));
       success('Customer removed successfully');
       auditService.log('customer.delete', {
-        userId: currentEmployeeId,
+        userId: currentEmployeeId || 'System',
         details: `Deleted customer ID: ${id}`,
         entityId: id,
       });
     },
-    [setCustomers, success, currentEmployeeId, employees, error]
+    [setCustomers, sales, success, currentEmployeeId, employees, error]
   );
 
   // --- Purchase Management ---
@@ -775,6 +792,18 @@ export function useEntityHandlers({
         error('Cannot delete your own account');
         return;
       }
+
+      // 🔴 Delete Guard: Check for orphaned foreign keys
+      // Since an employee might have cashier shifts, sales, etc., we prevent hard deletion
+      const hasSales = sales.some((s) => s.soldByEmployeeId === id);
+      const hasPurchases = purchases.some((p) => p.approvedBy === id);
+      const hasCustomers = customers.some((c) => c.registeredByEmployeeId === id);
+
+      if (hasSales || hasPurchases || hasCustomers) {
+        error('Cannot delete employee with existing transaction records. Disable their account instead (not yet implemented).');
+        return;
+      }
+
       setEmployees((prev) => prev.filter((e) => e.id !== id));
       success('Employee deleted successfully');
       auditService.log('user.delete', {
@@ -783,7 +812,7 @@ export function useEntityHandlers({
         entityId: id,
       });
     },
-    [setEmployees, success, currentEmployeeId, employees, error]
+    [setEmployees, sales, purchases, customers, success, currentEmployeeId, employees, error]
   );
 
   // --- Sale Management ---
