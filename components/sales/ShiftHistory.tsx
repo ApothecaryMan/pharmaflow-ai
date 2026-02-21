@@ -221,7 +221,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in'>
       {isLoading && (
-        <div className='absolute inset-0 z-50 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-2xl'>
+        <div className='absolute inset-0 z-50 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-xs rounded-2xl'>
           <div className='flex flex-col items-center gap-3'>
             <div
               className={`w-10 h-10 border-4 border-${color}-200 border-t-${color}-600 rounded-full animate-spin`}

@@ -86,7 +86,7 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
           {/* Main Progress Circle Area */}
           <div
             className='flex-1 p-6 rounded-3xl relative overflow-hidden flex flex-col items-center justify-center
-              bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700
+              bg-white dark:bg-gray-800 shadow-xs border border-gray-100 dark:border-gray-700
           '
           >
             <div className='relative z-10 text-center'>
@@ -114,7 +114,7 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
                     strokeDasharray='264'
                     strokeDashoffset={264 - (264 * percentage) / 100}
                     strokeLinecap='round'
-                    className={`transition-all duration-1000 ease-out filter drop-shadow-sm text-${color}-500`}
+                    className={`transition-all duration-1000 ease-out filter drop-shadow-xs text-${color}-500`}
                   />
                 </svg>
 
@@ -149,7 +149,7 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
 
           {/* Stats Grid */}
           <div className='flex-1 grid grid-cols-2 gap-4'>
-            <div className='p-4 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center'>
+            <div className='p-4 rounded-2xl bg-white dark:bg-gray-800 shadow-xs border border-gray-100 dark:border-gray-700 flex flex-col justify-center'>
               <div className='mb-2'>
                 <span className='text-xs font-bold text-gray-400 uppercase tracking-wider'>
                   Velocity
@@ -161,7 +161,7 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
               <p className='text-xs text-emerald-500 font-medium mt-1'>↑ 12% vs avg</p>
             </div>
 
-            <div className='p-4 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center'>
+            <div className='p-4 rounded-2xl bg-white dark:bg-gray-800 shadow-xs border border-gray-100 dark:border-gray-700 flex flex-col justify-center'>
               <div className='mb-2'>
                 <span className='text-xs font-bold text-gray-400 uppercase tracking-wider'>
                   Remaining
@@ -173,7 +173,7 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
               <p className='text-xs text-blue-500 font-medium mt-1'>Est. 12 days left</p>
             </div>
 
-            <div className='col-span-2 p-4 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between'>
+            <div className='col-span-2 p-4 rounded-2xl bg-white dark:bg-gray-800 shadow-xs border border-gray-100 dark:border-gray-700 flex items-center justify-between'>
               <div>
                 <p className='text-gray-400 text-xs font-bold uppercase tracking-wider mb-1'>
                   Project Health
@@ -209,7 +209,7 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
         </div>
 
         {/* 3. Content Area */}
-        <div className='h-80 min-h-[320px] rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden relative'>
+        <div className='h-80 min-h-[320px] rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-xs overflow-hidden relative'>
           {viewMode === 'timeline' ? (
             <div className='w-full h-full p-4'>
               <ResponsiveContainer width='100%' height='100%'>

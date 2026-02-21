@@ -177,7 +177,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
     return (
       <div
         dir='ltr'
-        className='hidden md:flex items-center justify-between h-6 border-t shrink-0 select-none shadow-sm'
+        className='hidden md:flex items-center justify-between h-6 border-t shrink-0 select-none shadow-xs'
         style={{
           backgroundColor: 'var(--bg-secondary)',
           borderColor: 'var(--border-primary)',

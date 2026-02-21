@@ -262,7 +262,7 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
         content={getSlideTooltip(currentSlide)}
         className='h-full'
         triggerClassName='h-full'
-        tooltipClassName='font-bold uppercase tracking-wider z-[60]'
+        tooltipClassName='font-bold uppercase tracking-wider z-60'
       >
         {/* Main Content */}
         <div
@@ -285,7 +285,7 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
                     ? 'text-red-500'
                     : currentSlide.variant === 'info'
                       ? 'text-blue-500'
-                      : 'text-[var(--text-secondary)]'
+                      : 'text-(--text-secondary)'
             }`}
           >
             {currentSlide.icon}

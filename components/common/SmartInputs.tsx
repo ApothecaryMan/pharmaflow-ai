@@ -522,11 +522,11 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
           bg-white dark:bg-gray-900
           border border-gray-200 dark:border-gray-800
           hover:border-gray-300 dark:hover:border-gray-700
-          focus:outline-none focus:ring-0
+          focus:outline-hidden focus:ring-0
           focus:border-${color}-500 dark:focus:border-${color}-400
           focus:hover:border-${color}-500 dark:focus:hover:border-${color}-400
           text-gray-900 dark:text-gray-100 placeholder-gray-400
-          shadow-sm ${className}
+          shadow-xs ${className}
         `}
       />
 

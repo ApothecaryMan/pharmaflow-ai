@@ -64,18 +64,18 @@ export const InventoryManagement: React.FC<InventoryManagementProps> = ({
           const stock = item.stock;
           if (stock === 0)
             return (
-              <span className='px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-bold'>
+              <span className='px-2 py-1 rounded-sm bg-red-100 text-red-700 text-xs font-bold'>
                 Out of Stock
               </span>
             );
           if (stock < 10)
             return (
-              <span className='px-2 py-1 rounded bg-amber-100 text-amber-700 text-xs font-bold'>
+              <span className='px-2 py-1 rounded-sm bg-amber-100 text-amber-700 text-xs font-bold'>
                 Low Stock
               </span>
             );
           return (
-            <span className='px-2 py-1 rounded bg-green-100 text-green-700 text-xs font-bold'>
+            <span className='px-2 py-1 rounded-sm bg-green-100 text-green-700 text-xs font-bold'>
               Instock
             </span>
           );

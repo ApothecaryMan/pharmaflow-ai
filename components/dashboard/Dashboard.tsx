@@ -753,14 +753,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <button
                     type='button'
                     onClick={() => setRestockIsUnit(false)}
-                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${!restockIsUnit ? `bg-white dark:bg-gray-700 text-${color}-600 shadow-sm` : 'text-gray-400'}`}
+                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${!restockIsUnit ? `bg-white dark:bg-gray-700 text-${color}-600 shadow-xs` : 'text-gray-400'}`}
                   >
                     {t.pos?.pack || 'Pack'}
                   </button>
                   <button
                     type='button'
                     onClick={() => setRestockIsUnit(true)}
-                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${restockIsUnit ? `bg-white dark:bg-gray-700 text-${color}-600 shadow-sm` : 'text-gray-400'}`}
+                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${restockIsUnit ? `bg-white dark:bg-gray-700 text-${color}-600 shadow-xs` : 'text-gray-400'}`}
                   >
                     {t.pos?.unit || 'Unit'}
                   </button>
@@ -1105,7 +1105,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       setRestockDrug(item);
                       setExpandedView(null);
                     }}
-                    className={`px-4 py-2 rounded-full bg-white dark:bg-gray-800 shadow-sm font-medium text-${color}-600 hover:bg-${color}-50 dark:hover:bg-gray-700 transition-colors`}
+                    className={`px-4 py-2 rounded-full bg-white dark:bg-gray-800 shadow-xs font-medium text-${color}-600 hover:bg-${color}-50 dark:hover:bg-gray-700 transition-colors`}
                   >
                     {t.restock}
                   </button>
@@ -1318,7 +1318,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <div key={sale.id} className='relative z-10'>
                   {/* Timeline Node */}
                   <div
-                    className={`absolute top-6 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-sm z-10 ${
+                    className={`absolute top-6 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-xs z-10 ${
                       hasReturns ? 'bg-orange-400' : `bg-${color}-500`
                     } ${language === 'AR' ? '-right-[18px]' : '-left-[18px]'}`}
                   ></div>
@@ -1326,7 +1326,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <MaterialTabs
                     index={index}
                     total={recentSales20.length}
-                    className='!h-auto py-2 !flex-col !items-stretch gap-1 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors shadow-sm'
+                    className='h-auto! py-2 flex-col! items-stretch! gap-1 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors shadow-xs'
                   >
                     <div className='flex items-center justify-between gap-3 mb-1'>
                       {/* Left Side: Icon, Name, Code, Time */}
@@ -1342,7 +1342,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </p>
 
                         {sale.customerCode && (
-                          <span className='text-[9px] bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-500 font-mono border border-gray-200 dark:border-gray-700 shrink-0'>
+                          <span className='text-[9px] bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-sm text-gray-500 font-mono border border-gray-200 dark:border-gray-700 shrink-0'>
                             #{sale.customerCode}
                           </span>
                         )}
@@ -1421,8 +1421,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               className={`flex justify-between text-xs ${
                                 hasReturn
                                   ? returnedQty === item.quantity
-                                    ? 'bg-red-50 dark:bg-red-950/20 rounded px-1.5 py-0.5 -mx-1.5' // Full return
-                                    : 'bg-orange-50 dark:bg-orange-950/20 rounded px-1.5 py-0.5 -mx-1.5' // Partial return
+                                    ? 'bg-red-50 dark:bg-red-950/20 rounded-sm px-1.5 py-0.5 -mx-1.5' // Full return
+                                    : 'bg-orange-50 dark:bg-orange-950/20 rounded-sm px-1.5 py-0.5 -mx-1.5' // Partial return
                                   : ''
                               }`}
                             >

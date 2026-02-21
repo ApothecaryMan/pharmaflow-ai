@@ -36,7 +36,7 @@ export const MaterialTabs: React.FC<MaterialTabsProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`group relative h-[72px] px-4 flex items-center transition-all cursor-pointer overflow-hidden outline-none focus:outline-none ring-0 focus:ring-0 ${roundedClass} ${
+      className={`group relative h-[72px] px-4 flex items-center transition-all cursor-pointer overflow-hidden outline-hidden focus:outline-hidden ring-0 focus:ring-0 ${roundedClass} ${
         isSelected
           ? `bg-${color}-50 dark:bg-${color}-950/20`
           : 'bg-[#F3F4F6] hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/50'

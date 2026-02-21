@@ -167,7 +167,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                 }}
                 onFocus={() => setShowSearch(true)}
                 onKeyDown={onKeyDown}
-                className="w-full pl-12 rtl:pl-4 rtl:pr-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-none ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                className="w-full pl-12 rtl:pl-4 rtl:pr-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-none ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-blue-500 transition-all outline-hidden text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
               />
               <SearchDropdown
                 isVisible={showSearch && searchResults.length > 0}
@@ -177,7 +177,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                 columns={[
                   { 
                     header: t.inventory.headers.name, 
-                    width: 'flex-[4]',
+                    width: 'flex-4',
                     render: (d: Drug) => {
                       const displayName = getDisplayName(d);
                       const itemDir = /[\u0600-\u06FF]/.test(displayName) ? 'rtl' : 'ltr';

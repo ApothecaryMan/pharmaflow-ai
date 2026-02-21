@@ -141,7 +141,7 @@ const AIPerformanceSummary: React.FC<{
 
   return (
     <>
-      <div className='bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg'>
+      <div className='bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg'>
         <div className='flex items-center justify-between mb-3'>
           <h3 className='font-bold text-lg flex items-center gap-2'>
             <span className='material-symbols-rounded'>psychology</span>
@@ -167,7 +167,7 @@ const AIPerformanceSummary: React.FC<{
             <button
               onClick={fetchShortSummary}
               disabled={loading}
-              className={`px-4 h-[36px] rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-all active:scale-95 flex items-center gap-2 text-sm font-medium shadow-sm ${loading ? 'opacity-80' : ''}`}
+              className={`px-4 h-[36px] rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-all active:scale-95 flex items-center gap-2 text-sm font-medium shadow-xs ${loading ? 'opacity-80' : ''}`}
             >
               <span
                 className={`material-symbols-rounded text-base ${loading ? 'animate-spin' : ''}`}
@@ -188,7 +188,7 @@ const AIPerformanceSummary: React.FC<{
             {/* Expand to Detailed Modal Button */}
             <button
               onClick={openDetailedModal}
-              className='w-[36px] h-[36px] flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-all active:scale-95 shadow-sm'
+              className='w-[36px] h-[36px] flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-all active:scale-95 shadow-xs'
               title={language === 'AR' ? 'تحليل مفصل' : 'Detailed Analysis'}
             >
               <span className='material-symbols-rounded text-base'>open_in_full</span>
@@ -910,7 +910,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   return (
     <div className='h-full space-y-6 animate-fade-in overflow-y-auto'>
       {/* Header Section */}
-      <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-transparent'>
+      <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-xs border-2 border-gray-200 dark:border-transparent'>
         <div className='flex items-center gap-4'>
           {(() => {
             const nameParts = selectedEmployee.name.trim().split(/\s+/);
@@ -924,11 +924,11 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                   <img
                     src={selectedEmployee.image}
                     alt={selectedEmployee.name}
-                    className={`w-16 h-16 rounded-2xl object-cover shadow-sm border border-${color.name}-200 dark:border-${color.name}-700/50`}
+                    className={`w-16 h-16 rounded-2xl object-cover shadow-xs border border-${color.name}-200 dark:border-${color.name}-700/50`}
                   />
                 ) : (
                   <div
-                    className={`w-16 h-16 rounded-2xl bg-gradient-to-br from-${color.name}-100 to-${color.name}-50 dark:from-${color.name}-900/40 dark:to-${color.name}-800/20 flex items-center justify-center text-${color.name}-600 dark:text-${color.name}-400 text-xl font-bold uppercase shadow-sm border border-${color.name}-200 dark:border-${color.name}-700/50`}
+                    className={`w-16 h-16 rounded-2xl bg-linear-to-br from-${color.name}-100 to-${color.name}-50 dark:from-${color.name}-900/40 dark:to-${color.name}-800/20 flex items-center justify-center text-${color.name}-600 dark:text-${color.name}-400 text-xl font-bold uppercase shadow-xs border border-${color.name}-200 dark:border-${color.name}-700/50`}
                   >
                     {initials}
                   </div>
@@ -1005,7 +1005,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                 onClick={() => setDateFilterMode(period)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                   dateFilterMode === period
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                 }`}
               >
@@ -1147,7 +1147,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                     <div
                       key={shift.shiftId}
                       onClick={() => setSelectedShiftId(isSelected ? null : shift.shiftId)}
-                      className={`flex items-center gap-1.5 flex-shrink-0 cursor-pointer ${
+                      className={`flex items-center gap-1.5 shrink-0 cursor-pointer ${
                         idx > 0
                           ? language === 'AR'
                             ? 'pr-2 border-r border-gray-200 dark:border-gray-700'
@@ -1180,7 +1180,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                             arrow_forward
                           </span>
                         ) : (
-                          <div className='h-3 w-[1px] bg-gray-300 dark:bg-gray-600 mx-0.5'></div>
+                          <div className='h-3 w-px bg-gray-300 dark:bg-gray-600 mx-0.5'></div>
                         )}
 
                         {/* Close Time or Status */}
@@ -1223,7 +1223,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
         {/* Achievements & Insights */}
         <div className='space-y-6'>
           {/* Best Achievements Card */}
-          <div className='bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-transparent'>
+          <div className='bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-xs border-2 border-gray-200 dark:border-transparent'>
             <h3 className='text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2'>
               <span className='material-symbols-rounded text-yellow-500'>trophy</span>
               {language === 'AR' ? 'الأفضل' : 'Best Achievements'}
@@ -1232,7 +1232,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
             <div className='space-y-4'>
               {/* Most Sold Product */}
               <div className='flex items-center gap-3 p-3 bg-amber-50 dark:bg-gray-700/20 rounded-xl border border-amber-100 dark:border-gray-600/30'>
-                <div className='w-10 h-10 bg-amber-100 dark:bg-gray-600/30 rounded-full flex items-center justify-center flex-shrink-0'>
+                <div className='w-10 h-10 bg-amber-100 dark:bg-gray-600/30 rounded-full flex items-center justify-center shrink-0'>
                   <span className='material-symbols-rounded text-amber-600 dark:text-amber-400'>
                     local_fire_department
                   </span>
@@ -1260,7 +1260,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
 
               {/* Highest Invoice */}
               <div className='flex items-center gap-3 p-3 bg-emerald-50 dark:bg-gray-700/20 rounded-xl border border-emerald-100 dark:border-gray-600/30'>
-                <div className='w-10 h-10 bg-emerald-100 dark:bg-gray-600/30 rounded-full flex items-center justify-center flex-shrink-0'>
+                <div className='w-10 h-10 bg-emerald-100 dark:bg-gray-600/30 rounded-full flex items-center justify-center shrink-0'>
                   <span className='material-symbols-rounded text-emerald-600 dark:text-emerald-400'>
                     receipt_long
                   </span>
@@ -1289,7 +1289,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
 
               {/* Highest Priced Item Sold */}
               <div className='flex items-center gap-3 p-3 bg-purple-50 dark:bg-gray-700/20 rounded-xl border border-purple-100 dark:border-gray-600/30'>
-                <div className='w-10 h-10 bg-purple-100 dark:bg-gray-600/30 rounded-full flex items-center justify-center flex-shrink-0'>
+                <div className='w-10 h-10 bg-purple-100 dark:bg-gray-600/30 rounded-full flex items-center justify-center shrink-0'>
                   <span className='material-symbols-rounded text-purple-600 dark:text-purple-400'>
                     diamond
                   </span>

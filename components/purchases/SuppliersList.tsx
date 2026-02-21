@@ -267,7 +267,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
               e.stopPropagation();
               showMenu(e.clientX, e.clientY, getRowActions(row.original));
             }}
-            className='p-1.5 text-gray-400 hover:text-blue-600 transition-colors outline-none'
+            className='p-1.5 text-gray-400 hover:text-blue-600 transition-colors outline-hidden'
             title={t.headers?.actions || 'Actions'}
           >
             <span className='material-symbols-rounded text-[20px]'>more_vert</span>
@@ -281,7 +281,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in p-4 overflow-hidden'>
       {/* Header */}
-      <div className='flex justify-between items-center flex-shrink-0'>
+      <div className='flex justify-between items-center shrink-0'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight type-expressive'>
             {mode === 'list'
@@ -312,7 +312,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
 
       {mode === 'list' ? (
         <>
-          <div className='flex-shrink-0'>
+          <div className='shrink-0'>
             <SearchInput
               value={search}
               onSearchChange={setSearch}
@@ -367,7 +367,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       required
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all'
+                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
                       style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                       placeholder={t.form?.enterCompanyName || 'Enter company name'}
                       dir={nameDir}
@@ -381,7 +381,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       value={editForm.address}
                       onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                       rows={3}
-                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all resize-none'
+                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all resize-none'
                       style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                       placeholder={t.form?.enterAddress || 'Enter company address'}
                       dir={addressDir}
@@ -407,7 +407,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       required
                       value={editForm.contactPerson}
                       onChange={(e) => setEditForm({ ...editForm, contactPerson: e.target.value })}
-                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all'
+                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
                       style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                       placeholder={t.form?.enterContactPerson || 'Enter contact person name'}
                       dir={contactPersonDir}
@@ -421,7 +421,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       required
                       value={editForm.phone}
                       onChange={(val) => setEditForm({ ...editForm, phone: val })}
-                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all'
+                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
                       style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                       placeholder={t.form?.phonePlaceholder || '+1234567890'}
                     />
@@ -434,7 +434,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       required
                       value={editForm.email}
                       onChange={(val) => setEditForm({ ...editForm, email: val })}
-                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all'
+                      className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
                       style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                       placeholder={t.form?.emailPlaceholder || 'email@example.com'}
                     />
@@ -501,7 +501,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                     type='text'
                     value={editForm.name}
                     onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all'
+                    className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                     placeholder={t.form?.enterCompanyName || 'Enter company name'}
                     dir={nameDir}
@@ -515,7 +515,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                     value={editForm.address}
                     onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                     rows={3}
-                    className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all resize-none'
+                    className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all resize-none'
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                     placeholder={t.form?.enterAddress || 'Enter company address'}
                     dir={addressDir}
@@ -540,7 +540,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                     type='text'
                     value={editForm.contactPerson}
                     onChange={(e) => setEditForm({ ...editForm, contactPerson: e.target.value })}
-                    className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all'
+                    className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                     placeholder={t.form?.enterContactPerson || 'Enter contact person name'}
                     dir={contactPersonDir}
@@ -553,7 +553,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                   <SmartPhoneInput
                     value={editForm.phone}
                     onChange={(val) => setEditForm({ ...editForm, phone: val })}
-                    className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all'
+                    className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                     placeholder={t.form?.phonePlaceholder || '+1234567890'}
                   />
@@ -565,7 +565,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                   <SmartEmailInput
                     value={editForm.email}
                     onChange={(val) => setEditForm({ ...editForm, email: val })}
-                    className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all'
+                    className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
                     style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                     placeholder={t.form?.emailPlaceholder || 'email@example.com'}
                   />

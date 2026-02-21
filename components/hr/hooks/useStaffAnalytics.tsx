@@ -649,7 +649,7 @@ export const useStaffAnalytics = ({
                     {staff.titles.map((title, i) => (
                       <div
                         key={i}
-                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-${title.color}-50 dark:bg-${title.color}-900/20 border border-${title.color}-100 dark:border-${title.color}-900/30 text-${title.color}-600 dark:text-${title.color}-400 shadow-sm`}
+                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-${title.color}-50 dark:bg-${title.color}-900/20 border border-${title.color}-100 dark:border-${title.color}-900/30 text-${title.color}-600 dark:text-${title.color}-400 shadow-xs`}
                         title={title.label}
                       >
                         <span className='material-symbols-rounded text-[12px]'>{title.icon}</span>

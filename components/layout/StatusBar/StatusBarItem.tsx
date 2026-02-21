@@ -43,7 +43,7 @@ export interface StatusBarItemProps {
  */
 const variantStyles: Record<string, string> = {
   default:
-    'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/10',
+    'text-(--text-secondary) hover:text-(--text-primary) hover:bg-black/5 dark:hover:bg-white/10',
   success: 'text-emerald-500 hover:bg-emerald-500/10',
   warning: 'text-amber-500 hover:bg-amber-500/10',
   error: 'text-red-500 hover:bg-red-500/10',
@@ -74,11 +74,11 @@ export const StatusBarItem: React.FC<StatusBarItemProps> = ({
   const content = (
     <>
       {icon && <span className='material-symbols-rounded text-[14px] leading-none'>{icon}</span>}
-      {label && <span className='pt-[1px]'>{label}</span>}
+      {label && <span className='pt-px'>{label}</span>}
       {children}
       {badge !== undefined && badge !== 0 && (
         <span
-          className={`absolute top-0.5 right-1.5 flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full leading-none pt-[1px] ${
+          className={`absolute top-0.5 right-1.5 flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full leading-none pt-px ${
             (typeof badge === 'number' && badge > 9) ||
             (typeof badge === 'string' && badge.length > 1)
               ? 'px-0.5 h-[10px] min-w-[10px]'
@@ -97,7 +97,7 @@ export const StatusBarItem: React.FC<StatusBarItemProps> = ({
         content={tooltip}
         className='h-full'
         triggerClassName='h-full'
-        tooltipClassName='font-bold uppercase tracking-wider z-[60]'
+        tooltipClassName='font-bold uppercase tracking-wider z-60'
       >
         <div
           className={baseClasses}

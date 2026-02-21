@@ -22,12 +22,12 @@ export const ChartRowSkeleton = () => (
 
     {/* Top Selling List Skeleton */}
     <div className='h-80 bg-gray-200 dark:bg-gray-800 rounded-3xl animate-pulse p-5 space-y-4'>
-      <div className='h-6 w-1/2 bg-gray-300 dark:bg-gray-700 rounded mb-4' />
+      <div className='h-6 w-1/2 bg-gray-300 dark:bg-gray-700 rounded-sm mb-4' />
       {[1, 2, 3, 4, 5].map((i) => (
         <div key={i} className='flex justify-between items-center'>
           <div className='h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-700' />
-          <div className='h-4 w-2/3 bg-gray-300 dark:bg-gray-700 rounded' />
-          <div className='h-4 w-10 bg-gray-300 dark:bg-gray-700 rounded' />
+          <div className='h-4 w-2/3 bg-gray-300 dark:bg-gray-700 rounded-sm' />
+          <div className='h-4 w-10 bg-gray-300 dark:bg-gray-700 rounded-sm' />
         </div>
       ))}
     </div>
@@ -41,7 +41,7 @@ export const BottomRowSkeleton = () => (
     <div className='flex flex-col gap-4'>
       {/* Low Stock Skeleton */}
       <div className='h-64 bg-gray-200 dark:bg-gray-800 rounded-3xl animate-pulse p-5'>
-        <div className='h-6 w-1/3 bg-gray-300 dark:bg-gray-700 rounded mb-4' />
+        <div className='h-6 w-1/3 bg-gray-300 dark:bg-gray-700 rounded-sm mb-4' />
         <div className='space-y-3'>
           {[1, 2, 3].map((i) => (
             <div key={i} className='h-12 bg-gray-300 dark:bg-gray-700 rounded-xl w-full' />
@@ -50,7 +50,7 @@ export const BottomRowSkeleton = () => (
       </div>
       {/* Expiring Skeleton */}
       <div className='h-64 bg-gray-200 dark:bg-gray-800 rounded-3xl animate-pulse p-5'>
-        <div className='h-6 w-1/3 bg-gray-300 dark:bg-gray-700 rounded mb-4' />
+        <div className='h-6 w-1/3 bg-gray-300 dark:bg-gray-700 rounded-sm mb-4' />
         <div className='space-y-3'>
           {[1, 2, 3].map((i) => (
             <div key={i} className='h-12 bg-gray-300 dark:bg-gray-700 rounded-xl w-full' />
@@ -61,18 +61,18 @@ export const BottomRowSkeleton = () => (
 
     {/* Recent Transactions Skeleton */}
     <div className='h-[530px] bg-gray-200 dark:bg-gray-800 rounded-3xl animate-pulse p-5'>
-      <div className='h-6 w-1/3 bg-gray-300 dark:bg-gray-700 rounded mb-6' />
+      <div className='h-6 w-1/3 bg-gray-300 dark:bg-gray-700 rounded-sm mb-6' />
       <div className='space-y-4'>
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i} className='flex justify-between items-center'>
             <div className='flex gap-3 w-full'>
               <div className='h-10 w-10 rounded-xl bg-gray-300 dark:bg-gray-700 shrink-0' />
               <div className='space-y-2 w-full'>
-                <div className='h-4 w-1/2 bg-gray-300 dark:bg-gray-700 rounded' />
-                <div className='h-3 w-1/3 bg-gray-300 dark:bg-gray-700 rounded' />
+                <div className='h-4 w-1/2 bg-gray-300 dark:bg-gray-700 rounded-sm' />
+                <div className='h-3 w-1/3 bg-gray-300 dark:bg-gray-700 rounded-sm' />
               </div>
             </div>
-            <div className='h-4 w-16 bg-gray-300 dark:bg-gray-700 rounded shrink-0' />
+            <div className='h-4 w-16 bg-gray-300 dark:bg-gray-700 rounded-sm shrink-0' />
           </div>
         ))}
       </div>

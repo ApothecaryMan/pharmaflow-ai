@@ -178,7 +178,7 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
       </div>
 
       {/* Unified Transactions Table */}
-      <div className='bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex-1 flex flex-col min-h-[500px]'>
+      <div className='bg-white dark:bg-gray-800 rounded-xl shadow-xs border border-gray-100 dark:border-gray-700 overflow-hidden flex-1 flex flex-col min-h-[500px]'>
         <div className='p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800'>
           <div className='flex items-center gap-3'>
             <span className='material-symbols-rounded text-gray-400'>history</span>

@@ -230,7 +230,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                         )}
                         <span className='flex-1'>{getMenuTranslation(itemLabel, language)}</span>
                         {!isImplemented && (
-                          <span className='text-[10px] opacity-60 border border-gray-300 dark:border-gray-700 px-1 rounded uppercase tracking-tighter'>
+                          <span className='text-[10px] opacity-60 border border-gray-300 dark:border-gray-700 px-1 rounded-sm uppercase tracking-tighter'>
                             Soon
                           </span>
                         )}

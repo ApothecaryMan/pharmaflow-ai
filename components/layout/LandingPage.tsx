@@ -39,7 +39,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ language, darkMode, co
         </div>
 
         {/* Text Section */}
-        <h1 className='text-4xl md:text-5xl font-black mb-6 tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-zinc-900 to-zinc-500 dark:from-white dark:to-zinc-500'>
+        <h1 className='text-4xl md:text-5xl font-black mb-6 tracking-tight bg-clip-text text-transparent bg-linear-to-br from-zinc-900 to-zinc-500 dark:from-white dark:to-zinc-500'>
           {language === 'AR' ? 'مرحباً بك في ZINC' : 'Welcome to Zinc'}
         </h1>
 

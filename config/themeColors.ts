@@ -42,9 +42,9 @@ export const COLOR_HEX_MAP: Record<string, string> = {
  */
 export const THEMES: ThemeColor[] = [
   { name: 'Red', primary: 'red', hex: COLOR_HEX_MAP.red },
-  { name: 'Green', primary: 'emerald', hex: COLOR_HEX_MAP.emerald },
+  { name: 'Green', primary: 'green', hex: COLOR_HEX_MAP.green },
   { name: 'Blue', primary: 'blue', hex: COLOR_HEX_MAP.blue },
-  { name: 'Purple', primary: 'violet', hex: COLOR_HEX_MAP.violet },
+  { name: 'Purple', primary: 'purple', hex: COLOR_HEX_MAP.purple },
 ];
 
 /**

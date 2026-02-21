@@ -466,7 +466,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.global?.actions?.search || 'Search...'}
-              className='w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none'
+              className='w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
             />
           </div>
 
@@ -546,7 +546,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                 <img
                   src={formData.image}
                   alt='Employee'
-                  className='w-32 h-32 rounded-3xl object-cover shadow-sm border border-gray-100 dark:border-gray-700'
+                  className='w-32 h-32 rounded-3xl object-cover shadow-xs border border-gray-100 dark:border-gray-700'
                 />
               ) : (
                 <div
@@ -628,7 +628,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder={t.employeeList.name}
                       autoFocus
-                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none'
+                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
                       required
                     />
                   </div>
@@ -743,7 +743,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       value={formData.position || ''}
                       onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                       placeholder={t.employeeList.position}
-                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none'
+                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
                     />
                   </div>
 
@@ -756,7 +756,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       value={formData.phone || ''}
                       onChange={(val) => setFormData({ ...formData, phone: val })}
                       placeholder={t.employeeList.phone}
-                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none'
+                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
                     />
                   </div>
                   <div className='col-span-6 space-y-1.5'>
@@ -767,7 +767,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       value={formData.email || ''}
                       onChange={(val) => setFormData({ ...formData, email: val })}
                       placeholder={t.employeeList.email}
-                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none'
+                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
                     />
                   </div>
 
@@ -784,7 +784,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         }
                         placeholder='0.00'
                         type='number'
-                        className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none pl-9'
+                        className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden pl-9'
                       />
                       <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium'>
                         $
@@ -799,7 +799,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       value={formData.notes || ''}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       placeholder={language === 'AR' ? 'ملاحظات إضافية...' : 'Additional notes...'}
-                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none'
+                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
                     />
                   </div>
                 </div>
@@ -844,7 +844,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         value={formData.username || ''}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                         placeholder={t.employeeList.usernamePlaceholder || 'Login Username'}
-                        className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none'
+                        className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
                       />
                     </div>
                     {/* Biometric Setup Section */}
@@ -967,7 +967,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         placeholder={t.employeeList.passwordPlaceholder || 'Login Password'}
                         type='password'
-                        className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none'
+                        className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
                       />
                     </div>
                   )}
@@ -1050,7 +1050,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                         : 'Enter current password'
                                     }
                                     type='password'
-                                    className={`w-full px-4 py-2.5 rounded-xl border ${passwordError ? 'border-red-400 dark:border-red-500' : 'border-gray-200 dark:border-gray-700'} bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none`}
+                                    className={`w-full px-4 py-2.5 rounded-xl border ${passwordError ? 'border-red-400 dark:border-red-500' : 'border-gray-200 dark:border-gray-700'} bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden`}
                                   />
                                   {passwordError && (
                                     <p className='text-xs text-red-500 dark:text-red-400 flex items-center gap-1 px-1'>
@@ -1134,7 +1134,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                       : 'Enter new password'
                                   }
                                   type='password'
-                                  className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none'
+                                  className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
                                 />
                               </div>
                             </div>

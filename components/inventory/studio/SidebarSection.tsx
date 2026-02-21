@@ -19,7 +19,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className='bg-white/50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm transition-all duration-300 group overflow-hidden'>
+    <div className='bg-white/50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-xs transition-all duration-300 group overflow-hidden'>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full flex items-center justify-between p-3.5 bg-gray-50/30 dark:bg-gray-800/20 hover:bg-gray-100/50 dark:hover:bg-gray-800/40 transition-all relative ${isOpen ? 'border-b border-gray-100 dark:border-gray-800/50' : ''}`}

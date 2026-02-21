@@ -243,7 +243,7 @@ export const useDashboardAnalytics = ({
             React.createElement(
               'span',
               {
-                className: `text-${profitGrade.color}-400/50 px-1 rounded border border-current scale-75 uppercase`,
+                className: `text-${profitGrade.color}-400/50 px-1 rounded-sm border border-current scale-75 uppercase`,
               },
               profitGrade.label
             )

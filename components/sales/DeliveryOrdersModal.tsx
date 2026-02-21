@@ -53,7 +53,7 @@ const DriverSelect = ({
         )}
         keyExtractor={(d) => d.id}
         className='absolute top-0 left-0 w-full'
-        zIndexHigh='z-[200]'
+        zIndexHigh='z-200'
         color='blue'
         variant='input'
         disabled={disabled}
@@ -715,7 +715,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
               <div className='flex items-center gap-3'>
                 <button
                   onClick={() => setSelectedSaleId(null)}
-                  className='w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors group flex-shrink-0'
+                  className='w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors group shrink-0'
                 >
                   <span className='material-symbols-rounded text-gray-500 group-hover:text-blue-600 transition-colors text-lg'>
                     arrow_back
@@ -754,7 +754,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                       {selectedSale.customerName}
                     </span>
                     {selectedSale.customerCode && (
-                      <span className='bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0 rounded text-[10px] font-mono border border-gray-200 dark:border-gray-700'>
+                      <span className='bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0 rounded-sm text-[10px] font-mono border border-gray-200 dark:border-gray-700'>
                         #{selectedSale.customerCode}
                       </span>
                     )}
@@ -895,7 +895,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                           total={rowCount}
                           color={isDeleted ? 'red' : hasChange ? 'orange' : 'blue'}
                           isSelected={false}
-                          className={`!h-auto py-3 ${isDeleted ? 'opacity-50' : ''}`}
+                          className={`h-auto! py-3 ${isDeleted ? 'opacity-50' : ''}`}
                         >
                           <div className='flex items-center justify-between w-full' dir='ltr'>
                             <div className='flex items-center gap-4'>
@@ -915,7 +915,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                               {/* Quantity Controls / Display - "Split Pill" Design (Cloned from SortableCartItem) */}
                               {isEditMode && !isDeleted ? (
                                 /* EXACT STYLE FROM SortableCartItem.tsx */
-                                <div className='flex items-center bg-white dark:bg-gray-900 rounded-lg border shadow-sm h-6 overflow-hidden transition-colors w-[4.5rem] border-gray-200 dark:border-gray-700'>
+                                <div className='flex items-center bg-white dark:bg-gray-900 rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-18 border-gray-200 dark:border-gray-700'>
                                   {/* Pack Input */}
                                   <input
                                     type='number'
@@ -932,7 +932,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                       if (targetItem)
                                         handleQuantityChange(targetItem, false, val - packQty);
                                     }}
-                                    className={`h-full text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 font-bold text-[10px] text-gray-900 dark:text-gray-100 shrink-0 min-w-0 ${hasDualMode ? 'w-1/2' : 'w-full'}`}
+                                    className={`h-full text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 font-bold text-[10px] text-gray-900 dark:text-gray-100 shrink-0 min-w-0 ${hasDualMode ? 'w-1/2' : 'w-full'}`}
                                   />
 
                                   {/* Separator */}
@@ -956,13 +956,13 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                         if (targetItem)
                                           handleQuantityChange(targetItem, true, val - unitQty);
                                       }}
-                                      className='h-full w-1/2 text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-blue-200 font-bold text-[10px] text-blue-600 dark:text-blue-400 shrink-0 min-w-0'
+                                      className='h-full w-1/2 text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-blue-200 font-bold text-[10px] text-blue-600 dark:text-blue-400 shrink-0 min-w-0'
                                     />
                                   )}
                                 </div>
                               ) : (
                                 /* View Mode - Static Split Pill (Matching exact dimensions) */
-                                <div className='flex items-center justify-center bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 h-6 overflow-hidden shadow-sm w-[4.5rem]'>
+                                <div className='flex items-center justify-center bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 h-6 overflow-hidden shadow-xs w-18'>
                                   {hasDualMode ? (
                                     <div className='flex items-center gap-0 w-full'>
                                       <span
@@ -1007,7 +1007,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                   return (
                                     <div
                                       title={`Max: ${effectiveMax}%`}
-                                      className={`flex items-center rounded-lg border shadow-sm h-6 overflow-hidden transition-colors w-14 shrink-0 ${
+                                      className={`flex items-center rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-14 shrink-0 ${
                                         currentDiscount > 0
                                           ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                                           : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
@@ -1039,7 +1039,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                           if (finalVal > effectiveMax) finalVal = effectiveMax;
                                           handleDiscountChange(common.id, finalVal);
                                         }}
-                                        className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                                        className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                                           currentDiscount > 0
                                             ? 'text-green-700 dark:text-green-300 placeholder-green-300'
                                             : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
@@ -1141,7 +1141,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                         <div key={record.id} className='relative z-10'>
                           {/* Timeline Node */}
                           <div
-                            className={`absolute -left-[18px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-sm transition-all duration-300 ${
+                            className={`absolute -left-[18px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-xs transition-all duration-300 ${
                               isExpanded
                                 ? hasDeletions
                                   ? 'bg-red-500 scale-110'
@@ -1155,7 +1155,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                           <MaterialTabs
                             index={idx}
                             total={selectedSale.modificationHistory?.length || 0}
-                            className={`!h-auto py-3 transition-all duration-300 ${isExpanded ? 'bg-[#F3F4F6] dark:bg-blue-950/20 dark:ring-1 dark:ring-blue-900/40 shadow-sm' : 'hover:bg-gray-100/50 dark:hover:bg-white/10'}`}
+                            className={`h-auto! py-3 transition-all duration-300 ${isExpanded ? 'bg-[#F3F4F6] dark:bg-blue-950/20 dark:ring-1 dark:ring-blue-900/40 shadow-xs' : 'hover:bg-gray-100/50 dark:hover:bg-white/10'}`}
                             onClick={() =>
                               setExpandedHistoryRecordId(isExpanded ? null : record.id)
                             }
@@ -1202,7 +1202,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                       </div>
                                     </div>
 
-                                    <div className='flex items-center gap-3 flex-shrink-0'>
+                                    <div className='flex items-center gap-3 shrink-0'>
                                       {record.modifications.some(
                                         (m) => m.type === 'item_removed'
                                       ) && (
@@ -1273,7 +1273,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                             className='flex items-center gap-3 py-1'
                                           >
                                             <span
-                                              className={`flex-shrink-0 ${
+                                              className={`shrink-0 ${
                                                 isDeletion
                                                   ? 'text-red-500'
                                                   : isIncrease
@@ -1298,7 +1298,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                                   });
                                                 })()}
                                               </span>
-                                              <div className='flex items-center gap-2 ml-8 flex-shrink-0'>
+                                              <div className='flex items-center gap-2 ml-8 shrink-0'>
                                                 {isDeletion ? (
                                                   <span className='text-red-500 font-bold text-xs'>
                                                     {t.deleted || 'Deleted'} {mod.previousQuantity}

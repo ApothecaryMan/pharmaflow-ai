@@ -338,7 +338,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   return (
     <div className='flex flex-col lg:flex-row h-[calc(100vh-140px)] gap-6 p-4'>
       {/* LEFT: Controls */}
-      <div className='w-full lg:w-1/3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4'>
+      <div className='w-full lg:w-1/3 bg-white dark:bg-gray-800 rounded-2xl shadow-xs p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4'>
         {/* Template Manager Header */}
         <div className='w-full'>
           <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1 block px-1'>
@@ -352,7 +352,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}
                   placeholder={t.receiptDesigner.newTemplatePlaceholder}
-                  className='flex-1 bg-transparent border border-blue-500 rounded-xl px-3 h-10 text-sm focus:outline-none text-gray-800 dark:text-white'
+                  className='flex-1 bg-transparent border border-blue-500 rounded-xl px-3 h-10 text-sm focus:outline-hidden text-gray-800 dark:text-white'
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateTemplate()}
                 />
                 <button
@@ -406,12 +406,12 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                                 autoFocus
                                 value={editingNameValue}
                                 onChange={(e) => setEditingNameValue(e.target.value)}
-                                className='flex-1 bg-white dark:bg-gray-800 border border-blue-500 rounded-lg px-2 py-1 text-xs focus:outline-none text-gray-800 dark:text-white'
+                                className='flex-1 bg-white dark:bg-gray-800 border border-blue-500 rounded-lg px-2 py-1 text-xs focus:outline-hidden text-gray-800 dark:text-white'
                                 onKeyDown={(e) => e.key === 'Enter' && handleRenameTemplate(e)}
                               />
                               <button
                                 onClick={(e) => handleRenameTemplate(e)}
-                                className='w-6 h-6 bg-emerald-500 text-white rounded-lg flex items-center justify-center transition-colors shadow-sm'
+                                className='w-6 h-6 bg-emerald-500 text-white rounded-lg flex items-center justify-center transition-colors shadow-xs'
                               >
                                 <span className='material-symbols-rounded text-[14px]'>check</span>
                               </button>
@@ -528,7 +528,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                       setOptions({ ...options, logoBase64: '' });
                       setQuotaError(false);
                     }}
-                    className='absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-sm z-10'
+                    className='absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-xs z-10'
                   >
                     <span className='material-symbols-rounded text-[12px]'>close</span>
                   </button>
@@ -612,7 +612,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                       setOptions({ ...options, logoSvgCode: '' });
                       setQuotaError(false);
                     }}
-                    className='absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-sm z-10'
+                    className='absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-xs z-10'
                   >
                     <span className='material-symbols-rounded text-[12px]'>close</span>
                   </button>
@@ -624,7 +624,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                     setOptions({ ...options, logoSvgCode: e.target.value, logoBase64: '' });
                     setQuotaError(false);
                   }}
-                  className={`w-full h-24 p-2 rounded-xl border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} bg-gray-50 dark:bg-gray-900 focus:outline-none transition-all resize-none font-mono text-[9px]`}
+                  className={`w-full h-24 p-2 rounded-xl border ${quotaError ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} bg-gray-50 dark:bg-gray-900 focus:outline-hidden transition-all resize-none font-mono text-[9px]`}
                   placeholder='Paste SVG code here...'
                   dir='ltr'
                 />
@@ -784,7 +784,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   options.termsCondition?.replace(/\u003cbr\u003e/g, '\n'),
                   '...'
                 )}
-                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all h-20 resize-none'
+                className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 transition-all h-20 resize-none'
                 placeholder='...'
               />
             </div>
@@ -800,7 +800,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 type='checkbox'
                 checked={options.showAddressBox !== false}
                 onChange={(e) => setOptions({ ...options, showAddressBox: e.target.checked })}
-                className={`w-4 h-4 rounded border-gray-300 text-${color}-600 focus:ring-${color}-500 cursor-pointer`}
+                className={`w-4 h-4 rounded-sm border-gray-300 text-${color}-600 focus:ring-${color}-500 cursor-pointer`}
               />
             </label>
 
@@ -812,7 +812,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 type='checkbox'
                 checked={showDeliveryPreview}
                 onChange={(e) => setShowDeliveryPreview(e.target.checked)}
-                className={`w-4 h-4 rounded border-gray-300 text-${color}-600 focus:ring-${color}-500 cursor-pointer`}
+                className={`w-4 h-4 rounded-sm border-gray-300 text-${color}-600 focus:ring-${color}-500 cursor-pointer`}
               />
             </label>
 
@@ -824,7 +824,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 type='checkbox'
                 checked={showReturnsPreview}
                 onChange={(e) => setShowReturnsPreview(e.target.checked)}
-                className={`w-4 h-4 rounded border-gray-300 text-${color}-600 focus:ring-${color}-500 cursor-pointer`}
+                className={`w-4 h-4 rounded-sm border-gray-300 text-${color}-600 focus:ring-${color}-500 cursor-pointer`}
               />
             </label>
           </div>
@@ -832,14 +832,14 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       </div>
 
       {/* RIGHT: Preview */}
-      <div className='flex-1 rounded-2xl flex justify-center p-8 border border-gray-200 dark:border-gray-800 overflow-y-auto custom-scrollbar bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] bg-gray-100 dark:bg-gray-950 relative'>
+      <div className='flex-1 rounded-2xl flex justify-center p-8 border border-gray-200 dark:border-gray-800 overflow-y-auto custom-scrollbar bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] bg-size-[20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] bg-gray-100 dark:bg-gray-950 relative'>
         {/* Top-Left Unified Stats Badge */}
-        <div className='absolute top-4 left-4 flex items-center px-2.5 h-7 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-xl border border-gray-200/50 dark:border-gray-700/50 shadow-sm text-[10px] font-bold gap-3 z-20 pointer-events-none'>
+        <div className='absolute top-4 left-4 flex items-center px-2.5 h-7 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-xl border border-gray-200/50 dark:border-gray-700/50 shadow-xs text-[10px] font-bold gap-3 z-20 pointer-events-none'>
           <div className='flex items-center gap-1.2' title='Real Printing Memory Size (Actual)'>
             <span className='material-symbols-rounded text-[16px] text-blue-500'>memory</span>
             <span className='text-blue-600 dark:text-blue-400'>{actualPrintSize}</span>
           </div>
-          <div className='w-[1px] h-3 bg-gray-200 dark:bg-gray-700' />
+          <div className='w-px h-3 bg-gray-200 dark:bg-gray-700' />
           <div
             className='flex items-center gap-1.2 opacity-80'
             title='Raw Data Transfer Size (Payload)'
@@ -849,7 +849,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
           </div>
         </div>
         <div
-          className='bg-white shadow-2xl shadow-gray-300 dark:shadow-black flex-shrink-0 transition-all duration-200 ease-in-out rounded-lg overflow-hidden'
+          className='bg-white shadow-2xl shadow-gray-300 dark:shadow-black shrink-0 transition-all duration-200 ease-in-out rounded-lg overflow-hidden'
           style={{ width: '79mm', height: 'fit-content', minHeight: '300px' }}
         >
           <iframe

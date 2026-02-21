@@ -44,7 +44,7 @@ export interface SegmentedControlOption<T> {
 
 type SegmentedControlSize = 'xs' | 'sm' | 'md' | 'lg';
 
-type SegmentedControlShape = 'rounded' | 'pill';
+type SegmentedControlShape = 'rounded-sm' | 'pill';
 
 // Variant controls the dark mode background:
 // 'onCard' (default): Use when on gray-800 card backgrounds -> container uses dark:bg-gray-900
@@ -59,7 +59,7 @@ interface SegmentedControlProps<T> {
   color?: string;
   size?: SegmentedControlSize;
   fullWidth?: boolean; // If true, buttons use flex-1 for equal width. If false, buttons use natural width.
-  shape?: SegmentedControlShape; // 'rounded' (default) or 'pill' for circular style
+  shape?: SegmentedControlShape; // 'rounded-sm' (default) or 'pill' for circular style
   variant?: SegmentedControlVariant; // 'onCard' (default) or 'onPage' - controls dark mode background
 }
 
@@ -93,7 +93,7 @@ export function SegmentedControl<T extends string | number | boolean>({
   color = 'emerald',
   size = 'sm',
   fullWidth = true,
-  shape = 'rounded',
+  shape = 'rounded-sm',
   variant = 'onCard',
 }: SegmentedControlProps<T>) {
   const isPill = shape === 'pill';
@@ -148,7 +148,7 @@ export function SegmentedControl<T extends string | number | boolean>({
         <div
           className={`absolute ${isPill ? '' : 'bg-white dark:bg-gray-700'} ${indicatorRound} pointer-events-none z-0 ${
             !isFirstRender.current
-              ? 'transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]'
+              ? 'transition-all duration-300 ease-in-out'
               : ''
           }`}
           style={{

@@ -28,7 +28,7 @@ export const AnimatedCounter = ({
       {characters.map((char, index) => {
         if (!/[0-9]/.test(char)) {
           return (
-            <span key={index} className='mx-[1px]'>
+            <span key={index} className='mx-px'>
               {char}
             </span>
           );
@@ -46,7 +46,7 @@ export const AnimatedCounter = ({
               style={{ transform: `translateY(-${digit * 10}%)` }}
             >
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                <span key={num} className='h-[100%] flex items-center justify-center'>
+                <span key={num} className='h-full flex items-center justify-center'>
                   {num}
                 </span>
               ))}

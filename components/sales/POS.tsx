@@ -1367,7 +1367,7 @@ export const POS: React.FC<POSProps> = ({
             <span className='font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate'>
               {getDisplayName(info.row.original)}
             </span>
-            <span className='text-xs text-gray-500 whitespace-normal break-words w-full text-start' dir='auto'>
+            <span className='text-xs text-gray-500 whitespace-normal wrap-break-word w-full text-start' dir='auto'>
               {info.row.original.genericName && info.row.original.genericName.length > 35
                 ? `${info.row.original.genericName.slice(0, 35)}…`
                 : info.row.original.genericName}
@@ -1463,7 +1463,7 @@ export const POS: React.FC<POSProps> = ({
                   variant='input'
                   floating
                   minHeight={28}
-                  zIndexHigh='z-[60]'
+                  zIndexHigh='z-60'
                   autoHideArrow
                 />
               ) : (
@@ -1503,7 +1503,7 @@ export const POS: React.FC<POSProps> = ({
                           ? `${i.expiryDate.split('/')[0]}/${i.expiryDate.split('/')[1].slice(-2)}`
                           : (i.expiryDate || '-'))) + ` • ${formatStock(i.stock, i.unitsPerPack).replace(/ Packs?/g, '')}`
                   ) : (
-                    <span className='inline-flex items-center px-2 py-0.5 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 rounded border border-red-100 dark:border-red-800/50'>
+                    <span className='inline-flex items-center px-2 py-0.5 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 rounded-sm border border-red-100 dark:border-red-800/50'>
                       {t.noStock}
                     </span>
                   )}
@@ -1576,7 +1576,7 @@ export const POS: React.FC<POSProps> = ({
                 variant='input'
                 floating
                 minHeight={28}
-                zIndexHigh='z-[60]'
+                zIndexHigh='z-60'
                 autoHideArrow
               />
             </div>
@@ -1612,7 +1612,7 @@ export const POS: React.FC<POSProps> = ({
 
         <button
           onClick={() => setShowDeliveryModal(true)}
-          className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent hover:bg-${color}-600 dark:hover:bg-${color}-500 hover:text-white dark:hover:text-white hover:border-${color}-600 dark:hover:border-${color}-500 transition-all duration-200 cursor-pointer shadow-sm`}
+          className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent hover:bg-${color}-600 dark:hover:bg-${color}-500 hover:text-white dark:hover:text-white hover:border-${color}-600 dark:hover:border-${color}-500 transition-all duration-200 cursor-pointer shadow-xs`}
         >
           <span className='material-symbols-rounded text-sm'>local_shipping</span>
           {t.deliveryOrders || 'Delivery Orders'}
@@ -1819,7 +1819,7 @@ export const POS: React.FC<POSProps> = ({
           {/* Search & Filter - No Card Container */}
           <div className='w-full flex flex-col sm:flex-row gap-1 shrink-0'>
             {/* search length */}
-            <div className='relative flex-[6]'>
+            <div className='relative flex-6'>
               <SearchInput
                 ref={searchInputRef}
                 value={search}
@@ -1839,7 +1839,7 @@ export const POS: React.FC<POSProps> = ({
                 badge={
                   search.trim().length >= 2 ? (
                     <span
-                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent shadow-sm`}
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent shadow-xs`}
                     >
                       <span className='material-symbols-rounded text-sm'>inventory_2</span>
                       {filteredDrugs.length}
@@ -2046,7 +2046,7 @@ export const POS: React.FC<POSProps> = ({
         <div
           ref={sidebarRef}
           style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}
-          className={`w-full lg:w-[var(--sidebar-width)] ${CARD_MD} border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden h-full ${
+          className={`w-full lg:w-(--sidebar-width) ${CARD_MD} border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden h-full ${
             mobileTab === 'products' ? 'hidden lg:flex' : 'flex'
           }`}
         >
@@ -2285,7 +2285,7 @@ export const POS: React.FC<POSProps> = ({
                 >
                   {/* Amount Input */}
                   <div
-                    className={`flex-1 bg-white dark:bg-gray-900 border border-${color}-500 dark:border-${color}-400 rounded-xl flex items-center px-3 gap-1 overflow-hidden whitespace-nowrap shadow-sm`}
+                    className={`flex-1 bg-white dark:bg-gray-900 border border-${color}-500 dark:border-${color}-400 rounded-xl flex items-center px-3 gap-1 overflow-hidden whitespace-nowrap shadow-xs`}
                   >
                     <input
                       ref={(el) => {
@@ -2296,7 +2296,7 @@ export const POS: React.FC<POSProps> = ({
                       value={amountPaid}
                       onChange={(e) => setAmountPaid(e.target.value)}
                       placeholder={cartTotal.toString()}
-                      className='flex-1 min-w-0 bg-transparent border-none focus:outline-none focus:ring-0 font-bold text-base text-gray-900 dark:text-white p-0 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+                      className='flex-1 min-w-0 bg-transparent border-none focus:outline-hidden focus:ring-0 font-bold text-base text-gray-900 dark:text-white p-0 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           handleCheckout('walk-in');
@@ -2370,7 +2370,7 @@ export const POS: React.FC<POSProps> = ({
                     <select
                       value={deliveryEmployeeId}
                       onChange={(e) => setDeliveryEmployeeId(e.target.value)}
-                      className={`w-full h-full bg-white dark:bg-gray-900 border border-${color}-400 dark:border-${color}-500/50 rounded-xl text-sm px-3 focus:ring-0 focus:outline-none appearance-none cursor-pointer font-bold tabular-nums shadow-sm transition-all`}
+                      className={`w-full h-full bg-white dark:bg-gray-900 border border-${color}-400 dark:border-${color}-500/50 rounded-xl text-sm px-3 focus:ring-0 focus:outline-hidden appearance-none cursor-pointer font-bold tabular-nums shadow-xs transition-all`}
                       style={{
                         backgroundImage:
                           'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',

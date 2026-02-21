@@ -80,7 +80,7 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
           const action = info.row.original.recommended_action;
           return (
             <div className='flex justify-end'>
-              <button className='px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded text-xs font-medium transition-colors'>
+              <button className='px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-sm text-xs font-medium transition-colors'>
                 {action === 'DISCOUNT_AGGRESSIVE'
                   ? t?.intelligence?.risk?.grid?.actions?.discount50 || '50% Off'
                   : action === 'DISCOUNT_MODERATE'

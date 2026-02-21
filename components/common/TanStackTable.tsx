@@ -687,7 +687,7 @@ export function TanStackTable<TData, TValue>({
 
               {/* Alignment Controls Container */}
               <div className='px-3 py-3'>
-                <div className='text-[10px] font-bold tracking-[0.1em] text-gray-400 dark:text-gray-500 uppercase mb-2.5 flex items-center gap-2'>
+                <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-2.5 flex items-center gap-2'>
                   <span className='material-symbols-rounded text-sm opacity-60'>format_align_left</span>
                   {t?.global?.table?.alignment || 'Alignment'}
                 </div>
@@ -762,7 +762,7 @@ export function TanStackTable<TData, TValue>({
         className={`flex flex-col flex-1 min-h-0 ${
           lite
             ? 'bg-transparent'
-            : 'rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900 overflow-hidden'
+            : 'rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs bg-white dark:bg-gray-900 overflow-hidden'
         }`}
       >
         {/* Table Scroll Area */}
@@ -1049,7 +1049,7 @@ export function TanStackTable<TData, TValue>({
         {enablePagination && (table.getPageCount() > 1 || enableShowAll) && (
           <div
             dir='ltr'
-            className='flex items-center justify-between h-8 border-t bg-[var(--bg-secondary)] border-[var(--border-primary)] px-2'
+            className='flex items-center justify-between h-8 border-t bg-(--bg-secondary) border-(--border-primary) px-2'
           >
             {/* Left: Info */}
             <div className='flex items-center gap-4 text-[10px] font-bold tracking-wide text-gray-500 uppercase h-full'>

@@ -143,7 +143,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       type='checkbox'
                       checked={showPairedPreview}
                       onChange={(e) => setShowPairedPreview(e.target.checked)}
-                      className={`w-4 h-4 rounded text-${color}-600 focus:ring-${color}-500`}
+                      className={`w-4 h-4 rounded-sm text-${color}-600 focus:ring-${color}-500`}
                     />
                     <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                       {t.printSettings.pairedPreview}
@@ -160,7 +160,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       type='checkbox'
                       checked={showPrintBorders}
                       onChange={(e) => setShowPrintBorders(e.target.checked)}
-                      className={`w-4 h-4 rounded text-${color}-600 focus:ring-${color}-500`}
+                      className={`w-4 h-4 rounded-sm text-${color}-600 focus:ring-${color}-500`}
                     />
                     <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                       {t.printSettings.showBorders}
@@ -316,7 +316,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       inputMode='decimal'
                       value={selectedElement.x}
                       onChange={(e) => handlePropertyChange('x', parseFloat(e.target.value))}
-                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all'
+                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
                     />
                   </div>
                 </div>
@@ -331,7 +331,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       inputMode='decimal'
                       value={selectedElement.y}
                       onChange={(e) => handlePropertyChange('y', parseFloat(e.target.value))}
-                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all'
+                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
                     />
                   </div>
                 </div>
@@ -346,7 +346,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     inputMode='numeric'
                     value={selectedElement.fontSize}
                     onChange={(e) => handlePropertyChange('fontSize', parseInt(e.target.value))}
-                    className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all'
+                    className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
                   />
                 </div>
               )}
@@ -407,7 +407,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       inputMode='decimal'
                       value={selectedElement.width}
                       onChange={(e) => handlePropertyChange('width', parseFloat(e.target.value))}
-                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all'
+                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
                     />
                   </div>
                   <div className='space-y-1.5'>
@@ -419,7 +419,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       inputMode='decimal'
                       value={selectedElement.height}
                       onChange={(e) => handlePropertyChange('height', parseFloat(e.target.value))}
-                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none transition-all'
+                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
                     />
                   </div>
                 </div>

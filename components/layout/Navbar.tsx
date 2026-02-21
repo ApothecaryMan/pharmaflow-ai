@@ -304,7 +304,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         isEffectivelyDisabled
                           ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
                           : isActive
-                            ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold shadow-sm`
+                            ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold shadow-xs`
                             : isDropdownOpen
                               ? `bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 font-medium`
                               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-800 dark:hover:text-gray-200'
@@ -545,7 +545,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         minWidth: '20px',
                         minHeight: '20px',
                       }}
-                      className='absolute bottom-0 right-0 w-5 h-5 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition-colors shadow-sm'
+                      className='absolute bottom-0 right-0 w-5 h-5 bg-black/30 backdrop-blur-xs text-white rounded-full flex items-center justify-center hover:bg-black/50 transition-colors shadow-xs'
                       title='Change Photo'
                     >
                       <span className='material-symbols-rounded text-[12px]'>edit</span>

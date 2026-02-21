@@ -168,7 +168,7 @@ const StatusGlassCard = ({ title, status, message, gradient }: any) => (
     <div className='relative z-10'>
       <div className='flex justify-between items-center mb-2'>
         <p className='text-white/80 text-sm font-medium'>{title}</p>
-        <span className='px-2 py-0.5 rounded-md bg-white/20 text-white text-[10px] uppercase font-bold tracking-wider backdrop-blur-sm'>
+        <span className='px-2 py-0.5 rounded-md bg-white/20 text-white text-[10px] uppercase font-bold tracking-wider backdrop-blur-xs'>
           {status}
         </span>
       </div>

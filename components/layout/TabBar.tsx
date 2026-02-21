@@ -348,7 +348,7 @@ export const TabBar: React.FC<TabBarProps> = ({
             onClick={onTabAdd}
             className={`
               flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200
-              hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm border border-transparent hover:border-gray-200 dark:hover:border-gray-700
+              hover:bg-white dark:hover:bg-gray-800 hover:shadow-xs border border-transparent hover:border-gray-200 dark:hover:border-gray-700
               text-gray-500 hover:text-${color}-600 dark:text-gray-400 dark:hover:text-${color}-400
               shrink-0
             `}

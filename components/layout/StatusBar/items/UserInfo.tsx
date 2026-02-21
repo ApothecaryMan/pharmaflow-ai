@@ -309,7 +309,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({
                   ? 'كلمة المرور...'
                   : 'Password...'
             }
-            className={`bg-transparent border-none outline-none text-[11px] font-bold text-gray-800 dark:text-white placeholder-gray-500 w-24 focus:ring-0 ${isError ? 'text-red-500 dark:text-red-400' : ''}`}
+            className={`bg-transparent border-none outline-hidden text-[11px] font-bold text-gray-800 dark:text-white placeholder-gray-500 w-24 focus:ring-0 ${isError ? 'text-red-500 dark:text-red-400' : ''}`}
             autoComplete='off'
           />
           {step === 'username' && isError && (

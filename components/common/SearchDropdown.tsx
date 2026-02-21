@@ -50,7 +50,7 @@ export function SearchDropdown<T extends { id: string | number }>({
   return (
     <div className='absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden isolate z-40'>
       {/* Fixed Header Row */}
-      <div className='flex items-stretch w-full bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold uppercase tracking-wider text-gray-400 rounded-t-xl'>
+      <div className='flex items-stretch w-full bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-xs border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold uppercase tracking-wider text-gray-400 rounded-t-xl'>
         {columns.map((col, index) => (
           <div
             key={index}

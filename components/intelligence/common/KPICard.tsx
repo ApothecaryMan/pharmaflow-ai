@@ -37,7 +37,7 @@ export const KPICard: React.FC<KPICardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`relative p-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm hover:shadow-md transition-all ${onClick ? 'cursor-pointer hover:border-gray-200 dark:hover:border-gray-700' : ''} ${className}`}
+      className={`relative p-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-xs hover:shadow-md transition-all ${onClick ? 'cursor-pointer hover:border-gray-200 dark:hover:border-gray-700' : ''} ${className}`}
     >
       <div className='flex justify-between items-start mb-2'>
         <h3 className='text-sm font-medium text-gray-500 dark:text-gray-400'>{title}</h3>

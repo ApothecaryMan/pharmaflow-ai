@@ -77,7 +77,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
               <div className="flex items-center gap-2">
                   <span>{option.label}</span>
                   {isDefault && (
-                       <span className="inline-flex items-center px-1 py-0 rounded border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50 leading-none h-4">
+                       <span className="inline-flex items-center px-1 py-0 rounded-sm border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50 leading-none h-4">
                           DEF
                        </span>
                   )}

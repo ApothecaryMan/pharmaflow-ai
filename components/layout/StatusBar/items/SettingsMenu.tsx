@@ -192,9 +192,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
         <div
           className={`
             absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
-            ${align === 'start' ? 'start-0 origin-top-start' : 'end-0 origin-top-end'}
+            ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
             w-64 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-800 
-            backdrop-blur-sm z-[110] animate-fade-in
+            backdrop-blur-xs z-110 animate-fade-in
           `}
           style={{
             backgroundColor: 'var(--bg-primary)',
@@ -257,7 +257,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         ${
                           isMobile
                             ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-3 rounded-lg'
-                            : `absolute w-48 rounded-lg shadow-xl border z-[120] p-3 space-y-3 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                            : `absolute w-48 rounded-lg shadow-xl border z-120 p-3 space-y-3 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                         }
                     `}
                   style={
@@ -377,7 +377,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                             ${
                               isMobile
                                 ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-1.5 rounded-lg'
-                                : `absolute w-56 rounded-lg shadow-xl border z-[120] p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                                : `absolute w-56 rounded-lg shadow-xl border z-120 p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}
                   style={
@@ -560,7 +560,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                             ${
                               isMobile
                                 ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-3 rounded-lg'
-                                : `absolute w-56 rounded-lg shadow-xl border z-[120] p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                                : `absolute w-56 rounded-lg shadow-xl border z-120 p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}
                   style={
@@ -585,7 +585,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     <select
                       value={fontFamilyEN}
                       onChange={(e) => setFontFamilyEN(e.target.value)}
-                      className='w-full text-xs bg-transparent border rounded-md px-2 py-1 outline-none transition-colors hover:border-blue-400 focus:border-blue-500'
+                      className='w-full text-xs bg-transparent border rounded-md px-2 py-1 outline-hidden transition-colors hover:border-blue-400 focus:border-blue-500'
                       style={{ color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
                     >
                       {AVAILABLE_FONTS_EN.map((font) => (
@@ -611,7 +611,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     <select
                       value={fontFamilyAR}
                       onChange={(e) => setFontFamilyAR(e.target.value)}
-                      className='w-full text-xs bg-transparent border rounded-md px-2 py-1 outline-none transition-colors hover:border-blue-400 focus:border-blue-500'
+                      className='w-full text-xs bg-transparent border rounded-md px-2 py-1 outline-hidden transition-colors hover:border-blue-400 focus:border-blue-500'
                       style={{ color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
                     >
                       {AVAILABLE_FONTS_AR.map((font) => (
@@ -751,7 +751,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                             ${
                               isMobile
                                 ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-2 space-y-1 rounded-lg'
-                                : `absolute w-48 rounded-lg shadow-xl border z-[120] p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                                : `absolute w-48 rounded-lg shadow-xl border z-120 p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}
                       style={

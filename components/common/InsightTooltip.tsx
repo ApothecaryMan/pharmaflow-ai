@@ -146,7 +146,7 @@ export const InsightTooltip: React.FC<InsightTooltipProps> = ({
       </div>
 
       {/* TIER 2: CALCULATION LOGIC (TRANSPARENCY) */}
-      <div className='bg-zinc-100/80 dark:bg-white/5 p-2.5 rounded-2xl space-y-3 border border-black/5 dark:border-white/5 shadow-sm'>
+      <div className='bg-zinc-100/80 dark:bg-white/5 p-2.5 rounded-2xl space-y-3 border border-black/5 dark:border-white/5 shadow-xs'>
         {calculations.map((calc, idx) => (
           <div
             key={idx}

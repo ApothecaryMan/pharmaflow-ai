@@ -32,7 +32,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
   return (
     <div className='h-full flex flex-col items-center justify-center max-w-2xl mx-auto animate-fade-in'>
       <div
-        className={`w-full bg-white dark:bg-gray-900 p-6 rounded-[2rem] shadow-xl border border-gray-200 dark:border-gray-800`}
+        className={`w-full bg-white dark:bg-gray-900 p-6 rounded-4xl shadow-xl border border-gray-200 dark:border-gray-800`}
       >
         <div className='flex flex-col items-center mb-6 text-center'>
           <div
@@ -61,7 +61,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
               value={drugName}
               onChange={(e) => setDrugName(e.target.value)}
               placeholder={t.placeholderDrug}
-              className='w-full p-3 rounded-2xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 transition-all'
+              className='w-full p-3 rounded-2xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:outline-hidden focus:ring-2 transition-all'
               style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
             />
           </div>
@@ -74,7 +74,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t.placeholderQuestion}
-              className='w-full p-3 rounded-2xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 transition-all'
+              className='w-full p-3 rounded-2xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:outline-hidden focus:ring-2 transition-all'
               style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
             />
           </div>

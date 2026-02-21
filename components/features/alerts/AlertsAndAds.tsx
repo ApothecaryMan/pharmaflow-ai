@@ -66,7 +66,7 @@ export const AlertsAndAds: React.FC<AlertsAndAdsProps> = ({ rotationSpeed = 8000
 
   return (
     <div
-      className='flex items-center h-full relative px-3 mx-1 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-150 cursor-default rounded-sm'
+      className='flex items-center h-full relative px-3 mx-1 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-150 cursor-default rounded-xs'
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

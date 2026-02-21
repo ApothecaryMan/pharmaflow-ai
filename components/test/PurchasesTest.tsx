@@ -509,7 +509,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
       case 'payment':
         return (
           <span
-            className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide text-white shadow-sm ${p.paymentType === 'cash' ? 'bg-green-600' : 'bg-blue-600'}`}
+            className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide text-white shadow-xs ${p.paymentType === 'cash' ? 'bg-green-600' : 'bg-blue-600'}`}
           >
             {p.paymentType === 'cash' ? t.cash || 'Cash' : t.credit || 'Credit'}
           </span>
@@ -1043,7 +1043,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
   return (
     <div className='h-full flex flex-col gap-2 animate-fade-in overflow-hidden'>
       {/* Header with toggle */}
-      <div className='flex justify-between items-center px-2 flex-shrink-0'>
+      <div className='flex justify-between items-center px-2 shrink-0'>
         <div>
           <div className='flex items-center gap-3'>
             <h2 className='text-2xl font-bold tracking-tight type-expressive'>
@@ -1101,7 +1101,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
           {mode === 'history' && (
             <>
               <div className='relative me-2' ref={searchSuggestionsRef}>
-                <span className='absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none text-gray-500 material-symbols-rounded text-lg'>
+                <span className='absolute inset-y-0 inset-s-0 flex items-center ps-3 pointer-events-none text-gray-500 material-symbols-rounded text-lg'>
                   search
                 </span>
                 <input
@@ -1114,12 +1114,12 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                   onFocus={() => setIsSearchSuggestionsOpen(true)}
                   dir={historySearch.startsWith('@') ? 'ltr' : historySearchDir}
                   placeholder={t.placeholders?.searchHistory || 'Search ID, Supplier...'}
-                  className={`ps-10 pe-4 py-1 h-[32px] bg-gray-100 dark:bg-gray-800 rounded-full text-xs font-medium focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 w-48 placeholder-gray-400 ${historySearch.startsWith('@') ? 'text-left' : ''}`}
+                  className={`ps-10 pe-4 py-1 h-[32px] bg-gray-100 dark:bg-gray-800 rounded-full text-xs font-medium focus:outline-hidden focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 w-48 placeholder-gray-400 ${historySearch.startsWith('@') ? 'text-left' : ''}`}
                 />
                 {isSearchSuggestionsOpen && filteredSearchSuggestions.length > 0 && (
                   <div
                     dir='ltr'
-                    className='absolute top-full mt-2 start-0 w-60 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden max-h-60 overflow-y-auto'
+                    className='absolute top-full mt-2 inset-s-0 w-60 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden max-h-60 overflow-y-auto'
                   >
                     {filteredSearchSuggestions.map((drug) => (
                       <div
@@ -1130,7 +1130,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                         }}
                         className='px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer flex items-center gap-3 transition-colors border-b last:border-0 border-gray-50 dark:border-gray-700/50'
                       >
-                        <div className='w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0'>
+                        <div className='w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0'>
                           <span className='material-symbols-rounded text-blue-500 text-lg'>
                             medication
                           </span>
@@ -1141,7 +1141,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                               {drug.name}
                             </span>
                             {drug.dosageForm && (
-                              <span className='text-[10px] text-gray-400 flex-shrink-0'>
+                              <span className='text-[10px] text-gray-400 shrink-0'>
                                 {drug.dosageForm}
                               </span>
                             )}
@@ -1194,7 +1194,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
         <div className='flex flex-col gap-4 h-full overflow-hidden'>
           {/* TOP: Search Controls */}
           <div
-            className={`${CARD_BASE} p-4 rounded-3xl flex flex-col xl:flex-row gap-4 items-end flex-shrink-0`}
+            className={`${CARD_BASE} p-4 rounded-3xl flex flex-col xl:flex-row gap-4 items-end shrink-0`}
           >
             {/* Drug Search & Filter */}
             <div className='flex-[1.5] w-full flex gap-2'>
@@ -1240,7 +1240,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                   }}
                   suggestions={[]}
                   placeholder={t.searchDrug}
-                  className='w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all text-sm h-[42px]'
+                  className='w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all text-sm h-[42px]'
                   style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                   onFocus={() => setShowSuggestions(true)}
                   onKeyDown={(e) => {
@@ -1262,7 +1262,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
 
                 {/* Search Suggestions Dropdown */}
                 {showSuggestions && search.trim() && (
-                  <div className='absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-2xl overflow-hidden z-[100]'>
+                  <div className='absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-2xl overflow-hidden z-100'>
                     <div className='max-h-[300px] overflow-y-auto p-1 custom-scrollbar'>
                       {filteredDrugs.length > 0 ? (
                         filteredDrugs.slice(0, 10).map((drug, index) => (
@@ -1280,7 +1280,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                             }`}
                             dir='ltr'
                           >
-                            <span className='text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-300 shrink-0'>
+                            <span className='text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-sm text-gray-600 dark:text-gray-300 shrink-0'>
                               {drug.internalCode || drug.barcode || drug.id}
                             </span>
                             <span
@@ -1344,7 +1344,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                   }}
                   dir={supplierSearchDir}
                   autoComplete='off'
-                  className='w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm h-[42px]'
+                  className='w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm h-[42px]'
                 />
 
                 {selectedSupplierId && (
@@ -1354,7 +1354,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                       setSelectedSupplierId('');
                       setSupplierSearch('');
                     }}
-                    className='absolute end-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                    className='absolute inset-e-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                   >
                     <span className='material-symbols-rounded text-lg'>close</span>
                   </button>
@@ -1482,7 +1482,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                       readOnly
                       value={invoiceId}
                       dir='ltr'
-                      className={`text-lg font-mono font-bold bg-transparent border border-transparent rounded-lg px-2 py-0.5 outline-none cursor-default w-36 text-left select-all transition-all duration-500 ease-out ${
+                      className={`text-lg font-mono font-bold bg-transparent border border-transparent rounded-lg px-2 py-0.5 outline-hidden cursor-default w-36 text-left select-all transition-all duration-500 ease-out ${
                         isOrderIdAnimating
                           ? 'text-green-500 dark:text-green-400 animate-[rollUp_0.5s_ease-out]'
                           : 'text-gray-500 dark:text-gray-400'
@@ -1505,7 +1505,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                     value={externalInvoiceId}
                     onChange={(e) => setExternalInvoiceId(e.target.value)}
                     dir={externalInvoiceIdDir}
-                    className='text-lg font-mono font-bold bg-transparent border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-blue-500 rounded-lg px-2 py-0.5 outline-none transition-all w-28 text-left text-gray-600 dark:text-gray-400 placeholder-gray-300'
+                    className='text-lg font-mono font-bold bg-transparent border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-blue-500 rounded-lg px-2 py-0.5 outline-hidden transition-all w-28 text-left text-gray-600 dark:text-gray-400 placeholder-gray-300'
                   />
                 </div>
 
@@ -1945,7 +1945,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
           <div className='flex-1 overflow-auto bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800'>
             <table className='w-full min-w-full table-fixed border-collapse type-functional'>
               <thead
-                className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-sm`}
+                className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-xs`}
               >
                 <tr>
                   {columnOrder
@@ -2088,7 +2088,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                 {t.detailsModal?.payment || 'Payment'}
               </p>
               <span
-                className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase text-white ${selectedPurchase.paymentType === 'cash' ? 'bg-green-600' : 'bg-blue-600'}`}
+                className={`inline-block px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase text-white ${selectedPurchase.paymentType === 'cash' ? 'bg-green-600' : 'bg-blue-600'}`}
               >
                 {selectedPurchase.paymentType === 'cash' ? t.cash || 'Cash' : t.credit || 'Credit'}
               </span>
@@ -2141,7 +2141,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
           {/* Items Table */}
           <div className='bg-gray-50 dark:bg-black/20 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800'>
             <table className='w-full text-left border-collapse'>
-              <thead className='sticky top-0 z-10 bg-gray-50 dark:bg-gray-900 shadow-sm'>
+              <thead className='sticky top-0 z-10 bg-gray-50 dark:bg-gray-900 shadow-xs'>
                 <tr className='border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500 uppercase'>
                   <th className='p-2 font-bold bg-gray-50 dark:bg-gray-900'>
                     {t.detailsModal?.item || 'Item'}
@@ -2219,7 +2219,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                       <td className='p-2 text-center'>
                         {item.expiryDate ? (
                           <span
-                            className={`px-2 py-0.5 rounded text-xs font-medium ${getExpiryStatusStyle(checkExpiryStatus(item.expiryDate), 'badge')}`}
+                            className={`px-2 py-0.5 rounded-sm text-xs font-medium ${getExpiryStatusStyle(checkExpiryStatus(item.expiryDate), 'badge')}`}
                           >
                             {formatExpiryDisplay(item.expiryDate)}
                           </span>

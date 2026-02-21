@@ -237,11 +237,11 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
       style={style}
       {...attributes}
       {...listeners}
-      className={`flex flex-col p-2 rounded-xl bg-white dark:bg-gray-900 border transition-all touch-manipulation relative group outline-none
-        ${isDragging ? 'shadow-xl ring-2 ring-blue-500 scale-[1.02] z-50 opacity-90' : ''}
+      className={`flex flex-col p-2 rounded-xl bg-white dark:bg-gray-900 border transition-all touch-manipulation relative group outline-hidden
+        ${isDragging ? `shadow-xl ring-2 ring-${color}-500 scale-[1.02] z-50 opacity-90` : ''}
         ${
           isHighlighted
-            ? `border-gray-100 dark:border-gray-800 bg-${color}-50 dark:bg-${color}-900/20`
+            ? `border-${color}-200 dark:border-${color}-800 bg-${color}-100/50 dark:bg-${color}-900/30`
             : 'border-gray-100 dark:border-gray-800'
         }`}
       onContextMenu={(e) => {
@@ -274,7 +274,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
           {/* Expiry Date Badge with Batch Details */}
           <div className='flex items-center gap-1'>
             <span
-              className={`text-[9px] font-bold text-white w-[38px] h-[18px] flex items-center justify-center rounded shadow-sm cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
+              className={`text-[9px] font-bold text-white w-[38px] h-[18px] flex items-center justify-center rounded shadow-xs cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
                 const today = new Date();
                 const expiry = new Date(item.expiryDate);
                 const monthDiff =
@@ -339,9 +339,9 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
               return (
                 <div
                   title={`Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`}
-                  className={`flex items-center rounded-lg border shadow-sm h-6 overflow-hidden transition-colors w-14 shrink-0 ${
+                  className={`flex items-center rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-14 shrink-0 ${
                     (item.discount || 0) > 0
-                      ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                      ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-800`
                       : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
                   }`}
                 >
@@ -359,7 +359,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                     onPointerDown={(e) => e.stopPropagation()}
                     className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
                       (item.discount || 0) > 0
-                        ? 'text-green-600 dark:text-green-400'
+                        ? `text-${color}-600 dark:text-${color}-400`
                         : 'text-gray-400'
                     }`}
                   >
@@ -384,9 +384,9 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                       if (unitItem) updateItemDiscount(unitItem.id, true, finalVal);
                       if (finalVal > 0) setGlobalDiscount(0);
                     }}
-                    className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                    className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                       (item.discount || 0) > 0
-                        ? 'text-green-700 dark:text-green-300 placeholder-green-300'
+                        ? `text-${color}-700 dark:text-${color}-300 placeholder-${color}-300`
                         : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
                     }`}
                   />
@@ -396,7 +396,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
 
             {/* Dual Qty Control: [ Pack | Unit ] - Fixed width matching discount */}
             <div
-              className={`flex items-center bg-white dark:bg-gray-900 rounded-lg border shadow-sm h-6 overflow-hidden w-14 shrink-0 transition-colors ${
+              className={`flex items-center bg-white dark:bg-gray-900 rounded-lg border shadow-xs h-6 overflow-hidden w-14 shrink-0 transition-colors ${
                 hasDualMode &&
                 (!packItem || packItem.quantity === 0) &&
                 (!unitItem || unitItem.quantity === 0)
@@ -426,9 +426,9 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                     addToCart(item, false, clampedVal);
                   }
                 }}
-                className={`h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 shrink-0 min-w-0 ${
+                className={`h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 shrink-0 min-w-0 ${
                   hasDualMode ? 'w-7' : 'w-full'
-                }`}
+                } text-${color}-600 dark:text-${color}-400`}
               />
 
               {/* Separator */}
@@ -457,7 +457,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                       addToCart(item, true, clampedVal);
                     }
                   }}
-                  className='w-7 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-blue-600 dark:text-blue-400 placeholder-blue-200 shrink-0'
+                   className={`w-7 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-${color}-600 dark:text-${color}-400 placeholder-${color}-200 shrink-0`}
                 />
               )}
             </div>
@@ -480,7 +480,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                 removeDrugFromCart(item.id);
               }}
               onPointerDown={(e) => e.stopPropagation()}
-              className='w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors focus:outline-none focus:bg-red-50 dark:focus:bg-red-900/30 focus:text-red-500'
+              className='w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors focus:outline-hidden focus:bg-red-50 dark:focus:bg-red-900/30 focus:text-red-500'
             >
               <span className='material-symbols-rounded text-[16px]'>close</span>
             </button>

@@ -67,7 +67,7 @@ export const SmallCard = ({
   }, [value, type]);
 
   const iconContent = (
-    <div className={`flex-shrink-0 text-${iconColor}-600 dark:text-${iconColor}-400 relative`}>
+    <div className={`shrink-0 text-${iconColor}-600 dark:text-${iconColor}-400 relative`}>
       <span className='material-symbols-rounded text-[38px] leading-none'>{icon}</span>
       {iconOverlay}
     </div>
@@ -78,7 +78,7 @@ export const SmallCard = ({
     <div className={`p-3 rounded-2xl ${CARD_BASE} ${CARD_HOVER} h-[84px] flex items-center gap-3`}>
       {/* Icon - Left Side */}
       {iconTooltip ? (
-        <Tooltip content={iconTooltip} position='top' triggerClassName='flex-shrink-0'>
+        <Tooltip content={iconTooltip} position='top' triggerClassName='shrink-0'>
           {iconContent}
         </Tooltip>
       ) : (
@@ -127,7 +127,7 @@ export const SmallCard = ({
                 }`}
               >
                 {trend && trend !== 'unchanged' && (
-                  <div className='flex items-center gap-1 flex-shrink-0'>
+                  <div className='flex items-center gap-1 shrink-0'>
                     <span className='material-symbols-rounded text-sm'>
                       {trend === 'up' ? 'trending_up' : 'trending_down'}
                     </span>

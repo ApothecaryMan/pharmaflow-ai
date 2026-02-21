@@ -326,7 +326,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
       </div>
 
       {/* Main Filter/Search Toolbar */}
-      <div className='bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row items-center gap-4'>
+      <div className='bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-xs border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row items-center gap-4'>
         {/* Search Input Container */}
         <div className='relative z-20 flex-1 w-full' ref={searchRef}>
           <SearchInput
@@ -396,7 +396,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
 
         {/* Labels Summary & Settings */}
         <div className='flex items-center gap-3 shrink-0'>
-          <div className='h-8 w-[1px] bg-gray-100 dark:bg-gray-800 hidden md:block' />
+          <div className='h-8 w-px bg-gray-100 dark:bg-gray-800 hidden md:block' />
 
           <div className='flex items-center gap-4 bg-gray-50 dark:bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-100 dark:border-gray-800'>
             <div className='flex flex-col items-center'>
@@ -486,7 +486,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                   {/* Expiry Badge with Context Menu */}
                   <div className='flex items-center gap-1'>
                     <span
-                      className={`text-[10px] font-bold text-white px-3 h-7 flex items-center justify-center rounded-lg shadow-sm cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
+                      className={`text-[10px] font-bold text-white px-3 h-7 flex items-center justify-center rounded-lg shadow-xs cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
                         if (!item.drug.expiryDate) return 'bg-gray-400';
                         const today = new Date();
                         const expiry = new Date(item.drug.expiryDate);
@@ -546,7 +546,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                       type='number'
                       value={item.quantity}
                       onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
-                      className='w-8 h-full text-center bg-transparent text-xs font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+                      className='w-8 h-full text-center bg-transparent text-xs font-bold focus:outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
                       min='1'
                     />
                     <button

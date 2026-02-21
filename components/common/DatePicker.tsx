@@ -525,13 +525,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           setIsOpen(!isOpen);
         }}
         className={`
-                    flex items-center border transition-all select-none outline-none focus:ring-0
+                    flex items-center border transition-all select-none outline-hidden focus:ring-0
                     ${styles[size]}
                     ${styles.rounded[rounded]}
                     
                     ${
                       value
-                        ? `bg-${color}-200 dark:bg-${color}-800 border-${color}-400 dark:border-${color}-600 text-${color}-900 dark:text-${color}-50 font-semibold shadow-sm`
+                        ? `bg-${color}-200 dark:bg-${color}-800 border-${color}-400 dark:border-${color}-600 text-${color}-900 dark:text-${color}-50 font-semibold shadow-xs`
                         : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-white dark:hover:bg-gray-800'
                     }
                     ${className}
@@ -565,7 +565,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         createPortal(
           <div
             ref={dropdownRef}
-            className='fixed z-[99999] animate-fade-in'
+            className='fixed z-99999 animate-fade-in'
             style={{
               top: position.top,
               left: position.left,
@@ -609,7 +609,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                       width='75px'
                     />
 
-                    <div className='w-[1px] h-20 bg-gray-200 dark:bg-gray-800 mx-1 self-center opacity-50' />
+                    <div className='w-px h-20 bg-gray-200 dark:bg-gray-800 mx-1 self-center opacity-50' />
 
                     {/* Hour */}
                     <WheelPicker

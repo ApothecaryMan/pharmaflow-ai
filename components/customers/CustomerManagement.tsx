@@ -543,7 +543,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           value={formData.streetAddress || ''}
           onChange={(e) => setFormData({ ...formData, streetAddress: e.target.value })}
           rows={2}
-          className='w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm resize-none'
+          className='w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm resize-none'
           placeholder={t.modal.placeholders.streetAddress}
           dir={streetDir}
         />
@@ -560,7 +560,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         <div className='w-full' onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div
-            className={`p-6 bg-gradient-to-br from-${color}-500 to-${color}-600 text-white relative overflow-hidden`}
+            className={`p-6 bg-linear-to-br from-${color}-500 to-${color}-600 text-white relative overflow-hidden`}
           >
             <div className='absolute top-0 ltr:right-0 rtl:left-0 p-3 opacity-20'>
               <span className='material-symbols-rounded text-[100px]'>account_circle</span>
@@ -571,7 +571,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 {/* REMOVED CLOSE BUTTON AS REQUESTED */}
               </div>
               <div className='flex gap-2 flex-wrap'>
-                <div className='px-2.5 py-1 rounded-lg bg-black/20 backdrop-blur-sm border border-white/10 text-xs font-mono flex items-center gap-2'>
+                <div className='px-2.5 py-1 rounded-lg bg-black/20 backdrop-blur-xs border border-white/10 text-xs font-mono flex items-center gap-2'>
                   <span className='material-symbols-rounded text-[14px]'>qr_code</span>
                   {c.code}
                 </div>
@@ -581,7 +581,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   const icon = isActive ? 'check_circle' : 'cancel';
                   return (
                     <div
-                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/20 backdrop-blur-sm text-white border border-white/20`}
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/20 backdrop-blur-xs text-white border border-white/20`}
                     >
                       <span className='material-symbols-rounded text-sm'>{icon}</span>
                       {t.status[c.status?.toLowerCase()] || c.status}
@@ -589,7 +589,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   );
                 })()}
                 {c.vip && (
-                  <div className='inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-amber-400 text-amber-900 border border-amber-300 shadow-sm'>
+                  <div className='inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-amber-400 text-amber-900 border border-amber-300 shadow-xs'>
                     <span className='material-symbols-rounded text-sm'>stars</span>
                     VIP
                   </div>
@@ -649,7 +649,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       {/* Country Badge */}
                       {getDetectedCountry(c.phone) && (
                         <span
-                          className={`px-1.5 py-0.5 bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300 rounded text-[10px] font-bold ms-auto`}
+                          className={`px-1.5 py-0.5 bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300 rounded-sm text-[10px] font-bold ms-auto`}
                         >
                           {language === 'AR'
                             ? getDetectedCountry(c.phone)?.country_ar
@@ -810,7 +810,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             {/* LEFT COLUMN: Main Info */}
             <div className='xl:col-span-2 space-y-6'>
               {/* Basic Details Card */}
-              <div className='bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm card-shadow'>
+              <div className='bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-xs card-shadow'>
                 <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
                   <span className='material-symbols-rounded text-blue-500'>person</span>
                   {t.basicInfo || 'Basic Information'}
@@ -827,7 +827,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                         required
                         value={formData.code || ''}
                         onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                        className='w-full px-3 py-2 pr-10 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-sm'
+                        className='w-full px-3 py-2 pr-10 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all font-mono text-sm'
                         dir='ltr'
                       />
                       <button
@@ -849,7 +849,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       required
                       value={formData.name || ''}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       dir={nameDir}
                     />
                   </div>
@@ -866,11 +866,11 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                         value={formData.phone || ''}
                         onChange={(val) => setFormData({ ...formData, phone: val })}
                         placeholder={t.modal.placeholders.phone}
-                        className='w-full px-3 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                        className='w-full px-3 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       />
                       {getDetectedCountry(formData.phone) && (
                         <div
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300 rounded text-[10px] font-bold`}
+                          className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300 rounded-sm text-[10px] font-bold`}
                         >
                           {language === 'AR'
                             ? getDetectedCountry(formData.phone)?.country_ar
@@ -886,7 +886,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     <SmartEmailInput
                       value={formData.email || ''}
                       onChange={(val) => setFormData({ ...formData, email: val })}
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       placeholder={t.modal.placeholders.email}
                     />
                   </div>
@@ -917,7 +917,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       onClick={() => toggleCondition(condition)}
                       className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
                         (formData.chronicConditions || []).includes(condition)
-                          ? `border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 bg-transparent ring-1 ring-${color}-200 dark:ring-${color}-900/10 shadow-sm`
+                          ? `border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 bg-transparent ring-1 ring-${color}-200 dark:ring-${color}-900/10 shadow-xs`
                           : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
                       }`}
                     >
@@ -937,7 +937,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     value={formData.notes || ''}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     rows={2}
-                    className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm resize-none'
+                    className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm resize-none'
                     dir={notesDir}
                   />
                 </div>
@@ -999,7 +999,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       onChange={(e) =>
                         setFormData({ ...formData, preferredLocation: e.target.value })
                       }
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       placeholder={t.modal.placeholders.downtownBranch}
                       dir={locationDir}
                     />
@@ -1020,7 +1020,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       onChange={(e) =>
                         setFormData({ ...formData, insuranceProvider: e.target.value })
                       }
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       dir={insuranceDir}
                     />
                   </div>
@@ -1032,7 +1032,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       type='text'
                       value={formData.policyNumber || ''}
                       onChange={(e) => setFormData({ ...formData, policyNumber: e.target.value })}
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       dir='ltr'
                     />
                   </div>
@@ -1091,7 +1091,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       required
                       value={formData.code || ''}
                       onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all font-mono text-sm'
                       dir='ltr'
                     />
                   </div>
@@ -1105,7 +1105,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     required
                     value={formData.name || ''}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className='w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all'
+                    className='w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
                     dir={nameDir}
                   />
                 </div>
@@ -1121,10 +1121,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       required
                       value={formData.phone || ''}
                       onChange={(val) => setFormData({ ...formData, phone: val })}
-                      className='w-full px-4 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all'
+                      className='w-full px-4 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
                     />
                     {getDetectedCountry(formData.phone) && (
-                      <div className='absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded text-[10px] font-bold'>
+                      <div className='absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-sm text-[10px] font-bold'>
                         {language === 'AR'
                           ? getDetectedCountry(formData.phone)?.country_ar
                           : getDetectedCountry(formData.phone)?.country_en}
@@ -1139,7 +1139,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   <SmartEmailInput
                     value={formData.email || ''}
                     onChange={(val) => setFormData({ ...formData, email: val })}
-                    className='w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all'
+                    className='w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
                   />
                 </div>
               </div>
@@ -1195,7 +1195,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     onChange={(e) =>
                       setFormData({ ...formData, preferredLocation: e.target.value })
                     }
-                    className='w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all'
+                    className='w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
                     placeholder={t.modal.placeholders.downtownBranch}
                     dir={locationDir}
                   />
@@ -1217,7 +1217,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       onChange={(e) =>
                         setFormData({ ...formData, insuranceProvider: e.target.value })
                       }
-                      className='w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       dir={insuranceDir}
                     />
                   </div>
@@ -1227,7 +1227,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       type='text'
                       value={formData.policyNumber || ''}
                       onChange={(e) => setFormData({ ...formData, policyNumber: e.target.value })}
-                      className='w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       dir='ltr'
                     />
                   </div>
@@ -1254,7 +1254,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       onClick={() => toggleCondition(condition)}
                       className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
                         (formData.chronicConditions || []).includes(condition)
-                          ? `border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 bg-transparent ring-1 ring-${color}-200 dark:ring-${color}-900/10 shadow-sm`
+                          ? `border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 bg-transparent ring-1 ring-${color}-200 dark:ring-${color}-900/10 shadow-xs`
                           : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
                       }`}
                     >
@@ -1275,7 +1275,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   value={formData.notes || ''}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={2}
-                  className='w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none'
+                  className='w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all resize-none'
                   dir={notesDir}
                 />
               </div>
@@ -1326,7 +1326,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   required
                   value={formData.name || ''}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className='w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all'
+                  className='w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
                   placeholder={t.modal.placeholders.johnDoe}
                   dir={nameDir}
                 />
@@ -1342,12 +1342,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       required
                       value={formData.phone || ''}
                       onChange={(val) => setFormData({ ...formData, phone: val })}
-                      className='w-full px-4 py-3 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all'
+                      className='w-full px-4 py-3 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
                       placeholder={t.modal.placeholders.phone}
                     />
                     {getDetectedCountry(formData.phone) && (
                       <div
-                        className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300 rounded text-[10px] font-bold`}
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300 rounded-sm text-[10px] font-bold`}
                       >
                         {language === 'AR'
                           ? getDetectedCountry(formData.phone)?.country_ar
@@ -1363,7 +1363,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   <SmartEmailInput
                     value={formData.email || ''}
                     onChange={(val) => setFormData({ ...formData, email: val })}
-                    className='w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all'
+                    className='w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
                     placeholder={t.modal.placeholders.email}
                   />
                 </div>
@@ -1398,7 +1398,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                           onClick={() => toggleCondition(condition)}
                           className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
                             (formData.chronicConditions || []).includes(condition)
-                              ? `border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 bg-transparent ring-1 ring-${color}-200 dark:ring-${color}-900/10 shadow-sm`
+                              ? `border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 bg-transparent ring-1 ring-${color}-200 dark:ring-${color}-900/10 shadow-xs`
                               : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
                           }`}
                         >
@@ -1424,7 +1424,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               </button>
               <button
                 type='submit'
-                className={`flex-[2] px-6 py-3 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all font-bold text-lg`}
+                className={`flex-2 px-6 py-3 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all font-bold text-lg`}
               >
                 {t.modal.register}
               </button>
@@ -1436,7 +1436,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
       {/* Copy Feedback Toast */}
       {copyFeedback && (
-        <div className='fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-gray-800 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-fade-in'>
+        <div className='fixed bottom-6 left-1/2 -translate-x-1/2 z-70 bg-gray-800 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-fade-in'>
           <span className='material-symbols-rounded text-[18px] text-green-400'>check_circle</span>
           <span className='text-sm font-medium'>{t.modal.copied}</span>
         </div>

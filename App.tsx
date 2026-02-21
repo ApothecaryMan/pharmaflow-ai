@@ -307,7 +307,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   // --- TRANSITION SKELETON STATE ---
   if (isLoggingOut) {
     return (
-      <div className='h-screen bg-[var(--bg-primary)] p-4 overflow-hidden'>
+      <div className='h-screen bg-(--bg-primary) p-4 overflow-hidden'>
         <PageSkeletonRegistry view={view} />
       </div>
     );
@@ -362,7 +362,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
             : ''
         }
         icon={windowedView ? PAGE_REGISTRY[windowedView]?.icon : 'window'}
-        className='!bg-[#f3f4f6] dark:!bg-black'
+        className='bg-[#f3f4f6]! dark:bg-black!'
       >
         <div className='h-[80vh]'>
           {windowedView && (

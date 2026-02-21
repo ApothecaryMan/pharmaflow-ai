@@ -1,137 +1,193 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100..700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100;200;300;400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,slnt,wdth,wght@8..144,-10..0,25..151,100..1000&display=swap");
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100..700&display=swap")
+layer(base);
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100;200;300;400;500;600;700&display=swap")
+layer(base);
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,slnt,wdth,wght@8..144,-10..0,25..151,100..1000&display=swap")
+layer(base);
+@import "tailwindcss";
 
-/* 
+
+
+/* ── Tailwind v4 native CSS config ─── */
+@theme {
+  /* Custom font stack */
+  --font-sans:
+    var(--font-en), "Inter", var(--font-ar), "Cairo", -apple-system,
+    BlinkMacSystemFont, "Roboto Flex", sans-serif;
+
+  /* Surface color palette */
+  --color-surface-50: #f9fafb;
+  --color-surface-100: #f3f4f6;
+  --color-surface-200: #e5e7eb;
+  --color-surface-800: #1f2937;
+  --color-surface-900: #111827;
+}
+
+/* Dark mode via .dark class */
+@variant dark (&:where(.dark, .dark *));
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gray-300) transparent;
+  .dark & {
+    scrollbar-color: var(--color-gray-700) transparent;
+  }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-700;
+    border-radius: 20px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-600;
+  }
+
+  &::-webkit-scrollbar-button {
+    display: none;
+  }
+}
+
+@utility dark {
+  & .custom-scrollbar {
+    scrollbar-color: var(--color-gray-700) transparent;
+  }
+}
+
+@layer utilities {
+  /* 
    --- Script Firewall: Unicode Proxy Strategy ---
    We define virtual font families that restrict system fonts to specific character ranges.
    This prevents "greedy" fonts (like Segoe UI) from stealing Arabic rendering,
    and prevents Arabic fonts from stealing English rendering.
 */
 
-/* Latin/English Proxy */
-@font-face {
-  font-family: "En-Firewall";
-  src: local("-apple-system"), local("BlinkMacSystemFont"), local("Segoe UI"), local("Roboto"), local("Helvetica Neue"), local("Arial"), local("sans-serif");
-  /* Latin, Latin-ext, and common symbols only */
-  unicode-range: U+0000-00FF, U+0100-024F, U+0259, U+1E00-1EFF, U+2000-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
-}
+  /* Latin/English Proxy */
+  @font-face {
+    font-family: "En-Firewall";
+    src:
+      local("-apple-system"), local("BlinkMacSystemFont"), local("Segoe UI"),
+      local("Roboto"), local("Helvetica Neue"), local("Arial"),
+      local("sans-serif");
+    /* Latin, Latin-ext, and common symbols only */
+    unicode-range:
+      U+0000-00FF, U+0100-024F, U+0259, U+1E00-1EFF, U+2000-20AB, U+20AD-20CF,
+      U+2C60-2C7F, U+A720-A7FF;
+  }
 
-/* Arabic Proxy */
-@font-face {
-  font-family: "Ar-Firewall";
-  src: local("Segoe UI"), local("Tahoma"), local("Arial"), local("sans-serif");
-  /* Arabic, Arabic Supplement, Presentation Forms A/B */
-  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
-}
+  /* Arabic Proxy */
+  @font-face {
+    font-family: "Ar-Firewall";
+    src:
+      local("Segoe UI"), local("Tahoma"), local("Arial"), local("sans-serif");
+    /* Arabic, Arabic Supplement, Presentation Forms A/B */
+    unicode-range:
+      U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
+  }
 
-/* Define structural variables for Recharts/SVG usage */
-:root {
-  --border-color: #e5e7eb; /* gray-200 */
-  --text-secondary: #6b7280; /* gray-500 */
-  --font-en: "IBM Plex Sans";
-  --font-ar: "IBM Plex Sans Arabic";
-}
+  /* Define structural variables for Recharts/SVG usage */
+  :root {
+    --border-color: #e5e7eb; /* gray-200 */
+    --text-secondary: #6b7280; /* gray-500 */
+    --font-en: "IBM Plex Sans";
+    --font-ar: "IBM Plex Sans Arabic";
+  }
 
-.dark {
-  --border-color: #374151; /* gray-700 */
-  --text-secondary: #9ca3af; /* gray-400 */
-}
+  .dark {
+    --border-color: #374151; /* gray-700 */
+    --text-secondary: #9ca3af; /* gray-400 */
+  }
 
-/* PWA Styles - iOS/iPad Safe Areas & Standalone Mode */
-@supports (padding: env(safe-area-inset-top)) {
+  /* PWA Styles - iOS/iPad Safe Areas & Standalone Mode */
+  @supports (padding: env(safe-area-inset-top)) {
+    body {
+      /* Handle notch/home indicator safe areas */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+
+  /* Prevent iOS rubber-band scrolling on the body */
+  html,
   body {
-    /* Handle notch/home indicator safe areas */
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Scroll Lock for Mobile Drawer/Modals */
+  .drawer-open,
+  .drawer-open html,
+  .drawer-open body {
+    overflow: hidden !important;
+  }
+
+  .drawer-open .main-content-scroll {
+    overflow: hidden !important;
+    touch-action: none !important;
+  }
+
+  /* PWA Standalone Mode Detection */
+  @media (display-mode: standalone) {
+    /* Add any standalone-specific styles here */
+    body {
+      /* Slightly different styling when running as PWA */
+    }
+  }
+
+  /* Prevent text selection on UI elements (PWA feel) */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Global Disabled Button Styling */
+  button:disabled,
+  .btn-disabled {
+    cursor: default !important;
+    pointer-events: none !important;
+    opacity: 0.5;
   }
 }
 
-/* Prevent iOS rubber-band scrolling on the body */
-html,
-body {
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Scroll Lock for Mobile Drawer/Modals */
-.drawer-open,
-.drawer-open html,
-.drawer-open body {
-  overflow: hidden !important;
-}
-
-.drawer-open .main-content-scroll {
-  overflow: hidden !important;
-  touch-action: none !important;
-}
-
-/* PWA Standalone Mode Detection */
-@media (display-mode: standalone) {
-  /* Add any standalone-specific styles here */
-  body {
-    /* Slightly different styling when running as PWA */
-  }
-}
-
-/* Prevent text selection on UI elements (PWA feel) */
-.no-select {
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-}
-
-/* Global Disabled Button Styling */
-button:disabled,
-.btn-disabled {
-  cursor: default !important;
-  pointer-events: none !important;
-  opacity: 0.5;
-}
-
-@layer utilities {
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: theme("colors.gray.300") transparent;
-  }
-  .dark .custom-scrollbar {
-    scrollbar-color: theme("colors.gray.700") transparent;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-gray-700;
-    border-radius: 20px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400 dark:bg-gray-600;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-button {
-    display: none;
-  }
-}
 
 /* Material Symbols Override - Force Font Family */
-.material-symbols-rounded {
-  font-family: 'Material Symbols Rounded' !important;
-  direction: ltr !important; /* Prevent RTL flipping */
-  display: inline-block;
-  line-height: 1;
+@layer base {
+  .material-symbols-rounded {
+    font-family: "Material Symbols Rounded" !important;
+    direction: ltr !important; /* Prevent RTL flipping */
+    display: inline-block;
+    line-height: 1;
+    vertical-align: middle;
+  }
 }
 
 /* --- Real-Time Sales Animations --- */
@@ -270,7 +326,7 @@ html:not(.dark) .card-shadow {
   --font-ytfi: 738; /* Figure Height 560..788 */
   --font-ytlc: 514; /* Lowercase Height 416..570 */
   --font-ytuc: 712; /* Uppercase Height 528..760 */
-  
+
   /* Cross-Script Harmonization */
   --ar-scale: 0.485; /* Precision aspect ratio for IBM Plex Sans Arabic vs Roboto Flex */
   --ar-offset-y: -0.05em; /* Vertical alignment offset */
@@ -290,11 +346,11 @@ html:not(.dark) .card-shadow {
 /* Global Typography Reset & Script Firewall */
 body {
   font-family:
-    var(--font-en),          /* 1. Latin Firewall (Restricted to Latin) */
-    var(--font-ar),          /* 2. Arabic Firewall (Restricted to Arabic) */
-    "En-Firewall",           /* 3. Global Latin Safety */
-    "Ar-Firewall",           /* 4. Global Arabic Safety */
-    sans-serif;
+    var(--font-en),
+    /* 1. Latin Firewall (Restricted to Latin) */ var(--font-ar),
+    /* 2. Arabic Firewall (Restricted to Arabic) */ "En-Firewall",
+    /* 3. Global Latin Safety */ "Ar-Firewall",
+    /* 4. Global Arabic Safety */ sans-serif;
 
   /* Enable Native Browser Optical Sizing */
   font-optical-sizing: auto;
@@ -322,7 +378,7 @@ body {
 html[dir="rtl"] body,
 html[lang="ar"] body {
   /* Cross-Script Harmonization: Scale Arabic text */
-  font-size-adjust: var(--ar-scale); 
+  font-size-adjust: var(--ar-scale);
 }
 
 /* Arabic Headings & Active UI - Inherit Full Firewall Stack */
@@ -353,11 +409,7 @@ html[lang="ar"] h6,
 html[lang="ar"] .h6,
 html[lang="ar"] nav {
   font-family:
-    var(--font-en),
-    var(--font-ar),
-    "En-Firewall",
-    "Ar-Firewall",
-    sans-serif;
+    var(--font-en), var(--font-ar), "En-Firewall", "Ar-Firewall", sans-serif;
 }
 
 /* Adjust padding/height for Arabic Navigation to accommodate font weight/size */
@@ -446,11 +498,7 @@ html[dir="rtl"] .font-bold,
 html[lang="ar"] .font-bold {
   font-weight: 700 !important;
   font-family:
-    var(--font-en),
-    var(--font-ar),
-    "En-Firewall",
-    "Ar-Firewall",
-    sans-serif;
+    var(--font-en), var(--font-ar), "En-Firewall", "Ar-Firewall", sans-serif;
 }
 
 /* --- Mobile Dock Fluid Animation --- */
@@ -477,11 +525,14 @@ html[lang="ar"] .font-bold {
   animation: wordEntrance 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
-
-
-
 .mask-fade-edges {
-  mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 15%,
+    black 85%,
+    transparent
+  );
 }
 
 @keyframes scaleIn {

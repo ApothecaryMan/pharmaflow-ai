@@ -140,7 +140,7 @@ export const TransactionLogGrid: React.FC<TransactionLogGridProps> = ({ data, on
   }
 
   return (
-    <div className='bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col h-full'>
+    <div className='bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-xs overflow-hidden flex flex-col h-full'>
       <div className='overflow-x-auto overflow-y-auto flex-1'>
         <table className='w-full text-sm relative'>
           <thead className='text-gray-500 sticky top-0 z-20'>

@@ -149,11 +149,11 @@ export function FilterDropdown<T>({
   const outerClasses = `relative inline-block ${className}`;
   const outerStyle = floating && minHeight ? { ...style, height: minHeight, minHeight } : style;
 
-  const innerClasses = `relative w-full flex flex-col overflow-hidden border transition-all duration-300 outline-none group
+  const innerClasses = `relative w-full flex flex-col overflow-hidden border transition-all duration-300 outline-hidden group
                     ${rounded === 'full' ? 'rounded-[20px]' : 'rounded-xl'}
                     ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
                     ${effectiveIsOpen || isAnimating ? zIndexHigh : 'z-0'}
-                    ${onBackground ? 'shadow-sm' : ''}
+                    ${onBackground ? 'shadow-xs' : ''}
                     motion-safe:transition-all motion-reduce:transition-none
                     ${floating ? 'absolute top-0 left-0' : ''}
                 `;

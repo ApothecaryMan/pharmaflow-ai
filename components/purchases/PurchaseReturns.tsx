@@ -155,7 +155,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
               e.stopPropagation();
               showMenu(e.clientX, e.clientY, getRowActions(row.original));
             }}
-            className='p-1.5 text-gray-400 hover:text-blue-600 transition-colors outline-none'
+            className='p-1.5 text-gray-400 hover:text-blue-600 transition-colors outline-hidden'
             title='Actions'
           >
             <span className='material-symbols-rounded text-[20px]'>more_vert</span>
@@ -324,7 +324,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   return (
     <div className='h-full flex flex-col space-y-4 animate-fade-in p-4 overflow-hidden'>
       {/* Header */}
-      <div className='flex justify-between items-center flex-shrink-0'>
+      <div className='flex justify-between items-center shrink-0'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight type-expressive'>
             {t.purchaseReturns?.returnHistory || 'Return History'}
@@ -343,7 +343,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       </div>
 
       {/* RETURN HISTORY TABLE (Always visible now) */}
-      <div className='flex-shrink-0'>
+      <div className='shrink-0'>
         <SearchInput
           value={search}
           onSearchChange={setSearch}
@@ -427,7 +427,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                   setReturnItems([]);
                   setItemFormData({});
                 }}
-                className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all'
+                className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
                 style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                 required
               >
@@ -508,7 +508,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                     </div>
                   ))}
 
-                  <div className='flex justify-between items-center p-3 rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 mt-4 shadow-sm'>
+                  <div className='flex justify-between items-center p-3 rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 mt-4 shadow-xs'>
                     <span className='text-sm text-gray-500 font-medium'>
                       {t.purchaseReturns?.totalRefund || 'Total Refund'}
                     </span>
@@ -560,7 +560,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                       return (
                         <div
                           key={index}
-                          className='p-4 bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm group hover:border-gray-200 dark:hover:border-gray-700 transition-all'
+                          className='p-4 bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-xs group hover:border-gray-200 dark:hover:border-gray-700 transition-all'
                         >
                           <div className='flex items-start justify-between mb-3 min-w-0'>
                             <div className='flex-1 min-w-0'>
@@ -599,7 +599,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                     ),
                                   })
                                 }
-                                className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all'
+                                className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
                                 style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                               />
                             </div>
@@ -615,7 +615,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                     reason: e.target.value as PurchaseReturnItem['reason'],
                                   })
                                 }
-                                className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all'
+                                className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
                                 style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                               >
                                 <option value='damaged'>
@@ -650,7 +650,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                     condition: e.target.value as PurchaseReturnItem['condition'],
                                   })
                                 }
-                                className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all'
+                                className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
                                 style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                               >
                                 <option value='damaged'>
@@ -701,7 +701,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
                 dir={notesDir}
-                className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-none transition-all resize-none text-sm font-medium'
+                className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all resize-none text-sm font-medium'
                 style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
                 placeholder={
                   t.purchaseReturns?.notesPlaceholder ||

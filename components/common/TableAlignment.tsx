@@ -11,7 +11,7 @@ interface AlignButtonProps {
 
 export const AlignButton: React.FC<AlignButtonProps> = ({ align, isActive, onClick, isRtl }) => {
   const activeClass =
-    'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md ring-1 ring-emerald-400/50 dark:ring-emerald-500/50';
+    'bg-linear-to-br from-emerald-500 to-emerald-600 text-white shadow-md ring-1 ring-emerald-400/50 dark:ring-emerald-500/50';
   const inactiveClass =
     'text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200/50 dark:hover:bg-gray-700/50';
 

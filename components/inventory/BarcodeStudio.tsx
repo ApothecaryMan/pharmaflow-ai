@@ -826,7 +826,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
     >
       {/* Unified Control Bar */}
       <div
-        className={`${CARD_BASE} p-2 px-4 rounded-2xl flex flex-wrap lg:flex-nowrap items-center justify-between gap-4 sticky top-0 z-[30] backdrop-blur-md bg-white/90 dark:bg-gray-900/90 border border-gray-100 dark:border-gray-800/50 shadow-lg shadow-gray-200/20 dark:shadow-black/20`}
+        className={`${CARD_BASE} p-2 px-4 rounded-2xl flex flex-wrap lg:flex-nowrap items-center justify-between gap-4 sticky top-0 z-30 backdrop-blur-md bg-white/90 dark:bg-gray-900/90 border border-gray-100 dark:border-gray-800/50 shadow-lg shadow-gray-200/20 dark:shadow-black/20`}
       >
         {/* Left Side: Branding & Templates */}
         <div className='flex items-center gap-3'>
@@ -961,7 +961,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
               onClick={() => addElement('text')}
               className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
                 elements.some((el) => el.type === 'text' && el.id.startsWith('custom-'))
-                  ? `bg-${color}-500 text-white shadow-sm`
+                  ? `bg-${color}-500 text-white shadow-xs`
                   : 'hover:bg-white dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500'
               }`}
               title={t.toolbar.addText}
@@ -983,7 +983,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
               }}
               className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
                 elements.some((el) => el.type === 'image' && el.id.startsWith('img-'))
-                  ? `bg-${color}-500 text-white shadow-sm`
+                  ? `bg-${color}-500 text-white shadow-xs`
                   : 'hover:bg-white dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500'
               }`}
               title={t.toolbar.addImage}
@@ -1057,7 +1057,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
           {/* Canvas */}
           <div
-            className={`flex-1 bg-gray-100 dark:bg-gray-950 rounded-3xl border border-gray-200 dark:border-gray-800 relative flex items-center justify-center bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] overflow-hidden`}
+            className={`flex-1 bg-gray-100 dark:bg-gray-950 rounded-3xl border border-gray-200 dark:border-gray-800 relative flex items-center justify-center bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] bg-size-[20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] overflow-hidden`}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
           >
@@ -1151,7 +1151,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                 if (e.key === 'Enter' && newTemplateName.trim()) saveNewTemplate();
               }}
               placeholder={t.templatePlaceholder}
-              className='w-full px-3 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all'
+              className='w-full px-3 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
             />
           </div>
 

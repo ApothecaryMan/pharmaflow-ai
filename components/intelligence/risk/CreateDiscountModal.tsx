@@ -86,7 +86,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
             onChange={(e) => setDiscountValue(Number(e.target.value))}
             min={1}
             max={discountType === 'percentage' ? 100 : undefined}
-            className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-lg font-bold text-center'
+            className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-hidden transition-all text-lg font-bold text-center'
           />
           {discountType === 'percentage' && (
             <div className='flex gap-2 mt-2'>
@@ -118,7 +118,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
             value={validDays}
             onChange={(e) => setValidDays(Number(e.target.value))}
             min={1}
-            className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all'
+            className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-hidden transition-all'
           />
         </div>
 

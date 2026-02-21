@@ -89,7 +89,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({
         />
       </div>
 
-      <div className='flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm flex flex-col'>
+      <div className='flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-xs flex flex-col'>
         <div className='overflow-x-auto flex-1'>
           <table className='w-full text-start border-collapse'>
             <thead

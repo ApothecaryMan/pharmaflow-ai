@@ -490,7 +490,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         cell: ({ row }) => {
           if (row.original.stock <= 0) {
             return (
-              <span className='inline-flex items-center px-1.5 py-0.5 rounded-lg border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest bg-red-50 dark:bg-red-900/10 shadow-sm shadow-red-500/10'>
+              <span className='inline-flex items-center px-1.5 py-0.5 rounded-lg border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest bg-red-50 dark:bg-red-900/10 shadow-xs shadow-red-500/10'>
                 {t.outOfStockShort || 'OUT'}
               </span>
             );
@@ -791,7 +791,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                     <SmartInput
                       id="brand-name"
                       required
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       placeholder='e.g., Panadol Extra'
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -804,7 +804,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                     <SmartInput
                       id="generic-name"
                       required
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       placeholder='e.g., Paracetamol'
                       value={formData.genericName}
                       onChange={(e) => setFormData({ ...formData, genericName: e.target.value })}
@@ -868,7 +868,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                         Active Ingredients (Comma separated)
                       </label>
                       <SmartInput
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                         placeholder='e.g., Paracetamol, Caffeine'
                         value={formData.activeIngredients?.join(', ') || ''}
                         onChange={(e) =>
@@ -927,7 +927,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                         ))}
 
                         <input
-                          className='flex-1 bg-transparent border-none outline-none text-sm min-w-[80px]'
+                          className='flex-1 bg-transparent border-none outline-hidden text-sm min-w-[80px]'
                           placeholder={!formData.barcode ? 'Scan barcode' : 'More...'}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
@@ -960,7 +960,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                       </label>
                       <div className='relative group'>
                         <input
-                          className='w-full pl-3 pr-10 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-mono'
+                          className='w-full pl-3 pr-10 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm font-mono'
                           placeholder='Auto-generated or custom'
                           value={formData.internalCode || ''}
                           onChange={(e) =>
@@ -988,7 +988,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                       {t.modal.desc}
                     </label>
                     <SmartInput
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       placeholder='Description...'
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -1017,7 +1017,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                         type='number'
                         step='0.01'
                         required
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                         value={formData.stock}
                         onChange={(e) =>
                           setFormData({ ...formData, stock: parseFloat(e.target.value) || 0 })
@@ -1031,7 +1031,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                       <input
                         type='number'
                         min='1'
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                         value={formData.unitsPerPack || 1}
                         onChange={(e) =>
                           setFormData({ ...formData, unitsPerPack: parseInt(e.target.value) || 1 })
@@ -1046,7 +1046,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                     </label>
                     <SmartDateInput
                       required
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       value={formData.expiryDate}
                       onChange={(val) => setFormData({ ...formData, expiryDate: val })}
                     />
@@ -1063,7 +1063,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                         type='number'
                         step='0.01'
                         required
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold text-green-600'
+                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm font-bold text-green-600'
                         value={formData.price}
                         onChange={(e) =>
                           setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
@@ -1077,7 +1077,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                       <input
                         type='number'
                         step='0.01'
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                         value={formData.costPrice || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, costPrice: parseFloat(e.target.value) || 0 })
@@ -1094,7 +1094,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                       type='number'
                       min='0'
                       max='100'
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm text-red-500'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm text-red-500'
                       value={formData.maxDiscount || ''}
                       onChange={(e) =>
                         setFormData({ ...formData, maxDiscount: parseFloat(e.target.value) })
@@ -1292,7 +1292,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                     </label>
                     <input
                       required
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
@@ -1303,7 +1303,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                     </label>
                     <input
                       required
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       value={formData.genericName}
                       onChange={(e) => setFormData({ ...formData, genericName: e.target.value })}
                     />
@@ -1365,7 +1365,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                       Active Ingredients
                     </label>
                     <input
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       placeholder='e.g., Paracetamol, Caffeine'
                       value={formData.activeIngredients?.join(', ') || ''}
                       onChange={(e) =>
@@ -1417,7 +1417,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                       </span>
                     ))}
                     <input
-                      className='flex-1 bg-transparent border-none outline-none text-sm min-w-[120px]'
+                      className='flex-1 bg-transparent border-none outline-hidden text-sm min-w-[120px]'
                       placeholder={!formData.barcode ? 'Scan primary barcode' : 'Add more...'}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -1444,7 +1444,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                   </label>
                   <div className='relative'>
                     <input
-                      className='w-full pl-3 pr-10 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-mono'
+                      className='w-full pl-3 pr-10 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm font-mono'
                       placeholder='Auto-generated'
                       value={formData.internalCode || ''}
                       onChange={(e) => setFormData({ ...formData, internalCode: e.target.value })}
@@ -1465,7 +1465,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                     {t.modal.desc}
                   </label>
                   <textarea
-                    className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm resize-none'
+                    className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm resize-none'
                     rows={2}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -1488,7 +1488,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                         type='number'
                         step='0.01'
                         required
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                         value={formData.stock}
                         onChange={(e) =>
                           setFormData({ ...formData, stock: parseFloat(e.target.value) || 0 })
@@ -1502,7 +1502,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                       <input
                         type='number'
                         min='1'
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                         value={formData.unitsPerPack || 1}
                         onChange={(e) =>
                           setFormData({ ...formData, unitsPerPack: parseInt(e.target.value) || 1 })
@@ -1516,7 +1516,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                     </label>
                     <SmartDateInput
                       required
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       value={formData.expiryDate}
                       onChange={(val) => setFormData({ ...formData, expiryDate: val })}
                     />
@@ -1536,7 +1536,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                         type='number'
                         step='0.01'
                         required
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold text-green-600'
+                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm font-bold text-green-600'
                         value={formData.price}
                         onChange={(e) =>
                           setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
@@ -1550,7 +1550,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                       <input
                         type='number'
                         step='0.01'
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm'
+                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                         value={formData.costPrice || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, costPrice: parseFloat(e.target.value) || 0 })
@@ -1566,7 +1566,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                       type='number'
                       min='0'
                       max='100'
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm text-red-500'
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm text-red-500'
                       value={formData.maxDiscount || ''}
                       onChange={(e) =>
                         setFormData({ ...formData, maxDiscount: parseFloat(e.target.value) })
@@ -1634,7 +1634,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                 onChange={(e) =>
                   setPrintQuantity(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))
                 }
-                className='w-20 h-12 text-center text-2xl font-bold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none'
+                className='w-20 h-12 text-center text-2xl font-bold rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-hidden'
               />
 
               <button

@@ -198,11 +198,11 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   const isRTL = language === 'AR';
 
   return (
-    <div className='fixed inset-0 z-[100] md:hidden overflow-hidden'>
+    <div className='fixed inset-0 z-100 md:hidden overflow-hidden'>
       {/* Backdrop */}
       <div
         className={`
-          fixed inset-0 bg-white/30 dark:bg-black/40 backdrop-blur-sm 
+          fixed inset-0 bg-white/30 dark:bg-black/40 backdrop-blur-xs 
           transition-opacity duration-${ANIMATION_DURATION} ease-out
           ${isAnimating ? 'opacity-100' : 'opacity-0'}
         `}

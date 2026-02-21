@@ -293,7 +293,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       className='h-full flex flex-col overflow-hidden animate-fade-in'
       dir={isRTL ? 'rtl' : 'ltr'}
     >
-      <div className='flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 flex-shrink-0 pe-2'>
+      <div className='flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 shrink-0 pe-2'>
         <h2 className='text-2xl font-medium tracking-tight flex items-center gap-2'>
           <span className='material-symbols-rounded text-gray-900 dark:text-gray-100'>
             person_search
@@ -334,7 +334,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
           {selectedCustomer && (
             <button
               onClick={handleClear}
-              className='px-4 py-2.5 rounded-xl font-medium text-xs text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 backdrop-blur-sm transition-all whitespace-nowrap'
+              className='px-4 py-2.5 rounded-xl font-medium text-xs text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 backdrop-blur-xs transition-all whitespace-nowrap'
             >
               {t.clear || 'Clear'}
             </button>
@@ -358,7 +358,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
         <div className='flex-1 flex flex-col min-h-0 pb-4 pe-2'>
           {/* Customer Profile Card */}
           <div
-            className={`p-6 rounded-3xl bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border border-gray-100 dark:border-gray-800 ${CARD_BASE} flex flex-col h-full overflow-hidden`}
+            className={`p-6 rounded-3xl bg-white/50 dark:bg-gray-900/50 backdrop-blur-xs border border-gray-100 dark:border-gray-800 ${CARD_BASE} flex flex-col h-full overflow-hidden`}
           >
             <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4'>
               <div className='flex items-center gap-4'>

@@ -481,7 +481,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
                             <span className='shrink-0'>{t.modal.qty}:</span>
                             <span className='font-bold shrink-0'>{item.quantity}</span>
                             {item.isUnit && (
-                              <span className='text-[8px] border border-sky-200 dark:border-sky-800 text-sky-600 dark:text-sky-400 px-1 py-1 leading-none rounded font-bold tracking-tighter uppercase whitespace-nowrap'>
+                              <span className='text-[8px] border border-sky-200 dark:border-sky-800 text-sky-600 dark:text-sky-400 px-1 py-1 leading-none rounded-sm font-bold tracking-tighter uppercase whitespace-nowrap'>
                                 {language === 'AR' ? 'وحدة' : 'UNIT'}
                               </span>
                             )}

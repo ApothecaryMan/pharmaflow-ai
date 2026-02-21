@@ -139,7 +139,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
           {pendingPurchases.map((purchase) => (
             <div
               key={purchase.id}
-              className='bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col relative overflow-hidden group cursor-pointer hover:border-blue-200 dark:hover:border-blue-800 transition-colors'
+              className='bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xs flex flex-col relative overflow-hidden group cursor-pointer hover:border-blue-200 dark:hover:border-blue-800 transition-colors'
               onClick={() => setSelectedPurchase(purchase)}
             >
               {/* Status Badge */}
@@ -202,7 +202,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                 </button>
                 <button
                   onClick={(e) => handleOpenApprove(purchase.id, e)}
-                  className='py-2.5 rounded-xl bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm'
+                  className='py-2.5 rounded-xl bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-xs'
                 >
                   <span className='material-symbols-rounded text-lg'>check</span>
                   {t.approve || 'Approve'}
@@ -320,7 +320,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                     dir={direction}
                     onChange={(e) => setApproverName(e.target.value)}
                     placeholder={t.enterName || 'Enter Name'}
-                    className='w-64 px-3 py-1 rounded-md bg-transparent border border-transparent hover:border-gray-300 outline-none text-sm font-medium transition-all'
+                    className='w-64 px-3 py-1 rounded-md bg-transparent border border-transparent hover:border-gray-300 outline-hidden text-sm font-medium transition-all'
                   />
                 </div>
               </div>
@@ -329,7 +329,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             {/* Items Table */}
             <div className='bg-gray-50 dark:bg-black/20 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800'>
               <table className='w-full text-left border-collapse'>
-                <thead className='sticky top-0 z-10 bg-gray-50 dark:bg-gray-900 shadow-sm'>
+                <thead className='sticky top-0 z-10 bg-gray-50 dark:bg-gray-900 shadow-xs'>
                   <tr className='border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500 uppercase'>
                     <th className='p-2 font-bold bg-gray-50 dark:bg-gray-900'>
                       {t.tableHeaders?.item || 'Item'}
@@ -424,7 +424,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
               placeholder={
                 t.rejectOrder?.reasonPlaceholder || 'E.g., Incorrect pricing, wrong items...'
               }
-              className='w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-red-500/50'
+              className='w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-hidden focus:ring-2 focus:ring-red-500/50'
               dir={rejectReasonDir}
             />
           </div>

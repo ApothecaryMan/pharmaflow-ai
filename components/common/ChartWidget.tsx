@@ -185,7 +185,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
 
   return (
     <div
-      className={`lg:col-span-2 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-transparent group ${className || ''}`}
+      className={`lg:col-span-2 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-xs border-2 border-gray-200 dark:border-transparent group ${className || ''}`}
     >
       {/* Header */}
       <div className={`flex items-center justify-between mb-4 ${headerClassName || ''}`}>

@@ -609,7 +609,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           <input
             type='number'
             inputMode='decimal'
-            className={`w-20 text-center px-2 py-1 rounded-md border text-sm tabular-nums outline-none focus:ring-2 ring-blue-500/20 transition-colors
+            className={`w-20 text-center px-2 py-1 rounded-md border text-sm tabular-nums outline-hidden focus:ring-2 ring-blue-500/20 transition-colors
                 ${
                   info.row.original.newStock !== info.row.original.currentStock
                     ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/10 text-amber-700'
@@ -665,7 +665,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             floating
             color={color}
             keyExtractor={(item) => item}
-            zIndexHigh='z-[60]'
+            zIndexHigh='z-60'
             autoHideArrow
           />
         ),
@@ -818,13 +818,13 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                 <div className='flex gap-1'>
                   <button
                     onClick={() => handleApprove(item)}
-                    className='p-1 px-2 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-bold transition-colors shadow-sm'
+                    className='p-1 px-2 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-bold transition-colors shadow-xs'
                   >
                     {t.pendingApproval.approve}
                   </button>
                   <button
                     onClick={() => handleReject(item)}
-                    className='p-1 px-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold transition-colors shadow-sm'
+                    className='p-1 px-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold transition-colors shadow-xs'
                   >
                     {t.pendingApproval.reject}
                   </button>
@@ -1058,7 +1058,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                   label={t.common?.fromDate || 'From'}
                   color={color}
                   icon='calendar_today'
-                  className='!py-0.5 !px-2 !text-xs border-0 bg-transparent !h-6'
+                  className='py-0.5! px-2! text-xs! border-0 bg-transparent h-6!'
                 />
                 <span className='text-gray-300 dark:text-gray-600 rtl:rotate-180 flex items-center'>
                   <span className='material-symbols-rounded text-[14px]'>arrow_forward</span>
@@ -1069,7 +1069,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                   label={t.common?.toDate || 'To'}
                   color={color}
                   icon='event'
-                  className='!py-0.5 !px-2 !text-xs border-0 bg-transparent !h-6'
+                  className='py-0.5! px-2! text-xs! border-0 bg-transparent h-6!'
                 />
               </div>
 
@@ -1077,13 +1077,13 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               <div className='ml-auto xl:ml-0 flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg h-8 items-center'>
                 <button
                   onClick={setHistoryTab.bind(null, 'pending')}
-                  className={`px-3 py-0.5 text-xs font-bold rounded-md transition h-full flex items-center ${historyTab === 'pending' ? 'bg-white dark:bg-gray-700 shadow-sm text-amber-600' : 'text-gray-500 hover:text-amber-600 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'}`}
+                  className={`px-3 py-0.5 text-xs font-bold rounded-md transition h-full flex items-center ${historyTab === 'pending' ? 'bg-white dark:bg-gray-700 shadow-xs text-amber-600' : 'text-gray-500 hover:text-amber-600 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'}`}
                 >
                   {t.purchases.status.pending}
                 </button>
                 <button
                   onClick={setHistoryTab.bind(null, 'all')}
-                  className={`px-3 py-0.5 text-xs font-bold rounded-md transition h-full flex items-center ${historyTab === 'all' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'}`}
+                  className={`px-3 py-0.5 text-xs font-bold rounded-md transition h-full flex items-center ${historyTab === 'all' ? 'bg-white dark:bg-gray-700 shadow-xs text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'}`}
                 >
                   {t.global.actions.all}
                 </button>

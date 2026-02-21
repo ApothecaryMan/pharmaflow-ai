@@ -31,12 +31,12 @@ export const Switch: React.FC<SwitchProps> = ({
         minHeight: '24px',
         backgroundColor: checked && activeColor ? activeColor : undefined,
       }}
-      className={`w-12 h-6 rounded-full relative transition-colors duration-200 ease-in-out focus:outline-none ${
+      className={`w-12 h-6 rounded-full relative transition-colors duration-200 ease-in-out focus:outline-hidden ${
         checked ? (!activeColor ? `bg-${theme}-600` : '') : 'bg-gray-200 dark:bg-gray-700'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
     >
       <div
-        className={`absolute top-1 start-1 w-4 h-4 rounded-full bg-white shadow-sm flex items-center justify-center transition-transform duration-200 ease-in-out ${
+        className={`absolute top-1 inset-s-1 w-4 h-4 rounded-full bg-white shadow-xs flex items-center justify-center transition-transform duration-200 ease-in-out ${
           checked ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'
         }`}
       >

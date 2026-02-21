@@ -331,7 +331,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
           />
 
           <div className='flex items-center gap-2'>
-            <div className='relative min-w-[4rem]'>
+            <div className='relative min-w-16'>
               <FilterDropdown
                 floating
                 items={periodOptions}

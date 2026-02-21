@@ -62,7 +62,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
     icon,
     children,
   }) => (
-    <div className='bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800'>
+    <div className='bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-xs border border-gray-200 dark:border-gray-800'>
       <h3 className='text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2 mb-4'>
         <span
           className='material-symbols-rounded text-[24px]'

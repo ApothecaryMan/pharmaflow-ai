@@ -988,7 +988,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   return (
     <div className='h-full flex flex-col gap-2 animate-fade-in overflow-hidden'>
       {/* Header with toggle */}
-      <div className='flex justify-between items-center px-2 flex-shrink-0'>
+      <div className='flex justify-between items-center px-2 shrink-0'>
         <div>
           <div className='flex items-center gap-3'>
             <h2 className='text-2xl font-bold tracking-tight type-expressive'>
@@ -1057,7 +1057,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
         <div className='flex flex-col gap-4 h-full overflow-hidden'>
           {/* TOP: Search Controls */}
           <div
-            className={`${CARD_BASE} p-4 rounded-xl flex flex-col xl:flex-row gap-4 items-end flex-shrink-0`}
+            className={`${CARD_BASE} p-4 rounded-xl flex flex-col xl:flex-row gap-4 items-end shrink-0`}
           >
             {/* Drug Search & Filter */}
             <div className='flex-[1.5] w-full flex gap-2'>
@@ -1299,7 +1299,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       readOnly
                       value={invoiceId}
                       dir='ltr'
-                      className={`text-lg font-mono font-bold bg-transparent border border-transparent rounded-lg px-2 py-0.5 outline-none cursor-default w-36 text-left select-all transition-all duration-500 ease-out ${
+                      className={`text-lg font-mono font-bold bg-transparent border border-transparent rounded-lg px-2 py-0.5 outline-hidden cursor-default w-36 text-left select-all transition-all duration-500 ease-out ${
                         isOrderIdAnimating
                           ? 'text-green-500 dark:text-green-400 animate-[rollUp_0.5s_ease-out]'
                           : 'text-gray-500 dark:text-gray-400'
@@ -1322,7 +1322,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     value={externalInvoiceId}
                     onChange={(e) => setExternalInvoiceId(e.target.value)}
                     dir={externalInvoiceIdDir}
-                    className='text-lg font-mono font-bold bg-transparent border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-blue-500 rounded-lg px-2 py-0.5 outline-none transition-all w-28 text-left text-gray-600 dark:text-gray-400 placeholder-gray-300'
+                    className='text-lg font-mono font-bold bg-transparent border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-blue-500 rounded-lg px-2 py-0.5 outline-hidden transition-all w-28 text-left text-gray-600 dark:text-gray-400 placeholder-gray-300'
                   />
                 </div>
 
@@ -1984,7 +1984,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
           {/* Items Table */}
           <div className='bg-gray-50 dark:bg-black/20 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800'>
             <table className='w-full text-left border-collapse'>
-              <thead className='sticky top-0 z-10 bg-gray-50 dark:bg-gray-900 shadow-sm'>
+              <thead className='sticky top-0 z-10 bg-gray-50 dark:bg-gray-900 shadow-xs'>
                 <tr className='border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500 uppercase'>
                   <th className='p-2 font-bold bg-gray-50 dark:bg-gray-900'>
                     {t.detailsModal?.item || 'Item'}

@@ -643,7 +643,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className='bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg'>
+                          <div className='bg-white/20 backdrop-blur-xs px-2 py-1 rounded-lg'>
                             <p className='text-white font-bold text-sm'>
                               ${payload[0].value.toLocaleString()}
                             </p>

@@ -200,7 +200,7 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
         {/* Center Guidelines */}
         {showVCenterGuide && (
           <div
-            className='absolute top-0 bottom-0 border-l border-blue-500/50 border-dashed z-[20]'
+            className='absolute top-0 bottom-0 border-l border-blue-500/50 border-dashed z-20'
             style={{
               left: `${dims.w / 2}mm`,
               height: `${showPairedPreview ? dims.h * 2 : dims.h}mm`,
@@ -209,7 +209,7 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
         )}
         {showHCenterGuide && (
           <div
-            className='absolute left-0 right-0 border-t border-blue-500/50 border-dashed z-[20]'
+            className='absolute left-0 right-0 border-t border-blue-500/50 border-dashed z-20'
             style={{ top: `${dims.h / 2}mm`, width: `${dims.w}mm` }}
           />
         )}
@@ -219,7 +219,7 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
           guide.x !== undefined ? (
             <div
               key={`v-${idx}`}
-              className='absolute top-0 bottom-0 border-l border-emerald-500/40 border-dashed z-[20]'
+              className='absolute top-0 bottom-0 border-l border-emerald-500/40 border-dashed z-20'
               style={{
                 left: `${guide.x}mm`,
                 height: `${showPairedPreview ? dims.h * 2 : dims.h}mm`,
@@ -228,7 +228,7 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
           ) : guide.y !== undefined ? (
             <div
               key={`h-${idx}`}
-              className='absolute left-0 right-0 border-t border-emerald-500/40 border-dashed z-[20]'
+              className='absolute left-0 right-0 border-t border-emerald-500/40 border-dashed z-20'
               style={{ top: `${guide.y}mm`, width: `${dims.w}mm` }}
             />
           ) : null

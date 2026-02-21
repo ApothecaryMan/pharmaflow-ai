@@ -122,7 +122,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ t, language }) => {
       />
 
       <div className='bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex-1 flex flex-col overflow-hidden'>
-        <div className='flex justify-between items-center px-4 pt-4 mb-4 flex-shrink-0'>
+        <div className='flex justify-between items-center px-4 pt-4 mb-4 shrink-0'>
           <div className='flex items-center gap-4'>
             <h3 className='text-lg font-bold text-gray-900 dark:text-white'>
               {t.intelligence.audit.title}

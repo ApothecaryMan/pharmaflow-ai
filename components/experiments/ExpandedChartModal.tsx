@@ -362,7 +362,7 @@ const calculateStats = (values: number[]) => {
  * @param {StatsCardProps} props - Component props
  */
 const StatsCard: React.FC<StatsCardProps> = memo(({ label, value, color, change, unit = '' }) => (
-  <div className='p-4 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center text-center'>
+  <div className='p-4 rounded-2xl bg-white dark:bg-gray-800 shadow-xs border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center text-center'>
     <p className='text-xs text-gray-500 font-medium uppercase tracking-wide'>{label}</p>
     <div className='flex items-end gap-2 mt-1'>
       <h3
@@ -932,7 +932,7 @@ export const ExpandedChartModal: React.FC<ExpandedChartModalProps> = ({
 
         {/* 3. Main Content Area - Chart or Table */}
         <div
-          className='min-h-[384px] rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden relative'
+          className='min-h-[384px] rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-xs overflow-hidden relative'
           style={{ height: chartConfig.chartHeight }}
         >
           {viewMode === 'chart' ? (
@@ -944,7 +944,7 @@ export const ExpandedChartModal: React.FC<ExpandedChartModalProps> = ({
                 .recharts-brush-traveller group:focus { outline: none !important; }
               `}</style>
 
-              <div className='flex-1 w-full min-h-0 [&_*]:outline-none [&_*]:ring-0 [&_*]:focus:outline-none'>
+              <div className='flex-1 w-full min-h-0 **:outline-hidden **:ring-0 focus:**:outline-hidden'>
                 <ResponsiveContainer width='100%' height='100%'>
                   {chartType === 'area' ? (
                     <AreaChart

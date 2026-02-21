@@ -190,10 +190,10 @@ const DockButton = React.memo<DockButtonProps>(
       <button
         onClick={onClick}
         className={`
-        h-12 flex items-center justify-center rounded-[1.5rem] transition-fluid
+        h-12 flex items-center justify-center rounded-3xl transition-fluid
         ${
           isActive
-            ? `flex-grow bg-${theme.primary}-100 dark:bg-${theme.primary}-500/20 text-${theme.primary}-700 dark:text-${theme.primary}-300 px-4 gap-2 shadow-sm`
+            ? `grow bg-${theme.primary}-100 dark:bg-${theme.primary}-500/20 text-${theme.primary}-700 dark:text-${theme.primary}-300 px-4 gap-2 shadow-xs`
             : 'w-12 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
         }
         ${isDynamic ? 'animate-scale-in' : ''}
@@ -309,12 +309,12 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
       {/* Mobile Floating Dock Navigation */}
       <nav
-        className='md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[92%] max-w-[400px] safe-area-bottom'
+        className='md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-60 w-[92%] max-w-[400px] safe-area-bottom'
         aria-label='Primary navigation'
       >
         <div
           className={`
-            flex items-center justify-between p-1.5 rounded-[2rem]
+            flex items-center justify-between p-1.5 rounded-4xl
             bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl
             border border-gray-200/50 dark:border-gray-800/50
             shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]

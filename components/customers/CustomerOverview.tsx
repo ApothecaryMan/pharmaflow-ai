@@ -585,7 +585,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           </div>
 
           <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
-            <div className='p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/40 dark:to-amber-900/20 border border-amber-200 dark:border-amber-800/50'>
+            <div className='p-4 rounded-2xl bg-linear-to-br from-amber-50 to-amber-100 dark:from-amber-950/40 dark:to-amber-900/20 border border-amber-200 dark:border-amber-800/50'>
               <div className='flex items-center gap-2 mb-2'>
                 <span className='material-symbols-rounded text-amber-500'>star</span>
                 <span className='text-xs font-bold text-amber-700 dark:text-amber-400 uppercase'>
@@ -598,7 +598,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className='text-xs text-amber-600 dark:text-amber-400'>$1000+</p>
             </div>
 
-            <div className='p-4 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/40 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800/50'>
+            <div className='p-4 rounded-2xl bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-950/40 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800/50'>
               <div className='flex items-center gap-2 mb-2'>
                 <span className='material-symbols-rounded text-blue-500'>verified</span>
                 <span className='text-xs font-bold text-blue-700 dark:text-blue-400 uppercase'>
@@ -611,7 +611,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className='text-xs text-blue-600 dark:text-blue-400'>$100-$1000</p>
             </div>
 
-            <div className='p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/40 dark:to-gray-700/20 border border-gray-200 dark:border-gray-700'>
+            <div className='p-4 rounded-2xl bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800/40 dark:to-gray-700/20 border border-gray-200 dark:border-gray-700'>
               <div className='flex items-center gap-2 mb-2'>
                 <span className='material-symbols-rounded text-gray-500'>person</span>
                 <span className='text-xs font-bold text-gray-600 dark:text-gray-400 uppercase'>
@@ -624,7 +624,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className='text-xs text-gray-500 dark:text-gray-400'>&lt;$100</p>
             </div>
 
-            <div className='p-4 rounded-2xl bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/40 dark:to-red-900/20 border border-red-200 dark:border-red-800/50'>
+            <div className='p-4 rounded-2xl bg-linear-to-br from-red-50 to-red-100 dark:from-red-950/40 dark:to-red-900/20 border border-red-200 dark:border-red-800/50'>
               <div className='flex items-center gap-2 mb-2'>
                 <span className='material-symbols-rounded text-red-500'>warning</span>
                 <span className='text-xs font-bold text-red-700 dark:text-red-400 uppercase'>

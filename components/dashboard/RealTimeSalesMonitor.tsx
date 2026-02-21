@@ -575,7 +575,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             language={language}
             unit=''
             allowChartTypeSelection={false}
-            className='card-shadow !rounded-3xl border-0 flex flex-col justify-between !p-0'
+            className='card-shadow rounded-3xl! border-0 flex flex-col justify-between p-0!'
             headerClassName='px-6 pt-5'
             chartClassName='h-[200px] w-full px-2'
             xAxisInterval={2}
@@ -1106,7 +1106,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   </div>
                 </div>
                 <span
-                  className={`px-2 py-1 rounded text-xs font-bold ${id <= 3 ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600'}`}
+                  className={`px-2 py-1 rounded-sm text-xs font-bold ${id <= 3 ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600'}`}
                 >
                   {id <= 3 ? 'ONLINE' : 'OFFLINE'}
                 </span>

@@ -187,7 +187,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
       )}
 
       {/* Form Card */}
-      <div className='flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm'>
+      <div className='flex-1 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-xs'>
         <form onSubmit={(e) => handleSubmit(e, false)} className='p-6 md:p-8 space-y-8'>
           {/* Basic Information */}
           <div className='space-y-4'>

@@ -156,7 +156,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 
       {/* Filters Toolbar */}
       <div className='flex flex-wrap gap-3 items-center justify-between bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 px-4 py-3 shrink-0'>
         <div className='flex flex-wrap gap-2 items-center'>
-          <div className='relative h-[42px] min-w-[12rem]'>
+          <div className='relative h-[42px] min-w-48'>
             <FilterDropdown
               floating
               items={supplierOptions}
@@ -189,7 +189,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 
             />
           </div>
 
-          <div className='relative h-[42px] min-w-[12rem]'>
+          <div className='relative h-[42px] min-w-48'>
             <FilterDropdown
               floating
               items={categoryOptions}
@@ -224,7 +224,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 
         <div className='flex gap-2'>
           <button
             onClick={() => handleGeneratePO(filteredItems.map((i) => i.product_id))}
-            className='flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm active:scale-95'
+            className='flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-xs active:scale-95'
           >
             <span className='material-symbols-rounded text-lg'>add_shopping_cart</span>
             {t.intelligence.procurement.actions.generatePO}
