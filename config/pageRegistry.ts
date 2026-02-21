@@ -19,6 +19,7 @@ import { BarcodeStudio } from '../components/inventory/BarcodeStudio';
 import { Inventory } from '../components/inventory/Inventory';
 import { InventoryManagement } from '../components/inventory/InventoryManagement';
 import { StockAdjustment } from '../components/inventory/StockAdjustment';
+import { StockMovementReport } from '../components/inventory';
 import { LandingPage } from '../components/layout/LandingPage';
 import { PendingApproval } from '../components/purchases/PendingApproval';
 import { PurchaseReturns } from '../components/purchases/PurchaseReturns';
@@ -93,6 +94,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     skeleton: InventorySkeleton,
     permission: 'inventory.view',
   },
+  'stock-movement': {
+    id: 'stock-movement',
+    component: StockMovementReport,
+    menuLabel: 'Stock Movement Report',
+    menuLabelAr: 'تقرير حركة المخزون',
+    icon: 'timeline',
+    category: 'inventory',
+    requiredProps: ['onViewChange'],
+    permission: 'reports.view_stock_movement',
+  },
   'inventory-beta': {
     id: 'inventory-beta',
     component: InventoryManagement,
@@ -143,6 +154,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       't',
       'language',
       'currentShift',
+      'navigationParams',
     ],
     permission: 'sale.view_history',
   },
@@ -153,7 +165,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'سجل الإرجاعات',
     icon: 'assignment_return',
     category: 'sales',
-    requiredProps: ['returns', 'sales', 'color', 't', 'language'],
+    requiredProps: ['returns', 'sales', 'color', 't', 'language', 'navigationParams'],
     permission: 'sale.refund',
   },
   suppliers: {

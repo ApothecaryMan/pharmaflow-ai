@@ -444,10 +444,12 @@ export const Inventory: React.FC<InventoryProps> = ({
         header: t.headers.name,
         cell: ({ row }) => {
           const drug = row.original;
+          const displayName = getDisplayName({ name: drug.name });
+          const itemDir = /[\u0600-\u06FF]/.test(displayName) ? 'rtl' : 'ltr';
           return (
-            <div className={`flex flex-col whitespace-normal ${isRTL ? 'text-right' : 'text-left'}`} dir='ltr'>
+            <div className={`flex flex-col whitespace-normal ${isRTL ? 'text-right' : 'text-left'}`} dir={itemDir}>
               <div className='font-medium text-gray-900 dark:text-gray-100 text-sm drug-name'>
-                {getDisplayName({ name: drug.name })}{' '}
+                {displayName}{' '}
                 {drug.dosageForm && (
                   <span className='text-gray-500 font-normal'>
                     {getDisplayName({

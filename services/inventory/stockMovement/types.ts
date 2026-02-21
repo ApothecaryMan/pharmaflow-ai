@@ -52,13 +52,38 @@ export interface StockMovementFilters {
   performedBy?: string;
   branchId?: string;
   status?: 'pending' | 'approved' | 'rejected';
+  page?: number;
+  pageSize?: number;
+}
+
+export interface StockMovementSummary {
+  totalIn: number;
+  totalOut: number;
+  returns: number;
+  netChange: number;
+  currentStock: number;
+}
+
+export interface StockMovementKPISummary {
+  totalStockIn: number;
+  totalStockOut: number;
+  totalReturns: number;
+  inventoryValue: number;
+}
+
+export interface PaginatedStockMovements {
+  data: StockMovement[];
+  total: number;
+  hasMore: boolean;
 }
 
 export interface StockMovementService {
   getAll: () => Promise<StockMovement[]>;
   getByDrugId: (drugId: string) => Promise<StockMovement[]>;
   logMovement: (movement: Omit<StockMovement, 'id' | 'timestamp'>) => Promise<StockMovement>;
-  getHistory: (filters: StockMovementFilters) => Promise<StockMovement[]>;
+  getHistory: (filters: StockMovementFilters) => Promise<StockMovement[] | PaginatedStockMovements>;
+  getSummaryByDrug: (drugId: string, filters: StockMovementFilters) => Promise<StockMovementSummary>;
+  getKPISummary: (filters: StockMovementFilters) => Promise<StockMovementKPISummary>;
   approveMovement: (id: string, userId: string) => Promise<void>;
   rejectMovement: (id: string, userId: string) => Promise<void>;
 }

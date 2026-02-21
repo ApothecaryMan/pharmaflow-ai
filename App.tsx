@@ -188,6 +188,8 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setReturns,
     customers,
     setCustomers,
+    purchaseReturns,
+    setPurchaseReturns,
     currentEmployeeId,
     employees,
     setEmployees, // Added setEmployees

@@ -340,6 +340,12 @@ export const PHARMACY_MENU: MenuItem[] = [
           { label: 'Minimum Stock Levels', icon: 'warning' },
           { label: 'Reorder Points', icon: 'reorder' },
           { label: 'Stock Valuation', icon: 'attach_money' },
+          {
+            label: 'Stock Movement Report',
+            view: 'stock-movement',
+            icon: 'timeline',
+            permission: 'reports.view_stock_movement',
+          },
         ],
       },
       {

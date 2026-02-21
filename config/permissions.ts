@@ -69,6 +69,7 @@ export type PermissionAction =
   | 'dashboard.view'
   | 'reports.view_financial'
   | 'reports.view_inventory'
+  | 'reports.view_stock_movement'
   | 'reports.view_intelligence'
   | 'reports.export'
 
@@ -121,6 +122,7 @@ const ALL_PERMISSIONS: PermissionAction[] = [
   'dashboard.view',
   'reports.view_financial',
   'reports.view_inventory',
+  'reports.view_stock_movement',
   'reports.view_intelligence',
   'reports.export',
   'settings.view',
@@ -177,6 +179,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'shift.cash_out',
     'reports.view_financial',
     'reports.view_inventory',
+    'reports.view_stock_movement',
     'reports.view_intelligence',
     'reports.export',
     'settings.view',
@@ -223,6 +226,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'shift.cash_in',
     'shift.cash_out',
     'reports.view_inventory', // No financial reports
+    'reports.view_stock_movement',
     'users.view', // Can view staff but not manage accounts directly (unless given 'users.manage' specifically)
     'shift.view_expected_balance',
   ],
@@ -269,6 +273,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'supplier.add',
     'supplier.update',
     'reports.view_inventory',
+    'reports.view_stock_movement',
   ],
 
   assistant: [
