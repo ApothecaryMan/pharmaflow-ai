@@ -859,6 +859,11 @@ export const MENU_TRANSLATIONS = {
     'System Logs': 'سجلات النظام',
     'Performance Settings': 'إعدادات الأداء',
     'Cache Management': 'إدارة التخزين المؤقت',
+
+    // Missing specific items
+    'Stock Movement Report': 'تقرير حركة المخزون',
+    'Sales by Product Analysis': 'تحليل المبيعات حسب المنتج',
+    'Login Audit Report': 'تقرير سجل تسجيل الدخول',
   },
 };
 
