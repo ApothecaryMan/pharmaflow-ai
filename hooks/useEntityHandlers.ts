@@ -512,6 +512,21 @@ export function useEntityHandlers({
                     }
                   : d
               );
+
+              // FIX: The batch was created with drugId = sourceDrug.id
+              // but stock was added to sameExpiryEntry.id. If they differ,
+              // update the batch to point to the correct Drug entry.
+              if (sameExpiryEntry.id !== sourceDrug.id) {
+                const allBatches = batchService.getAllBatches();
+                const mismatchedBatch = allBatches
+                  .filter(
+                    (b) => b.drugId === sourceDrug.id && b.purchaseId === purchase.id
+                  )
+                  .sort((a, b) => new Date(b.dateReceived).getTime() - new Date(a.dateReceived).getTime())[0];
+                if (mismatchedBatch) {
+                  batchService.updateBatch(mismatchedBatch.id, { drugId: sameExpiryEntry.id });
+                }
+              }
             } else {
               // Different expiry → create a NEW Drug entry (same product, new batch)
               const newDrugId = idGenerator.generate('inventory');
@@ -646,6 +661,21 @@ export function useEntityHandlers({
                   }
                 : d
             );
+
+            // FIX: The batch was created with drugId = sourceDrug.id
+            // but stock was added to sameExpiryEntry.id. If they differ,
+            // update the batch to point to the correct Drug entry.
+            if (sameExpiryEntry.id !== sourceDrug.id) {
+              const allBatches = batchService.getAllBatches();
+              const mismatchedBatch = allBatches
+                .filter(
+                  (b) => b.drugId === sourceDrug.id && b.purchaseId === purchase.id
+                )
+                .sort((a, b) => new Date(b.dateReceived).getTime() - new Date(a.dateReceived).getTime())[0];
+              if (mismatchedBatch) {
+                batchService.updateBatch(mismatchedBatch.id, { drugId: sameExpiryEntry.id });
+              }
+            }
           } else {
             // Different expiry → create a NEW Drug entry (same product, new batch)
             const newDrugId = idGenerator.generate('inventory');
@@ -862,7 +892,12 @@ export function useEntityHandlers({
             const quantityToDeduct = item.isUnit
               ? item.quantity
               : item.quantity * (drug?.unitsPerPack || 1);
-            return { drugId: item.id, quantity: quantityToDeduct, name: item.name };
+            return {
+              drugId: item.id,
+              quantity: quantityToDeduct,
+              name: item.name,
+              preferredBatchId: item.preferredBatchId,
+            };
           });
 
           const bulkAllocations = batchService.allocateStockBulk(allocationRequests);

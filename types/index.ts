@@ -253,6 +253,11 @@ export interface CartItem extends Drug {
    * Used for FEFO (First Expired, First Out) tracking.
    */
   batchAllocations?: BatchAllocation[];
+  /**
+   * Optional manual override for batch selection.
+   * If set, allocation will attempt to take from this batch first.
+   */
+  preferredBatchId?: string;
 }
 
 /**
