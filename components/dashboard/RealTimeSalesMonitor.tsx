@@ -286,7 +286,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             value={todayStats.revenue}
             fractionDigits={2}
             icon='payments'
-            iconColor={color.name}
+            iconColor='primary'
             type='currency'
             currencyLabel='$'
             trend={todayStats.revenueChange > 0 ? 'up' : 'neutral'}
@@ -549,7 +549,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     label: 'Reg.',
                     value: `${todayStats.registeredRate.toFixed(0)}%`,
                     percentage: todayStats.registeredRate,
-                    color: 'blue',
+                    color: 'primary',
                   },
                   {
                     label: 'Anon.',
@@ -601,7 +601,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 >
                   <div className='flex items-center gap-3 overflow-hidden'>
                     <div
-                      className={`w-6 h-6 rounded-full bg-${color.name}-100 dark:bg-${color.name}-900/50 text-${color.name}-600 dark:text-${color.name}-300 flex items-center justify-center font-bold text-xs shrink-0`}
+                      className={`w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-300 flex items-center justify-center font-bold text-xs shrink-0`}
                     >
                       {idx + 1}
                     </div>

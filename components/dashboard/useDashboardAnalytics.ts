@@ -124,7 +124,7 @@ export const useDashboardAnalytics = ({
   // 7. Health Grades
   const profitGrade = useMemo(() => {
     if (profitMarginPercent > 35) return { label: 'Excellent', color: 'emerald' as const };
-    if (profitMarginPercent > 20) return { label: 'Healthy', color: 'blue' as const };
+    if (profitMarginPercent > 20) return { label: 'Healthy', color: 'primary' as const };
     return { label: 'Low Margin', color: 'amber' as const };
   }, [profitMarginPercent]);
 
@@ -170,7 +170,7 @@ export const useDashboardAnalytics = ({
       value: inventoryValuation,
       valueLabel: 'Value',
       icon: 'inventory_2',
-      iconColorClass: 'text-blue-400',
+      iconColorClass: 'text-primary-400',
       calculations: [
         {
           label: 'Turnover Ratio = COGS / Assets',

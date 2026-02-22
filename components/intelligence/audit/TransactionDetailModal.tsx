@@ -114,7 +114,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
           <button
             type='button'
             onClick={onClose}
-            className='px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors font-medium'
+            className='px-6 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white transition-colors font-medium'
           >
             إغلاق
           </button>

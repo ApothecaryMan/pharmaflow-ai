@@ -13,7 +13,7 @@ export const Switch: React.FC<SwitchProps> = ({
   checked,
   onChange,
   className = '',
-  theme = 'emerald',
+  theme = 'primary',
   disabled = false,
   activeColor,
 }) => {
@@ -32,7 +32,7 @@ export const Switch: React.FC<SwitchProps> = ({
         backgroundColor: checked && activeColor ? activeColor : undefined,
       }}
       className={`w-12 h-6 rounded-full relative transition-colors duration-200 ease-in-out focus:outline-hidden ${
-        checked ? (!activeColor ? `bg-${theme}-600` : '') : 'bg-gray-200 dark:bg-gray-700'
+        checked ? (!activeColor ? (theme === 'primary' ? 'bg-primary-600' : `bg-${theme}-600`) : '') : 'bg-gray-200 dark:bg-gray-700'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
     >
       <div
@@ -42,7 +42,7 @@ export const Switch: React.FC<SwitchProps> = ({
       >
         {checked ? (
           <svg
-            className={`w-3 h-3 ${!activeColor ? `text-${theme}-600` : ''}`}
+            className={`w-3 h-3 ${!activeColor ? (theme === 'primary' ? 'text-primary-600' : `text-${theme}-600`) : ''}`}
             style={{ color: activeColor }}
             fill='none'
             viewBox='0 0 24 24'

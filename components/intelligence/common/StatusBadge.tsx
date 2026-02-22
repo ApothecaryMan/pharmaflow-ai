@@ -52,7 +52,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       case 'RISING':
         return { color: 'emerald', icon: 'trending_up', label: isAr ? 'صعود' : 'Rising' };
       case 'STABLE':
-        return { color: 'blue', icon: 'trending_flat', label: isAr ? 'مستقر' : 'Stable' };
+        return { color: 'primary', icon: 'trending_flat', label: isAr ? 'مستقر' : 'Stable' };
       case 'DECLINING':
         return { color: 'amber', icon: 'trending_down', label: isAr ? 'هبوط' : 'Declining' };
 
@@ -80,7 +80,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       case 'SPARSE':
         return { color: 'amber', icon: 'analytics', label: isAr ? 'قليلة' : 'Sparse' };
       case 'NEW_PRODUCT':
-        return { color: 'blue', icon: 'new_releases', label: isAr ? 'جديد' : 'New' };
+        return { color: 'primary', icon: 'new_releases', label: isAr ? 'جديد' : 'New' };
 
       default:
         return { color: 'gray', icon: 'info', label: statusKey };

@@ -119,7 +119,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
                   : reason === 'wrong_item'
                     ? { color: 'purple', icon: 'error' }
                     : reason === 'overage'
-                      ? { color: 'blue', icon: 'add_circle' }
+                      ? { color: 'primary', icon: 'add_circle' }
                       : { color: 'gray', icon: 'help' };
 
           return (

@@ -924,11 +924,11 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                   <img
                     src={selectedEmployee.image}
                     alt={selectedEmployee.name}
-                    className={`w-16 h-16 rounded-2xl object-cover shadow-xs border border-${color.name}-200 dark:border-${color.name}-700/50`}
+                    className={`w-16 h-16 rounded-2xl object-cover shadow-xs border border-primary-200 dark:border-primary-700/50`}
                   />
                 ) : (
                   <div
-                    className={`w-16 h-16 rounded-2xl bg-linear-to-br from-${color.name}-100 to-${color.name}-50 dark:from-${color.name}-900/40 dark:to-${color.name}-800/20 flex items-center justify-center text-${color.name}-600 dark:text-${color.name}-400 text-xl font-bold uppercase shadow-xs border border-${color.name}-200 dark:border-${color.name}-700/50`}
+                    className={`w-16 h-16 rounded-2xl bg-linear-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 flex items-center justify-center text-primary-600 dark:text-primary-400 text-xl font-bold uppercase shadow-xs border border-primary-200 dark:border-primary-700/50`}
                   >
                     {initials}
                   </div>
@@ -949,7 +949,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
             </h1>
             <div className='flex items-center gap-2 flex-wrap'>
               <div
-                className={`px-2.5 py-0.5 rounded-lg bg-${color.name}-50 dark:bg-${color.name}-900/20 text-${color.name}-700 dark:text-${color.name}-300 text-xs font-semibold border border-${color.name}-100 dark:border-${color.name}-700/30 flex items-center gap-1`}
+                className={`px-2.5 py-0.5 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 text-xs font-semibold border border-primary-100 dark:border-primary-700/30 flex items-center gap-1`}
               >
                 <span className='material-symbols-rounded text-[14px]'>badge</span>
                 {selectedEmployee.role}
@@ -992,7 +992,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                 )}
                 keyExtractor={(emp) => emp.id}
                 variant='input'
-                color={color.name}
+                color='primary'
               />
             </div>
           )}
@@ -1158,7 +1158,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
                       <div
                         className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-medium whitespace-nowrap transition-colors duration-200 ${
                           isSelected
-                            ? 'bg-blue-100 dark:bg-blue-900/60 border-blue-200 dark:border-blue-800' // Simple colored background
+                            ? 'bg-primary-100 dark:bg-primary-900/60 border-primary-200 dark:border-primary-800' // Simple colored background
                             : 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                       >

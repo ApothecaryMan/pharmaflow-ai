@@ -72,7 +72,7 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t }) => {
               },
               {
                 value: 0,
-                color: 'bg-blue-400',
+                color: 'bg-primary-400',
                 label: 'متوسط',
                 tooltip: 'متوسط (60-90 يوم)',
               },
@@ -142,7 +142,7 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t }) => {
             },
             {
               value: summary.by_urgency.medium.count,
-              color: 'bg-blue-400',
+              color: 'bg-primary-400',
               label: 'متوسط',
               tooltip: 'متوسط (60-90 يوم)',
             },

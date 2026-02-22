@@ -272,7 +272,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                     e.stopPropagation();
                     handleEdit(row.original);
                   }}
-                  className='p-1 text-gray-400 hover:text-blue-600 transition-colors'
+                  className='p-1 text-gray-400 hover:text-primary-600 transition-colors'
                 >
                   <span className='material-symbols-rounded text-[20px]'>edit</span>
                 </button>
@@ -466,7 +466,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.global?.actions?.search || 'Search...'}
-              className='w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
+              className='w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500/20 transition-all outline-hidden'
             />
           </div>
 
@@ -628,7 +628,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder={t.employeeList.name}
                       autoFocus
-                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
+                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500/20 transition-all outline-hidden'
                       required
                     />
                   </div>

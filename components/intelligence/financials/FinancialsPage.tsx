@@ -130,7 +130,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
       categoryColumnHelper.accessor('gross_profit', {
         header: t?.intelligence?.financials?.categoryGrid?.columns?.profit || 'Profit',
         cell: (info) => (
-          <span className='font-medium text-blue-600 dark:text-blue-400'>
+          <span className='font-medium text-primary-600 dark:text-primary-400'>
             {formatCurrency(info.getValue())}
           </span>
         ),
@@ -162,7 +162,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
               <span className='inline-flex items-center px-1.5 py-0.5 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs font-bold bg-transparent'>
                 A:{dist.a}
               </span>
-              <span className='inline-flex items-center px-1.5 py-0.5 border border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold bg-transparent'>
+              <span className='inline-flex items-center px-1.5 py-0.5 border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 rounded-lg text-xs font-bold bg-transparent'>
                 B:{dist.b}
               </span>
               <span className='inline-flex items-center px-1.5 py-0.5 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400 rounded-lg text-xs font-bold bg-transparent'>
@@ -190,7 +190,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
                 info.row.original.abc_class === 'A'
                   ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'
                   : info.row.original.abc_class === 'B'
-                    ? 'border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400'
+                    ? 'border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400'
                     : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400'
               }`}
             >
@@ -224,7 +224,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
       productColumnHelper.accessor('gross_profit', {
         header: t?.intelligence?.financials?.productGrid?.columns?.profit || 'Profit',
         cell: (info) => (
-          <span className='font-bold text-blue-600 dark:text-blue-400'>
+          <span className='font-bold text-primary-600 dark:text-primary-400'>
             {formatCurrency(info.getValue())}
           </span>
         ),
@@ -325,7 +325,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
               },
             ]}
             size='sm'
-            color='blue'
+            color='primary'
             fullWidth={false}
             variant='onPage'
           />

@@ -290,7 +290,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                     flex flex-col items-center justify-center p-2 min-w-[68px] rounded-2xl transition-all duration-300
                     ${
                       isActive
-                        ? `text-${theme.primary}-600 dark:text-${theme.primary}-400`
+                        ? `text-primary-600 dark:text-primary-400`
                         : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'
                     }
                   `}
