@@ -1377,7 +1377,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     onClick={() => setSelectedCartIndex(index)}
                     className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer transition-all ${
                       selectedCartIndex === index
-                        ? `bg-${color}-50 dark:bg-gray-700`
+                        ? `bg-primary-50 dark:bg-gray-700`
                         : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
                     onContextMenu={(e) => {
@@ -1439,7 +1439,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           value={item.quantity}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           onFocus={(e) => {
@@ -1474,7 +1474,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           })()}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           value={
@@ -1522,7 +1522,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           value={item.costPrice}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           onFocus={(e) => {
@@ -1549,7 +1549,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           value={item.discount || 0}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           onFocus={(e) => {
@@ -1574,7 +1574,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           value={item.salePrice || 0}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           onFocus={(e) => {
@@ -1601,7 +1601,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           value={item.tax || 0}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           onFocus={(e) => {
@@ -1623,7 +1623,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           onChange={() => {}} // Read only
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           className='opacity-75 pointer-events-none' // Visual cue
@@ -1644,7 +1644,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           onChange={() => {}} // Read only
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           className='opacity-75 pointer-events-none' // Visual cue
@@ -1901,7 +1901,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
               <p className='text-xs text-gray-500 uppercase font-bold mb-1'>
                 {t.detailsModal?.totalCost || 'Total Cost'}
               </p>
-              <p className={`font-bold text-lg text-${color}-600`}>
+              <p className={`font-bold text-lg text-primary-600`}>
                 ${selectedPurchase.totalCost.toFixed(2)}
               </p>
             </div>

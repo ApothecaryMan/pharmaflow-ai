@@ -175,12 +175,12 @@ export const AddProduct: React.FC<AddProductProps> = ({
       {/* Success Message */}
       {showSuccess && (
         <div
-          className={`p-4 rounded-2xl bg-${color}-50 dark:bg-${color}-950/30 border border-${color}-200 dark:border-${color}-800 flex items-center gap-3 animate-fade-in`}
+          className={`p-4 rounded-2xl bg-primary-50 dark:bg-primary-950/30 border border-primary-200 dark:border-primary-800 flex items-center gap-3 animate-fade-in`}
         >
-          <span className={`material-symbols-rounded text-${color}-600 dark:text-${color}-400`}>
+          <span className={`material-symbols-rounded text-primary-600 dark:text-primary-400`}>
             check_circle
           </span>
-          <span className={`text-sm font-medium text-${color}-700 dark:text-${color}-300`}>
+          <span className={`text-sm font-medium text-primary-700 dark:text-primary-300`}>
             {t.addProduct.messages.success}
           </span>
         </div>
@@ -203,7 +203,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 <input
                   required
                   className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all'
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                  style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                   placeholder={t.addProduct.placeholders.brandName}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -217,7 +217,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 <input
                   required
                   className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all'
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                  style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                   placeholder={t.addProduct.placeholders.genericName}
                   value={formData.genericName}
                   onChange={(e) => setFormData({ ...formData, genericName: e.target.value })}
@@ -287,7 +287,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 </label>
                 <input
                   className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all'
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                  style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                   placeholder={t.addProduct.placeholders.barcode}
                   value={formData.barcode || ''}
                   onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
@@ -301,7 +301,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 <div className='relative group'>
                   <input
                     className='w-full p-3 pr-12 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all font-mono'
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                    style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                     placeholder={t.addProduct.placeholders.internalCode}
                     value={formData.internalCode || ''}
                     onChange={(e) => setFormData({ ...formData, internalCode: e.target.value })}
@@ -311,7 +311,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                     <button
                       type='button'
                       onClick={generateInternalCode}
-                      className={`w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-${color}-600 hover:bg-${color}-50 dark:hover:bg-${color}-900/20 transition-all duration-200 active:scale-90`}
+                      className={`w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 active:scale-90`}
                       title={t.addProduct.actions.generateCode}
                     >
                       <span className='material-symbols-rounded text-[22px]'>magic_button</span>
@@ -338,7 +338,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   step='0.01'
                   required
                   className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all'
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                  style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                   value={formData.stock}
                   onChange={(e) =>
                     setFormData({ ...formData, stock: parseFloat(e.target.value) || 0 })
@@ -353,7 +353,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   type='number'
                   min='1'
                   className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all'
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                  style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                   value={formData.unitsPerPack || 1}
                   onChange={(e) =>
                     setFormData({ ...formData, unitsPerPack: parseInt(e.target.value) || 1 })
@@ -368,7 +368,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   type='date'
                   required
                   className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all text-gray-500'
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                  style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                   value={formData.expiryDate}
                   onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
                 />
@@ -392,7 +392,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   step='0.01'
                   required
                   className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all font-bold text-green-600 dark:text-green-400'
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                  style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                   value={formData.price}
                   onChange={(e) =>
                     setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
@@ -407,7 +407,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   type='number'
                   step='0.01'
                   className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all text-gray-500'
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                  style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                   value={formData.costPrice || 0}
                   onChange={(e) =>
                     setFormData({ ...formData, costPrice: parseFloat(e.target.value) || 0 })
@@ -423,7 +423,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   min='0'
                   max='100'
                   className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all text-red-500'
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                  style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                   placeholder='No Limit'
                   value={formData.maxDiscount || ''}
                   onChange={(e) =>
@@ -446,7 +446,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
               </label>
               <textarea
                 className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all'
-                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                 rows={4}
                 placeholder={t.addProduct.placeholders.description}
                 value={formData.description}
@@ -469,14 +469,14 @@ export const AddProduct: React.FC<AddProductProps> = ({
             <button
               type='button'
               onClick={(e) => handleSubmit(e, true)}
-              className={`flex-1 py-3 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2`}
+              className={`flex-1 py-3 rounded-full font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2`}
             >
               <span className='material-symbols-rounded text-lg'>add_circle</span>
               {t.addProduct.actions.saveAndNew}
             </button>
             <button
               type='submit'
-              className={`flex-1 py-3 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-lg shadow-${color}-200 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2`}
+              className={`flex-1 py-3 rounded-full font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-200 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2`}
             >
               <span className='material-symbols-rounded text-lg'>save</span>
               {t.addProduct.actions.save}

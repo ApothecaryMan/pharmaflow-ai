@@ -150,7 +150,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                         !isImplemented
                           ? 'opacity-50 cursor-not-allowed text-gray-400'
                           : isActive
-                            ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold`
+                            ? `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-semibold`
                             : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-700'
                       }`}
                     >

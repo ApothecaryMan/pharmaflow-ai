@@ -36,10 +36,10 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
       >
         <div className='flex flex-col items-center mb-6 text-center'>
           <div
-            className={`w-14 h-14 rounded-full bg-${color}-100 dark:bg-${color}-900 flex items-center justify-center mb-3`}
+            className={`w-14 h-14 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center mb-3`}
           >
             <span
-              className={`material-symbols-rounded text-3xl text-${color}-600 dark:text-${color}-400`}
+              className={`material-symbols-rounded text-3xl text-primary-600 dark:text-primary-400`}
             >
               smart_toy
             </span>
@@ -62,7 +62,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
               onChange={(e) => setDrugName(e.target.value)}
               placeholder={t.placeholderDrug}
               className='w-full p-3 rounded-2xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:outline-hidden focus:ring-2 transition-all'
-              style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+              style={{ '--tw-ring-color': `var(--primary-500)` } as any}
             />
           </div>
           <div>
@@ -75,14 +75,14 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t.placeholderQuestion}
               className='w-full p-3 rounded-2xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 focus:outline-hidden focus:ring-2 transition-all'
-              style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+              style={{ '--tw-ring-color': `var(--primary-500)` } as any}
             />
           </div>
 
           <button
             type='submit'
             disabled={loading}
-            className={`w-full py-3 rounded-2xl bg-${color}-600 hover:bg-${color}-700 text-white font-bold text-base shadow-lg shadow-${color}-200 dark:shadow-none transition-all active:scale-95 flex justify-center items-center gap-2`}
+            className={`w-full py-3 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-bold text-base shadow-lg shadow-primary-200 dark:shadow-none transition-all active:scale-95 flex justify-center items-center gap-2`}
           >
             {loading ? (
               <>
@@ -103,7 +103,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ color, t }) => {
         {response && (
           <div className='mt-6 p-5 bg-gray-50 dark:bg-gray-950 rounded-3xl border border-gray-200 dark:border-gray-800 animate-fade-in'>
             <div className='flex items-start gap-3'>
-              <span className={`material-symbols-rounded text-${color}-600 mt-0.5 text-xl`}>
+              <span className={`material-symbols-rounded text-primary-600 mt-0.5 text-xl`}>
                 info
               </span>
               <div className='prose dark:prose-invert text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line'>

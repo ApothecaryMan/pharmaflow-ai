@@ -402,7 +402,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               title={t.revenue}
               value={totalRevenue}
               icon='payments'
-              iconColor={color}
+              iconColor={color === 'primary' ? 'primary' : color}
               type='currency'
               currencyLabel={getCurrencySymbol()}
               fractionDigits={2}
@@ -506,7 +506,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 >
                   <div className='flex items-center gap-3 overflow-hidden'>
                     <div
-                      className={`w-6 h-6 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 font-bold text-xs flex items-center justify-center shrink-0`}
+                      className={`w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-300 font-bold text-xs flex items-center justify-center shrink-0`}
                     >
                       {index + 1}
                     </div>
@@ -565,7 +565,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </div>
                     <button
                       onClick={() => setRestockDrug(item)}
-                      className={`text-xs px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium hover:bg-${color}-50 hover:text-${color}-600 dark:hover:bg-gray-700 transition-colors shrink-0 ms-2`}
+                      className={`text-xs px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-gray-700 transition-colors shrink-0 ms-2`}
                     >
                       {t.restock}
                     </button>
@@ -652,7 +652,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 >
                   <div className='flex items-center gap-3'>
                     <div
-                      className={`w-10 h-10 flex items-center justify-center rounded-xl bg-${color}-50 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400`}
+                      className={`w-10 h-10 flex items-center justify-center rounded-xl bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400`}
                     >
                       <span className='material-symbols-rounded'>shopping_bag</span>
                     </div>
@@ -753,14 +753,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <button
                     type='button'
                     onClick={() => setRestockIsUnit(false)}
-                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${!restockIsUnit ? `bg-white dark:bg-gray-700 text-${color}-600 shadow-xs` : 'text-gray-400'}`}
+                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${!restockIsUnit ? `bg-white dark:bg-gray-700 text-primary-600 shadow-xs` : 'text-gray-400'}`}
                   >
                     {t.pos?.pack || 'Pack'}
                   </button>
                   <button
                     type='button'
                     onClick={() => setRestockIsUnit(true)}
-                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${restockIsUnit ? `bg-white dark:bg-gray-700 text-${color}-600 shadow-xs` : 'text-gray-400'}`}
+                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${restockIsUnit ? `bg-white dark:bg-gray-700 text-primary-600 shadow-xs` : 'text-gray-400'}`}
                   >
                     {t.pos?.unit || 'Unit'}
                   </button>
@@ -779,7 +779,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   required
                   min='1'
                   className='flex-1 p-2 text-center text-lg font-bold rounded-xl bg-gray-50 dark:bg-gray-950 border-none focus:ring-2 focus:ring-inset transition-all'
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                  style={{ '--tw-ring-color': `var(--primary-500)` } as any}
                   value={restockQty}
                   onChange={(e) => setRestockQty(parseInt(e.target.value) || 0)}
                 />
@@ -803,7 +803,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </button>
               <button
                 type='submit'
-                className={`flex-1 py-2.5 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all active:scale-95`}
+                className={`flex-1 py-2.5 rounded-full font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95`}
               >
                 {t.modal.confirm}
               </button>
@@ -834,14 +834,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
       >
         <div className='space-y-6'>
           <div
-            className={`p-6 rounded-2xl bg-${color}-50 dark:bg-${color}-950/20 border border-${color}-100 dark:border-${color}-900`}
+            className={`p-6 rounded-2xl bg-primary-50 dark:bg-primary-950/20 border border-primary-100 dark:border-primary-900`}
           >
             <p
-              className={`text-sm font-bold text-${color}-800 dark:text-${color}-300 uppercase mb-2`}
+              className={`text-sm font-bold text-primary-800 dark:text-primary-300 uppercase mb-2`}
             >
               {t.revenue}
             </p>
-            <p className={`text-4xl font-bold text-${color}-900 dark:text-${color}-100`}>
+            <p className={`text-4xl font-bold text-primary-900 dark:text-primary-100`}>
               {formatCurrency(totalRevenue)}
             </p>
             <p className='text-sm text-gray-500 mt-2'>
@@ -1105,7 +1105,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       setRestockDrug(item);
                       setExpandedView(null);
                     }}
-                    className={`px-4 py-2 rounded-full bg-white dark:bg-gray-800 shadow-xs font-medium text-${color}-600 hover:bg-${color}-50 dark:hover:bg-gray-700 transition-colors`}
+                    className={`px-4 py-2 rounded-full bg-white dark:bg-gray-800 shadow-xs font-medium text-primary-600 hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors`}
                   >
                     {t.restock}
                   </button>
@@ -1156,7 +1156,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               >
                 <div className='flex items-center gap-4 flex-1'>
                   <div
-                    className={`w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 font-bold flex items-center justify-center shrink-0`}
+                    className={`w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-300 font-bold flex items-center justify-center shrink-0`}
                   >
                     {index + 1}
                   </div>
@@ -1172,7 +1172,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <div className='text-end'>
                   <div className='w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
                     <div
-                      className={`bg-${color}-500 h-2 rounded-full`}
+                      className={`bg-primary-500 h-2 rounded-full`}
                       style={{ width: `${(item.qty / topSelling20[0].qty) * 100}%` }}
                     />
                   </div>
@@ -1319,7 +1319,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   {/* Timeline Node */}
                   <div
                     className={`absolute top-6 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 shadow-xs z-10 ${
-                      hasReturns ? 'bg-orange-400' : `bg-${color}-500`
+                      hasReturns ? 'bg-orange-400' : `bg-primary-500`
                     } ${language === 'AR' ? '-right-[18px]' : '-left-[18px]'}`}
                   ></div>
 
@@ -1332,7 +1332,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       {/* Left Side: Icon, Name, Code, Time */}
                       <div className='flex items-center gap-2 flex-1 min-w-0'>
                         <div
-                          className={`w-8 h-8 rounded-full bg-${color}-100 dark:bg-${color}-900/50 flex items-center justify-center text-${color}-600 dark:text-${color}-300 shrink-0`}
+                          className={`w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-300 shrink-0`}
                         >
                           <span className='material-symbols-rounded text-[18px]'>shopping_bag</span>
                         </div>

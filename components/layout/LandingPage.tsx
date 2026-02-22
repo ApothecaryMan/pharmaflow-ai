@@ -15,10 +15,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ language, darkMode, co
       {/* Abstract Background Decoration */}
       <div className='absolute inset-0 overflow-hidden pointer-events-none'>
         <div
-          className={`absolute -top-24 -right-24 w-96 h-96 bg-${color}-500/5 rounded-full blur-3xl`}
+          className={`absolute -top-24 -right-24 w-96 h-96 bg-primary-500/5 rounded-full blur-3xl`}
         ></div>
         <div
-          className={`absolute -bottom-24 -left-24 w-96 h-96 bg-${color}-500/5 rounded-full blur-3xl`}
+          className={`absolute -bottom-24 -left-24 w-96 h-96 bg-primary-500/5 rounded-full blur-3xl`}
         ></div>
       </div>
 
@@ -27,7 +27,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ language, darkMode, co
         <div className='mb-12 relative group'>
           {/* Glowing Aura */}
           <div
-            className={`absolute inset-0 bg-${color}-500/20 blur-2xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-all duration-1000`}
+            className={`absolute inset-0 bg-primary-500/20 blur-2xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-all duration-1000`}
           ></div>
 
           <div className='relative transform hover:scale-105 transition-transform duration-500'>
@@ -51,7 +51,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ language, darkMode, co
 
         {/* Action Hint */}
         <div className='flex items-center gap-3 px-6 py-3 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 animate-bounce'>
-          <span className={`material-symbols-rounded text-${color}-500`}>arrow_downward</span>
+          <span className={`material-symbols-rounded text-primary-500`}>arrow_downward</span>
           <span className='text-sm font-bold text-zinc-600 dark:text-zinc-300'>
             {language === 'AR' ? 'اختر ملف الموظف بالأسفل' : 'Select Profile Below'}
           </span>

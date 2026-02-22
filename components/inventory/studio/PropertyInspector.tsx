@@ -81,7 +81,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
         className={`px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30`}
       >
         <div className='flex items-center gap-2'>
-          <span className={`material-symbols-rounded text-sm text-${color}-500`}>
+          <span className={`material-symbols-rounded text-sm text-primary-500`}>
             {selectedElementId ? 'edit_note' : 'dashboard_customize'}
           </span>
           <h3
@@ -107,7 +107,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       onSearchChange={onSearchChange}
                       placeholder={t.searchPlaceholder}
                       className='p-2.5 rounded-xl border-gray-200 dark:border-gray-800 ps-10'
-                      style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                      style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                     />
                     {searchTerm && (
                       <div className='absolute z-20 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg max-h-40 overflow-y-auto'>
@@ -143,7 +143,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       type='checkbox'
                       checked={showPairedPreview}
                       onChange={(e) => setShowPairedPreview(e.target.checked)}
-                      className={`w-4 h-4 rounded-sm text-${color}-600 focus:ring-${color}-500`}
+                      className={`w-4 h-4 rounded-sm text-primary-600 focus:ring-primary-500`}
                     />
                     <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                       {t.printSettings.pairedPreview}
@@ -160,7 +160,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       type='checkbox'
                       checked={showPrintBorders}
                       onChange={(e) => setShowPrintBorders(e.target.checked)}
-                      className={`w-4 h-4 rounded-sm text-${color}-600 focus:ring-${color}-500`}
+                      className={`w-4 h-4 rounded-sm text-primary-600 focus:ring-primary-500`}
                     />
                     <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                       {t.printSettings.showBorders}
@@ -187,7 +187,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       </span>
                     </div>
                     <span
-                      className={`text-xs font-bold px-2 py-0.5 rounded-full bg-${color}-100 dark:bg-${color}-900/40 text-${color}-700 dark:text-${color}-300`}
+                      className={`text-xs font-bold px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300`}
                     >
                       {printOffsetX > 0 ? '+' : ''}
                       {printOffsetX}mm
@@ -200,7 +200,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     step='0.5'
                     value={printOffsetX}
                     onChange={(e) => setPrintOffsetX(parseFloat(e.target.value))}
-                    className={`w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-${color}-500`}
+                    className={`w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-primary-500`}
                   />
                 </div>
 
@@ -216,7 +216,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       </span>
                     </div>
                     <span
-                      className={`text-xs font-bold px-2 py-0.5 rounded-full bg-${color}-100 dark:bg-${color}-900/40 text-${color}-700 dark:text-${color}-300`}
+                      className={`text-xs font-bold px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300`}
                     >
                       {printOffsetY > 0 ? '+' : ''}
                       {printOffsetY}mm
@@ -229,7 +229,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     step='0.5'
                     value={printOffsetY}
                     onChange={(e) => setPrintOffsetY(parseFloat(e.target.value))}
-                    className={`w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-${color}-500`}
+                    className={`w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-primary-500`}
                   />
                 </div>
               </div>
@@ -244,7 +244,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                 className={`w-full py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
                   printOffsetX === 0 && printOffsetY === 0
                     ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-                    : `bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-800/40`
+                    : `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-800/40`
                 }`}
               >
                 <span className='material-symbols-rounded text-sm'>restart_alt</span>

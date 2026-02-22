@@ -193,7 +193,7 @@ const DockButton = React.memo<DockButtonProps>(
         h-12 flex items-center justify-center rounded-3xl transition-fluid
         ${
           isActive
-            ? `grow bg-${theme.primary}-100 dark:bg-${theme.primary}-500/20 text-${theme.primary}-700 dark:text-${theme.primary}-300 px-4 gap-2 shadow-xs`
+            ? `grow bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 px-4 gap-2 shadow-xs`
             : 'w-12 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
         }
         ${isDynamic ? 'animate-scale-in' : ''}

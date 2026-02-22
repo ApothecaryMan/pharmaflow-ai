@@ -317,7 +317,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
           <button
             onClick={handlePrint}
             disabled={queue.length === 0}
-            className={`px-5 py-2.5 bg-${color}-600 hover:bg-${color}-700 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:grayscale disabled:shadow-none font-semibold`}
+            className={`px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:grayscale disabled:shadow-none font-semibold`}
           >
             <span className='material-symbols-rounded'>print</span>
             {t.barcodePrinter?.printLabels || 'Print Labels'}
@@ -404,7 +404,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                 {t.barcodePrinter?.totalLabels || 'Total Labels'}
               </span>
               <span
-                className={`text-sm font-bold text-${color}-600 dark:text-${color}-400 tabular-nums`}
+                className={`text-sm font-bold text-primary-600 dark:text-primary-400 tabular-nums`}
               >
                 {queue.reduce((acc, item) => acc + item.quantity, 0)}
               </span>
@@ -466,7 +466,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                   key={item.id}
                   className={`border transition-colors group gap-3 flex items-center p-3 rounded-xl ${
                     lastAddedId === item.id
-                      ? `bg-${color}-500/10 dark:bg-${color}-400/10 border-${color}-200 dark:border-${color}-700/50`
+                      ? `bg-primary-500/10 dark:bg-primary-400/10 border-primary-200 dark:border-primary-700/50`
                       : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-800'
                   }`}
                   dir='ltr'

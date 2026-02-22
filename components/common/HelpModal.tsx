@@ -92,7 +92,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({
         {/* Usage */}
         <div className={`p-5 rounded-2xl ${CARD_BASE}`}>
           <h3 className='text-xl font-bold mb-4 flex items-center gap-2'>
-            <span className={`material-symbols-rounded text-${color}-600`}>menu_book</span>
+            <span className={`material-symbols-rounded text-primary-600`}>menu_book</span>
             {helpContent.usage.title}
           </h3>
 
@@ -123,7 +123,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({
         {/* Features */}
         <div className={`p-5 rounded-2xl ${CARD_BASE}`}>
           <h3 className='text-xl font-bold mb-3 flex items-center gap-2'>
-            <span className={`material-symbols-rounded text-${color}-600`}>featured_play_list</span>
+            <span className={`material-symbols-rounded text-primary-600`}>featured_play_list</span>
             {helpContent.features.title}
           </h3>
           <ul className='space-y-2 list-disc list-inside text-gray-700 dark:text-gray-300 text-sm columns-1 md:columns-2'>
@@ -139,7 +139,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({
         {helpContent.understanding && (
           <div className={`p-5 rounded-2xl ${CARD_BASE}`}>
             <h3 className='text-xl font-bold mb-3 flex items-center gap-2'>
-              <span className={`material-symbols-rounded text-${color}-600`}>info</span>
+              <span className={`material-symbols-rounded text-primary-600`}>info</span>
               {helpContent.understanding.title}
             </h3>
             <ul className='space-y-2 list-disc list-inside text-gray-700 dark:text-gray-300 text-sm mb-3'>

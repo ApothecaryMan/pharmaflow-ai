@@ -297,14 +297,14 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         {/* Total Revenue Card - Hidden for Delivery Agents */}
         {userRole !== 'delivery' && (
           <div
-            className={`px-4 py-2 rounded-2xl bg-${color}-50 dark:bg-${color}-900/20 ${CARD_BASE} flex flex-col items-end min-w-[140px]`}
+            className={`px-4 py-2 rounded-2xl bg-primary-50 dark:bg-primary-900/20 ${CARD_BASE} flex flex-col items-end min-w-[140px]`}
           >
             <span
-              className={`text-[10px] font-bold uppercase text-${color}-600 dark:text-${color}-400`}
+              className={`text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400`}
             >
               {t.totalRevenue}
             </span>
-            <span className={`text-xl font-bold text-${color}-900 dark:text-${color}-100`}>
+            <span className={`text-xl font-bold text-primary-900 dark:text-primary-100`}>
               ${sales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
             </span>
           </div>
@@ -613,7 +613,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
                   <button
                     onClick={() => handlePrint(selectedSale)}
                     aria-label={t.modal.print}
-                    className={`flex-1 py-2.5 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 transition-colors flex items-center justify-center gap-2`}
+                    className={`flex-1 py-2.5 rounded-full font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors flex items-center justify-center gap-2`}
                   >
                     <span className='material-symbols-rounded'>print</span>
                     {t.modal.print}

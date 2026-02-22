@@ -1241,7 +1241,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                   suggestions={[]}
                   placeholder={t.searchDrug}
                   className='w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all text-sm h-[42px]'
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                  style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                   onFocus={() => setShowSuggestions(true)}
                   onKeyDown={(e) => {
                     if (filteredDrugs.length > 0) {
@@ -1275,7 +1275,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                             }}
                             className={`w-full text-left p-3 flex items-center gap-3 transition-all rounded-lg ${
                               index === selectedSuggestionIndex
-                                ? `bg-${color}-50 dark:bg-gray-700 ring-2 ring-${color}-500/20`
+                                ? `bg-primary-50 dark:bg-gray-700 ring-2 ring-primary-500/20`
                                 : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
                             }`}
                             dir='ltr'
@@ -1371,9 +1371,9 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                           setSupplierSearch('');
                           setIsSupplierOpen(false);
                         }}
-                        className={`px-3 py-2 cursor-pointer hover:bg-${color}-50 dark:hover:bg-${color}-900/20 transition-colors ${
+                        className={`px-3 py-2 cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors ${
                           selectedSupplierId === supplier.id
-                            ? `bg-${color}-50 dark:bg-gray-700/20`
+                            ? `bg-primary-50 dark:bg-gray-700/20`
                             : ''
                         }`}
                       >
@@ -1560,7 +1560,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                     onClick={() => setSelectedCartIndex(index)}
                     className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer transition-all ${
                       selectedCartIndex === index
-                        ? `bg-${color}-50 dark:bg-gray-700`
+                        ? `bg-primary-50 dark:bg-gray-700`
                         : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
                     onContextMenu={(e) => {
@@ -1622,7 +1622,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                           value={item.quantity}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           onFocus={(e) => {
@@ -1657,7 +1657,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                           })()}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           value={
@@ -1705,7 +1705,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                           value={item.costPrice}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           onFocus={(e) => {
@@ -1732,7 +1732,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                           value={item.discount || 0}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           onFocus={(e) => {
@@ -1757,7 +1757,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                           value={item.salePrice || 0}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           onFocus={(e) => {
@@ -1784,7 +1784,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                           value={item.tax || 0}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           onFocus={(e) => {
@@ -1806,7 +1806,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                           onChange={() => {}} // Read only
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           className='opacity-75 pointer-events-none' // Visual cue
@@ -1827,7 +1827,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                           onChange={() => {}} // Read only
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-${color}-50 dark:bg-gray-700`
+                              ? `bg-primary-50 dark:bg-gray-700`
                               : 'bg-gray-50 dark:bg-gray-800'
                           }
                           className='opacity-75 pointer-events-none' // Visual cue
@@ -1945,7 +1945,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
           <div className='flex-1 overflow-auto bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800'>
             <table className='w-full min-w-full table-fixed border-collapse type-functional'>
               <thead
-                className={`bg-${color}-50 dark:bg-${color}-900 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-xs`}
+                className={`bg-primary-50 dark:bg-primary-900 text-primary-900 dark:text-primary-100 uppercase text-xs font-bold tracking-wider sticky top-0 z-10 shadow-xs`}
               >
                 <tr>
                   {columnOrder
@@ -1956,7 +1956,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                         data-column-id={columnId}
                         className={`${historyColumnsDef[columnId as keyof typeof historyColumnsDef].className} ${!isColumnResizing ? 'cursor-grab active:cursor-grabbing' : ''} select-none transition-colors relative group/header hover:bg-gray-100 dark:hover:bg-gray-800 ${
                           draggedColumn === columnId ? 'opacity-50' : ''
-                        } ${dragOverColumn === columnId ? `bg-${color}-100 dark:bg-${color}-900/50` : ''}`}
+                        } ${dragOverColumn === columnId ? `bg-primary-100 dark:bg-primary-900/50` : ''}`}
                         title={historyColumnsDef[columnId as keyof typeof historyColumnsDef].label}
                         draggable={!isColumnResizing}
                         onDragStart={(e) => {
@@ -2026,7 +2026,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                       e.stopPropagation();
                       showMenu(e.clientX, e.clientY, getRowContextActions(p));
                     }}
-                    className={`border-b border-gray-100 dark:border-gray-800 hover:bg-${color}-50 dark:hover:bg-${color}-950/20 cursor-pointer transition-colors ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''}`}
+                    className={`border-b border-gray-100 dark:border-gray-800 hover:bg-primary-50 dark:hover:bg-primary-950/20 cursor-pointer transition-colors ${index % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/20' : ''}`}
                   >
                     {columnOrder
                       .filter((col) => !hiddenColumns.has(col))
@@ -2097,7 +2097,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
               <p className='text-xs text-gray-500 uppercase font-bold mb-1'>
                 {t.detailsModal?.totalCost || 'Total Cost'}
               </p>
-              <p className={`font-bold text-lg text-${color}-600`}>
+              <p className={`font-bold text-lg text-primary-600`}>
                 ${selectedPurchase.totalCost.toFixed(2)}
               </p>
             </div>

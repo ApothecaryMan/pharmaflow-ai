@@ -26,15 +26,15 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
       >
         {/* Left Accent */}
         <div
-          className={`absolute left-0 top-1/4 bottom-1/4 w-1 rounded-r-full bg-${color}-500/50 dark:bg-${color}-400/30 opacity-0 group-hover:opacity-100 transition-opacity`}
+          className={`absolute left-0 top-1/4 bottom-1/4 w-1 rounded-r-full bg-primary-500/50 dark:bg-primary-400/30 opacity-0 group-hover:opacity-100 transition-opacity`}
         />
 
         <div className='flex items-center gap-3'>
           <div
-            className={`w-7 h-7 rounded-lg bg-${color}-50 dark:bg-${color}-900/30 flex items-center justify-center border border-${color}-100/50 dark:border-${color}-800/20`}
+            className={`w-7 h-7 rounded-lg bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center border border-primary-100/50 dark:border-primary-800/20`}
           >
             <span
-              className={`material-symbols-rounded text-base text-${color}-600 dark:text-${color}-400`}
+              className={`material-symbols-rounded text-base text-primary-600 dark:text-primary-400`}
             >
               {icon}
             </span>

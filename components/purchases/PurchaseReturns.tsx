@@ -335,7 +335,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
         </div>
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white font-bold shadow-lg shadow-${color}-200 dark:shadow-none transition-all active:scale-95`}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold shadow-lg shadow-primary-200 dark:shadow-none transition-all active:scale-95`}
         >
           <span className='material-symbols-rounded text-[20px]'>add_circle</span>
           {t.purchaseReturns?.createReturn || 'Create Return'}
@@ -403,7 +403,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                 className={`px-8 py-3 rounded-xl shadow-lg transition-all font-bold flex items-center gap-2 ${
                   returnItems.length === 0
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : `bg-${color}-600 hover:bg-${color}-700 text-white`
+                    : `bg-primary-600 hover:bg-primary-700 text-white`
                 }`}
               >
                 <span className='material-symbols-rounded'>check_circle</span>
@@ -428,7 +428,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                   setItemFormData({});
                 }}
                 className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
-                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                 required
               >
                 <option value=''>
@@ -446,7 +446,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                 <button
                   type='button'
                   onClick={handleReturnAll}
-                  className={`mt-3 w-full px-4 py-2 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50 text-sm font-bold transition-colors flex items-center justify-center gap-2`}
+                  className={`mt-3 w-full px-4 py-2 rounded-xl bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50 text-sm font-bold transition-colors flex items-center justify-center gap-2`}
                 >
                   <span className='material-symbols-rounded text-[18px]'>assignment_return</span>
                   {t.purchaseReturns?.returnAll || 'Return All Items from This Purchase'}
@@ -600,7 +600,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                   })
                                 }
                                 className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
-                                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                               />
                             </div>
 
@@ -616,7 +616,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                   })
                                 }
                                 className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
-                                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                               >
                                 <option value='damaged'>
                                   {t.purchaseReturns?.reasons?.damaged || 'Damaged'}
@@ -651,7 +651,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                   })
                                 }
                                 className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
-                                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                               >
                                 <option value='damaged'>
                                   {t.purchaseReturns?.conditions?.damaged || 'Damaged'}
@@ -676,7 +676,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                                 );
                                 updateItemFormData({ quantity: 1 });
                               }}
-                              className={`w-full py-2.5 rounded-xl bg-${color}-600/10 hover:bg-${color}-600 text-${color}-600 hover:text-white text-xs font-black transition-all border border-${color}-600/20 active:scale-95`}
+                              className={`w-full py-2.5 rounded-xl bg-primary-600/10 hover:bg-primary-600 text-primary-600 hover:text-white text-xs font-black transition-all border border-primary-600/20 active:scale-95`}
                             >
                               <span className='material-symbols-rounded block mb-0.5'>
                                 add_shopping_cart
@@ -702,7 +702,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                 rows={3}
                 dir={notesDir}
                 className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all resize-none text-sm font-medium'
-                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                 placeholder={
                   t.purchaseReturns?.notesPlaceholder ||
                   'Add any additional notes about this return...'

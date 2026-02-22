@@ -288,9 +288,9 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                   s === step
-                    ? `bg-${color}-600 text-white shadow-lg shadow-${color}-200 dark:shadow-none`
+                    ? `bg-primary-600 text-white shadow-lg shadow-primary-200 dark:shadow-none`
                     : s < step
-                      ? `bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600`
+                      ? `bg-primary-100 dark:bg-primary-900/50 text-primary-600`
                       : 'bg-gray-200 dark:bg-gray-800 text-gray-400'
                 }`}
               >
@@ -300,7 +300,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
               </div>
               <span
                 className={`text-[10px] mt-1 font-medium ${
-                  s === step ? `text-${color}-600` : 'text-gray-400'
+                  s === step ? `text-primary-600` : 'text-gray-400'
                 }`}
               >
                 {stepLabels[s - 1]}
@@ -309,7 +309,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
             {s < 3 && (
               <div
                 className={`w-12 h-0.5 mx-2 transition-colors ${
-                  s < step ? `bg-${color}-600` : 'bg-gray-200 dark:bg-gray-800'
+                  s < step ? `bg-primary-600` : 'bg-gray-200 dark:bg-gray-800'
                 }`}
               />
             )}
@@ -325,7 +325,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
             <div className='flex items-center justify-between mb-4'>
               <p className='text-sm text-gray-600 dark:text-gray-400'>
                 {t.returns.selectItems}{' '}
-                <span className={`font-bold text-${color}-600`}>
+                <span className={`font-bold text-primary-600`}>
                   ({selectedItems.size} {t.returns.itemsSelected})
                 </span>
               </p>
@@ -334,7 +334,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   isAllSelected
                     ? 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
-                    : `bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 hover:bg-${color}-200 dark:hover:bg-${color}-900/50`
+                    : `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50`
                 }`}
               >
                 {isAllSelected
@@ -381,7 +381,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           </h4>
                           <div className='flex items-center gap-2 mt-0 leading-none h-4'>
                             <span
-                              className={`text-[10px] font-bold uppercase ${isSelected ? `text-${color}-600 dark:text-${color}-400` : 'text-gray-400'}`}
+                              className={`text-[10px] font-bold uppercase ${isSelected ? `text-primary-600 dark:text-primary-400` : 'text-gray-400'}`}
                             >
                               {t.modal?.qty || 'Qty'}: {item.availableQty}
                             </span>
@@ -416,7 +416,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                                     updateItemQuantity(item.lineKey, Math.max(1, selectedQty - 1))
                                   }
                                   disabled={selectedQty <= 1}
-                                  className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-xs flex items-center justify-center enabled:hover:text-${color}-600 dark:enabled:hover:text-${color}-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:pointer-events-none`}
+                                  className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-xs flex items-center justify-center enabled:hover:text-primary-600 dark:enabled:hover:text-primary-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:pointer-events-none`}
                                 >
                                   <span className='material-symbols-rounded text-lg'>remove</span>
                                 </button>
@@ -444,7 +444,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                                     )
                                   }
                                   disabled={selectedQty >= item.availableQty}
-                                  className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-xs flex items-center justify-center enabled:hover:text-${color}-600 dark:enabled:hover:text-${color}-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:pointer-events-none`}
+                                  className={`w-7 h-7 rounded-full bg-white dark:bg-gray-700 shadow-xs flex items-center justify-center enabled:hover:text-primary-600 dark:enabled:hover:text-primary-400 transition-colors text-gray-600 dark:text-gray-200 disabled:opacity-50 disabled:pointer-events-none`}
                                 >
                                   <span className='material-symbols-rounded text-lg'>add</span>
                                 </button>
@@ -454,7 +454,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             <div
                               className={`w-8 h-8 rounded-full flex items-center justify-center transition-all border-2 ${
                                 isSelected
-                                  ? `bg-${color}-600 border-${color}-600 text-white`
+                                  ? `bg-primary-600 border-primary-600 text-white`
                                   : 'border-gray-200 dark:border-gray-700 text-transparent'
                               }`}
                             >
@@ -503,7 +503,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                 renderSelected={(item) => (
                   <div className='flex items-center gap-2'>
                     {item && (
-                      <span className={`material-symbols-rounded text-${color}-600`}>
+                      <span className={`material-symbols-rounded text-primary-600`}>
                         {item.icon}
                       </span>
                     )}
@@ -524,13 +524,13 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                 rows={4}
                 dir={returnNotesDir}
                 className={`peer w-full px-4 pt-6 pb-2 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-hidden focus:ring-2 focus:border-transparent transition-all resize-none font-medium text-gray-900 dark:text-gray-100 placeholder-transparent`}
-                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                style={{ '--tw-ring-color': `var(--color-primary-500)` } as any}
                 placeholder='Additional Notes'
               />
               <label
                 htmlFor='returnNotes'
                 className={`absolute top-2 inset-s-4 text-xs font-bold text-gray-400 pointer-events-none transition-all 
-                    peer-focus:text-${color}-600 peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs`}
+                    peer-focus:text-primary-600 peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs`}
               >
                 {t.returns.notes}
               </label>
@@ -542,13 +542,13 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         {step === 3 && (
           <div className='space-y-4'>
             <div
-              className={`p-5 rounded-3xl bg-linear-to-br from-${color}-50 to-${color}-100/50 dark:from-${color}-950/30 dark:to-${color}-900/20 border border-${color}-100 dark:border-${color}-800`}
+              className={`p-5 rounded-3xl bg-linear-to-br from-primary-50 to-primary-100/50 dark:from-primary-950/30 dark:to-primary-900/20 border border-primary-100 dark:border-primary-800`}
             >
               <div className='flex items-center gap-3 mb-4'>
                 <div
-                  className={`w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-900/50 flex items-center justify-center shadow-xs`}
+                  className={`w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center shadow-xs`}
                 >
-                  <span className={`material-symbols-rounded text-${color}-600`}>
+                  <span className={`material-symbols-rounded text-primary-600`}>
                     assignment_return
                   </span>
                 </div>
@@ -569,7 +569,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                 </div>
                 <div className='flex justify-between items-center p-3 rounded-xl bg-white dark:bg-gray-900 shadow-xs border border-gray-100 dark:border-gray-800 mt-2'>
                   <span className={`text-gray-500 font-medium`}>{t.returns.refundAmount}:</span>
-                  <span className={`text-xl font-black text-${color}-600`}>
+                  <span className={`text-xl font-black text-primary-600`}>
                     ${calculateRefund.toFixed(2)}
                   </span>
                 </div>
@@ -674,7 +674,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           <button
             onClick={handleNext}
             disabled={step === 1 && selectedItems.size === 0}
-            className={`px-8 py-2.5 rounded-xl font-bold text-white bg-${color}-600 enabled:hover:bg-${color}-700 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 shadow-lg shadow-${color}-200 dark:shadow-none`}
+            className={`px-8 py-2.5 rounded-xl font-bold text-white bg-primary-600 enabled:hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 shadow-lg shadow-primary-200 dark:shadow-none`}
           >
             {t.returns.next}
             <span className='material-symbols-rounded text-lg'>arrow_forward</span>
@@ -682,7 +682,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         ) : (
           <button
             onClick={handleConfirm}
-            className={`px-8 py-2.5 rounded-xl font-bold text-white bg-${color}-600 hover:bg-${color}-700 transition-all flex items-center gap-2 shadow-lg shadow-${color}-200 dark:shadow-none`}
+            className={`px-8 py-2.5 rounded-xl font-bold text-white bg-primary-600 hover:bg-primary-700 transition-all flex items-center gap-2 shadow-lg shadow-primary-200 dark:shadow-none`}
           >
             <span className='material-symbols-rounded text-[20px]'>check_circle</span>
             {t.returns.confirmReturn}

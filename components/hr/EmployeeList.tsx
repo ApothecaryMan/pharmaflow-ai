@@ -477,7 +477,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                 setEditingEmployee(null);
                 setIsModalOpen(true);
               }}
-              className={`flex items-center justify-center gap-2 px-4 py-2 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all active:scale-95 whitespace-nowrap`}
+              className={`flex items-center justify-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all active:scale-95 whitespace-nowrap`}
             >
               <span className='material-symbols-rounded'>add</span>
               <span>{t.employeeList.addEmployee}</span>
@@ -550,7 +550,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                 />
               ) : (
                 <div
-                  className={`w-32 h-32 rounded-3xl bg-${color}-50 dark:bg-${color}-900/20 flex items-center justify-center text-${color}-600 dark:text-${color}-400 text-4xl font-bold border border-${color}-100 dark:border-${color}-900/30`}
+                  className={`w-32 h-32 rounded-3xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center text-primary-600 dark:text-primary-400 text-4xl font-bold border border-primary-100 dark:border-primary-900/30`}
                 >
                   {getInitials(formData.name || '')}
                 </div>
@@ -809,7 +809,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                 {/* Credentials Tab */}
                 <div className='space-y-4'>
                   <div className='flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800'>
-                    <span className={`material-symbols-rounded text-${color}-500 text-lg`}>
+                    <span className={`material-symbols-rounded text-primary-500 text-lg`}>
                       lock
                     </span>
                     <h3 className='text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider'>
@@ -992,7 +992,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                           <div className='flex items-center justify-between'>
                             <div className='flex items-center gap-2'>
                               <span
-                                className={`material-symbols-rounded text-${color}-500 text-lg`}
+                                className={`material-symbols-rounded text-primary-500 text-lg`}
                               >
                                 key
                               </span>
@@ -1096,7 +1096,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                         );
                                       }
                                     }}
-                                    className={`px-4 py-2.5 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all active:scale-95 font-medium flex items-center gap-2`}
+                                    className={`px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all active:scale-95 font-medium flex items-center gap-2`}
                                   >
                                     <span className='material-symbols-rounded text-[18px]'>
                                       verified_user
@@ -1161,7 +1161,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                 {/* Documents Tab */}
                 <div className='space-y-4'>
                   <div className='flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800'>
-                    <span className={`material-symbols-rounded text-${color}-500 text-lg`}>
+                    <span className={`material-symbols-rounded text-primary-500 text-lg`}>
                       description
                     </span>
                     <h3 className='text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider'>
@@ -1285,10 +1285,10 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                               </div>
                             ) : (
                               <label
-                                className={`flex items-center justify-center w-24 h-24 border-2 border-dashed border-${color}-300 dark:border-${color}-600 rounded-xl hover:border-${color}-400 dark:hover:border-${color}-500 transition-colors cursor-pointer bg-${color}-50/50 dark:bg-${color}-900/10`}
+                                className={`flex items-center justify-center w-24 h-24 border-2 border-dashed border-primary-300 dark:border-primary-600 rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-primary-50/50 dark:bg-primary-900/10`}
                               >
                                 <span
-                                  className={`material-symbols-rounded text-${color}-500 text-2xl`}
+                                  className={`material-symbols-rounded text-primary-500 text-2xl`}
                                 >
                                   add
                                 </span>
@@ -1493,7 +1493,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
           </button>
           <button
             onClick={handleSave}
-            className={`px-8 py-2.5 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all active:scale-95 font-bold`}
+            className={`px-8 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all active:scale-95 font-bold`}
           >
             {t.employeeList.modal.save}
           </button>
@@ -1552,7 +1552,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       />
                     ) : (
                       <div
-                        className={`w-12 h-12 rounded-full flex items-center justify-center bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 text-xl font-bold`}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xl font-bold`}
                       >
                         {getInitials(viewingEmployee.name)}
                       </div>

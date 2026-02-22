@@ -154,7 +154,7 @@ export const PrinterSettings: React.FC<PrinterSettingsProps> = ({
                 <button
                   onClick={connect}
                   disabled={isConnecting}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-400 hover:bg-${color}-200 dark:hover:bg-${color}-900/50`}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-900/50`}
                 >
                   {pt.reconnect || 'Reconnect'}
                 </button>
@@ -189,7 +189,7 @@ export const PrinterSettings: React.FC<PrinterSettingsProps> = ({
                   disabled={testingLabel || !settings.labelPrinter}
                   className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 ${
                     settings.labelPrinter
-                      ? `bg-${color}-50 dark:bg-${color}-900/20 text-${color}-600 hover:bg-${color}-100`
+                      ? `bg-primary-50 dark:bg-primary-900/20 text-primary-600 hover:bg-primary-100`
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   }`}
                 >
@@ -246,7 +246,7 @@ export const PrinterSettings: React.FC<PrinterSettingsProps> = ({
                   disabled={testingReceipt || !settings.receiptPrinter}
                   className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 ${
                     settings.receiptPrinter
-                      ? `bg-${color}-50 dark:bg-${color}-900/20 text-${color}-600 hover:bg-${color}-100`
+                      ? `bg-primary-50 dark:bg-primary-900/20 text-primary-600 hover:bg-primary-100`
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   }`}
                 >

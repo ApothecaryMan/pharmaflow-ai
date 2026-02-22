@@ -442,7 +442,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
               {canAddCash && (
                 <button
                   onClick={() => setModalMode('in')}
-                  className={`px-4 py-2 rounded-xl bg-${color}-100 text-${color}-700 hover:bg-${color}-200 font-bold transition-colors flex items-center gap-2`}
+                  className={`px-4 py-2 rounded-xl bg-primary-100 text-primary-700 hover:bg-primary-200 font-bold transition-colors flex items-center gap-2`}
                 >
                   <span className='material-symbols-rounded'>add</span>
                   {t.cashRegister.actions.addCash}
@@ -471,7 +471,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             canOpenShift && (
               <button
                 onClick={() => setModalMode('open')}
-                className={`px-6 py-2.5 rounded-xl bg-${color}-600 text-white hover:bg-${color}-700 font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2`}
+                className={`px-6 py-2.5 rounded-xl bg-primary-600 text-white hover:bg-primary-700 font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2`}
               >
                 <span className='material-symbols-rounded'>lock_open</span>
                 {t.cashRegister.actions.openShift}
@@ -489,7 +489,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           <div className={`p-6 rounded-3xl ${CARD_BASE} relative overflow-hidden group`}>
             <div className='absolute -bottom-6 ltr:-right-6 rtl:-left-6 opacity-10 group-hover:scale-110 transition-transform duration-500 pointer-events-none select-none'>
               <span
-                className={`material-symbols-rounded text-[180px] ${currentShift ? `text-${color}-500` : 'text-gray-500'} -rotate-12`}
+                className={`material-symbols-rounded text-[180px] ${currentShift ? `text-primary-500` : 'text-gray-500'} -rotate-12`}
               >
                 {currentShift ? 'lock_open' : 'lock'}
               </span>
@@ -578,15 +578,15 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             <div className='space-y-3'>
               {canViewExpectedBalance && (
                 <div
-                  className={`p-4 rounded-2xl bg-${color}-50 dark:bg-${color}-950/20 border border-${color}-100 dark:border-${color}-900`}
+                  className={`p-4 rounded-2xl bg-primary-50 dark:bg-primary-950/20 border border-primary-100 dark:border-primary-900`}
                 >
                   <p
-                    className={`text-xs font-bold uppercase text-${color}-800 dark:text-${color}-300 mb-1`}
+                    className={`text-xs font-bold uppercase text-primary-800 dark:text-primary-300 mb-1`}
                   >
                     {t.cashRegister.summary.expectedBalance}
                   </p>
                   <p
-                    className={`text-2xl font-bold text-${color}-900 dark:text-${color}-100 type-expressive`}
+                    className={`text-2xl font-bold text-primary-900 dark:text-primary-100 type-expressive`}
                   >
                     {(() => {
                       const { amount, symbol } = formatCurrencyParts(
@@ -955,8 +955,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   if (modalMode === 'close') handleCloseShift();
                   if (modalMode === 'in' || modalMode === 'out') handleCashTransaction();
                 }}
-                className={`flex-1 py-3 rounded-xl font-bold text-white shadow-lg shadow-${color}-500/20
-                           bg-${color}-600 hover:bg-${color}-700 active:scale-95 transition-all`}
+                className={`flex-1 py-3 rounded-xl font-bold text-white shadow-lg shadow-primary-500/20
+                           bg-primary-600 hover:bg-primary-700 active:scale-95 transition-all`}
               >
                 {t.cashRegister.modal.confirm}
               </button>

@@ -478,7 +478,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         header: t.headers.category,
         cell: ({ row }) => (
           <span
-            className={`inline-flex items-center px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
+            className={`inline-flex items-center px-1.5 py-0.5 rounded-lg border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
           >
             {getLocalizedCategory(row.original.category || 'General', currentLang)}
           </span>
@@ -729,12 +729,12 @@ export const Inventory: React.FC<InventoryProps> = ({
       {/* Success Message */}
       {showSuccess && mode === 'add' && (
         <div
-          className={`p-4 rounded-2xl bg-${color}-50 dark:bg-${color}-950/30 border border-${color}-200 dark:border-${color}-800 flex items-center gap-3 animate-fade-in`}
+          className={`p-4 rounded-2xl bg-primary-50 dark:bg-primary-950/30 border border-primary-200 dark:border-primary-800 flex items-center gap-3 animate-fade-in`}
         >
-          <span className={`material-symbols-rounded text-${color}-600 dark:text-${color}-400`}>
+          <span className={`material-symbols-rounded text-primary-600 dark:text-primary-400`}>
             check_circle
           </span>
-          <span className={`text-sm font-medium text-${color}-700 dark:text-${color}-300`}>
+          <span className={`text-sm font-medium text-primary-700 dark:text-primary-300`}>
             {t.productAddedSuccess || 'Product added successfully!'}
           </span>
         </div>
@@ -1123,7 +1123,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               </button>
               <button
                 type='submit'
-                className={`px-8 py-2.5 bg-${color}-600 hover:bg-${color}-700 text-white rounded-xl shadow-lg shadow-${color}-200 dark:shadow-none transition-all font-medium text-sm type-interactive`}
+                className={`px-8 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-lg shadow-primary-200 dark:shadow-none transition-all font-medium text-sm type-interactive`}
               >
                 {t.addDrug}
               </button>
@@ -1160,7 +1160,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                 </p>
               </div>
               <span
-                className={`inline-flex items-center px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
+                className={`inline-flex items-center px-1.5 py-0.5 rounded-lg border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
               >
                 {getLocalizedCategory(viewingDrug.category || 'General', currentLang)}
               </span>
@@ -1251,7 +1251,7 @@ export const Inventory: React.FC<InventoryProps> = ({
           <div className='p-4 flex gap-3'>
             <button
               onClick={() => handlePrintBarcode(viewingDrug)}
-              className={`flex-1 py-2.5 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 type-interactive`}
+              className={`flex-1 py-2.5 rounded-full font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 type-interactive`}
             >
               <span className='material-symbols-rounded'>qr_code_2</span>
               {t.actionsMenu.printBarcode}
@@ -1587,7 +1587,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               </button>
               <button
                 type='submit'
-                className={`flex-1 py-3 rounded-xl font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all active:scale-95`}
+                className={`flex-1 py-3 rounded-xl font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95`}
               >
                 {t.modal.save}
               </button>
@@ -1659,7 +1659,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               <button
                 type='button'
                 onClick={handleConfirmPrint}
-                className={`flex-1 py-3 rounded-xl font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2`}
+                className={`flex-1 py-3 rounded-xl font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95 flex items-center justify-center gap-2`}
               >
                 <span className='material-symbols-rounded text-lg'>print</span>
                 {t.actionsMenu.printBarcode}

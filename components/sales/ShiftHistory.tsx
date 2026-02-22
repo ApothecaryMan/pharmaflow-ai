@@ -224,7 +224,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         <div className='absolute inset-0 z-50 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-xs rounded-2xl'>
           <div className='flex flex-col items-center gap-3'>
             <div
-              className={`w-10 h-10 border-4 border-${color}-200 border-t-${color}-600 rounded-full animate-spin`}
+              className={`w-10 h-10 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin`}
             />
             <p className='text-sm font-medium text-gray-500'>
               {language === 'AR' ? 'جاري تحميل المناوبات...' : 'Loading shifts...'}
@@ -247,26 +247,26 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         {/* Summary Cards */}
         <div className='flex gap-3'>
           <div
-            className={`px-4 py-2 rounded-2xl bg-${color}-50 dark:bg-${color}-900/20 ${CARD_BASE} flex flex-col items-end min-w-[120px]`}
+            className={`px-4 py-2 rounded-2xl bg-primary-50 dark:bg-primary-900/20 ${CARD_BASE} flex flex-col items-end min-w-[120px]`}
           >
             <span
-              className={`text-[10px] font-bold uppercase text-${color}-600 dark:text-${color}-400`}
+              className={`text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400`}
             >
               {t.shiftHistory?.summary?.totalShifts || 'Total Shifts'}
             </span>
-            <span className={`text-xl font-bold text-${color}-900 dark:text-${color}-100`}>
+            <span className={`text-xl font-bold text-primary-900 dark:text-primary-100`}>
               {filteredShifts.length}
             </span>
           </div>
           <div
-            className={`px-4 py-2 rounded-2xl bg-${color}-50 dark:bg-${color}-900/20 ${CARD_BASE} flex flex-col items-end min-w-[140px]`}
+            className={`px-4 py-2 rounded-2xl bg-primary-50 dark:bg-primary-900/20 ${CARD_BASE} flex flex-col items-end min-w-[140px]`}
           >
             <span
-              className={`text-[10px] font-bold uppercase text-${color}-600 dark:text-${color}-400`}
+              className={`text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400`}
             >
               {t.shiftHistory?.summary?.totalRevenue || 'Total Revenue'}
             </span>
-            <span className={`text-xl font-bold text-${color}-900 dark:text-${color}-100`}>
+            <span className={`text-xl font-bold text-primary-900 dark:text-primary-100`}>
               <PriceDisplay value={totalRevenue} />
             </span>
           </div>

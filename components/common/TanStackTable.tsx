@@ -873,7 +873,7 @@ export function TanStackTable<TData, TValue>({
                     <td colSpan={columns.length} className='h-32 text-center'>
                       <div className='flex flex-col items-center justify-center p-4'>
                         <div
-                          className={`w-6 h-6 border-2 border-${color}-500 border-t-transparent rounded-full animate-spin mb-2`}
+                          className={`w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mb-2`}
                         ></div>
                         <span className='text-sm text-gray-500'>{t.global.table.loadingData}</span>
                       </div>
@@ -899,7 +899,7 @@ export function TanStackTable<TData, TValue>({
                       }}
                       className={`transition-colors overflow-visible ${onRowClick ? 'cursor-pointer' : ''} ${
                         activeIndex !== undefined && row.index === activeIndex
-                          ? `bg-${color}-50 dark:bg-${color}-900/20`
+                          ? `bg-primary-50 dark:bg-primary-900/20`
                           : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                       }`}
                     >
@@ -1069,7 +1069,7 @@ export function TanStackTable<TData, TValue>({
                   onClick={() => setIsShowAll(!isShowAll)}
                   className={`flex items-center justify-center w-6 h-6 rounded-md border transition-all ${
                     isShowAll
-                      ? `bg-${color}-50 border-${color}-200 text-${color}-700 dark:bg-${color}-900/20 dark:border-${color}-800 dark:text-${color}-400`
+                      ? `bg-primary-50 border-primary-200 text-primary-700 dark:bg-primary-900/20 dark:border-primary-800 dark:text-primary-400`
                       : 'bg-transparent border-gray-200 dark:border-gray-700 text-gray-500 hover:text-gray-700'
                   }`}
                   title={isShowAll ? 'Show Less' : t.global?.table?.showAll || 'Show All'}

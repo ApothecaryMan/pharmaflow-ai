@@ -217,7 +217,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                           !isImplemented
                             ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
                             : isActive
-                              ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold`
+                              ? `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-semibold`
                               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                       >

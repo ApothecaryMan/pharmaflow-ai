@@ -1593,7 +1593,7 @@ export const POS: React.FC<POSProps> = ({
           if (count <= 0) return null;
           return (
             <div
-              className={`inline-block bg-${color}-600 text-white text-xs font-bold px-2 py-1 rounded-md tabular-nums`}
+              className={`inline-block bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded-md tabular-nums`}
             >
               {count}
             </div>
@@ -1612,7 +1612,7 @@ export const POS: React.FC<POSProps> = ({
 
         <button
           onClick={() => setShowDeliveryModal(true)}
-          className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent hover:bg-${color}-600 dark:hover:bg-${color}-500 hover:text-white dark:hover:text-white hover:border-${color}-600 dark:hover:border-${color}-500 transition-all duration-200 cursor-pointer shadow-xs`}
+          className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent hover:bg-primary-600 dark:hover:bg-primary-500 hover:text-white dark:hover:text-white hover:border-primary-600 dark:hover:border-primary-500 transition-all duration-200 cursor-pointer shadow-xs`}
         >
           <span className='material-symbols-rounded text-sm'>local_shipping</span>
           {t.deliveryOrders || 'Delivery Orders'}
@@ -1651,7 +1651,7 @@ export const POS: React.FC<POSProps> = ({
               <div className='flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in'>
                 <div className='flex items-center gap-3'>
                   <div
-                    className={`w-12 h-12 rounded-full bg-${color}-100 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-600 dark:text-${color}-400`}
+                    className={`w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400`}
                   >
                     <span className='material-symbols-rounded text-[24px]'>person</span>
                   </div>
@@ -1839,7 +1839,7 @@ export const POS: React.FC<POSProps> = ({
                 badge={
                   search.trim().length >= 2 ? (
                     <span
-                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent shadow-xs`}
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 text-[10px] font-bold uppercase tracking-wider bg-transparent shadow-xs`}
                     >
                       <span className='material-symbols-rounded text-sm'>inventory_2</span>
                       {filteredDrugs.length}
@@ -2019,7 +2019,7 @@ export const POS: React.FC<POSProps> = ({
         >
           <button
             onClick={() => setMobileTab('cart')}
-            className={`w-full p-3 rounded-2xl bg-${color}-600 text-white shadow-xl shadow-${color}-200 dark:shadow-none flex items-center justify-between animate-slide-up active:scale-95 transition-transform`}
+            className={`w-full p-3 rounded-2xl bg-primary-600 text-white shadow-xl shadow-primary-200 dark:shadow-none flex items-center justify-between animate-slide-up active:scale-95 transition-transform`}
           >
             <div className='flex items-center gap-3'>
               <span className='bg-white/20 px-2 py-0.5 rounded-lg text-xs font-bold'>
@@ -2053,13 +2053,13 @@ export const POS: React.FC<POSProps> = ({
           <div className='p-3 space-y-2 shrink-0'>
             <div className='flex items-center justify-between'>
               <h2
-                className={`text-sm font-bold text-${color}-900 dark:text-${color}-100 flex items-center gap-2`}
+                className={`text-sm font-bold text-primary-900 dark:text-primary-100 flex items-center gap-2`}
               >
                 <span className='material-symbols-rounded text-[18px]'>shopping_cart</span>
                 {t.cartTitle}
                 {totalItems > 0 && (
                   <span
-                    className={`bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 text-[10px] font-bold px-1.5 rounded-full min-w-[30px] h-[18px] inline-flex justify-center items-center`}
+                    className={`bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-[10px] font-bold px-1.5 rounded-full min-w-[30px] h-[18px] inline-flex justify-center items-center`}
                   >
                     {totalItems}
                   </span>
@@ -2110,7 +2110,7 @@ export const POS: React.FC<POSProps> = ({
                 <p className='text-xs'>{t.emptyCart}</p>
                 <button
                   onClick={() => setMobileTab('products')}
-                  className={`lg:hidden px-3 py-1.5 rounded-full bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 font-medium text-xs`}
+                  className={`lg:hidden px-3 py-1.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium text-xs`}
                 >
                   {t.backToProducts}
                 </button>
@@ -2219,7 +2219,7 @@ export const POS: React.FC<POSProps> = ({
                   {t.total}:
                 </span>
                 <span
-                  className={`text-2xl font-black text-${color}-600 dark:text-${color}-400 h-8 flex items-center tabular-nums`}
+                  className={`text-2xl font-black text-primary-600 dark:text-primary-400 h-8 flex items-center tabular-nums`}
                 >
                   <PriceDisplay value={cartTotal} />
                 </span>
@@ -2257,7 +2257,7 @@ export const POS: React.FC<POSProps> = ({
                     disabled={
                       !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
                     }
-                    className={`flex-1 py-2.5 rounded-xl bg-${color}-600 enabled:hover:bg-${color}-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
+                    className={`flex-1 py-2.5 rounded-xl bg-primary-600 enabled:hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
                   >
                     <span className='material-symbols-rounded text-[18px]'>payments</span>
                     {t.completeOrder}
@@ -2270,7 +2270,7 @@ export const POS: React.FC<POSProps> = ({
                     disabled={
                       !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
                     }
-                    className={`w-12 py-2.5 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 enabled:hover:bg-${color}-200 dark:enabled:hover:bg-${color}-900/50 disabled:opacity-50 disabled:pointer-events-none transition-colors flex justify-center items-center shrink-0`}
+                    className={`w-12 py-2.5 rounded-xl bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 enabled:hover:bg-primary-200 dark:enabled:hover:bg-primary-900/50 disabled:opacity-50 disabled:pointer-events-none transition-colors flex justify-center items-center shrink-0`}
                     title={t.deliveryOrder}
                   >
                     <span className='material-symbols-rounded text-[20px]'>local_shipping</span>
@@ -2285,7 +2285,7 @@ export const POS: React.FC<POSProps> = ({
                 >
                   {/* Amount Input */}
                   <div
-                    className={`flex-1 bg-white dark:bg-gray-900 border border-${color}-500 dark:border-${color}-400 rounded-xl flex items-center px-3 gap-1 overflow-hidden whitespace-nowrap shadow-xs`}
+                    className={`flex-1 bg-white dark:bg-gray-900 border border-primary-500 dark:border-primary-400 rounded-xl flex items-center px-3 gap-1 overflow-hidden whitespace-nowrap shadow-xs`}
                   >
                     <input
                       ref={(el) => {
@@ -2315,7 +2315,7 @@ export const POS: React.FC<POSProps> = ({
                   <div
                     className={`flex flex-col justify-center px-2 rounded-xl border min-w-[70px] transition-colors overflow-hidden whitespace-nowrap ${
                       (parseFloat(amountPaid) || 0) >= cartTotal
-                        ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-700`
+                        ? `bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700`
                         : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                     }`}
                   >
@@ -2325,7 +2325,7 @@ export const POS: React.FC<POSProps> = ({
                     <span
                       className={`text-sm font-bold text-center tabular-nums ${
                         (parseFloat(amountPaid) || 0) >= cartTotal
-                          ? `text-${color}-600 dark:text-${color}-400`
+                          ? `text-primary-600 dark:text-primary-400`
                           : 'text-gray-400'
                       }`}
                     >
@@ -2342,7 +2342,7 @@ export const POS: React.FC<POSProps> = ({
                       setIsCheckoutMode(false);
                       setAmountPaid('');
                     }}
-                    className={`w-11 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white flex items-center justify-center transition-colors shrink-0`}
+                    className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0`}
                   >
                     <span className='material-symbols-rounded'>check</span>
                   </button>
@@ -2370,7 +2370,7 @@ export const POS: React.FC<POSProps> = ({
                     <select
                       value={deliveryEmployeeId}
                       onChange={(e) => setDeliveryEmployeeId(e.target.value)}
-                      className={`w-full h-full bg-white dark:bg-gray-900 border border-${color}-400 dark:border-${color}-500/50 rounded-xl text-sm px-3 focus:ring-0 focus:outline-hidden appearance-none cursor-pointer font-bold tabular-nums shadow-xs transition-all`}
+                      className={`w-full h-full bg-white dark:bg-gray-900 border border-primary-400 dark:border-primary-500/50 rounded-xl text-sm px-3 focus:ring-0 focus:outline-hidden appearance-none cursor-pointer font-bold tabular-nums shadow-xs transition-all`}
                       style={{
                         backgroundImage:
                           'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
@@ -2396,7 +2396,7 @@ export const POS: React.FC<POSProps> = ({
                       handleCheckout('delivery', true);
                       setIsDeliveryMode(false);
                     }}
-                    className={`w-11 rounded-xl bg-${color}-600 hover:bg-${color}-700 text-white flex items-center justify-center transition-colors shrink-0`}
+                    className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0`}
                   >
                     <span className='material-symbols-rounded'>check</span>
                   </button>
@@ -2498,7 +2498,7 @@ export const POS: React.FC<POSProps> = ({
             <div className='p-4 bg-gray-50 dark:bg-gray-950/50 border-t border-gray-100 dark:border-gray-800'>
               <button
                 onClick={() => setViewingDrug(null)}
-                className={`w-full py-3 rounded-xl font-bold text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-colors`}
+                className={`w-full py-3 rounded-xl font-bold text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-colors`}
               >
                 {t.close}
               </button>

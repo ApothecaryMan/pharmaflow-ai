@@ -298,7 +298,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           }}
         />
       </div>
-      <div className={`text-${color}-500 mb-2`}>
+      <div className={`text-primary-500 mb-2`}>
         <span className='material-symbols-rounded text-3xl'>{icon}</span>
       </div>
       <div>
@@ -334,7 +334,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           value={totalCustomers}
           subtitle={`${activeCustomers} ${t?.active || 'Active'} • ${inactiveCustomers} ${t?.inactive || 'Inactive'}`}
           onClick={() => setExpandedView('total')}
-          colorClass={`bg-${color}-50 dark:bg-${color}-950/20 border border-${color}-100 dark:border-${color}-900`}
+          colorClass={`bg-primary-50 dark:bg-primary-950/20 border border-primary-100 dark:border-primary-900`}
         />
 
         {/* Customer Lifetime Value */}
@@ -457,7 +457,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 >
                   <div className='flex items-center gap-3 overflow-hidden'>
                     <div
-                      className={`w-8 h-8 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 font-bold text-sm flex items-center justify-center shrink-0`}
+                      className={`w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-300 font-bold text-sm flex items-center justify-center shrink-0`}
                     >
                       {index + 1}
                     </div>
@@ -680,7 +680,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                   </div>
                   <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
                     <div
-                      className={`bg-${color}-500 h-2 rounded-full transition-all`}
+                      className={`bg-primary-500 h-2 rounded-full transition-all`}
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
@@ -710,7 +710,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               >
                 <div className='flex items-center gap-3'>
                   <div
-                    className={`w-8 h-8 rounded-full bg-${color}-100 dark:bg-${color}-900/50 flex items-center justify-center text-${color}-600 dark:text-${color}-400 font-bold text-xs`}
+                    className={`w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-xs`}
                   >
                     {customer.name.substring(0, 2).toUpperCase()}
                   </div>
@@ -821,14 +821,14 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         <div className='space-y-6'>
           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
             <div
-              className={`p-6 rounded-2xl bg-${color}-50 dark:bg-${color}-950/20 border border-${color}-100 dark:border-${color}-900`}
+              className={`p-6 rounded-2xl bg-primary-50 dark:bg-primary-950/20 border border-primary-100 dark:border-primary-900`}
             >
               <p
-                className={`text-sm font-bold text-${color}-800 dark:text-${color}-300 uppercase mb-2`}
+                className={`text-sm font-bold text-primary-800 dark:text-primary-300 uppercase mb-2`}
               >
                 {t?.totalCustomers || 'Total'}
               </p>
-              <p className={`text-4xl font-bold text-${color}-900 dark:text-${color}-100`}>
+              <p className={`text-4xl font-bold text-primary-900 dark:text-primary-100`}>
                 {totalCustomers}
               </p>
             </div>
@@ -858,7 +858,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               >
                 <div className='flex items-center gap-3'>
                   <div
-                    className={`w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-900/50 flex items-center justify-center text-${color}-600 dark:text-${color}-400 font-bold text-sm`}
+                    className={`w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm`}
                   >
                     {customer.name.substring(0, 2).toUpperCase()}
                   </div>
@@ -921,7 +921,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
             >
               <div className='flex items-center gap-4 flex-1'>
                 <div
-                  className={`w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 font-bold flex items-center justify-center shrink-0`}
+                  className={`w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-300 font-bold flex items-center justify-center shrink-0`}
                 >
                   {index + 1}
                 </div>
@@ -1055,7 +1055,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                     <div className='flex items-center gap-3'>
                       <div className='w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
                         <div
-                          className={`bg-${color}-500 h-2 rounded-full`}
+                          className={`bg-primary-500 h-2 rounded-full`}
                           style={{ width: `${percentage}%` }}
                         />
                       </div>

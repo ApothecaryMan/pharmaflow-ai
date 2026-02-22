@@ -304,7 +304,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         isEffectivelyDisabled
                           ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
                           : isActive
-                            ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-700 dark:text-${theme}-400 font-semibold shadow-xs`
+                            ? `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-semibold shadow-xs`
                             : isDropdownOpen
                               ? `bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 font-medium`
                               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-800 dark:hover:text-gray-200'
@@ -344,7 +344,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
                   {isActive && hasPage && navStyle !== 2 && (
                     <div
-                      className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-${theme}-600 rounded-full`}
+                      className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-primary-600 rounded-full`}
                     ></div>
                   )}
                 </button>
@@ -427,7 +427,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors relative
                               ${
                                 isActive
-                                  ? `bg-${theme}-100 dark:bg-${theme}-900/30 text-${theme}-600 dark:text-${theme}-400`
+                                  ? `bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400`
                                   : isDropdownOpen
                                     ? `bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200`
                                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -589,7 +589,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     setShowPrinterSettings(true);
                     setShowProfileMenu(false);
                   }}
-                  className={`w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-${theme}-50 dark:hover:bg-${theme}-900/20 rounded-lg transition-colors flex items-center justify-center gap-2`}
+                  className={`w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors flex items-center justify-center gap-2`}
                 >
                   <span className='material-symbols-rounded text-[18px]'>print</span>
                   {(t as any).printerSettings?.title || 'Printer Settings'}

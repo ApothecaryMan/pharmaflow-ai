@@ -238,10 +238,10 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
       {...attributes}
       {...listeners}
       className={`flex flex-col p-2 rounded-xl bg-white dark:bg-gray-900 border transition-all touch-manipulation relative group outline-hidden
-        ${isDragging ? `shadow-xl ring-2 ring-${color}-500 scale-[1.02] z-50 opacity-90` : ''}
+        ${isDragging ? `shadow-xl ring-2 ring-primary-500 scale-[1.02] z-50 opacity-90` : ''}
         ${
           isHighlighted
-            ? `border-${color}-200 dark:border-${color}-800 bg-${color}-100/50 dark:bg-${color}-900/30`
+            ? `border-primary-200 dark:border-primary-800 bg-primary-100/50 dark:bg-primary-900/30`
             : 'border-gray-100 dark:border-gray-800'
         }`}
       onContextMenu={(e) => {
@@ -255,7 +255,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
     >
       {/* Drag Handle */}
       <div className='absolute left-0 top-1/2 -translate-y-1/2 w-3 h-full flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity'>
-        <div className={`w-1 h-3/5 rounded-full bg-${color}-100 dark:bg-${color}-800`}></div>
+        <div className={`w-1 h-3/5 rounded-full bg-primary-100 dark:bg-primary-800`}></div>
       </div>
 
       <div className='flex flex-wrap items-center justify-between gap-x-2 gap-y-2 relative pl-3'>
@@ -341,7 +341,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                   title={`Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`}
                   className={`flex items-center rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-14 shrink-0 ${
                     (item.discount || 0) > 0
-                      ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-200 dark:border-${color}-800`
+                      ? `bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800`
                       : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
                   }`}
                 >
@@ -359,7 +359,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                     onPointerDown={(e) => e.stopPropagation()}
                     className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
                       (item.discount || 0) > 0
-                        ? `text-${color}-600 dark:text-${color}-400`
+                        ? `text-primary-600 dark:text-primary-400`
                         : 'text-gray-400'
                     }`}
                   >
@@ -386,7 +386,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                     }}
                     className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                       (item.discount || 0) > 0
-                        ? `text-${color}-700 dark:text-${color}-300 placeholder-${color}-300`
+                        ? `text-primary-700 dark:text-primary-300 placeholder-primary-300`
                         : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
                     }`}
                   />
@@ -428,7 +428,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                 }}
                 className={`h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 shrink-0 min-w-0 ${
                   hasDualMode ? 'w-7' : 'w-full'
-                } text-${color}-600 dark:text-${color}-400`}
+                } text-primary-600 dark:text-primary-400`}
               />
 
               {/* Separator */}
@@ -457,7 +457,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                       addToCart(item, true, clampedVal);
                     }
                   }}
-                   className={`w-7 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-${color}-600 dark:text-${color}-400 placeholder-${color}-200 shrink-0`}
+                   className={`w-7 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-primary-600 dark:text-primary-400 placeholder-primary-200 shrink-0`}
                 />
               )}
             </div>

@@ -941,11 +941,11 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
               <button
                 key={el.id}
                 onClick={() => toggleVisibility(el.id)}
-                className={`whitespace-nowrap px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border ${
-                  el.isVisible
-                    ? `bg-${color}-500/10 text-${color}-600 dark:text-${color}-400 border-${color}-200/50 dark:border-${color}-800/50`
-                    : 'bg-transparent text-gray-400 border-transparent opacity-60'
-                }`}
+                  className={`whitespace-nowrap px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border ${
+                    el.isVisible
+                      ? `bg-primary-500/10 text-primary-600 dark:text-primary-400 border-primary-200/50 dark:border-primary-800/50`
+                      : 'bg-transparent text-gray-400 border-transparent opacity-60'
+                  }`}
               >
                 {el.label}
               </button>
@@ -959,11 +959,11 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           <div className='flex items-center bg-gray-50/50 dark:bg-gray-800/30 p-0.5 rounded-lg border border-gray-100 dark:border-gray-800/50'>
             <button
               onClick={() => addElement('text')}
-              className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
-                elements.some((el) => el.type === 'text' && el.id.startsWith('custom-'))
-                  ? `bg-${color}-500 text-white shadow-xs`
-                  : 'hover:bg-white dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500'
-              }`}
+                className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
+                  elements.some((el) => el.type === 'text' && el.id.startsWith('custom-'))
+                    ? `bg-primary-500 text-white shadow-xs`
+                    : 'hover:bg-white dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500'
+                }`}
               title={t.toolbar.addText}
             >
               <span className='material-symbols-rounded text-[18px] leading-none'>title</span>
@@ -981,11 +981,11 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                   document.getElementById('img-upload-hidden')?.click();
                 }
               }}
-              className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
-                elements.some((el) => el.type === 'image' && el.id.startsWith('img-'))
-                  ? `bg-${color}-500 text-white shadow-xs`
-                  : 'hover:bg-white dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500'
-              }`}
+                className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
+                  elements.some((el) => el.type === 'image' && el.id.startsWith('img-'))
+                    ? `bg-primary-500 text-white shadow-xs`
+                    : 'hover:bg-white dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500'
+                }`}
               title={t.toolbar.addImage}
             >
               <span className='material-symbols-rounded text-[18px] leading-none'>image</span>
@@ -1042,7 +1042,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           <button
             onClick={handlePrint}
             disabled={!selectedDrug}
-            className={`h-9 w-9 flex items-center justify-center rounded-xl bg-${color}-600 text-white font-black hover:opacity-90 shadow-lg shadow-${color}-600/20 disabled:grayscale disabled:opacity-50 transition-all ml-1`}
+            className={`h-9 w-9 flex items-center justify-center rounded-xl bg-primary-600 text-white font-black hover:opacity-90 shadow-lg shadow-primary-600/20 disabled:grayscale disabled:opacity-50 transition-all ml-1`}
             title={t.print}
           >
             <span className='material-symbols-rounded text-lg'>print</span>
@@ -1167,7 +1167,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
               type='button'
               onClick={saveNewTemplate}
               disabled={!newTemplateName.trim()}
-              className={`flex-1 py-3 rounded-xl font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+              className={`flex-1 py-3 rounded-xl font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
             >
               <span className='material-symbols-rounded text-lg'>save</span>
               {t.modal.save}

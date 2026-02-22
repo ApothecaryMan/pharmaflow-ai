@@ -634,7 +634,7 @@ export const useStaffAnalytics = ({
                 />
               ) : (
                 <div
-                  className={`w-9 h-9 rounded-full bg-${color}-50 dark:bg-${color}-900/20 flex items-center justify-center text-${color}-600 dark:text-${color}-400 text-xs font-bold shrink-0 border border-${color}-100 dark:border-${color}-900/30`}
+                  className={`w-9 h-9 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center text-primary-600 dark:text-primary-400 text-xs font-bold shrink-0 border border-primary-100 dark:border-primary-900/30`}
                 >
                   {getInitials(staff.name)}
                 </div>

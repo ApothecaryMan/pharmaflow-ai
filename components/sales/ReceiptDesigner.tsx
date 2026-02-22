@@ -800,7 +800,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 type='checkbox'
                 checked={options.showAddressBox !== false}
                 onChange={(e) => setOptions({ ...options, showAddressBox: e.target.checked })}
-                className={`w-4 h-4 rounded-sm border-gray-300 text-${color}-600 focus:ring-${color}-500 cursor-pointer`}
+                className={`w-4 h-4 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer`}
               />
             </label>
 
@@ -812,7 +812,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 type='checkbox'
                 checked={showDeliveryPreview}
                 onChange={(e) => setShowDeliveryPreview(e.target.checked)}
-                className={`w-4 h-4 rounded-sm border-gray-300 text-${color}-600 focus:ring-${color}-500 cursor-pointer`}
+                className={`w-4 h-4 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer`}
               />
             </label>
 
@@ -824,7 +824,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 type='checkbox'
                 checked={showReturnsPreview}
                 onChange={(e) => setShowReturnsPreview(e.target.checked)}
-                className={`w-4 h-4 rounded-sm border-gray-300 text-${color}-600 focus:ring-${color}-500 cursor-pointer`}
+                className={`w-4 h-4 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer`}
               />
             </label>
           </div>

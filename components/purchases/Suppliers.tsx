@@ -72,7 +72,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({
         </div>
         <button
           onClick={handleOpenAdd}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-${color}-600 hover:bg-${color}-700 text-white font-medium text-sm transition-all shadow-lg shadow-${color}-200 dark:shadow-none active:scale-95`}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-medium text-sm transition-all shadow-lg shadow-primary-200 dark:shadow-none active:scale-95`}
         >
           <span className='material-symbols-rounded text-lg'>add</span>
           {t.addSupplier}
@@ -85,7 +85,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({
           onSearchChange={setSearchTerm}
           placeholder={t.searchPlaceholder}
           className='w-full ps-12 pe-4 py-3 rounded-full border-gray-200 dark:border-gray-800'
-          style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+          style={{ '--tw-ring-color': `var(--color-primary-500)` } as any}
         />
       </div>
 
@@ -93,7 +93,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({
         <div className='overflow-x-auto flex-1'>
           <table className='w-full text-start border-collapse'>
             <thead
-              className={`bg-${color}-50 dark:bg-${color}-950/30 text-${color}-900 dark:text-${color}-100 uppercase text-xs font-bold tracking-wider`}
+              className={`bg-primary-50 dark:bg-primary-950/30 text-primary-900 dark:text-primary-100 uppercase text-xs font-bold tracking-wider`}
             >
               <tr>
                 <th className='p-4 text-start'>{t.headers.name}</th>
@@ -121,14 +121,14 @@ export const Suppliers: React.FC<SuppliersProps> = ({
                     <div className='flex flex-col gap-1'>
                       <a
                         href={`tel:${supplier.phone}`}
-                        className='flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 hover:text-${color}-600'
+                        className='flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 hover:text-primary-600'
                       >
                         <span className='material-symbols-rounded text-[14px]'>call</span>{' '}
                         {supplier.phone}
                       </a>
                       <a
                         href={`mailto:${supplier.email}`}
-                        className='flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 hover:text-${color}-600'
+                        className='flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 hover:text-primary-600'
                       >
                         <span className='material-symbols-rounded text-[14px]'>mail</span>{' '}
                         {supplier.email}
@@ -138,7 +138,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({
                   <td className='p-4 text-end space-x-2 rtl:space-x-reverse'>
                     <button
                       onClick={() => handleOpenEdit(supplier)}
-                      className={`p-2 rounded-full hover:bg-${color}-50 dark:hover:bg-${color}-900/30 text-gray-400 hover:text-${color}-600 transition-colors`}
+                      className={`p-2 rounded-full hover:bg-primary-50 dark:hover:bg-primary-900/30 text-gray-400 hover:text-primary-600 transition-colors`}
                     >
                       <span className='material-symbols-rounded text-[18px]'>edit</span>
                     </button>
@@ -159,9 +159,9 @@ export const Suppliers: React.FC<SuppliersProps> = ({
       {isModalOpen && (
         <Modal isOpen={true} onClose={() => setIsModalOpen(false)} size='lg' zIndex={50}>
           <div
-            className={`p-5 bg-${color}-50 dark:bg-${color}-950/30 border-b border-${color}-100 dark:border-${color}-900 flex justify-between items-center`}
+            className={`p-5 bg-primary-50 dark:bg-primary-950/30 border-b border-primary-100 dark:border-primary-900 flex justify-between items-center`}
           >
-            <h3 className={`text-lg font-semibold text-${color}-900 dark:text-${color}-100`}>
+            <h3 className={`text-lg font-semibold text-primary-900 dark:text-primary-100`}>
               {editingSupplier ? t.modal.edit : t.modal.add}
             </h3>
             <button
@@ -178,7 +178,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({
               <input
                 required
                 className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all'
-                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 dir={nameDir}
@@ -193,7 +193,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({
                 <input
                   required
                   className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all'
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                  style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                   value={formData.contactPerson}
                   onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
                   dir={contactDir}
@@ -203,7 +203,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({
                 <label className='text-xs font-bold text-gray-500 uppercase'>{t.modal.phone}</label>
                 <input
                   className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all'
-                  style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                  style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 />
@@ -214,7 +214,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({
               <label className='text-xs font-bold text-gray-500 uppercase'>{t.modal.email}</label>
               <SmartEmailInput
                 className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all'
-                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                 value={formData.email || ''}
                 onChange={(val) => setFormData({ ...formData, email: val })}
               />
@@ -225,7 +225,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({
               <textarea
                 className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all'
                 rows={2}
-                style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 dir={addressDir}
@@ -242,7 +242,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({
               </button>
               <button
                 type='submit'
-                className={`flex-1 py-3 rounded-full font-medium text-white bg-${color}-600 hover:bg-${color}-700 shadow-md transition-all active:scale-95`}
+                className={`flex-1 py-3 rounded-full font-medium text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all active:scale-95`}
               >
                 {t.modal.save}
               </button>

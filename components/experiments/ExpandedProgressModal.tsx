@@ -114,7 +114,7 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
                     strokeDasharray='264'
                     strokeDashoffset={264 - (264 * percentage) / 100}
                     strokeLinecap='round'
-                    className={`transition-all duration-1000 ease-out filter drop-shadow-xs text-${color}-500`}
+                    className={`transition-all duration-1000 ease-out filter drop-shadow-xs text-primary-500`}
                   />
                 </svg>
 
@@ -126,7 +126,7 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
                     {percentage}%
                   </span>
                   <span
-                    className={`text-xs font-bold uppercase tracking-wider text-${color}-600 dark:text-${color}-400 mt-1`}
+                    className={`text-xs font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400 mt-1`}
                   >
                     Complete
                   </span>
@@ -247,7 +247,7 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
                                   ms.status === 'completed'
                                     ? 'bg-emerald-100 border-emerald-500 text-emerald-600'
                                     : ms.status === 'in-progress'
-                                      ? `bg-${color}-50 border-${color}-500 text-${color}-600`
+                                      ? `bg-primary-50 border-primary-500 text-primary-600`
                                       : 'bg-gray-50 border-gray-300 text-gray-300'
                                 }
                             `}
@@ -276,7 +276,7 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
                                   ms.status === 'completed'
                                     ? 'bg-emerald-100 text-emerald-700'
                                     : ms.status === 'in-progress'
-                                      ? `bg-${color}-100 text-${color}-700`
+                                      ? `bg-primary-100 text-primary-700`
                                       : 'bg-gray-100 text-gray-500'
                                 }
                             `}

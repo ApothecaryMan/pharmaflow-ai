@@ -174,7 +174,7 @@ const SortableTab = ({
       {/* Pin Indicator */}
       {isPinned && (
         <span
-          className={`material-symbols-rounded text-[14px] ${isActive ? `text-${color}-500` : 'text-gray-400'}`}
+          className={`material-symbols-rounded text-[14px] ${isActive ? `text-primary-500` : 'text-gray-400'}`}
         >
           push_pin
         </span>
@@ -214,7 +214,7 @@ const SortableTab = ({
                     flex items-center justify-center h-5 min-w-[20px] px-1 rounded-full text-[10px] font-bold
                     ${
                       isActive
-                        ? `bg-${color}-100 dark:bg-${color}-900/50 text-${color}-700 dark:text-${color}-300`
+                        ? `bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300`
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     }
                 `}
@@ -349,7 +349,7 @@ export const TabBar: React.FC<TabBarProps> = ({
             className={`
               flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200
               hover:bg-white dark:hover:bg-gray-800 hover:shadow-xs border border-transparent hover:border-gray-200 dark:hover:border-gray-700
-              text-gray-500 hover:text-${color}-600 dark:text-gray-400 dark:hover:text-${color}-400
+              text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400
               shrink-0
             `}
             title={t.tabs?.newTab || 'New Tab'}

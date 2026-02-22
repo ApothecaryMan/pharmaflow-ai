@@ -185,7 +185,7 @@ export function FilterDropdown<T>({
         className={innerClasses}
         style={{
           backgroundColor: currentBg,
-          borderColor: effectiveIsOpen ? `var(--color-${color}-500)` : currentBorder,
+          borderColor: effectiveIsOpen ? 'var(--color-primary-500)' : currentBorder,
           willChange: isAnimating ? 'grid-template-rows, background-color, border-color' : 'auto',
           transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
         }}
@@ -202,7 +202,7 @@ export function FilterDropdown<T>({
         >
           {isInput ? (
             <>
-              <div className={`flex-1 truncate text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors group-hover:text-${color}-600 dark:group-hover:text-${color}-400`}>
+               <div className={`flex-1 truncate text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors group-hover:text-primary-600 dark:group-hover:text-primary-400`}>
                 {renderSelected(selectedItem)}
               </div>
               {!(

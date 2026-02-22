@@ -176,7 +176,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                   <p className='text-[10px] uppercase font-bold text-gray-400 mb-1'>
                     {t.totalCost || 'Total Cost'}
                   </p>
-                  <p className={`text-lg font-bold text-${color}-600 dark:text-${color}-400`}>
+                  <p className={`text-lg font-bold text-primary-600 dark:text-primary-400`}>
                     ${purchase.totalCost.toFixed(2)}
                   </p>
                 </div>
@@ -243,7 +243,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
               disabled={!approverName.trim()}
               className={`px-8 py-3 rounded-2xl font-bold transition-all flex items-center gap-2 ${
                 approverName.trim()
-                  ? `bg-${color}-600 text-white hover:bg-${color}-700 shadow-xl shadow-${color}-200 dark:shadow-none active:scale-95`
+                  ? `bg-primary-600 text-white hover:bg-primary-700 shadow-xl shadow-primary-200 dark:shadow-none active:scale-95`
                   : `bg-gray-50 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600`
               }`}
             >
@@ -297,7 +297,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                 <p className='text-xs text-gray-500 uppercase font-bold mb-1'>
                   {t.info?.totalCost || 'Total Cost'}
                 </p>
-                <p className={`font-bold text-lg text-${color}-600`}>
+                <p className={`font-bold text-lg text-primary-600`}>
                   ${selectedPurchase.totalCost.toFixed(2)}
                 </p>
               </div>

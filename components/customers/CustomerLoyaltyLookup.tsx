@@ -363,7 +363,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
             <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4'>
               <div className='flex items-center gap-4'>
                 <div
-                  className={`w-16 h-16 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 flex items-center justify-center font-bold text-2xl`}
+                  className={`w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-300 flex items-center justify-center font-bold text-2xl`}
                 >
                   {selectedCustomer.name.substring(0, 2).toUpperCase()}
                 </div>

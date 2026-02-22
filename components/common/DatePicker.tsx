@@ -531,7 +531,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     
                     ${
                       value
-                        ? `bg-${color}-200 dark:bg-${color}-800 border-${color}-400 dark:border-${color}-600 text-${color}-900 dark:text-${color}-50 font-semibold shadow-xs`
+                        ? `bg-primary-200 dark:bg-primary-800 border-primary-400 dark:border-primary-600 text-primary-900 dark:text-primary-50 font-semibold shadow-xs`
                         : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-white dark:hover:bg-gray-800'
                     }
                     ${className}
@@ -552,7 +552,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         {value && (
           <div
             onClick={clearSelection}
-            className={`w-5 h-5 rounded-full flex items-center justify-center transform hover:scale-110 active:scale-95 transition-all ml-1 hover:bg-${color}-200 dark:hover:bg-${color}-800`}
+            className={`w-5 h-5 rounded-full flex items-center justify-center transform hover:scale-110 active:scale-95 transition-all ml-1 hover:bg-primary-200 dark:hover:bg-primary-800`}
           >
             <span className='material-symbols-rounded text-[14px]'>close</span>
           </div>
@@ -650,7 +650,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 </button>
                 <button
                   onClick={confirmSelection}
-                  className={`px-6 py-2 text-sm font-bold text-white bg-${color}-600 hover:bg-${color}-700 rounded-lg shadow-lg shadow-${color}-500/20 active:scale-95 transition-all`}
+                  className={`px-6 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-lg shadow-primary-500/20 active:scale-95 transition-all`}
                 >
                   {translations.ok}
                 </button>

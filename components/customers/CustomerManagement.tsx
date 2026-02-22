@@ -393,7 +393,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           const icon = isActive ? 'check_circle' : 'cancel';
           return (
             <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
+              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
             >
               <span className='material-symbols-rounded text-sm'>{icon}</span>
               {t.status[c.status?.toLowerCase()] || c.status}
@@ -560,7 +560,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         <div className='w-full' onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div
-            className={`p-6 bg-linear-to-br from-${color}-500 to-${color}-600 text-white relative overflow-hidden`}
+            className={`p-6 bg-linear-to-br from-primary-500 to-primary-600 text-white relative overflow-hidden`}
           >
             <div className='absolute top-0 ltr:right-0 rtl:left-0 p-3 opacity-20'>
               <span className='material-symbols-rounded text-[100px]'>account_circle</span>
@@ -639,7 +639,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               <div className='space-y-3'>
                 <div className='flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl relative overflow-hidden'>
                   <span
-                    className={`w-8 h-8 rounded-full bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 flex items-center justify-center`}
+                    className={`w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center`}
                   >
                     <span className='material-symbols-rounded text-[18px]'>call</span>
                   </span>
@@ -649,7 +649,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       {/* Country Badge */}
                       {getDetectedCountry(c.phone) && (
                         <span
-                          className={`px-1.5 py-0.5 bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300 rounded-sm text-[10px] font-bold ms-auto`}
+                          className={`px-1.5 py-0.5 bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 rounded-sm text-[10px] font-bold ms-auto`}
                         >
                           {language === 'AR'
                             ? getDetectedCountry(c.phone)?.country_ar
@@ -663,7 +663,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 {c.email && (
                   <div className='flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl'>
                     <span
-                      className={`w-8 h-8 rounded-full bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 flex items-center justify-center`}
+                      className={`w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center`}
                     >
                       <span className='material-symbols-rounded text-[18px]'>mail</span>
                     </span>
@@ -716,7 +716,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 handleCloseProfile();
                 handleOpenEdit(c);
               }}
-              className={`px-4 py-2 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 font-medium text-sm transition-colors flex items-center gap-2`}
+              className={`px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 font-medium text-sm transition-colors flex items-center gap-2`}
             >
               <span className='material-symbols-rounded text-[18px]'>edit</span>
               {t.modal.editProfile}
@@ -774,12 +774,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       {/* Success Message */}
       {showSuccess && mode === 'add' && (
         <div
-          className={`p-4 rounded-2xl bg-${color}-50 dark:bg-${color}-950/30 border border-${color}-200 dark:border-${color}-800 flex items-center gap-3 animate-fade-in`}
+          className={`p-4 rounded-2xl bg-primary-50 dark:bg-primary-950/30 border border-primary-200 dark:border-primary-800 flex items-center gap-3 animate-fade-in`}
         >
-          <span className={`material-symbols-rounded text-${color}-600 dark:text-${color}-400`}>
+          <span className={`material-symbols-rounded text-primary-600 dark:text-primary-400`}>
             check_circle
           </span>
-          <span className={`text-sm font-medium text-${color}-700 dark:text-${color}-300`}>
+          <span className={`text-sm font-medium text-primary-700 dark:text-primary-300`}>
             {t.customerAddedSuccess || 'Customer added successfully!'}
           </span>
         </div>
@@ -870,7 +870,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       />
                       {getDetectedCountry(formData.phone) && (
                         <div
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300 rounded-sm text-[10px] font-bold`}
+                          className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 rounded-sm text-[10px] font-bold`}
                         >
                           {language === 'AR'
                             ? getDetectedCountry(formData.phone)?.country_ar
@@ -917,7 +917,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       onClick={() => toggleCondition(condition)}
                       className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
                         (formData.chronicConditions || []).includes(condition)
-                          ? `border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 bg-transparent ring-1 ring-${color}-200 dark:ring-${color}-900/10 shadow-xs`
+                          ? `border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 bg-transparent ring-1 ring-primary-200 dark:ring-primary-900/10 shadow-xs`
                           : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
                       }`}
                     >
@@ -1041,7 +1041,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 <div className='mt-8'>
                   <button
                     type='submit'
-                    className={`w-full py-3 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all font-bold`}
+                    className={`w-full py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-bold`}
                   >
                     {t.modal.save || 'Save Customer'}
                   </button>
@@ -1254,7 +1254,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       onClick={() => toggleCondition(condition)}
                       className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
                         (formData.chronicConditions || []).includes(condition)
-                          ? `border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 bg-transparent ring-1 ring-${color}-200 dark:ring-${color}-900/10 shadow-xs`
+                          ? `border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 bg-transparent ring-1 ring-primary-200 dark:ring-primary-900/10 shadow-xs`
                           : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
                       }`}
                     >
@@ -1290,7 +1290,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 </button>
                 <button
                   type='submit'
-                  className={`px-6 py-2 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all font-medium`}
+                  className={`px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-medium`}
                 >
                   {t.modal.save}
                 </button>
@@ -1305,7 +1305,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         <div className='w-full h-full bg-gray-50 dark:bg-gray-800 p-8 overflow-y-auto'>
           <div className='text-center mb-8'>
             <div
-              className={`w-16 h-16 mx-auto bg-${color}-100 text-${color}-600 rounded-full flex items-center justify-center mb-4`}
+              className={`w-16 h-16 mx-auto bg-primary-100 text-primary-600 rounded-full flex items-center justify-center mb-4`}
             >
               <span className='material-symbols-rounded text-4xl'>person_add</span>
             </div>
@@ -1347,7 +1347,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     />
                     {getDetectedCountry(formData.phone) && (
                       <div
-                        className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-${color}-100 text-${color}-700 dark:bg-${color}-900/30 dark:text-${color}-300 rounded-sm text-[10px] font-bold`}
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 rounded-sm text-[10px] font-bold`}
                       >
                         {language === 'AR'
                           ? getDetectedCountry(formData.phone)?.country_ar
@@ -1398,7 +1398,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                           onClick={() => toggleCondition(condition)}
                           className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
                             (formData.chronicConditions || []).includes(condition)
-                              ? `border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 bg-transparent ring-1 ring-${color}-200 dark:ring-${color}-900/10 shadow-xs`
+                              ? `border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 bg-transparent ring-1 ring-primary-200 dark:ring-primary-900/10 shadow-xs`
                               : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
                           }`}
                         >
@@ -1424,7 +1424,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               </button>
               <button
                 type='submit'
-                className={`flex-2 px-6 py-3 bg-${color}-500 hover:bg-${color}-600 text-white rounded-xl shadow-lg shadow-${color}-500/20 transition-all font-bold text-lg`}
+                className={`flex-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-bold text-lg`}
               >
                 {t.modal.register}
               </button>

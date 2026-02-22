@@ -234,18 +234,18 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>
         {/* Total Active Customers */}
         <div
-          className={`p-5 rounded-3xl bg-${color}-50 dark:bg-${color}-900/20 ${CARD_BASE} flex flex-col justify-between min-h-[120px]`}
+          className={`p-5 rounded-3xl bg-primary-50 dark:bg-primary-900/20 ${CARD_BASE} flex flex-col justify-between min-h-[120px]`}
         >
-          <div className={`text-${color}-600 dark:text-${color}-400 mb-1`}>
+          <div className={`text-primary-600 dark:text-primary-400 mb-1`}>
             <span className='material-symbols-rounded text-3xl'>group</span>
           </div>
           <div>
             <p
-              className={`text-xs font-bold text-${color}-800 dark:text-${color}-300 uppercase opacity-70`}
+              className={`text-xs font-bold text-primary-800 dark:text-primary-300 uppercase opacity-70`}
             >
               {t.loyalty?.activeCustomers || 'Active Customers'}
             </p>
-            <p className={`text-2xl font-bold text-${color}-900 dark:text-${color}-100`}>
+            <p className={`text-2xl font-bold text-primary-900 dark:text-primary-100`}>
               {loyaltyStats.activeCustomers}
             </p>
           </div>
@@ -425,7 +425,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
                   >
                     <div className='flex items-center gap-3 overflow-hidden flex-1'>
                       <div
-                        className={`w-7 h-7 rounded-full bg-${color}-100 dark:bg-${color}-900/50 text-${color}-600 dark:text-${color}-300 font-bold text-xs flex items-center justify-center shrink-0`}
+                        className={`w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-300 font-bold text-xs flex items-center justify-center shrink-0`}
                       >
                         {index + 1}
                       </div>

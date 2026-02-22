@@ -190,7 +190,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
       {/* Header */}
       <div className={`flex items-center justify-between mb-4 ${headerClassName || ''}`}>
         <h3 className='text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2'>
-          <span className={`material-symbols-rounded text-${color}-500`} style={{ color }}>
+          <span className={`material-symbols-rounded text-primary-500`} style={{ color }}>
             {icon}
           </span>
           {title}

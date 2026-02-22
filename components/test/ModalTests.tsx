@@ -46,11 +46,11 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
         flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all
         ${
           variant === 'primary'
-            ? `bg-${color}-500 text-white hover:bg-${color}-600 shadow-lg hover:shadow-xl`
+            ? `bg-primary-500 text-white hover:bg-primary-600 shadow-lg hover:shadow-xl`
             : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
         }
       `}
-      style={variant === 'primary' ? { backgroundColor: `var(--color-${color}-500, #3b82f6)` } : {}}
+      style={variant === 'primary' ? { backgroundColor: 'var(--color-primary-500, #3b82f6)' } : {}}
     >
       <span className='material-symbols-rounded text-[20px]'>{icon}</span>
       {label}
@@ -66,7 +66,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
       <h3 className='text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2 mb-4'>
         <span
           className='material-symbols-rounded text-[24px]'
-          style={{ color: `var(--color-${color}-500, #3b82f6)` }}
+          style={{ color: 'var(--color-primary-500, #3b82f6)' }}
         >
           {icon}
         </span>
@@ -89,7 +89,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
       <div className='flex items-center gap-3'>
         <span
           className='material-symbols-rounded text-[32px]'
-          style={{ color: `var(--color-${color}-500, #3b82f6)` }}
+          style={{ color: 'var(--color-primary-500, #3b82f6)' }}
         >
           dialogs
         </span>
@@ -286,7 +286,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
               <button
                 onClick={() => setIsOpen(false)}
                 className='flex-1 px-4 py-2.5 rounded-xl font-medium text-white transition-colors'
-                style={{ backgroundColor: `var(--color-${color}-500, #3b82f6)` }}
+                style={{ backgroundColor: 'var(--color-primary-500, #3b82f6)' }}
               >
                 {language === 'AR' ? 'إغلاق' : 'Close Modal'}
               </button>

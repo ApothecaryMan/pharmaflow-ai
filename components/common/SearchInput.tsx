@@ -177,7 +177,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             bg-white dark:bg-[#090C14]
             border border-gray-200 dark:border-gray-800
             transition-colors
-            focus-within:border-${color}-500 dark:focus-within:border-${color}-400
+            focus-within:border-primary-500 dark:focus-within:border-primary-400
             ${rounded === 'full' ? 'rounded-4xl px-1' : 'rounded-xl px-1'} 
             ${wrapperClassName}
          `}
@@ -226,9 +226,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                     <span className={`
                         inline-flex items-center gap-1 px-0.5 py-0 ms-1
                         rounded-lg border backdrop-blur-md 
-                        border-${color}-200/50 dark:border-${color}-800/50
-                        bg-${color}-50/30 dark:bg-${color}-900/20
-                        text-${color}-600 dark:text-${color}-400
+                        border-primary-200/50 dark:border-primary-800/50
+                        bg-primary-50/30 dark:bg-primary-900/20
+                        text-primary-600 dark:text-primary-400
                         text-sm font-bold tracking-wider
                         ${textTransform === 'uppercase' ? 'uppercase' : ''}
                         animate-in fade-in zoom-in-95 duration-200

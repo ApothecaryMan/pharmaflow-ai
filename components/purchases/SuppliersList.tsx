@@ -368,7 +368,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                       className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
-                      style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                      style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                       placeholder={t.form?.enterCompanyName || 'Enter company name'}
                       dir={nameDir}
                     />
@@ -382,7 +382,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                       rows={3}
                       className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all resize-none'
-                      style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                      style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                       placeholder={t.form?.enterAddress || 'Enter company address'}
                       dir={addressDir}
                     />
@@ -408,7 +408,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       value={editForm.contactPerson}
                       onChange={(e) => setEditForm({ ...editForm, contactPerson: e.target.value })}
                       className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
-                      style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                      style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                       placeholder={t.form?.enterContactPerson || 'Enter contact person name'}
                       dir={contactPersonDir}
                     />
@@ -422,7 +422,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       value={editForm.phone}
                       onChange={(val) => setEditForm({ ...editForm, phone: val })}
                       className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
-                      style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                      style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                       placeholder={t.form?.phonePlaceholder || '+1234567890'}
                     />
                   </div>
@@ -435,7 +435,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       value={editForm.email}
                       onChange={(val) => setEditForm({ ...editForm, email: val })}
                       className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
-                      style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                      style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                       placeholder={t.form?.emailPlaceholder || 'email@example.com'}
                     />
                   </div>
@@ -454,7 +454,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
               </button>
               <button
                 type='submit'
-                className={`px-6 py-3 bg-${color}-600 hover:bg-${color}-700 text-white rounded-xl shadow-lg transition-all font-bold`}
+                className={`px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-lg transition-all font-bold`}
               >
                 {t.modal?.addSupplier || 'Add Supplier'}
               </button>
@@ -502,7 +502,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                     value={editForm.name}
                     onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                     className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                    style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                     placeholder={t.form?.enterCompanyName || 'Enter company name'}
                     dir={nameDir}
                   />
@@ -516,7 +516,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                     onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                     rows={3}
                     className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all resize-none'
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                    style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                     placeholder={t.form?.enterAddress || 'Enter company address'}
                     dir={addressDir}
                   />
@@ -541,7 +541,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                     value={editForm.contactPerson}
                     onChange={(e) => setEditForm({ ...editForm, contactPerson: e.target.value })}
                     className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                    style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                     placeholder={t.form?.enterContactPerson || 'Enter contact person name'}
                     dir={contactPersonDir}
                   />
@@ -554,7 +554,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                     value={editForm.phone}
                     onChange={(val) => setEditForm({ ...editForm, phone: val })}
                     className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                    style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                     placeholder={t.form?.phonePlaceholder || '+1234567890'}
                   />
                 </div>
@@ -566,7 +566,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                     value={editForm.email}
                     onChange={(val) => setEditForm({ ...editForm, email: val })}
                     className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all'
-                    style={{ '--tw-ring-color': `var(--color-${color}-500)` } as any}
+                    style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                     placeholder={t.form?.emailPlaceholder || 'email@example.com'}
                   />
                 </div>
@@ -584,7 +584,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
             </button>
             <button
               onClick={handleSaveEdit}
-              className={`px-4 py-2 rounded-xl bg-${color}-600 text-white hover:bg-${color}-700 transition-colors`}
+              className={`px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors`}
             >
               {t.modal?.saveChanges || 'Save Changes'}
             </button>
@@ -718,7 +718,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                 setViewingSupplier(null);
                 handleEdit(viewingSupplier);
               }}
-              className={`px-4 py-2 rounded-xl bg-${color}-600 text-white hover:bg-${color}-700 transition-colors`}
+              className={`px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors`}
             >
               {t.modal?.edit || 'Edit Supplier'}
             </button>
