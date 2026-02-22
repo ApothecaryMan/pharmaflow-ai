@@ -53,6 +53,7 @@ export interface StatusBarProps {
   currentEmployeeId?: string | null;
   userRole?: UserRole;
   onSelectEmployee?: (id: string) => void;
+  iconSize?: number | string;
 }
 
 const defaultTranslations: StatusBarTranslations = {
@@ -74,7 +75,7 @@ const defaultTranslations: StatusBarTranslations = {
 };
 
 export const StatusBar: React.FC<StatusBarProps> = React.memo(
-  ({ t = defaultTranslations, currentEmployeeId, userRole, onSelectEmployee }) => {
+  ({ t = defaultTranslations, currentEmployeeId, userRole, onSelectEmployee, iconSize = 'var(--icon-base)' }) => {
     /*
      * STATUS BAR ARCHITECTURE GUIDE
      * =============================
@@ -181,7 +182,8 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
         style={{
           backgroundColor: 'var(--bg-secondary)',
           borderColor: 'var(--border-primary)',
-        }}
+          '--status-icon-size': typeof iconSize === 'number' ? `${iconSize}px` : iconSize,
+        } as React.CSSProperties}
       >
         {/* Left Section */}
         <div className='flex items-center h-full'>

@@ -1612,9 +1612,9 @@ export const POS: React.FC<POSProps> = ({
 
         <button
           onClick={() => setShowDeliveryModal(true)}
-          className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent hover:bg-primary-600 dark:hover:bg-primary-500 hover:text-white dark:hover:text-white hover:border-primary-600 dark:hover:border-primary-500 transition-all duration-200 cursor-pointer shadow-xs`}
+          className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent hover:bg-primary-600 dark:hover:bg-primary-500 hover:text-white dark:hover:text-white hover:border-primary-600 dark:hover:border-primary-500 transition-all duration-200 cursor-pointer shadow-xs`}
         >
-          <span className='material-symbols-rounded text-sm'>local_shipping</span>
+          <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>local_shipping</span>
           {t.deliveryOrders || 'Delivery Orders'}
         </button>
 
@@ -1653,7 +1653,7 @@ export const POS: React.FC<POSProps> = ({
                   <div
                     className={`w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400`}
                   >
-                    <span className='material-symbols-rounded text-[24px]'>person</span>
+                    <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>person</span>
                   </div>
                   <div className='flex flex-col gap-0'>
                     <h3 className='font-bold text-gray-800 dark:text-gray-100 text-lg leading-none mb-0.5'>
@@ -1672,7 +1672,7 @@ export const POS: React.FC<POSProps> = ({
 
                 <div className='flex-1 border-s-2 border-gray-100 dark:border-gray-700 ps-6 ms-2 hidden sm:block'>
                   <p className='text-xs font-bold text-gray-400 uppercase mb-1 flex items-center gap-1'>
-                    <span className='material-symbols-rounded text-[14px]'>location_on</span>
+                    <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>location_on</span>
                     {t.address}
                   </p>
                   <div className='flex flex-col leading-snug'>
@@ -1703,7 +1703,7 @@ export const POS: React.FC<POSProps> = ({
                       className='text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors flex items-center justify-center bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 w-5 h-5 rounded-md'
                       title={t.changeCustomer}
                     >
-                      <span className='material-symbols-rounded text-[16px]'>close</span>
+                      <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>close</span>
                     </button>
                   </div>
                   <SegmentedControl
@@ -1841,7 +1841,7 @@ export const POS: React.FC<POSProps> = ({
                     <span
                       className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 text-[10px] font-bold uppercase tracking-wider bg-transparent shadow-xs`}
                     >
-                      <span className='material-symbols-rounded text-sm'>inventory_2</span>
+                      <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>inventory_2</span>
                       {filteredDrugs.length}
                     </span>
                   ) : undefined
@@ -1981,7 +1981,7 @@ export const POS: React.FC<POSProps> = ({
               customEmptyState={
                 search.trim() === '' ? (
                   <div className='h-full flex flex-col items-center justify-center text-gray-400 space-y-3 p-8 select-none'>
-                    <span className='material-symbols-rounded text-6xl opacity-20'>search</span>
+                    <span className='material-symbols-rounded opacity-20' style={{ fontSize: '60px' }}>search</span>
                     <h2 className='text-2xl font-bold tracking-tight type-expressive'>
                       {t.searchPlaceholder}
                     </h2>
@@ -2055,7 +2055,7 @@ export const POS: React.FC<POSProps> = ({
               <h2
                 className={`text-sm font-bold text-primary-900 dark:text-primary-100 flex items-center gap-2`}
               >
-                <span className='material-symbols-rounded text-[18px]'>shopping_cart</span>
+                <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>shopping_cart</span>
                 {t.cartTitle}
                 {totalItems > 0 && (
                   <span
@@ -2071,7 +2071,7 @@ export const POS: React.FC<POSProps> = ({
                 onClick={() => setMobileTab('products')}
                 className='lg:hidden p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500'
               >
-                <span className='material-symbols-rounded text-[18px]'>close</span>
+                <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>close</span>
               </button>
             </div>
           </div>
@@ -2232,7 +2232,7 @@ export const POS: React.FC<POSProps> = ({
             {!hasOpenShift ? (
               <div className='flex h-[42px] items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900'>
                 <div className='flex items-center gap-2 text-red-700 dark:text-red-300'>
-                  <span className='material-symbols-rounded text-[18px]'>warning</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>warning</span>
                   <p className='text-xs font-medium'>
                     {t.noOpenShift || 'Open a shift before completing sales'}
                   </p>
@@ -2259,7 +2259,7 @@ export const POS: React.FC<POSProps> = ({
                     }
                     className={`flex-1 py-2.5 rounded-xl bg-primary-600 enabled:hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
                   >
-                    <span className='material-symbols-rounded text-[18px]'>payments</span>
+                    <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>payments</span>
                     {t.completeOrder}
                   </button>
                   <button
@@ -2273,7 +2273,7 @@ export const POS: React.FC<POSProps> = ({
                     className={`w-12 py-2.5 rounded-xl bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 enabled:hover:bg-primary-200 dark:enabled:hover:bg-primary-900/50 disabled:opacity-50 disabled:pointer-events-none transition-colors flex justify-center items-center shrink-0`}
                     title={t.deliveryOrder}
                   >
-                    <span className='material-symbols-rounded text-[20px]'>local_shipping</span>
+                    <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>local_shipping</span>
                   </button>
                 </div>
 
@@ -2355,7 +2355,7 @@ export const POS: React.FC<POSProps> = ({
                     }}
                     className='w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'
                   >
-                    <span className='material-symbols-rounded text-[18px]'>close</span>
+                    <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>close</span>
                   </button>
                 </div>
 
@@ -2408,7 +2408,7 @@ export const POS: React.FC<POSProps> = ({
                     }}
                     className='w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'
                   >
-                    <span className='material-symbols-rounded text-[18px]'>close</span>
+                    <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>close</span>
                   </button>
                 </div>
               </div>

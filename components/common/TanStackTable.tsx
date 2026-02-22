@@ -688,7 +688,7 @@ export function TanStackTable<TData, TValue>({
               {/* Alignment Controls Container */}
               <div className='px-3 py-3'>
                 <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-2.5 flex items-center gap-2'>
-                  <span className='material-symbols-rounded text-sm opacity-60'>format_align_left</span>
+                  <span className='material-symbols-rounded opacity-60' style={{ fontSize: 'var(--icon-sm)' }}>format_align_left</span>
                   {t?.global?.table?.alignment || 'Alignment'}
                 </div>
                 {/* Unified Alignment */}
@@ -773,7 +773,7 @@ export function TanStackTable<TData, TValue>({
               onOpen={(x, y) => onContextMenuOpen(x, y)}
             >
               <div className='h-full min-h-[400px] flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 gap-3 select-none'>
-                <span className='material-symbols-rounded text-6xl opacity-50'>view_column</span>
+                <span className='material-symbols-rounded opacity-50' style={{ fontSize: 'var(--icon-3xl)' }}>view_column</span>
                 <div className='text-center'>
                   <p className='text-lg font-medium mb-1'>{t.global.table.noColumnsVisible}</p>
                   <p className='text-sm opacity-70'>{t.global.table.manageColumnsHint}</p>
@@ -846,12 +846,12 @@ export function TanStackTable<TData, TValue>({
                                   >
                                     {{
                                       asc: (
-                                        <span className='material-symbols-rounded text-xl leading-none text-current opacity-70'>
+                                        <span className='material-symbols-rounded leading-none text-current opacity-70' style={{ fontSize: 'var(--icon-lg)' }}>
                                           arrow_drop_up
                                         </span>
                                       ),
                                       desc: (
-                                        <span className='material-symbols-rounded text-xl leading-none text-current opacity-70'>
+                                        <span className='material-symbols-rounded leading-none text-current opacity-70' style={{ fontSize: 'var(--icon-lg)' }}>
                                           arrow_drop_down
                                         </span>
                                       ),
@@ -867,7 +867,8 @@ export function TanStackTable<TData, TValue>({
                   </tr>
                 ))}
               </thead>
-              <tbody className=''>
+              {/* Enforce var(--icon-sm) on all material-symbols-rounded icons inside table cells using arbitrary variants, except action columns */}
+              <tbody className='[&_td:not(.action-col)_.material-symbols-rounded]:!text-[length:var(--icon-sm)] [&_td:not(.action-col)_.material-symbols-rounded]:!text-sm'>
                 {isLoading ? (
                   <tr>
                     <td colSpan={columns.length} className='h-32 text-center'>
@@ -919,6 +920,8 @@ export function TanStackTable<TData, TValue>({
                         const colId = cell.column.id.toLowerCase();
                         const isIdColumn = colId.includes('id') || colId.includes('code');
                         const isNameColumn = colId.includes('name');
+
+                        const isActionColumn = colId.includes('action');
 
                         // Date Detection & Formatting (Avoiding false positives like 'csat')
                         const isDateColumn =
@@ -997,7 +1000,7 @@ export function TanStackTable<TData, TValue>({
                           <td
                             key={cell.id}
                             className={`${dense ? 'py-1' : 'py-2'} px-4 text-sm text-gray-700 dark:text-gray-300 align-middle border-b border-gray-100 dark:border-gray-800
-                            ${isFlex ? '' : 'whitespace-nowrap'}`}
+                            ${isFlex ? '' : 'whitespace-nowrap'} ${isActionColumn ? 'action-col' : ''}`}
                             style={{
                               width: isFlex ? 'auto' : cell.column.columnDef.meta?.width,
                               minWidth: cell.column.columnDef.meta?.minWidth,
@@ -1008,7 +1011,7 @@ export function TanStackTable<TData, TValue>({
                               className={`flex items-center gap-1.5 w-full ${justifyClass} ${isIdColumn && align === 'start' ? '-ms-3' : ''} ${isIdColumn && align === 'end' ? '-me-3' : ''}`}
                             >
                               {isIdColumn && (
-                                <span className='material-symbols-rounded text-base text-gray-400 shrink-0'>
+                                <span className='material-symbols-rounded text-gray-400 shrink-0' style={{ fontSize: 'var(--icon-md)' }}>
                                   tag
                                 </span>
                               )}
@@ -1031,7 +1034,7 @@ export function TanStackTable<TData, TValue>({
                         customEmptyState
                       ) : (
                         <div className='flex flex-col items-center justify-center'>
-                          <span className='material-symbols-rounded text-4xl mb-2 opacity-30'>
+                          <span className='material-symbols-rounded mb-2 opacity-30' style={{ fontSize: 'var(--icon-xl)' }}>
                             inbox
                           </span>
                           <p>{emptyMessage}</p>
@@ -1074,7 +1077,7 @@ export function TanStackTable<TData, TValue>({
                   }`}
                   title={isShowAll ? 'Show Less' : t.global?.table?.showAll || 'Show All'}
                 >
-                  <span className='material-symbols-rounded text-[18px]'>
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
                     {isShowAll ? 'keyboard_double_arrow_up' : 'keyboard_double_arrow_down'}
                   </span>
                 </button>
@@ -1091,7 +1094,7 @@ export function TanStackTable<TData, TValue>({
                 className='h-full aspect-square flex items-center justify-center transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 hover:enabled:text-gray-900 dark:hover:enabled:text-gray-100'
                 title='First Page'
               >
-                <span className='material-symbols-rounded text-[18px] leading-none'>
+                <span className='material-symbols-rounded leading-none' style={{ fontSize: 'var(--icon-md)' }}>
                   first_page
                 </span>
               </button>
@@ -1101,7 +1104,7 @@ export function TanStackTable<TData, TValue>({
                 className='h-full aspect-square flex items-center justify-center transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 hover:enabled:text-gray-900 dark:hover:enabled:text-gray-100'
                 title='Previous Page'
               >
-                <span className='material-symbols-rounded text-[18px] leading-none'>
+                <span className='material-symbols-rounded leading-none' style={{ fontSize: 'var(--icon-md)' }}>
                   chevron_left
                 </span>
               </button>
@@ -1114,7 +1117,7 @@ export function TanStackTable<TData, TValue>({
                 className='h-full aspect-square flex items-center justify-center transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 hover:enabled:text-gray-900 dark:hover:enabled:text-gray-100'
                 title='Next Page'
               >
-                <span className='material-symbols-rounded text-[18px] leading-none'>
+                <span className='material-symbols-rounded leading-none' style={{ fontSize: 'var(--icon-md)' }}>
                   chevron_right
                 </span>
               </button>
@@ -1124,7 +1127,7 @@ export function TanStackTable<TData, TValue>({
                 className='h-full aspect-square flex items-center justify-center transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 hover:enabled:text-gray-900 dark:hover:enabled:text-gray-100'
                 title='Last Page'
               >
-                <span className='material-symbols-rounded text-[18px] leading-none'>last_page</span>
+                <span className='material-symbols-rounded leading-none' style={{ fontSize: 'var(--icon-md)' }}>last_page</span>
               </button>
             </div>
           </div>

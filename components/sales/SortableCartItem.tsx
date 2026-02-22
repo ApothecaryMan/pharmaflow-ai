@@ -341,7 +341,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                   title={`Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`}
                   className={`flex items-center rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-14 shrink-0 ${
                     (item.discount || 0) > 0
-                      ? `bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800`
+                      ? `bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800`
                       : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
                   }`}
                 >
@@ -359,11 +359,11 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                     onPointerDown={(e) => e.stopPropagation()}
                     className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
                       (item.discount || 0) > 0
-                        ? `text-primary-600 dark:text-primary-400`
+                        ? `text-emerald-600 dark:text-emerald-400`
                         : 'text-gray-400'
                     }`}
                   >
-                    <span className='material-symbols-rounded text-[12px]'>percent</span>
+                    <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>percent</span>
                   </button>
                   <input
                     type='number'
@@ -386,7 +386,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
                     }}
                     className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                       (item.discount || 0) > 0
-                        ? `text-primary-700 dark:text-primary-300 placeholder-primary-300`
+                        ? `text-emerald-700 dark:text-emerald-300 placeholder-emerald-300`
                         : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
                     }`}
                   />
@@ -482,7 +482,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
               onPointerDown={(e) => e.stopPropagation()}
               className='w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors focus:outline-hidden focus:bg-red-50 dark:focus:bg-red-900/30 focus:text-red-500'
             >
-              <span className='material-symbols-rounded text-[16px]'>close</span>
+              <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>close</span>
             </button>
           </div>
         </div>

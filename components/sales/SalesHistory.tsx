@@ -162,8 +162,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         },
       },
       {
-        id: 'actions',
-        header: '',
+        id: 'status',
+        header: t.status || 'Status',
         meta: { align: 'end' },
         cell: ({ row }) => {
           const sale = row.original;
@@ -171,27 +171,27 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
           if (sale.hasReturns) {
             return (
-              <div className='inline-flex items-center gap-1 px-2 py-1 rounded-md border border-orange-200 text-orange-700 bg-transparent font-bold'>
-                <span className='material-symbols-rounded text-[16px]'>assignment_return</span>
-                <span className='text-xs'>-${totalReturned.toFixed(2)}</span>
-              </div>
+              <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+                <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>assignment_return</span>
+                -${totalReturned.toFixed(2)}
+              </span>
             );
           }
 
           if (sale.status === 'cancelled') {
             return (
-              <div className='inline-flex items-center gap-1 px-2 py-1 rounded-md border border-red-200 text-red-700 bg-transparent font-bold'>
-                <span className='material-symbols-rounded text-[16px]'>cancel</span>
-                <span className='text-xs uppercase'>{t.cancelled || 'Cancelled'}</span>
-              </div>
+              <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+                <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>cancel</span>
+                {t.cancelled || 'Cancelled'}
+              </span>
             );
           }
 
           return (
-            <div className='inline-flex items-center gap-1 px-2 py-1 rounded-md border border-emerald-200 text-emerald-700 bg-transparent font-bold'>
-              <span className='material-symbols-rounded text-[16px]'>check_circle</span>
-              <span className='text-xs uppercase'>{t.completed || 'Completed'}</span>
-            </div>
+            <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>check_circle</span>
+              {t.completed || 'Completed'}
+            </span>
           );
         },
       },

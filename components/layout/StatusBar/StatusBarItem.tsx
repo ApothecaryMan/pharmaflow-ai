@@ -73,7 +73,7 @@ export const StatusBarItem: React.FC<StatusBarItemProps> = ({
 
   const content = (
     <>
-      {icon && <span className='material-symbols-rounded text-[14px] leading-none'>{icon}</span>}
+      {icon && <span className='material-symbols-rounded leading-none' style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)' }}>{icon}</span>}
       {label && <span className='pt-px'>{label}</span>}
       {children}
       {badge !== undefined && badge !== 0 && (

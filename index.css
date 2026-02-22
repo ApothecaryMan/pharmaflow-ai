@@ -129,6 +129,21 @@ layer(base);
     --text-secondary: #6b7280; /* gray-500 */
     --font-en: "IBM Plex Sans";
     --font-ar: "IBM Plex Sans Arabic";
+
+    /* Standard Icon Sizes */
+    --icon-xs: 12px;
+    --icon-sm: 14px;
+    --icon-base: 16px;
+    --icon-md: 18px;
+    --icon-lg: 24px;
+    --icon-xl: 32px;
+    --icon-2xl: 48px;
+    --icon-3xl: 60px;
+
+    /* Navbar Specific Icon Sizes */
+    --icon-navbar-main: 22px;
+    --icon-navbar-dropdown: 18px;
+    --icon-navbar-mobile: 28px;
   }
 
   .dark {

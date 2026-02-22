@@ -241,8 +241,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     type='button'
                   >
                     <span
-                      className={`material-symbols-rounded text-[16px] transition-transform ${themeExpanded ? 'rotate-180' : ''}`}
-                      style={{ color: 'var(--text-tertiary)' }}
+                      className={`material-symbols-rounded transition-transform ${themeExpanded ? 'rotate-180' : ''}`}
+                      style={{ fontSize: 'var(--status-icon-size, 16px)', color: 'var(--text-tertiary)' }}
                     >
                       {themesPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
                     </span>
@@ -290,7 +290,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           title={themeOption.name}
                         >
                           {currentTheme.name === themeOption.name && (
-                            <span className='material-symbols-rounded text-white text-[12px] drop-shadow-md'>
+                            <span className='material-symbols-rounded text-white drop-shadow-md' style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 4px)' }}>
                               check
                             </span>
                           )}
@@ -306,8 +306,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       style={{ color: 'var(--text-primary)' }}
                     >
                       <span
-                        className='material-symbols-rounded text-[14px]'
-                        style={{ color: 'var(--text-secondary)' }}
+                        className='material-symbols-rounded'
+                        style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)', color: 'var(--text-secondary)' }}
                       >
                         dark_mode
                       </span>
@@ -361,8 +361,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     type='button'
                   >
                     <span
-                      className={`material-symbols-rounded text-[16px] transition-transform ${blurOptionsExpanded ? 'rotate-180' : ''}`}
-                      style={{ color: 'var(--text-tertiary)' }}
+                      className={`material-symbols-rounded transition-transform ${blurOptionsExpanded ? 'rotate-180' : ''}`}
+                      style={{ fontSize: 'var(--status-icon-size, 16px)', color: 'var(--text-tertiary)' }}
                     >
                       {blurOptionsPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
                     </span>
@@ -544,8 +544,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     type='button'
                   >
                     <span
-                      className={`material-symbols-rounded text-[16px] transition-transform ${typographyExpanded ? 'rotate-180' : ''}`}
-                      style={{ color: 'var(--text-tertiary)' }}
+                      className={`material-symbols-rounded transition-transform ${typographyExpanded ? 'rotate-180' : ''}`}
+                      style={{ fontSize: 'var(--status-icon-size, 16px)', color: 'var(--text-tertiary)' }}
                     >
                       {typographyPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
                     </span>
@@ -704,8 +704,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     {/* Left Side: Icon + Label */}
                     <div className='flex items-center gap-2'>
                       <span
-                        className='material-symbols-rounded text-[16px]'
-                        style={{ color: 'var(--text-secondary)' }}
+                        className='material-symbols-rounded'
+                        style={{ fontSize: 'var(--status-icon-size, 16px)', color: 'var(--text-secondary)' }}
                       >
                         speed
                       </span>
@@ -735,8 +735,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         type='button'
                       >
                         <span
-                          className={`material-symbols-rounded text-[16px] transition-transform ${statusBarExpanded ? 'rotate-180' : ''}`}
-                          style={{ color: 'var(--text-tertiary)' }}
+                          className={`material-symbols-rounded transition-transform ${statusBarExpanded ? 'rotate-180' : ''}`}
+                          style={{ fontSize: 'var(--status-icon-size, 16px)', color: 'var(--text-tertiary)' }}
                         >
                           {quickStatusesPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
                         </span>

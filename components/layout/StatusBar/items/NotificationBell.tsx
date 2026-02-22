@@ -177,7 +177,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                   className={`px-3 py-2 transition-colors flex items-start gap-2 ${getNotificationStyle(notification.type)}`}
                 >
                   <span
-                    className={`material-symbols-rounded text-[16px] mt-0.5 ${getVariantColor(notification.type)}`}
+                    className={`material-symbols-rounded mt-0.5 ${getVariantColor(notification.type)}`}
+                    style={{ fontSize: 'var(--status-icon-size, 16px)' }}
                   >
                     {getVariantIcon(notification.type)}
                   </span>
@@ -194,7 +195,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                     className='text-gray-400 hover:text-black dark:hover:text-white transition-colors'
                     title={t.dismiss}
                   >
-                    <span className='material-symbols-rounded text-[14px]'>close</span>
+                    <span className='material-symbols-rounded' style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)' }}>close</span>
                   </button>
                 </div>
               ))

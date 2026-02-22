@@ -32,7 +32,7 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
         }`}
         style={{ color: 'var(--text-secondary)' }}
       >
-        <span className='material-symbols-rounded text-[14px] text-amber-500'>campaign</span>
+        <span className='material-symbols-rounded text-amber-500' style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)' }}>campaign</span>
         <span>{state.announcement}</span>
       </div>
 
@@ -42,7 +42,7 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
         className='absolute right-0 p-0.5 text-gray-400 hover:text-gray-600 transition-colors opacity-0 hover:opacity-100'
         style={{ opacity: isHovered ? 1 : 0 }}
       >
-        <span className='material-symbols-rounded text-[12px]'>close</span>
+        <span className='material-symbols-rounded' style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 4px)' }}>close</span>
       </button>
 
       <style>{`

@@ -317,7 +317,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   >
                     {module.id === 'sales' ? (
                       <svg
-                        className='w-5 h-5'
+                        style={{ width: 'var(--icon-navbar-main)', height: 'var(--icon-navbar-main)' }}
                         viewBox='0 0 24 24'
                         fill='none'
                         stroke='currentColor'
@@ -331,7 +331,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                       </svg>
                     ) : (
                       <span
-                        className={`material-symbols-rounded text-[20px] ${module.id === 'dashboard' ? 'text-[22px]' : ''}`}
+                        className={`material-symbols-rounded`}
+                        style={{ fontSize: 'var(--icon-navbar-main)' }}
                       >
                         {module.icon}
                       </span>
@@ -391,13 +392,13 @@ const NavbarComponent: React.FC<NavbarProps> = ({
           dropDirection='down'
           align='end'
           triggerVariant='navbar'
-          triggerSize={26}
+          triggerSize={'var(--icon-navbar-mobile)' as any}
         />
         <button
           onClick={onMobileMenuToggle}
           className='flex items-center justify-center w-10 h-10 text-gray-600 dark:text-gray-300 transition-colors'
         >
-          <span className='material-symbols-rounded text-[28px]'>menu</span>
+          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-navbar-mobile)' }}>menu</span>
         </button>
       </div>
 
@@ -436,7 +437,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   title={getMenuTranslation(settingsModule.label, language)}
                 >
                   <span
-                    className={`material-symbols-rounded text-[22px] ${isActive || isDropdownOpen ? 'icon-filled' : ''}`}
+                    className={`material-symbols-rounded ${isActive || isDropdownOpen ? 'icon-filled' : ''}`}
+                    style={{ fontSize: 'var(--icon-navbar-main)' }}
                   >
                     {settingsModule.icon}
                   </span>
@@ -492,7 +494,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   border: '1px solid rgba(255,255,255,0.2)',
                 }}
               >
-                <span className='material-symbols-rounded text-white text-[18px]'>store</span>
+                <span className='material-symbols-rounded text-white' style={{ fontSize: 'var(--icon-md)' }}>store</span>
               </Avatar>
             )}
             <div className='hidden md:flex flex-col items-start'>
@@ -503,7 +505,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 {language === 'AR' ? 'الفرع الرئيسي' : 'Main Branch'}
               </span>
             </div>
-            <span className='hidden md:block material-symbols-rounded text-gray-400 text-[16px]'>
+            <span className='hidden md:block material-symbols-rounded text-gray-400' style={{ fontSize: 'var(--icon-base)' }}>
               expand_more
             </span>
           </button>
@@ -530,7 +532,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                           border: '1px solid rgba(255,255,255,0.2)',
                         }}
                       >
-                        <span className='material-symbols-rounded text-white text-[24px]'>
+                        <span className='material-symbols-rounded text-white' style={{ fontSize: 'var(--icon-lg)' }}>
                           store
                         </span>
                       </Avatar>
@@ -548,7 +550,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                       className='absolute bottom-0 right-0 w-5 h-5 bg-black/30 backdrop-blur-xs text-white rounded-full flex items-center justify-center hover:bg-black/50 transition-colors shadow-xs'
                       title='Change Photo'
                     >
-                      <span className='material-symbols-rounded text-[12px]'>edit</span>
+                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-xs)' }}>edit</span>
                     </button>
                   </div>
                   <div>
@@ -591,7 +593,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   }}
                   className={`w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors flex items-center justify-center gap-2`}
                 >
-                  <span className='material-symbols-rounded text-[18px]'>print</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>print</span>
                   {(t as any).printerSettings?.title || 'Printer Settings'}
                 </button>
               </div>
@@ -626,14 +628,14 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 >
                   {isLoggingOut ? (
                     <>
-                      <span className='material-symbols-rounded text-[18px] animate-spin'>
+                      <span className='material-symbols-rounded animate-spin' style={{ fontSize: 'var(--icon-md)' }}>
                         progress_activity
                       </span>
                       {t.profile.signOut}...
                     </>
                   ) : (
                     <>
-                      <span className='material-symbols-rounded text-[18px]'>logout</span>
+                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>logout</span>
                       {t.profile.signOut}
                     </>
                   )}

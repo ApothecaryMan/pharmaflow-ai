@@ -276,7 +276,7 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
         >
           {/* Icon */}
           <span
-            className={`material-symbols-rounded text-[14px] leading-none ${
+            className={`material-symbols-rounded leading-none ${
               currentSlide.variant === 'success'
                 ? 'text-emerald-500'
                 : currentSlide.variant === 'warning'
@@ -287,6 +287,7 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
                       ? 'text-blue-500'
                       : 'text-(--text-secondary)'
             }`}
+            style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)' }}
           >
             {currentSlide.icon}
           </span>

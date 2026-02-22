@@ -157,7 +157,8 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                       <div className='flex items-center gap-2.5'>
                         {itemIcon && (
                           <span
-                            className={`material-symbols-rounded text-[18px] ${isActive ? '' : 'opacity-70 group-hover:opacity-100'}`}
+                            className={`material-symbols-rounded ${isActive ? '' : 'opacity-70 group-hover:opacity-100'}`}
+                            style={{ fontSize: 'var(--icon-navbar-dropdown)' }}
                           >
                             {itemIcon}
                           </span>

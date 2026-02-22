@@ -848,6 +848,18 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
             <span className='text-gray-500 dark:text-gray-400'>{payloadSize}</span>
           </div>
         </div>
+
+        {/* Top-Right Action Button */}
+        <div className='absolute top-4 right-4 z-20'>
+          <button 
+            type="button"
+            className='h-7 px-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-md rounded-xl border border-gray-200/50 dark:border-gray-700/50 shadow-xs text-[10px] font-bold text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-1.5 cursor-pointer pointer-events-auto'
+            onClick={() => {}}
+          >
+            <span className='material-symbols-rounded'>receipt_long</span>
+            {language === 'AR' ? 'طباعة إيصال الوردية' : 'Close Shift Receipt'}
+          </button>
+        </div>
         <div
           className='bg-white shadow-2xl shadow-gray-300 dark:shadow-black shrink-0 transition-all duration-200 ease-in-out rounded-lg overflow-hidden'
           style={{ width: '79mm', height: 'fit-content', minHeight: '300px' }}

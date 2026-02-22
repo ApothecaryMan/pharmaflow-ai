@@ -74,7 +74,10 @@ export const AlertsAndAds: React.FC<AlertsAndAdsProps> = ({ rotationSpeed = 8000
         key={content.key}
         className={`flex items-center gap-2 text-[12px] whitespace-nowrap animate-fade-in-up min-w-[200px]`}
       >
-        <span className={`material-symbols-rounded text-[16px] ${content.iconColor}`}>
+        <span
+          className={`material-symbols-rounded ${content.iconColor}`}
+          style={{ fontSize: 'var(--status-icon-size, 16px)' }}
+        >
           {content.icon}
         </span>
         <span className={`${content.textColor} font-medium tracking-wide`}>{content.text}</span>
