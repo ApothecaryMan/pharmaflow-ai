@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import type React from 'react';
+import React from 'react';
 import { useMemo, useState } from 'react';
 import { RETURN_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { CartItem, type Return, type Sale } from '../../types';

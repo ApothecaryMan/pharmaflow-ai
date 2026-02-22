@@ -195,6 +195,7 @@ layer(base);
 @layer base {
   .material-symbols-rounded {
     font-family: "Material Symbols Rounded" !important;
+    font-size-adjust: none !important; /* Protect from Arabic scaling shrink */
     direction: ltr !important; /* Prevent RTL flipping */
     display: inline-block;
     line-height: 1;
