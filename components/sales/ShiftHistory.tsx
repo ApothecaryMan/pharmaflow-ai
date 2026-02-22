@@ -9,6 +9,8 @@ import { DatePicker } from '../common/DatePicker';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
+import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
+import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
 
 interface ShiftHistoryProps {
   color: string;
@@ -32,7 +34,54 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
 
   // Load shifts from useShift hook (sharded storage)
-  const { shifts: allShiftsFromHook, isLoading } = useShift();
+  const { shifts: allShiftsFromHook, isLoading, endShift } = useShift();
+
+  const handleReprintShift = async (shift: Shift) => {
+    // 1. Increment print count
+    const updatedShift: Shift = {
+      ...shift,
+      printCount: (shift.printCount || 1) + 1,
+    };
+    
+    // 2. Persist update
+    endShift(updatedShift);
+    setSelectedShift(updatedShift);
+
+    // 3. Print
+    try {
+      const html = generateShiftReceiptHTML(updatedShift, language as any);
+      
+      const printerSettings = getPrinterSettings();
+      const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
+      let printedSilently = false;
+
+      if (shouldTrySilent && printerSettings.receiptPrinter) {
+        try {
+          const silentPrinted = await printReceiptSilently(html);
+          if (silentPrinted) {
+            printedSilently = true;
+          }
+        } catch (silentErr) {
+          console.warn('QZ Tray silent print failed:', silentErr);
+        }
+      }
+
+      if (!printedSilently) {
+        const printWindow = window.open('', '_blank', 'width=400,height=600');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+          }, 500);
+        }
+      }
+    } catch (err) {
+      console.error('Reprint failed:', err);
+    }
+  };
 
   const shifts = useMemo(() => {
     // Only show closed shifts
@@ -77,8 +126,25 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
   const columns = useMemo<ColumnDef<Shift>[]>(
     () => [
       {
+        id: 'shiftNumber',
+        accessorFn: (row) => row.handoverReceiptNumber || row.id.slice(-6),
+        header: t.shiftHistory?.headers?.shiftNumber || 'Shift #',
+        cell: ({ getValue }) => (
+          <span className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
+            <span className="material-symbols-rounded text-[18px] text-gray-400">tag</span>
+            {getValue() as string}
+          </span>
+        ),
+        meta: { align: 'start' },
+      },
+      {
         accessorKey: 'id',
-        header: t.shiftHistory?.headers?.shiftId || 'Shift ID',
+        header: t.shiftHistory?.headers?.systemId || 'System ID',
+        cell: ({ getValue }) => (
+          <span className="text-sm font-mono text-gray-500">
+            {getValue() as string}
+          </span>
+        ),
         meta: { align: 'start' },
       },
       {
@@ -347,7 +413,16 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
           size='2xl'
           title={t.shiftHistory?.details?.title || 'Shift Details'}
           icon='receipt_long'
-          subtitle={`${t.shiftHistory?.headers?.shiftId || 'ID'}: #${selectedShift.id.slice(-6)} • ${new Date(selectedShift.openTime).toLocaleDateString()}`}
+          subtitle={`${t.shiftHistory?.headers?.shiftNumber || 'Shift #'}: #${selectedShift.handoverReceiptNumber || selectedShift.id.slice(-6)} • ${new Date(selectedShift.openTime).toLocaleDateString()}`}
+          headerActions={
+            <button
+              onClick={() => handleReprintShift(selectedShift)}
+              className='w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 hover:bg-primary-500 hover:text-white transition-all flex items-center justify-center border border-gray-100 dark:border-gray-700'
+              title={language === 'AR' ? 'إعادة طباعة' : 'Reprint'}
+            >
+              <span className='material-symbols-rounded text-[22px]'>print</span>
+            </button>
+          }
         >
           <div className='space-y-6'>
             {/* Summary Grid */}

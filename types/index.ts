@@ -714,6 +714,22 @@ export interface Shift {
   transactions: CashTransaction[];
   /** Shift notes */
   notes?: string;
+  /** Cash purchases total during this shift (snapshot at close) */
+  cashPurchases?: number;
+  /** Cash purchase returns total during this shift (snapshot at close) */
+  cashPurchaseReturns?: number;
+  /** Total discounts granted during this shift (snapshot at close) */
+  totalDiscounts?: number;
+  /** Number of cash invoices during this shift */
+  cashInvoiceCount?: number;
+  /** Number of card invoices during this shift */
+  cardInvoiceCount?: number;
+  /** Shift duration in minutes */
+  shiftDurationMinutes?: number;
+  /** Sequential handover receipt number (human-readable audit ID) */
+  handoverReceiptNumber?: number;
+  /** Number of times this shift receipt has been printed */
+  printCount?: number;
 }
 
 export interface Employee {

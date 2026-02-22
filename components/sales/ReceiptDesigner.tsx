@@ -1,13 +1,15 @@
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
-import type { Sale } from '../../types';
+import type { Sale, Shift } from '../../types';
 import { storage } from '../../utils/storage';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput, useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
 import { generateInvoiceHTML, type InvoiceTemplateOptions } from '../sales/InvoiceTemplate';
+import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
+import { useShift } from '../../hooks/useShift';
 
 interface ReceiptDesignerProps {
   color: string;
@@ -19,6 +21,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   const { getVerifiedDate } = useStatusBar();
   // Track if component has mounted (to avoid overwriting localStorage on first render)
   const [hasMounted, setHasMounted] = useState(false);
+  const { shifts } = useShift();
+  const [previewMode, setPreviewMode] = useState<'sale' | 'shift'>('sale');
 
   useEffect(() => {
     setHasMounted(true);
@@ -191,6 +195,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   // Preview-only toggles (not saved to localStorage, just for visualization)
   const [showDeliveryPreview, setShowDeliveryPreview] = useState(false);
   const [showReturnsPreview, setShowReturnsPreview] = useState(false);
+  const [showDuplicatePreview, setShowDuplicatePreview] = useState(false);
 
   // 2. Dummy Sale Data for Preview
   const DUMMY_SALE: Sale = {
@@ -259,13 +264,67 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     itemReturnedQuantities: showReturnsPreview ? { '2_1': 1 } : undefined,
   };
 
+  const DUMMY_SHIFT: Shift = useMemo(() => {
+    const now = getVerifiedDate();
+    const openTime = new Date(now.getTime() - 8 * 60 * 60 * 1000); // 8 hours ago
+    return {
+      id: 'SHIFT-889900',
+      status: 'closed',
+      openTime: openTime.toISOString(),
+      closeTime: now.toISOString(),
+      openedBy: 'Dr. Ahmed',
+      closedBy: 'Dr. Ahmed',
+      openingBalance: 1000,
+      closingBalance: 8600,
+      expectedBalance: 8650,
+      cashIn: 500,
+      cashOut: 450,
+      cashSales: 7500,
+      cardSales: 2100,
+      returns: 400,
+      cashPurchases: 1200,
+      cashPurchaseReturns: 150,
+      totalDiscounts: 230,
+      cashInvoiceCount: 65,
+      cardInvoiceCount: 14,
+      shiftDurationMinutes: 480,
+      handoverReceiptNumber: 1042,
+      printCount: showDuplicatePreview ? 2 : 1,
+      transactions: [],
+    };
+  }, [getVerifiedDate, showDuplicatePreview]);
+
+  // 3. Preview HTML Generation
   // 3. Preview HTML Generation
   const [previewHtml, setPreviewHtml] = useState('');
 
   useEffect(() => {
-    const html = generateInvoiceHTML(DUMMY_SALE, { ...options, language });
+    if (previewMode === 'shift') {
+      setPreviewHtml(generateShiftReceiptHTML(DUMMY_SHIFT, language));
+      return;
+    }
+
+    // Update DUMMY_SALE to reflect preview toggles
+    const activeDummySale = {
+      ...DUMMY_SALE,
+      total: showDeliveryPreview ? 111.0 : 101.0,
+      returns: showReturnsPreview
+        ? [
+            {
+              id: 'RET-1',
+              date: getVerifiedDate().toISOString(),
+              totalRefund: 15.5,
+              items: [],
+              originalSaleId: DUMMY_SALE.id,
+              userId: 'admin',
+            },
+          ]
+        : undefined,
+    } as Sale;
+
+    const html = generateInvoiceHTML(activeDummySale, { ...options, language });
     setPreviewHtml(html);
-  }, [options, language, showDeliveryPreview, showReturnsPreview]);
+  }, [options, language, showDeliveryPreview, showReturnsPreview, previewMode, DUMMY_SHIFT]);
 
   const payloadSize = useMemo(() => {
     if (!previewHtml) return '0 B';
@@ -338,7 +397,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   return (
     <div className='flex flex-col lg:flex-row h-[calc(100vh-140px)] gap-6 p-4'>
       {/* LEFT: Controls */}
-      <div className='w-full lg:w-1/3 bg-white dark:bg-gray-800 rounded-2xl shadow-xs p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4'>
+      <div className={`w-full lg:w-1/3 bg-white dark:bg-gray-800 rounded-2xl shadow-xs p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4 transition-opacity duration-300 ${previewMode === 'shift' ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
         {/* Template Manager Header */}
         <div className='w-full'>
           <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1 block px-1'>
@@ -832,7 +891,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       </div>
 
       {/* RIGHT: Preview */}
-      <div className='flex-1 rounded-2xl flex justify-center p-8 border border-gray-200 dark:border-gray-800 overflow-y-auto custom-scrollbar bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] bg-size-[20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] bg-gray-100 dark:bg-gray-950 relative'>
+      <div className='flex-1 rounded-2xl border border-gray-200 dark:border-gray-800 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] bg-size-[20px_20px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] bg-gray-100 dark:bg-gray-950 relative flex flex-col overflow-hidden'>
         {/* Top-Left Unified Stats Badge */}
         <div className='absolute top-4 left-4 flex items-center px-2.5 h-7 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-xl border border-gray-200/50 dark:border-gray-700/50 shadow-xs text-[10px] font-bold gap-3 z-20 pointer-events-none'>
           <div className='flex items-center gap-1.2' title='Real Printing Memory Size (Actual)'>
@@ -850,16 +909,30 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         </div>
 
         {/* Top-Right Action Button */}
-        <div className='absolute top-4 right-4 z-20'>
+        <div className='absolute top-4 right-4 z-20 flex gap-2'>
           <button 
             type="button"
-            className='h-7 px-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-md rounded-xl border border-gray-200/50 dark:border-gray-700/50 shadow-xs text-[10px] font-bold text-gray-700 dark:text-gray-300 transition-colors flex items-center gap-1.5 cursor-pointer pointer-events-auto'
-            onClick={() => {}}
+            className={`h-7 px-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-md rounded-xl border shadow-xs text-[10px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer pointer-events-auto ${previewMode === 'shift' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-gray-200/50 dark:border-gray-700/50 text-gray-700 dark:text-gray-300'}`}
+            onClick={() => setPreviewMode(previewMode === 'sale' ? 'shift' : 'sale')}
           >
             <span className='material-symbols-rounded'>receipt_long</span>
-            {language === 'AR' ? 'طباعة إيصال الوردية' : 'Close Shift Receipt'}
+            {previewMode === 'shift' ? (language === 'AR' ? 'إيصال المبيعات' : 'Sale Receipt') : (language === 'AR' ? 'إيصال تسليم وردية' : 'Shift Receipt')}
           </button>
+
+          {previewMode === 'shift' && (
+            <button 
+              type="button"
+              className={`h-7 px-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-md rounded-xl border shadow-xs text-[10px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer pointer-events-auto ${showDuplicatePreview ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-gray-200/50 dark:border-gray-700/50 text-gray-700 dark:text-gray-300'}`}
+              onClick={() => setShowDuplicatePreview(!showDuplicatePreview)}
+            >
+              <span className='material-symbols-rounded'>content_copy</span>
+              {language === 'AR' ? 'عرض كنسخة مكررة' : 'Preview as Duplicate'}
+            </button>
+          )}
         </div>
+
+        {/* Scrollable Content Area */}
+        <div className='flex-1 overflow-y-auto custom-scrollbar p-8 flex justify-center'>
         <div
           className='bg-white shadow-2xl shadow-gray-300 dark:shadow-black shrink-0 transition-all duration-200 ease-in-out rounded-lg overflow-hidden'
           style={{ width: '79mm', height: 'fit-content', minHeight: '300px' }}
@@ -882,6 +955,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
               }
             }}
           />
+        </div>
         </div>
       </div>
     </div>

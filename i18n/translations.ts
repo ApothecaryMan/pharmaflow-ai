@@ -860,6 +860,8 @@ export const TRANSLATIONS = {
       noResults: 'No shifts found',
       headers: {
         shiftId: 'Shift ID',
+        shiftNumber: 'Shift #',
+        systemId: 'System ID',
         openTime: 'Opened',
         closeTime: 'Closed',
         duration: 'Duration',
@@ -3533,7 +3535,9 @@ export const TRANSLATIONS = {
       exportCSV: 'تصدير CSV',
       noResults: 'لا توجد ورديات',
       headers: {
-        shiftId: 'رقم الوردية',
+        shiftId: 'رقم الوردية (القديم)',
+        shiftNumber: 'رقم الوردية',
+        systemId: 'ID',
         openTime: 'وقت الفتح',
         closeTime: 'وقت الإغلاق',
         duration: 'المدة',

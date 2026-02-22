@@ -13,6 +13,12 @@ import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useSmartDirection } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
+import { useData } from '../../services';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
+import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
+import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
+import { idGenerator } from '../../utils/idGenerator';
 
 interface CashRegisterProps {
   color: string;
@@ -35,6 +41,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
 
   // Use the shared shift hook
   const { currentShift, shifts, isLoading, startShift, endShift, addTransaction } = useShift();
+  const { purchases, purchaseReturns, sales } = useData();
 
   // Local UI State
   const [modalMode, setModalMode] = useState<'open' | 'close' | 'in' | 'out' | null>(null);
@@ -269,8 +276,10 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     const startUser = employees?.find((e) => e.id === currentEmployeeId);
     const userName = startUser ? startUser.name : 'Pharmacist';
 
+    const newShiftId = idGenerator.generate('shifts');
+
     const newShift: Shift = {
-      id: getVerifiedDate().getTime().toString(),
+      id: newShiftId,
       status: 'open',
       openTime: getVerifiedDate().toISOString(),
       openedBy: userName,
@@ -282,8 +291,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
       returns: 0, // Initialize returns counter
       transactions: [
         {
-          id: getVerifiedDate().getTime().toString() + '-init',
-          shiftId: getVerifiedDate().getTime().toString(),
+          id: idGenerator.generate('transactions'),
+          shiftId: newShiftId,
           time: getVerifiedDate().toISOString(),
           type: 'opening',
           amount: amount,
@@ -324,14 +333,48 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     const startUser = employees?.find((e) => e.id === currentEmployeeId);
     const userName = startUser ? startUser.name : 'Pharmacist';
 
+    // Snapshot computations
+    const closeTs = getVerifiedDate();
+    const shiftStart = new Date(currentShift.openTime).getTime();
+    const shiftEnd = closeTs.getTime();
+
+    const cashPurchases = purchases
+      .filter((p) => p.paymentType === 'cash' && new Date(p.date).getTime() >= shiftStart && new Date(p.date).getTime() <= shiftEnd)
+      .reduce((sum, p) => sum + p.totalCost, 0);
+
+    const cashPurchaseReturns = purchaseReturns
+      .filter((pr) => new Date(pr.date).getTime() >= shiftStart && new Date(pr.date).getTime() <= shiftEnd)
+      .reduce((sum, pr) => sum + pr.totalRefund, 0);
+
+    const cashInvoiceCount = currentShift.transactions.filter((tx) => tx.type === 'sale').length;
+    const cardInvoiceCount = currentShift.transactions.filter((tx) => tx.type === 'card_sale').length;
+
+    const totalDiscounts = sales
+      .filter((s) => new Date(s.date).getTime() >= shiftStart && new Date(s.date).getTime() <= shiftEnd)
+      .reduce((sum, s) => sum + (s.globalDiscount || 0), 0);
+
+    const shiftDurationMinutes = Math.round((shiftEnd - shiftStart) / 60000);
+
+    const prevCounter = storage.get<number>(StorageKeys.SHIFT_RECEIPT_COUNTER, 0);
+    const handoverReceiptNumber = prevCounter + 1;
+    storage.set(StorageKeys.SHIFT_RECEIPT_COUNTER, handoverReceiptNumber);
+
     const closedShift: Shift = {
       ...currentShift,
       status: 'closed',
-      closeTime: getVerifiedDate().toISOString(),
+      closeTime: closeTs.toISOString(),
       closedBy: userName,
       closingBalance: amount,
       expectedBalance: currentBalance,
+      cashPurchases,
+      cashPurchaseReturns,
+      totalDiscounts,
+      cashInvoiceCount,
+      cardInvoiceCount,
+      shiftDurationMinutes,
+      handoverReceiptNumber,
       notes: reasonInput,
+      printCount: 1, // First print
       transactions: [
         ...currentShift.transactions,
         {
@@ -348,6 +391,48 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
 
     endShift(closedShift);
     closeModal();
+
+    // Trigger Print
+    setTimeout(async () => {
+      try {
+        const html = generateShiftReceiptHTML(closedShift, language);
+        
+        // Try QZ Tray silent printing first
+        const printerSettings = getPrinterSettings();
+        const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
+        let printedSilently = false;
+
+        if (shouldTrySilent && printerSettings.receiptPrinter) {
+          try {
+            const silentPrinted = await printReceiptSilently(html);
+            if (silentPrinted) {
+              console.log('Shift Receipt printed silently via QZ Tray');
+              printedSilently = true;
+            }
+          } catch (silentErr) {
+            console.warn('QZ Tray silent print failed, falling back to browser print:', silentErr);
+            if (printerSettings.silentMode !== 'fallback') {
+              return;
+            }
+          }
+        }
+
+        if (!printedSilently) {
+          const printWindow = window.open('', '_blank', 'width=400,height=600');
+          if (printWindow) {
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+              printWindow.print();
+              printWindow.close();
+            }, 500);
+          }
+        }
+      } catch (e) {
+        console.error('Auto-print failed:', e);
+      }
+    }, 500);
   };
 
   const handleCashTransaction = () => {
