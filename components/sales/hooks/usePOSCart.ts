@@ -10,6 +10,7 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { canPerformAction, type UserRole } from '../../../config/permissions';
 import type { CartItem, Drug } from '../../../types';
+import { isStockConstraintMet } from '../utils/POSUtils';
 
 interface UsePOSCartProps {
   activeTab: any;
@@ -107,18 +108,7 @@ export const usePOSCart = ({
     }
 
     setCart((prev: CartItem[]) => {
-      // Calculate Validation Logic (Total Units)
-      const currentCartItems = prev.filter((i) => i.id === drug.id);
-      let totalUnitsInCart = 0;
-
-      currentCartItems.forEach((i) => {
-        if (i.isUnit) totalUnitsInCart += i.quantity;
-        else totalUnitsInCart += i.quantity * (drug.unitsPerPack || 1);
-      });
-
-      const unitsToAdd = isUnitMode ? initialQuantity : initialQuantity * (drug.unitsPerPack || 1);
-
-      if (totalUnitsInCart + unitsToAdd > drug.stock) {
+      if (!isStockConstraintMet(drug.id, drug.stock, drug.unitsPerPack, prev, initialQuantity, isUnitMode)) {
         return prev;
       }
 
@@ -127,11 +117,10 @@ export const usePOSCart = ({
       );
 
       if (existingIndex >= 0) {
-        const existing = prev[existingIndex];
         const updated = [...prev];
         updated[existingIndex] = {
-          ...existing,
-          quantity: existing.quantity + initialQuantity,
+          ...updated[existingIndex],
+          quantity: updated[existingIndex].quantity + initialQuantity,
         };
         return updated;
       }
@@ -258,84 +247,60 @@ export const usePOSCart = ({
 
   const updateQuantity = useCallback((id: string, isUnit: boolean, delta: number) => {
     setCart((prev: CartItem[]) => {
-      const packItem = prev.find((i) => i.id === id && !i.isUnit);
-      const unitItem = prev.find((i) => i.id === id && i.isUnit);
       const drug = inventory.find((d) => d.id === id);
-      const stock = drug?.stock || 0;
-      const unitsPerPack = drug?.unitsPerPack || 1;
-      const hasDualMode = unitsPerPack > 1;
-
-      const currentPackQty = packItem?.quantity || 0;
-      const currentUnitQty = unitItem?.quantity || 0;
+      if (!drug) return prev;
 
       const targetItem = prev.find((i) => i.id === id && !!i.isUnit === isUnit);
       if (!targetItem) return prev;
 
       const newQty = targetItem.quantity + delta;
-
-      let newPackQty = currentPackQty;
-      let newUnitQty = currentUnitQty;
-      if (isUnit) {
-        newUnitQty = newQty;
-      } else {
-        newPackQty = newQty;
-      }
-
-      const totalUnitsUsed = newPackQty * unitsPerPack + newUnitQty;
-      const isStockValid = totalUnitsUsed <= stock;
+      
+      // Basic validation: Cannot go below 1 pack, but units can hit 0 (if there are packs)
+      const unitsPerPack = drug.unitsPerPack || 1;
+      const hasDualMode = unitsPerPack > 1;
       const minQtyValid = hasDualMode ? newQty >= 0 : isUnit ? newQty >= 0 : newQty >= 1;
 
-      if (minQtyValid && isStockValid) {
-        return prev.map((item) => {
-          if (item.id === id && !!item.isUnit === isUnit) {
-            return { ...item, quantity: newQty };
-          }
-          return item;
-        });
+      if (!minQtyValid) return prev;
+
+      if (!isStockConstraintMet(id, drug.stock, drug.unitsPerPack, prev, delta, isUnit)) {
+        return prev;
       }
-      return prev;
+
+      return prev.map((item) =>
+        item.id === id && !!item.isUnit === isUnit ? { ...item, quantity: newQty } : item
+      );
     });
   }, [inventory, setCart]);
 
   const toggleUnitMode = useCallback((id: string, currentIsUnit: boolean) => {
     setCart((prev: CartItem[]) => {
-      const itemIndex = prev.findIndex((i) => i.id === id && !!i.isUnit === currentIsUnit);
-      if (itemIndex === -1) return prev;
+      const item = prev.find((i) => i.id === id && !!i.isUnit === currentIsUnit);
+      if (!item) return prev;
 
-      const item = prev[itemIndex];
       const unitsPerPack = item.unitsPerPack || 1;
+      if (unitsPerPack <= 1) return prev; // Cannot toggle if no packs/units distinction
 
-      if (!currentIsUnit) {
-        const existingUnitIndex = prev.findIndex((i) => i.id === id && i.isUnit);
-        const convertedQty = item.quantity * unitsPerPack;
-        let updated = [...prev];
+      const newIsUnit = !currentIsUnit;
+      const convertedQty = currentIsUnit ? item.quantity / unitsPerPack : item.quantity * unitsPerPack;
 
-        if (existingUnitIndex >= 0) {
-          updated[existingUnitIndex] = {
-            ...updated[existingUnitIndex],
-            quantity: updated[existingUnitIndex].quantity + convertedQty,
-          };
-          updated = updated.filter((_, idx) => idx !== itemIndex);
-        } else {
-          updated[itemIndex] = { ...item, isUnit: true, quantity: convertedQty };
-        }
-        return updated;
-      }
-
-      if (unitsPerPack <= 1) return prev;
-
-      const convertedPacks = item.quantity / unitsPerPack;
-      const existingPackIndex = prev.findIndex((i) => i.id === id && !i.isUnit);
+      const existingIndex = prev.findIndex((i) => i.id === id && !!i.isUnit === newIsUnit);
+      
       let updated = [...prev];
-
-      if (existingPackIndex >= 0) {
-        updated[existingPackIndex] = {
-          ...updated[existingPackIndex],
-          quantity: updated[existingPackIndex].quantity + convertedPacks,
+      if (existingIndex >= 0) {
+        // Merge with existing item of that type
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: updated[existingIndex].quantity + convertedQty,
         };
-        updated = updated.filter((_, idx) => idx !== itemIndex);
+        // Remove the toggled item
+        updated = updated.filter((i) => !(i.id === id && !!i.isUnit === currentIsUnit));
       } else {
-        updated[itemIndex] = { ...item, isUnit: false, quantity: convertedPacks };
+        // Just change the type of the current item
+        updated = prev.map((i) => 
+          (i.id === id && !!i.isUnit === currentIsUnit) 
+            ? { ...i, isUnit: newIsUnit, quantity: convertedQty } 
+            : i
+        );
       }
       return updated;
     });

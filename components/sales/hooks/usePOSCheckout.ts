@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { canPerformAction, type UserRole } from '../../../config/permissions';
-import { getLocationName } from '../../../data/locations';
 import type { CartItem, Customer, Sale } from '../../../types';
 import { generateInvoiceHTML, getActiveReceiptSettings } from '../InvoiceTemplate';
 import { getPrinterSettings, printReceiptSilently } from '../../../utils/qzPrinter';
+import { buildSalePayload } from '../utils/POSUtils';
 
 interface UsePOSCheckoutProps {
   cart: CartItem[];
@@ -65,102 +65,63 @@ export const usePOSCheckout = ({
       }
       if (!isValidOrder) return;
 
+      const isDelivery = saleType === 'delivery';
       let deliveryFee = 0;
-      if (saleType === 'delivery') {
+      if (isDelivery) {
         deliveryFee = 5;
       }
 
-      if (saleType === 'delivery' && !deliveryEmployeeId && !isPending) {
+      if (isDelivery && !deliveryEmployeeId && !isPending) {
         alert(t.selectDriver || 'Please select a delivery man');
         return;
       }
 
-      addNotification({
-        messageKey: 'saleComplete',
-        messageParams: { total: cartTotal.toFixed(2) },
-        type: 'success',
-      });
-
-      let processingTimeMinutes: number | undefined;
       const startTime = activeTab?.firstItemAt || activeTab?.createdAt;
-
+      let processingTimeMinutes: number | undefined;
       if (startTime) {
         const rawMinutes = Math.round((Date.now() - startTime) / 6000) / 10;
         processingTimeMinutes = Math.max(0.1, Math.min(rawMinutes, 60));
       }
 
-      const success = await onCompleteSale({
+      const saleParams = {
         items: cart,
-        customerName: customerName || 'Guest Customer',
+        customer: selectedCustomer,
+        customerName: customerName || undefined,
         customerCode,
-        customerPhone: selectedCustomer?.phone,
-        customerAddress: selectedCustomer
-          ? [
-              selectedCustomer.area ? getLocationName(selectedCustomer.area, 'area', language as 'EN' | 'AR') : '',
-              selectedCustomer.city ? getLocationName(selectedCustomer.city, 'city', language as 'EN' | 'AR') : '',
-              selectedCustomer.governorate ? getLocationName(selectedCustomer.governorate, 'gov', language as 'EN' | 'AR') : '',
-            ]
-              .filter(Boolean)
-              .join(', ')
-          : undefined,
-        customerStreetAddress: selectedCustomer?.streetAddress,
         paymentMethod,
         saleType,
         deliveryFee,
         globalDiscount,
         subtotal,
         total: cartTotal + deliveryFee,
-        deliveryEmployeeId: saleType === 'delivery' ? deliveryEmployeeId : undefined,
-        status: isPending
-          ? 'pending'
-          : saleType === 'delivery'
-            ? deliveryEmployeeId
-              ? 'with_delivery'
-              : 'pending'
-            : 'completed',
+        language: (language as 'EN' | 'AR') || 'EN',
+        deliveryEmployeeId: isDelivery ? deliveryEmployeeId : undefined,
+        status: (isPending ? 'pending' : isDelivery ? (deliveryEmployeeId ? 'with_delivery' : 'pending') : 'completed') as Sale['status'],
         processingTimeMinutes,
-      });
+        date: getVerifiedDate(),
+      };
+
+      const salePayload = buildSalePayload(saleParams);
+
+      const success = await onCompleteSale(salePayload);
 
       if (success === false) {
         console.warn('[POS] Checkout failed. Cart preserved.');
         return;
       }
 
+      addNotification({
+        messageKey: 'saleComplete',
+        messageParams: { total: (cartTotal + deliveryFee).toFixed(2) },
+        type: 'success',
+      });
+
       try {
         const opts = getActiveReceiptSettings();
-        const isDelivery = saleType === 'delivery';
         const shouldPrint = (isDelivery && opts.autoPrintOnDelivery) || opts.autoPrintOnComplete;
 
         if (shouldPrint) {
-          const verifiedDate = getVerifiedDate();
-          const mockSale: Sale = {
-            id: 'TRX-' + verifiedDate.getTime().toString().slice(-6),
-            date: verifiedDate.toISOString(),
-            dailyOrderNumber: 0,
-            items: cart,
-            subtotal,
-            globalDiscount,
-            total: cartTotal + deliveryFee,
-            paymentMethod,
-            saleType,
-            deliveryFee,
-            status: 'completed',
-            customerName: customerName || 'Guest Customer',
-            customerCode,
-            customerPhone: selectedCustomer?.phone,
-            customerAddress: selectedCustomer
-              ? [
-                  selectedCustomer.area ? getLocationName(selectedCustomer.area, 'area', language as 'EN' | 'AR') : '',
-                  selectedCustomer.city ? getLocationName(selectedCustomer.city, 'city', language as 'EN' | 'AR') : '',
-                  selectedCustomer.governorate ? getLocationName(selectedCustomer.governorate, 'gov', language as 'EN' | 'AR') : '',
-                ]
-                  .filter(Boolean)
-                  .join(', ')
-              : undefined,
-            customerStreetAddress: selectedCustomer?.streetAddress,
-          };
-
-          const html = generateInvoiceHTML(mockSale, opts);
+          const html = generateInvoiceHTML(salePayload, opts);
           const printerSettings = getPrinterSettings();
           const shouldTrySilent = printerSettings.enabled && printerSettings.silentMode !== 'off';
 
@@ -168,9 +129,7 @@ export const usePOSCheckout = ({
             (async () => {
               try {
                 const silentPrinted = await printReceiptSilently(html);
-                if (silentPrinted) {
-                  return;
-                }
+                if (silentPrinted) return;
               } catch (silentErr) {
                 if (printerSettings.silentMode !== 'fallback') return;
               }

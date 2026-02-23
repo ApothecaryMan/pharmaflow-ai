@@ -1,6 +1,7 @@
 import React from 'react';
 import { canPerformAction, type UserRole } from '../../config/permissions';
 import type { CartItem, Drug } from '../../types';
+import { formatExpiryDate } from './utils/POSUtils';
 
 export interface CartItemExpiryBadgeProps {
   item: CartItem;
@@ -37,7 +38,7 @@ export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
         onClick={(e) => {
           e.stopPropagation();
           const batchMenuItems = allBatches.map((batch) => ({
-            label: `${new Date(batch.expiryDate).toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' })} • ${batch.stock} ${t.pack || 'Pack'}`,
+            label: `${formatExpiryDate(batch.expiryDate)} • ${batch.stock} ${t.pack || 'Pack'}`,
             icon: batch.id === item.id ? 'check_circle' : undefined,
             disabled: batch.stock <= 0,
             action: () => {
@@ -50,7 +51,7 @@ export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
         }}
         onPointerDown={(e) => e.stopPropagation()}
       >
-        {new Date(item.expiryDate).toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' })}
+        {formatExpiryDate(item.expiryDate)}
       </span>
     </div>
   );
