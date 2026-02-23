@@ -100,6 +100,16 @@ export const PriceDisplay: React.FC<{
 
 import { createSearchRegex } from '../../utils/searchUtils';
 
+let _cachedTerm = '';
+let _cachedRegex: RegExp = /.*/;
+const getCachedSearchRegex = (term: string) => {
+  if (term !== _cachedTerm) {
+    _cachedTerm = term;
+    _cachedRegex = createSearchRegex(term);
+  }
+  return _cachedRegex;
+};
+
 // Define a unified filter function
 const unifiedFilterFn: FilterFn<any> = (row, columnId, filterValue, addMeta) => {
   // filterValue is expected to be { term: string, filters: Record<string, any[]> }
@@ -172,7 +182,7 @@ const unifiedFilterFn: FilterFn<any> = (row, columnId, filterValue, addMeta) => 
   const itemValue = row.getValue(columnId);
   if (itemValue == null) return false;
 
-  const regex = createSearchRegex(term);
+  const regex = getCachedSearchRegex(term);
   return regex.test(String(itemValue));
 };
 
@@ -385,8 +395,12 @@ export function TanStackTable<TData, TValue>({
 
   const globalFilter =
     externalGlobalFilter !== undefined ? externalGlobalFilter : internalGlobalFilter;
-  const setGlobalFilter = (updaterOrValue: string | ((prev: string) => string)) => {
-    const newValue = typeof updaterOrValue === 'function' ? updaterOrValue(globalFilter) : updaterOrValue;
+    
+  const globalFilterRef = useRef(globalFilter);
+  globalFilterRef.current = globalFilter;
+
+  const setGlobalFilter = React.useCallback((updaterOrValue: string | ((prev: string) => string)) => {
+    const newValue = typeof updaterOrValue === 'function' ? updaterOrValue(globalFilterRef.current) : updaterOrValue;
     
     if (onSearchChange) {
       onSearchChange(newValue);
@@ -394,7 +408,7 @@ export function TanStackTable<TData, TValue>({
     if (externalGlobalFilter === undefined) {
       setInternalGlobalFilter(newValue);
     }
-  };
+  }, [onSearchChange, externalGlobalFilter]);
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     storedSettings?.columnVisibility || defaultVisibility
@@ -725,18 +739,62 @@ export function TanStackTable<TData, TValue>({
     [table, columnAlignment, showMenu, columnVisibility, persistSettings, t.global.table]
   );
 
-  const onContextMenuOpen = (x: number, y: number, columnId?: string) => {
+  const onContextMenuOpen = React.useCallback((x: number, y: number, columnId?: string) => {
     menuPosRef.current = { x, y, columnId };
     showMenu(x, y, getMenuContent(columnId));
-  };
+  }, [showMenu, getMenuContent]);
 
-  const handleColumnContextMenu = (e: React.MouseEvent, columnId?: string) => {
+  const handleColumnContextMenu = React.useCallback((e: React.MouseEvent, columnId?: string) => {
     e.preventDefault();
     e.stopPropagation();
     onContextMenuOpen(e.clientX, e.clientY, columnId);
-  };
+  }, [onContextMenuOpen]);
   
   const { rows } = table.getRowModel();
+
+  // --- Fix 5: Pre-compute Date Constants ---
+  const { todayTs, yesterdayTs } = React.useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return { todayTs: today.getTime(), yesterdayTs: yesterday.getTime() };
+  }, []);
+
+  // --- Fix 3: Pre-compute Column Metadata ---
+  const columnMetaMap = React.useMemo(() => {
+    const map = new Map<string, any>();
+    table.getVisibleLeafColumns().forEach((col) => {
+      const colId = col.id.toLowerCase();
+      const align =
+        (col.columnDef.meta?.disableAlignment ? null : columnAlignment[col.id]) ||
+        col.columnDef.meta?.align ||
+        (lite ? getSmartAlignment(col.id) : null) ||
+        'start';
+      const isNameColumn = colId.includes('name');
+      const isIdColumn = colId.includes('id') || colId.includes('code');
+      const isActionColumn = colId.includes('action');
+      const isDateColumn = ['date', 'time', 'timestamp', 'visit'].some((key) => colId.includes(key)) ||
+            (colId.includes('at') && !colId.includes('csat') && !colId.includes('cat'));
+      const isFlex = col.columnDef.meta?.flex ?? isNameColumn;
+
+      map.set(col.id, {
+        isIdColumn,
+        isNameColumn,
+        isActionColumn,
+        isDateColumn,
+        isFlex,
+        align,
+        justifyClass: `${getHeaderJustifyClass(align)} ${getTextAlignClass(align)}`,
+        itemsAlignClass: getItemsAlignClass(align),
+        width: col.columnDef.meta?.width,
+        minWidth: col.columnDef.meta?.minWidth,
+        cellDirMeta: col.columnDef.meta?.dir,
+        smartDateVisible: col.columnDef.meta?.smartDate !== false,
+      });
+    });
+    return map;
+  }, [table, columnAlignment, lite]);
 
   // Virtualizer Setup
   const rowVirtualizer = useVirtualizer({
@@ -746,14 +804,14 @@ export function TanStackTable<TData, TValue>({
     overscan: 10,
   });
 
-  const virtualItems = enableVirtualization
-    ? rowVirtualizer.getVirtualItems()
-    : rows.map((_, i) => ({ index: i, start: 0, end: 0, size: 0, key: '', measureElement: null }));
+  const virtualItems = enableVirtualization ? rowVirtualizer.getVirtualItems() : null;
 
-  const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
-  const paddingBottom = virtualItems.length > 0
+  const paddingTop = virtualItems && virtualItems.length > 0 ? virtualItems[0].start : 0;
+  const paddingBottom = virtualItems && virtualItems.length > 0
     ? rowVirtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end
     : 0;
+
+  const itemsToRender = enableVirtualization ? virtualItems! : rows;
 
   return (
     <div className='flex flex-col h-full w-full'>
@@ -909,14 +967,18 @@ export function TanStackTable<TData, TValue>({
                         <td style={{ height: paddingTop }} colSpan={columns.length} />
                       </tr>
                     )}
-                    {virtualItems.map((virtualRow) => {
-                      const row = rows[virtualRow.index];
+                    {itemsToRender.map((item, index) => {
+                      const isVirtual = enableVirtualization;
+                      const row = isVirtual ? rows[(item as any).index] : (item as any);
+                      const virtualRow = isVirtual ? (item as any) : null;
+                      const rowIndex = isVirtual ? virtualRow.index : index;
+                      
                       return (
                         <tr
                           key={row.id}
-                          ref={enableVirtualization ? rowVirtualizer.measureElement : undefined}
-                          data-index={virtualRow.index}
-                          id={`drug-row-${row.index}`}
+                          ref={isVirtual ? rowVirtualizer.measureElement : undefined}
+                          data-index={rowIndex}
+                          id={`drug-row-${rowIndex}`}
                           onClick={() => onRowClick && onRowClick(row.original)}
                       onTouchStart={(e) => {
                         currentTouchRow.current = row.original;
@@ -931,124 +993,85 @@ export function TanStackTable<TData, TValue>({
                         }
                       }}
                       className={`transition-colors overflow-visible ${onRowClick ? 'cursor-pointer' : ''} ${
-                        activeIndex !== undefined && row.index === activeIndex
+                        activeIndex !== undefined && rowIndex === activeIndex
                           ? `bg-primary-50 dark:bg-primary-900/20`
                           : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                       }`}
                     >
-                      {row.getVisibleCells().map((cell) => {
-                        const align =
-                          (cell.column.columnDef.meta?.disableAlignment ? null : columnAlignment[cell.column.id]) ||
-                          cell.column.columnDef.meta?.align ||
-                          (lite ? getSmartAlignment(cell.column.id) : null) ||
-                          'start';
+                      {row.getVisibleCells().map((cell: any) => {
+                        const meta = columnMetaMap.get(cell.column.id) || {
+                          isIdColumn: false, isNameColumn: false, isActionColumn: false, isDateColumn: false,
+                          isFlex: false, align: 'start', justifyClass: 'justify-start text-start', itemsAlignClass: 'items-start',
+                          smartDateVisible: true, width: undefined, minWidth: undefined, cellDirMeta: undefined
+                        };
 
-                        const justifyClass = `${getHeaderJustifyClass(align)} ${getTextAlignClass(align)}`;
-
-                        const isFlex =
-                          cell.column.columnDef.meta?.flex ??
-                          cell.column.id.toLowerCase().includes('name');
-
-                        const colId = cell.column.id.toLowerCase();
-                        const isIdColumn = colId.includes('id') || colId.includes('code');
-                        const isNameColumn = colId.includes('name');
-
-                        const isActionColumn = colId.includes('action');
-
-                        // Date Detection & Formatting (Avoiding false positives like 'csat')
-                        const isDateColumn =
-                          ['date', 'time', 'timestamp', 'visit'].some((key) => colId.includes(key)) ||
-                          (colId.includes('at') &&
-                            !colId.includes('csat') &&
-                            !colId.includes('cat'));
                         const cellValue = cell.getValue();
-
-                        let cellDir = cell.column.columnDef.meta?.dir;
-                        if (cellDir === 'auto' || (!cellDir && isNameColumn && typeof cellValue === 'string')) {
+                        let cellDir = meta.cellDirMeta;
+                        if (cellDir === 'auto' || (!cellDir && meta.isNameColumn && typeof cellValue === 'string')) {
                           cellDir = getSmartDirection(String(cellValue || ''));
                         }
 
-                        const renderCellContent = () => {
-                          // If it's a date column and we have a value and smart formatting is enabled (default)
-                          const smartDateVisible = cell.column.columnDef.meta?.smartDate !== false;
-
-                          if (
-                            smartDateVisible &&
-                            isDateColumn &&
-                            cellValue &&
-                            (typeof cellValue === 'string' ||
-                              typeof cellValue === 'number' ||
-                              cellValue instanceof Date)
-                          ) {
-                            const date = new Date(cellValue);
-                            if (!isNaN(date.getTime())) {
-                              const now = new Date();
-                              const today = new Date(
-                                now.getFullYear(),
-                                now.getMonth(),
-                                now.getDate()
-                              );
-                              const yesterday = new Date(today);
-                              yesterday.setDate(yesterday.getDate() - 1);
-
-                              const targetDate = new Date(
-                                date.getFullYear(),
-                                date.getMonth(),
-                                date.getDate()
-                              );
-
-                              let dateLabel = date.toLocaleDateString();
-                              if (targetDate.getTime() === today.getTime()) {
-                                dateLabel = isRtl ? 'اليوم' : 'Today';
-                              } else if (targetDate.getTime() === yesterday.getTime()) {
-                                dateLabel = isRtl ? 'أمس' : 'Yesterday';
-                              }
-
-                              const timeLabel = date.toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              });
-                              const formattedTime = isRtl
-                                ? timeLabel.replace('AM', 'ص').replace('PM', 'م')
-                                : timeLabel;
-
-                              return (
-                                <div className={`flex flex-col ${getItemsAlignClass(align)}`}>
-                                  <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
-                                    {formattedTime}
-                                  </span>
-                                  <span className='text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5'>
-                                    {dateLabel}
-                                  </span>
-                                </div>
-                              );
+                        // --- Fix 4: Inline renderCellContent ---
+                        let content = null;
+                        if (
+                          meta.smartDateVisible &&
+                          meta.isDateColumn &&
+                          cellValue &&
+                          (typeof cellValue === 'string' || typeof cellValue === 'number' || cellValue instanceof Date)
+                        ) {
+                          const date = new Date(cellValue);
+                          if (!isNaN(date.getTime())) {
+                            const targetTs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+                            
+                            let dateLabel = date.toLocaleDateString();
+                            if (targetTs === todayTs) {
+                              dateLabel = isRtl ? 'اليوم' : 'Today';
+                            } else if (targetTs === yesterdayTs) {
+                              dateLabel = isRtl ? 'أمس' : 'Yesterday';
                             }
-                          }
 
-                          return flexRender(cell.column.columnDef.cell, cell.getContext());
-                        };
+                            const timeLabel = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            const formattedTime = isRtl ? timeLabel.replace('AM', 'ص').replace('PM', 'م') : timeLabel;
+
+                            content = (
+                              <div className={`flex flex-col ${meta.itemsAlignClass}`}>
+                                <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
+                                  {formattedTime}
+                                </span>
+                                <span className='text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5'>
+                                  {dateLabel}
+                                </span>
+                              </div>
+                            );
+                          }
+                        }
+                        
+                        // Fallback to default render if no format applied
+                        if (!content) {
+                          content = flexRender(cell.column.columnDef.cell, cell.getContext());
+                        }
 
                         return (
                           <td
                             key={cell.id}
                             className={`${dense ? 'py-1' : 'py-2'} px-4 text-sm text-gray-700 dark:text-gray-300 align-middle border-b border-gray-100 dark:border-gray-800
-                            ${isFlex ? '' : 'whitespace-nowrap'} ${isActionColumn ? 'action-col' : ''}`}
+                            ${meta.isFlex ? '' : 'whitespace-nowrap'} ${meta.isActionColumn ? 'action-col' : ''}`}
                             style={{
-                              width: isFlex ? 'auto' : cell.column.columnDef.meta?.width,
+                              width: meta.isFlex ? 'auto' : cell.column.columnDef.meta?.width,
                               minWidth: cell.column.columnDef.meta?.minWidth,
                             }}
                             dir={cellDir}
                           >
                             <div
-                              className={`flex items-center gap-1.5 w-full ${justifyClass} ${isIdColumn && align === 'start' ? '-ms-3' : ''} ${isIdColumn && align === 'end' ? '-me-3' : ''}`}
+                              className={`flex items-center gap-1.5 w-full ${meta.justifyClass} ${meta.isIdColumn && meta.align === 'start' ? '-ms-3' : ''} ${meta.isIdColumn && meta.align === 'end' ? '-me-3' : ''}`}
                             >
-                              {isIdColumn && (
+                              {meta.isIdColumn && (
                                 <span className='material-symbols-rounded text-gray-400 shrink-0' style={{ fontSize: 'var(--icon-md)' }}>
                                   tag
                                 </span>
                               )}
-                              <span dir={isIdColumn ? 'ltr' : undefined}>
-                                {renderCellContent()}
+                              <span dir={meta.isIdColumn ? 'ltr' : undefined}>
+                                {content}
                               </span>
                             </div>
                           </td>
