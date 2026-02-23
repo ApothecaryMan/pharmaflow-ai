@@ -33,6 +33,7 @@ import {
   useReactTable,
   type VisibilityState,
 } from '@tanstack/react-table';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import React, { useRef, useState } from 'react';
 import { storage } from '../../utils/storage';
 
@@ -231,6 +232,7 @@ interface TanStackTableProps<TData, TValue> {
   dense?: boolean; // New: for compact rows
   enablePagination?: boolean;
   pageSize?: number;
+  enableVirtualization?: boolean;
 
   // New Filter Props
   filterableColumns?: FilterConfig[]; // Definitions for the pills
@@ -304,6 +306,7 @@ export function TanStackTable<TData, TValue>({
   enablePagination = false,
   pageSize = 20,
   enableShowAll = false,
+  enableVirtualization = false,
 
   filterableColumns = [],
   initialFilters = {},
@@ -328,6 +331,7 @@ export function TanStackTable<TData, TValue>({
   });
   
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   const { language } = useSettings();
   const t = TRANSLATIONS[language];
@@ -731,7 +735,25 @@ export function TanStackTable<TData, TValue>({
     e.stopPropagation();
     onContextMenuOpen(e.clientX, e.clientY, columnId);
   };
-  const rows = table.getRowModel().rows;
+  
+  const { rows } = table.getRowModel();
+
+  // Virtualizer Setup
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => (dense ? 36 : 48), // Default estimate based on row density
+    overscan: 10,
+  });
+
+  const virtualItems = enableVirtualization
+    ? rowVirtualizer.getVirtualItems()
+    : rows.map((_, i) => ({ index: i, start: 0, end: 0, size: 0, key: '', measureElement: null }));
+
+  const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
+  const paddingBottom = virtualItems.length > 0
+    ? rowVirtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end
+    : 0;
 
   return (
     <div className='flex flex-col h-full w-full'>
@@ -766,7 +788,7 @@ export function TanStackTable<TData, TValue>({
         }`}
       >
         {/* Table Scroll Area */}
-        <div className='flex-1 overflow-auto custom-scrollbar relative'>
+        <div ref={tableContainerRef} className='flex-1 overflow-auto custom-scrollbar relative'>
           {table.getVisibleLeafColumns().length === 0 ? (
             <ContextMenuTrigger
               className='h-full w-full'
@@ -881,11 +903,21 @@ export function TanStackTable<TData, TValue>({
                     </td>
                   </tr>
                 ) : rows.length > 0 ? (
-                  rows.map((row) => (
-                    <tr
-                      key={row.id}
-                      id={`drug-row-${row.index}`}
-                      onClick={() => onRowClick && onRowClick(row.original)}
+                  <>
+                    {enableVirtualization && paddingTop > 0 && (
+                      <tr className="padding-row">
+                        <td style={{ height: paddingTop }} colSpan={columns.length} />
+                      </tr>
+                    )}
+                    {virtualItems.map((virtualRow) => {
+                      const row = rows[virtualRow.index];
+                      return (
+                        <tr
+                          key={row.id}
+                          ref={enableVirtualization ? rowVirtualizer.measureElement : undefined}
+                          data-index={virtualRow.index}
+                          id={`drug-row-${row.index}`}
+                          onClick={() => onRowClick && onRowClick(row.original)}
                       onTouchStart={(e) => {
                         currentTouchRow.current = row.original;
                         onRowTouchStart(e);
@@ -1023,7 +1055,14 @@ export function TanStackTable<TData, TValue>({
                         );
                       })}
                     </tr>
-                  ))
+                  )}
+                  )}
+                  {enableVirtualization && paddingBottom > 0 && (
+                    <tr className="padding-row">
+                      <td style={{ height: paddingBottom }} colSpan={columns.length} />
+                    </tr>
+                  )}
+                </>
                 ) : (
                   <tr>
                     <td

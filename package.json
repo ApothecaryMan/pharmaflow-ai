@@ -47,6 +47,7 @@
     "@mui/x-data-grid": "^8.22.0",
     "@simplewebauthn/browser": "^13.2.2",
     "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.13.18",
     "chart.js": "^4.5.1",
     "qrcode": "^1.5.3",
     "react": "^19.2.0",
