@@ -1,11 +1,18 @@
 import { closestCenter, DndContext, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import type React from 'react';
+import React, { useCallback } from 'react';
 import { canPerformAction, type UserRole } from '../../../config/permissions';
 import type { CartItem, Drug, Employee, Language } from '../../../types';
 import { CARD_MD } from '../../../utils/themeStyles';
 import { PriceDisplay } from '../../common/TanStackTable';
 import { SortableCartItem } from '../SortableCartItem';
+
+const cartScrollStyles = `
+  .cart-scroll::-webkit-scrollbar { width: 2px; background: transparent; }
+  .cart-scroll::-webkit-scrollbar-track { background: transparent; border: none; box-shadow: none; }
+  .cart-scroll::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.6); border-radius: 9999px; }
+  .cart-scroll::-webkit-scrollbar-corner { background: transparent; }
+`;
 
 export interface POSCartSidebarProps {
   mobileTab: 'products' | 'cart';
@@ -31,7 +38,7 @@ export interface POSCartSidebarProps {
   updateQuantity: any;
   addToCart: any;
   removeDrugFromCart: any;
-  inventory: Drug[];
+  batchesMap: Map<string, Drug[]>;
   switchBatchWithAutoSplit: any;
   currentLang: string;
   globalDiscount: number;
@@ -55,7 +62,7 @@ export interface POSCartSidebarProps {
   isRTL: boolean;
 }
 
-export const POSCartSidebar: React.FC<POSCartSidebarProps> = ({
+export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   mobileTab,
   setMobileTab,
   cart,
@@ -79,7 +86,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = ({
   updateQuantity,
   addToCart,
   removeDrugFromCart,
-  inventory,
+  batchesMap,
   switchBatchWithAutoSplit,
   currentLang,
   globalDiscount,
@@ -102,6 +109,14 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = ({
   employees,
   isRTL,
 }) => {
+  const handleSearchInTable = useCallback(
+    (term: string) => {
+      setSearch(term);
+      searchInputRef.current?.focus();
+    },
+    [setSearch, searchInputRef]
+  );
+
   return (
     <>
       {/* Mobile Floating Cart Summary (Only in Products View) */}
@@ -176,29 +191,8 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = ({
         <div
           className={`flex-1 p-2 space-y-2 cart-scroll ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
           dir='ltr'
-          style={{
-            scrollbarWidth: 'thin',
-            scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
-          }}
         >
-          <style>{`
-              .cart-scroll::-webkit-scrollbar {
-                  width: 2px;
-                  background: transparent;
-              }
-              .cart-scroll::-webkit-scrollbar-track {
-                  background: transparent;
-                  border: none;
-                  box-shadow: none;
-              }
-              .cart-scroll::-webkit-scrollbar-thumb {
-                  background: rgba(156, 163, 175, 0.6);
-                  border-radius: 9999px;
-              }
-              .cart-scroll::-webkit-scrollbar-corner {
-                  background: transparent;
-              }
-          `}</style>
+          <style>{cartScrollStyles}</style>
           {cart.length === 0 ? (
             <div className='h-full flex flex-col items-center justify-center text-gray-400 space-y-2'>
               <span className='material-symbols-rounded text-4xl opacity-20'>
@@ -247,24 +241,14 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = ({
                         updateQuantity={updateQuantity}
                         addToCart={addToCart}
                         removeDrugFromCart={removeDrugFromCart}
-                        allBatches={inventory
-                          .filter(
-                            (d) =>
-                              d.name === group.common.name &&
-                              d.dosageForm === group.common.dosageForm
-                          )
-                          .sort(
-                            (a, b) =>
-                              new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
-                          )}
+                        allBatches={
+                          batchesMap.get(`${group.common.name}|${group.common.dosageForm}`) || []
+                        }
                         onSelectBatch={switchBatchWithAutoSplit}
                         isHighlighted={index === highlightedIndex}
                         currentLang={currentLang as 'en' | 'ar'}
                         globalDiscount={globalDiscount}
-                        onSearchInTable={(term) => {
-                          setSearch(term);
-                          searchInputRef.current?.focus();
-                        }}
+                        onSearchInTable={handleSearchInTable}
                         userRole={userRole}
                       />
                     </div>
@@ -519,4 +503,6 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = ({
       </div>
     </>
   );
-};
+});
+
+POSCartSidebar.displayName = 'POSCartSidebar';

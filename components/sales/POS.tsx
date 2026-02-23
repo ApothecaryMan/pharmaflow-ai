@@ -353,6 +353,26 @@ export const POS: React.FC<POSProps> = ({
     });
   }, [groupedDrugs]);
 
+  // --- Precomputed Batches Map for Cart Items (Fix A) ---
+  // PREVENTS O(N) inventory scans per SortableCartItem on every sidebar render
+  const batchesMap = useMemo(() => {
+    const map = new Map<string, Drug[]>();
+    inventory.forEach((drug) => {
+      const key = `${drug.name}|${drug.dosageForm}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.push(drug);
+      } else {
+        map.set(key, [drug]);
+      }
+    });
+    // Sort all arrays in the map once
+    map.forEach((batches) => {
+      batches.sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+    });
+    return map;
+  }, [inventory]);
+
   // --- Keyboard Shortcuts & Navigation ---
   const isTableFocused = search.trim().length > 0 && tableData.length > 0;
 
@@ -863,6 +883,8 @@ export const POS: React.FC<POSProps> = ({
               data={tableData}
               columns={tableColumns}
               color={color}
+              enableVirtualization={true}
+              dense={true}
               onRowClick={(item) => addGroupToCart(item.group)}
               onRowLongPress={(e, item) => {
                 showMenu(e.touches[0].clientX, e.touches[0].clientY, [
@@ -953,7 +975,7 @@ export const POS: React.FC<POSProps> = ({
           updateQuantity={updateQuantity}
           addToCart={addToCart}
           removeDrugFromCart={removeDrugFromCart}
-          inventory={inventory}
+          batchesMap={batchesMap}
           switchBatchWithAutoSplit={switchBatchWithAutoSplit}
           currentLang={currentLang}
           globalDiscount={globalDiscount}
