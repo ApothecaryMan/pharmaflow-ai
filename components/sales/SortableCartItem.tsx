@@ -1,8 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type React from 'react';
+import React from 'react';
 import { canPerformAction, type UserRole } from '../../config/permissions';
-import { getLocalizedProductType } from '../../data/productCategories';
 import { useLongPress } from '../../hooks/useLongPress';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { CartItem, Drug } from '../../types';
@@ -50,7 +49,7 @@ export const calculateItemTotal = (item: CartItem) => {
   return baseTotal - discountAmount;
 };
 
-export const SortableCartItem: React.FC<SortableCartItemProps> = ({
+export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
   packItem,
   unitItem,
   commonItem,
@@ -341,4 +340,4 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
       </div>
     </div>
   );
-};
+});

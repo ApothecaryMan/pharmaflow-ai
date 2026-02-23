@@ -1,26 +1,10 @@
-import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePosShortcuts } from '../../components/common/hooks/usePosShortcuts';
 import { usePosSounds } from '../../components/common/hooks/usePosSounds';
 import { canPerformAction, type UserRole } from '../../config/permissions';
-import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
 import { getLocationName } from '../../data/locations';
 import { useFilterDropdown } from '../../hooks/useFilterDropdown';
@@ -30,10 +14,8 @@ import type { TRANSLATIONS } from '../../i18n/translations';
 import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatStock } from '../../utils/inventory';
-import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
 import { parseSearchTerm } from '../../utils/searchUtils';
-import { storage } from '../../utils/storage';
-import { CARD_MD } from '../../utils/themeStyles';
+
 import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { type FilterConfig } from '../common/FilterPill';
@@ -43,12 +25,6 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartAutocomplete } from '../common/SmartInputs';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { useStatusBar } from '../layout/StatusBar';
-import { TabBar } from '../layout/TabBar';
-import {
-  generateInvoiceHTML,
-  getActiveReceiptSettings,
-  InvoiceTemplateOptions,
-} from '../sales/InvoiceTemplate';
 import { calculateItemTotal, SortableCartItem } from '../sales/SortableCartItem';
 
 import { POSPageHeader } from './ui/POSPageHeader';
@@ -184,17 +160,18 @@ export const POS: React.FC<POSProps> = ({
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [setSearch]);
 
-  const grossSubtotal = cart.reduce((sum, item) => {
-    let unitPrice = item.price;
-    if (item.isUnit && item.unitsPerPack) {
-      unitPrice = item.price / item.unitsPerPack;
-    }
-    return sum + unitPrice * item.quantity;
-  }, 0);
-
-  const netItemTotal = cart.reduce((sum, item) => sum + calculateItemTotal(item), 0);
-  const cartTotal = netItemTotal * (1 - (globalDiscount || 0) / 100);
-  const subtotal = grossSubtotal;
+  const { grossSubtotal, cartTotal, subtotal } = useMemo(() => {
+    const gross = cart.reduce((sum, item) => {
+      let unitPrice = item.price;
+      if (item.isUnit && item.unitsPerPack) {
+        unitPrice = item.price / item.unitsPerPack;
+      }
+      return sum + unitPrice * item.quantity;
+    }, 0);
+    const net = cart.reduce((sum, item) => sum + calculateItemTotal(item), 0);
+    const total = net * (1 - (globalDiscount || 0) / 100);
+    return { grossSubtotal: gross, cartTotal: total, subtotal: gross };
+  }, [cart, globalDiscount]);
 
   const {
     paymentMethod, setPaymentMethod, deliveryEmployeeId, setDeliveryEmployeeId,
@@ -206,9 +183,11 @@ export const POS: React.FC<POSProps> = ({
     selectedCustomer, language, t, cartTotal, subtotal, globalDiscount,
   });
 
-  const totalDiscountAmount = grossSubtotal - cartTotal;
-  const orderDiscountPercent = grossSubtotal > 0 ? (totalDiscountAmount / grossSubtotal) * 100 : 0;
-  const totalItems = mergedCartItems.filter((item) => (item.pack?.quantity || 0) + (item.unit?.quantity || 0) > 0).length;
+  const { totalDiscountAmount, orderDiscountPercent, totalItems } = useMemo(() => ({
+    totalDiscountAmount: grossSubtotal - cartTotal,
+    orderDiscountPercent: grossSubtotal > 0 ? ((grossSubtotal - cartTotal) / grossSubtotal) * 100 : 0,
+    totalItems: mergedCartItems.filter((item) => (item.pack?.quantity || 0) + (item.unit?.quantity || 0) > 0).length,
+  }), [grossSubtotal, cartTotal, mergedCartItems]);
 
   // Auto-scroll active item into view
   useEffect(() => {
@@ -310,17 +289,8 @@ export const POS: React.FC<POSProps> = ({
     const isUppercase = textTransform === 'uppercase';
 
     // Filter inventory based on active category and stock filters first
-    const filteredBase = inventory.filter((d) => {
-      const drugBroadCat = getBroadCategory(d.category);
-      const matchesCategory = selectedCategory === 'All' || drugBroadCat === selectedCategory;
-
-      const matchesStock =
-        stockFilter === 'all' ||
-        (stockFilter === 'in_stock' && d.stock > 0) ||
-        (stockFilter === 'out_of_stock' && d.stock <= 0);
-
-      return matchesCategory && matchesStock;
-    });
+    // Reusing the already filtered list eliminates a full O(N) scan.
+    const filteredBase = filteredDrugs;
 
     let suggestions: string[];
     if (isGenericMode) {
@@ -335,7 +305,7 @@ export const POS: React.FC<POSProps> = ({
 
     // Apply uppercase transform if enabled
     return isUppercase ? suggestions.map((s) => s.toUpperCase()) : suggestions;
-  }, [search, inventory, selectedCategory, stockFilter, textTransform]);
+  }, [search, filteredDrugs, textTransform]);
 
   // Group drugs by name and sort batches by expiry
   const groupedDrugs = useMemo(() => {
@@ -357,7 +327,20 @@ export const POS: React.FC<POSProps> = ({
 
   // Long Press Logic for Touch Devices
 
+  // --- Cart Quantity Map (lightweight, updates on cart change) ---
+  const cartQtyMap = useMemo(() => {
+    const map = new Map<string, number>();
+    cart.forEach((c) => {
+      map.set(c.id, (map.get(c.id) || 0) + c.quantity);
+    });
+    return map;
+  }, [cart]);
+  const cartQtyMapRef = useRef(cartQtyMap);
+  cartQtyMapRef.current = cartQtyMap;
+
   // --- DataTable Configuration ---
+  // PERF: tableData no longer depends on `cart`. This prevents rebuilding
+  // thousands of row objects on every cart add/remove/quantity change.
   const tableData = useMemo(() => {
     return groupedDrugs.map((group) => {
       const first = group[0];
@@ -366,13 +349,9 @@ export const POS: React.FC<POSProps> = ({
         ...first,
         group: group,
         totalStock: group.reduce((sum, d) => sum + d.stock, 0),
-        inCartCount: group.reduce(
-          (sum, d) => sum + (cart.find((c) => c.id === d.id)?.quantity || 0),
-          0
-        ),
       };
     });
-  }, [groupedDrugs, cart]);
+  }, [groupedDrugs]);
 
   // --- Keyboard Shortcuts & Navigation ---
   const isTableFocused = search.trim().length > 0 && tableData.length > 0;
@@ -692,7 +671,10 @@ export const POS: React.FC<POSProps> = ({
         size: 80,
         meta: { align: 'center' },
         cell: (info) => {
-          const count = info.row.original.inCartCount;
+          // Computed lazily from ref — doesn't force table re-render on cart change
+          const count = info.row.original.group.reduce(
+            (sum: number, d: any) => sum + (cartQtyMapRef.current.get(d.id) || 0), 0
+          );
           if (count <= 0) return null;
           return (
             <div

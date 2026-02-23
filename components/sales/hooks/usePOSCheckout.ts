@@ -26,6 +26,8 @@ interface UsePOSCheckoutProps {
   globalDiscount: number;
 }
 
+const DELIVERY_FEE = 5;
+
 export const usePOSCheckout = ({
   cart,
   mergedCartItems,
@@ -68,7 +70,7 @@ export const usePOSCheckout = ({
       const isDelivery = saleType === 'delivery';
       let deliveryFee = 0;
       if (isDelivery) {
-        deliveryFee = 5;
+        deliveryFee = DELIVERY_FEE;
       }
 
       if (isDelivery && !deliveryEmployeeId && !isPending) {

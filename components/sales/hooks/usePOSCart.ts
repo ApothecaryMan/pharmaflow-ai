@@ -35,13 +35,18 @@ export const usePOSCart = ({
 }: UsePOSCartProps) => {
   // --- Cart State ---
   const cart: CartItem[] = activeTab?.cart || [];
-  
+
+  // Ref to break the dependency cascade: setCart no longer depends on `cart`,
+  // so all downstream callbacks (addToCart, updateQuantity, etc.) become stable.
+  const cartRef = useRef(cart);
+  cartRef.current = cart;
+
   const setCart = useCallback(
     (newCart: CartItem[] | ((prev: CartItem[]) => CartItem[])) => {
-      const updatedCart = typeof newCart === 'function' ? newCart(cart) : newCart;
+      const updatedCart = typeof newCart === 'function' ? newCart(cartRef.current) : newCart;
       updateTab(activeTabId, { cart: updatedCart });
     },
-    [cart, activeTabId, updateTab]
+    [activeTabId, updateTab]
   );
 
   const globalDiscount = activeTab?.discount || 0;
@@ -103,7 +108,7 @@ export const usePOSCart = ({
   const addToCart = useCallback((drug: Drug, isUnitMode: boolean = false, initialQuantity: number = 1) => {
     if (drug.stock <= 0) return;
 
-    if (cart.length === 0 && !activeTab?.firstItemAt) {
+    if (cartRef.current.length === 0 && !activeTab?.firstItemAt) {
       updateTab(activeTabId, { firstItemAt: Date.now() });
     }
 
@@ -135,7 +140,7 @@ export const usePOSCart = ({
         },
       ];
     });
-  }, [cart.length, activeTab?.firstItemAt, activeTabId, updateTab, setCart]);
+  }, [activeTab?.firstItemAt, activeTabId, updateTab, setCart]);
 
   const addGroupToCart = useCallback((group: Drug[]) => {
     const firstDrug = group[0];
@@ -148,8 +153,9 @@ export const usePOSCart = ({
     }
 
     if (!targetBatch || targetBatch.stock <= 0) {
+      const currentCart = cartRef.current;
       targetBatch = group.find((d) => {
-        const inCart = cart
+        const inCart = currentCart
           .filter((c) => c.id === d.id)
           .reduce(
             (sum, c) =>
@@ -164,7 +170,7 @@ export const usePOSCart = ({
       const unitMode = selectedUnits[firstDrug.id] === 'unit';
       addToCart(targetBatch, unitMode);
     }
-  }, [selectedBatches, cart, selectedUnits, addToCart]);
+  }, [selectedBatches, selectedUnits, addToCart]);
 
   const removeFromCart = useCallback((id: string, isUnit: boolean) => {
     setCart((prev: CartItem[]) => prev.filter((item) => !(item.id === id && !!item.isUnit === isUnit)));
