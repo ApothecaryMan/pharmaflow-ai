@@ -9,6 +9,13 @@ import type { CartItem, Drug } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { useSettings } from '../../context';
 
+import {
+  CartItemExpiryBadge,
+  CartItemDiscountControl,
+  CartItemQuantityControl,
+} from './CartItemControls';
+
+
 export interface SortableCartItemProps {
   packItem?: CartItem;
   unitItem?: CartItem;
@@ -274,195 +281,38 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
         {/* Unified 'Rest' Section: Date, Controls, Price */}
         <div className='flex items-center gap-2 shrink-0 ml-auto'>
           {/* Expiry Date Badge with Batch Details */}
-          <div className='flex items-center gap-1'>
-            <span
-              className={`text-[9px] font-bold text-white w-[38px] h-[18px] flex items-center justify-center rounded shadow-xs cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
-                const today = new Date();
-                const expiry = new Date(item.expiryDate);
-                const monthDiff =
-                  (expiry.getFullYear() - today.getFullYear()) * 12 +
-                  (expiry.getMonth() - today.getMonth());
-                if (monthDiff <= 0) return 'bg-red-500';
-                if (monthDiff <= 3) return 'bg-orange-500';
-                return 'bg-gray-500 dark:bg-gray-600';
-              })()}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                const batchMenuItems = allBatches.map((batch) => ({
-                  label: `${new Date(batch.expiryDate).toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' })} • ${batch.stock} ${t.pack || 'Pack'}`,
-                  icon: batch.id === item.id ? 'check_circle' : undefined,
-                  disabled: batch.stock <= 0,
-                  action: () => {
-                    // Call switch function with current quantities to re-distribute if needed
-                    const currentPackQty = packItem ? packItem.quantity : 0;
-                    const currentUnitQty = unitItem ? unitItem.quantity : 0;
-                    onSelectBatch(item, batch, currentPackQty, currentUnitQty);
-                  },
-                }));
-                showMenu(e.clientX, e.clientY, [...batchMenuItems]);
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-            >
-              {new Date(item.expiryDate).toLocaleDateString('en-US', {
-                month: '2-digit',
-                year: '2-digit',
-              })}
-            </span>
-          </div>
+          <CartItemExpiryBadge
+            item={item}
+            allBatches={allBatches}
+            packItem={packItem}
+            unitItem={unitItem}
+            t={t}
+            showMenu={showMenu}
+            onSelectBatch={onSelectBatch}
+          />
 
           {/* Controls */}
           <div className='flex items-center gap-1'>
             {/* Smart Discount Logic Info */}
-            {(() => {
-              const cost = item.costPrice || 0;
-              const price = item.price || 0;
-              const margin = price > 0 ? ((price - cost) / price) * 100 : 0;
+            <CartItemDiscountControl
+              item={item}
+              packItem={packItem}
+              unitItem={unitItem}
+              globalDiscount={globalDiscount}
+              userRole={userRole}
+              updateItemDiscount={updateItemDiscount}
+              setGlobalDiscount={setGlobalDiscount}
+            />
 
-              // "Default max is 10%, if margin < 20% then max is floor(margin/2)"
-              let calculatedMax = 10;
-              if (margin < 20) {
-                calculatedMax = Math.floor(margin / 2);
-              }
-
-              // If item defines an explicit max (e.g. 5% or 50%), use it?
-              // User said "logic I calculate... is written", implying this dynamic logic IS the rule.
-              // But let's respect explicit overrides if they exist and are non-zero.
-              // Or simple fallback:
-              const effectiveMax =
-                item.maxDiscount && item.maxDiscount > 0 ? item.maxDiscount : calculatedMax;
-
-              // Hide discount control if global discount is active and > 0, OR if user lacks permission
-              if (
-                (globalDiscount && globalDiscount > 0) ||
-                !canPerformAction(userRole, 'sale.discount')
-              )
-                return null;
-
-              return (
-                <div
-                  title={`Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`}
-                  className={`flex items-center rounded-lg border shadow-xs h-6 overflow-hidden transition-colors w-14 shrink-0 ${
-                    (item.discount || 0) > 0
-                      ? `bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800`
-                      : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
-                  }`}
-                >
-                  <button
-                    tabIndex={-1}
-                    onClick={() => {
-                      const currentDiscount = item.discount || 0;
-                      // Toggle: Apply Max / Clear
-                      const newVal = currentDiscount === 0 ? effectiveMax : 0;
-
-                      if (packItem) updateItemDiscount(packItem.id, false, newVal);
-                      if (unitItem) updateItemDiscount(unitItem.id, true, newVal);
-                      if (newVal > 0) setGlobalDiscount(0);
-                    }}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${
-                      (item.discount || 0) > 0
-                        ? `text-emerald-600 dark:text-emerald-400`
-                        : 'text-gray-400'
-                    }`}
-                  >
-                    <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>percent</span>
-                  </button>
-                  <input
-                    type='number'
-                    value={item.discount || ''}
-                    placeholder='0'
-                    onClick={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      const valid = !isNaN(val) && val >= 0;
-                      // Clamp to Effective Max
-                      let finalVal = valid ? val : 0;
-
-                      if (finalVal > effectiveMax) finalVal = effectiveMax;
-
-                      if (packItem) updateItemDiscount(packItem.id, false, finalVal);
-                      if (unitItem) updateItemDiscount(unitItem.id, true, finalVal);
-                      if (finalVal > 0) setGlobalDiscount(0);
-                    }}
-                    className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                      (item.discount || 0) > 0
-                        ? `text-emerald-700 dark:text-emerald-300 placeholder-emerald-300`
-                        : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
-                    }`}
-                  />
-                </div>
-              );
-            })()}
-
-            {/* Dual Qty Control: [ Pack | Unit ] - Fixed width matching discount */}
-            <div
-              className={`flex items-center bg-white dark:bg-gray-900 rounded-lg border shadow-xs h-6 overflow-hidden w-14 shrink-0 transition-colors ${
-                hasDualMode &&
-                (!packItem || packItem.quantity === 0) &&
-                (!unitItem || unitItem.quantity === 0)
-                  ? 'border-yellow-400 dark:border-yellow-500 ring-1 ring-yellow-400/20'
-                  : 'border-gray-200 dark:border-gray-700'
-              }`}
-            >
-              {/* Pack Input */}
-              <input
-                type='number'
-                min={hasDualMode ? '0' : '1'}
-                step='any' // Allow decimals
-                placeholder={hasDualMode ? 'P' : '1'}
-                value={packItem?.quantity === 0 ? '' : packItem?.quantity || ''}
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                onChange={(e) => {
-                  const val =
-                    e.target.value === '' ? (hasDualMode ? 0 : 1) : parseFloat(e.target.value); // Use parseFloat to allow fractional packs
-                  if (isNaN(val)) return;
-                  const minVal = hasDualMode ? 0 : 1;
-                  const clampedVal = Math.max(minVal, val);
-                  if (packItem) {
-                    updateQuantity(packItem.id, false, clampedVal - packItem.quantity);
-                  } else if (clampedVal > 0) {
-                    addToCart(item, false, clampedVal);
-                  }
-                }}
-                className={`h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 shrink-0 min-w-0 ${
-                  hasDualMode ? 'w-7' : 'w-full'
-                } text-primary-600 dark:text-primary-400`}
-              />
-
-              {/* Separator */}
-              {hasDualMode && (
-                <div className='w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0'></div>
-              )}
-
-              {/* Unit Input */}
-              {hasDualMode && (
-                <input
-                  type='number'
-                  min='0'
-                  placeholder='U'
-                  title={`1 Pack = ${item.unitsPerPack || 1} Units`}
-                  value={unitItem?.quantity === 0 ? '' : unitItem?.quantity || ''}
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                  onChange={(e) => {
-                    const val = e.target.value === '' ? 0 : parseInt(e.target.value);
-                    if (isNaN(val)) return;
-                    const clampedVal = Math.max(0, val);
-                    if (unitItem) {
-                      updateQuantity(unitItem.id, true, clampedVal - unitItem.quantity);
-                    } else if (clampedVal > 0) {
-                      addToCart(item, true, clampedVal);
-                    }
-                  }}
-                   className={`w-7 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-primary-600 dark:text-primary-400 placeholder-primary-200 shrink-0`}
-                />
-              )}
-            </div>
+            {/* Dual Qty Control */}
+            <CartItemQuantityControl
+              item={item}
+              packItem={packItem}
+              unitItem={unitItem}
+              hasDualMode={hasDualMode}
+              updateQuantity={updateQuantity}
+              addToCart={addToCart}
+            />
 
             {/* Total Price (Sum of both) */}
             <div className='text-sm font-bold text-gray-900 dark:text-white w-16 shrink-0 text-end tabular-nums'>
