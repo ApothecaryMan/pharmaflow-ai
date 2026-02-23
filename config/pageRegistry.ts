@@ -19,7 +19,7 @@ import { BarcodeStudio } from '../components/inventory/BarcodeStudio';
 import { Inventory } from '../components/inventory/Inventory';
 import { InventoryManagement } from '../components/inventory/InventoryManagement';
 import { StockAdjustment } from '../components/inventory/StockAdjustment';
-import { StockMovementReport } from '../components/inventory';
+import { StockMovementReport, ExpiryManagement } from '../components/inventory';
 import { LandingPage } from '../components/layout/LandingPage';
 import { PendingApproval } from '../components/purchases/PendingApproval';
 import { PurchaseReturns } from '../components/purchases/PurchaseReturns';
@@ -103,6 +103,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'inventory',
     requiredProps: ['onViewChange'],
     permission: 'reports.view_stock_movement',
+  },
+  'expiry-calendar': {
+    id: 'expiry-calendar',
+    component: ExpiryManagement,
+    menuLabel: 'Expiry Calendar',
+    menuLabelAr: 'تقويم الانتهاء',
+    icon: 'calendar_today',
+    category: 'inventory',
+    requiredProps: ['inventory', 'batches', 'color', 't', 'language', 'onUpdateInventory'],
+    permission: 'inventory.view',
   },
   'inventory-beta': {
     id: 'inventory-beta',

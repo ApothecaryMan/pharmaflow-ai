@@ -84,7 +84,7 @@ export const PHARMACY_MENU: MenuItem[] = [
           { label: 'Inventory Turnover', icon: 'sync' },
           { label: 'Category-wise Stock', icon: 'category' },
           { label: 'Location-wise Stock', icon: 'location_on' },
-          { label: 'Batch Expiry Calendar', icon: 'calendar_today' },
+          { label: 'Batch Expiry Calendar', view: 'expiry-calendar', icon: 'calendar_today' },
         ],
       },
       {
@@ -367,7 +367,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         items: [
           { label: 'Batch Management', icon: 'folder_zip' },
           { label: 'Batch Tracking', icon: 'track_changes' },
-          { label: 'Expiry Calendar', icon: 'calendar_today' },
+          { label: 'Expiry Calendar', view: 'expiry-calendar', icon: 'calendar_today' },
           { label: 'Expired Items', icon: 'event_busy' },
           { label: 'Near Expiry (30 days)', icon: 'date_range' },
           { label: 'Near Expiry (60 days)', icon: 'event_note' },

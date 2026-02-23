@@ -15,7 +15,7 @@ declare module '@tanstack/react-table' {
     align?: 'start' | 'center' | 'end';
     width?: number;
     flex?: boolean; // Column absorbs remaining space
-    dir?: 'ltr' | 'rtl';
+    dir?: 'ltr' | 'rtl' | 'auto';
   }
 }
 

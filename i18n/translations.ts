@@ -1828,6 +1828,49 @@ export const TRANSLATIONS = {
         allTypes: 'All Types',
       }
     },
+    expiryManagement: {
+      invalidQuantity: 'Invalid quantity',
+      actionSuccess: 'Successfully updated stock',
+      actions: 'Actions',
+      returnToSupplier: 'Return to Supplier',
+      damageStock: 'Damage Stock',
+      potentialLoss: 'Potential Loss',
+      status: {
+        valid: 'Valid',
+        expired: 'Expired',
+      },
+      time: {
+        days: 'Days',
+      },
+      details: {
+        packs: 'Packs'
+      },
+      title: 'Expiry Management',
+      subtitle: 'Track and manage batch expiration dates alerts',
+      expiredItems: 'Expired Items',
+      nearExpiry30: 'Expiring < 30 Days',
+      nearExpiry90: 'Expiring < 90 Days',
+      all: 'All',
+      expired: 'Expired',
+      searchPlaceholder: 'Search batches...',
+      noRecords: 'No batches found matching criteria',
+      batch: 'Batch',
+      available: 'Available',
+      quantity: 'Quantity',
+      notes: 'Notes',
+      optional: 'Optional',
+      addNotes: 'Add any reason or details...',
+      cancel: 'Cancel',
+      confirm: 'Confirm',
+      table: {
+        codeOrBatch: 'Code / Batch',
+        name: 'Name',
+        remainingQty: 'Remaining Qty',
+        costPrice: 'Cost Price',
+        potentialLoss: 'Potential Loss',
+        expiryDate: 'Expiry Date',
+      }
+    },
   },
   AR: {
     employeeList: {
@@ -3675,6 +3718,49 @@ export const TRANSLATIONS = {
       filters: {
         dateRange: 'الفترة الزمنية',
         allTypes: 'كل الأنواع',
+      }
+    },
+    expiryManagement: {
+      invalidQuantity: 'الكمية غير صحيحة',
+      actionSuccess: 'تم تحديث المخزون بنجاح',
+      actions: 'إجراءات',
+      returnToSupplier: 'إرجاع للمورد',
+      damageStock: 'إعدام توالف',
+      potentialLoss: 'خسارة محتملة',
+      status: {
+        valid: 'صالح',
+        expired: 'منتهي الصلاحية',
+      },
+      time: {
+        days: 'يوم',
+      },
+      details: {
+        packs: 'عبوة'
+      },
+      title: 'إدارة الصلاحيات',
+      subtitle: 'تتبع تواريخ انتهاء الصلاحية والتنبيهات',
+      expiredItems: 'أصناف منتهية',
+      nearExpiry30: 'ينتهي < 30 يوم',
+      nearExpiry90: 'ينتهي < 90 يوم',
+      all: 'الكل',
+      expired: 'منتهي',
+      searchPlaceholder: 'ابحث في التشغيلات...',
+      noRecords: 'لم يتم العثور على نتائج تطابق بحثك',
+      batch: 'التشغيلة',
+      available: 'المتاح',
+      quantity: 'الكمية',
+      notes: 'ملاحظات',
+      optional: 'اختياري',
+      addNotes: 'أضف أي تفاصيل أو أسباب...',
+      cancel: 'إلغاء',
+      confirm: 'تأكيد',
+      table: {
+        codeOrBatch: 'الكود / التشغيلة',
+        name: 'الاسم',
+        remainingQty: 'الكمية المتبقية',
+        costPrice: 'سعر التكلفة',
+        potentialLoss: 'خسارة محتملة',
+        expiryDate: 'تاريخ الانتهاء',
       }
     },
   },
