@@ -11,7 +11,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
 import { useStatusBar } from '../layout/StatusBar';
-import { useAlert } from '../../context';
+import { useAlert, useSettings } from '../../context';
 import { stockMovementService } from '../../services/inventory';
 import { batchService } from '../../services/inventory/batchService';
 import { idGenerator } from '../../utils/idGenerator';
@@ -42,6 +42,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
   const { getVerifiedDate } = useStatusBar();
   const { success, error } = useAlert();
   const { showMenu, hideMenu } = useContextMenu();
+  const { textTransform } = useSettings();
 
   const [filterMode, setFilterMode] = useState<'all' | 'expired' | 'near30' | 'near90'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -233,12 +234,12 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       },
       {
         id: 'name',
-        accessorFn: (row) => getDisplayName(row.drug),
+        accessorFn: (row) => getDisplayName(row.drug, textTransform),
         header: t.expiryManagement?.table?.name || 'الاسم',
         cell: ({ row }) => {
           const item = row.original;
           const drug = item.drug;
-          const displayName = getDisplayName(drug);
+          const displayName = getDisplayName(drug, textTransform);
           return (
             <span className="font-bold text-gray-900 dark:text-gray-100">{displayName}</span>
           );
@@ -319,7 +320,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
         meta: { smartDate: false },
       },
     ];
-  }, [t, getVerifiedDate]);
+  }, [t, getVerifiedDate, textTransform]);
 
   return (
     <div className="absolute inset-0 flex flex-col gap-6 animate-fade-in p-6">

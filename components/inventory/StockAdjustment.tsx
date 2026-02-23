@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
 import { StorageKeys } from '../../config/storageKeys';
-import { useAlert } from '../../context';
+import { useAlert, useSettings } from '../../context';
 import { type StockMovement, stockMovementService } from '../../services/inventory';
 import { batchService } from '../../services/inventory/batchService';
 import type { Drug, StockBatch } from '../../types';
@@ -59,6 +59,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [adjustments, setAdjustments] = useState<AdjustmentItem[]>([]);
   const { success, error, info, warning } = useAlert();
+  const { textTransform } = useSettings();
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [history, setHistory] = useState<StockMovement[]>([]);
   const [lastTransaction, setLastTransaction] = useState<StockMovement[]>([]);
@@ -110,7 +111,8 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       if (dateRange.to) filters.endDate = dateRange.to;
 
       const data = await stockMovementService.getHistory(filters);
-      setHistory(data.slice(0, 50));
+      const historyItems = Array.isArray(data) ? data : (data as any).items || [];
+      setHistory(historyItems.slice(0, 50));
     } catch (e) {
       console.error('Failed to load history', e);
       error(t.common?.error || 'Failed to load history');
@@ -264,7 +266,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
           newAdjustments.push({
             drugId: drug.id,
-            drugName: getFullDisplayName(drug),
+            drugName: getFullDisplayName(drug, textTransform),
             currentStock: currentStock,
             newStock: qty > 0 ? qty : currentStock + 1, // If qty provided use it, else +1
             difference: qty > 0 ? qty - currentStock : 1,
@@ -363,7 +365,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
     const newItem: AdjustmentItem = {
       drugId: drug.id,
-      drugName: getFullDisplayName(drug),
+      drugName: getFullDisplayName(drug, textTransform),
       currentStock: currentStock,
       newStock: currentStock,
       difference: 0,
@@ -558,7 +560,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           const item = info.row.original;
           // Try to find full drug object for reactive display, fallback to stored name
           const drug = inventory.find((d) => d.id === item.drugId);
-          const displayName = drug ? getFullDisplayName(drug) : item.drugName;
+          const displayName = drug ? getFullDisplayName(drug, textTransform) : item.drugName;
 
           return (
             <div>
@@ -698,7 +700,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         meta: { align: 'center', width: 50 },
       },
     ],
-    [t, inventory, openDropdownIndex, updateAdjustment, removeAdjustment, color]
+    [t, inventory, openDropdownIndex, updateAdjustment, removeAdjustment, color, textTransform]
   );
 
   // History Table Columns
@@ -715,7 +717,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         cell: (info) => {
           const item = info.row.original;
           const drug = inventory.find((d) => d.id === item.drugId);
-          const displayName = drug ? getFullDisplayName(drug) : item.drugName;
+          const displayName = drug ? getFullDisplayName(drug, textTransform) : item.drugName;
 
           return (
             <div>
@@ -836,7 +838,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         meta: { align: 'end', width: 160 },
       },
     ],
-    [t, handleApprove, handleReject]
+    [t, handleApprove, handleReject, inventory, textTransform]
   );
 
   const handlePrint = () => {
@@ -856,7 +858,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         header: t.stockAdjustment?.table?.product || 'Name',
         width: 'flex-1',
         className: 'text-gray-900 dark:text-gray-400',
-        render: (drug: Drug) => getDisplayName(drug),
+        render: (drug: Drug) => getDisplayName(drug, textTransform), // Passed textTransform
       },
       {
         header: t.inventory?.headers?.expiry || 'Expiry',
@@ -880,7 +882,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         ),
       },
     ],
-    [t]
+    [t, textTransform] // Added textTransform to dependencies
   );
 
   return (
@@ -1113,10 +1115,14 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           size='md'
         >
           <div className='space-y-4'>
-            <p className='text-sm text-gray-500'>
-              {t.stockAdjustment?.selectBatchDesc ||
-                'This item has multiple batches. Please select which one to adjust.'}
-            </p>
+            <div>
+              <h4 className='font-black text-base text-gray-900 dark:text-white'>
+                {getDisplayName(batchSelectionDrug, textTransform)}
+              </h4>
+              <p className='text-xs text-gray-500'>
+                {t.inventory?.selectBatchSubtitle || 'Select a batch for adjustment'}
+              </p>
+            </div>
 
             <div className='space-y-2 max-h-[300px] overflow-y-auto'>
               {availableBatches.map((batch) => (

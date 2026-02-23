@@ -10,6 +10,8 @@ import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
 import { StatusBadge } from '../common/StatusBadge';
 import { GeneratePOModal } from './GeneratePOModal';
 import { ProcurementKPIs } from './ProcurementKPIs';
+import { useSettings } from '../../../context';
+import { getDisplayName } from '../../../utils/drugDisplayName';
 
 // --- Local Components ---
 
@@ -30,6 +32,8 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 
     supplierId: selectedSupplier,
     categoryId: selectedCategory,
   });
+
+  const { textTransform } = useSettings();
 
   // Build dropdown options
   const supplierOptions = useMemo(
@@ -62,7 +66,9 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 
         meta: { align: 'start' },
         cell: (info) => (
           <div>
-            <div className='font-medium text-gray-900 dark:text-white'>{info.getValue()}</div>
+            <div className='font-medium text-gray-900 dark:text-white'>
+              {getDisplayName({ name: info.getValue() }, textTransform)}
+            </div>
             <div className='text-xs text-gray-500'>{info.row.original.supplier_name}</div>
           </div>
         ),
@@ -136,7 +142,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 
         ),
       }),
     ],
-    [columnHelper, handleGeneratePO, t]
+    [columnHelper, handleGeneratePO, t, textTransform]
   );
 
   // Loading skeleton

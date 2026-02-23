@@ -7,6 +7,8 @@ import { useAudit } from '../../../hooks/useAudit';
 import type { AuditTransaction } from '../../../types/intelligence';
 import { formatCurrency } from '../../../utils/currency';
 import { TransactionDetailModal } from './TransactionDetailModal';
+import { useSettings } from '../../../context';
+import { getDisplayName } from '../../../utils/drugDisplayName';
 
 interface AuditPageProps {
   t: any;
@@ -18,6 +20,8 @@ export const AuditPage: React.FC<AuditPageProps> = ({ t, language }) => {
   const [selectedTransaction, setSelectedTransaction] = useState<AuditTransaction | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [globalFilter, setGlobalFilter] = useState('');
+
+  const { textTransform } = useSettings();
 
   // Define Columns
   const columnHelper = createColumnHelper<AuditTransaction>();
@@ -65,7 +69,9 @@ export const AuditPage: React.FC<AuditPageProps> = ({ t, language }) => {
       columnHelper.accessor('product_name', {
         header: t.intelligence.audit.columns.product,
         cell: (info) => (
-          <span className='font-medium text-gray-900 dark:text-white'>{info.getValue()}</span>
+          <span className='font-medium text-gray-900 dark:text-white'>
+            {getDisplayName({ name: info.getValue() }, textTransform)}
+          </span>
         ),
       }),
       columnHelper.accessor('quantity', {
@@ -104,7 +110,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ t, language }) => {
           ),
       }),
     ],
-    [columnHelper, t, language]
+    [columnHelper, t, language, textTransform]
   );
 
   const handleViewTransaction = (transaction: AuditTransaction) => {

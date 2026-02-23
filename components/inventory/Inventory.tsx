@@ -22,6 +22,7 @@ import { Modal } from '../common/Modal';
 import { SmartDateInput, SmartInput } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
 import { useStatusBar } from '../layout/StatusBar';
+import { useSettings } from '../../context';
 
 interface InventoryProps {
   inventory: Drug[];
@@ -44,6 +45,7 @@ export const Inventory: React.FC<InventoryProps> = ({
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
+  const { textTransform } = useSettings();
 
   // Detect language direction/locale
   const isRTL =
@@ -448,18 +450,11 @@ export const Inventory: React.FC<InventoryProps> = ({
         },
         cell: ({ row }) => {
           const drug = row.original;
-          const displayName = getDisplayName({ name: drug.name });
+          const displayName = getDisplayName(drug, textTransform);
           return (
             <div className='flex flex-col whitespace-normal items-start text-start w-full'>
               <div className='font-medium text-gray-900 dark:text-gray-100 text-sm drug-name'>
-                {displayName}{' '}
-                {drug.dosageForm && (
-                  <span className='text-gray-500 font-normal'>
-                    {getDisplayName({
-                      name: `(${getLocalizedProductType(drug.dosageForm, 'en')})`,
-                    })}
-                  </span>
-                )}
+                {displayName}
               </div>
               <div className='text-xs text-gray-500 w-full text-start' dir='auto'>
                 <span>
@@ -623,13 +618,12 @@ export const Inventory: React.FC<InventoryProps> = ({
               </div>
             );
           }
-
           return <div className='flex justify-center'>{renderDateWrapper(drug.expiryDate)}</div>;
         },
         meta: { align: 'center', smartDate: false },
       },
     ],
-    [color, currentLang, t, selectedBatches, openBatchDropdown]
+    [color, currentLang, t, selectedBatches, openBatchDropdown, textTransform]
   );
 
   // Define Filter Config
@@ -1146,12 +1140,15 @@ export const Inventory: React.FC<InventoryProps> = ({
             <div className='flex justify-between items-start'>
               <div>
                 <h2 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-                  {getDisplayName({ name: viewingDrug.name })}{' '}
+                  {getDisplayName({ name: viewingDrug.name }, textTransform)}{' '}
                   {viewingDrug.dosageForm && (
                     <span className='text-lg text-gray-500 font-normal'>
-                      {getDisplayName({
-                        name: `(${getLocalizedProductType(viewingDrug.dosageForm, 'en')})`,
-                      })}
+                      {getDisplayName(
+                        {
+                          name: `(${getLocalizedProductType(viewingDrug.dosageForm, 'en')})`,
+                        },
+                        textTransform
+                      )}
                     </span>
                   )}
                 </h2>

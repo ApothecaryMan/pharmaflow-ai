@@ -3,7 +3,7 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { canPerformAction, type UserRole } from '../../config/permissions';
-import { useAlert } from '../../context';
+import { useAlert, useSettings } from '../../context';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useLongPress } from '../../hooks/useLongPress';
 import { settingsService } from '../../services';
@@ -66,6 +66,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const { getVerifiedDate } = useStatusBar();
   const { error: showToastError } = useAlert();
   const { showMenu } = useContextMenu();
+  const { textTransform } = useSettings();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
   const [supplierSearch, setSupplierSearch] = useState('');
@@ -683,7 +684,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
         {
           id: idGenerator.generate('generic'), // Unique ID for this row
           drugId: drug.id,
-          name: drug.name,
+          name: getDisplayName(drug, textTransform),
           quantity: 1,
           costPrice: cost,
           dosageForm: drug.dosageForm,
@@ -1115,7 +1116,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       width: 'flex-1',
                       className: 'text-gray-900 dark:text-gray-400',
                       render: (drug: Drug) => (
-                        <span className={`truncate`}>{getDisplayName(drug)}</span>
+                        <span className={`truncate`}>{getDisplayName(drug, textTransform)}</span>
                       ),
                     },
                     {
@@ -1422,7 +1423,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       {/* Product Name */}
                       <div className='flex-1 min-w-0'>
                         <p className='font-bold text-md drug-name truncate mb-1' title={item.name}>
-                          {getDisplayName(item)}
+                          {getDisplayName(item, textTransform)}
                         </p>
                       </div>
 
@@ -1795,7 +1796,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     width: 'flex-1',
                     className: 'text-gray-900 dark:text-gray-400',
                     render: (drug: Drug) => (
-                      <span className='truncate'>{getDisplayName(drug)}</span>
+                      <span className='truncate'>{getDisplayName(drug, textTransform)}</span>
                     ),
                   },
                 ]}
@@ -2026,7 +2027,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     >
                       <td className='p-2'>
                         <p className='font-bold text-gray-800 dark:text-gray-200'>
-                          {getDisplayName(item)}
+                          {getDisplayName(item, textTransform)}
                         </p>
                         {hasReturns && (
                           <div className='mt-1 space-y-1'>

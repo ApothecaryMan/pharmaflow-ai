@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useState } from 'react';
+import { useSettings } from '../../context';
 import { PENDING_APPROVAL_HELP } from '../../i18n/helpInstructions';
 import { type Purchase, PurchaseItem } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
@@ -30,6 +31,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   onRejectPurchase,
   language,
 }) => {
+  const { textTransform } = useSettings();
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
 
   // Reject State
@@ -361,7 +363,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                       className='border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-white dark:hover:bg-gray-800 transition-colors'
                     >
                       <td className='p-2 font-bold text-gray-800 dark:text-gray-200'>
-                        {getDisplayName(item)}
+                        {getDisplayName(item, textTransform)}
                       </td>
                       <td className='p-2 text-center'>
                         {item.expiryDate

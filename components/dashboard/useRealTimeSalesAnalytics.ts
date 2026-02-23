@@ -308,16 +308,17 @@ export const useRealTimeSalesAnalytics = ({
   // === TOP PRODUCTS ANALYSIS ===
 
   const topProducts = useMemo(() => {
-    const productMap: Record<string, { name: string; qty: number; revenue: number }> = {};
+    const productMap: Record<string, { name: string; dosageForm?: string; qty: number; revenue: number }> = {};
 
     todaysSales.forEach((s) => {
       s.items.forEach((i) => {
-        // Find current drug info from products prop for consistent naming
+        // Find current drug info from products prop for consistent naming and dosage
         const drug = products.find((d) => d.id === i.id);
         const name = drug?.name || i.name;
+        const dosageForm = drug?.dosageForm || i.dosageForm;
 
         if (!productMap[i.id]) {
-          productMap[i.id] = { name, qty: 0, revenue: 0 };
+          productMap[i.id] = { name, dosageForm, qty: 0, revenue: 0 };
         }
         // Quantity accumulation uses effectiveQty to account for returns
         let effectiveQty = i.quantity;

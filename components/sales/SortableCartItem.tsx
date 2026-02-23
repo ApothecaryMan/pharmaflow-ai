@@ -7,6 +7,7 @@ import { useLongPress } from '../../hooks/useLongPress';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { CartItem, Drug } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { useSettings } from '../../context';
 
 export interface SortableCartItemProps {
   packItem?: CartItem;
@@ -65,6 +66,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
   onSearchInTable,
   userRole,
 }) => {
+  const { textTransform } = useSettings();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: itemId,
   });
@@ -263,9 +265,9 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = ({
         <div className='flex-1 min-w-[120px]'>
           <h4
             className='font-bold text-xs text-gray-900 dark:text-gray-100 leading-tight line-clamp-2 drug-name'
-            title={getDisplayName(item)}
+            title={getDisplayName(item, textTransform)}
           >
-            {getDisplayName(item)}
+            {getDisplayName(item, textTransform)}
           </h4>
         </div>
 

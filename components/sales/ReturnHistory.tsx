@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 import { useMemo, useState } from 'react';
+import { useSettings } from '../../context';
 import { RETURN_HISTORY_HELP } from '../../i18n/helpInstructions';
 import { CartItem, type Return, type Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
@@ -49,6 +50,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
 
   const [selectedReturn, setSelectedReturn] = useState<Return | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const { textTransform } = useSettings();
   const { showMenu } = useContextMenu();
 
   // Get help content based on language
@@ -133,7 +135,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
         },
       },
     ],
-    [t, locale, sales, color]
+    [t, locale, sales, color, textTransform]
   );
 
   // Filter returns by date only (text search handled by TanStackTable globalFilter)
@@ -331,7 +333,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
                   >
                     <div>
                       <p className='font-bold text-gray-900 dark:text-white text-sm mb-1'>
-                        {getDisplayName(item)}
+                        {getDisplayName(item, textTransform)}
                       </p>
                       <p className='text-xs text-gray-500'>
                         <span className='opacity-70'>{t.modal?.qty || 'Quantity'}:</span>{' '}

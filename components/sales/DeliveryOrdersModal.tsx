@@ -9,6 +9,7 @@ import {
   OrderModificationRecord,
   type Sale,
 } from '../../types';
+import { useAlert, useSettings } from '../../context';
 import { formatCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { FilterDropdown } from '../common/FilterDropdown';
@@ -104,6 +105,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   currentEmployeeId,
 }) => {
   const [activeTab, setActiveTab] = useState<DeliveryTab>('all');
+  const { error: showToastError } = useAlert();
+  const { textTransform } = useSettings();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
 
@@ -423,7 +426,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       console.error('Failed to save delivery order changes:', error);
       // TODO: Show error toast to user
     }
-  }, [selectedSale, hasChanges, pendingChanges, pendingDiscountChanges, onUpdateSale]);
+  }, [selectedSale, hasChanges, pendingChanges, pendingDiscountChanges, onUpdateSale, getItemDiscount]);
 
   // Handle discard changes
   const handleDiscardChanges = useCallback(() => {
@@ -903,7 +906,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                 <span
                                   className={`font-bold text-sm ${isDeleted ? 'line-through text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}
                                 >
-                                  {getDisplayName(common)}
+                                  {getDisplayName(common, textTransform)}
                                 </span>
                                 <span className='text-[10px] text-gray-500'>
                                   {common.genericName}
@@ -1092,7 +1095,6 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                 </div>
               ) : (
                 /* Modification History View */
-                /* Modification History View */
                 <div className='relative pl-6 space-y-2 py-2' dir='ltr'>
                   {/* Vertical Timeline Rail */}
                   <div className='absolute left-[11px] top-4 bottom-4 w-0.5 bg-gray-200 dark:bg-gray-800 z-0'></div>
@@ -1183,10 +1185,13 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                       <div className='flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 flex-wrap'>
                                         {record.modifications.map((m, mIdx) => {
                                           const drug = inventory.find((d) => d.id === m.itemId);
-                                          const displayName = getDisplayName({
-                                            name: m.itemName,
-                                            dosageForm: m.dosageForm || drug?.dosageForm,
-                                          });
+                                          const displayName = getDisplayName(
+                                            {
+                                              name: m.itemName,
+                                              dosageForm: m.dosageForm || drug?.dosageForm,
+                                            },
+                                            textTransform
+                                          );
                                           return (
                                             <span
                                               key={mIdx}
@@ -1292,10 +1297,13 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                                   const drug = inventory.find(
                                                     (d) => d.id === mod.itemId
                                                   );
-                                                  return getDisplayName({
-                                                    name: mod.itemName,
-                                                    dosageForm: mod.dosageForm || drug?.dosageForm,
-                                                  });
+                                                  return getDisplayName(
+                                                    {
+                                                      name: mod.itemName,
+                                                      dosageForm: mod.dosageForm || drug?.dosageForm,
+                                                    },
+                                                    textTransform
+                                                  );
                                                 })()}
                                               </span>
                                               <div className='flex items-center gap-2 ml-8 shrink-0'>

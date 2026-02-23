@@ -25,6 +25,7 @@ import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
 import { SmallCard } from '../common/SmallCard';
 import { useDashboardAnalytics } from './useDashboardAnalytics';
+import { useSettings } from '../../context';
 
 interface DashboardProps {
   inventory: Drug[];
@@ -54,6 +55,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [restockIsUnit, setRestockIsUnit] = useState(false);
   const [expandedView, setExpandedView] = useState<ExpandedView>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const { textTransform } = useSettings();
 
   const helpContent = DASHBOARD_HELP[language as 'EN' | 'AR'] || DASHBOARD_HELP.EN;
 
@@ -511,7 +513,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       {index + 1}
                     </div>
                     <span className='text-sm font-medium text-gray-700 dark:text-gray-200 truncate item-name'>
-                      {getDisplayName(item)}
+                      {getDisplayName(item, textTransform)}
                     </span>
                   </div>
                   <span className='text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md whitespace-nowrap'>
@@ -556,7 +558,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </div>
                       <div className='min-w-0'>
                         <p className='font-medium text-sm text-gray-700 dark:text-gray-200 truncate item-name'>
-                          {getDisplayName(item)}
+                          {getDisplayName(item, textTransform)}
                         </p>
                         <p className='text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase'>
                           {item.stock} {t.expand?.allItems || 'left'}
@@ -608,7 +610,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                         <div className='min-w-0'>
                           <p className='font-medium text-sm text-gray-700 dark:text-gray-200 truncate item-name'>
-                            {getDisplayName(item)}
+                            {getDisplayName(item, textTransform)}
                           </p>
                           <p
                             className={`text-[10px] font-bold uppercase ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-500'}`}
@@ -743,7 +745,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           size='sm'
           zIndex={50}
           title={t.modal.title}
-          subtitle={`${getDisplayName(restockDrug)} (${restockDrug.stock} left)`}
+          subtitle={`${getDisplayName(restockDrug, textTransform)} (${restockDrug.stock} left)`}
         >
           <form onSubmit={handleRestockSubmit} className='space-y-5'>
             <div className='space-y-4'>
@@ -1093,7 +1095,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 >
                   <div className='flex-1'>
                     <p className='font-medium text-gray-900 dark:text-gray-100'>
-                      {getDisplayName(item)}
+                      {getDisplayName(item, textTransform)}
                     </p>
                     <p className='text-sm text-gray-500'>{item.category}</p>
                     <p className='text-xs text-orange-600 dark:text-orange-400 font-bold uppercase mt-1'>
@@ -1162,7 +1164,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </div>
                   <div className='flex-1 min-w-0'>
                     <p className='font-medium text-gray-900 dark:text-gray-100 truncate item-name'>
-                      {getDisplayName(item)}
+                      {getDisplayName(item, textTransform)}
                     </p>
                     <p className='text-sm text-gray-500'>
                       {item.qty} {t.sold} • {formatCurrency(item.revenue)} {t.revenue}
@@ -1225,7 +1227,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <div className='flex justify-between items-start'>
                     <div className='flex-1'>
                       <p className='font-medium text-gray-900 dark:text-gray-100 item-name'>
-                        {getDisplayName(item)}
+                        {getDisplayName(item, textTransform)}
                       </p>
                       <p className='text-sm text-gray-500'>
                         {item.category} • {item.stock} in stock
@@ -1442,7 +1444,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                     keyboard_return
                                   </span>
                                 )}
-                                <span>{getDisplayName(item)}</span>
+                                <span>{getDisplayName(item, textTransform)}</span>
                                 <span className='text-gray-400 text-[10px]'>x{item.quantity}</span>
                                 {hasReturn && (
                                   <span

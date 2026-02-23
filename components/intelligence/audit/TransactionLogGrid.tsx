@@ -9,6 +9,8 @@ import {
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import type { AuditTransaction } from '../../../types/intelligence';
+import { useSettings } from '../../../context';
+import { getDisplayName } from '../../../utils/drugDisplayName';
 
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
@@ -29,6 +31,8 @@ export const TransactionLogGrid: React.FC<TransactionLogGridProps> = ({ data, on
 
   // Detect RTL direction
   const isRtl = typeof document !== 'undefined' && document.dir === 'rtl';
+
+  const { textTransform } = useSettings();
 
   const columnHelper = createColumnHelper<AuditTransaction>();
 
@@ -78,6 +82,7 @@ export const TransactionLogGrid: React.FC<TransactionLogGridProps> = ({ data, on
           align: 'start',
           flex: true, // This column absorbs remaining space
         },
+        cell: (info) => getDisplayName({ name: info.getValue() }, textTransform),
       }),
       columnHelper.accessor('quantity', {
         header: 'الكمية',
@@ -118,7 +123,7 @@ export const TransactionLogGrid: React.FC<TransactionLogGridProps> = ({ data, on
           ),
       }),
     ],
-    [columnHelper]
+    [columnHelper, textTransform]
   );
 
   const table = useReactTable({

@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import type { Drug, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
+import { useSettings } from '../../context';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
@@ -35,6 +36,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   language,
   onCreatePurchaseReturn,
 }) => {
+  const { textTransform } = useSettings();
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
@@ -163,7 +165,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
         ),
       },
     ],
-    [t, getRowActions]
+    [t, getRowActions, textTransform]
   ); // getRowActions is stable component reference but we just in case include it
 
   // Add item to return
@@ -475,7 +477,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                             dosageForm:
                               item.dosageForm ||
                               drugs.find((d) => d.id === item.drugId)?.dosageForm,
-                          })}
+                          }, textTransform)}
                         </p>
                         <p className='text-xs text-gray-500'>
                           <span className='opacity-70'>
@@ -565,7 +567,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                           <div className='flex items-start justify-between mb-3 min-w-0'>
                             <div className='flex-1 min-w-0'>
                               <p className='font-black text-gray-900 dark:text-white text-base truncate'>
-                                {getDisplayName(purchaseItem)}
+                                {getDisplayName(purchaseItem, textTransform)}
                               </p>
                               <div className='flex flex-wrap items-center gap-2 mt-1'>
                                 <span
@@ -825,11 +827,14 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
                   >
                     <div>
                       <p className='font-bold text-gray-900 dark:text-white text-sm mb-1'>
-                        {getDisplayName({
-                          ...item,
-                          dosageForm:
-                            item.dosageForm || drugs.find((d) => d.id === item.drugId)?.dosageForm,
-                        })}
+                        {getDisplayName(
+                          {
+                            ...item,
+                            dosageForm:
+                              item.dosageForm || drugs.find((d) => d.id === item.drugId)?.dosageForm,
+                          },
+                          textTransform
+                        )}
                       </p>
                       <p className='text-xs text-gray-500'>
                         <span className='opacity-70'>{t.purchaseReturns?.quantity || 'Qty'}:</span>{' '}

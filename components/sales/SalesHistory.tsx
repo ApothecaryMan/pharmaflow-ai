@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import React, { useRef, useState } from 'react';
+import { useSettings } from '../../context';
 import { canPerformAction, type UserRole } from '../../config/permissions';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import type { Return, Sale, Shift } from '../../types';
@@ -55,6 +56,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [returnModalOpen, setReturnModalOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const { textTransform } = useSettings();
 
   // Calculate daily refunds for the current employee (used for pharmacist limits)
   const currentDailyRefunds = React.useMemo(() => {
@@ -196,7 +198,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         },
       },
     ],
-    [t]
+    [t, textTransform]
   );
 
   const filteredSales = sales.filter((sale) => {
@@ -472,7 +474,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
                       <div className='flex justify-between items-center w-full' dir='ltr'>
                         <div className='text-left'>
                           <p className='font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1 item-name'>
-                            {getDisplayName({ name: item.name, dosageForm: item.dosageForm })}
+                            {getDisplayName({ name: item.name, dosageForm: item.dosageForm }, textTransform)}
                           </p>
                           <div
                             className='text-xs text-gray-500 flex flex-row items-center gap-1 mt-0.5'

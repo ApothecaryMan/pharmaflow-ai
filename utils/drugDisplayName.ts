@@ -19,7 +19,7 @@ export interface DrugDisplayItem {
  * Helper to check capitalization setting
  */
 const shouldCapitalize = (): boolean => {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === 'undefined') return true; // Default matches SettingsContext
 
   // 1. Try unified settings
   const settings = storage.get<SettingsState | null>('pharma_settings', null);
@@ -28,7 +28,7 @@ const shouldCapitalize = (): boolean => {
   }
 
   // 2. Fallback to legacy key
-  const legacy = storage.get<'normal' | 'uppercase'>('pharma_textTransform', 'normal');
+  const legacy = storage.get<'normal' | 'uppercase'>('pharma_textTransform', 'uppercase');
   return legacy === 'uppercase';
 };
 
@@ -49,9 +49,13 @@ const capitalizeWords = (str: string): string => {
  * Combines the drug name with its dosage form (in English).
  *
  * @param item - The drug item object containing name and optional dosageForm
+ * @param forcedTransform - Optional override for text transform ('uppercase' | 'normal')
  * @returns Formatted string like "Panadol Tablet" or "Levoxin 500mg Capsule"
  */
-export const getDisplayName = (item: DrugDisplayItem): string => {
+export const getDisplayName = (
+  item: DrugDisplayItem,
+  forcedTransform?: 'uppercase' | 'normal'
+): string => {
   if (!item) return '';
 
   const parts: string[] = [item.name];
@@ -61,16 +65,21 @@ export const getDisplayName = (item: DrugDisplayItem): string => {
   }
 
   const fullName = parts.join(' ');
-  return shouldCapitalize() ? fullName.toUpperCase() : capitalizeWords(fullName);
+  const mode = forcedTransform || (shouldCapitalize() ? 'uppercase' : 'normal');
+  return mode === 'uppercase' ? fullName.toUpperCase() : capitalizeWords(fullName);
 };
 
 /**
  * Returns a formatted display name with strength included.
  *
  * @param item - The drug item object
+ * @param forcedTransform - Optional override for text transform
  * @returns Formatted string like "Panadol 500mg Tablet"
  */
-export const getFullDisplayName = (item: DrugDisplayItem): string => {
+export const getFullDisplayName = (
+  item: DrugDisplayItem,
+  forcedTransform?: 'uppercase' | 'normal'
+): string => {
   if (!item) return '';
 
   const parts: string[] = [item.name];
@@ -84,5 +93,6 @@ export const getFullDisplayName = (item: DrugDisplayItem): string => {
   }
 
   const fullName = parts.join(' ');
-  return shouldCapitalize() ? fullName.toUpperCase() : capitalizeWords(fullName);
+  const mode = forcedTransform || (shouldCapitalize() ? 'uppercase' : 'normal');
+  return mode === 'uppercase' ? fullName.toUpperCase() : capitalizeWords(fullName);
 };

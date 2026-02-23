@@ -74,6 +74,8 @@ import { getCurrencySymbol } from '../../../utils/currency';
 import { FilterDropdown } from '../../common/FilterDropdown';
 import { SegmentedControl } from '../../common/SegmentedControl';
 import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
+import { useSettings } from '../../../context';
+import { getDisplayName } from '../../../utils/drugDisplayName';
 
 interface FinancialsPageProps {
   t: any;
@@ -84,6 +86,8 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<FinancialPeriod>('this_month');
   const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
   const { kpis, products, loading } = useFinancials(selectedPeriod);
+
+  const { textTransform } = useSettings();
 
   const periodOptions = useMemo(
     () => [
@@ -196,7 +200,9 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
             >
               {info.row.original.abc_class}
             </span>
-            <span className='font-medium text-gray-900 dark:text-white'>{info.getValue()}</span>
+            <span className='font-medium text-gray-900 dark:text-white'>
+              {getDisplayName({ name: info.getValue() }, textTransform)}
+            </span>
           </div>
         ),
       }),
@@ -248,7 +254,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
         },
       }),
     ],
-    [t]
+    [t, textTransform]
   );
 
   const selectedOption = periodOptions.find((p) => p.value === selectedPeriod);

@@ -6,6 +6,8 @@ import type { ExpiryRiskItem } from '../../../types/intelligence';
 import { formatCurrency } from '../../../utils/currency';
 import { TanStackTable } from '../../common/TanStackTable';
 import { StatusBadge } from '../common/StatusBadge';
+import { useSettings } from '../../../context';
+import { getDisplayName } from '../../../utils/drugDisplayName';
 
 // --- Local Components ---
 // StatusBadge moved to shared components
@@ -23,6 +25,8 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
   // We can pass language prop if available.
   // For now, let's just assume EN or use safe default.
 
+  const { textTransform } = useSettings();
+
   const columnHelper = createColumnHelper<ExpiryRiskItem>();
 
   const columns = useMemo(
@@ -31,7 +35,9 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
         header: t?.intelligence?.risk?.grid?.columns?.product || 'Product / Batch',
         cell: (info) => (
           <div>
-            <div className='font-medium'>{info.getValue()}</div>
+            <div className='font-medium'>
+              {getDisplayName({ name: info.getValue() }, textTransform)}
+            </div>
             <div className='text-xs text-gray-500 font-mono'>{info.row.original.batch_number}</div>
           </div>
         ),
@@ -94,7 +100,7 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
         },
       }),
     ],
-    [columnHelper, t]
+    [columnHelper, t, textTransform]
   );
 
   return (

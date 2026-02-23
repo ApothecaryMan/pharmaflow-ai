@@ -36,6 +36,8 @@ import { FlexDataCard } from '../common/ProgressCard';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { useRealTimeSalesAnalytics } from './useRealTimeSalesAnalytics';
+import { useSettings } from '../../context';
+import { getDisplayName } from '../../utils/drugDisplayName';
 
 interface RealTimeSalesMonitorProps {
   sales: Sale[];
@@ -76,6 +78,8 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     itemsSoldTooltip: itemsSoldTooltipData,
     activeCountersTooltip: activeCountersTooltipData,
   } = useRealTimeSalesAnalytics({ sales, customers, products, language });
+
+  const { textTransform } = useSettings();
 
   // Create tooltip elements
   const revenueTooltip = <InsightTooltip {...revenueTooltipData} language={language} />;
@@ -607,7 +611,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     </div>
                     <div className='truncate'>
                       <p className='text-sm font-medium text-gray-800 dark:text-gray-200 truncate item-name'>
-                        {p.name}
+                        {getDisplayName(p, textTransform)}
                       </p>
                     </div>
                   </div>
@@ -1072,7 +1076,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   className='border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                 >
                   <td className='p-4 text-sm text-gray-500'>#{idx + 1}</td>
-                  <td className='p-4 text-sm font-bold'>{p.name}</td>
+                  <td className='p-4 text-sm font-bold'>{getDisplayName(p, textTransform)}</td>
                   <td className='p-4 text-sm text-gray-500'>General</td>
                   <td className='p-4 text-sm font-bold text-end'>{p.qty}</td>
                   <td className='p-4 text-sm font-bold text-end'>${p.revenue.toFixed(2)}</td>

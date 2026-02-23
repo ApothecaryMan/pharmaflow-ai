@@ -21,7 +21,7 @@ interface StockMovementReportProps {
 
 const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange }) => {
   const { inventory, isLoading: isDataLoading } = useData();
-  const { language, theme } = useSettings();
+  const { language, theme, textTransform } = useSettings();
   const themeColor = theme.primary;
   const t = TRANSLATIONS[language];
   const isRTL = language === 'AR';
@@ -51,18 +51,18 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
     return inventory.filter(d => {
       if (!d) return false;
       const query = searchQuery.toLowerCase();
-      const displayName = getDisplayName(d).toLowerCase();
+      const displayName = getDisplayName(d, textTransform).toLowerCase();
       const nameMatch = d.name?.toLowerCase().includes(query) || displayName.includes(query);
       const arabicMatch = d.nameArabic?.includes(searchQuery);
       const idMatch = d.id?.toLowerCase().includes(query);
       const barcodeMatch = d.barcode?.includes(searchQuery);
       return nameMatch || arabicMatch || idMatch || barcodeMatch;
     }).slice(0, 8);
-  }, [searchQuery, inventory]);
+  }, [searchQuery, inventory, textTransform]);
 
   const handleSelectDrug = (drug: Drug) => {
     setSelectedDrug(drug);
-    setSearchQuery(getDisplayName(drug));
+    setSearchQuery(getDisplayName(drug, textTransform));
     setShowSearch(false);
   };
 
@@ -125,7 +125,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `stock_movement_${getDisplayName(selectedDrug as Drug) || 'report'}.csv`);
+    link.setAttribute("download", `stock_movement_${getDisplayName(selectedDrug as Drug, textTransform) || 'report'}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -179,7 +179,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                     header: t.inventory.headers.name, 
                     width: 'flex-4',
                     render: (d: Drug) => {
-                      const displayName = getDisplayName(d);
+                      const displayName = getDisplayName(d, textTransform);
                       const itemDir = /[\u0600-\u06FF]/.test(displayName) ? 'rtl' : 'ltr';
                       return (
                         <div className="font-bold whitespace-normal" dir={itemDir}>
@@ -277,7 +277,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                 <div className="flex items-center gap-4">
                   <div>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                      {getDisplayName(selectedDrug)}
+                      {getDisplayName(selectedDrug, textTransform)}
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="material-symbols-rounded text-slate-400 text-sm">qr_code_2</span>

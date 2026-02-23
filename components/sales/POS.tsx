@@ -21,7 +21,7 @@ import { usePosShortcuts } from '../../components/common/hooks/usePosShortcuts';
 import { usePosSounds } from '../../components/common/hooks/usePosSounds';
 import { canPerformAction, type UserRole } from '../../config/permissions';
 import { StorageKeys } from '../../config/storageKeys';
-import { useAlert } from '../../context';
+import { useAlert, useSettings } from '../../context';
 import { getLocationName } from '../../data/locations';
 import { useFilterDropdown } from '../../hooks/useFilterDropdown';
 import { usePOSTabs } from '../../hooks/usePOSTabs';
@@ -99,8 +99,9 @@ export const POS: React.FC<POSProps> = ({
   currentEmployeeId,
   userRole,
 }) => {
-  const { error: showToastError } = useAlert();
+  const { success, error: showToastError } = useAlert();
   const { showMenu } = useContextMenu();
+  const { textTransform } = useSettings();
   const { getVerifiedDate, addNotification } = useStatusBar();
   const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
   const currentLang = isRTL ? 'ar' : 'en';
@@ -1182,8 +1183,7 @@ export const POS: React.FC<POSProps> = ({
     if (searchTermLength < 2) return [];
 
     // Check if uppercase mode is enabled
-    const settings = storage.get<any>(StorageKeys.SETTINGS, {});
-    const isUppercase = settings.textTransform === 'uppercase';
+    const isUppercase = textTransform === 'uppercase';
 
     // Filter inventory based on active category and stock filters first
     const filteredBase = inventory.filter((d) => {
@@ -1211,7 +1211,7 @@ export const POS: React.FC<POSProps> = ({
 
     // Apply uppercase transform if enabled
     return isUppercase ? suggestions.map((s) => s.toUpperCase()) : suggestions;
-  }, [search, inventory, selectedCategory, stockFilter]);
+  }, [search, inventory, selectedCategory, stockFilter, textTransform]);
 
   // Group drugs by name and sort batches by expiry
   const groupedDrugs = useMemo(() => {
@@ -1365,7 +1365,7 @@ export const POS: React.FC<POSProps> = ({
         cell: (info) => (
           <div className="flex flex-col w-full min-w-0 items-start text-start">
             <span className='font-bold text-sm text-gray-900 dark:text-gray-100 drug-name truncate'>
-              {getDisplayName(info.row.original)}
+              {getDisplayName(info.row.original, textTransform)}
             </span>
             <span className='text-xs text-gray-500 whitespace-normal wrap-break-word w-full text-start' dir='auto'>
               {info.row.original.genericName && info.row.original.genericName.length > 35
@@ -1601,7 +1601,7 @@ export const POS: React.FC<POSProps> = ({
         },
       }),
     ],
-    [color, t, language, selectedUnits, openUnitDropdown, selectedBatches, openBatchDropdown]
+    [color, t, language, selectedUnits, openUnitDropdown, selectedBatches, openBatchDropdown, textTransform]
   );
 
   return (

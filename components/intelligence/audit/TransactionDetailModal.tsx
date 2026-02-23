@@ -2,6 +2,8 @@ import type React from 'react';
 import type { AuditTransaction } from '../../../types/intelligence';
 import { formatCurrency } from '../../../utils/currency';
 import { Modal } from '../../common/Modal';
+import { useSettings } from '../../../context';
+import { getDisplayName } from '../../../utils/drugDisplayName';
 
 interface TransactionDetailModalProps {
   isOpen: boolean;
@@ -14,6 +16,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   onClose,
   transaction,
 }) => {
+  const { textTransform } = useSettings();
   if (!transaction) return null;
 
   return (
@@ -81,7 +84,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
               <span className='text-gray-500'>المنتج</span>
               <span className='font-medium text-gray-900 dark:text-white'>
-                {transaction.product_name}
+                {getDisplayName({ name: transaction.product_name }, textTransform)}
               </span>
             </div>
             <div className='flex justify-between py-2 border-b border-gray-100 dark:border-gray-800'>
