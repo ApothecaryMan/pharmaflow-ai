@@ -1,5 +1,6 @@
 import type { SettingsState } from '../context/SettingsContext';
 import { storage } from './storage';
+import { getLocalizedProductType } from '../data/productCategories';
 
 /**
  * Drug Display Name Utility
@@ -97,15 +98,6 @@ export const getFullDisplayName = (
   const mode = forcedTransform || (shouldCapitalize() ? 'uppercase' : 'normal');
   return mode === 'uppercase' ? fullName.toUpperCase() : capitalizeWords(fullName);
 };
-
-/**
- * Returns a formatted Arabic display name for a drug item.
- * Combines the Arabic name with its dosage form (translated).
- *
- * @param item - The drug item object
- * @returns Formatted string like "بانادول (قرص)"
- */
-import { getLocalizedProductType } from '../data/productCategories';
 
 export const getArabicDisplayName = (item: DrugDisplayItem): string => {
   if (!item || !item.nameArabic) return '';
