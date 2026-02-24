@@ -27,7 +27,7 @@ import { Purchases } from '../components/purchases/Purchases';
 import { SuppliersList } from '../components/purchases/SuppliersList';
 import { LoginAuditList } from '../components/reports/LoginAuditList';
 import { CashRegister } from '../components/sales/CashRegister';
-import { POS } from '../components/sales/POS';
+import { POS } from '../components/sales/pos/POS';
 import { ReceiptDesigner } from '../components/sales/ReceiptDesigner';
 import { ReturnHistory } from '../components/sales/ReturnHistory';
 import { SalesHistory } from '../components/sales/SalesHistory';

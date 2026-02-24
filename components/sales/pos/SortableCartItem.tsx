@@ -1,12 +1,12 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import React from 'react';
-import { canPerformAction, type UserRole } from '../../config/permissions';
-import { useLongPress } from '../../hooks/useLongPress';
-import type { TRANSLATIONS } from '../../i18n/translations';
-import type { CartItem, Drug } from '../../types';
-import { getDisplayName } from '../../utils/drugDisplayName';
-import { useSettings } from '../../context';
+import { canPerformAction, type UserRole } from '../../../config/permissions';
+import { useLongPress } from '../../../hooks/useLongPress';
+import type { TRANSLATIONS } from '../../../i18n/translations';
+import type { CartItem, Drug } from '../../../types';
+import { getDisplayName } from '../../../utils/drugDisplayName';
+import { useSettings } from '../../../context';
 
 import {
   CartItemExpiryBadge,

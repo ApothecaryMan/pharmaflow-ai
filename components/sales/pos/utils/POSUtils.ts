@@ -1,5 +1,5 @@
-import type { CartItem, Customer, Sale, Drug } from '../../../types';
-import { getLocationName } from '../../../data/locations';
+import type { CartItem, Customer, Sale, Drug } from '../../../../types';
+import { getLocationName } from '../../../../data/locations';
 
 /**
  * Standardizes the display of expiry dates.

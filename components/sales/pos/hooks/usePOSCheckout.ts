@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
-import { canPerformAction, type UserRole } from '../../../config/permissions';
-import type { CartItem, Customer, Sale } from '../../../types';
-import { generateInvoiceHTML, getActiveReceiptSettings } from '../InvoiceTemplate';
-import { getPrinterSettings, printReceiptSilently } from '../../../utils/qzPrinter';
+import { canPerformAction, type UserRole } from '../../../../config/permissions';
+import type { CartItem, Customer, Sale } from '../../../../types';
+import { generateInvoiceHTML, getActiveReceiptSettings } from '../../InvoiceTemplate';
+import { getPrinterSettings, printReceiptSilently } from '../../../../utils/qzPrinter';
 import { buildSalePayload } from '../utils/POSUtils';
 
 interface UsePOSCheckoutProps {

@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
-import type { TRANSLATIONS } from '../../../i18n/translations';
-import { type FilterConfig } from '../../common/FilterPill';
-import { TabContextType } from '../../../hooks/usePOSTabs';
+import type { TRANSLATIONS } from '../../../../i18n/translations';
+import { type FilterConfig } from '../../../common/FilterPill';
+import { TabContextType } from '../../../../hooks/usePOSTabs';
 
 interface UsePOSSearchAndFiltersProps {
   t: typeof TRANSLATIONS.EN.pos;

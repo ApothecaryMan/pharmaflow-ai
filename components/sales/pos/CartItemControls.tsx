@@ -1,6 +1,6 @@
 import React from 'react';
-import { canPerformAction, type UserRole } from '../../config/permissions';
-import type { CartItem, Drug } from '../../types';
+import { canPerformAction, type UserRole } from '../../../config/permissions';
+import type { CartItem, Drug } from '../../../types';
 import { formatExpiryDate } from './utils/POSUtils';
 
 export interface CartItemExpiryBadgeProps {

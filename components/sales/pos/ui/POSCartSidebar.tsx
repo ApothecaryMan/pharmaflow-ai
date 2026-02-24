@@ -1,10 +1,10 @@
 import { closestCenter, DndContext, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import React, { useCallback } from 'react';
-import { canPerformAction, type UserRole } from '../../../config/permissions';
-import type { CartItem, Drug, Employee, Language } from '../../../types';
-import { CARD_MD } from '../../../utils/themeStyles';
-import { PriceDisplay } from '../../common/TanStackTable';
+import { canPerformAction, type UserRole } from '../../../../config/permissions';
+import type { CartItem, Drug, Employee, Language } from '../../../../types';
+import { CARD_MD } from '../../../../utils/themeStyles';
+import { PriceDisplay } from '../../../common/TanStackTable';
 import { SortableCartItem } from '../SortableCartItem';
 
 const cartScrollStyles = `
@@ -279,7 +279,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
             {/* Discount */}
             {/* Discount - Only show if > 0 */}
             {orderDiscountPercent > 0 && (
-              <div className='flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3'>
+              <div className='flex items-center gap-2 border-s first:border-s-0 border-gray-200 dark:border-gray-700 ps-3'>
                 <span className='text-[10px] text-gray-500 font-medium uppercase'>
                   {t.orderDiscount}:
                 </span>
@@ -294,7 +294,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
             )}
 
             {/* Total */}
-            <div className='flex items-center gap-2 border-s border-gray-200 dark:border-gray-700 ps-3'>
+            <div className='flex items-center gap-2 border-s first:border-s-0 border-gray-200 dark:border-gray-700 ps-3'>
               <span className='text-xs text-gray-500 font-bold uppercase whitespace-nowrap'>
                 {t.total}:
               </span>

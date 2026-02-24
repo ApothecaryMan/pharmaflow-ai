@@ -2,30 +2,30 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { usePosShortcuts } from '../../components/common/hooks/usePosShortcuts';
-import { usePosSounds } from '../../components/common/hooks/usePosSounds';
-import { canPerformAction, type UserRole } from '../../config/permissions';
-import { useAlert, useSettings } from '../../context';
-import { getLocationName } from '../../data/locations';
-import { useFilterDropdown } from '../../hooks/useFilterDropdown';
-import { usePOSTabs } from '../../hooks/usePOSTabs';
-import { useShift } from '../../hooks/useShift'; // Import useShift
-import type { TRANSLATIONS } from '../../i18n/translations';
-import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../types';
-import { getDisplayName } from '../../utils/drugDisplayName';
-import { formatStock } from '../../utils/inventory';
-import { parseSearchTerm } from '../../utils/searchUtils';
+import { usePosShortcuts } from '../../common/hooks/usePosShortcuts';
+import { usePosSounds } from '../../common/hooks/usePosSounds';
+import { canPerformAction, type UserRole } from '../../../config/permissions';
+import { useAlert, useSettings } from '../../../context';
+import { getLocationName } from '../../../data/locations';
+import { useFilterDropdown } from '../../../hooks/useFilterDropdown';
+import { usePOSTabs } from '../../../hooks/usePOSTabs';
+import { useShift } from '../../../hooks/useShift'; // Import useShift
+import type { TRANSLATIONS } from '../../../i18n/translations';
+import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../../types';
+import { getDisplayName } from '../../../utils/drugDisplayName';
+import { formatStock } from '../../../utils/inventory';
+import { parseSearchTerm } from '../../../utils/searchUtils';
 
-import { useContextMenu } from '../common/ContextMenu';
-import { FilterDropdown } from '../common/FilterDropdown';
-import { type FilterConfig } from '../common/FilterPill';
-import { Modal } from '../common/Modal';
-import { SearchInput } from '../common/SearchInput';
-import { SegmentedControl } from '../common/SegmentedControl';
-import { SmartAutocomplete } from '../common/SmartInputs';
-import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
-import { useStatusBar } from '../layout/StatusBar';
-import { calculateItemTotal, SortableCartItem } from '../sales/SortableCartItem';
+import { useContextMenu } from '../../common/ContextMenu';
+import { FilterDropdown } from '../../common/FilterDropdown';
+import { type FilterConfig } from '../../common/FilterPill';
+import { Modal } from '../../common/Modal';
+import { SearchInput } from '../../common/SearchInput';
+import { SegmentedControl } from '../../common/SegmentedControl';
+import { SmartAutocomplete } from '../../common/SmartInputs';
+import { PriceDisplay, TanStackTable } from '../../common/TanStackTable';
+import { useStatusBar } from '../../layout/StatusBar';
+import { calculateItemTotal, SortableCartItem } from './SortableCartItem';
 
 import { POSPageHeader } from './ui/POSPageHeader';
 import { POSCustomerPanel } from './ui/POSCustomerPanel';
@@ -38,6 +38,7 @@ import { formatExpiryDate } from './utils/POSUtils';
 import { usePOSSidebarResizer } from './hooks/usePOSSidebarResizer';
 import { usePOSSearchAndFilters } from './hooks/usePOSSearchAndFilters';
 import { usePOSCustomer } from './hooks/usePOSCustomer';
+import { usePOSSearchWorker } from './hooks/usePOSSearchWorker';
 import { usePOSCart } from './hooks/usePOSCart';
 import { usePOSCheckout } from './hooks/usePOSCheckout';
 
@@ -223,56 +224,12 @@ export const POS: React.FC<POSProps> = ({
     prevCartLengthRef.current = cart.length;
   }, [cart.length, mergedCartItems.length]);
 
-  const filteredDrugs = useMemo(() => {
-    const { mode, regex } = parseSearchTerm(search);
-    const trimmedSearch = search.trim();
-
-    // Get search term without @ prefix for length check
-    const searchTermForLength =
-      mode === 'generic' ? search.trimStart().substring(1).trim() : trimmedSearch;
-
-    return inventory.filter((d) => {
-      const drugBroadCat = getBroadCategory(d.category);
-      const matchesCategory = selectedCategory === 'All' || drugBroadCat === selectedCategory;
-
-      let matchesSearch = false;
-
-      // If search is empty, show nothing
-      if (!trimmedSearch) {
-        matchesSearch = false;
-      }
-      // Exact code match (barcode or internal code) - no minimum length
-      else if (d.barcode === trimmedSearch || d.internalCode === trimmedSearch) {
-        matchesSearch = true;
-      }
-      // Text search requires minimum 2 characters
-      else if (searchTermForLength.length >= 2) {
-        if (mode === 'generic') {
-          matchesSearch = !!d.genericName && regex.test(d.genericName);
-        } else {
-          const searchableText = [
-            d.name,
-            // d.genericName, // Generic name excluded from default search
-            d.dosageForm,
-            d.category,
-            d.description,
-            ...(Array.isArray(d.activeIngredients) ? d.activeIngredients : []),
-          ]
-            .filter(Boolean)
-            .join(' ');
-
-          matchesSearch = regex.test(searchableText);
-        }
-      }
-
-      const matchesStock =
-        stockFilter === 'all' ||
-        (stockFilter === 'in_stock' && d.stock > 0) ||
-        (stockFilter === 'out_of_stock' && d.stock <= 0);
-
-      return matchesCategory && matchesSearch && matchesStock;
-    });
-  }, [inventory, search, selectedCategory, stockFilter]);
+  const { filteredDrugs } = usePOSSearchWorker({
+    inventory,
+    search,
+    selectedCategory,
+    stockFilter,
+  });
 
   // Dynamic suggestions: generic names when @ prefix, else drug names (requires 2+ chars)
   const searchSuggestions = useMemo(() => {

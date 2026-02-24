@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useFilterDropdown } from '../../../hooks/useFilterDropdown';
-import type { Customer } from '../../../types';
+import { useFilterDropdown } from '../../../../hooks/useFilterDropdown';
+import type { Customer } from '../../../../types';
 
 interface UsePOSCustomerProps {
   activeTab: any;

@@ -8,8 +8,8 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { canPerformAction, type UserRole } from '../../../config/permissions';
-import type { CartItem, Drug } from '../../../types';
+import { canPerformAction, type UserRole } from '../../../../config/permissions';
+import type { CartItem, Drug } from '../../../../types';
 import { isStockConstraintMet } from '../utils/POSUtils';
 
 interface UsePOSCartProps {

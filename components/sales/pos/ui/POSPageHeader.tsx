@@ -1,6 +1,6 @@
 import type React from 'react';
-import { TabBar } from '../../layout/TabBar';
-import type { SaleTab } from '../../../types';
+import { TabBar } from '../../../layout/TabBar';
+import type { SaleTab } from '../../../../types';
 
 interface POSPageHeaderProps {
   t: any;

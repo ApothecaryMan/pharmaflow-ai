@@ -1,9 +1,9 @@
 import type React from 'react';
-import { SearchInput } from '../../common/SearchInput';
-import { SegmentedControl } from '../../common/SegmentedControl';
-import { CARD_MD } from '../../../utils/themeStyles';
-import { getLocationName } from '../../../data/locations';
-import type { Customer, Language } from '../../../types';
+import { SearchInput } from '../../../common/SearchInput';
+import { SegmentedControl } from '../../../common/SegmentedControl';
+import { CARD_MD } from '../../../../utils/themeStyles';
+import { getLocationName } from '../../../../data/locations';
+import type { Customer, Language } from '../../../../types';
 
 export interface POSCustomerPanelProps {
   t: any;
