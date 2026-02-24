@@ -5,6 +5,7 @@ import { canPerformAction, type UserRole } from '../../../../config/permissions'
 import type { CartItem, Drug, Employee, Language } from '../../../../types';
 import { CARD_MD } from '../../../../utils/themeStyles';
 import { PriceDisplay } from '../../../common/TanStackTable';
+import { Tooltip } from '../../../common/Tooltip';
 import { SortableCartItem } from '../SortableCartItem';
 
 const cartScrollStyles = `
@@ -117,6 +118,10 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
     [setSearch, searchInputRef]
   );
 
+  const packsCount = mergedCartItems.reduce((acc, g) => acc + (g.pack?.quantity || 0), 0);
+  const unitsCount = mergedCartItems.reduce((acc, g) => acc + (g.unit?.quantity || 0), 0);
+  const discountedCount = cart.filter(item => (item.discount || 0) > 0).length;
+
   return (
     <>
       {/* Mobile Floating Cart Summary (Only in Products View) */}
@@ -154,36 +159,86 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
       <div
         ref={sidebarRef}
         style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}
-        className={`w-full lg:w-(--sidebar-width) ${CARD_MD} border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden h-full ${
+        className={`w-full lg:w-(--sidebar-width) ${CARD_MD} border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden isolate relative h-full ${
           mobileTab === 'products' ? 'hidden lg:flex' : 'flex'
         }`}
       >
-        <div className='p-3 space-y-2 shrink-0'>
-          <div className='flex items-center justify-between'>
-            <h2
-              className={`text-sm font-bold text-primary-900 dark:text-primary-100 flex items-center gap-2`}
-            >
-              <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
-                shopping_cart
-              </span>
+        <div className="px-4 py-3.5 border-b border-gray-200/60 dark:border-gray-800/60 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl shrink-0 flex items-center justify-between sticky top-0 z-10 rounded-t-2xl">
+          <div className="flex items-center gap-3">
+            {/* Title */}
+            <h2 className="text-[15px] font-black text-gray-800 dark:text-gray-100 uppercase tracking-tight leading-none">
               {t.cartTitle}
-              {totalItems > 0 && (
-                <span
-                  className={`bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-[10px] font-bold px-1.5 rounded-full min-w-[30px] h-[18px] inline-flex justify-center items-center`}
-                >
-                  {totalItems}
-                </span>
-              )}
             </h2>
+            
+            {/* Status & Counts in one row */}
+            <div className="flex items-center gap-2 text-[11px] font-bold text-gray-500 tracking-wider">
+              {cart.length > 0 ? (
+                <>
+                  <svg className="size-1.5 animate-pulse shrink-0" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="4" cy="4" r="3" className="fill-emerald-500" />
+                  </svg>
+                  <Tooltip content={
+                    <div className="flex flex-col gap-1 py-0.5">
+                      <span className="font-bold border-b border-gray-200/20 pb-0.5 mb-0.5">
+                        {currentLang === 'ar' ? 'تحليل الأصناف' : 'Items Analysis'}
+                      </span>
+                      <div className="flex justify-between gap-4">
+                        <span>{currentLang === 'ar' ? 'أنواع الأدوية:' : 'Drug Types:'}</span>
+                        <span className="font-black tabular-nums">{mergedCartItems.length}</span>
+                      </div>
+                      {discountedCount > 0 && (
+                        <div className="flex justify-between gap-4 text-emerald-400">
+                          <span>{currentLang === 'ar' ? 'أصناف بخـصم:' : 'Discounted:'}</span>
+                          <span className="font-black tabular-nums">{discountedCount}</span>
+                        </div>
+                      )}
+                    </div>
+                  }>
+                    <span className="uppercase text-emerald-600 dark:text-emerald-400 whitespace-nowrap">{cart.length} {t.items || 'أصناف'}</span>
+                  </Tooltip>
+                  <svg className="size-1 shrink-0 mx-0.5" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="3" cy="3" r="2" className="fill-gray-300 dark:fill-gray-600" />
+                  </svg>
+                  <Tooltip content={
+                    <div className="flex flex-col gap-1 py-0.5">
+                      <span className="font-bold border-b border-gray-200/20 pb-0.5 mb-0.5">
+                        {currentLang === 'ar' ? 'توزيع الكمية' : 'Quantity Distribution'}
+                      </span>
+                      {packsCount > 0 && (
+                        <div className="flex justify-between gap-4">
+                          <span>{currentLang === 'ar' ? 'إجمالي العلب:' : 'Total Packs:'}</span>
+                          <span className="font-black tabular-nums">{packsCount}</span>
+                        </div>
+                      )}
+                      {unitsCount > 0 && (
+                        <div className="flex justify-between gap-4">
+                          <span>{currentLang === 'ar' ? 'إجمالي الوحدات/الأشرطة:' : 'Total Strips/Units:'}</span>
+                          <span className="font-black tabular-nums">{unitsCount}</span>
+                        </div>
+                      )}
+                    </div>
+                  }>
+                    <span className="whitespace-nowrap">{totalItems} {t.quantity || 'قطعة'}</span>
+                  </Tooltip>
+                </>
+              ) : (
+                <>
+                  <svg className="size-1.5 shrink-0" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="4" cy="4" r="3" className="fill-gray-400 dark:fill-gray-500" />
+                  </svg>
+                  <span className="whitespace-nowrap">{t.emptyCart || 'سلة فارغة'}</span>
+                </>
+              )}
+            </div>
+          </div>
 
+          <div className="flex items-center gap-2">
             {/* Mobile Back Button */}
             <button
               onClick={() => setMobileTab('products')}
-              className='lg:hidden p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500'
+              className="lg:hidden w-9 h-9 rounded-xl bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-all active:scale-95 border border-gray-200/50 dark:border-gray-700/50"
             >
-              <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
-                close
-              </span>
+              <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>close</span>
             </button>
           </div>
         </div>
@@ -259,50 +314,44 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
           )}
         </div>
 
-        <div className='px-3 py-2 border-t border-gray-200 dark:border-gray-800 space-y-2 shrink-0'>
-          {/* Summary Row - Horizontal Layout like Purchases */}
-          <div className='flex items-center justify-between gap-2'>
-            {
-              /* Subtotal - Only show if different from total (i.e. if there's a discount or fee) */
-              grossSubtotal !== cartTotal && (
-                <div className='flex items-center gap-2 ps-3'>
-                  <span className='text-[10px] text-gray-500 font-medium uppercase'>
-                    {t.subtotal}:
-                  </span>
-                  <span className='font-medium text-sm text-gray-700 dark:text-gray-300 tabular-nums'>
-                    <PriceDisplay value={grossSubtotal} />
-                  </span>
-                </div>
-              )
-            }
-
-            {/* Discount */}
-            {/* Discount - Only show if > 0 */}
-            {orderDiscountPercent > 0 && (
-              <div className='flex items-center gap-2 border-s first:border-s-0 border-gray-200 dark:border-gray-700 ps-3'>
-                <span className='text-[10px] text-gray-500 font-medium uppercase'>
-                  {t.orderDiscount}:
+        <div className="px-4 py-4 border-t border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md space-y-4 shrink-0 rounded-b-2xl">
+          {/* Summary Card with Glassmorphism */}
+          <div className="bg-gray-50/80 dark:bg-gray-800/40 rounded-2xl p-3 border border-gray-200/50 dark:border-gray-700/30 space-y-2.5">
+            {/* Subtotal Row */}
+            {grossSubtotal !== cartTotal && (
+              <div className="flex items-center justify-between text-[11px] text-gray-500 font-bold uppercase tracking-wider">
+                <span className="opacity-70">{t.subtotal}</span>
+                <span className="tabular-nums font-black text-xs text-gray-700 dark:text-gray-300">
+                  <PriceDisplay value={grossSubtotal} />
                 </span>
-
-                {/* Order Discount % */}
-                <div className='flex items-center gap-1'>
-                  <span className='font-medium text-sm text-gray-700 dark:text-gray-300 tabular-nums'>
-                    {orderDiscountPercent.toFixed(1)}%
-                  </span>
-                </div>
               </div>
             )}
 
-            {/* Total */}
-            <div className='flex items-center gap-2 border-s first:border-s-0 border-gray-200 dark:border-gray-700 ps-3'>
-              <span className='text-xs text-gray-500 font-bold uppercase whitespace-nowrap'>
-                {t.total}:
+            {/* Discount Row */}
+            {orderDiscountPercent > 0 && (
+              <div className="flex items-center justify-between text-[11px] text-secondary-600 dark:text-secondary-400 font-bold uppercase tracking-wider">
+                <span>{t.orderDiscount}</span>
+                <span className="tabular-nums font-black text-xs">
+                  {orderDiscountPercent.toFixed(1)}%
+                </span>
+              </div>
+            )}
+
+            {/* Subtle Divider (only if subtotal or discount exists) */}
+            {(grossSubtotal !== cartTotal || orderDiscountPercent > 0) && (
+              <div className="h-px bg-gray-200/50 dark:bg-gray-700/50 -mx-1" />
+            )}
+
+            {/* Total Row */}
+            <div className="flex items-center justify-between group">
+              <span className="text-xs font-black text-gray-700 dark:text-gray-300 uppercase tracking-tight">
+                {t.total}
               </span>
-              <span
-                className={`text-2xl font-black text-primary-600 dark:text-primary-400 h-8 flex items-center tabular-nums`}
-              >
-                <PriceDisplay value={cartTotal} />
-              </span>
+              <div className="flex flex-col items-end">
+                <span className="text-2xl font-black text-primary-600 dark:text-primary-400 tabular-nums tracking-tighter transition-all">
+                  <PriceDisplay value={cartTotal} />
+                </span>
+              </div>
             </div>
           </div>
 
@@ -337,8 +386,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   disabled={
                     !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
                   }
-                  className={`flex-1 py-2.5 rounded-xl bg-primary-600 enabled:hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}
-                >
+                  className={`flex-1 py-2.5 rounded-xl bg-red-600 enabled:hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}>
                   <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
                     payments
                   </span>
@@ -352,9 +400,8 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   disabled={
                     !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
                   }
-                  className={`w-12 py-2.5 rounded-xl bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 enabled:hover:bg-primary-200 dark:enabled:hover:bg-primary-900/50 disabled:opacity-50 disabled:pointer-events-none transition-colors flex justify-center items-center shrink-0`}
-                  title={t.deliveryOrder}
-                >
+                  className={`w-12 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 enabled:hover:bg-gray-50 dark:enabled:hover:bg-gray-700 disabled:opacity-50 disabled:pointer-events-none transition-colors flex justify-center items-center shrink-0`}
+                  title={t.deliveryOrder}>
                   <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
                     local_shipping
                   </span>
@@ -365,12 +412,10 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
               <div
                 className={`flex gap-2 items-stretch transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
                   isCheckoutMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
-                }`}
-              >
+                }`}>
                 {/* Amount Input */}
                 <div
-                  className={`flex-1 bg-white dark:bg-gray-900 border border-primary-500 dark:border-primary-400 rounded-xl flex items-center px-3 gap-1 overflow-hidden whitespace-nowrap shadow-xs`}
-                >
+                  className={`flex-1 bg-white dark:bg-gray-900 border border-primary-500 dark:border-primary-400 rounded-xl flex items-center px-3 gap-1 overflow-hidden whitespace-nowrap`}>
                   <input
                     ref={(el) => {
                       if (el && isCheckoutMode) setTimeout(() => el.focus(), 50);
@@ -401,8 +446,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                     (parseFloat(amountPaid) || 0) >= cartTotal
                       ? `bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700`
                       : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-                  }`}
-                >
+                  }`}>
                   <span className='text-[8px] text-gray-500 uppercase font-bold text-center'>
                     {t.remainder || 'Change'}
                   </span>
@@ -411,8 +455,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                       (parseFloat(amountPaid) || 0) >= cartTotal
                         ? `text-primary-600 dark:text-primary-400`
                         : 'text-gray-400'
-                    }`}
-                  >
+                    }`}>
                     <PriceDisplay value={Math.max(0, (parseFloat(amountPaid) || 0) - cartTotal)} />
                   </span>
                 </div>
@@ -424,8 +467,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                     setIsCheckoutMode(false);
                     setAmountPaid('');
                   }}
-                  className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0`}
-                >
+                  className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0`}>
                   <span className='material-symbols-rounded'>check</span>
                 </button>
 
@@ -435,8 +477,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                     setIsCheckoutMode(false);
                     setAmountPaid('');
                   }}
-                  className='w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'
-                >
+                  className='w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'>
                   <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
                     close
                   </span>
@@ -447,22 +488,20 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
               <div
                 className={`flex gap-2 items-stretch transition-[width,opacity] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${
                   isDeliveryMode ? 'w-full opacity-100' : 'w-0 opacity-0 overflow-hidden'
-                }`}
-              >
+                }`}>
                 {/* Driver Select */}
-                <div className={`flex-1 overflow-hidden relative`}>
+                <div className='flex-1 overflow-hidden relative'>
                   <select
                     value={deliveryEmployeeId}
                     onChange={(e) => setDeliveryEmployeeId(e.target.value)}
-                    className={`w-full h-full bg-white dark:bg-gray-900 border border-primary-400 dark:border-primary-500/50 rounded-xl text-sm px-3 focus:ring-0 focus:outline-hidden appearance-none cursor-pointer font-bold tabular-nums shadow-xs transition-all`}
+                    className={`w-full h-full bg-white dark:bg-gray-900 border border-primary-400 dark:border-primary-500/50 rounded-xl text-sm px-3 focus:ring-0 focus:outline-hidden appearance-none cursor-pointer font-bold tabular-nums transition-all`}
                     style={{
                       backgroundImage:
                         'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
                       backgroundRepeat: 'no-repeat',
                       backgroundPosition: isRTL ? 'left .7em top 50%' : 'right .7em top 50%',
                       backgroundSize: '.65em auto',
-                    }}
-                  >
+                    }}>
                     <option value=''>{t.selectDriver || 'Select Driver (Optional)'}</option>
                     {employees
                       .filter((e) => e.role === 'delivery')
@@ -480,8 +519,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                     handleCheckout('delivery', true);
                     setIsDeliveryMode(false);
                   }}
-                  className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0`}
-                >
+                  className={`w-11 rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-colors shrink-0`}>
                   <span className='material-symbols-rounded'>check</span>
                 </button>
 
@@ -490,8 +528,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   onClick={() => {
                     setIsDeliveryMode(false);
                   }}
-                  className='w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'
-                >
+                  className='w-9 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-colors shrink-0'>
                   <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
                     close
                   </span>

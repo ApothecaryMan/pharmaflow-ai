@@ -44,6 +44,7 @@ declare module '@tanstack/react-table' {
     width?: number;
     minWidth?: number;
     flex?: boolean;
+    isId?: boolean;
     dir?: 'ltr' | 'rtl' | 'auto';
     disableAlignment?: boolean;
     smartDate?: boolean;
@@ -281,8 +282,8 @@ const getSmartAlignment = (columnId: string): 'start' | 'end' | 'center' => {
     return 'end';
   }
 
-  // Status / Actions -> Center
-  if (['status', 'active', 'is_', 'has_', 'action', 'check'].some((key) => id.includes(key))) {
+  // Status / Actions / Selection -> Center
+  if (['status', 'active', 'is_', 'has_', 'action', 'check', 'customer', 'total', 'driver', 'man'].some((key) => id.includes(key))) {
     return 'center';
   }
 
@@ -772,7 +773,7 @@ export function TanStackTable<TData, TValue>({
         (lite ? getSmartAlignment(col.id) : null) ||
         'start';
       const isNameColumn = colId.includes('name');
-      const isIdColumn = colId.includes('id') || colId.includes('code');
+      const isIdColumn = col.columnDef.meta?.isId ?? (colId.includes('id') || colId.includes('code'));
       const isActionColumn = colId.includes('action');
       const isDateColumn = ['date', 'time', 'timestamp', 'visit'].some((key) => colId.includes(key)) ||
             (colId.includes('at') && !colId.includes('csat') && !colId.includes('cat'));
@@ -787,7 +788,7 @@ export function TanStackTable<TData, TValue>({
         align,
         justifyClass: `${getHeaderJustifyClass(align)} ${getTextAlignClass(align)}`,
         itemsAlignClass: getItemsAlignClass(align),
-        width: col.columnDef.meta?.width,
+        width: col.columnDef.meta?.width || col.getSize(),
         minWidth: col.columnDef.meta?.minWidth,
         cellDirMeta: col.columnDef.meta?.dir,
         smartDateVisible: col.columnDef.meta?.smartDate !== false,
@@ -889,7 +890,7 @@ export function TanStackTable<TData, TValue>({
                         ${textAlignClass}
                         ${isFlex ? '' : 'w-[1%] whitespace-nowrap'}`}
                           style={{
-                            width: isFlex ? 'auto' : header.column.columnDef.meta?.width,
+                            width: isFlex ? 'auto' : (header.column.columnDef.meta?.width || header.column.getSize()),
                             minWidth: header.column.columnDef.meta?.minWidth,
                           }}
                         >
@@ -1057,7 +1058,7 @@ export function TanStackTable<TData, TValue>({
                             className={`${dense ? 'py-1' : 'py-2'} px-4 text-sm text-gray-700 dark:text-gray-300 align-middle border-b border-gray-100 dark:border-gray-800
                             ${meta.isFlex ? '' : 'whitespace-nowrap'} ${meta.isActionColumn ? 'action-col' : ''}`}
                             style={{
-                              width: meta.isFlex ? 'auto' : cell.column.columnDef.meta?.width,
+                              width: meta.isFlex ? 'auto' : (cell.column.columnDef.meta?.width || cell.column.getSize()),
                               minWidth: cell.column.columnDef.meta?.minWidth,
                             }}
                             dir={cellDir}

@@ -12,12 +12,12 @@ import {
 import { useAlert, useSettings } from '../../../context';
 import { formatCurrency } from '../../../utils/currency';
 import { getDisplayName } from '../../../utils/drugDisplayName';
-import { FilterDropdown } from '../../../common/FilterDropdown';
-import { MaterialTabs } from '../../../common/MaterialTabs';
-import { Modal } from '../../../common/Modal';
-import { SearchInput } from '../../../common/SearchInput';
-import { SegmentedControl } from '../../../common/SegmentedControl';
-import { TanStackTable } from '../../../common/TanStackTable';
+import { FilterDropdown } from '../../common/FilterDropdown';
+import { MaterialTabs } from '../../common/MaterialTabs';
+import { Modal } from '../../common/Modal';
+import { SearchInput } from '../../common/SearchInput';
+import { SegmentedControl } from '../../common/SegmentedControl';
+import { TanStackTable } from '../../common/TanStackTable';
 
 const DriverSelect = ({
   driverId,
@@ -470,7 +470,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Order daily number (ID)
       columnHelper.accessor('customerCode', {
         header: 'ID',
-        size: 60,
+        size: 70,
         meta: { align: 'start' },
       }),
       // Time and Date
@@ -482,7 +482,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Customer name and code badge
       columnHelper.accessor('customerName', {
         header: t.customer || 'Customer',
-        size: 150,
+        size: 180,
+        meta: { flex: true, align: 'center' },
         cell: (info) => {
           const name = info.getValue();
           const displayName = name === 'Guest Customer' ? t.guestCustomer || name : name;
@@ -503,7 +504,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Customer address
       columnHelper.accessor('customerAddress', {
         header: t.address || 'Address',
-        size: 200,
+        size: 250,
         cell: (info) => (
           <div className='text-xs whitespace-normal line-clamp-2' title={info.getValue()}>
             {info.row.original.customerStreetAddress && (
@@ -518,7 +519,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Order total amount
       columnHelper.accessor('total', {
         header: t.total || 'Total',
-        size: 100,
+        size: 110,
+        meta: { align: 'center' },
         cell: (info) => (
           <div className='flex flex-col items-start leading-tight'>
             <span className='font-bold text-gray-900 dark:text-gray-100'>
@@ -535,7 +537,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Delivery driver selection
       columnHelper.accessor('deliveryEmployeeId', {
         header: t.deliveryMan || 'Delivery Man',
-        size: 180,
+        size: 200,
+        meta: { align: 'center', isId: false },
         cell: (info) => {
           const s = info.row.original;
           const isSelectDisabled = s.status === 'completed' || s.status === 'cancelled';
@@ -557,7 +560,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       columnHelper.display({
         id: 'actions',
         header: '',
-        size: 220,
+        size: 260,
         meta: {
           align: 'end',
         },

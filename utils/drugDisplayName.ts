@@ -10,6 +10,7 @@ import { storage } from './storage';
 
 export interface DrugDisplayItem {
   name: string;
+  nameArabic?: string;
   dosageForm?: string;
   genericName?: string;
   strength?: string;
@@ -95,4 +96,31 @@ export const getFullDisplayName = (
   const fullName = parts.join(' ');
   const mode = forcedTransform || (shouldCapitalize() ? 'uppercase' : 'normal');
   return mode === 'uppercase' ? fullName.toUpperCase() : capitalizeWords(fullName);
+};
+
+/**
+ * Returns a formatted Arabic display name for a drug item.
+ * Combines the Arabic name with its dosage form (translated).
+ *
+ * @param item - The drug item object
+ * @returns Formatted string like "بانادول (قرص)"
+ */
+import { getLocalizedProductType } from '../data/productCategories';
+
+export const getArabicDisplayName = (item: DrugDisplayItem): string => {
+  if (!item || !item.nameArabic) return '';
+
+  const parts: string[] = [item.nameArabic];
+
+  if (item.dosageForm) {
+    const localizedForm = getLocalizedProductType(item.dosageForm, 'ar');
+    // If we have a translation, wrap it in parentheses for better Arabic UX
+    if (localizedForm !== item.dosageForm) {
+      parts.push(`(${localizedForm})`);
+    } else {
+      parts.push(item.dosageForm);
+    }
+  }
+
+  return parts.join(' ');
 };
