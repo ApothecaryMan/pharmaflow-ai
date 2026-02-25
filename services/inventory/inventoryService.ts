@@ -24,6 +24,10 @@ export const createInventoryService = (): InventoryService => ({
     return all.filter((d) => !d.branchId || d.branchId === branchCode);
   },
 
+  getAllBranches: async (): Promise<Drug[]> => {
+    return getRawAll();
+  },
+
   getById: async (id: string): Promise<Drug | null> => {
     const all = await inventoryService.getAll();
     return all.find((d) => d.id === id) || null;
