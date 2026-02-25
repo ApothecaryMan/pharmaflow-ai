@@ -43,6 +43,7 @@ import { usePOSCustomer } from './hooks/usePOSCustomer';
 import { usePOSSearchWorker } from './hooks/usePOSSearchWorker';
 import { usePOSCart } from './hooks/usePOSCart';
 import { usePOSCheckout } from './hooks/usePOSCheckout';
+import { useBarcodeScanner } from './hooks/useBarcodeScanner';
 
 
 // --- Main POS Component ---
@@ -132,6 +133,15 @@ export const POS: React.FC<POSProps> = ({
     openBatchDropdown, setOpenBatchDropdown,
   } = usePOSCart({
     activeTab, activeTabId, updateTab, inventory, userRole, showToastError, addNotification, playError,
+  });
+
+  // Initialize Smart Barcode Scanner (Background Detection)
+  useBarcodeScanner({
+    inventory,
+    addToCart,
+    playSuccess,
+    playError,
+    enabled: hasOpenShift,
   });
 
   const [activeIndex, setActiveIndex] = useState(0);
