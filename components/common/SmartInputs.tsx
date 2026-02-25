@@ -431,28 +431,20 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
   ...restProps
 }) => {
   const [currentSuggestion, setCurrentSuggestion] = useState<string>('');
-  const [debouncedValue, setDebouncedValue] = useState(value);
   const internalRef = useRef<HTMLInputElement>(null);
   const inputRef = externalRef || internalRef;
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isCapsLock, setIsCapsLock] = useState(false);
 
   // Auto-detect text direction
   const dir = useSmartDirection(value, placeholder);
 
-  // Debounce the input value
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(value);
-    }, debounceMs);
 
-    return () => clearTimeout(timer);
-  }, [value, debounceMs]);
-
-  // Calculate suggestion based on current input
+  // Calculate matching suggestion
   const suggestion = useMemo(() => {
-    if (!debouncedValue || disabled) return '';
+    if (!value || disabled) return '';
 
-    const searchValue = caseSensitive ? debouncedValue : debouncedValue.toLowerCase();
+    const searchValue = caseSensitive ? value : value.toLowerCase();
 
     const match = suggestions.find((s) => {
       const suggestionValue = caseSensitive ? s : s.toLowerCase();
@@ -460,7 +452,7 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
     });
 
     return match || '';
-  }, [debouncedValue, suggestions, caseSensitive, disabled]);
+  }, [value, suggestions, caseSensitive, disabled]);
 
   // Update current suggestion
   useEffect(() => {
@@ -469,6 +461,9 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
 
   // Handle keyboard shortcuts
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Track Caps Lock
+    setIsCapsLock(e.getModifierState('CapsLock'));
+
     if (currentSuggestion) {
       // Accept suggestion with Tab or Right Arrow
       if (e.key === 'ArrowRight') {
@@ -496,7 +491,8 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
     const suggestionToCompare = caseSensitive ? currentSuggestion : currentSuggestion.toLowerCase();
 
     if (suggestionToCompare.startsWith(valueToCompare)) {
-      return currentSuggestion.slice(value.length);
+      // Normalize to lowercase so it can follow dynamic casing logic
+      return currentSuggestion.slice(value.length).toLowerCase();
     }
 
     return '';
@@ -513,6 +509,7 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
+        onKeyUp={(e) => setIsCapsLock(e.getModifierState('CapsLock'))}
         placeholder={placeholder}
         disabled={disabled}
         dir={dir}
@@ -546,15 +543,17 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
           {/* Visible ghost text as a Badge */}
           <span
             className={`
-            inline-flex items-center px-0.5 py-0.5 ms-1
-            rounded-lg border border-gray-200 dark:border-gray-800 
-            bg-gray-50/50 dark:bg-gray-800/50 
-            text-sm font-bold tracking-tight
-            text-gray-400 dark:text-gray-500 
-            transition-all animate-in fade-in zoom-in duration-200
+            inline-flex items-center px-1 py-1 ms-0.5
+            rounded-[10px]
+            bg-gray-100 dark:bg-gray-800 
+            text-[13px] font-black tracking-tight
+            text-gray-600 dark:text-gray-400 
+            shadow-sm transition-all animate-in fade-in duration-100
+            ${isCapsLock ? 'uppercase' : ''}
           `}
           >
-            {ghostText}
+            {isCapsLock ? ghostText.toUpperCase() : ghostText}
+            <span className="material-symbols-rounded text-[14px] ms-1 opacity-60">keyboard_tab</span>
           </span>
         </div>
       )}

@@ -59,30 +59,27 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     const dir = useSmartDirection(value, placeholder);
     const showClear = value && onClear;
     const { showMenu, hideMenu } = useContextMenu();
+    const [isCapsLock, setIsCapsLock] = useState(false);
+
 
     // --- Autocomplete Logic ---
     const [currentSuggestion, setCurrentSuggestion] = useState<string>('');
-    const [debouncedValue, setDebouncedValue] = useState(value);
-
-    // Debounce value for suggestion calculation
-    useEffect(() => {
-        const timer = setTimeout(() => setDebouncedValue(value), 100);
-        return () => clearTimeout(timer);
-    }, [value]);
 
     // Calculate suggestion
     const ghostText = useMemo(() => {
-        if (!enableAutocomplete || !debouncedValue || !suggestions.length) return '';
+        if (!enableAutocomplete || !value || !suggestions.length) return '';
         const match = suggestions.find(s => 
-            s.toLowerCase().startsWith(debouncedValue.toLowerCase()) && 
-            s.toLowerCase() !== debouncedValue.toLowerCase()
+            s.toLowerCase().startsWith(value.toLowerCase()) && 
+            s.toLowerCase() !== value.toLowerCase()
         );
         if (!match) return '';
         setCurrentSuggestion(match);
-        return match.slice(debouncedValue.length);
-    }, [debouncedValue, suggestions, enableAutocomplete]);
+        // Normalize to lowercase so it can follow dynamic casing logic
+        return match.slice(value.length).toLowerCase();
+    }, [value, suggestions, enableAutocomplete]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        setIsCapsLock(e.getModifierState('CapsLock'));
         if (ghostText && (e.key === 'ArrowRight' || e.key === 'Tab')) {
             e.preventDefault();
             const fullTerm = value + ghostText;
@@ -208,6 +205,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               value={value}
               onChange={(e) => onSearchChange(e.target.value)}
               onKeyDown={handleKeyDown}
+              onKeyUp={(e) => setIsCapsLock(e.getModifierState('CapsLock'))}
               placeholder={hasActiveFilters ? placeholder?.split(',')[0] + '...' : placeholder}
               spellCheck='false'
               autoComplete="off"
@@ -224,18 +222,16 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 <div className={`absolute inset-y-0 ${dir === 'rtl' ? 'right-0' : 'left-0'} flex items-center pointer-events-none overflow-hidden select-none`}>
                     <span className="invisible whitespace-pre text-sm py-2.5">{value}</span>
                     <span className={`
-                        inline-flex items-center gap-1 px-0.5 py-0 ms-1
-                        rounded-lg border backdrop-blur-md 
-                        border-primary-200/50 dark:border-primary-800/50
-                        bg-primary-50/30 dark:bg-primary-900/20
-                        text-primary-600 dark:text-primary-400
-                        text-sm font-bold tracking-wider
-                        ${textTransform === 'uppercase' ? 'uppercase' : ''}
-                        animate-in fade-in zoom-in-95 duration-200
-                        origin-left
+                        inline-flex items-center px-1 py-1 ms-0.5
+                        rounded-[10px] 
+                        bg-gray-100 dark:bg-gray-800 
+                        text-[13px] font-black tracking-tight
+                        text-gray-600 dark:text-gray-400 
+                        shadow-sm transition-all animate-in fade-in duration-100
+                        ${isCapsLock ? 'uppercase' : ''}
                     `}>
-                        {textTransform === 'uppercase' ? ghostText.toUpperCase() : ghostText}
-                        <span className="material-symbols-rounded text-sm">east</span>
+                        {isCapsLock ? ghostText.toUpperCase() : ghostText}
+                        <span className="material-symbols-rounded text-[14px] ms-1 opacity-60">keyboard_tab</span>
                     </span>
                 </div>
             )}
