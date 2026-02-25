@@ -122,6 +122,13 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   const unitsCount = mergedCartItems.reduce((acc, g) => acc + (g.unit?.quantity || 0), 0);
   const discountedCount = cart.filter(item => (item.discount || 0) > 0).length;
 
+  // Calculate total profit margin (Accounts for item-level and global discounts)
+  // Formula: Net Sale Total - Total Cost of Goods Sold
+  const totalCost = cart.reduce((acc, item) => {
+    return acc + (item.costPrice || 0) * item.quantity;
+  }, 0);
+  const totalProfit = cartTotal - totalCost;
+
   return (
     <>
       {/* Mobile Floating Cart Summary (Only in Products View) */}
@@ -220,6 +227,37 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   }>
                     <span className="whitespace-nowrap">{totalItems} {t.quantity || 'قطعة'}</span>
                   </Tooltip>
+
+                  {/* Estimated Profit Display (Managers Only) */}
+                  {(userRole === 'admin' || userRole === 'pharmacist_owner') && cart.length > 0 && (
+                    <>
+                      <svg className="size-1 shrink-0 mx-0.5" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="3" cy="3" r="2" className="fill-gray-300 dark:fill-gray-600" />
+                      </svg>
+                      <Tooltip content={
+                        <div className="flex flex-col gap-1 py-0.5 min-w-[120px]">
+                          <span className="font-bold border-b border-emerald-200/20 pb-0.5 mb-0.5 text-emerald-400">
+                            {currentLang === 'ar' ? 'صافي الربح' : 'Net Profit'}
+                          </span>
+                          <div className="flex justify-between gap-4 text-xs">
+                            <span className="opacity-70">{currentLang === 'ar' ? 'هامش الربح المتوقع:' : 'Exp. Margin:'}</span>
+                            <span className="font-black tabular-nums text-emerald-400">
+                              +<PriceDisplay value={totalProfit} />
+                            </span>
+                          </div>
+                          <p className="text-[9px] text-gray-400 font-medium leading-tight mt-1 border-t border-gray-100/10 pt-1">
+                            {currentLang === 'ar' 
+                              ? 'صافي الربح بعد خصم التكلفة والخصومات.' 
+                              : 'Net gain after cost and discounts.'}
+                          </p>
+                        </div>
+                      }>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-black tabular-nums bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-800/30 whitespace-nowrap animate-in fade-in zoom-in duration-300">
+                          +<PriceDisplay value={totalProfit} />
+                        </span>
+                      </Tooltip>
+                    </>
+                  )}
                 </>
               ) : (
                 <>

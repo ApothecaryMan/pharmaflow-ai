@@ -2809,7 +2809,7 @@ export const TRANSLATIONS = {
       backToProducts: 'عودة للمنتجات',
       items: 'عناصر',
       pack: 'عبوة',
-      unit: 'الوحدة',
+      unit: 'وحدة',
       perUnit: '/وحدة',
       actions: {
         checkStock: 'فحص المخزون',
