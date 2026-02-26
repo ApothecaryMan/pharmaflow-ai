@@ -35,6 +35,7 @@ import { returnService } from './returns';
 import { salesService } from './sales';
 import { settingsService } from './settings/settingsService';
 import { supplierService } from './suppliers';
+import { syncQueueService } from './syncQueueService';
 
 export interface DataState {
   inventory: Drug[];
@@ -228,9 +229,13 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   }, []); // Run once on mount
 
   // Sync to localStorage when state changes (only after initial load)
+  // DEPRECATED for Inventory: We now use differential writes directly in actions 
+  // to avoid full-array serialization overhead.
+  /*
   useEffect(() => {
     if (!isLoading) inventoryService.save(inventory);
   }, [inventory, isLoading]);
+  */
   useEffect(() => {
     if (!isLoading) salesService.save(sales);
   }, [sales, isLoading]);
@@ -311,18 +316,21 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
   const addProduct = useCallback(async (product: Omit<Drug, 'id'>) => {
     const newProduct = await inventoryService.create(product);
+    await syncQueueService.enqueue('SALE', { action: 'CREATE_DRUG', drug: newProduct }); // Example sync action
     setInventoryState((prev) => [...prev, newProduct]);
     return newProduct;
   }, []);
 
   const updateProduct = useCallback(async (id: string, updates: Partial<Drug>) => {
     const updated = await inventoryService.update(id, updates);
+    await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'UPDATE_DRUG', id, updates });
     setInventoryState((prev) => prev.map((p) => (p.id === id ? updated : p)));
     return updated;
   }, []);
 
   const updateStock = useCallback(async (id: string, quantity: number) => {
     await inventoryService.updateStock(id, quantity);
+    await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'UPDATE_STOCK', id, quantity });
     setInventoryState((prev) =>
       prev.map((p) => (p.id === id ? { ...p, stock: p.stock + quantity } : p))
     );
@@ -330,6 +338,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
   const addSale = useCallback(async (sale: Omit<Sale, 'id'>) => {
     const newSale = await salesService.create(sale);
+    await syncQueueService.enqueue('SALE', { action: 'CREATE_SALE', sale: newSale });
     setSalesState((prev) => [...prev, newSale]);
     return newSale;
   }, []);

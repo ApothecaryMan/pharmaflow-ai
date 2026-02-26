@@ -11,14 +11,31 @@ import * as batchService from './batchService';
 import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
 import type { InventoryFilters, InventoryService, InventoryStats } from './types';
+import { drugCacheService } from './drugCacheService';
 
-const getRawAll = (): Drug[] => {
-  return storage.get<Drug[]>(StorageKeys.INVENTORY, []);
+const MIGRATED_KEY = 'pharma_inventory_indexeddb_migrated';
+
+const getRawAll = async (): Promise<Drug[]> => {
+  // Try to load from IndexedDB
+  let drugs = await drugCacheService.loadAll();
+
+  // Migration Logic: If empty and not migrated, check localStorage
+  if (drugs.length === 0 && !storage.get<boolean>(MIGRATED_KEY, false)) {
+    const oldData = storage.get<Drug[]>(StorageKeys.INVENTORY, []);
+    if (oldData.length > 0) {
+      console.log(`📦 Migrating ${oldData.length} drugs from localStorage to IndexedDB...`);
+      await drugCacheService.saveAll(oldData);
+      drugs = oldData;
+    }
+    storage.set(MIGRATED_KEY, true);
+  }
+
+  return drugs;
 };
 
 export const createInventoryService = (): InventoryService => ({
   getAll: async (): Promise<Drug[]> => {
-    const all = getRawAll();
+    const all = await getRawAll();
     const settings = await settingsService.getAll();
     const branchCode = settings.branchCode;
     return all.filter((d) => !d.branchId || d.branchId === branchCode);
@@ -29,8 +46,7 @@ export const createInventoryService = (): InventoryService => ({
   },
 
   getById: async (id: string): Promise<Drug | null> => {
-    const all = await inventoryService.getAll();
-    return all.find((d) => d.id === id) || null;
+    return drugCacheService.getById(id);
   },
 
   getByBarcode: async (barcode: string): Promise<Drug | null> => {
@@ -74,15 +90,14 @@ export const createInventoryService = (): InventoryService => ({
   },
 
   create: async (drug: Omit<Drug, 'id'>): Promise<Drug> => {
-    const all = getRawAll();
     const settings = await settingsService.getAll();
     const newDrug: Drug = {
       ...drug,
       id: idGenerator.generate('inventory'),
       branchId: settings.branchCode,
     } as Drug;
-    all.push(newDrug);
-    storage.set(StorageKeys.INVENTORY, all);
+    
+    await drugCacheService.upsert(newDrug);
 
     // Create initial stock batch for the new drug
     batchService.createBatch({
@@ -98,28 +113,26 @@ export const createInventoryService = (): InventoryService => ({
   },
 
   update: async (id: string, updates: Partial<Drug>): Promise<Drug> => {
-    const all = getRawAll();
-    const index = all.findIndex((d) => d.id === id);
-    if (index === -1) throw new Error('Drug not found');
-    all[index] = { ...all[index], ...updates };
-    storage.set(StorageKeys.INVENTORY, all);
-    return all[index];
+    const drug = await drugCacheService.getById(id);
+    if (!drug) throw new Error('Drug not found');
+    
+    const updated = { ...drug, ...updates };
+    await drugCacheService.upsert(updated);
+    return updated;
   },
 
   delete: async (id: string): Promise<boolean> => {
-    const all = getRawAll();
-    const filtered = all.filter((d) => d.id !== id);
-    storage.set(StorageKeys.INVENTORY, filtered);
+    await drugCacheService.remove(id);
     return true;
   },
 
   updateStock: async (id: string, quantity: number): Promise<Drug> => {
-    const all = getRawAll();
-    const index = all.findIndex((d) => d.id === id);
-    if (index === -1) throw new Error('Drug not found');
-    all[index].stock = validateStock(all[index].stock + quantity);
-    storage.set(StorageKeys.INVENTORY, all);
-    return all[index];
+    const drug = await drugCacheService.getById(id);
+    if (!drug) throw new Error('Drug not found');
+    
+    drug.stock = validateStock(drug.stock + quantity);
+    await drugCacheService.upsert(drug);
+    return drug;
   },
 
   getStats: async (): Promise<InventoryStats> => {
@@ -149,13 +162,16 @@ export const createInventoryService = (): InventoryService => ({
   },
 
   save: async (inventory: Drug[]): Promise<void> => {
-    const all = getRawAll();
+    // Note: We avoid doing full-array save in the new architecture 
+    // to benefit from differential writes, but we keep this for compatibility 
+    // with parts of the app that still use bulk replacement.
+    const all = await drugCacheService.loadAll();
     const settings = await settingsService.getAll();
     const branchCode = settings.branchCode;
     const otherBranchItems = all.filter((d) => d.branchId && d.branchId !== branchCode);
 
     const merged = [...otherBranchItems, ...inventory];
-    storage.set(StorageKeys.INVENTORY, merged);
+    await drugCacheService.saveAll(merged);
   },
 });
 
