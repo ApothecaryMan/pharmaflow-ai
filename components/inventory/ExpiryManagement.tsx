@@ -1,9 +1,10 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
 import type { Drug, StockBatch } from '../../types';
-import { formatCurrencyParts } from '../../utils/currency';
+import { formatCurrencyParts, formatCompactCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
-import { CARD_BASE } from '../../utils/themeStyles';
+import { formatStock } from '../../utils/inventory';
+import { SmallCard } from '../common/SmallCard';
 import { ContextMenuItem, useContextMenu } from '../common/ContextMenu';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
@@ -249,11 +250,18 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       {
         accessorKey: 'quantity',
         header: t.expiryManagement?.table?.remainingQty || 'Remaining Qty',
-        cell: ({ row }) => (
-          <span className="font-medium text-gray-800 dark:text-gray-200">
-            {row.original.quantity} {t.expiryManagement?.details?.packs || 'Packs'}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <span className="font-medium text-gray-800 dark:text-gray-200">
+              {formatStock(item.quantity, item.drug.unitsPerPack, {
+                packs: t.expiryManagement?.details?.packs || 'Packs',
+                outOfStock: t.expiryManagement?.status?.outOfStock || 'Out of Stock'
+              })}
+            </span>
+          );
+        },
+        meta: { align: 'center' },
       },
       {
         accessorKey: 'costPrice',
@@ -266,14 +274,16 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
             </span>
           );
         },
+        meta: { align: 'center' },
       },
       {
         id: 'potentialLoss',
         accessorFn: (row) => row.quantity * row.costPrice,
         header: t.expiryManagement?.table?.potentialLoss || 'Potential Loss',
+        meta: { align: 'center' },
         cell: ({ getValue }) => {
           const loss = getValue<number>();
-          const parts = formatCurrencyParts(loss);
+          const parts = formatCompactCurrencyParts(loss);
           return (
             <span className="text-red-600 dark:text-red-400 font-bold">
               {parts.amount} <span className="text-xs font-normal">{parts.symbol}</span>
@@ -317,19 +327,19 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
             </div>
           );
         },
-        meta: { smartDate: false },
+        meta: { smartDate: false, align: 'center' },
       },
     ];
   }, [t, getVerifiedDate, textTransform]);
 
   return (
-    <div className="absolute inset-0 flex flex-col gap-6 animate-fade-in p-6">
+    <div className="h-full flex flex-col gap-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight type-expressive">
             {t.expiryManagement?.title || 'Expiry Management'}
-          </h2>
+          </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {t.expiryManagement?.subtitle || 'Track and manage batch expiration dates alerts.'}
           </p>
@@ -338,41 +348,35 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0">
-        <div className={`${CARD_BASE} p-4 rounded-2xl flex flex-col gap-2 border-l-4 border-l-red-500`}>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-500">
-              {t.expiryManagement?.expiredItems || 'Expired Items'} ({stats.expiredCount})
-            </span>
-            <span className="material-symbols-rounded text-red-500">event_busy</span>
-          </div>
-          <span className="text-2xl font-black text-red-600 dark:text-red-400">
-            {formatCurrencyParts(stats.expiredValue).amount} <span className="text-sm font-normal">{formatCurrencyParts(stats.expiredValue).symbol}</span>
-          </span>
-        </div>
+        <SmallCard
+          title={t.expiryManagement?.expiredItems || 'Expired Items'}
+          value={stats.expiredValue}
+          type="currency"
+          currencyLabel={formatCurrencyParts(0).symbol}
+          icon="event_busy"
+          iconColor="rose"
+          subValue={stats.expiredCount.toString()}
+        />
 
-        <div className={`${CARD_BASE} p-4 rounded-2xl flex flex-col gap-2 border-l-4 border-l-orange-500`}>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-500">
-              {t.expiryManagement?.nearExpiry30 || 'Expiring < 30 Days'} ({stats.near30Count})
-            </span>
-            <span className="material-symbols-rounded text-orange-500">warning</span>
-          </div>
-          <span className="text-2xl font-black text-orange-600 dark:text-orange-400">
-            {formatCurrencyParts(stats.near30Value).amount} <span className="text-sm font-normal">{formatCurrencyParts(stats.near30Value).symbol}</span>
-          </span>
-        </div>
+        <SmallCard
+          title={t.expiryManagement?.nearExpiry30 || 'Expiring < 30 Days'}
+          value={stats.near30Value}
+          type="currency"
+          currencyLabel={formatCurrencyParts(0).symbol}
+          icon="warning"
+          iconColor="orange"
+          subValue={stats.near30Count.toString()}
+        />
 
-        <div className={`${CARD_BASE} p-4 rounded-2xl flex flex-col gap-2 border-l-4 border-l-yellow-500`}>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-500">
-              {t.expiryManagement?.nearExpiry90 || 'Expiring < 90 Days'} ({stats.near90Count})
-            </span>
-            <span className="material-symbols-rounded text-yellow-500">calendar_month</span>
-          </div>
-          <span className="text-2xl font-black text-yellow-600 dark:text-yellow-400">
-            {formatCurrencyParts(stats.near90Value).amount} <span className="text-sm font-normal">{formatCurrencyParts(stats.near90Value).symbol}</span>
-          </span>
-        </div>
+        <SmallCard
+          title={t.expiryManagement?.nearExpiry90 || 'Expiring < 90 Days'}
+          value={stats.near90Value}
+          type="currency"
+          currencyLabel={formatCurrencyParts(0).symbol}
+          icon="calendar_month"
+          iconColor="amber"
+          subValue={stats.near90Count.toString()}
+        />
       </div>
 
       {/* Filters & Table Wrapper */}
@@ -412,7 +416,9 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
             globalFilter={searchQuery}
             emptyMessage={t.expiryManagement?.noRecords || 'No batches found matching criteria'}
             enablePagination={true}
-            pageSize={20}
+            enableShowAll={true}
+            pageSize="auto"
+            enableVirtualization={false}
             onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
           />
         </div>

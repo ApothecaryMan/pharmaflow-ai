@@ -20,7 +20,7 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
 
   return (
     <div
-      className='h-full p-4 lg:p-6 flex flex-col overflow-hidden'
+      className='h-full flex flex-col overflow-hidden'
       dir={language === 'AR' ? 'rtl' : 'ltr'}
     >
       {/* Header Section */}

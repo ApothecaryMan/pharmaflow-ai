@@ -104,19 +104,18 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
   };
 
   return (
-    <div className='h-full flex flex-col space-y-6 animate-fade-in p-2 md:p-6 lg:p-8 overflow-hidden'>
+    <div className='h-full flex flex-col space-y-6 animate-fade-in overflow-hidden'>
       {/* Header */}
-      <div className='flex flex-col space-y-1'>
-        <h2 className='text-3xl font-bold tracking-tight text-gray-800 dark:text-gray-100 flex items-center gap-3'>
-          <span className='w-10 h-10 flex items-center justify-center rounded-xl bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400'>
-            <span className='material-symbols-rounded text-2xl'>pending_actions</span>
-          </span>
-          {t.title || 'Pending Approvals'}
-        </h2>
-        <p className='text-gray-500 dark:text-gray-400 text-sm max-w-2xl'>
-          {t.subtitle ||
-            'Review and approve incoming purchase orders. Orders must be approved before inventory is updated.'}
-        </p>
+      <div className='flex items-center justify-between'>
+        <div>
+          <h2 className='text-2xl font-bold tracking-tight text-gray-800 dark:text-gray-100 type-expressive'>
+            {t.title || 'Pending Approvals'}
+          </h2>
+          <p className='text-gray-500 dark:text-gray-400 text-sm mt-1'>
+            {t.subtitle ||
+              'Review and approve incoming purchase orders. Orders must be approved before inventory is updated.'}
+          </p>
+        </div>
       </div>
 
       {/* Content */}

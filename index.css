@@ -33,6 +33,10 @@ layer(base);
   --color-primary-700: var(--primary-700);
   --color-primary-800: var(--primary-800);
   --color-primary-900: var(--primary-900);
+
+  /* Layout Tokens */
+  --spacing-page: var(--page-padding);
+  --max-width-page: var(--page-max-width);
 }
 
 /* Dark mode via .dark class */
@@ -57,15 +61,15 @@ layer(base);
 }
 
 @utility custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-gray-300) transparent;
+  scrollbar-width: auto;
+  scrollbar-color: var(--color-gray-400) transparent;
   .dark & {
-    scrollbar-color: var(--color-gray-700) transparent;
+    scrollbar-color: var(--color-gray-600) transparent;
   }
 
   &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
 
   &::-webkit-scrollbar-track {
@@ -73,12 +77,14 @@ layer(base);
   }
 
   &::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-gray-700;
+    @apply bg-gray-400 dark:bg-gray-600;
     border-radius: 20px;
+    border: 2px solid transparent;
+    background-clip: content-box;
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400 dark:bg-gray-600;
+    @apply bg-gray-500 dark:bg-gray-500;
   }
 
   &::-webkit-scrollbar-button {
@@ -167,6 +173,7 @@ layer(base);
   body {
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
   }
 
   /* Scroll Lock for Mobile Drawer/Modals */
@@ -322,6 +329,10 @@ html:not(.dark) .card-shadow {
 
 /* --- Roboto Flex Variable Typography System --- */
 :root {
+  /* Layout Constants */
+  --page-padding: 1rem;
+  --page-max-width: 1600px;
+
   /* Core Axes Defaults */
   --font-weight: 400; /* wght: 100-1000 */
   --font-width: 100; /* wdth: 50-150 (approx, standard is 100) */

@@ -49,6 +49,7 @@ export interface PageConfig {
   category?: string;
   permission?: PermissionAction;
   skeleton?: ComponentType<any>;
+  layout?: 'standard' | 'full-bleed' | 'dashboard' | 'split' | 'auth';
   skeletonProps?: Record<string, any>;
 }
 
@@ -73,6 +74,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     ],
     skeleton: DashboardSkeleton,
     permission: 'dashboard.view',
+    layout: 'dashboard',
   },
   inventory: {
     id: 'inventory',
@@ -148,6 +150,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     ],
     skeleton: POSSkeleton,
     permission: 'sale.create',
+    layout: 'full-bleed',
   },
   'sales-history': {
     id: 'sales-history',
@@ -287,6 +290,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'customer-dashboard',
     requiredProps: ['customers', 'sales', 'color', 't', 'language'],
     permission: 'customer.view',
+    layout: 'dashboard',
   },
   'customer-history': {
     id: 'customer-history',
@@ -307,6 +311,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'customer-dashboard',
     requiredProps: ['customers', 'sales', 'color', 't', 'language'],
     permission: 'customer.view_loyalty',
+    layout: 'dashboard',
   },
   'loyalty-lookup': {
     id: 'loyalty-lookup',
@@ -327,6 +332,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'sales-dashboard',
     requiredProps: ['sales', 'customers', 'products', 'color', 't', 'language'],
     permission: 'reports.view_financial',
+    layout: 'dashboard',
   },
   'add-product': {
     id: 'add-product',
@@ -472,6 +478,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'lock',
     category: 'system',
     requiredProps: ['color', 't', 'language', 'onViewChange', 'onLoginSuccess'],
+    layout: 'auth',
   },
   intelligence: {
     id: 'intelligence',
@@ -482,6 +489,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'reports',
     requiredProps: ['color', 't', 'language'],
     permission: 'reports.view_financial',
+    layout: 'dashboard',
   },
   'login-audit': {
     id: 'login-audit',
@@ -501,6 +509,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'home',
     category: 'system',
     requiredProps: ['color', 'language', 'darkMode'],
+    layout: 'auth',
   },
   'staff-overview': {
     id: 'staff-overview',
@@ -511,6 +520,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'hr-dashboard',
     requiredProps: ['sales', 'employees', 'customers', 'color', 't', 'language', 'getVerifiedDate'],
     permission: 'users.view',
+    layout: 'dashboard',
   },
 };
 

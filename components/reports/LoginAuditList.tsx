@@ -280,10 +280,9 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
   return (
     <div className='h-full flex flex-col overflow-hidden bg-transparent'>
       {/* Header Area */}
-      <div className='p-6 pb-2'>
+      <div className='pb-2'>
         <div className='flex items-center justify-between mb-1'>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3'>
-            <span className='material-symbols-rounded text-blue-500'>history_edu</span>
+          <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
             {t.loginAudit.title}
           </h1>
         </div>
@@ -291,7 +290,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
       </div>
 
       {/* Table Area */}
-      <div className='flex-1 p-6 pt-2 overflow-hidden'>
+      <div className='flex-1 pt-2 overflow-hidden'>
         <TanStackTable
           tableId='login-audit-report'
           data={history}

@@ -395,7 +395,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   }, [previewHtml, options.receiptFont, options.logoBase64, options.logoSvgCode]);
 
   return (
-    <div className='flex flex-col lg:flex-row h-[calc(100vh-140px)] gap-6 p-4'>
+    <div className='flex flex-col lg:flex-row h-full gap-6'>
       {/* LEFT: Controls */}
       <div className={`w-full lg:w-1/3 bg-white dark:bg-gray-800 rounded-2xl shadow-xs p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4 transition-opacity duration-300 ${previewMode === 'shift' ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
         {/* Template Manager Header */}

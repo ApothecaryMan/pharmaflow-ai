@@ -7,6 +7,7 @@ interface InventoryManagementProps {
   inventory: Drug[];
   color: string;
   t: any;
+  language: string;
   darkMode?: boolean;
 }
 
@@ -14,6 +15,7 @@ export const InventoryManagement: React.FC<InventoryManagementProps> = ({
   inventory,
   color,
   t,
+  language,
   darkMode,
 }) => {
   // Define columns
@@ -86,13 +88,15 @@ export const InventoryManagement: React.FC<InventoryManagementProps> = ({
   );
 
   return (
-    <div className='flex flex-col h-full animate-fade-in p-6 gap-6'>
+    <div className='flex flex-col h-full animate-fade-in gap-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-800 dark:text-gray-100'>
-            Inventory Management (Beta)
+          <h1 className='text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 type-expressive'>
+            {language === 'AR' ? 'المخزون المتطور' : 'Advanced Inventory'}
           </h1>
-          <p className='text-gray-500 text-sm'>Advanced view using TanStack Table</p>
+          <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>
+            {language === 'AR' ? 'عرض متقدم باستخدام جداول متطورة' : 'Advanced view with enhanced data tables'}
+          </p>
         </div>
       </div>
 

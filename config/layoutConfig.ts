@@ -13,12 +13,12 @@ export const LAYOUT_CONFIG = {
   // Page Spacing Configuration (Single source of truth)
   // You can use any CSS value here (px, rem, %, etc.)
   SPACING: {
-    DESKTOP_TOP: '15px', // Space from the top (Desktop)
-    DESKTOP_SIDES: '150px', // General side space (Desktop)
-    DASHBOARD_DESKTOP_SIDES: '160px', // Specific side space for Dashboards (Desktop)
-    DESKTOP_BOTTOM: '10px', // Space from the bottom (Desktop)
-    MOBILE: '0px', // Horizontal space (Mobile)
-    MOBILE_BOTTOM: '70px', // Bottom buffer for floating navbar (Mobile)
+    DESKTOP_TOP: '1rem', // Previously 15px
+    DESKTOP_SIDES: '9.375rem', // Previously 150px
+    DASHBOARD_DESKTOP_SIDES: '10rem', // Previously 160px
+    DESKTOP_BOTTOM: '0.625rem', // Previously 10px
+    MOBILE: '0rem',
+    MOBILE_BOTTOM: '4.375rem', // Previously 70px
   },
 
   // Sidebar width
@@ -42,27 +42,29 @@ export const LAYOUT_CONFIG = {
 /**
  * Generates the CSS classes for the main content surface container.
  *
- * @param view - The current active view/route ID
+ * @param layout - The layout mode defined in pageRegistry
  * @param isStandalone - Whether the view is rendered outside the main layout shell
  * @returns A string of Tailwind CSS classes
  */
-export const getContentContainerClasses = (view: string, isStandalone: boolean): string => {
+export const getContentContainerClasses = (
+  layout: 'standard' | 'full-bleed' | 'dashboard' | 'split' | 'auth' | undefined,
+  isStandalone: boolean
+): string => {
   // Initial common classes
-  const base = 'h-full overflow-y-auto scrollbar-hide main-content-scroll';
+  // Note: scrollbar-hide is replaced by standard Tailwind/CSS overflow control
+  const base = 'h-full overflow-y-auto main-content-scroll scrollbar-gutter-stable';
 
-  // 1. Standalone views (Login, etc.) take full screen
-  if (isStandalone) {
+  // 1. Standalone / Auth views take full screen with no padding
+  if (isStandalone || layout === 'auth') {
     return `${base} w-full`;
   }
 
-  const horizontal = LAYOUT_CONFIG.HORIZONTAL_PADDING;
-
-  // 2. Full-bleed functional views (POS, Purchases)
-  const isFullBleed = view.includes('pos') || view.includes('purchases');
-  if (isFullBleed) {
-    return `${base} w-full ${horizontal}`;
+  // 2. Full-bleed views (e.g. POS)
+  if (layout === 'full-bleed') {
+    return `${base} w-full px-page`;
   }
 
-  // 3. Standard maximum-width views (Dashboards, Settings, CRM)
-  return `${base} w-full max-w-[${LAYOUT_CONFIG.MAX_CONTENT_WIDTH}] mx-auto ${horizontal}`;
+  // 3. Standard / Dashboard views with Max Width and Padding
+  // py-page ensures consistent vertical spacing from top/bottom
+  return `${base} w-full max-w-page mx-auto px-page py-page`;
 };

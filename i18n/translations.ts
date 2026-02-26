@@ -107,6 +107,9 @@ export const TRANSLATIONS = {
         clearAllFilters: 'Clear All Filters',
         clearFilter: 'Clear Filter',
         selectedCount: 'selected',
+        showing: 'Showing',
+        showingAll: 'Showing All Items',
+        total: 'Total',
       },
     },
     login: {
@@ -189,6 +192,7 @@ export const TRANSLATIONS = {
       },
     },
     inventory: {
+      title: 'Inventory',
       subtitle: 'Manage your pharmaceutical stock',
       outOfStock: 'Out of Stock',
       available: 'Available',
@@ -2227,6 +2231,9 @@ export const TRANSLATIONS = {
         clearAllFilters: 'مسح كل الفلاتر',
         clearFilter: 'مسح الفلتر',
         selectedCount: 'محدد',
+        showing: 'عرض',
+        showingAll: 'عرض كل العناصر',
+        total: 'الإجمالي',
       },
     },
     login: {

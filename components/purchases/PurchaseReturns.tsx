@@ -324,7 +324,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   });
 
   return (
-    <div className='h-full flex flex-col space-y-4 animate-fade-in p-4 overflow-hidden'>
+    <div className='h-full flex flex-col space-y-4 animate-fade-in overflow-hidden'>
       {/* Header */}
       <div className='flex justify-between items-center shrink-0'>
         <div>
