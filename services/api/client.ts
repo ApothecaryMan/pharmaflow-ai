@@ -153,5 +153,13 @@ export const createRealApiClient = (config: ApiConfig): ApiClient => ({
   },
 });
 
-// Default client instance
-export const apiClient = createMockApiClient();
+// Default client instance based on environment configuration
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+export const isApiConfigured = (): boolean => {
+  return typeof API_BASE_URL === 'string' && API_BASE_URL.trim().length > 0;
+};
+
+export const apiClient = isApiConfigured() 
+  ? createRealApiClient({ baseUrl: API_BASE_URL }) 
+  : createMockApiClient();

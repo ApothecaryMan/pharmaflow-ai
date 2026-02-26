@@ -36,6 +36,7 @@ import { salesService } from './sales';
 import { settingsService } from './settings/settingsService';
 import { supplierService } from './suppliers';
 import { syncQueueService } from './syncQueueService';
+import { syncEngine, type SyncStatus } from './sync/syncEngine';
 
 export interface DataState {
   inventory: Drug[];
@@ -48,6 +49,7 @@ export interface DataState {
   employees: Employee[];
   batches: StockBatch[];
   isLoading: boolean;
+  syncStatus: SyncStatus;
 }
 
 export interface DataActions {
@@ -139,6 +141,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   const [customers, setCustomersState] = useState<Customer[]>([]);
   const [employees, setEmployeesState] = useState<Employee[]>([]);
   const [batches, setBatchesState] = useState<StockBatch[]>([]);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
 
   // Load initial data
   // Load initial data
@@ -225,6 +228,13 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       }
     };
     loadData();
+
+    // --- Initialize Sync Engine ---
+    syncEngine.start((status) => setSyncStatus(status));
+    
+    return () => {
+      syncEngine.stop();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount
 
@@ -471,6 +481,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       employees,
       batches,
       isLoading,
+      syncStatus,
       // Actions
       setInventory,
       addProduct,
@@ -544,6 +555,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       syncBatches,
       refreshAll,
       switchBranch,
+      syncStatus,
     ]
   );
 
