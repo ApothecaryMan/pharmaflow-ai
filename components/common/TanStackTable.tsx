@@ -242,7 +242,7 @@ interface TanStackTableProps<TData, TValue> {
   lite?: boolean;
   dense?: boolean; // New: for compact rows
   enablePagination?: boolean;
-  pageSize?: number;
+  pageSize?: number | 'auto';
   enableVirtualization?: boolean;
 
   // New Filter Props
@@ -343,6 +343,8 @@ export function TanStackTable<TData, TValue>({
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLTableSectionElement>(null);
+  const firstRowRef = useRef<HTMLTableRowElement>(null);
 
   const { language } = useSettings();
   const t = TRANSLATIONS[language];
@@ -393,6 +395,8 @@ export function TanStackTable<TData, TValue>({
   }, [initialFilters, onFilterChange]);
 
   const [isShowAll, setIsShowAll] = useState(false);
+  const [isJumping, setIsJumping] = useState(false);
+  const [jumpValue, setJumpValue] = useState('');
 
   const globalFilter =
     externalGlobalFilter !== undefined ? externalGlobalFilter : internalGlobalFilter;
@@ -745,6 +749,29 @@ export function TanStackTable<TData, TValue>({
     showMenu(x, y, getMenuContent(columnId));
   }, [showMenu, getMenuContent]);
 
+  // --- Fix: Auto Page Size Calculation (Accurate) ---
+  React.useEffect(() => {
+    if (pageSize === 'auto' && tableContainerRef.current && !isShowAll) {
+      const observer = new ResizeObserver(() => {
+        if (!tableContainerRef.current) return;
+        
+        const containerHeight = tableContainerRef.current.clientHeight;
+        const headHeight = headerRef.current?.offsetHeight || 45;
+        const rowHeight = firstRowRef.current?.offsetHeight || (dense ? 36 : 48);
+        
+        const availableHeight = containerHeight - headHeight;
+        const calculated = Math.max(1, Math.floor(availableHeight / rowHeight));
+        
+        if (calculated !== pagination.pageSize) {
+          table.setPageSize(calculated);
+        }
+      });
+      
+      observer.observe(tableContainerRef.current);
+      return () => observer.disconnect();
+    }
+  }, [pageSize, dense, isShowAll, pagination.pageSize, table]);
+
   const handleColumnContextMenu = React.useCallback((e: React.MouseEvent, columnId?: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -847,7 +874,7 @@ export function TanStackTable<TData, TValue>({
         }`}
       >
         {/* Table Scroll Area */}
-        <div ref={tableContainerRef} className='flex-1 overflow-auto custom-scrollbar relative'>
+        <div ref={tableContainerRef} className='flex-1 overflow-y-scroll custom-scrollbar relative'>
           {table.getVisibleLeafColumns().length === 0 ? (
             <ContextMenuTrigger
               className='h-full w-full'
@@ -863,7 +890,7 @@ export function TanStackTable<TData, TValue>({
             </ContextMenuTrigger>
           ) : (
             <table className='w-full text-left border-separate border-spacing-0'>
-              <thead className='sticky top-0 z-10 bg-white dark:bg-gray-900'>
+              <thead ref={headerRef} className='sticky top-0 z-10 bg-white dark:bg-gray-900'>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
@@ -977,7 +1004,10 @@ export function TanStackTable<TData, TValue>({
                       return (
                         <tr
                           key={row.id}
-                          ref={isVirtual ? rowVirtualizer.measureElement : undefined}
+                          ref={(el) => {
+                            if (isVirtual) rowVirtualizer.measureElement(el);
+                            if (rowIndex === 0) (firstRowRef.current as any) = el;
+                          }}
                           data-index={rowIndex}
                           id={`drug-row-${rowIndex}`}
                           onClick={() => onRowClick && onRowClick(row.original)}
@@ -1111,87 +1141,191 @@ export function TanStackTable<TData, TValue>({
           )}
         </div>
 
-        {/* Pagination Footer */}
+        {/* StatusBar-Style Pagination & Tools Toolbar */}
         {enablePagination && (table.getPageCount() > 1 || enableShowAll) && (
           <div
             dir='ltr'
-            className='flex items-center justify-between h-8 border-t bg-(--bg-secondary) border-(--border-primary) px-2'
+            className={`flex items-center justify-between h-6 border-t shrink-0 select-none shadow-xs bg-white dark:bg-gray-900 ${
+              lite ? 'border-gray-200 dark:border-gray-700' : 'border-gray-200 dark:border-gray-800'
+            }`}
           >
-            {/* Left: Info */}
-            <div className='flex items-center gap-4 text-[10px] font-bold tracking-wide text-gray-500 uppercase h-full'>
-              <div className='flex items-center'>
-                {t.global?.table?.page || 'Page'}{' '}
-                <span className='mx-1 text-gray-900 dark:text-gray-100'>
-                  {table.getState().pagination.pageIndex + 1}
-                </span>{' '}
-                {t.global?.table?.of || 'of'}{' '}
-                <span className='ml-1 text-gray-900 dark:text-gray-100'>
-                  {table.getPageCount()}
-                </span>
+            {/* Left Zone: Data Summary (Fixed width to prevent jitter) */}
+            <div className='w-56 flex items-center h-full'>
+              <div className='flex items-center gap-1 px-2.5 h-full text-[11px] uppercase font-bold tracking-wide text-(--text-secondary) tabular-nums'>
+                {isShowAll ? (
+                  <span className='whitespace-nowrap font-bold'>{t.global?.table?.showingAll || 'Showing All Items'}</span>
+                ) : language === 'AR' ? (
+                  <>
+                    <span className='text-(--text-primary) inline-block min-w-[24px] text-center text-[12px]'>
+                      {table.getFilteredRowModel().rows.length}
+                    </span>
+                    <span className='shrink-0 px-1'>{t.global?.table?.of || 'of'}</span>
+                    <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
+                      {Math.min(
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                        table.getFilteredRowModel().rows.length
+                      )}
+                    </span>
+                    <span className='opacity-50 px-0.5'>-</span>
+                    <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
+                      {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
+                    </span>
+                    <span className='shrink-0'>{t.global?.table?.showing || 'Showing'}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className='shrink-0'>{t.global?.table?.showing || 'Showing'}</span>
+                    <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
+                      {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
+                    </span>
+                    <span className='opacity-50 px-0.5'>-</span>
+                    <span className='text-(--text-primary) inline-block min-w-[20px] text-center text-[12px]'>
+                      {Math.min(
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                        table.getFilteredRowModel().rows.length
+                      )}
+                    </span>
+                    <span className='shrink-0 px-1'>{t.global?.table?.of || 'of'}</span>
+                    <span className='text-(--text-primary) inline-block min-w-[24px] text-center text-[12px]'>
+                      {table.getFilteredRowModel().rows.length}
+                    </span>
+                  </>
+                )}
               </div>
+            </div>
+
+            {/* Center Zone: Navigation Controls (StatusBarItem Style) */}
+            {!isShowAll && (
+              <div className='flex-1 flex justify-center h-full'>
+                <div className='flex items-center h-full'>
+                  <button
+                    onClick={() => table.setPageIndex(0)}
+                    disabled={!table.getCanPreviousPage()}
+                    className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:enabled:text-(--text-primary) hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 disabled:opacity-10'
+                    title='First Page'
+                  >
+                    <span className='material-symbols-rounded leading-none' style={{ fontSize: '18px' }}>
+                      first_page
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                    className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:enabled:text-(--text-primary) hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 disabled:opacity-10'
+                    title='Previous Page'
+                  >
+                    <span className='material-symbols-rounded leading-none' style={{ fontSize: '18px' }}>
+                      chevron_left
+                    </span>
+                  </button>
+
+                  <div
+                    onClick={() => {
+                      if (!isJumping) {
+                        setIsJumping(true);
+                        setJumpValue((table.getState().pagination.pageIndex + 1).toString());
+                      }
+                    }}
+                    className={`px-4 flex items-center h-full text-[12px] font-bold text-(--text-secondary) tabular-nums transition-colors group ${
+                      !isJumping ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/10' : ''
+                    }`}
+                  >
+                    {isJumping ? (
+                      <div className='flex items-center gap-1'>
+                        <input
+                          autoFocus
+                          type='text'
+                          value={jumpValue}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            if (val === '') {
+                              setJumpValue('');
+                              return;
+                            }
+                            const num = parseInt(val);
+                            if (num >= 1 && num <= table.getPageCount()) {
+                              setJumpValue(val);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && jumpValue) {
+                              table.setPageIndex(parseInt(jumpValue) - 1);
+                              setIsJumping(false);
+                            } else if (e.key === 'Escape') {
+                              setIsJumping(false);
+                            }
+                          }}
+                          onBlur={() => {
+                            // Delay slightly to allow click on Enter if needed, but blur is usually enough
+                            setTimeout(() => setIsJumping(false), 150);
+                          }}
+                          className='w-8 h-4 bg-transparent border-b border-(--border-primary)/50 focus:border-primary-500 text-center outline-none text-(--text-primary) rounded-none'
+                        />
+                        <span className='opacity-50 mx-0.5'>/</span>
+                        <span className='opacity-70 inline-block min-w-[24px] text-center'>{table.getPageCount()}</span>
+                      </div>
+                    ) : (
+                      <>
+                        <span className='group-hover:text-(--text-primary) inline-block min-w-[24px] text-center'>
+                          {table.getState().pagination.pageIndex + 1}
+                        </span>
+                        <span className='opacity-50 mx-1'>/</span>
+                        <span className='opacity-70 inline-block min-w-[24px] text-center'>{table.getPageCount()}</span>
+                      </>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                    className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:enabled:text-(--text-primary) hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 disabled:opacity-10'
+                    title='Next Page'
+                  >
+                    <span className='material-symbols-rounded leading-none' style={{ fontSize: '18px' }}>
+                      chevron_right
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                    disabled={!table.getCanNextPage()}
+                    className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:enabled:text-(--text-primary) hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 disabled:opacity-10'
+                    title='Last Page'
+                  >
+                    <span className='material-symbols-rounded leading-none' style={{ fontSize: '18px' }}>
+                      last_page
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Right Zone: Utility Tools (Fixed width for balance) */}
+            <div className='w-56 flex items-center justify-end h-full'>
+              <button
+                onClick={() => tableContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+                className='px-2.5 h-full flex items-center justify-center transition-colors text-(--text-secondary) hover:text-(--text-primary) hover:bg-black/5 dark:hover:bg-white/10'
+                title='Jump to Top'
+              >
+                <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
+                  vertical_align_top
+                </span>
+              </button>
 
               {enableShowAll && (
                 <button
                   onClick={() => setIsShowAll(!isShowAll)}
-                  className={`flex items-center justify-center w-6 h-6 rounded-md border transition-all ${
+                  className={`px-2.5 h-full flex items-center justify-center transition-colors ${
                     isShowAll
-                      ? `bg-primary-50 border-primary-200 text-primary-700 dark:bg-primary-900/20 dark:border-primary-800 dark:text-primary-400`
-                      : 'bg-transparent border-gray-200 dark:border-gray-700 text-gray-500 hover:text-gray-700'
+                      ? `text-primary-600 bg-primary-500/10 dark:text-primary-400 dark:bg-primary-400/10`
+                      : 'text-(--text-secondary) hover:text-(--text-primary) hover:bg-black/5 dark:hover:bg-white/10'
                   }`}
-                  title={isShowAll ? 'Show Less' : t.global?.table?.showAll || 'Show All'}
+                  title={isShowAll ? 'Paginated View' : t.global?.table?.showAll || 'Show All'}
                 >
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
-                    {isShowAll ? 'keyboard_double_arrow_up' : 'keyboard_double_arrow_down'}
+                  <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
+                    {isShowAll ? 'splitscreen' : 'view_day'}
                   </span>
                 </button>
               )}
-            </div>
-
-            {/* Right: Controls */}
-            <div
-              className={`flex items-center h-full ${isShowAll ? 'opacity-30 pointer-events-none' : ''}`}
-            >
-              <button
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-                className='h-full aspect-square flex items-center justify-center transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 hover:enabled:text-gray-900 dark:hover:enabled:text-gray-100'
-                title='First Page'
-              >
-                <span className='material-symbols-rounded leading-none' style={{ fontSize: 'var(--icon-md)' }}>
-                  first_page
-                </span>
-              </button>
-              <button
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-                className='h-full aspect-square flex items-center justify-center transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 hover:enabled:text-gray-900 dark:hover:enabled:text-gray-100'
-                title='Previous Page'
-              >
-                <span className='material-symbols-rounded leading-none' style={{ fontSize: 'var(--icon-md)' }}>
-                  chevron_left
-                </span>
-              </button>
-
-              <div className='w-px h-3 bg-gray-300 dark:bg-gray-700 mx-1'></div>
-
-              <button
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-                className='h-full aspect-square flex items-center justify-center transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 hover:enabled:text-gray-900 dark:hover:enabled:text-gray-100'
-                title='Next Page'
-              >
-                <span className='material-symbols-rounded leading-none' style={{ fontSize: 'var(--icon-md)' }}>
-                  chevron_right
-                </span>
-              </button>
-              <button
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-                className='h-full aspect-square flex items-center justify-center transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-black/5 dark:hover:enabled:bg-white/10 hover:enabled:text-gray-900 dark:hover:enabled:text-gray-100'
-                title='Last Page'
-              >
-                <span className='material-symbols-rounded leading-none' style={{ fontSize: 'var(--icon-md)' }}>last_page</span>
-              </button>
             </div>
           </div>
         )}
