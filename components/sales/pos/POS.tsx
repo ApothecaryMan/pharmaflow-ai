@@ -36,6 +36,7 @@ import { POSDrugOverview } from './ui/POSDrugOverview';
 import { POSDrugBranches } from './ui/POSDrugBranches';
 import { POSDrugAnalytics } from './ui/POSDrugAnalytics';
 import { formatExpiryDate } from './utils/POSUtils';
+import { POSCustomerHistoryModal } from './ui/POSCustomerHistoryModal';
 
 import { usePOSSidebarResizer } from './hooks/usePOSSidebarResizer';
 import { usePOSSearchAndFilters } from './hooks/usePOSSearchAndFilters';
@@ -149,6 +150,7 @@ export const POS: React.FC<POSProps> = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
   const [viewingDrugTab, setViewingDrugTab] = useState<'overview' | 'branches' | 'analytics'>('overview');
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
@@ -725,6 +727,7 @@ export const POS: React.FC<POSProps> = ({
             customerDropdownHook={customerDropdownHook}
             paymentMethod={paymentMethod}
             setPaymentMethod={setPaymentMethod}
+            onShowHistory={() => setIsHistoryModalOpen(true)}
           />
 
           {/* Search & Filter - No Card Container */}
@@ -1045,6 +1048,17 @@ export const POS: React.FC<POSProps> = ({
           color={color}
           t={t}
           currentEmployeeId={currentEmployeeId}
+        />
+
+        {/* Customer History Modal */}
+        <POSCustomerHistoryModal
+          isOpen={isHistoryModalOpen}
+          onClose={() => setIsHistoryModalOpen(false)}
+          customer={selectedCustomer}
+          sales={sales}
+          color={color}
+          t={t}
+          language={language}
         />
 
         {/* Close Main POS Content div */}

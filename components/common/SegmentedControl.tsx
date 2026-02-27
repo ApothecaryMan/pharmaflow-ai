@@ -40,6 +40,7 @@ export interface SegmentedControlOption<T> {
   icon?: string;
   activeColor?: string;
   count?: number | string;
+  disabled?: boolean;
 }
 
 type SegmentedControlSize = 'xs' | 'sm' | 'md' | 'lg';
@@ -186,11 +187,12 @@ export function SegmentedControl<T extends string | number | boolean>({
             type='button'
             data-active={isActive}
             style={{ WebkitAppearance: 'none', appearance: 'none' }}
+            disabled={option.disabled}
             className={`${fullWidth ? 'flex-1' : 'flex-none'} ${sizeClasses.button} ${buttonRound} transition-colors z-10 relative flex items-center justify-center ${hasIcon && hasLabel ? 'gap-2' : 'gap-0'} whitespace-nowrap font-bold ${
               isActive
                 ? 'text-gray-900 dark:text-white'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50'
-            }`}
+            } ${option.disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
           >
             {hasIcon && (
               <span

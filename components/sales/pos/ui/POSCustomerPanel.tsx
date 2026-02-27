@@ -25,6 +25,7 @@ export interface POSCustomerPanelProps {
   };
   paymentMethod: 'cash' | 'visa';
   setPaymentMethod: (method: 'cash' | 'visa') => void;
+  onShowHistory?: () => void;
 }
 
 export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
@@ -44,6 +45,7 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
   customerDropdownHook,
   paymentMethod,
   setPaymentMethod,
+  onShowHistory,
 }) => {
   return (
     <div className={`${CARD_MD} p-3 border border-gray-200 dark:border-gray-800`}>
@@ -52,7 +54,9 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
         <div className='flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in'>
           <div className='flex items-center gap-3'>
             <div
-              className={`w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400`}
+              onClick={onShowHistory}
+              title={t.viewHistory}
+              className={`w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 cursor-pointer hover:bg-primary-200 dark:hover:bg-primary-800/50 transition-colors active:scale-95`}
             >
               <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
                 person
