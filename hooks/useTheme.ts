@@ -13,6 +13,7 @@ const COLOR_PALETTES: Record<string, Record<string, string>> = {
     '700': '#1d4ed8',
     '800': '#1e40af',
     '900': '#1e3a8a',
+    '950': '#172554',
   },
   purple: {
     '50': '#faf5ff',
@@ -25,6 +26,7 @@ const COLOR_PALETTES: Record<string, Record<string, string>> = {
     '700': '#7e22ce',
     '800': '#6b21a8',
     '900': '#581c87',
+    '950': '#3b0764',
   },
   pink: {
     '50': '#fdf2f8',
@@ -37,6 +39,7 @@ const COLOR_PALETTES: Record<string, Record<string, string>> = {
     '700': '#be185d',
     '800': '#9d174d',
     '900': '#831843',
+    '950': '#500724',
   },
   green: {
     '50': '#f0fdf4',
@@ -49,6 +52,7 @@ const COLOR_PALETTES: Record<string, Record<string, string>> = {
     '700': '#15803d',
     '800': '#166534',
     '900': '#14532d',
+    '950': '#052e16',
   },
   orange: {
     '50': '#fff7ed',
@@ -61,6 +65,7 @@ const COLOR_PALETTES: Record<string, Record<string, string>> = {
     '700': '#c2410c',
     '800': '#9a3412',
     '900': '#7c2d12',
+    '950': '#431407',
   },
   red: {
     '50': '#fef2f2',
@@ -73,6 +78,7 @@ const COLOR_PALETTES: Record<string, Record<string, string>> = {
     '700': '#b91c1c',
     '800': '#991b1b',
     '900': '#7f1d1d',
+    '950': '#450a0a',
   },
   teal: {
     '50': '#f0fdfa',
@@ -85,6 +91,7 @@ const COLOR_PALETTES: Record<string, Record<string, string>> = {
     '700': '#0f766e',
     '800': '#115e59',
     '900': '#134e4a',
+    '950': '#042f2e',
   },
   indigo: {
     '50': '#eef2ff',
@@ -97,6 +104,7 @@ const COLOR_PALETTES: Record<string, Record<string, string>> = {
     '700': '#4338ca',
     '800': '#3730a3',
     '900': '#312e81',
+    '950': '#1e1b4b',
   },
 };
 

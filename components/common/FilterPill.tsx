@@ -167,7 +167,8 @@ export const FilterPill: React.FC<FilterPillProps> = ({
       >
         {/* Icon */}
         <span
-          className={`material-symbols-rounded ${collapsed ? 'text-[18px]' : 'text-[16px] opacity-70'}`}
+          className={`material-symbols-rounded ${collapsed ? '' : 'opacity-70'}`}
+          style={{ fontSize: collapsed ? 'var(--icon-navbar-dropdown)' : 'var(--icon-base)' }}
         >
           {config.icon}
         </span>
@@ -200,7 +201,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
             active:scale-75
           `}
         >
-          <span className='material-symbols-rounded text-[14px] font-bold'>
+          <span className='material-symbols-rounded font-bold' style={{ fontSize: 'var(--icon-sm)' }}>
             close
           </span>
         </div>

@@ -33,6 +33,7 @@ layer(base);
   --color-primary-700: var(--primary-700);
   --color-primary-800: var(--primary-800);
   --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
 
   /* Layout Tokens */
   --spacing-page: var(--page-padding);

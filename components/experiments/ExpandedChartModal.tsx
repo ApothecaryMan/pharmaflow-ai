@@ -111,6 +111,7 @@ import {
 } from 'recharts';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
+import { formatCurrencyParts } from '../../utils/currency';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES & INTERFACES - واجهات الأنواع
@@ -393,12 +394,27 @@ StatsCard.displayName = 'StatsCard';
 const CustomTooltipContent = memo(({ active, payload, label, color, unit }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className='backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 p-3 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700'>
-        <p className='text-xs text-gray-500 dark:text-gray-400 mb-1'>{label}</p>
-        <p className='text-lg font-bold text-gray-900 dark:text-white' style={{ color }}>
-          <span dir='ltr'>{payload[0].value.toLocaleString()}</span>{' '}
-          <span className='text-sm'>{unit}</span>
-        </p>
+      <div className='backdrop-blur-md bg-white/80 dark:bg-gray-900/80 saturate-150 p-2.5 px-3.5 rounded-xl shadow-xl border border-white/20 dark:border-gray-700/50 flex flex-col gap-1'>
+        <div className='flex items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-1 mb-0.5'>
+          <span className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider'>{label}</span>
+          <span className='text-[10px] font-medium text-gray-400 dark:text-gray-500'>Details</span>
+        </div>
+        <div className='flex items-baseline gap-1.5'>
+          {(() => {
+            const parts = formatCurrencyParts(payload[0].value);
+            return (
+              <>
+                <span 
+                  className='text-xl font-black tabular-nums tracking-tight'
+                  style={{ color }}
+                >
+                  {parts.amount}
+                </span>
+                <span className='text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase'>{parts.symbol}</span>
+              </>
+            );
+          })()}
+        </div>
       </div>
     );
   }
@@ -462,24 +478,23 @@ const ChartControls: React.FC<ChartControlsProps> = memo(
       {/* View Toggle - Always available if showTableView enabled */}
       {/* زر التبديل بين الرسم والجدول - متاح دائماً إذا كان showTableView مفعل */}
       {features?.showTableView !== false && (
-        <div className='w-24'>
-          <SegmentedControl
-            value={viewMode}
-            onChange={onViewModeChange}
-            options={[
-              { label: '', value: 'chart', icon: 'show_chart' },
-              { label: '', value: 'table', icon: 'table_chart' },
-            ]}
-            size='sm'
-            variant='onPage'
-          />
-        </div>
+        <SegmentedControl
+          value={viewMode}
+          onChange={onViewModeChange}
+          options={[
+            { label: '', value: 'chart', icon: 'show_chart' },
+            { label: '', value: 'table', icon: 'table_chart' },
+          ]}
+          size='xs'
+          variant='onPage'
+          fullWidth={false}
+        />
       )}
 
       {/* Chart Type Toggle - Only in chart view */}
       {/* زر نوع الرسم - يظهر فقط في وضع الرسم */}
       {viewMode === 'chart' && features?.showChartTypeToggle !== false && (
-        <div className='w-24 animate-fade-in'>
+        <div className='animate-fade-in'>
           <SegmentedControl
             value={chartType}
             onChange={onChartTypeChange}
@@ -487,9 +502,10 @@ const ChartControls: React.FC<ChartControlsProps> = memo(
               { label: '', value: 'area', icon: 'area_chart' },
               { label: '', value: 'bar', icon: 'bar_chart' },
             ]}
-            size='sm'
+            size='xs'
             variant='onPage'
             color='blue'
+            fullWidth={false}
           />
         </div>
       )}
@@ -497,7 +513,7 @@ const ChartControls: React.FC<ChartControlsProps> = memo(
       {/* Line Style Toggle - Only with Area chart */}
       {/* زر نمط الخط - فقط مع رسم المساحة */}
       {viewMode === 'chart' && chartType === 'area' && features?.showLineStyleToggle !== false && (
-        <div className='w-24 animate-fade-in'>
+        <div className='animate-fade-in'>
           <SegmentedControl
             value={lineStyle}
             onChange={onLineStyleChange}
@@ -505,9 +521,10 @@ const ChartControls: React.FC<ChartControlsProps> = memo(
               { label: '', value: 'solid', icon: 'remove' },
               { label: '', value: 'dashed', icon: 'more_horiz' },
             ]}
-            size='sm'
+            size='xs'
             variant='onPage'
             color='gray'
+            fullWidth={false}
           />
         </div>
       )}
@@ -515,7 +532,7 @@ const ChartControls: React.FC<ChartControlsProps> = memo(
       {/* Period Selector - Shows in chart view */}
       {/* اختيار الفترة - يظهر في وضع الرسم */}
       {viewMode === 'chart' && features?.showPeriodSelector !== false && (
-        <div className='w-64 animate-fade-in'>
+        <div className='animate-fade-in'>
           <SegmentedControl
             value={period}
             onChange={onPeriodChange}
@@ -525,7 +542,7 @@ const ChartControls: React.FC<ChartControlsProps> = memo(
               { label: '3M', value: '3m' },
               { label: 'All', value: 'all' },
             ]}
-            size='sm'
+            size='xs'
             variant='onPage'
             color='indigo'
           />

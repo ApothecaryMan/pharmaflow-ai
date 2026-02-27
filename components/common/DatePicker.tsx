@@ -537,7 +537,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     ${className}
                 `}
       >
-        <span className='material-symbols-rounded text-[18px]'>{icon}</span>
+        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>{icon}</span>
         <span className='text-sm font-medium whitespace-nowrap'>
           {value
             ? new Date(value).toLocaleString(locale, {
@@ -554,7 +554,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             onClick={clearSelection}
             className={`w-5 h-5 rounded-full flex items-center justify-center transform hover:scale-110 active:scale-95 transition-all ml-1 hover:bg-primary-200 dark:hover:bg-primary-800`}
           >
-            <span className='material-symbols-rounded text-[14px]'>close</span>
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>close</span>
           </div>
         )}
       </button>
@@ -650,7 +650,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 </button>
                 <button
                   onClick={confirmSelection}
-                  className={`px-6 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-lg shadow-primary-500/20 active:scale-95 transition-all`}
+                  className={`px-6 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg active:scale-95 transition-all`}
                 >
                   {translations.ok}
                 </button>

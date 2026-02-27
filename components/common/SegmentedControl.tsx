@@ -65,20 +65,20 @@ interface SegmentedControlProps<T> {
 
 const SIZE_CLASSES = {
   xs: {
-    button: 'py-1 px-2 text-xs',
-    icon: 'text-[16px]',
+    button: 'py-1 px-2 text-xs min-w-[32px] h-[32px]',
+    iconSize: 'var(--icon-md)', // Standardized to 18px for better visibility
   },
   sm: {
-    button: 'py-1.5 px-3 text-sm',
-    icon: 'text-[18px]',
+    button: 'py-1.5 px-3 text-sm min-w-[38px] h-[38px]',
+    iconSize: 'var(--icon-md)', // 18px
   },
   md: {
-    button: 'py-2.5 px-4 text-base',
-    icon: 'text-[20px]',
+    button: 'py-2 px-4 text-base min-w-[44px] h-[44px]',
+    iconSize: 'var(--icon-navbar-dropdown)', // 18px
   },
   lg: {
-    button: 'py-3 px-5 text-lg',
-    icon: 'text-[22px]',
+    button: 'py-2.5 px-5 text-lg min-w-[50px] h-[50px]',
+    iconSize: 'var(--icon-navbar-main)', // 22px
   },
 };
 
@@ -161,17 +161,14 @@ export function SegmentedControl<T extends string | number | boolean>({
     >
       {indicatorStyle && (
         <div
-          className={`absolute ${isPill ? '' : 'bg-white dark:bg-gray-700'} ${indicatorRound} pointer-events-none z-0 ${
+          className={`absolute bg-white dark:bg-gray-700 ${indicatorRound} pointer-events-none z-0 ${
             !isFirstRender.current && !isRtlChange
               ? 'transition-all duration-300 ease-in-out'
               : ''
           }`}
           style={{
             ...indicatorStyle,
-            boxShadow: isPill
-              ? '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)'
-              : 'rgba(0, 0, 0, 0.09) 0px 3px 12px',
-            backgroundColor: isPill ? COLOR_HEX_MAP[color] || '#059669' : undefined,
+            boxShadow: 'rgba(0, 0, 0, 0.09) 0px 3px 12px',
           }}
         />
       )}
@@ -179,6 +176,9 @@ export function SegmentedControl<T extends string | number | boolean>({
       {options.map((option) => {
         const isActive = value === option.value;
         const optionColor = option.activeColor || color;
+        const hasIcon = !!option.icon;
+        const hasLabel = !!option.label;
+
         return (
           <button
             key={String(option.value)}
@@ -186,22 +186,21 @@ export function SegmentedControl<T extends string | number | boolean>({
             type='button'
             data-active={isActive}
             style={{ WebkitAppearance: 'none', appearance: 'none' }}
-            className={`${fullWidth ? 'flex-1' : 'flex-none'} ${sizeClasses.button} ${buttonRound} transition-colors z-10 relative flex items-center justify-center gap-2 whitespace-nowrap ${
-              isPill ? (isActive ? 'font-bold' : 'font-medium') : 'font-bold'
-            } ${
+            className={`${fullWidth ? 'flex-1' : 'flex-none'} ${sizeClasses.button} ${buttonRound} transition-colors z-10 relative flex items-center justify-center ${hasIcon && hasLabel ? 'gap-2' : 'gap-0'} whitespace-nowrap font-bold ${
               isActive
-                ? isPill
-                  ? 'text-white'
-                  : 'text-gray-900 dark:text-white'
-                : isPill
-                  ? 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50'
+                ? 'text-gray-900 dark:text-white'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50'
             }`}
           >
-            {option.icon && (
-              <span className={`material-symbols-rounded ${sizeClasses.icon}`}>{option.icon}</span>
+            {hasIcon && (
+              <span
+                className='material-symbols-rounded'
+                style={{ fontSize: sizeClasses.iconSize }}
+              >
+                {option.icon}
+              </span>
             )}
-            {option.label}
+            {hasLabel && <span>{option.label}</span>}
             {option.count !== undefined && (
               <span
                 className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold leading-none ${

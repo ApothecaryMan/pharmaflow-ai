@@ -171,7 +171,7 @@ export const Modal: React.FC<ModalProps> = ({
             <div className='flex items-center justify-between mb-6 shrink-0 gap-4'>
               <div>
                 <h2 className='text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2'>
-                  {icon && <span className='material-symbols-rounded text-[24px]'>{icon}</span>}
+                  {icon && <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>{icon}</span>}
                   {title}
                 </h2>
                 {subtitle && (
@@ -200,7 +200,7 @@ export const Modal: React.FC<ModalProps> = ({
                     onClick={onClose}
                     className='w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
                   >
-                    <span className='material-symbols-rounded'>close</span>
+                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>close</span>
                   </button>
                 )}
               </div>

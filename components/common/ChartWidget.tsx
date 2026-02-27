@@ -11,6 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 import { SegmentedControl } from './SegmentedControl'; // Adjust path if needed
+import { formatCurrencyParts } from '../../utils/currency';
 
 // --- Custom Tooltip Component ---
 export const CustomTooltipContent = memo(
@@ -32,39 +33,49 @@ export const CustomTooltipContent = memo(
       );
 
       return (
-        <div className='backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 p-3 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 min-w-[180px]'>
-          <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>{label}</p>
+        <div className='backdrop-blur-md bg-white/80 dark:bg-gray-900/80 saturate-150 p-2.5 px-3.5 rounded-xl shadow-xl border border-white/20 dark:border-gray-700/50 flex flex-col gap-1.5'>
+          {/* Header: Date/Label */}
+          <div className='flex items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-1 mb-0.5'>
+            <span className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider'>{label}</span>
+            <span className='text-[10px] font-medium text-gray-400 dark:text-gray-500'>{primaryLabel || 'Overview'}</span>
+          </div>
 
-          {/* Main Employee */}
+          {/* Main Value Body */}
           {mainData && (
-            <div className='mb-2'>
-              <p className='text-xs text-gray-400 mb-0.5'>
-                {primaryLabel ||
-                  employees?.find((e: any) => e.id === selectedEmployeeId)?.name ||
-                  'You'}
-              </p>
-              <p
-                className='text-lg font-bold text-gray-900 dark:text-white'
-                style={{ color: mainData.color || mainData.fill }}
-              >
-                <span dir='ltr'>{mainData.value.toLocaleString()}</span>{' '}
-                <span className='text-sm'>{unit}</span>
-              </p>
+            <div className='flex flex-col'>
+              <div className='flex items-baseline gap-1.5'>
+                {(() => {
+                  const parts = formatCurrencyParts(mainData.value);
+                  return (
+                    <>
+                      <span 
+                        className='text-xl font-black tabular-nums tracking-tight'
+                        style={{ color: mainData.color || mainData.fill }}
+                      >
+                        {parts.amount}
+                      </span>
+                      <span className='text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase'>{parts.symbol}</span>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
           )}
 
-          {/* Other Employees (Comparison) */}
+          {/* Comparison Section */}
           {showComparison && otherEmployees.length > 0 && (
-            <div className='pt-2 border-t border-gray-200 dark:border-gray-700 space-y-1'>
+            <div className='flex flex-col gap-1 pt-1 border-t border-gray-100 dark:border-gray-800'>
               {otherEmployees.map((emp: any, idx: number) => {
                 const employee = employees?.find((e: any) => e.id === emp.dataKey);
                 const name = employee?.name || emp.dataKey;
-
                 return (
-                  <div key={idx} className='flex items-center justify-between text-xs'>
-                    <span className='text-gray-600 dark:text-gray-400'>{name}</span>
-                    <span className='font-bold text-gray-700 dark:text-gray-300' dir='ltr'>
-                      {emp.value.toLocaleString()} {unit}
+                  <div key={idx} className='flex items-center justify-between gap-6'>
+                    <div className='flex items-center gap-1.5'>
+                      <div className='w-1.5 h-1.5 rounded-full' style={{ backgroundColor: emp.color || emp.fill || '#9ca3af' }} />
+                      <span className='text-[11px] font-medium text-gray-600 dark:text-gray-400 truncate max-w-[80px]'>{name}</span>
+                    </div>
+                    <span className='text-[11px] font-bold text-gray-700 dark:text-gray-200 tabular-nums'>
+                      {formatCurrencyParts(emp.value).amount}
                     </span>
                   </div>
                 );
@@ -190,7 +201,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
       {/* Header */}
       <div className={`flex items-center justify-between mb-4 ${headerClassName || ''}`}>
         <h3 className='text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2'>
-          <span className={`material-symbols-rounded text-primary-500`} style={{ color }}>
+          <span className={`material-symbols-rounded`} style={{ color, fontSize: 'var(--icon-navbar-dropdown)' }}>
             {icon}
           </span>
           {title}
@@ -215,7 +226,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                   ]}
                   value={showComparison ? 'group' : 'single'}
                   onChange={(val) => onComparisonChange(val === 'group')}
-                  size='sm'
+                  size='xs'
                   fullWidth={false}
                 />
               </div>
@@ -223,19 +234,17 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
 
           {/* Chart Type Toggle */}
           {allowChartTypeSelection && (
-            <div className='w-24'>
-              <SegmentedControl
-                options={[
-                  { label: '', value: 'area', icon: 'area_chart' },
-                  { label: '', value: 'bar', icon: 'bar_chart' },
-                ]}
-                value={activeChartType}
-                onChange={(val) => handleChartTypeChange(val as 'area' | 'bar')}
-                size='sm'
-                fullWidth={false}
-                shape='pill'
-              />
-            </div>
+            <SegmentedControl
+              options={[
+                { label: '', value: 'area', icon: 'area_chart' },
+                { label: '', value: 'bar', icon: 'bar_chart' },
+              ]}
+              value={activeChartType}
+              onChange={(val) => handleChartTypeChange(val as 'area' | 'bar')}
+              size='xs'
+              fullWidth={false}
+              shape='pill'
+            />
           )}
 
           {onExpand && (
@@ -244,7 +253,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
               className='w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 opacity-0 group-hover:opacity-100'
               title={language === 'AR' ? 'توسيع الرسم البياني' : 'Expand Chart'}
             >
-              <span className='material-symbols-rounded text-xl'>open_in_full</span>
+              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>open_in_full</span>
             </button>
           )}
         </div>

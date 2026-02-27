@@ -315,7 +315,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       className='w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 opacity-0 group-hover:opacity-100'
       title={title || t.expand?.expand || 'Expand'}
     >
-      <span className='material-symbols-rounded text-xl'>open_in_full</span>
+      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>open_in_full</span>
     </button>
   );
 
@@ -488,7 +488,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-80 flex flex-col group`}>
           <div className='flex justify-between items-center mb-3'>
             <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2 type-expressive'>
-              <span className='material-symbols-rounded text-yellow-500 text-[20px]'>
+              <span className='material-symbols-rounded text-yellow-500' style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
                 hotel_class
               </span>
               {t.topSelling}
@@ -534,7 +534,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className={`p-5 rounded-3xl ${CARD_BASE} h-64 flex flex-col group`}>
             <div className='flex justify-between items-center mb-2'>
               <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2 type-expressive'>
-                <span className='material-symbols-rounded text-orange-500 text-[20px]'>
+                <span className='material-symbols-rounded text-orange-500' style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
                   priority_high
                 </span>
                 {t.attention}
@@ -581,7 +581,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className={`p-5 rounded-3xl ${CARD_BASE} h-64 flex flex-col group`}>
             <div className='flex justify-between items-center mb-2'>
               <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-                <span className='material-symbols-rounded text-red-500 text-[20px]'>
+                <span className='material-symbols-rounded text-red-500' style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
                   event_busy
                 </span>
                 {t.expiringSoon}
@@ -606,7 +606,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isExpired ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'}`}
                         >
-                          <span className='material-symbols-rounded text-base'>event_busy</span>
+                          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>event_busy</span>
                         </div>
                         <div className='min-w-0'>
                           <p className='font-medium text-sm text-gray-700 dark:text-gray-200 truncate item-name'>
@@ -634,7 +634,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-auto max-h-[530px] flex flex-col group`}>
           <div className='flex justify-between items-center mb-4'>
             <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-blue-500 text-[20px]'>
+              <span className='material-symbols-rounded text-blue-500' style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
                 receipt_long
               </span>
               {t.recentSales}
@@ -656,7 +656,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <div
                       className={`w-10 h-10 flex items-center justify-center rounded-xl bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400`}
                     >
-                      <span className='material-symbols-rounded'>shopping_bag</span>
+                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>shopping_bag</span>
                     </div>
                     <div>
                       <p className='text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2'>
@@ -666,7 +666,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             dir='ltr'
                             className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400 text-[10px] font-bold uppercase tracking-wider bg-transparent'
                           >
-                            <span className='material-symbols-rounded text-sm'>tag</span>
+                            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>tag</span>
                             {sale.customerCode}
                           </span>
                         )}
@@ -685,12 +685,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <span
                           className={`inline-flex items-center ${sale.paymentMethod === 'visa' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}
                         >
-                          <span className='material-symbols-rounded text-base'>
+                          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>
                             {sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
                           </span>
                         </span>
                         <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400 text-[10px] font-bold uppercase tracking-wider bg-transparent'>
-                          <span className='material-symbols-rounded text-sm'>package_2</span>
+                          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>package_2</span>
                           {sale.items.length}
                         </span>
                       </p>
@@ -718,7 +718,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           );
                           return (
                             <span className='text-orange-500 flex items-center gap-0.5'>
-                              <span className='material-symbols-rounded text-[12px]'>
+                              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-xs)' }}>
                                 keyboard_return
                               </span>
                               <span className='text-[10px]'>
@@ -774,7 +774,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   onClick={() => setRestockQty(Math.max(1, restockQty - 5))}
                   className='w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'
                 >
-                  <span className='material-symbols-rounded text-lg'>remove</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>remove</span>
                 </button>
                 <input
                   type='number'
@@ -790,7 +790,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   onClick={() => setRestockQty(restockQty + 5)}
                   className='w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'
                 >
-                  <span className='material-symbols-rounded text-lg'>add</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>add</span>
                 </button>
               </div>
             </div>

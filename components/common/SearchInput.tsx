@@ -189,8 +189,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         {/* Leading Icon (or Filter Button if filters exist?) */}
         {/* If has active filters, we show them first? OR after icon? */}
         {/* Design: [Icon] [Pill] [Pill] [Input] [Clear] [Add Filter] */}
-        <div className='flex items-center text-gray-400 select-none'>
-          <span className='material-symbols-rounded text-[18px]'>{icon}</span>
+        <div className='flex items-center text-gray-400 select-none ps-2'>
+          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-navbar-main)' }}>{icon}</span>
         </div>
 
         {/* The Actual Input Container */}
@@ -231,7 +231,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                         ${isCapsLock ? 'uppercase' : ''}
                     `}>
                         {isCapsLock ? ghostText.toUpperCase() : ghostText}
-                        <span className="material-symbols-rounded text-[14px] ms-1 opacity-60">keyboard_tab</span>
+                        <span className="material-symbols-rounded ms-1 opacity-60" style={{ fontSize: 'var(--icon-sm)' }}>keyboard_tab</span>
                     </span>
                 </div>
             )}
@@ -266,13 +266,14 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 e.stopPropagation();
                 onClear();
               }}
-              className='material-symbols-rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-[18px] transition-colors outline-hidden p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700'
+              className='material-symbols-rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors outline-hidden p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700'
+              style={{ fontSize: 'var(--icon-md)' }}
             >
               close
             </button>
           )}
 
-          {/* Filter Actions Group (Hide/Show Clear All based on state) */}
+          {/* Filter Actions Group (Restored Container) */}
           {filterConfigs.length > 0 && (
             <div className={`
               flex items-center p-1 rounded-xl
@@ -286,9 +287,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   <button
                     type='button'
                     onClick={handleClearAllFilters}
-                    className='text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center justify-center w-6 h-6 rounded-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-xs transition-all duration-200'
+                    className='text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center justify-center w-6 h-6 transition-colors'
                   >
-                    <span className='material-symbols-rounded text-[18px]'>filter_list_off</span>
+                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>filter_list_off</span>
                   </button>
                 </Tooltip>
               )}
@@ -298,9 +299,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 <button
                   type='button'
                   onClick={handleFilterClick}
-                  className='text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center w-6 h-6 rounded-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-xs transition-all duration-200'
+                  className='text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center w-6 h-6 transition-colors'
                 >
-                  <span className='material-symbols-rounded text-[20px]'>tune</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-navbar-main)' }}>tune</span>
                 </button>
               </Tooltip>
             </div>
