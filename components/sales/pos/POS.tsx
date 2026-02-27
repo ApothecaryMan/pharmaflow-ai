@@ -1,7 +1,7 @@
 
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import React from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { usePosShortcuts } from '../../common/hooks/usePosShortcuts';
 import { usePosSounds } from '../../common/hooks/usePosSounds';
 import { canPerformAction, type UserRole } from '../../../config/permissions';
@@ -216,20 +216,22 @@ export const POS: React.FC<POSProps> = ({
     if (highlightedIndex !== -1) {
       const activeCartRow = document.getElementById(`cart-item-${highlightedIndex}`);
       if (activeCartRow) {
-        activeCartRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // Use requestAnimationFrame to ensure the DOM has rendered the new state
+        requestAnimationFrame(() => {
+          activeCartRow.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: highlightedIndex === mergedCartItems.length - 1 ? 'end' : 'nearest' 
+          });
+        });
       }
     }
-  }, [highlightedIndex]);
+  }, [highlightedIndex, mergedCartItems.length]);
 
   // Auto-highlight last item when added
   const prevCartLengthRef = useRef(cart.length);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (cart.length > prevCartLengthRef.current) {
-      // Item added - highlight the last one (which is usually at the bottom or top depending on sort? assumption: bottom/end of merged list)
-      // mergedCartItems syncs with cart? Yes.
-      // Wait, mergedCartItems might not be updated immediately in this render cycle if it depends on cart state which just updated?
-      // mergedCartItems is a useMemo on [cart]. So it updates when cart updates.
-      // So safe to set index to length - 1.
+      // Item added - highlight the last one instantly before paint
       if (mergedCartItems.length > 0) {
         setHighlightedIndex(mergedCartItems.length - 1);
       }
