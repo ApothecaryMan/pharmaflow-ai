@@ -537,6 +537,10 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
                     dense
                     enableSearch={false}
                     tableId='customer-loyalty-history'
+                    enablePagination={true}
+                    enableVirtualization={false}
+                    pageSize='auto'
+                    enableShowAll={true}
                   />
                 )}
               </div>

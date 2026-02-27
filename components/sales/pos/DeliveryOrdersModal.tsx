@@ -1379,6 +1379,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
               emptyMessage={t.noOrders || 'No delivery orders found'}
               onRowClick={(row) => setSelectedSaleId(row.id)}
               lite={true}
+              enablePagination={false}
             />
           </div>
         )}

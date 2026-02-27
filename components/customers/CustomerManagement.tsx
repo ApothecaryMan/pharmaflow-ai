@@ -801,6 +801,10 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             enableTopToolbar={true}
             globalFilter={searchQuery}
             onSearchChange={setSearchQuery}
+            enablePagination={true}
+            enableVirtualization={false}
+            pageSize='auto'
+            enableShowAll={true}
           />
         </>
       ) : (

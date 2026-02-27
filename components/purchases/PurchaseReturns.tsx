@@ -368,6 +368,10 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
           onRowClick={(row) => handleViewDetails(row)}
           onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
           color={color}
+          enablePagination={true}
+          enableVirtualization={false}
+          pageSize='auto'
+          enableShowAll={true}
         />
       </div>
 

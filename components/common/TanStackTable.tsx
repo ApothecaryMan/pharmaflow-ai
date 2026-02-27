@@ -1142,7 +1142,7 @@ export function TanStackTable<TData, TValue>({
         </div>
 
         {/* StatusBar-Style Pagination & Tools Toolbar */}
-        {enablePagination && (table.getPageCount() > 1 || enableShowAll) && (
+        {enablePagination && (table.getPageCount() > 1 || isShowAll) && (
           <div
             dir='ltr'
             className={`flex items-center justify-between h-6 border-t shrink-0 select-none shadow-xs bg-white dark:bg-gray-900 ${

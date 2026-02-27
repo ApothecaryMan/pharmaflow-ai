@@ -1849,6 +1849,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
               tableId='purchases_history_v2'
               manualFiltering={true}
               enableSearch={false}
+              enablePagination={true}
+              enableVirtualization={false}
+              pageSize='auto'
+              enableShowAll={true}
             />
           </div>
         </div>

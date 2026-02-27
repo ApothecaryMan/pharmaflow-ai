@@ -215,6 +215,10 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
               searchPlaceholder={
                 t.customerHistory?.searchPlaceholder || 'Search Name, Code, Phone, Invoice...'
               }
+              enablePagination={true}
+              enableVirtualization={false}
+              pageSize='auto'
+              enableShowAll={true}
             />
           ) : (
             <TanStackTable
@@ -225,6 +229,10 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
               searchPlaceholder={
                 t.customerHistory?.searchPlaceholder || 'Search Name, Code, Phone, Return...'
               }
+              enablePagination={true}
+              enableVirtualization={false}
+              pageSize='auto'
+              enableShowAll={true}
             />
           )}
         </div>

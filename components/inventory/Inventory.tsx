@@ -753,7 +753,9 @@ export const Inventory: React.FC<InventoryProps> = ({
               emptyMessage={t.noResults}
               lite={false} // Use standard card design
               enablePagination={true}
-              pageSize={20}
+              enableVirtualization={false}
+              pageSize='auto'
+              enableShowAll={true}
               // New Filter Props
               filterableColumns={filterConfigs}
               onFilterChange={setActiveFilters}

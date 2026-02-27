@@ -165,7 +165,9 @@ export const AuditPage: React.FC<AuditPageProps> = ({ t, language }) => {
             lite={true}
             globalFilter={globalFilter}
             enablePagination={true}
-            pageSize={20}
+            enableVirtualization={false}
+            pageSize='auto'
+            enableShowAll={true}
           />
         </div>
       </div>

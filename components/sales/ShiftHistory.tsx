@@ -402,6 +402,10 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
           lite={true}
           dense={true}
           initialSorting={[{ id: 'openTime', desc: true }]}
+          enablePagination={true}
+          enableVirtualization={false}
+          pageSize='auto'
+          enableShowAll={true}
         />
       </div>
 

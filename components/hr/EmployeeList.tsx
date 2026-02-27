@@ -498,6 +498,10 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
           globalFilter={searchQuery}
           enableSearch={false}
           enableTopToolbar={false}
+          enablePagination={true}
+          enableVirtualization={false}
+          pageSize='auto'
+          enableShowAll={true}
         />
       </div>
 

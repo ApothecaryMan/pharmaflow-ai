@@ -1015,6 +1015,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                 emptyMessage={t.stockAdjustment.empty || 'No items added. Scan or search to begin.'}
                 color={color}
                 lite={true}
+                enablePagination={true}
+                enableVirtualization={false}
+                pageSize='auto'
+                enableShowAll={true}
               />
             </div>
           </div>
@@ -1100,6 +1104,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               emptyMessage={t.stockAdjustment.noHistory}
               color={color}
               lite={true}
+              enablePagination={true}
+              enableVirtualization={false}
+              pageSize='auto'
+              enableShowAll={true}
             />
           </div>
         </div>

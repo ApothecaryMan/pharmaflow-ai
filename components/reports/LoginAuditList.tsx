@@ -299,6 +299,10 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
           color='blue'
           emptyMessage={t.loginAudit.emptyMessage}
           dense={true}
+          enablePagination={true}
+          enableVirtualization={false}
+          pageSize='auto'
+          enableShowAll={true}
         />
       </div>
     </div>

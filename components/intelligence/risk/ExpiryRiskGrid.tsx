@@ -112,6 +112,10 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
         tableId='expiry-risk-table'
         enableSearch={false}
         emptyMessage={t?.intelligence?.risk?.grid?.empty || 'No risking items found'}
+        enablePagination={true}
+        enableVirtualization={false}
+        pageSize='auto'
+        enableShowAll={true}
       />
     </div>
   );

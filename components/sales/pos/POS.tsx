@@ -855,6 +855,7 @@ export const POS: React.FC<POSProps> = ({
               color={color}
               enableVirtualization={true}
               dense={true}
+              enablePagination={false}
               onRowClick={(item) => addGroupToCart(item.group)}
               onRowLongPress={(e, item) => {
                 showMenu(e.touches[0].clientX, e.touches[0].clientY, [
@@ -915,8 +916,6 @@ export const POS: React.FC<POSProps> = ({
               enableTopToolbar={false}
               enableSearch={false}
               manualFiltering={true}
-              enablePagination={true}
-              enableShowAll={true}
             />
           </div>
         </div>

@@ -377,6 +377,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           lite={true}
           dense={true}
           initialSorting={[{ id: 'date', desc: true }]}
+          enablePagination={true}
+          enableVirtualization={false}
+          pageSize='auto'
+          enableShowAll={true}
         />
       </div>
 

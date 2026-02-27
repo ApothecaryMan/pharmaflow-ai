@@ -97,6 +97,10 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
               columns={staffAnalysis.performanceColumns}
               lite={true}
               enableSearch={false}
+              enablePagination={true}
+              enableVirtualization={false}
+              pageSize='auto'
+              enableShowAll={true}
             />
           </div>
         </div>

@@ -340,9 +340,6 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
           <h1 className="text-2xl font-bold tracking-tight type-expressive">
             {t.expiryManagement?.title || 'Expiry Management'}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t.expiryManagement?.subtitle || 'Track and manage batch expiration dates alerts.'}
-          </p>
         </div>
       </div>
 
@@ -382,6 +379,16 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       {/* Filters & Table Wrapper */}
       <div className="flex-1 flex flex-col min-h-0 gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
+          <div className="w-full max-w-xl">
+            <SearchInput
+              value={searchQuery}
+              onSearchChange={setSearchQuery}
+              onClear={() => setSearchQuery('')}
+              placeholder={t.expiryManagement?.searchPlaceholder || 'Search batches...'}
+              color={color}
+            />
+          </div>
+
           <SegmentedControl
             options={[
               { label: t.expiryManagement?.all || 'All', value: 'all' },
@@ -393,16 +400,6 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
             onChange={(val) => setFilterMode(val as any)}
             color={color}
           />
-          
-          <div className="w-full max-w-xl">
-            <SearchInput
-              value={searchQuery}
-              onSearchChange={setSearchQuery}
-              onClear={() => setSearchQuery('')}
-              placeholder={t.expiryManagement?.searchPlaceholder || 'Search batches...'}
-              color={color}
-            />
-          </div>
         </div>
 
         <div className="flex-1 min-h-0 overflow-hidden">

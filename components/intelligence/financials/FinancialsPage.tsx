@@ -385,6 +385,10 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
                   columns={productColumns}
                   lite={true}
                   tableId='product-financials-table'
+                  enablePagination={true}
+                  enableVirtualization={false}
+                  pageSize='auto'
+                  enableShowAll={true}
                 />
               ) : (
                 <div className='text-center py-12 text-gray-500'>
@@ -402,6 +406,10 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
                 columns={categoryColumns}
                 lite={true}
                 tableId='category-financials-table'
+                enablePagination={true}
+                enableVirtualization={false}
+                pageSize='auto'
+                enableShowAll={true}
               />
             </div>
           )}
