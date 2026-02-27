@@ -969,6 +969,7 @@ export const POS: React.FC<POSProps> = ({
           setDeliveryEmployeeId={setDeliveryEmployeeId}
           employees={employees}
           isRTL={isRTL}
+          paymentMethod={paymentMethod}
         />
 
         {/* Product Details Modal */}

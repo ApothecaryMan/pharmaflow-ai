@@ -62,6 +62,7 @@ export interface POSCartSidebarProps {
   setDeliveryEmployeeId: (id: string) => void;
   employees: Employee[];
   isRTL: boolean;
+  paymentMethod: 'cash' | 'visa';
 }
 
 export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
@@ -110,6 +111,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   setDeliveryEmployeeId,
   employees,
   isRTL,
+  paymentMethod,
 }) => {
   const handleSearchInTable = useCallback(
     (term: string) => {
@@ -426,9 +428,13 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   disabled={
                     !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
                   }
-                  className={`flex-1 py-2.5 rounded-xl bg-red-600 enabled:hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}>
+                  className={`flex-1 py-2.5 rounded-xl ${
+                    paymentMethod === 'visa' 
+                      ? 'bg-blue-600 enabled:hover:bg-blue-700' 
+                      : 'bg-emerald-600 enabled:hover:bg-emerald-700'
+                  } disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}>
                   <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
-                    payments
+                    {paymentMethod === 'visa' ? 'credit_card' : 'payments'}
                   </span>
                   {t.completeOrder}
                 </button>
