@@ -11,6 +11,7 @@ interface UsePOSCheckoutProps {
   userRole: UserRole;
   showToastError: (msg: string) => void;
   addNotification: (notification: any) => void;
+  playSuccess: () => void;
   getVerifiedDate: () => Date;
   activeTab: any;
   activeTabId: string;
@@ -34,6 +35,7 @@ export const usePOSCheckout = ({
   userRole,
   showToastError,
   addNotification,
+  playSuccess,
   getVerifiedDate,
   activeTab,
   activeTabId,
@@ -112,6 +114,8 @@ export const usePOSCheckout = ({
         return;
       }
 
+      playSuccess();
+
       addNotification({
         messageKey: 'saleComplete',
         messageParams: { total: (cartTotal + deliveryFee).toFixed(2) },
@@ -176,6 +180,7 @@ export const usePOSCheckout = ({
       getVerifiedDate,
       removeTab,
       activeTabId,
+      playSuccess,
     ]
   );
 

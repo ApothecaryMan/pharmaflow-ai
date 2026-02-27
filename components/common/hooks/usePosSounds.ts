@@ -6,8 +6,35 @@ export const usePosSounds = () => {
   // Initialize AudioContext lazily (usually requires user interaction first)
   const initAudio = useCallback(() => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({
+        latencyHint: 'interactive'
+      });
     }
+  }, []);
+
+  // Global interaction listener to unlock AudioContext (Browser Autoplay Policy Fix)
+  useEffect(() => {
+    const resumeAudio = () => {
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().then(() => {
+          console.log('[usePosSounds] AudioContext resumed successfully');
+          // Once resumed, we can remove the listeners
+          cleanup();
+        });
+      }
+    };
+
+    const cleanup = () => {
+      window.removeEventListener('mousedown', resumeAudio);
+      window.removeEventListener('keydown', resumeAudio);
+      window.removeEventListener('touchstart', resumeAudio);
+    };
+
+    window.addEventListener('mousedown', resumeAudio);
+    window.addEventListener('keydown', resumeAudio);
+    window.addEventListener('touchstart', resumeAudio);
+
+    return cleanup;
   }, []);
 
   const playTone = useCallback(

@@ -132,7 +132,8 @@ export const POS: React.FC<POSProps> = ({
     openUnitDropdown, setOpenUnitDropdown, selectedBatches, setSelectedBatches,
     openBatchDropdown, setOpenBatchDropdown,
   } = usePOSCart({
-    activeTab, activeTabId, updateTab, inventory, userRole, showToastError, addNotification, playError,
+    activeTab, activeTabId, updateTab, inventory, userRole, showToastError, addNotification, 
+    playBeep, playError,
   });
 
   // Initialize Smart Barcode Scanner (Background Detection)
@@ -194,7 +195,7 @@ export const POS: React.FC<POSProps> = ({
   } = usePOSCheckout({
     cart, mergedCartItems, userRole, showToastError, addNotification, getVerifiedDate,
     activeTab, activeTabId, removeTab, onCompleteSale, customerName, customerCode,
-    selectedCustomer, language, t, cartTotal, subtotal, globalDiscount,
+    selectedCustomer, language, t, cartTotal, subtotal, globalDiscount, playSuccess,
   });
 
   const { totalDiscountAmount, orderDiscountPercent, totalItems } = useMemo(() => ({

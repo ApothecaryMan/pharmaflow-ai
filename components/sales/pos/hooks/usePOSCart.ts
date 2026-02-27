@@ -20,6 +20,7 @@ interface UsePOSCartProps {
   userRole: UserRole;
   showToastError: (msg: string) => void;
   addNotification: (notification: any) => void;
+  playBeep: () => void;
   playError: () => void;
 }
 
@@ -31,6 +32,7 @@ export const usePOSCart = ({
   userRole,
   showToastError,
   addNotification,
+  playBeep,
   playError,
 }: UsePOSCartProps) => {
   // --- Cart State ---
@@ -127,9 +129,11 @@ export const usePOSCart = ({
           ...updated[existingIndex],
           quantity: updated[existingIndex].quantity + initialQuantity,
         };
+        initialQuantity > 0 && playBeep();
         return updated;
       }
 
+      initialQuantity > 0 && playBeep();
       return [
         ...prev,
         {
@@ -272,11 +276,12 @@ export const usePOSCart = ({
         return prev;
       }
 
+      playBeep();
       return prev.map((item) =>
         item.id === id && !!item.isUnit === isUnit ? { ...item, quantity: newQty } : item
       );
     });
-  }, [inventory, setCart]);
+  }, [inventory, setCart, playBeep]);
 
   const toggleUnitMode = useCallback((id: string, currentIsUnit: boolean) => {
     setCart((prev: CartItem[]) => {
