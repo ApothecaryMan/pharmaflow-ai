@@ -9,6 +9,8 @@ interface SwitchProps {
   activeColor?: string; // Hex color for checked state (bypasses tailwind safelist issues)
 }
 
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+
 export const Switch: React.FC<SwitchProps> = ({
   checked,
   onChange,
@@ -17,8 +19,23 @@ export const Switch: React.FC<SwitchProps> = ({
   disabled = false,
   activeColor,
 }) => {
+  const containerRef = useRef<HTMLButtonElement>(null);
+  const prevDir = useRef<string | null>(null);
+  const [isRtlChange, setIsRtlChange] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!containerRef.current) return;
+    
+    const currentDir = window.getComputedStyle(containerRef.current).direction;
+    if (prevDir.current !== null && prevDir.current !== currentDir) {
+      setIsRtlChange(true);
+      setTimeout(() => setIsRtlChange(false), 100);
+    }
+    prevDir.current = currentDir;
+  }); // Run on every render to catch layout shifts
   return (
     <button
+      ref={containerRef}
       type='button'
       onClick={() => !disabled && onChange(!checked)}
       disabled={disabled}
@@ -31,12 +48,14 @@ export const Switch: React.FC<SwitchProps> = ({
         minHeight: '24px',
         backgroundColor: checked && activeColor ? activeColor : undefined,
       }}
-      className={`w-12 h-6 rounded-full relative transition-colors duration-200 ease-in-out focus:outline-hidden ${
+      className={`w-12 h-6 rounded-full relative ${isRtlChange ? '' : 'transition-colors duration-200 ease-in-out'} focus:outline-hidden ${
         checked ? (!activeColor ? (theme === 'primary' ? 'bg-primary-600' : `bg-${theme}-600`) : '') : 'bg-gray-200 dark:bg-gray-700'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
     >
       <div
-        className={`absolute top-1 inset-s-1 w-4 h-4 rounded-full bg-white shadow-xs flex items-center justify-center transition-transform duration-200 ease-in-out ${
+        className={`absolute top-1 inset-s-1 w-4 h-4 rounded-full bg-white shadow-xs flex items-center justify-center ${
+          isRtlChange ? '' : 'transition-transform duration-200 ease-in-out'
+        } ${
           checked ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'
         }`}
       >

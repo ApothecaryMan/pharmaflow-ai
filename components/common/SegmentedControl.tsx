@@ -104,6 +104,8 @@ export function SegmentedControl<T extends string | number | boolean>({
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
+  const prevDir = useRef<string | null>(null);
+  const [isRtlChange, setIsRtlChange] = useState(false);
 
   const activeOption = options.find((o) => o.value === value);
   const activeColor = activeOption?.activeColor || color;
@@ -114,11 +116,19 @@ export function SegmentedControl<T extends string | number | boolean>({
       const container = containerRef.current;
       if (!container) return;
 
+      const currentDir = window.getComputedStyle(container).direction;
+      const isDirChange = prevDir.current !== null && prevDir.current !== currentDir;
+      prevDir.current = currentDir;
+
       const activeSegment = container.querySelector<HTMLButtonElement>(
         `button[data-active="true"]`
       );
 
       if (activeSegment) {
+        if (isDirChange) {
+          setIsRtlChange(true);
+        }
+
         setIndicatorStyle({
           width: activeSegment.offsetWidth,
           height: activeSegment.offsetHeight,
@@ -127,6 +137,12 @@ export function SegmentedControl<T extends string | number | boolean>({
         });
 
         isFirstRender.current = false;
+
+        if (isDirChange) {
+          setTimeout(() => {
+            setIsRtlChange(false);
+          }, 100);
+        }
       }
     };
 
@@ -141,13 +157,12 @@ export function SegmentedControl<T extends string | number | boolean>({
   return (
     <div
       ref={containerRef}
-      dir='ltr'
       className={`relative flex p-1 gap-1 bg-gray-200/50 dark:bg-gray-700/50 ${containerRound} shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] isolate ${className}`}
     >
       {indicatorStyle && (
         <div
           className={`absolute ${isPill ? '' : 'bg-white dark:bg-gray-700'} ${indicatorRound} pointer-events-none z-0 ${
-            !isFirstRender.current
+            !isFirstRender.current && !isRtlChange
               ? 'transition-all duration-300 ease-in-out'
               : ''
           }`}
