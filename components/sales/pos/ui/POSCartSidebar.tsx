@@ -1,5 +1,6 @@
 import { closestCenter, DndContext, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import React, { useCallback } from 'react';
 import { canPerformAction, type UserRole } from '../../../../config/permissions';
 import type { CartItem, Drug, Employee, Language } from '../../../../types';
@@ -304,6 +305,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
               sensors={cartSensors}
               collisionDetection={closestCenter}
               onDragEnd={handleCartDragEnd}
+              modifiers={[restrictToVerticalAxis]}
             >
               <SortableContext
                 items={mergedCartItems.map((group) => group.id)}
