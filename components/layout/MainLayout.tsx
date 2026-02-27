@@ -44,9 +44,10 @@ import { useContextMenu } from '../common/ContextMenu';
 const GlobalContextMenuWrapper: React.FC<{
   children: React.ReactNode;
   t: any;
-  toggleTheme: () => void;
+  darkMode: boolean;
+  setDarkMode: (dark: boolean) => void;
   toggleFullscreen: () => void;
-}> = ({ children, t, toggleTheme, toggleFullscreen }) => {
+}> = ({ children, t, darkMode, setDarkMode, toggleFullscreen }) => {
   const { showMenu } = useContextMenu();
 
   return (
@@ -56,7 +57,11 @@ const GlobalContextMenuWrapper: React.FC<{
         if (e.defaultPrevented) return;
         e.preventDefault();
         showMenu(e.clientX, e.clientY, [
-          { label: t.global.actions.theme, icon: 'palette', action: toggleTheme },
+          {
+            label: darkMode ? t.settings.lightMode : t.settings.darkMode,
+            icon: darkMode ? 'light_mode' : 'dark_mode',
+            action: () => setDarkMode(!darkMode),
+          },
           { label: t.global.actions.fullscreen, icon: 'fullscreen', action: toggleFullscreen },
           { separator: true },
           {
@@ -103,6 +108,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     setTheme,
     language,
     darkMode,
+    setDarkMode,
     sidebarVisible,
     setSidebarVisible,
     sidebarBlur,
@@ -113,11 +119,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   const isStandalone = STANDALONE_VIEWS.includes(view);
 
-  const toggleTheme = () => {
-    const currentIndex = THEMES.findIndex((th) => th.name === theme.name);
-    const nextIndex = (currentIndex + 1) % THEMES.length;
-    setTheme(THEMES[nextIndex]);
-  };
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -129,7 +130,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   return (
     <ContextMenuProvider enableGlassEffect={menuBlur}>
-      <GlobalContextMenuWrapper t={t} toggleTheme={toggleTheme} toggleFullscreen={toggleFullscreen}>
+      <GlobalContextMenuWrapper
+        t={t}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        toggleFullscreen={toggleFullscreen}
+      >
         <div
           className='h-screen flex flex-col transition-colors duration-200 select-none overflow-hidden'
           style={{
