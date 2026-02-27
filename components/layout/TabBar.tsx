@@ -17,6 +17,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { restrictToHorizontalAxis } from '@dnd-kit/modifiers';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import { useLongPress } from '../../hooks/useLongPress';
@@ -312,7 +313,12 @@ export const TabBar: React.FC<TabBarProps> = ({
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext 
+      sensors={sensors} 
+      collisionDetection={closestCenter} 
+      onDragEnd={handleDragEnd}
+      modifiers={[restrictToHorizontalAxis]}
+    >
       <div className='flex items-center gap-2 px-3 pb-2 pt-1 overflow-x-auto no-scrollbar select-none touch-pan-x'>
         {/* Tabs Container */}
         <div className='flex items-center gap-2 flex-1'>
