@@ -16,6 +16,7 @@ import { EmployeeProfile } from '../components/hr/EmployeeProfile';
 import { StaffOverview } from '../components/hr/StaffOverview';
 import { BarcodePrinter } from '../components/inventory/BarcodePrinter';
 import { BarcodeStudio } from '../components/inventory/BarcodeStudio';
+import { AddProduct } from '../components/inventory/AddProduct';
 import { Inventory } from '../components/inventory/Inventory';
 import { InventoryManagement } from '../components/inventory/InventoryManagement';
 import { StockAdjustment } from '../components/inventory/StockAdjustment';
@@ -336,7 +337,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
   },
   'add-product': {
     id: 'add-product',
-    component: Inventory, // Uses Inventory component with mode='add'
+    component: AddProduct,
     menuLabel: 'Add New Product',
     menuLabelAr: 'إضافة منتج جديد',
     icon: 'add_box',
@@ -344,12 +345,9 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     requiredProps: [
       'inventory',
       'onAddDrug',
-      'onUpdateDrug',
-      'onDeleteDrug',
       'color',
       't',
       'language',
-      'initialMode',
     ],
     permission: 'inventory.add',
   },

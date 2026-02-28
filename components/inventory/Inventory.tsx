@@ -21,6 +21,7 @@ import type { FilterConfig } from '../common/FilterPill';
 import { Modal } from '../common/Modal';
 import { SmartDateInput, SmartInput } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
+import { AddProduct } from './AddProduct';
 import { useStatusBar } from '../layout/StatusBar';
 import { useSettings } from '../../context';
 
@@ -88,8 +89,6 @@ export const Inventory: React.FC<InventoryProps> = ({
   });
 
   // Dropdown States
-  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
-  const [isAddDosageOpen, setIsAddDosageOpen] = useState(false);
   const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
   const [isEditDosageOpen, setIsEditDosageOpen] = useState(false);
 
@@ -138,20 +137,6 @@ export const Inventory: React.FC<InventoryProps> = ({
    */
   const handleOpenAdd = () => {
     setMode('add');
-    setFormData({
-      name: '',
-      genericName: '',
-      category: 'General',
-      price: 0,
-      costPrice: 0,
-      stock: 0,
-      expiryDate: '',
-      description: '',
-      barcode: '',
-      internalCode: '',
-      unitsPerPack: 1,
-      maxDiscount: 10,
-    });
   };
 
   const handleOpenEdit = (drug: Drug) => {
@@ -189,7 +174,7 @@ export const Inventory: React.FC<InventoryProps> = ({
     setActiveMenuId(null);
   };
 
-  const handleSubmit = (e: React.FormEvent, addAnother: boolean = false) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Prepare data: Convert stock (Packs) to Total Units
@@ -201,51 +186,7 @@ export const Inventory: React.FC<InventoryProps> = ({
     if (editingDrug) {
       onUpdateDrug({ ...editingDrug, ...submissionData } as Drug);
       setIsModalOpen(false);
-    } else {
-      // ID Generation Strategy: getVerifiedDate().getTime().toString()
-      // Now delegated to useInventoryActions.handleAddDrug for centralized ID management
-      onAddDrug(submissionData as any);
-
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
-
-      if (addAnother) {
-        const currentCategory = formData.category;
-        setFormData({
-          name: '',
-          genericName: '',
-          category: currentCategory,
-          price: 0,
-          costPrice: 0,
-          stock: 0,
-          expiryDate: '',
-          description: '',
-          barcode: '',
-          internalCode: '',
-          unitsPerPack: 1,
-          maxDiscount: 10,
-        });
-      } else {
-        setMode('list');
-      }
     }
-  };
-
-  const handleClear = () => {
-    setFormData({
-      name: '',
-      genericName: '',
-      category: 'General',
-      price: 0,
-      costPrice: 0,
-      stock: 0,
-      expiryDate: '',
-      description: '',
-      barcode: '',
-      internalCode: '',
-      unitsPerPack: 1,
-      maxDiscount: 10,
-    });
   };
 
   const generateInternalCode = () => {
@@ -766,365 +707,19 @@ export const Inventory: React.FC<InventoryProps> = ({
       ) : (
         /* ADD PRODUCT FORM VIEW - COMPACT LAYOUT */
         <div className='flex-1 overflow-y-auto'>
-          <form
-            onSubmit={(e) => handleSubmit(e, false)}
-            className='grid grid-cols-1 xl:grid-cols-3 gap-6 pb-20'
-          >
-            {/* LEFT COLUMN: Main Info */}
-            <div className='xl:col-span-2 space-y-6'>
-              {/* Basic Details Card */}
-              <div className={`${CARD_BASE} rounded-3xl p-6`}>
-                <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
-                  <span className='material-symbols-rounded text-blue-500'>info</span>
-                  {t.basicInfo || 'Basic Information'}
-                </h3>
-
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  <div>
-                    <label htmlFor="brand-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.brand} *
-                    </label>
-                    <SmartInput
-                      id="brand-name"
-                      required
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      placeholder='e.g., Panadol Extra'
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="generic-name" className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.generic} *
-                    </label>
-                    <SmartInput
-                      id="generic-name"
-                      required
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      placeholder='e.g., Paracetamol'
-                      value={formData.genericName}
-                      onChange={(e) => setFormData({ ...formData, genericName: e.target.value })}
-                    />
-                  </div>
-
-                  {/* Category & Dosage Form */}
-                  <div className='grid grid-cols-2 gap-4 md:col-span-2'>
-                    <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {t.modal.category} *
-                      </label>
-                      <FilterDropdown
-                        variant='input'
-                        items={getCategories(currentLang)}
-                        selectedItem={formData.category} // English ID
-                        isOpen={isAddCategoryOpen}
-                        onToggle={() => setIsAddCategoryOpen(!isAddCategoryOpen)}
-                        onSelect={(val) => {
-                          setFormData({ ...formData, category: val, dosageForm: '' });
-                          setIsAddCategoryOpen(false);
-                        }}
-                        keyExtractor={(c) => c}
-                        renderSelected={(c) => getLocalizedCategory(c || 'General', currentLang)}
-                        renderItem={(c) => getLocalizedCategory(c, currentLang)}
-                        className='w-full h-[50px]'
-                        color={color}
-                      />
-                    </div>
-                    <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {t.addProduct?.fields?.dosageForm || 'Product Type'}
-                      </label>
-                      <FilterDropdown
-                        variant='input'
-                        items={getProductTypes(formData.category || 'General', currentLang)} // English IDs
-                        selectedItem={formData.dosageForm || ''}
-                        isOpen={isAddDosageOpen}
-                        onToggle={() => setIsAddDosageOpen(!isAddDosageOpen)}
-                        onSelect={(val) => {
-                          setFormData({ ...formData, dosageForm: val });
-                          setIsAddDosageOpen(false);
-                        }}
-                        keyExtractor={(c) => c}
-                        renderSelected={(c) =>
-                          c
-                            ? getLocalizedProductType(c, currentLang)
-                            : t.addProduct?.placeholders?.dosageForm || 'Select Type'
-                        }
-                        renderItem={(c) => getLocalizedProductType(c, currentLang)}
-                        className='w-full h-[50px]'
-                        color={color}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Active Ingredients - Only for Medicine */}
-                  {isMedicineCategory(formData.category || '') && (
-                    <div className='md:col-span-2'>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        Active Ingredients (Comma separated)
-                      </label>
-                      <SmartInput
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                        placeholder='e.g., Paracetamol, Caffeine'
-                        value={formData.activeIngredients?.join(', ') || ''}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            activeIngredients: e.target.value.split(',').map((s) => s.trim()),
-                          })
-                        }
-                      />
-                    </div>
-                  )}
-
-                  {/* Barcode & Internal Code - Side by Side */}
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2'>
-                    {/* Barcode Input */}
-                    <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {t.modal.barcode}
-                      </label>
-                      <div className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]'>
-                        {/* Primary Barcode Chip */}
-                        {formData.barcode && (
-                          <span className='inline-flex items-center gap-1.5 px-1.5 py-0 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[11px] font-bold border border-blue-200 dark:border-blue-800 h-6'>
-                            <span className='material-symbols-rounded text-[13px]'>qr_code_2</span>
-                            {formData.barcode}
-                            <button
-                              type='button'
-                              onClick={() => setFormData({ ...formData, barcode: '' })}
-                              className='w-4 h-4 flex items-center justify-center rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors'
-                            >
-                              <span className='material-symbols-rounded text-[12px]'>close</span>
-                            </button>
-                          </span>
-                        )}
-
-                        {/* Additional Barcodes Chips */}
-                        {formData.additionalBarcodes?.map((code, idx) => (
-                          <span
-                            key={idx}
-                            className='inline-flex items-center gap-1.5 px-1.5 py-0 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[11px] font-bold border border-blue-200/50 dark:border-blue-800/50 h-6'
-                          >
-                            <span className='material-symbols-rounded text-[13px]'>qr_code_2</span>
-                            {code}
-                            <button
-                              type='button'
-                              onClick={() => {
-                                const newCodes = [...(formData.additionalBarcodes || [])];
-                                newCodes.splice(idx, 1);
-                                setFormData({ ...formData, additionalBarcodes: newCodes });
-                              }}
-                              className='w-4 h-4 flex items-center justify-center rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors'
-                            >
-                              <span className='material-symbols-rounded text-[12px]'>close</span>
-                            </button>
-                          </span>
-                        ))}
-
-                        <input
-                          className='flex-1 bg-transparent border-none outline-hidden text-sm min-w-[80px]'
-                          placeholder={!formData.barcode ? 'Scan barcode' : 'More...'}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              const val = e.currentTarget.value.trim();
-                              if (val) {
-                                if (!formData.barcode) {
-                                  setFormData({ ...formData, barcode: val });
-                                } else {
-                                  setFormData({
-                                    ...formData,
-                                    additionalBarcodes: [
-                                      ...(formData.additionalBarcodes || []),
-                                      val,
-                                    ],
-                                  });
-                                }
-                                e.currentTarget.value = '';
-                              }
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Internal Code */}
-                    <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {t.modal.internalCode}
-                      </label>
-                      <div className='relative group'>
-                        <input
-                          className='w-full pl-3 pr-10 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm font-mono'
-                          placeholder='Auto-generated or custom'
-                          value={formData.internalCode || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, internalCode: e.target.value })
-                          }
-                        />
-                        <div className='absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center'>
-                          <button
-                            type='button'
-                            onClick={generateInternalCode}
-                            className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 active:scale-90'
-                            title={t.autoGenerate || 'Auto-Generate'}
-                          >
-                            <span className='material-symbols-rounded text-[20px]'>
-                              magic_button
-                            </span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className='md:col-span-2'>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.desc}
-                    </label>
-                    <SmartInput
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      placeholder='Description...'
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT COLUMN: Details */}
-            <div className='xl:col-span-1 space-y-6'>
-              {/* Stock & Pricing Card */}
-              <div className={`${CARD_BASE} rounded-3xl p-6 h-full`}>
-                <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
-                  <span className='material-symbols-rounded text-blue-500'>inventory</span>
-                  Inventory & Pricing
-                </h3>
-
-                <div className='space-y-4'>
-                  <div className='grid grid-cols-2 gap-4'>
-                    <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {t.modal.stock} *
-                      </label>
-                      <input
-                        type='number'
-                        step='0.01'
-                        required
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                        value={formData.stock}
-                        onChange={(e) =>
-                          setFormData({ ...formData, stock: parseFloat(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {t.modal.unitsPerPack}
-                      </label>
-                      <input
-                        type='number'
-                        min='1'
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                        value={formData.unitsPerPack || 1}
-                        onChange={(e) =>
-                          setFormData({ ...formData, unitsPerPack: parseInt(e.target.value) || 1 })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.expiry} *
-                    </label>
-                    <SmartDateInput
-                      required
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      value={formData.expiryDate}
-                      onChange={(val) => setFormData({ ...formData, expiryDate: val })}
-                    />
-                  </div>
-
-                  <div className='border-t border-gray-100 dark:border-gray-800 my-4'></div>
-
-                  <div className='grid grid-cols-2 gap-4'>
-                    <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {t.modal.price} *
-                      </label>
-                      <input
-                        type='number'
-                        step='0.01'
-                        required
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm font-bold text-green-600'
-                        value={formData.price}
-                        onChange={(e) =>
-                          setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        {t.modal.cost}
-                      </label>
-                      <input
-                        type='number'
-                        step='0.01'
-                        className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                        value={formData.costPrice || 0}
-                        onChange={(e) =>
-                          setFormData({ ...formData, costPrice: parseFloat(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      Max Discount (%)
-                    </label>
-                    <input
-                      type='number'
-                      min='0'
-                      max='100'
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm text-red-500'
-                      value={formData.maxDiscount || ''}
-                      onChange={(e) =>
-                        setFormData({ ...formData, maxDiscount: parseFloat(e.target.value) })
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className='xl:col-span-3 flex justify-end gap-3 pt-2'>
-              <button
-                type='button'
-                onClick={handleClear}
-                className='px-6 py-2.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors font-medium text-sm type-interactive'
-              >
-                {t.clearForm || 'Clear Form'}
-              </button>
-              <button
-                type='button'
-                onClick={(e) => handleSubmit(e, true)}
-                className={`px-6 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl transition-all font-medium text-sm type-interactive`}
-              >
-                {t.saveAndAddAnother || 'Save & Add Another'}
-              </button>
-              <button
-                type='submit'
-                className={`px-8 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-lg shadow-primary-200 dark:shadow-none transition-all font-medium text-sm type-interactive`}
-              >
-                {t.addDrug}
-              </button>
-            </div>
-          </form>
+          <AddProduct
+            inventory={inventory}
+            onAddDrug={(drug) => {
+              onAddDrug(drug);
+              // Handle post-save navigation if not "Add Another" 
+              // (Note: AddProduct manages its own success state)
+            }}
+            color={color}
+            t={t.addProduct || {}}
+            language={currentLang.toUpperCase()}
+            hideHeader={true}
+            onCancel={() => setMode('list')}
+          />
         </div>
       )}
 

@@ -190,7 +190,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     'customer-history': t.customers,
     'customer-overview': t.customerOverview,
     employees: t.employeeList,
-    'add-product': { ...t.inventory, initialMode: 'add' },
+    'add-product': t.inventory.addProduct,
   };
 
   if (viewTranslations[view]) {

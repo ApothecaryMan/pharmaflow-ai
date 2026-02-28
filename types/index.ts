@@ -72,6 +72,9 @@ export interface Drug {
   itemRank?: string;
   /** Manufacturer name (الشركة المنتجة) */
   manufacturer?: string;
+  /** Value Added Tax percentage (VAT %) */
+  tax?: number;
+  /** Minimum allowed selling price */
   /** ISO date of creation */
   createdAt?: string;
   /** ISO date of last update */
