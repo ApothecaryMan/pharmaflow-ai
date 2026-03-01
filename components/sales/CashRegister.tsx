@@ -515,7 +515,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
       {/* Header */}
       <div className='flex justify-between items-center'>
         <div>
-          <h1 className='text-2xl font-bold tracking-tight'>
+          <h1 className='text-2xl font-bold tracking-tight page-title'>
             {t.cashRegister.title}
           </h1>
           <p className='text-gray-500 text-sm mt-1'>{t.cashRegister.subtitle}</p>

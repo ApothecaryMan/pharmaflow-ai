@@ -72,6 +72,7 @@ export interface SettingsState {
   showTickerInventory: boolean;
   showTickerCustomers: boolean;
   showTickerTopSeller: boolean;
+  graphicStyle: boolean;
 }
 
 // Context Type
@@ -100,6 +101,7 @@ export interface SettingsContextType extends SettingsState {
   setShowTickerInventory: (show: boolean) => void;
   setShowTickerCustomers: (show: boolean) => void;
   setShowTickerTopSeller: (show: boolean) => void;
+  setGraphicStyle: (graphic: boolean) => void;
   // Helpers
   availableThemes: ThemeColor[];
   availableLanguages: { code: Language; label: string }[];
@@ -126,6 +128,7 @@ const defaultSettings: SettingsState = {
   showTickerInventory: true,
   showTickerCustomers: true,
   showTickerTopSeller: true,
+  graphicStyle: false,
 };
 
 // Load settings from storage
@@ -172,6 +175,7 @@ const loadSettings = (): SettingsState => {
       sidebarVisible: sidebarVisible ?? defaultSettings.sidebarVisible,
       hideInactiveModules: hideInactiveModules ?? defaultSettings.hideInactiveModules,
       developerMode: developerMode ?? defaultSettings.developerMode,
+      graphicStyle: storage.get('pharma_graphicStyle', defaultSettings.graphicStyle),
     };
   } catch (e) {
     console.warn('Failed to migrate old settings:', e);
@@ -200,6 +204,15 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       document.documentElement.classList.remove('dark');
     }
   }, [settings.darkMode]);
+
+  // Apply Graphic Style to body
+  useEffect(() => {
+    if (settings.graphicStyle) {
+      document.body.classList.add('graphic-mode');
+    } else {
+      document.body.classList.remove('graphic-mode');
+    }
+  }, [settings.graphicStyle]);
 
   // Apply Font Settings & Load Fonts
   useEffect(() => {
@@ -330,6 +343,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, showTickerTopSeller }));
   }, []);
 
+  const setGraphicStyle = useCallback((graphicStyle: boolean) => {
+    setSettings((prev) => ({ ...prev, graphicStyle }));
+  }, []);
+
   const value = useMemo<SettingsContextType>(
     () => ({
       ...settings,
@@ -350,6 +367,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setShowTickerInventory,
       setShowTickerCustomers,
       setShowTickerTopSeller,
+      setGraphicStyle,
       setFontFamilyEN,
       setFontFamilyAR,
       availableThemes: THEMES,
@@ -371,6 +389,9 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setShowTickerInventory,
       setShowTickerCustomers,
       setShowTickerTopSeller,
+      setGraphicStyle,
+      setFontFamilyEN,
+      setFontFamilyAR,
     ]
   );
 

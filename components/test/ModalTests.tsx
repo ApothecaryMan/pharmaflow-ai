@@ -94,7 +94,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
           dialogs
         </span>
         <div>
-          <h1 className='text-2xl font-bold text-gray-800 dark:text-white'>
+          <h1 className='text-2xl font-bold text-gray-800 dark:text-white page-title'>
             {language === 'AR' ? 'اختبار النوافذ' : 'Modal Tests'}
           </h1>
           <p className='text-gray-500 dark:text-gray-400 text-sm'>

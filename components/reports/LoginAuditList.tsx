@@ -282,7 +282,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
       {/* Header Area */}
       <div className='pb-2'>
         <div className='flex items-center justify-between mb-1'>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
+          <h1 className='text-2xl font-bold text-gray-900 dark:text-white page-title'>
             {t.loginAudit.title}
           </h1>
         </div>
@@ -308,3 +308,5 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
     </div>
   );
 };
+
+export default LoginAuditList;

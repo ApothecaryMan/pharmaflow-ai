@@ -71,6 +71,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setShowTickerCustomers,
     showTickerTopSeller,
     setShowTickerTopSeller,
+    graphicStyle,
+    setGraphicStyle,
   } = useSettings();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -625,6 +627,30 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       ))}
                     </select>
                   </div>
+
+                  {/* Graphic Style Toggle - Only visible in Arabic */}
+                  {language === 'AR' && (
+                    <div className='flex items-center justify-between py-1'>
+                      <label
+                        className='text-xs font-medium flex items-center gap-1.5'
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        <span
+                          className='material-symbols-rounded'
+                          style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)', color: 'var(--text-secondary)' }}
+                        >
+                          style
+                        </span>
+                        {t.graphicStyle}
+                      </label>
+                      <Switch
+                        checked={graphicStyle}
+                        onChange={setGraphicStyle}
+                        theme={currentTheme.name.toLowerCase()}
+                        activeColor={currentTheme.hex}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>

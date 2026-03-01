@@ -903,7 +903,7 @@ export const POS: React.FC<POSProps> = ({
                 search.trim() === '' ? (
                   <div className='h-full flex flex-col items-center justify-center text-gray-400 space-y-3 p-8 select-none'>
                     <span className='material-symbols-rounded opacity-20' style={{ fontSize: '60px' }}>search</span>
-                    <h1 className='text-2xl font-bold tracking-tight'>
+                    <h1 className='text-2xl font-bold tracking-tight page-title'>
                       {t.searchPlaceholder}
                     </h1>
                     <p className='text-xs text-center max-w-xs opacity-70'>

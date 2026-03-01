@@ -294,12 +294,12 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <div className='flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 shrink-0 pe-2'>
-        <h2 className='text-2xl font-medium tracking-tight flex items-center gap-2'>
+        <h1 className='text-2xl font-bold tracking-tight flex items-center gap-2 page-title'>
           <span className='material-symbols-rounded text-gray-900 dark:text-gray-100'>
             person_search
           </span>
           {t.loyalty?.lookup || 'Customer Loyalty Lookup'}
-        </h2>
+        </h1>
 
         {/* Search Section */}
         <div className='flex items-center gap-2 flex-1 max-w-xl relative z-30'>

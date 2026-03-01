@@ -390,7 +390,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       ref={scrollContainerRef}
       className='h-full overflow-y-auto pe-2 space-y-4 animate-fade-in pb-10'
     >
-      <h1 className='text-2xl font-bold tracking-tight mb-4'>{t.title}</h1>
+      <h1 className='text-2xl font-bold tracking-tight mb-4 page-title'>{t.title}</h1>
 
       {/* Stats Cards Row */}
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>

@@ -260,7 +260,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     >
       {/* Header with Live Indicator */}
       <div className='flex items-center justify-between mb-2'>
-        <h1 className='text-2xl font-bold tracking-tight'>
+        <h1 className='text-2xl font-bold tracking-tight page-title'>
           {t.realTimeSales?.title || 'Real-time Sales Monitor'}
         </h1>
         <div className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'>

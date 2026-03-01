@@ -26,7 +26,7 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
       {/* Header Section */}
       <div className='mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-white mb-1'>
+          <h1 className='text-2xl font-bold text-gray-900 dark:text-white mb-1 page-title'>
             {t.intelligence.dashboard.title}
           </h1>
           <p className='text-gray-500 dark:text-gray-400 text-sm'>

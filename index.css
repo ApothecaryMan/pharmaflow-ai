@@ -4,9 +4,30 @@ layer(base);
 layer(base);
 @import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,slnt,wdth,wght@8..144,-10..0,25..151,100..1000&display=swap")
 layer(base);
+
+@font-face {
+  font-family: "HeadingFont";
+  src: url("/fonts/DARK.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --page-title-font-size: 1.5rem; /* text-2xl */
+  --page-title-font-family: inherit;
+}
+
+.graphic-mode [dir='rtl'] .page-title,
+.graphic-mode[dir='rtl'] .page-title {
+  --page-title-font-family: "HeadingFont", sans-serif;
+}
+
+.page-title {
+  font-size: var(--page-title-font-size) !important;
+  font-family: var(--page-title-font-family) !important;
+}
 @import "tailwindcss";
-
-
 
 /* ── Tailwind v4 native CSS config ─── */
 @theme {
@@ -212,7 +233,6 @@ layer(base);
     opacity: 0.5;
   }
 }
-
 
 /* Material Symbols Override - Force Font Family */
 @layer base {

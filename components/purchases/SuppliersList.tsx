@@ -283,7 +283,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
       {/* Header */}
       <div className='flex justify-between items-center shrink-0'>
         <div>
-          <h1 className='text-2xl font-bold tracking-tight'>
+          <h1 className='text-2xl font-bold tracking-tight page-title'>
             {mode === 'list'
               ? t.suppliersList || 'Suppliers List'
               : t.addNewSupplier || 'Add New Supplier'}

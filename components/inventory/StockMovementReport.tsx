@@ -138,9 +138,9 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
       <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
         <span className="material-symbols-rounded text-[40px] text-slate-400">package_2</span>
       </div>
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 page-title">
         {isRTL ? 'اختر صنفاً للمتابعة' : 'Select a drug to begin monitoring'}
-      </h2>
+      </h1>
       <p className="text-slate-500 dark:text-slate-400 max-w-md">
         {isRTL ? 'ابحث عن أي صنف في الصيدلية لعرض تاريخ حركته، ملخص المخزون والتحليلات.' : 'Search for any drug in your inventory to view its chronological movement history, stock summaries, and analytics.'}
       </p>

@@ -421,7 +421,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
       {/* Header */}
       <div className='flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0'>
         <div>
-          <h1 className='text-2xl font-bold tracking-tight'>
+          <h1 className='text-2xl font-bold tracking-tight page-title'>
             {t.employeeList.title}
           </h1>
           <p className='text-sm text-gray-500 dark:text-gray-400'>{t.employeeList.subtitle}</p>

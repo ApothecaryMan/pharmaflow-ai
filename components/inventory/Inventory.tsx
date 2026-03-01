@@ -652,7 +652,7 @@ export const Inventory: React.FC<InventoryProps> = ({
       {/* Header with toggle */}
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
         <div>
-          <h1 className='text-2xl font-bold tracking-tight'>
+          <h1 className='text-2xl font-bold tracking-tight page-title'>
             {mode === 'list' ? t.title : t.addNewProduct || 'Add New Product'}
           </h1>
           <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>
@@ -755,7 +755,7 @@ export const Inventory: React.FC<InventoryProps> = ({
           <div className='space-y-6'>
             <div className='flex justify-between items-start'>
               <div>
-                <h2 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
+                <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 page-title'>
                   {getDisplayName({ name: viewingDrug.name }, textTransform)}{' '}
                   {viewingDrug.dosageForm && (
                     <span className='text-lg text-gray-500 font-normal'>
@@ -767,7 +767,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                       )}
                     </span>
                   )}
-                </h2>
+                </h1>
                 <p className='text-gray-500 font-medium text-start' dir='ltr'>
                   {Array.isArray(viewingDrug.genericName)
                     ? viewingDrug.genericName.join(' + ')

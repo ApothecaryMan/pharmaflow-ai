@@ -1056,9 +1056,9 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
       <div className='flex justify-between items-center px-2 shrink-0'>
         <div>
           <div className='flex items-center gap-3'>
-            <h2 className='text-2xl font-bold tracking-tight type-expressive'>
+            <h1 className='text-2xl font-bold tracking-tight page-title'>
               {mode === 'create' ? t.title : t.historyTitle}
-            </h2>
+            </h1>
             {mode === 'history' && (
               <>
                 <span className='text-gray-300 text-2xl font-light'>|</span>

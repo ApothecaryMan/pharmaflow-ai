@@ -944,7 +944,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
             );
           })()}
           <div>
-            <h1 className='text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-none mb-1.5'>
+            <h1 className='text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-none mb-1.5 page-title'>
               {selectedEmployee.name}
             </h1>
             <div className='flex items-center gap-2 flex-wrap'>

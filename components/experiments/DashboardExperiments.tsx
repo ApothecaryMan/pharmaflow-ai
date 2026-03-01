@@ -302,9 +302,9 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
       className='h-full overflow-y-auto pe-2 space-y-6 animate-fade-in pb-10'
       dir={isRTL ? 'rtl' : 'ltr'}
     >
-      <h2 className='text-2xl font-bold tracking-tight mb-6 type-expressive text-gray-900 dark:text-gray-100'>
+      <h1 className='text-2xl font-bold tracking-tight mb-6 page-title text-gray-900 dark:text-gray-100'>
         {labels.title}
-      </h2>
+      </h1>
 
       {/* Grid Layout for Cards */}
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'>

@@ -328,7 +328,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       {/* Header */}
       <div className='flex justify-between items-center shrink-0'>
         <div>
-          <h1 className='text-2xl font-bold tracking-tight'>
+          <h1 className='text-2xl font-bold tracking-tight page-title'>
             {t.purchaseReturns?.returnHistory || 'Return History'}
           </h1>
           <p className='text-sm text-gray-500'>

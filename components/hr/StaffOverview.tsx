@@ -66,7 +66,7 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
       {/* Page Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
+          <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 page-title'>
             {language === 'AR' ? 'نظرة عامة على البائعين' : 'Sellers Overview'}
           </h1>
           <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>

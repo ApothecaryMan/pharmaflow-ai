@@ -321,9 +321,9 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
 
   return (
     <div className='h-full overflow-y-auto pe-2 space-y-4 pb-10'>
-      <h2 className='text-2xl font-medium tracking-tight mb-4'>
+      <h1 className='text-2xl font-bold tracking-tight mb-4 page-title'>
         {t?.title || 'Customer Overview'}
-      </h2>
+      </h1>
 
       {/* Row 1: Key Metrics */}
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4'>

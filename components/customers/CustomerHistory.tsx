@@ -168,9 +168,9 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
     <div className='h-full flex flex-col space-y-6 animate-fade-in'>
       <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4'>
         <div>
-          <h2 className='text-2xl font-bold tracking-tight type-expressive'>
+          <h1 className='text-2xl font-bold tracking-tight page-title'>
             {t.customerHistory?.title || 'Customer History'}
-          </h2>
+          </h1>
           <p className='text-sm text-gray-500'>
             {t.customerHistory?.subtitle || 'View detailed transaction history'}
           </p>

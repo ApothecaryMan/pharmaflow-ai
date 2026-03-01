@@ -62,6 +62,7 @@ export const TRANSLATIONS = {
       typography: 'Typography',
       fontEN: 'English Font',
       fontAR: 'Arabic Font',
+      graphicStyle: 'Graphic Heading Style',
     },
 
     profile: {
@@ -2199,6 +2200,7 @@ export const TRANSLATIONS = {
       typography: 'التنسيق والخطوط',
       fontEN: 'خط اللغة الإنجليزية',
       fontAR: 'خط اللغة العربية',
+      graphicStyle: 'نمط العناوين الجرافيكي',
     },
 
     profile: {
@@ -2523,7 +2525,7 @@ export const TRANSLATIONS = {
     },
 
     barcodePrinter: {
-      title: 'طباعة الباركود',
+      title: 'طباعــــــــــــــــــة الباركود',
       subtitle: 'قائمة انتظار وطباعة ملصقات المنتجات',
       searchPlaceholder: 'بحث عن منتج للطباعة...',
       addToQueue: 'إضافة للقائمة',
@@ -2922,7 +2924,7 @@ export const TRANSLATIONS = {
       allStock: 'كل المخزون',
       inStock: 'متوفر',
       outOfStock: 'غير متوفر',
-      posTitle: 'نقطة البيع',
+      posTitle: 'نقطة البيـــــــــــــــــع',
       name: 'اسم الصنف',
       code: 'الكود',
       category: 'الفئة',
