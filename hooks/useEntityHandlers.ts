@@ -1453,22 +1453,11 @@ export function useEntityHandlers({
                 (itemReturnedQuantities[item.drugId] || 0) + item.quantityReturned;
             });
 
-            const newReturnDetail = {
-              date: returnData.date,
-              items: returnData.items.map((item) => ({
-                drugId: item.drugId,
-                name: item.name,
-                quantity: item.quantityReturned,
-                refundAmount: item.refundAmount,
-              })),
-            };
 
             return {
               ...sale,
               hasReturns: true,
               returnIds: [...existingReturns, returnData.id],
-              returnDates: [...(sale.returnDates || []), returnData.date],
-              returnDetails: [...(sale.returnDetails || []), newReturnDetail],
               netTotal: sale.total - totalReturned,
               itemReturnedQuantities,
             };

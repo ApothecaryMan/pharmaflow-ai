@@ -16,6 +16,28 @@
  */
 
 /**
+ * Branch entity - represents a pharmacy location.
+ */
+export interface Branch {
+  /** Unique identifier (UUID) */
+  id: string;
+  /** Branch name (e.g., 'Main Branch', 'Downtown Store') */
+  name: string;
+  /** Short code for reference (e.g., 'MN01') */
+  code: string;
+  /** Physical address */
+  address?: string;
+  /** Contact phone number */
+  phone?: string;
+  /** Active status */
+  status: 'active' | 'inactive';
+  /** ISO date of creation */
+  createdAt?: string;
+  /** ISO date of last update */
+  updatedAt?: string;
+}
+
+/**
  * Drug/Medication entity - core inventory item.
  * Represents a sellable medicine with pricing, stock, and metadata.
  */
@@ -379,22 +401,14 @@ export interface Sale {
    * Formula: sum(item.price * item.quantity * (item.discount/100)) for all items
    */
   globalDiscount?: number;
-  // Return tracking
+  // Return tracking — use Return entity as source of truth
+  /** Quick lookup: has this sale been returned? (computed from Returns list) */
   hasReturns?: boolean;
+  /** IDs of associated Return records */
   returnIds?: string[];
-  returnDates?: string[];
-  returnDetails?: Array<{
-    date: string;
-    items: Array<{
-      drugId: string;
-      name: string;
-      quantity: number;
-      refundAmount: number;
-    }>;
-  }>;
-  /** Total after deducting returns */
+  /** Total after deducting returns (computed) */
   netTotal?: number;
-  /** Maps drugId to total quantity returned */
+  /** Maps drugId to total quantity returned (computed) */
   itemReturnedQuantities?: Record<string, number>;
   status: 'completed' | 'cancelled' | 'pending' | 'with_delivery' | 'on_way';
   /** Delivery driver assigned to this order */
