@@ -390,7 +390,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       ref={scrollContainerRef}
       className='h-full overflow-y-auto pe-2 space-y-4 animate-fade-in pb-10'
     >
-      <h2 className='text-2xl font-bold tracking-tight mb-4 type-expressive'>{t.title}</h2>
+      <h1 className='text-2xl font-bold tracking-tight mb-4'>{t.title}</h1>
 
       {/* Stats Cards Row */}
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>
@@ -487,7 +487,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Top Selling Products (1 Col) */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-80 flex flex-col group`}>
           <div className='flex justify-between items-center mb-3'>
-            <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2 type-expressive'>
+            <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
               <span className='material-symbols-rounded text-yellow-500' style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
                 hotel_class
               </span>
@@ -533,7 +533,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {/* Low Stock List */}
           <div className={`p-5 rounded-3xl ${CARD_BASE} h-64 flex flex-col group`}>
             <div className='flex justify-between items-center mb-2'>
-              <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2 type-expressive'>
+              <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
                 <span className='material-symbols-rounded text-orange-500' style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
                   priority_high
                 </span>

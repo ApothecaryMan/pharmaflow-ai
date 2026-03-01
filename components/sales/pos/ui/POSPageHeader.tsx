@@ -32,9 +32,9 @@ export const POSPageHeader: React.FC<POSPageHeaderProps> = ({
   setShowDeliveryModal,
 }) => {
   return (
-    <div className='flex items-center gap-4 px-2 h-12 shrink-0'>
+    <div className='flex items-center gap-4 px-2 min-h-12 shrink-0 py-1'>
       {/* Header - Compact */}
-      <h2 className='text-xl font-bold tracking-tight type-expressive shrink-0'>{t.posTitle}</h2>
+      <h1 className='text-2xl font-bold tracking-tight shrink-0'>{t.posTitle}</h1>
 
       <button
         onClick={() => setShowDeliveryModal(true)}

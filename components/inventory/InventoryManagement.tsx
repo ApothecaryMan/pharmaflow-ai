@@ -93,7 +93,7 @@ export const InventoryManagement: React.FC<InventoryManagementProps> = ({
     <div className='flex flex-col h-full animate-fade-in gap-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 type-expressive'>
+          <h1 className='text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100'>
             {language === 'AR' ? 'المخزون المتطور' : 'Advanced Inventory'}
           </h1>
           <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>

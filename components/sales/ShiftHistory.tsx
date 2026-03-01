@@ -302,9 +302,9 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
       {/* Header */}
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
         <div>
-          <h2 className='text-2xl font-bold tracking-tight type-expressive'>
+          <h1 className='text-2xl font-bold tracking-tight'>
             {t.shiftHistory?.title || 'Shift History'}
-          </h2>
+          </h1>
           <p className='text-sm text-gray-500 dark:text-gray-400'>
             {t.shiftHistory?.subtitle || 'View past cash register shifts'}
           </p>

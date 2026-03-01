@@ -892,9 +892,9 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       <div>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>
-            <h2 className='text-2xl font-bold tracking-tight type-expressive text-gray-900 dark:text-gray-100'>
+            <h1 className='text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100'>
               {t.stockAdjustment.title}
-            </h2>
+            </h1>
             <p className='text-sm text-gray-500 dark:text-gray-400'>{t.stockAdjustment.subtitle}</p>
           </div>
 

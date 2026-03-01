@@ -337,7 +337,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight type-expressive">
+          <h1 className="text-2xl font-bold tracking-tight">
             {t.expiryManagement?.title || 'Expiry Management'}
           </h1>
         </div>

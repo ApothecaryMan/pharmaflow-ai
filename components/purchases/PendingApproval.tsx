@@ -108,9 +108,9 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h2 className='text-2xl font-bold tracking-tight text-gray-800 dark:text-gray-100 type-expressive'>
+          <h1 className='text-2xl font-bold tracking-tight text-gray-800 dark:text-gray-100'>
             {t.title || 'Pending Approvals'}
-          </h2>
+          </h1>
           <p className='text-gray-500 dark:text-gray-400 text-sm mt-1'>
             {t.subtitle ||
               'Review and approve incoming purchase orders. Orders must be approved before inventory is updated.'}

@@ -995,9 +995,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
       <div className='flex justify-between items-center px-2 shrink-0'>
         <div>
           <div className='flex items-center gap-3'>
-            <h2 className='text-2xl font-bold tracking-tight type-expressive'>
+            <h1 className='text-2xl font-bold tracking-tight'>
               {mode === 'create' ? t.title : t.historyTitle}
-            </h2>
+            </h1>
           </div>
           <p className='text-sm text-gray-500'>{t.subtitle}</p>
         </div>

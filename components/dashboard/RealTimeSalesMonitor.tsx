@@ -260,7 +260,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     >
       {/* Header with Live Indicator */}
       <div className='flex items-center justify-between mb-2'>
-        <h1 className='text-2xl font-bold tracking-tight type-expressive'>
+        <h1 className='text-2xl font-bold tracking-tight'>
           {t.realTimeSales?.title || 'Real-time Sales Monitor'}
         </h1>
         <div className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'>
@@ -367,7 +367,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           {/* Recent Transactions Feed */}
           <div className='p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow flex flex-col h-[437px] overflow-hidden'>
             <div className='flex items-center justify-between mb-4'>
-              <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2 type-expressive'>
+              <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
                 <span className='material-symbols-rounded text-gray-400 text-xl'>history</span>
                 {t.realTimeSales?.recentTransactions || 'Recent Transactions'}
               </h3>
@@ -588,7 +588,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           {/* Top Products List */}
           <div className='p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow flex-1 flex flex-col'>
             <div className='flex items-center justify-between mb-4'>
-              <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 type-expressive flex items-center gap-2'>
+              <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
                 <span className='material-symbols-rounded text-yellow-500 text-[20px]'>
                   hotel_class
                 </span>
@@ -643,7 +643,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4'>
         {/* Payment Methods Chart */}
         <div className='p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow min-h-[300px] flex flex-col'>
-          <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 type-expressive'>
+          <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 mb-4'>
             Payment Methods
           </h3>
           <div className='flex-1 w-full relative'>
@@ -707,7 +707,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
         {/* Category Distribution */}
         <div className='p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow min-h-[300px] flex flex-col'>
-          <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 type-expressive'>
+          <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 mb-4'>
             Sales by Category
           </h3>
           <div className='w-full h-[250px] relative'>
