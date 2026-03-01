@@ -6,11 +6,11 @@ import {
   getLocalizedCategory,
   getLocalizedProductType,
   getProductTypes,
-  isMedicineCategory,
 } from '../../data/productCategories';
+import { validateStock } from '../../utils/inventory';
 import type { Drug } from '../../types';
 import { FilterDropdown } from '../common/FilterDropdown';
-import { SmartDateInput, SmartInput } from '../common/SmartInputs';
+import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
 import { Tooltip } from '../common/Tooltip';
 
 interface AddProductProps {
@@ -59,7 +59,6 @@ export const AddProduct: React.FC<AddProductProps> = ({
     barcode: '',
     internalCode: '',
     additionalBarcodes: [],
-    activeIngredients: [],
     manufacturer: '',
     origin: 'local',
     itemRank: 'normal',
@@ -127,7 +126,6 @@ export const AddProduct: React.FC<AddProductProps> = ({
   }, [formData.barcode]);
 
 
-  const [showSuccess, setShowSuccess] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isTypeOpen, setIsTypeOpen] = useState(false);
 
@@ -150,8 +148,33 @@ export const AddProduct: React.FC<AddProductProps> = ({
     return (profit / formData.price) * 100;
   }, [formData.price, formData.costPrice]);
 
-  const handleSubmit = (e: React.FormEvent, addAnother: boolean = false) => {
+  const handleSubmit = async (e: React.FormEvent, addAnother: boolean = false) => {
     e.preventDefault();
+
+    // Capture any pending barcode from the input ref if the user didn't press Enter
+    let finalBarcode = formData.barcode;
+    let finalAdditionalBarcodes = [...(formData.additionalBarcodes || [])];
+    
+    const pendingBarcode = barcodeInputRef.current?.value.trim();
+    if (pendingBarcode) {
+      if (!finalBarcode) {
+        finalBarcode = pendingBarcode;
+      } else if (finalBarcode !== pendingBarcode && !finalAdditionalBarcodes.includes(pendingBarcode)) {
+        finalAdditionalBarcodes.push(pendingBarcode);
+      }
+    }
+
+    // Auto-generate internal code if it's still missing during submission
+    let finalInternalCode = formData.internalCode;
+    if (!finalInternalCode) {
+      const existing = inventory
+        .map((d) => d.internalCode)
+        .filter((c): c is string => !!c && /^\d{6}$/.test(c))
+        .map((c) => parseInt(c, 10));
+      
+      const max = existing.length > 0 ? Math.max(...existing) : 100000;
+      finalInternalCode = String(max + 1).padStart(6, '0');
+    }
 
     const newDrug: Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'> = {
       name: formData.name || '',
@@ -161,28 +184,33 @@ export const AddProduct: React.FC<AddProductProps> = ({
       price: formData.price || 0,
       costPrice: formData.costPrice || 0,
       tax: formData.tax,
-      stock: formData.stock || 0,
+      stock: validateStock((formData.stock || 0) * (formData.unitsPerPack || 1)),
       expiryDate: formData.expiryDate || '',
       description: formData.description,
-      barcode: formData.barcode,
-      internalCode: formData.internalCode,
+      barcode: finalBarcode,
+      internalCode: finalInternalCode,
       unitsPerPack: formData.unitsPerPack || 1,
       minStock: formData.minStock,
       maxDiscount: formData.maxDiscount,
       dosageForm: formData.dosageForm,
-      activeIngredients: formData.activeIngredients,
       manufacturer: formData.manufacturer,
       origin: formData.origin,
       itemRank: formData.itemRank,
-      additionalBarcodes: formData.additionalBarcodes,
+      additionalBarcodes: finalAdditionalBarcodes,
     };
 
-    onAddDrug(newDrug);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
-
-    if (addAnother) {
-      handleClear();
+    try {
+      await onAddDrug(newDrug as Drug);
+      
+      if (addAnother) {
+        handleClear();
+      } else {
+        onCancel?.();
+      }
+    } catch (err) {
+      // Errors are handled by the alert context in useEntityHandlers, 
+      // but we catch here to prevent navigation if needed.
+      console.error('Failed to add drug:', err);
     }
   };
 
@@ -208,7 +236,6 @@ export const AddProduct: React.FC<AddProductProps> = ({
       barcode: '',
       internalCode: '',
       additionalBarcodes: [],
-      activeIngredients: [],
       manufacturer: '',
       origin: 'local',
       itemRank: 'normal',
@@ -231,8 +258,8 @@ export const AddProduct: React.FC<AddProductProps> = ({
         </div>
       )}
 
-      {/* Success Toast */}
-      {showSuccess && (
+      {/* Progress Indicator */}
+      {false && (
         <div className="fixed top-24 right-8 z-50 animate-slide-up">
           <div className="bg-green-600 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3">
             <span className="material-symbols-rounded">check_circle</span>
@@ -254,7 +281,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-              <div className="space-y-1.5 md:col-span-2">
+              <div className="space-y-1.5 flex-1">
                 <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1 flex justify-between">
                   <span>{t.fields?.brandName} *</span>
                   <span className="text-blue-500 lowercase font-medium">{t.placeholders?.langDetect}</span>
@@ -268,7 +295,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 flex-1">
                 <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1">
                   {t.fields?.nameArabic}
                 </label>
@@ -281,7 +308,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 />
               </div>
 
-              <div className="space-y-1.5 lg:col-span-2">
+              <div className="space-y-1.5 md:col-span-2">
                 <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1">
                   {t.fields?.genericName} *
                 </label>
@@ -457,37 +484,19 @@ export const AddProduct: React.FC<AddProductProps> = ({
                     </button>
                   </div>
                 </div>
-
-                <div className="space-y-1.5 md:col-span-2">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1">
-                    {t.fields?.activeIngredients}
-                  </label>
-                  <SmartInput
-                    placeholder={t.placeholders?.activeIngredients}
-                    value={formData.activeIngredients?.join(', ') || ''}
-                    onChange={(e) => setFormData({ ...formData, activeIngredients: e.target.value.split(',').map(s => s.trim()) })}
-                    className={INPUT_CLASSES}
-                  />
-                </div>
               </div>
 
               {/* Usage / Additional Details (Right 1/3) */}
-              <div className="lg:border-s lg:dark:border-gray-800 lg:ps-6 space-y-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                    {t.sections?.usage}
-                  </h3>
-                  <span className="material-symbols-rounded text-gray-400 text-lg">subject</span>
-                </div>
-                <div className="h-full min-h-[140px]">
-                  <textarea
-                    placeholder={t.placeholders?.description}
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className={`${INPUT_CLASSES} w-full h-[calc(100%-28px)] resize-none`}
-                    dir="auto"
-                  />
-                </div>
+              <div className="h-full flex flex-col space-y-1.5">
+                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1">
+                  {t.fields?.description}
+                </label>
+                <SmartTextarea
+                  placeholder={t.placeholders?.description}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className={`${INPUT_CLASSES} flex-1 resize-none h-full`}
+                />
               </div>
             </div>
           </div>

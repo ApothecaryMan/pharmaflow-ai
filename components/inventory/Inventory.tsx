@@ -19,7 +19,7 @@ import { FilterDropdown, SegmentedControl } from '../common';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import type { FilterConfig } from '../common/FilterPill';
 import { Modal } from '../common/Modal';
-import { SmartDateInput, SmartInput } from '../common/SmartInputs';
+import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
 import { AddProduct } from './AddProduct';
 import { useStatusBar } from '../layout/StatusBar';
@@ -60,7 +60,6 @@ export const Inventory: React.FC<InventoryProps> = ({
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [selectedBatches, setSelectedBatches] = useState<Record<string, string>>({}); // groupId -> drugId
   const [openBatchDropdown, setOpenBatchDropdown] = useState<string | null>(null);
@@ -72,6 +71,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   // Form State for Add Product
   const [formData, setFormData] = useState<Partial<Drug>>({
     name: '',
+    nameArabic: '',
     genericName: [], // Changed to array
     category: 'General',
     price: 0,
@@ -85,7 +85,6 @@ export const Inventory: React.FC<InventoryProps> = ({
     maxDiscount: 10,
     additionalBarcodes: [],
     dosageForm: '',
-    activeIngredients: [],
   });
 
   // Dropdown States
@@ -680,20 +679,6 @@ export const Inventory: React.FC<InventoryProps> = ({
         />
       </div>
 
-      {/* Success Message */}
-      {showSuccess && mode === 'add' && (
-        <div
-          className={`p-4 rounded-2xl bg-primary-50 dark:bg-primary-950/30 border border-primary-200 dark:border-primary-800 flex items-center gap-3 animate-fade-in`}
-        >
-          <span className={`material-symbols-rounded text-primary-600 dark:text-primary-400`}>
-            check_circle
-          </span>
-          <span className={`text-sm font-medium text-primary-700 dark:text-primary-300`}>
-            {t.productAddedSuccess || 'Product added successfully!'}
-          </span>
-        </div>
-      )}
-
       {mode === 'list' ? (
         <>
           {/* Table Card - Default Design */}
@@ -730,8 +715,6 @@ export const Inventory: React.FC<InventoryProps> = ({
             inventory={inventory}
             onAddDrug={(drug) => {
               onAddDrug(drug);
-              // Handle post-save navigation if not "Add Another"
-              // (Note: AddProduct manages its own success state)
             }}
             color={color}
             t={t.addProduct || {}}
@@ -899,7 +882,7 @@ export const Inventory: React.FC<InventoryProps> = ({
           <form onSubmit={handleSubmit} className='h-full'>
             <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
               {/* LEFT COLUMN: Main Info */}
-              <div className='md:col-span-2 space-y-4'>
+              <div className='md:col-span-2 space-y-4 flex flex-col'>
                 <div className='grid grid-cols-2 gap-4'>
                   <div>
                     <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
@@ -912,7 +895,18 @@ export const Inventory: React.FC<InventoryProps> = ({
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
                   </div>
-                  <div className='lg:col-span-2 space-y-1'>
+                  <div>
+                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      {t.modal.nameArabic || 'Arabic Name'}
+                    </label>
+                    <input
+                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
+                      value={formData.nameArabic || ''}
+                      onChange={(e) => setFormData({ ...formData, nameArabic: e.target.value })}
+                      dir="rtl"
+                    />
+                  </div>
+                  <div className='md:col-span-2 space-y-1'>
                     <label className='block text-xs font-medium text-gray-700 dark:text-gray-300'>
                       Generic Name
                     </label>
@@ -977,25 +971,6 @@ export const Inventory: React.FC<InventoryProps> = ({
                     />
                   </div>
                 </div>
-
-                {isMedicineCategory(formData.category || '') && (
-                  <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      Active Ingredients
-                    </label>
-                    <input
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      placeholder='e.g., Paracetamol, Caffeine'
-                      value={formData.activeIngredients?.join(', ') || ''}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          activeIngredients: e.target.value.split(',').map((s) => s.trim()),
-                        })
-                      }
-                    />
-                  </div>
-                )}
 
                 {/* Multi-Barcode Input */}
                 <div>
@@ -1079,16 +1054,15 @@ export const Inventory: React.FC<InventoryProps> = ({
                   </div>
                 </div>
 
-                <div>
+                <div className='flex-1 flex flex-col'>
                   <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t.modal.desc}
                   </label>
-                  <textarea
-                    className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm resize-none'
-                    rows={2}
+                  <SmartTextarea
+                    className='w-full flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm resize-none'
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  ></textarea>
+                  />
                 </div>
               </div>
 
@@ -1146,7 +1120,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                   <h4 className='text-xs font-bold text-gray-500 uppercase flex items-center gap-2'>
                     <span className='material-symbols-rounded text-base'>payments</span> Pricing
                   </h4>
-                  <div className='grid grid-cols-2 gap-3'>
+                  <div className='space-y-4'>
                     <div>
                       <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                         {t.modal.price}

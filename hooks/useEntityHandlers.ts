@@ -4,6 +4,7 @@ import { StorageKeys } from '../config/storageKeys';
 import { useAlert } from '../context';
 import { auditService } from '../services/auditService';
 import { batchService } from '../services/inventory/batchService';
+import { inventoryService } from '../services/inventory/inventoryService';
 import { stockMovementService } from '../services/inventory/stockMovement/stockMovementService';
 import { migrationService } from '../services/migration';
 import { restoreStockForCancelledSale } from '../services/salesHelpers';
@@ -40,9 +41,9 @@ const getBranchCode = (): string => {
 
 export interface EntityHandlers {
   // Drug/Inventory handlers
-  handleAddDrug: (drug: Drug) => void;
-  handleUpdateDrug: (drug: Drug) => void;
-  handleDeleteDrug: (id: string) => void;
+  handleAddDrug: (drug: Drug) => Promise<void>;
+  handleUpdateDrug: (drug: Drug) => Promise<void>;
+  handleDeleteDrug: (id: string) => Promise<void>;
   handleRestock: (id: string, qty: number, isUnit?: boolean) => void;
 
   // Supplier handlers
@@ -189,13 +190,10 @@ export function useEntityHandlers({
 
   // --- Drug Management ---
   const handleAddDrug = useCallback(
-    (drug: Drug) => {
+    async (drug: Drug) => {
       // Permission Check
       const employee = employees?.find((e) => e.id === currentEmployeeId);
       if (!canPerformAction(employee?.role || 'admin', 'inventory.add')) {
-        // Should fallback safely? Defaulting admin for safety if system... waiting, actually if !currentEmployeeId it's system.
-        // If system (no login), we might restrict. Or allow if dev.
-        // Let's assume login is required for Add.
         if (currentEmployeeId && !canPerformAction(employee?.role, 'inventory.add')) {
           error('Permission denied: Role cannot add items');
           return;
@@ -207,18 +205,30 @@ export function useEntityHandlers({
         error(validation.message || 'Invalid drug data');
         return;
       }
-      setInventory((prev) => [...prev, drug]);
-      auditService.log('inventory.add', {
-        userId: currentEmployeeId || 'System',
-        details: `Added drug: ${drug.name}`,
-        entityId: drug.id,
-      });
+
+      try {
+        const result = await inventoryService.create(drug);
+        setInventory((prev) => [...prev, result]);
+        
+        // Update batches state
+        setBatches(batchService.getAllBatches());
+
+        auditService.log('inventory.add', {
+          userId: currentEmployeeId || 'System',
+          details: `Added drug: ${result.name}`,
+          entityId: result.id,
+        });
+
+        success(`${result.name} added to inventory successfully!`);
+      } catch (err) {
+        error(`Failed to add product: ${err instanceof Error ? err.message : String(err)}`);
+      }
     },
-    [setInventory, currentEmployeeId, employees, error]
+    [setInventory, setBatches, currentEmployeeId, employees, error]
   );
 
   const handleUpdateDrug = useCallback(
-    (drug: Drug) => {
+    async (drug: Drug) => {
       if (!currentEmployeeId) {
         error('Permission denied: Login required to update items');
         return;
@@ -234,18 +244,25 @@ export function useEntityHandlers({
         error(validation.message || 'Invalid drug data');
         return;
       }
-      setInventory((prev) => prev.map((d) => (d.id === drug.id ? drug : d)));
-      auditService.log('inventory.update', {
-        userId: currentEmployeeId,
-        details: `Updated drug: ${drug.name}`,
-        entityId: drug.id,
-      });
+
+      try {
+        const result = await inventoryService.update(drug.id, drug);
+        setInventory((prev) => prev.map((d) => (d.id === drug.id ? result : d)));
+        
+        auditService.log('inventory.update', {
+          userId: currentEmployeeId,
+          details: `Updated drug: ${drug.name}`,
+          entityId: drug.id,
+        });
+      } catch (err) {
+        error(`Failed to update product: ${err instanceof Error ? err.message : String(err)}`);
+      }
     },
     [setInventory, currentEmployeeId, employees, error]
   );
 
   const handleDeleteDrug = useCallback(
-    (id: string) => {
+    async (id: string) => {
       if (!currentEmployeeId) {
         error('Permission denied: Login required to delete items');
         return;
@@ -256,12 +273,18 @@ export function useEntityHandlers({
         return;
       }
 
-      setInventory((prev) => prev.filter((d) => d.id !== id));
-      auditService.log('inventory.delete', {
-        userId: currentEmployeeId,
-        details: `Deleted drug ID: ${id}`,
-        entityId: id,
-      });
+      try {
+        await inventoryService.delete(id);
+        setInventory((prev) => prev.filter((d) => d.id !== id));
+        
+        auditService.log('inventory.delete', {
+          userId: currentEmployeeId,
+          details: `Deleted drug ID: ${id}`,
+          entityId: id,
+        });
+      } catch (err) {
+        error(`Failed to delete product: ${err instanceof Error ? err.message : String(err)}`);
+      }
     },
     [setInventory, currentEmployeeId, employees, error]
   );

@@ -161,6 +161,41 @@ export const SmartInput: React.FC<SmartInputProps> = ({
   );
 };
 
+interface SmartTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  value?: string | number | readonly string[] | undefined;
+}
+
+/**
+ * **SmartTextarea Component**
+ * 
+ * A wrapper around the native textarea element that automatically sets the `dir` attribute (LTR/RTL)
+ * based on the input value or placeholder.
+ * 
+ * @usage
+ * Use this component for **ALL** multi-line text fields.
+ */
+export const SmartTextarea: React.FC<SmartTextareaProps> = ({
+  value,
+  className,
+  placeholder,
+  ...props
+}) => {
+  const dir = useSmartDirection(
+    typeof value === 'string' ? value : String(value || ''),
+    placeholder
+  );
+
+  return (
+    <textarea
+      {...props}
+      value={value}
+      placeholder={placeholder}
+      dir={dir}
+      className={className}
+    />
+  );
+};
+
 interface SmartDateInputProps {
   value: string; // YYYY-MM-DD
   onChange: (value: string) => void;

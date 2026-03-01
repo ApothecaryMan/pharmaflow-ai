@@ -60,8 +60,6 @@ export interface Drug {
   additionalBarcodes?: string[];
   /** Dosage form: Tablet, Capsule, Syrup, etc. */
   dosageForm?: string;
-  /** Active ingredients/composition */
-  activeIngredients?: string[];
   /** Minimum stock alert threshold */
   minStock?: number;
   /** Drug class/category from import */
