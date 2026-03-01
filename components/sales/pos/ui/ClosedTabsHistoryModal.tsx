@@ -1,3 +1,5 @@
+import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Modal } from '../../../common/Modal';
 import { MaterialTabs } from '../../../common/MaterialTabs';
 import { SaleTab } from '../../../../types';
@@ -12,6 +14,105 @@ interface ClosedTabsHistoryModalProps {
   t: typeof TRANSLATIONS.EN.pos;
   isRTL?: boolean;
 }
+
+interface ClosedTabRowProps {
+  tab: SaleTab;
+  index: number;
+  total: number;
+  onRestore: (id: string) => void;
+  t: any;
+  isRTL: boolean;
+}
+
+const ClosedTabRow: React.FC<ClosedTabRowProps> = ({ tab, index, total, onRestore, t, isRTL }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const countRef = useRef<HTMLDivElement>(null);
+
+  const cartTitle = t.cartTitle || (isRTL ? 'محتويات السلة' : 'Cart Items');
+
+  return (
+    <MaterialTabs
+      index={index}
+      total={total}
+      className="!h-[68px] !px-4 !bg-gray-50/40 dark:!bg-white/[0.03] !hover:bg-gray-50/40 dark:!hover:bg-white/[0.03] !cursor-default border border-gray-200/50 dark:border-white/[0.05]"
+    >
+      <div className={`flex items-center justify-between w-full ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
+        {/* Restore Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRestore(tab.id);
+          }}
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 dark:bg-primary-400/10 dark:hover:bg-primary-400/20 rounded-lg transition-all active:scale-95"
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>restore</span>
+          <span dir="auto">{t.restoreTab || 'Restore'}</span>
+        </button>
+
+        {/* Tab Info + Count Indicator Group */}
+        <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse text-right' : 'flex-row text-left'}`}>
+          <div className={`flex flex-col ${isRTL ? 'items-end' : 'items-start'}`}>
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base leading-tight" dir="auto">
+              {tab.name}
+              {tab.customerName && (
+                <span className="mx-2 text-gray-400 dark:text-gray-600 font-normal">|</span>
+              )}
+              <span className="text-primary-600 dark:text-primary-400">{tab.customerName}</span>
+            </h3>
+            {tab.closedAt && (
+              <div className="flex items-center gap-1 mt-0.5 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                <span className="material-symbols-rounded" style={{ fontSize: '12px' }}>schedule</span>
+                {formatTime(tab.closedAt)}
+              </div>
+            )}
+          </div>
+
+          {/* Circular Count Indicator */}
+          <div 
+            ref={countRef}
+            onMouseEnter={() => setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+            className="w-12 h-12 rounded-full border border-gray-200 dark:border-white/[0.1] flex flex-col items-center justify-center text-gray-700 dark:text-gray-300 bg-white dark:bg-transparent shadow-xs cursor-help transition-colors hover:border-primary-500/30 dark:hover:border-primary-400/30"
+          >
+            <span className="text-lg font-black tabular-nums leading-none">{tab.cart.length}</span>
+            <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mt-0.5">
+              {isRTL ? 'عنصر' : (t.items || 'Items')}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Cart Items Tooltip */}
+      {showTooltip && countRef.current && createPortal(
+        <div 
+          className="fixed z-[9999] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-xl shadow-black/10 dark:shadow-black/30 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-2 min-w-[200px] text-gray-800 dark:text-gray-200 pointer-events-none transition-all animate-in fade-in zoom-in-95 duration-200"
+          style={{
+            top: countRef.current.getBoundingClientRect().bottom + 8,
+            left: isRTL 
+              ? countRef.current.getBoundingClientRect().right - 100 - (countRef.current.offsetWidth / 2)
+              : countRef.current.getBoundingClientRect().left - 100 + (countRef.current.offsetWidth / 2),
+          }}
+        >
+          <div className="text-[10px] font-black uppercase tracking-wider mb-2 border-b border-gray-200/50 dark:border-gray-800/50 pb-1 text-gray-500 flex items-center justify-between">
+            <span>{cartTitle}</span>
+            <span className="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 px-1.5 rounded">{tab.cart.length}</span>
+          </div>
+          <ul className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto no-scrollbar">
+            {tab.cart.map(item => (
+              <li key={item.id} className={`text-[11px] flex items-center justify-between gap-3 font-semibold ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <span className="truncate flex-1" dir="auto">{item.name} {item.dosageForm}</span>
+                <span className="tabular-nums text-primary-600 dark:text-primary-400 font-black">
+                  {item.quantity}{item.isUnit ? ' U' : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>,
+        document.body
+      )}
+    </MaterialTabs>
+  );
+};
 
 export const ClosedTabsHistoryModal: React.FC<ClosedTabsHistoryModalProps> = ({
   isOpen,
@@ -37,56 +138,20 @@ export const ClosedTabsHistoryModal: React.FC<ClosedTabsHistoryModalProps> = ({
       ) : (
         <div className="flex flex-col gap-1.5">
           {closedTabs.map((tab, index) => (
-            <MaterialTabs
+            <ClosedTabRow
               key={tab.id}
+              tab={tab}
               index={index}
               total={closedTabs.length}
-              className="!h-[68px] !px-4 !bg-gray-50/40 dark:!bg-white/[0.03] !hover:bg-gray-50/40 dark:!hover:bg-white/[0.03] !cursor-default border border-gray-200/50 dark:border-white/[0.05]"
-            >
-              <div className={`flex items-center justify-between w-full ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
-                {/* Restore Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRestoreTab(tab.id);
-                    if (closedTabs.length === 1) {
-                      onClose();
-                    }
-                  }}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 dark:bg-primary-400/10 dark:hover:bg-primary-400/20 rounded-lg transition-all active:scale-95"
-                >
-                  <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>restore</span>
-                  <span dir="auto">{t.restoreTab || 'Restore'}</span>
-                </button>
-
-                {/* Tab Info + Count Indicator Group */}
-                <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse text-right' : 'flex-row text-left'}`}>
-                  <div className={`flex flex-col ${isRTL ? 'items-end' : 'items-start'}`}>
-                    <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base leading-tight" dir="auto">
-                      {tab.name}
-                      {tab.customerName && (
-                        <span className="mx-2 text-gray-400 dark:text-gray-600 font-normal">|</span>
-                      )}
-                      <span className="text-primary-600 dark:text-primary-400">{tab.customerName}</span>
-                    </h3>
-                    {tab.closedAt && (
-                      <div className="flex items-center gap-1 mt-0.5 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                        <span className="material-symbols-rounded" style={{ fontSize: '12px' }}>schedule</span>
-                        {formatTime(tab.closedAt)}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Circular Count Indicator */}
-                  <div className="w-12 h-12 rounded-full border border-gray-200 dark:border-white/[0.1] flex flex-col items-center justify-center text-gray-700 dark:text-gray-300 bg-white dark:bg-transparent shadow-xs">
-                    <span className="text-lg font-black tabular-nums leading-none">{tab.cart.length}</span>
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mt-0.5">
-                      {isRTL ? 'عنصر' : (t.items || 'Items')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </MaterialTabs>
+              onRestore={(id) => {
+                onRestoreTab(id);
+                if (closedTabs.length === 1) {
+                  onClose();
+                }
+              }}
+              t={t}
+              isRTL={isRTL}
+            />
           ))}
         </div>
       )}
