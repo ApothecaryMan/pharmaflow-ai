@@ -39,10 +39,11 @@ export interface AppState {
  */
 export function useAppState(): AppState {
   // --- View State ---
-  const [view, setView] = usePersistedState<ViewState>(StorageKeys.VIEW, ROUTES.DASHBOARD);
+  const [view, setView] = usePersistedState<ViewState>(StorageKeys.VIEW, ROUTES.DASHBOARD, false);
   const [activeModule, setActiveModule] = usePersistedState<string>(
     StorageKeys.ACTIVE_MODULE,
-    ROUTES.DASHBOARD
+    ROUTES.DASHBOARD,
+    false
   );
   const [dashboardSubView, setDashboardSubView] = useState<string>('dashboard');
   const [navigationParams, setNavigationParams] = useState<Record<string, any> | null>(null);

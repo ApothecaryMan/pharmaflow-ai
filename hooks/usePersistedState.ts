@@ -11,7 +11,8 @@ import { storage } from '../utils/storage';
  */
 export function usePersistedState<T>(
   key: StorageKeys | string,
-  initialValue: T
+  initialValue: T,
+  sync = true
 ): [T, Dispatch<SetStateAction<T>>] {
   // Initialize state from storage
   const [state, setState] = useState<T>(() => {
@@ -25,6 +26,8 @@ export function usePersistedState<T>(
 
   // Optional: Listen for external changes (cross-tab sync)
   useEffect(() => {
+    if (!sync) return;
+
     const handleStorageChange = (e: StorageEvent) => {
       // If the key matches and there is a new value
       if (e.key === key && e.newValue) {
@@ -43,7 +46,7 @@ export function usePersistedState<T>(
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [key, state]);
+  }, [key, state, sync]);
 
   return [state, setState];
 }
