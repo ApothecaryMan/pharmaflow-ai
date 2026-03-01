@@ -2346,7 +2346,7 @@ export const TRANSLATIONS = {
       },
     },
     inventory: {
-      title: 'المخزون',
+      title: 'المخــــــــزون',
       subtitle: 'إدارة المخزون الدوائي',
       outOfStock: 'الخالص / نواقص',
       available: 'متوفر',
@@ -2490,7 +2490,7 @@ export const TRANSLATIONS = {
       },
     },
     stockAdjustment: {
-      title: 'جرد المخزون',
+      title: 'جـــــــــرد المخزون',
       subtitle: 'تصحح مستويات المخزون',
       searchPlaceholder: 'بحث عن منتج للتعديل...',
       add: 'إضافة للتعديل',
@@ -3013,7 +3013,7 @@ export const TRANSLATIONS = {
       guestCustomer: 'عميل غير مسجل',
     },
     salesHistory: {
-      title: 'سجل المبيعات',
+      title: 'سجل المبيعــــــــات',
       subtitle: 'عرض وإدارة المعاملات السابقة',
       searchPlaceholder: 'بحث بالعميل، المعرف أو اسم المنتج...',
       dateFrom: 'من',
@@ -3225,7 +3225,7 @@ export const TRANSLATIONS = {
       },
     },
     customerOverview: {
-      title: 'نظرة عامة على العملاء',
+      title: 'نظرة عــــامة على العمــــــــلاء',
       subtitle: 'تحليلات ورؤى شاملة للعملاء',
       totalCustomers: 'إجمالي العملاء',
       active: 'نشط',
@@ -3272,7 +3272,7 @@ export const TRANSLATIONS = {
       exportCSV: 'تصدير',
     },
     dashboard: {
-      title: 'نظرة عامة',
+      title: 'نظــــــــرة عــــامة',
       revenue: 'إجمالي الإيرادات',
       expenses: 'إجمالي المصروفات',
       profit: 'صافي الربح',
@@ -3455,7 +3455,7 @@ export const TRANSLATIONS = {
       },
     },
     returnHistory: {
-      title: 'سجل المرتجعات',
+      title: 'سجل المرتجعــــــــات',
       subtitle: 'عرض وإدارة المرتجعات التي تمت معالجتها',
       searchPlaceholder: 'بحث في المرتجعات، رقم البيع، أو العميل...',
       dateFrom: 'من',
@@ -3524,7 +3524,7 @@ export const TRANSLATIONS = {
       totalSuffix: 'إجمالي',
     },
     realTimeSales: {
-      title: 'مراقبة المبيعات الفورية',
+      title: 'مراقبــــة المبيعــــــــات الفورية',
       todayRevenue: 'إيرادات اليوم',
       totalTransactions: 'إجمالي المعاملات',
       itemsSold: 'الأصناف المباعة',
@@ -3559,7 +3559,7 @@ export const TRANSLATIONS = {
     },
 
     cashRegister: {
-      title: 'سجل النقدية',
+      title: 'سجل النقديــــــــــــة',
       subtitle: 'إدارة الورديات النقدية والمعاملات',
       status: {
         open: 'الوردية مفتوحة',
@@ -3631,7 +3631,7 @@ export const TRANSLATIONS = {
       help: '@@import(./cashRegisterHelp.json)',
     },
     shiftHistory: {
-      title: 'سجل الورديات',
+      title: 'سجل الورديـــــــــات',
       subtitle: 'عرض ورديات سجل النقدية السابقة',
       searchPlaceholder: 'بحث برقم الوردية أو المستخدم...',
       dateFrom: 'من',
@@ -3798,7 +3798,7 @@ export const TRANSLATIONS = {
       details: {
         packs: 'عبوة'
       },
-      title: 'إدارة الصلاحيات',
+      title: 'إدارة الصلاحيــــــــات',
       subtitle: 'تتبع تواريخ انتهاء الصلاحية والتنبيهات',
       expiredItems: 'أصناف منتهية',
       nearExpiry30: 'ينتهي < 30 يوم',
