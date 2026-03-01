@@ -10,7 +10,7 @@ import { settingsService } from '../settings/settingsService';
 
 // Export interface so it can be used if needed
 export interface EmployeeService {
-  getAll(): Promise<Employee[]>;
+  getAll(branchId?: string): Promise<Employee[]>;
   getById(id: string): Promise<Employee | null>;
   create(employee: Employee): Promise<Employee>;
   update(id: string, employee: Partial<Employee>): Promise<Employee>;
@@ -23,11 +23,10 @@ const getRawAll = (): Employee[] => {
 };
 
 export const createEmployeeService = (): EmployeeService => ({
-  getAll: async (): Promise<Employee[]> => {
+  getAll: async (branchId?: string): Promise<Employee[]> => {
     const all = getRawAll();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    return all.filter((e) => !e.branchId || e.branchId === branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    return all.filter((e) => e.branchId === effectiveBranchId);
   },
 
   getById: async (id: string): Promise<Employee | null> => {
@@ -35,15 +34,17 @@ export const createEmployeeService = (): EmployeeService => ({
     return all.find((e) => e.id === id) || null;
   },
 
-  create: async (employee: Employee): Promise<Employee> => {
+  create: async (employee: Employee, branchId?: string): Promise<Employee> => {
     const all = getRawAll();
-    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    
     // Assign ID if missing
     if (!employee.id) {
       employee.id = idGenerator.generate('employees');
     }
+    
     // Inject branchId
-    employee.branchId = settings.branchCode;
+    employee.branchId = effectiveBranchId;
 
     all.push(employee);
     storage.set(StorageKeys.EMPLOYEES, all);

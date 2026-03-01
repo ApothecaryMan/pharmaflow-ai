@@ -26,6 +26,8 @@ import type {
   StockBatch,
   Supplier,
 } from '../types';
+import { branchService } from './branchService';
+import { authService } from './auth/authService';
 import { customerService } from './customers';
 import { employeeService } from './hr';
 import { batchService, inventoryService } from './inventory';
@@ -101,10 +103,10 @@ export interface DataActions {
   refreshAll: () => Promise<void>;
 
   // Switch to a different branch and reload all data
-  switchBranch: (newBranchCode: string) => Promise<void>;
+  switchBranch: (branchId: string) => Promise<void>;
 
-  // Get current branch code
-  currentBranchCode: string;
+  // Get current active branch ID
+  activeBranchId: string;
 }
 
 export type DataContextType = DataState & DataActions;
@@ -131,7 +133,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   initialSuppliers = [],
 }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [currentBranchCode, setCurrentBranchCode] = useState('B1'); // Default branch
+  const [activeBranchId, setActiveBranchId] = useState<string>('');
   const [inventory, setInventoryState] = useState<Drug[]>([]);
   const [sales, setSalesState] = useState<Sale[]>([]);
   const [suppliers, setSuppliersState] = useState<Supplier[]>([]);
@@ -156,29 +158,38 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         // Ensure monolithic data is split before services try to read shards
         try {
           runShardingMigration();
+          // Phase 4: Data Migration to Multi-Branch
+          const { branchMigration } = await import('./branchMigration');
+          await branchMigration.runAll();
         } catch (err) {
           console.error('Migration Failed:', err);
         }
 
+        // 1. Initialize Active Branch
+        const activeBranch = branchService.getActive();
+        const session = await authService.getCurrentUser();
+        
+        // Priority: session.branchId > saved active branch > default branch
+        const finalBranchId = session?.branchId || activeBranch?.id || 'branch_main';
+        setActiveBranchId(finalBranchId);
+
         const [results, _] = await Promise.all([
           Promise.all([
-            inventoryService.getAll(),
-            salesService.getAll(),
-            supplierService.getAll(),
-            purchaseService.getAll(),
-            returnService.getAllPurchaseReturns(),
-            returnService.getAllSalesReturns(),
-            customerService.getAll(),
-            employeeService.getAll(),
-            batchService.getAllBatches(),
+            inventoryService.getAll(finalBranchId),
+            salesService.getAll(finalBranchId),
+            supplierService.getAll(finalBranchId),
+            purchaseService.getAll(finalBranchId),
+            returnService.getAllPurchaseReturns(finalBranchId),
+            returnService.getAllSalesReturns(finalBranchId),
+            customerService.getAll(finalBranchId),
+            employeeService.getAll(finalBranchId),
+            batchService.getAllBatches(finalBranchId),
           ]),
           minLoadTime,
         ]);
 
         const [inv, sal, sup, pur, pRet, ret, cust, emp, bat] = results;
 
-        // Use initial data if fetched data is empty and initial data is provided
-        // We use a stable check here instead of depending on the array reference
         setInventoryState(
           inv.length > 0 ? inv : initialInventory.length > 0 ? initialInventory : []
         );
@@ -325,11 +336,11 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   }, []);
 
   const addProduct = useCallback(async (product: Omit<Drug, 'id'>) => {
-    const newProduct = await inventoryService.create(product);
-    await syncQueueService.enqueue('SALE', { action: 'CREATE_DRUG', drug: newProduct }); // Example sync action
+    const newProduct = await inventoryService.create({ ...product, branchId: activeBranchId });
+    await syncQueueService.enqueue('SALE', { action: 'CREATE_DRUG', drug: newProduct });
     setInventoryState((prev) => [...prev, newProduct]);
     return newProduct;
-  }, []);
+  }, [activeBranchId]);
 
   const updateProduct = useCallback(async (id: string, updates: Partial<Drug>) => {
     const updated = await inventoryService.update(id, updates);
@@ -347,17 +358,17 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   }, []);
 
   const addSale = useCallback(async (sale: Omit<Sale, 'id'>) => {
-    const newSale = await salesService.create(sale);
+    const newSale = await salesService.create({ ...sale, branchId: activeBranchId });
     await syncQueueService.enqueue('SALE', { action: 'CREATE_SALE', sale: newSale });
     setSalesState((prev) => [...prev, newSale]);
     return newSale;
-  }, []);
+  }, [activeBranchId]);
 
   const addSupplier = useCallback(async (supplier: Omit<Supplier, 'id'>) => {
-    const newSupplier = await supplierService.create(supplier);
+    const newSupplier = await supplierService.create({ ...supplier, branchId: activeBranchId });
     setSuppliersState((prev) => [...prev, newSupplier]);
     return newSupplier;
-  }, []);
+  }, [activeBranchId]);
 
   const updateSupplier = useCallback(async (id: string, updates: Partial<Supplier>) => {
     const updated = await supplierService.update(id, updates);
@@ -366,10 +377,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   }, []);
 
   const addPurchase = useCallback(async (purchase: Omit<Purchase, 'id'>) => {
-    const newPurchase = await purchaseService.create(purchase);
+    const newPurchase = await purchaseService.create({ ...purchase, branchId: activeBranchId });
     setPurchasesState((prev) => [...prev, newPurchase]);
     return newPurchase;
-  }, []);
+  }, [activeBranchId]);
 
   const approvePurchase = useCallback(async (id: string, approver: string) => {
     await purchaseService.approve(id, approver);
@@ -388,16 +399,16 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   }, []);
 
   const addReturn = useCallback(async (ret: Omit<Return, 'id'>) => {
-    const newReturn = await returnService.createSalesReturn(ret);
+    const newReturn = await returnService.createSalesReturn({ ...ret, branchId: activeBranchId });
     setReturnsState((prev) => [...prev, newReturn]);
     return newReturn;
-  }, []);
+  }, [activeBranchId]);
 
   const addCustomer = useCallback(async (customer: Omit<Customer, 'id'>) => {
-    const newCustomer = await customerService.create(customer);
+    const newCustomer = await customerService.create({ ...customer, branchId: activeBranchId });
     setCustomersState((prev) => [...prev, newCustomer]);
     return newCustomer;
-  }, []);
+  }, [activeBranchId]);
 
   const updateCustomer = useCallback(async (id: string, updates: Partial<Customer>) => {
     const updated = await customerService.update(id, updates);
@@ -411,10 +422,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   }, []);
 
   const addEmployee = useCallback(async (employee: Employee) => {
-    const newEmployee = await employeeService.create(employee);
+    const newEmployee = await employeeService.create({ ...employee, branchId: activeBranchId });
     setEmployeesState((prev) => [...prev, newEmployee]);
     return newEmployee;
-  }, []);
+  }, [activeBranchId]);
 
   const updateEmployee = useCallback(async (id: string, updates: Partial<Employee>) => {
     const updated = await employeeService.update(id, updates);
@@ -429,14 +440,14 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
   const refreshAll = useCallback(async () => {
     const [inv, sal, sup, pur, pRet, ret, cust, emp] = await Promise.all([
-      inventoryService.getAll(),
-      salesService.getAll(),
-      supplierService.getAll(),
-      purchaseService.getAll(),
-      returnService.getAllPurchaseReturns(),
-      returnService.getAllSalesReturns(),
-      customerService.getAll(),
-      employeeService.getAll(),
+      inventoryService.getAll(activeBranchId),
+      salesService.getAll(activeBranchId),
+      supplierService.getAll(activeBranchId),
+      purchaseService.getAll(activeBranchId),
+      returnService.getAllPurchaseReturns(activeBranchId),
+      returnService.getAllSalesReturns(activeBranchId),
+      customerService.getAll(activeBranchId),
+      employeeService.getAll(activeBranchId),
     ]);
     setInventoryState(inv);
     setSalesState(sal);
@@ -446,27 +457,38 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     setReturnsState(ret);
     setCustomersState(cust);
     setEmployeesState(emp);
-  }, []);
+  }, [activeBranchId]);
 
   // Switch to a different branch and reload all data
   const switchBranch = useCallback(
-    async (newBranchCode: string) => {
+    async (branchId: string) => {
       try {
-        // Update settings with new branch code
-        await settingsService.setMultiple({ branchCode: newBranchCode });
-
+        // Persist new branch selection
+        branchService.setActive(branchId);
+        
         // Update local state
-        setCurrentBranchCode(newBranchCode);
+        setActiveBranchId(branchId);
 
-        // Reload all data (services will now filter by new branchCode)
-        await refreshAll();
+        // Update settings (for backward compatibility if anything else uses it)
+        await settingsService.setMultiple({ branchCode: branchId });
+
+        // Reload all data (services will now filter by new branchId)
+        // refreshAll uses activeBranchId from state which might not be updated yet
+        // so we pass branchId directly or wait for state
       } catch (error) {
         console.error('Error switching branch:', error);
         throw error;
       }
     },
-    [refreshAll]
+    []
   );
+
+  // Trigger data reload when branch changes
+  useEffect(() => {
+    if (activeBranchId && !isLoading) {
+      refreshAll();
+    }
+  }, [activeBranchId, refreshAll, isLoading]);
 
   const value = useMemo<DataContextType>(
     () => ({
@@ -514,7 +536,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
       refreshAll,
       switchBranch,
-      currentBranchCode,
+      activeBranchId,
     }),
     [
       inventory,
@@ -526,7 +548,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       customers,
       employees,
       isLoading,
-      currentBranchCode,
+      activeBranchId,
       setInventory,
       addProduct,
       updateProduct,

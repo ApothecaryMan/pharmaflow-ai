@@ -12,7 +12,7 @@ export interface SupplierFilters {
 }
 
 export interface SupplierService {
-  getAll(): Promise<Supplier[]>;
+  getAll(branchId?: string): Promise<Supplier[]>;
   getById(id: string): Promise<Supplier | null>;
   search(query: string): Promise<Supplier[]>;
   create(supplier: Omit<Supplier, 'id'>): Promise<Supplier>;

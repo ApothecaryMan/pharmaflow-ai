@@ -24,12 +24,18 @@ const saveBatches = (batches: StockBatch[]): void => {
 /**
  * Get all batches, optionally filtered by drugId
  */
-export const getAllBatches = (drugId?: string): StockBatch[] => {
+export const getAllBatches = (branchId?: string, drugId?: string): StockBatch[] => {
   const all = getAllBatchesRaw();
-  if (drugId) {
-    return all.filter((b) => b.drugId === drugId);
+  const effectiveBranchId = branchId; // Note: batchService is sync and doesn't use settingsService usually
+  
+  let results = all;
+  if (effectiveBranchId) {
+    results = results.filter((b) => b.branchId === effectiveBranchId);
   }
-  return all;
+  if (drugId) {
+    results = results.filter((b) => b.drugId === drugId);
+  }
+  return results;
 };
 
 /**
@@ -43,11 +49,12 @@ export const getBatchById = (batchId: string): StockBatch | null => {
 /**
  * Create a new batch (usually from a purchase)
  */
-export const createBatch = (batch: Omit<StockBatch, 'id'>): StockBatch => {
+export const createBatch = (batch: Omit<StockBatch, 'id'>, branchId?: string): StockBatch => {
   const all = getAllBatchesRaw();
   const newBatch: StockBatch = {
     ...batch,
     id: idGenerator.generate('batch'),
+    branchId: branchId || batch.branchId, // Prefer explicit branchId
   };
   all.push(newBatch);
   saveBatches(all);

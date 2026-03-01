@@ -68,6 +68,17 @@ export const TRANSLATIONS = {
       exportBackup: 'Export Backup',
       importBackup: 'Import Backup',
       importWarning: 'Warning: Importing a backup will overwrite all current data. Proceed?',
+      branchManagement: 'Branch Management',
+      addBranch: 'Add New Branch',
+      branchName: 'Branch Name',
+      branchCode: 'Branch Code',
+      branchAddress: 'Branch Address',
+      branchPhone: 'Branch Phone',
+      branchStatus: 'Status',
+      assignEmployees: 'Assign Employees',
+      saveBranch: 'Save Branch',
+      deleteBranch: 'Delete Branch',
+      deleteBranchConfirm: 'Are you sure you want to delete this branch? This will affect all data linked to it.',
     },
 
     profile: {
@@ -2174,7 +2185,7 @@ export const TRANSLATIONS = {
       sections: 'أقسام',
       totalItems: 'إجمالي العناصر',
       searchIn: 'بحث في',
-      pack: 'عبوة',
+      pack: 'علبة',
       unit: 'وحدة',
     },
     settings: {
@@ -2213,7 +2224,18 @@ export const TRANSLATIONS = {
       dataManagement: 'إدارة البيانات',
       exportBackup: 'تصدير نسخة احتياطية',
       importBackup: 'استيراد نسخة احتياطية',
-      importWarning: 'تحذير: استيراد النسخة الاحتياطية سيمسح البيانات الحالية ويستبدلها بالكامل. هل تريد الاستمرار؟',
+      importWarning: 'تحذير: استيراد نسخة احتياطية سيؤدي إلى مسح جميع البيانات الحالية. هل تريد الاستمرار؟',
+      branchManagement: 'إدارة الفروع',
+      addBranch: 'إضافة فرع جديد',
+      branchName: 'اسم الفرع',
+      branchCode: 'كود الفرع',
+      branchAddress: 'عنوان الفرع',
+      branchPhone: 'هاتف الفرع',
+      branchStatus: 'الحالة',
+      assignEmployees: 'تعيين الموظفين',
+      saveBranch: 'حفظ الفرع',
+      deleteBranch: 'حذف الفرع',
+      deleteBranchConfirm: 'هل أنت متأكد من حذف هذا الفرع؟ سيؤثر هذا على جميع البيانات المرتبطة به.',
     },
 
     profile: {
@@ -2420,7 +2442,7 @@ export const TRANSLATIONS = {
       },
       details: {
         stockLevel: 'مستوى المخزون',
-        packs: 'عبوة',
+        packs: 'علبة',
         sellingPrice: 'سعر البيع',
         costPrice: 'سعر التكلفة',
         unitsPerPack: 'وحدات/عبوة',
@@ -2458,7 +2480,7 @@ export const TRANSLATIONS = {
           unitsPerPack: 'الوحدات / العبوة',
           minStock: 'تنبيه الحد الأدنى للمخزون',
           expiryDate: 'تاريخ الانتهاء',
-          price: 'سعر البيع للجمهور (عبوة)',
+          price: 'سعر البيع للجمهور (علبة)',
           tax: 'الضريبة (%)',
           costPrice: 'سعر التكلفة (شراء)',
           liveProfit: 'الربح المباشر',
@@ -2713,7 +2735,7 @@ export const TRANSLATIONS = {
         enterId: 'أدخل الرقم',
         searchDrug: 'بحث عن دواء...',
       },
-      pack: 'عبوة',
+      pack: 'علبة',
       unit: 'وحدة',
       // Table headers
       tableHeaders: {
@@ -2892,8 +2914,8 @@ export const TRANSLATIONS = {
         noReturnsFound: 'لم يتم العثور على مردودات تطابق بحثك',
         noReturnsYet: 'لا توجد مردودات مشتريات حتى الآن',
       },
-      packs: 'عبوات',
-      pack: 'عبوة',
+      packs: 'علب',
+      pack: 'علبة',
       inReturnList: 'في قائمة الإرجاع',
       available: 'متاح',
     },
@@ -2926,7 +2948,7 @@ export const TRANSLATIONS = {
       viewCart: 'عرض السلة',
       backToProducts: 'عودة للمنتجات',
       items: 'عناصر',
-      pack: 'عبوة',
+      pack: 'علبة',
       unit: 'وحدة',
       perUnit: '/وحدة',
       actions: {
@@ -3127,7 +3149,7 @@ export const TRANSLATIONS = {
         },
         item: 'عنصر',
         items: 'عناصر',
-        pack: 'عبوة',
+        pack: 'علبة',
         packs: 'عبوات',
         unit: 'وحدة',
         units: 'وحدات',
@@ -3504,7 +3526,7 @@ export const TRANSLATIONS = {
         qty: 'الكمية',
         refund: 'الاسترداد',
         unit: 'وحدة',
-        pack: 'عبوة',
+        pack: 'علبة',
       },
     },
     loyalty: {
@@ -3810,7 +3832,7 @@ export const TRANSLATIONS = {
         days: 'يوم',
       },
       details: {
-        packs: 'عبوة'
+        packs: 'علبة'
       },
       title: 'إدارة الصلاحيــــــــات',
       subtitle: 'تتبع تواريخ انتهاء الصلاحية والتنبيهات',

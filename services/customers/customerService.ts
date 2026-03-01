@@ -15,25 +15,24 @@ const getRawAll = (): Customer[] => {
 };
 
 export const createCustomerService = (): CustomerService => ({
-  getAll: async (): Promise<Customer[]> => {
+  getAll: async (branchId?: string): Promise<Customer[]> => {
     const all = getRawAll();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    return all.filter((c) => !c.branchId || c.branchId === branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    return all.filter((c) => c.branchId === effectiveBranchId);
   },
 
-  getById: async (id: string): Promise<Customer | null> => {
-    const all = await customerService.getAll();
+  getById: async (id: string, branchId?: string): Promise<Customer | null> => {
+    const all = await customerService.getAll(branchId);
     return all.find((c) => c.id === id) || null;
   },
 
-  getByPhone: async (phone: string): Promise<Customer | null> => {
-    const all = await customerService.getAll();
+  getByPhone: async (phone: string, branchId?: string): Promise<Customer | null> => {
+    const all = await customerService.getAll(branchId);
     return all.find((c) => c.phone === phone) || null;
   },
 
-  search: async (query: string): Promise<Customer[]> => {
-    const all = await customerService.getAll();
+  search: async (query: string, branchId?: string): Promise<Customer[]> => {
+    const all = await customerService.getAll(branchId);
     const q = query.toLowerCase();
     return all.filter(
       (c) =>
@@ -44,8 +43,8 @@ export const createCustomerService = (): CustomerService => ({
     );
   },
 
-  filter: async (filters: CustomerFilters): Promise<Customer[]> => {
-    let results = await customerService.getAll();
+  filter: async (filters: CustomerFilters, branchId?: string): Promise<Customer[]> => {
+    let results = await customerService.getAll(branchId);
 
     if (filters.search) {
       const q = filters.search.toLowerCase();
@@ -58,16 +57,16 @@ export const createCustomerService = (): CustomerService => ({
     return results;
   },
 
-  create: async (customer: Omit<Customer, 'id'>): Promise<Customer> => {
+  create: async (customer: Omit<Customer, 'id'>, branchId?: string): Promise<Customer> => {
     const all = getRawAll();
-    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
     const newCustomer: Customer = {
       ...customer,
       id: idGenerator.generate('customers'),
       createdAt: new Date().toISOString(),
       points: customer.points || 0,
       totalPurchases: customer.totalPurchases || 0,
-      branchId: settings.branchCode,
+      branchId: effectiveBranchId,
     } as Customer;
     all.push(newCustomer);
     storage.set(StorageKeys.CUSTOMERS, all);
@@ -110,8 +109,8 @@ export const createCustomerService = (): CustomerService => ({
     return all[index];
   },
 
-  getStats: async (): Promise<CustomerStats> => {
-    const all = await customerService.getAll();
+  getStats: async (branchId?: string): Promise<CustomerStats> => {
+    const all = await customerService.getAll(branchId);
     return {
       totalCustomers: all.length,
       vipCustomers: all.filter((c) => c.vip).length,
@@ -120,8 +119,8 @@ export const createCustomerService = (): CustomerService => ({
     };
   },
 
-  getVip: async (): Promise<Customer[]> => {
-    const all = await customerService.getAll();
+  getVip: async (branchId?: string): Promise<Customer[]> => {
+    const all = await customerService.getAll(branchId);
     return all.filter((c) => c.vip);
   },
 

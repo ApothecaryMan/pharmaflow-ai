@@ -33,10 +33,10 @@ import { storage } from '../utils/storage';
 import { validateDrug, validateSaleData, validateStockAvailability } from '../utils/validation';
 import { useShift } from './useShift';
 
-// Helper to get current branchCode synchronously from storage
+// Helper to get current branchCode synchronously from storage (DEPRECATED: Use activeBranchId from props)
 const getBranchCode = (): string => {
   const settings = storage.get<Partial<AppSettings>>(StorageKeys.SETTINGS, {});
-  return settings.branchCode || 'B1';
+  return settings.branchCode || 'branch_main';
 };
 
 export interface EntityHandlers {
@@ -121,6 +121,7 @@ interface UseEntityHandlersParams {
 
   // Utilities
   currentEmployeeId: string | null;
+  activeBranchId: string;
   isLoading: boolean;
 
   // Time utilities from StatusBar
@@ -151,6 +152,7 @@ export function useEntityHandlers({
   employees,
   setEmployees,
   currentEmployeeId,
+  activeBranchId,
   isLoading,
   batches,
   setBatches,
@@ -312,7 +314,7 @@ export function useEntityHandlers({
             stockMovementService.logMovement({
               drugId: drug.id,
               drugName: drug.name,
-              branchId: getBranchCode(),
+              branchId: activeBranchId,
               type: 'adjustment',
               quantity: unitsToAdd,
               previousStock: drug.stock,
@@ -503,7 +505,7 @@ export function useEntityHandlers({
   const applyPurchaseToInventory = useCallback(
     (purchase: Purchase) => {
       const performer = employees?.find((e) => e.id === currentEmployeeId);
-      const branchCode = getBranchCode();
+      const branchCode = activeBranchId;
       
       let currentInventory = [...inventory];
       const newEntries: Drug[] = [];
@@ -725,7 +727,7 @@ export function useEntityHandlers({
             stockMovementService.logMovement({
               drugId: drug.id,
               drugName: drug.name,
-              branchId: getBranchCode(),
+              branchId: activeBranchId,
               type: 'return_supplier',
               quantity: -unitsToRemove,
               previousStock: drug.stock,

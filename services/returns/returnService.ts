@@ -20,25 +20,24 @@ const getRawPurchaseReturns = (): PurchaseReturn[] => {
 
 export const createReturnService = (): ReturnService => ({
   // Sales Returns
-  getAllSalesReturns: async (): Promise<Return[]> => {
+  getAllSalesReturns: async (branchId?: string): Promise<Return[]> => {
     const all = getRawSalesReturns();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    return all.filter((r) => !r.branchId || r.branchId === branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    return all.filter((r) => r.branchId === effectiveBranchId);
   },
 
-  getSalesReturnById: async (id: string): Promise<Return | null> => {
-    const all = await returnService.getAllSalesReturns();
+  getSalesReturnById: async (id: string, branchId?: string): Promise<Return | null> => {
+    const all = await returnService.getAllSalesReturns(branchId);
     return all.find((r) => r.id === id) || null;
   },
 
-  createSalesReturn: async (ret: Omit<Return, 'id'>): Promise<Return> => {
+  createSalesReturn: async (ret: Omit<Return, 'id'>, branchId?: string): Promise<Return> => {
     const all = getRawSalesReturns();
-    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
     const newReturn: Return = {
       ...ret,
       id: idGenerator.generate('returns'),
-      branchId: settings.branchCode,
+      branchId: effectiveBranchId,
     } as Return;
     all.push(newReturn);
     storage.set(StorageKeys.RETURNS, all);
@@ -46,25 +45,24 @@ export const createReturnService = (): ReturnService => ({
   },
 
   // Purchase Returns
-  getAllPurchaseReturns: async (): Promise<PurchaseReturn[]> => {
+  getAllPurchaseReturns: async (branchId?: string): Promise<PurchaseReturn[]> => {
     const all = getRawPurchaseReturns();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    return all.filter((r) => !r.branchId || r.branchId === branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    return all.filter((r) => r.branchId === effectiveBranchId);
   },
 
-  getPurchaseReturnById: async (id: string): Promise<PurchaseReturn | null> => {
-    const all = await returnService.getAllPurchaseReturns();
+  getPurchaseReturnById: async (id: string, branchId?: string): Promise<PurchaseReturn | null> => {
+    const all = await returnService.getAllPurchaseReturns(branchId);
     return all.find((r) => r.id === id) || null;
   },
 
-  createPurchaseReturn: async (ret: Omit<PurchaseReturn, 'id'>): Promise<PurchaseReturn> => {
+  createPurchaseReturn: async (ret: Omit<PurchaseReturn, 'id'>, branchId?: string): Promise<PurchaseReturn> => {
     const all = getRawPurchaseReturns();
-    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
     const newReturn: PurchaseReturn = {
       ...ret,
       id: idGenerator.generate('returns'),
-      branchId: settings.branchCode,
+      branchId: effectiveBranchId,
     } as PurchaseReturn;
     all.push(newReturn);
     storage.set(StorageKeys.PURCHASE_RETURNS, all);

@@ -170,6 +170,8 @@ export interface Customer {
 export interface StockBatch {
   /** Unique batch identifier */
   id: string;
+  /** Branch this batch belongs to */
+  branchId?: string;
   /** Drug this batch belongs to */
   drugId: string;
   /** Available quantity in this batch (in units) */

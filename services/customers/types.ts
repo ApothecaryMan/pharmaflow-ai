@@ -20,7 +20,7 @@ export interface CustomerStats {
 }
 
 export interface CustomerService {
-  getAll(): Promise<Customer[]>;
+  getAll(branchId?: string): Promise<Customer[]>;
   getById(id: string): Promise<Customer | null>;
   getByPhone(phone: string): Promise<Customer | null>;
   search(query: string): Promise<Customer[]>;

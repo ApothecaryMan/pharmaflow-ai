@@ -22,6 +22,7 @@ import { Inventory } from '../components/inventory/Inventory';
 import { InventoryManagement } from '../components/inventory/InventoryManagement';
 import { StockAdjustment } from '../components/inventory/StockAdjustment';
 import { StockMovementReport, ExpiryManagement } from '../components/inventory';
+import { BranchSettings } from '../components/settings/BranchSettings';
 import { LandingPage } from '../components/layout/LandingPage';
 import { PendingApproval } from '../components/purchases/PendingApproval';
 import { PurchaseReturns } from '../components/purchases/PurchaseReturns';
@@ -522,6 +523,16 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     requiredProps: ['sales', 'employees', 'customers', 'color', 't', 'language', 'getVerifiedDate'],
     permission: 'users.view',
     layout: 'dashboard',
+  },
+  'branch-management': {
+    id: 'branch-management',
+    component: BranchSettings,
+    menuLabel: 'Branch Management',
+    menuLabelAr: 'إدارة الفروع',
+    icon: 'domain',
+    category: 'pharmacy-configuration',
+    requiredProps: ['language', 'color'],
+    permission: 'settings.update',
   },
 };
 

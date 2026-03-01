@@ -8,12 +8,12 @@ export type { Return, PurchaseReturn };
 
 export interface ReturnService {
   // Sales Returns
-  getAllSalesReturns(): Promise<Return[]>;
+  getAllSalesReturns(branchId?: string): Promise<Return[]>;
   getSalesReturnById(id: string): Promise<Return | null>;
   createSalesReturn(ret: Omit<Return, 'id'>): Promise<Return>;
 
   // Purchase Returns
-  getAllPurchaseReturns(): Promise<PurchaseReturn[]>;
+  getAllPurchaseReturns(branchId?: string): Promise<PurchaseReturn[]>;
   getPurchaseReturnById(id: string): Promise<PurchaseReturn | null>;
   createPurchaseReturn(ret: Omit<PurchaseReturn, 'id'>): Promise<PurchaseReturn>;
 

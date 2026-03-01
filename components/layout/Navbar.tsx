@@ -12,6 +12,8 @@ import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { Switch } from '../common/Switch';
 import { backupService } from '../../services/backup/backupService';
+import { useData } from '../../services/DataContext';
+import { branchService } from '../../services/branchService';
 
 import { PrinterSettings } from '../settings/PrinterSettings';
 import { SidebarDropdown } from './SidebarDropdown';
@@ -71,6 +73,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     hideInactiveModules,
     developerMode,
   } = useSettings();
+
+  const { activeBranchId, switchBranch } = useData();
+  const allBranches = branchService.getAll();
+  const activeBranch = allBranches.find(b => b.id === activeBranchId) || allBranches[0];
 
   const theme = currentTheme.primary;
 
@@ -501,10 +507,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
             )}
             <div className='hidden md:flex flex-col items-start'>
               <span className='text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5'>
-                {language === 'AR' ? 'Zinc' : 'Zinc'}
+                {authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc')}
               </span>
               <span className='text-[10px] text-gray-400 leading-none'>
-                {language === 'AR' ? 'الفرع الرئيسي' : 'Main Branch'}
+                {activeBranch?.name || (language === 'AR' ? 'الفرع الرئيسي' : 'Main Branch')}
               </span>
             </div>
             <span className='hidden md:block material-symbols-rounded text-gray-400' style={{ fontSize: 'var(--icon-base)' }}>
@@ -557,11 +563,11 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   </div>
                   <div>
                     <h3 className='font-bold text-gray-900 dark:text-white'>
-                      {language === 'AR' ? 'Zinc' : 'Zinc'}
+                      {authService.getCurrentUserSync()?.username || (language === 'AR' ? 'Zinc' : 'Zinc')}
                     </h3>
                     <div className='flex items-center gap-2'>
                       <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        {language === 'AR' ? 'الفرع الرئيسي' : 'Main Branch'}
+                        {activeBranch?.name || (language === 'AR' ? 'الفرع الرئيسي' : 'Main Branch')}
                       </p>
                       {profileImage && (
                         <button
@@ -583,6 +589,61 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   />
                 </div>
               </div>
+
+              {/* Branch Management & Switcher (Admin Only) */}
+              {(userRole === 'admin' || userRole === 'pharmacist_owner' || authService.getCurrentUserSync()?.username === import.meta.env.VITE_SUPER_USER) && (
+                <div className='p-2 border-t border-gray-100 dark:border-gray-800'>
+                  <div className='flex items-center justify-between px-2 mb-2'>
+                    <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
+                      {language === 'AR' ? 'الفروع' : 'Branches'}
+                    </p>
+                    <button
+                      onClick={() => {
+                        if (onNavigate) onNavigate('branch-management');
+                        setShowProfileMenu(false);
+                      }}
+                       className='text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors flex items-center gap-1 py-1 px-3 rounded-full border border-primary-100 dark:border-primary-900/50 hover:shadow-sm active:scale-95'
+                    >
+                      <span className='material-symbols-rounded' style={{ fontSize: '13px' }}>settings</span>
+                      {language === 'AR' ? 'إدارة الفروع' : 'Manage Branches'}
+                    </button>
+                  </div>
+
+                  {allBranches.length > 1 ? (
+                    <div className='space-y-1'>
+                      {allBranches.map((branch) => (
+                        <button
+                          key={branch.id}
+                          onClick={() => {
+                            switchBranch(branch.id);
+                            setShowProfileMenu(false);
+                          }}
+                          className={`w-full p-2 text-sm font-medium rounded-lg transition-colors flex items-center justify-between
+                            ${
+                              activeBranchId === branch.id
+                                ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
+                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900/40'
+                            }
+                          `}
+                        >
+                          <div className='flex items-center gap-2'>
+                            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+                              {activeBranchId === branch.id ? 'radio_button_checked' : 'radio_button_unchecked'}
+                            </span>
+                            {branch.name}
+                          </div>
+                          {branch.code && <span className='text-[10px] opacity-60'>{branch.code}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700/50 flex items-center gap-2'>
+                      <span className='material-symbols-rounded text-[16px] text-gray-400'>info</span>
+                      {language === 'AR' ? 'يوجد فرع واحد فقط حالياً.' : 'Only one branch available.'}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Settings have been moved to StatusBar Settings Menu */}
 

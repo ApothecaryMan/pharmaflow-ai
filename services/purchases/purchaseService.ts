@@ -15,35 +15,34 @@ const getRawAll = (): Purchase[] => {
 };
 
 export const createPurchaseService = (): PurchaseService => ({
-  getAll: async (): Promise<Purchase[]> => {
+  getAll: async (branchId?: string): Promise<Purchase[]> => {
     const all = getRawAll();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    return all.filter((p) => !p.branchId || p.branchId === branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    return all.filter((p) => p.branchId === effectiveBranchId);
   },
 
-  getById: async (id: string): Promise<Purchase | null> => {
-    const all = await purchaseService.getAll();
+  getById: async (id: string, branchId?: string): Promise<Purchase | null> => {
+    const all = await purchaseService.getAll(branchId);
     return all.find((p) => p.id === id) || null;
   },
 
-  getBySupplier: async (supplierId: string): Promise<Purchase[]> => {
-    const all = await purchaseService.getAll();
+  getBySupplier: async (supplierId: string, branchId?: string): Promise<Purchase[]> => {
+    const all = await purchaseService.getAll(branchId);
     return all.filter((p) => p.supplierId === supplierId);
   },
 
-  getByStatus: async (status: PurchaseStatus): Promise<Purchase[]> => {
-    const all = await purchaseService.getAll();
+  getByStatus: async (status: PurchaseStatus, branchId?: string): Promise<Purchase[]> => {
+    const all = await purchaseService.getAll(branchId);
     return all.filter((p) => p.status === status);
   },
 
-  getPending: async (): Promise<Purchase[]> => {
-    const all = await purchaseService.getAll();
+  getPending: async (branchId?: string): Promise<Purchase[]> => {
+    const all = await purchaseService.getAll(branchId);
     return all.filter((p) => p.status === 'pending');
   },
 
-  filter: async (filters: PurchaseFilters): Promise<Purchase[]> => {
-    let results = await purchaseService.getAll();
+  filter: async (filters: PurchaseFilters, branchId?: string): Promise<Purchase[]> => {
+    let results = await purchaseService.getAll(branchId);
 
     if (filters.status) {
       results = results.filter((p) => p.status === filters.status);
@@ -62,14 +61,14 @@ export const createPurchaseService = (): PurchaseService => ({
     return results;
   },
 
-  create: async (purchase: Omit<Purchase, 'id'>): Promise<Purchase> => {
+  create: async (purchase: Omit<Purchase, 'id'>, branchId?: string): Promise<Purchase> => {
     const all = getRawAll();
-    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
     const newPurchase: Purchase = {
       ...purchase,
       id: idGenerator.generate('purchases'),
       status: 'pending',
-      branchId: settings.branchCode,
+      branchId: effectiveBranchId,
     } as Purchase;
     all.push(newPurchase);
     storage.set(StorageKeys.PURCHASES, all);
@@ -132,8 +131,8 @@ export const createPurchaseService = (): PurchaseService => ({
     return true;
   },
 
-  getStats: async (): Promise<PurchaseStats> => {
-    const all = await purchaseService.getAll();
+  getStats: async (branchId?: string): Promise<PurchaseStats> => {
+    const all = await purchaseService.getAll(branchId);
     return {
       totalOrders: all.length,
       pendingOrders: all.filter((p) => p.status === 'pending').length,

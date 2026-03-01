@@ -15,20 +15,19 @@ const getRawAll = (): Supplier[] => {
 };
 
 export const createSupplierService = (): SupplierService => ({
-  getAll: async (): Promise<Supplier[]> => {
+  getAll: async (branchId?: string): Promise<Supplier[]> => {
     const all = getRawAll();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    return all.filter((s) => !s.branchId || s.branchId === branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    return all.filter((s) => s.branchId === effectiveBranchId);
   },
 
-  getById: async (id: string): Promise<Supplier | null> => {
-    const all = await supplierService.getAll();
+  getById: async (id: string, branchId?: string): Promise<Supplier | null> => {
+    const all = await supplierService.getAll(branchId);
     return all.find((s) => s.id === id) || null;
   },
 
-  search: async (query: string): Promise<Supplier[]> => {
-    const all = await supplierService.getAll();
+  search: async (query: string, branchId?: string): Promise<Supplier[]> => {
+    const all = await supplierService.getAll(branchId);
     const q = query.toLowerCase();
     return all.filter(
       (s) =>
@@ -39,13 +38,13 @@ export const createSupplierService = (): SupplierService => ({
     );
   },
 
-  create: async (supplier: Omit<Supplier, 'id'>): Promise<Supplier> => {
+  create: async (supplier: Omit<Supplier, 'id'>, branchId?: string): Promise<Supplier> => {
     const all = getRawAll();
-    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
     const newSupplier: Supplier = {
       ...supplier,
       id: idGenerator.generate('suppliers'),
-      branchId: settings.branchCode,
+      branchId: effectiveBranchId,
     } as Supplier;
     all.push(newSupplier);
     storage.set(StorageKeys.SUPPLIERS, all);

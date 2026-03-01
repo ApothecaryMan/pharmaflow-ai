@@ -34,40 +34,43 @@ const getRawAll = async (): Promise<Drug[]> => {
 };
 
 export const createInventoryService = (): InventoryService => ({
-  getAll: async (): Promise<Drug[]> => {
+  getAll: async (branchId?: string): Promise<Drug[]> => {
     const all = await getRawAll();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    return all.filter((d) => !d.branchId || d.branchId === branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    return all.filter((d) => d.branchId === effectiveBranchId);
   },
 
-  getAllBranches: async (): Promise<Drug[]> => {
-    return getRawAll();
+  getAllBranches: async (branchId?: string): Promise<Drug[]> => {
+    const all = await getRawAll();
+    if (branchId) {
+      return all.filter((d) => d.branchId === branchId);
+    }
+    return all;
   },
 
   getById: async (id: string): Promise<Drug | null> => {
     return drugCacheService.getById(id);
   },
 
-  getByBarcode: async (barcode: string): Promise<Drug | null> => {
-    const all = await inventoryService.getAll();
+  getByBarcode: async (barcode: string, branchId?: string): Promise<Drug | null> => {
+    const all = await inventoryService.getAll(branchId);
     return all.find((d) => d.barcode === barcode) || null;
   },
 
-  search: async (query: string): Promise<Drug[]> => {
-    const all = await inventoryService.getAll();
+  search: async (query: string, branchId?: string): Promise<Drug[]> => {
+    const all = await inventoryService.getAll(branchId);
     const q = query.toLowerCase();
     return all.filter(
       (d) =>
         d.name.toLowerCase().includes(q) ||
-        d.genericName?.toLowerCase().includes(q) ||
+        (d.genericName && d.genericName.some(g => g.toLowerCase().includes(q))) ||
         d.barcode?.includes(q) ||
         d.internalCode?.toLowerCase().includes(q)
     );
   },
 
-  filter: async (filters: InventoryFilters): Promise<Drug[]> => {
-    let results = await inventoryService.getAll();
+  filter: async (filters: InventoryFilters, branchId?: string): Promise<Drug[]> => {
+    let results = await inventoryService.getAll(branchId);
 
     if (filters.category) {
       results = results.filter((d) => d.category === filters.category);
@@ -83,18 +86,18 @@ export const createInventoryService = (): InventoryService => ({
     if (filters.search) {
       const q = filters.search.toLowerCase();
       results = results.filter(
-        (d) => d.name.toLowerCase().includes(q) || d.genericName?.toLowerCase().includes(q)
+        (d) => d.name.toLowerCase().includes(q) || (d.genericName && d.genericName.some(g => g.toLowerCase().includes(q)))
       );
     }
     return results;
   },
 
-  create: async (drug: Omit<Drug, 'id'>): Promise<Drug> => {
-    const settings = await settingsService.getAll();
+  create: async (drug: Omit<Drug, 'id'>, branchId?: string): Promise<Drug> => {
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
     const newDrug: Drug = {
       ...drug,
       id: idGenerator.generate('inventory'),
-      branchId: settings.branchCode,
+      branchId: effectiveBranchId,
     } as Drug;
     
     await drugCacheService.upsert(newDrug);
@@ -135,8 +138,8 @@ export const createInventoryService = (): InventoryService => ({
     return drug;
   },
 
-  getStats: async (): Promise<InventoryStats> => {
-    const all = await inventoryService.getAll();
+  getStats: async (branchId?: string): Promise<InventoryStats> => {
+    const all = await inventoryService.getAll(branchId);
     const now = new Date();
     const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
@@ -149,13 +152,13 @@ export const createInventoryService = (): InventoryService => ({
     };
   },
 
-  getLowStock: async (threshold = 10): Promise<Drug[]> => {
-    const all = await inventoryService.getAll();
+  getLowStock: async (threshold = 10, branchId?: string): Promise<Drug[]> => {
+    const all = await inventoryService.getAll(branchId);
     return all.filter((d) => d.stock < threshold);
   },
 
-  getExpiringSoon: async (days = 30): Promise<Drug[]> => {
-    const all = await inventoryService.getAll();
+  getExpiringSoon: async (days = 30, branchId?: string): Promise<Drug[]> => {
+    const all = await inventoryService.getAll(branchId);
     const threshold = new Date();
     threshold.setDate(threshold.getDate() + days);
     return all.filter((d) => new Date(d.expiryDate) <= threshold);

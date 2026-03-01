@@ -20,7 +20,7 @@ export interface PurchaseStats {
 }
 
 export interface PurchaseService {
-  getAll(): Promise<Purchase[]>;
+  getAll(branchId?: string): Promise<Purchase[]>;
   getById(id: string): Promise<Purchase | null>;
   getBySupplier(supplierId: string): Promise<Purchase[]>;
   getByStatus(status: 'pending' | 'completed' | 'rejected'): Promise<Purchase[]>;

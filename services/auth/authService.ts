@@ -33,6 +33,7 @@
 
 export interface UserSession {
   username: string;
+  employeeId?: string; // Optional for dev admin
   branchId: string;
   department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics';
   role:
@@ -66,8 +67,6 @@ const SESSION_KEY = 'branch_pilot_session';
 const AUDIT_KEY = 'pharmaflow_login_audit';
 
 // Development credentials - ONLY visible/active in DEV mode
-// This prevents credentials from leaking into production builds if tree-shaken correctly,
-// though ideally true auth is server-side.
 const DEV_CREDENTIALS = {
   username: import.meta.env.VITE_TEST_USER || 'test',
   password: import.meta.env.VITE_TEST_PASS || 'test',
@@ -81,12 +80,18 @@ export const authService = {
    * Get the current user session from storage
    */
   getCurrentUser: async (): Promise<UserSession | null> => {
+    return authService.getCurrentUserSync();
+  },
+
+  /**
+   * Synchronous current user retrieval
+   */
+  getCurrentUserSync: (): UserSession | null => {
     try {
       const stored = localStorage.getItem(SESSION_KEY);
       if (stored) {
         return JSON.parse(stored);
       }
-
       return null;
     } catch {
       return null;
@@ -94,12 +99,13 @@ export const authService = {
   },
 
   /**
-   * Login function (Mock implementation for Pilot)
+   * Login function (Checks Dev credentials then real Employees)
    */
   login: async (username: string, password: string): Promise<UserSession | null> => {
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
+    // 1. Check Dev credentials
     if (username === DEV_CREDENTIALS.username && password === (DEV_CREDENTIALS.password ?? '')) {
       const session: UserSession = {
         username: DEV_CREDENTIALS.username,
@@ -109,14 +115,55 @@ export const authService = {
       };
 
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-
-      // Log Audit Event
       authService.logAuditEvent({
         username: session.username,
         role: session.role,
         branchId: session.branchId,
         action: 'system_login',
-        details: 'System session started',
+        details: 'Dev session started',
+      });
+
+      return session;
+    }
+
+    // 2. Check real Employees (Importing dynamically to avoid circular dependencies)
+    const { storage } = await import('../../utils/storage');
+    const { StorageKeys } = await import('../../config/storageKeys');
+    const { verifyPassword } = await import('./hashUtils');
+    
+    // Using raw storage access to get all employees across all branches
+    const allEmployees = storage.get<any[]>(StorageKeys.EMPLOYEES, []);
+    
+    let employee = null;
+    for (const e of allEmployees) {
+      if (e.username === username || e.employeeCode === username) {
+        // Check if plain text matches or if it's a valid hash
+        const isPasswordMatch = e.password === password || await verifyPassword(password, e.password);
+        if (isPasswordMatch) {
+          employee = e;
+          break;
+        }
+      }
+    }
+
+    if (employee) {
+      const session: UserSession = {
+        username: employee.username || employee.name,
+        employeeId: employee.id,
+        branchId: employee.branchId || 'branch_main',
+        role: employee.role,
+        department: employee.department,
+      };
+
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+
+      authService.logAuditEvent({
+        username: session.username,
+        role: session.role,
+        branchId: session.branchId,
+        action: 'system_login',
+        details: 'Employee login successful',
+        employeeId: employee.id,
       });
 
       return session;

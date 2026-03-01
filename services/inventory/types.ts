@@ -22,8 +22,8 @@ export interface InventoryStats {
 }
 
 export interface InventoryService {
-  getAll(): Promise<Drug[]>;
-  getAllBranches(): Promise<Drug[]>;
+  getAll(branchId?: string): Promise<Drug[]>;
+  getAllBranches(branchId?: string): Promise<Drug[]>;
   getById(id: string): Promise<Drug | null>;
   getByBarcode(barcode: string): Promise<Drug | null>;
   search(query: string): Promise<Drug[]>;

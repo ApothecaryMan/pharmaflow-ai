@@ -29,12 +29,11 @@ const loadActiveShards = (): Sale[] => {
 };
 
 export const createSalesService = (): SalesService => ({
-  getAll: async (): Promise<Sale[]> => {
+  getAll: async (branchId?: string): Promise<Sale[]> => {
     // Only load active shards (Current + Last Month) to prevent memory crash
     const all = loadActiveShards();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    return all.filter((s) => !s.branchId || s.branchId === branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    return all.filter((s) => s.branchId === effectiveBranchId);
   },
 
   getById: async (id: string): Promise<Sale | null> => {
@@ -55,13 +54,13 @@ export const createSalesService = (): SalesService => ({
     return null;
   },
 
-  getByCustomer: async (customerId: string): Promise<Sale[]> => {
-    const all = await salesService.getAll();
+  getByCustomer: async (customerId: string, branchId?: string): Promise<Sale[]> => {
+    const all = await salesService.getAll(branchId);
     return all.filter((s) => s.customerCode === customerId);
   },
 
-  getByDateRange: async (from: string, to: string): Promise<Sale[]> => {
-    const all = await salesService.getAll();
+  getByDateRange: async (from: string, to: string, branchId?: string): Promise<Sale[]> => {
+    const all = await salesService.getAll(branchId);
     const fromDate = new Date(from);
     const toDate = new Date(to);
     return all.filter((s) => {
@@ -70,18 +69,18 @@ export const createSalesService = (): SalesService => ({
     });
   },
 
-  getToday: async (): Promise<Sale[]> => {
-    const all = await salesService.getAll();
+  getToday: async (branchId?: string): Promise<Sale[]> => {
+    const all = await salesService.getAll(branchId);
     const today = new Date().toISOString().split('T')[0];
     return all.filter((s) => s.date.startsWith(today));
   },
 
-  create: async (sale: Omit<Sale, 'id'>): Promise<Sale> => {
-    const settings = await settingsService.getAll();
+  create: async (sale: Omit<Sale, 'id'>, branchId?: string): Promise<Sale> => {
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
     const newSale: Sale = {
       ...sale,
       id: idGenerator.generate('sales'),
-      branchId: settings.branchCode,
+      branchId: effectiveBranchId,
     } as Sale;
 
     // Write to specific shard based on Sale Date
@@ -143,8 +142,8 @@ export const createSalesService = (): SalesService => ({
     return false;
   },
 
-  getStats: async (): Promise<SalesStats> => {
-    const all = await salesService.getAll();
+  getStats: async (branchId?: string): Promise<SalesStats> => {
+    const all = await salesService.getAll(branchId);
     const today = new Date().toISOString().split('T')[0];
     const todaySales = all.filter((s) => s.date.startsWith(today));
 
@@ -158,8 +157,8 @@ export const createSalesService = (): SalesService => ({
     };
   },
 
-  filter: async (filters: SalesFilters): Promise<Sale[]> => {
-    let results = await salesService.getAll();
+  filter: async (filters: SalesFilters, branchId?: string): Promise<Sale[]> => {
+    let results = await salesService.getAll(branchId);
 
     if (filters.dateFrom) {
       const from = new Date(filters.dateFrom);

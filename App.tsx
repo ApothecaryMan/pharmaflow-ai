@@ -21,7 +21,7 @@ import { useSessionHandlers } from './hooks/useSessionHandlers';
 import { ShiftProvider, useShift } from './hooks/useShift';
 import { useTheme } from './hooks/useTheme';
 import { TRANSLATIONS } from './i18n/translations';
-import { DataProvider, useData } from './services';
+import { DataProvider, useData } from './services/DataContext';
 import { authService } from './services/auth/authService';
 import { type Supplier, ViewState } from './types';
 
@@ -122,6 +122,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     batches,
     setBatches,
     isLoading,
+    activeBranchId,
   } = useData();
 
   // --- StatusBar Utilities ---
@@ -191,6 +192,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     purchaseReturns,
     setPurchaseReturns,
     currentEmployeeId,
+    activeBranchId,
     employees,
     setEmployees, // Added setEmployees
     isLoading,

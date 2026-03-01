@@ -16,8 +16,8 @@ interface TimeResponse {
   unixtime: number;
 }
 
-const TIME_PROVIDERS = [
-  '/.netlify/functions/time', // Our own Netlify Function (most reliable)
+const TIME_PROVIDERS: string[] = [
+  // '/.netlify/functions/time', // Disabled for local dev to prevent 404
   // External APIs removed to prevent connection errors and rely on local system time as the source of truth
   // 'https://timeapi.io/api/Time/current/zone?timeZone=UTC',
   // 'https://worldtimeapi.org/api/timezone/Etc/UTC',
