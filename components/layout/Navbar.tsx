@@ -11,6 +11,7 @@ import { ContextMenuTrigger } from '../common/ContextMenu';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { Switch } from '../common/Switch';
+import { backupService } from '../../services/backup/backupService';
 
 import { PrinterSettings } from '../settings/PrinterSettings';
 import { SidebarDropdown } from './SidebarDropdown';
@@ -78,6 +79,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const importRef = useRef<HTMLInputElement>(null);
   const t = TRANSLATIONS[language];
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -596,6 +598,40 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>print</span>
                   {(t as any).printerSettings?.title || 'Printer Settings'}
                 </button>
+              </div>
+
+              {/* Backup & Data Management */}
+              <div className='p-2 border-t border-gray-100 dark:border-gray-800 space-y-1'>
+                <button
+                  onClick={() => backupService.exportBackup()}
+                  className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors flex items-center justify-center gap-2'
+                >
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>download</span>
+                  {t.settings.exportBackup}
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm(t.settings.importWarning)) {
+                      importRef.current?.click();
+                    }
+                  }}
+                  className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors flex items-center justify-center gap-2'
+                >
+                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>upload</span>
+                  {t.settings.importBackup}
+                </button>
+                <input 
+                  type="file" 
+                  ref={importRef} 
+                  className="hidden" 
+                  accept=".json"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      backupService.importBackup(file).catch(err => alert('Error: ' + err.message));
+                    }
+                  }}
+                />
               </div>
 
               {/* Sign Out */}

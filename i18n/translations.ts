@@ -64,6 +64,10 @@ export const TRANSLATIONS = {
       fontEN: 'English Font',
       fontAR: 'Arabic Font',
       graphicStyle: 'Graphic Heading Style',
+      dataManagement: 'Data Management',
+      exportBackup: 'Export Backup',
+      importBackup: 'Import Backup',
+      importWarning: 'Warning: Importing a backup will overwrite all current data. Proceed?',
     },
 
     profile: {
@@ -2206,6 +2210,10 @@ export const TRANSLATIONS = {
       fontEN: 'خط اللغة الإنجليزية',
       fontAR: 'خط اللغة العربية',
       graphicStyle: 'نمط العناوين الجرافيكي',
+      dataManagement: 'إدارة البيانات',
+      exportBackup: 'تصدير نسخة احتياطية',
+      importBackup: 'استيراد نسخة احتياطية',
+      importWarning: 'تحذير: استيراد النسخة الاحتياطية سيمسح البيانات الحالية ويستبدلها بالكامل. هل تريد الاستمرار؟',
     },
 
     profile: {
