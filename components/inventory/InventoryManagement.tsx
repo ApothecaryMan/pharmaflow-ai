@@ -35,7 +35,9 @@ export const InventoryManagement: React.FC<InventoryManagementProps> = ({
         render: (item: Drug) => (
           <div className='flex flex-col'>
             <span className='font-bold'>{item.name}</span>
-            <span className='text-xs text-gray-500'>{item.genericName}</span>
+            <span className='text-xs text-gray-500'>
+              {Array.isArray(item.genericName) ? item.genericName.join(' + ') : item.genericName}
+            </span>
           </div>
         ),
       },

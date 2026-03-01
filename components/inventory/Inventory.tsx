@@ -72,7 +72,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   // Form State for Add Product
   const [formData, setFormData] = useState<Partial<Drug>>({
     name: '',
-    genericName: '',
+    genericName: [], // Changed to array
     category: 'General',
     price: 0,
     costPrice: 0,
@@ -143,7 +143,16 @@ export const Inventory: React.FC<InventoryProps> = ({
     setEditingDrug(drug);
     // Load stock as PACKS for editing
     const stockInPacks = drug.stock / (drug.unitsPerPack || 1);
-    setFormData({ ...drug, stock: stockInPacks, maxDiscount: drug.maxDiscount ?? 10 });
+    setFormData({
+      ...drug,
+      stock: stockInPacks,
+      maxDiscount: drug.maxDiscount ?? 10,
+      genericName: Array.isArray(drug.genericName)
+        ? drug.genericName
+        : drug.genericName
+          ? [drug.genericName]
+          : [],
+    });
     setIsModalOpen(true);
     setActiveMenuId(null);
   };
@@ -151,7 +160,15 @@ export const Inventory: React.FC<InventoryProps> = ({
   const handleDuplicate = (drug: Drug) => {
     setEditingDrug(null); // Set as new drug
     const { id, ...rest } = drug;
-    setFormData({ ...rest, name: `${rest.name} (Copy)` });
+    setFormData({
+      ...rest,
+      name: `${rest.name} (Copy)`,
+      genericName: Array.isArray(rest.genericName)
+        ? rest.genericName
+        : rest.genericName
+          ? [rest.genericName]
+          : [],
+    });
     setIsModalOpen(true);
     setActiveMenuId(null);
   };
@@ -210,8 +227,10 @@ export const Inventory: React.FC<InventoryProps> = ({
     const { mode: searchMode, regex } = parseSearchTerm(searchTerm);
 
     let result = inventory.filter((d) => {
-      if (searchMode === 'ingredient') {
-        return d.activeIngredients && d.activeIngredients.some((ing) => regex.test(ing));
+      if (searchMode === 'ingredient' || searchMode === 'generic') {
+        return Array.isArray(d.genericName) 
+          ? d.genericName.some((gn) => regex.test(gn))
+          : (d.genericName as any) && regex.test(d.genericName as any);
       }
 
       // Normal search: Check composite string for cross-field matches (e.g. "Pana Tablet")
@@ -220,7 +239,9 @@ export const Inventory: React.FC<InventoryProps> = ({
       return (
         regex.test(searchableText) ||
         (d.barcode && regex.test(d.barcode)) ||
-        (d.internalCode && regex.test(d.internalCode))
+        (d.internalCode && regex.test(d.internalCode)) ||
+        (Array.isArray(d.genericName) && d.genericName.some((gn) => regex.test(gn))) || // Search genericName array
+        (!Array.isArray(d.genericName) && d.genericName && regex.test(d.genericName)) // Fallback for old string genericName
       );
     });
 
@@ -397,13 +418,11 @@ export const Inventory: React.FC<InventoryProps> = ({
               <div className='font-medium text-gray-900 dark:text-gray-100 text-sm drug-name'>
                 {displayName}
               </div>
-              <div className='text-xs text-gray-500 w-full text-start' dir='auto'>
                 <span>
-                  {drug.genericName?.length > 35
-                    ? drug.genericName.substring(0, 35) + '...'
-                    : drug.genericName}
+                  {Array.isArray(drug.genericName) 
+                    ? drug.genericName.join(' + ') 
+                    : (drug.genericName as any)}
                 </span>
-              </div>
             </div>
           );
         },
@@ -711,7 +730,7 @@ export const Inventory: React.FC<InventoryProps> = ({
             inventory={inventory}
             onAddDrug={(drug) => {
               onAddDrug(drug);
-              // Handle post-save navigation if not "Add Another" 
+              // Handle post-save navigation if not "Add Another"
               // (Note: AddProduct manages its own success state)
             }}
             color={color}
@@ -750,7 +769,9 @@ export const Inventory: React.FC<InventoryProps> = ({
                   )}
                 </h2>
                 <p className='text-gray-500 font-medium text-start' dir='ltr'>
-                  {viewingDrug.genericName}
+                  {Array.isArray(viewingDrug.genericName)
+                    ? viewingDrug.genericName.join(' + ')
+                    : (viewingDrug.genericName as any)}
                 </p>
               </div>
               <span
@@ -891,15 +912,19 @@ export const Inventory: React.FC<InventoryProps> = ({
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
                   </div>
-                  <div>
-                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t.modal.generic} *
+                  <div className='lg:col-span-2 space-y-1'>
+                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300'>
+                      Generic Name
                     </label>
                     <input
-                      required
                       className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      value={formData.genericName}
-                      onChange={(e) => setFormData({ ...formData, genericName: e.target.value })}
+                      value={Array.isArray(formData.genericName) ? formData.genericName.join(', ') : formData.genericName || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          genericName: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -1205,9 +1230,9 @@ export const Inventory: React.FC<InventoryProps> = ({
                 {printModalDrug.name}
               </div>
               <div className='text-sm text-gray-500'>
-                {printModalDrug.genericName?.length > 35
-                  ? printModalDrug.genericName.substring(0, 35) + '...'
-                  : printModalDrug.genericName}
+                {Array.isArray(printModalDrug.genericName)
+                  ? printModalDrug.genericName.join(' + ')
+                  : (printModalDrug.genericName as any)}
               </div>
             </div>
 

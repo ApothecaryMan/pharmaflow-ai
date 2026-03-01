@@ -44,7 +44,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
   const [formData, setFormData] = useState<Partial<Drug>>({
     name: '',
     nameArabic: '',
-    genericName: '',
+    genericName: [],
     category: 'General',
     dosageForm: '',
     price: 0,
@@ -156,7 +156,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
     const newDrug: Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'> = {
       name: formData.name || '',
       nameArabic: formData.nameArabic,
-      genericName: formData.genericName || '',
+      genericName: formData.genericName,
       category: formData.category || 'General',
       price: formData.price || 0,
       costPrice: formData.costPrice || 0,
@@ -193,7 +193,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
     setFormData({
       name: '',
       nameArabic: '',
-      genericName: '',
+      genericName: [],
       category: 'General',
       dosageForm: '',
       price: 0,
@@ -281,15 +281,16 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 lg:col-span-2">
                 <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1">
                   {t.fields?.genericName} *
                 </label>
                 <SmartInput
                   required
+                  dir="auto"
                   placeholder={t.placeholders?.genericName}
-                  value={formData.genericName}
-                  onChange={(e) => setFormData({ ...formData, genericName: e.target.value })}
+                  value={formData.genericName?.join(', ') || ''}
+                  onChange={(e) => setFormData({ ...formData, genericName: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
                   className={INPUT_CLASSES}
                 />
               </div>

@@ -63,17 +63,18 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
         // Exact code match (no regex needed)
         if (d.barcode === trimmed || d.internalCode === trimmed) return true;
 
-        if (mode === 'ingredient') {
-          return d.activeIngredients?.some((ing) => regex.test(ing));
+        if (mode === 'ingredient' || mode === 'generic') {
+          return Array.isArray(d.genericName) 
+            ? d.genericName.some((gn) => regex.test(gn))
+            : (d.genericName as any) && regex.test(d.genericName as any);
         }
 
         const searchableText = [
           d.name,
-          d.genericName,
+          ...(Array.isArray(d.genericName) ? d.genericName : [d.genericName]),
           d.dosageForm,
           d.category,
           d.description,
-          ...(Array.isArray(d.activeIngredients) ? d.activeIngredients : []),
         ]
           .filter(Boolean)
           .join(' ');

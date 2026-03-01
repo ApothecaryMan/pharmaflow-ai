@@ -271,7 +271,11 @@ export const POS: React.FC<POSProps> = ({
     if (isGenericMode) {
       const generics = new Set<string>();
       filteredBase.forEach((d) => {
-        if (d.genericName) generics.add(`@${d.genericName}`);
+        if (Array.isArray(d.genericName)) {
+          d.genericName.forEach(gn => generics.add(`@${gn}`));
+        } else if (d.genericName) {
+          generics.add(`@${d.genericName}`);
+        }
       });
       suggestions = Array.from(generics);
     } else {
@@ -466,9 +470,9 @@ export const POS: React.FC<POSProps> = ({
               {getDisplayName(info.row.original, textTransform)}
             </span>
             <span className='text-xs text-gray-500 whitespace-normal wrap-break-word w-full text-start' dir='auto'>
-              {info.row.original.genericName && info.row.original.genericName.length > 35
-                ? `${info.row.original.genericName.slice(0, 35)}…`
-                : info.row.original.genericName}
+              {Array.isArray(info.row.original.genericName)
+                ? info.row.original.genericName.join(' + ')
+                : (info.row.original.genericName as any)}
             </span>
           </div>
         ),

@@ -146,7 +146,7 @@ export const getLabelElementContent = (
           })
         : 'MM/YYYY';
     case 'genericName':
-      return drug.genericName || '';
+      return Array.isArray(drug.genericName) ? drug.genericName.join(' + ') : drug.genericName || '';
     default:
       return el.content || el.label || '';
   }

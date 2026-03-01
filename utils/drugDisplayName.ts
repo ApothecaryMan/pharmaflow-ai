@@ -13,7 +13,7 @@ export interface DrugDisplayItem {
   name: string;
   nameArabic?: string;
   dosageForm?: string;
-  genericName?: string;
+  genericName?: string[];
   strength?: string;
 }
 

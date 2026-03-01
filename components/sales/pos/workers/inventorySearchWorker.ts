@@ -50,14 +50,20 @@ self.onmessage = (e: MessageEvent) => {
       // Text search requires minimum 2 characters
       else if (searchTermForLength.length >= 2) {
         if (mode === 'generic') {
-          matchesSearch = !!d.genericName && regex.test(d.genericName);
+          matchesSearch = Array.isArray(d.genericName) 
+            ? d.genericName.some(gn => regex.test(gn))
+            : (d.genericName && regex.test(d.genericName as any));
         } else {
           const searchableText = [
             d.name,
             d.dosageForm,
             d.category,
             d.description,
-            ...(Array.isArray(d.activeIngredients) ? d.activeIngredients : []),
+            ...(Array.isArray(d.genericName) 
+              ? d.genericName 
+              : d.genericName 
+                ? [d.genericName] 
+                : []),
           ]
             .filter(Boolean)
             .join(' ');

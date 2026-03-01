@@ -303,7 +303,7 @@ export const TRANSLATIONS = {
         },
         placeholders: {
           brandName: 'e.g., Augmentin 1g Tablets',
-          genericName: 'e.g., Amoxicillin + Clavulanic Acid',
+          genericName: 'e.g., Amlodipine, Valsartan',
           barcode: 'Scan to add...',
           internalCode: 'Auto-gen or manual',
           category: 'Select Category',
@@ -2455,7 +2455,7 @@ export const TRANSLATIONS = {
         },
         placeholders: {
           brandName: 'مثال: أوجمنتين ١ جرام أقراص',
-          genericName: 'مثال: أموكسيسيلين + حمض الكلافولانيك',
+          genericName: 'مثال: أملوديبين، فالسارتان',
           barcode: 'امسح للإضافة...',
           internalCode: 'توليد تلقائي أو يدوي',
           category: 'اختر التصنيف',

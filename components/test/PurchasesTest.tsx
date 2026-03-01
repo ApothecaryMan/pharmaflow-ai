@@ -274,9 +274,16 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
     if (historySearch.trim()) {
       const { mode: searchMode, regex } = parseSearchTerm(historySearch);
 
-      if (searchMode === 'ingredient') {
+      if (searchMode === 'ingredient' || searchMode === 'generic') {
         data = data.filter(
-          (p) => p.items && p.items.some((item) => item.name && regex.test(item.name))
+          (p) => p.items && p.items.some((item) => {
+            // Find the drug in inventory to check its genericName
+            const drug = inventory.find(d => d.id === item.drugId);
+            if (!drug) return regex.test(item.name);
+            return Array.isArray(drug.genericName)
+              ? drug.genericName.some(gn => regex.test(gn))
+              : (drug.genericName as any) && regex.test(drug.genericName as any);
+          })
         );
       } else {
         data = data.filter(
@@ -1015,18 +1022,21 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
       if (filter === 'out-stock' && d.stock > 0) return false;
 
       // 2. Search Filter
-      if (searchMode === 'ingredient') {
-        return d.activeIngredients && d.activeIngredients.some((ing) => regex.test(ing));
+      if (searchMode === 'ingredient' || searchMode === 'generic') {
+        return Array.isArray(d.genericName) 
+          ? d.genericName.some((gn) => regex.test(gn))
+          : (d.genericName as any) && regex.test(d.genericName as any);
       }
 
-      const searchableText =
-        d.name +
-        ' ' +
-        (d.dosageForm || '') +
-        ' ' +
-        (d.internalCode || '') +
-        ' ' +
-        (d.barcode || '');
+      const searchableText = [
+        d.name,
+        d.dosageForm,
+        d.internalCode,
+        d.barcode,
+        ...(Array.isArray(d.genericName) ? d.genericName : [d.genericName]),
+      ]
+        .filter(Boolean)
+        .join(' ');
       return regex.test(searchableText);
     })
     .slice(0, 30); // Limit to 30 results for performance

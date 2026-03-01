@@ -39,7 +39,9 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
               {getArabicDisplayName(viewingDrug)}
             </h3>
           )}
-          <p className='text-sm text-gray-500 font-medium italic'>{viewingDrug.genericName}</p>
+          <p className='text-sm text-gray-500 font-medium italic'>
+            {Array.isArray(viewingDrug.genericName) ? viewingDrug.genericName.join(' + ') : (viewingDrug.genericName as any)}
+          </p>
         </div>
         
         <div className="flex gap-2">
@@ -90,15 +92,15 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
             </div>
           </div>
           
-          {viewingDrug.activeIngredients && viewingDrug.activeIngredients.length > 0 && (
+          {viewingDrug.genericName && (
             <div className="mt-3 p-3 rounded-xl bg-primary-50/30 dark:bg-primary-900/10 border border-primary-100/50 dark:border-primary-800/20">
               <label className="block text-[9px] font-black text-primary-500 uppercase mb-2 tracking-widest">
-                {currentLang === 'ar' ? 'المواد الفعالة' : 'Active Ingredients'}
+                {currentLang === 'ar' ? 'الاسم العلمي' : 'Scientific Name'}
               </label>
               <div className="flex flex-wrap gap-1.5">
-                {viewingDrug.activeIngredients.map((ing, i) => (
+                {(Array.isArray(viewingDrug.genericName) ? viewingDrug.genericName : [viewingDrug.genericName]).filter(Boolean).map((ing, i) => (
                   <span key={i} className="px-2 py-0.5 rounded-lg bg-white dark:bg-gray-900 text-[10px] font-bold text-primary-700 dark:text-primary-300 border border-primary-100 dark:border-primary-800 shadow-sm uppercase">
-                    {ing}
+                    {(ing as any)?.trim()}
                   </span>
                 ))}
               </div>
@@ -240,7 +242,7 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
       {/* Substitutes Section */}
       <section>
         <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">
-          {currentLang === 'ar' ? 'البدائل المتاحة (نفس المادة الفعالة)' : 'Available Substitutes'}
+          {currentLang === 'ar' ? 'البدائل المتاحة (نفس الاسم العلمي)' : 'Available Substitutes'}
         </h4>
         <div className="flex flex-wrap gap-2">
           {substitutes.length > 0 ? substitutes.map(sub => (
@@ -257,7 +259,7 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
               </div>
             </div>
           )) : (
-            <span className="text-xs text-gray-400 italic">{currentLang === 'ar' ? 'لا يوجد بدائل مسجلة بنفس المادة الفعالة' : 'No substitutes found with same generic name.'}</span>
+            <span className="text-xs text-gray-400 italic">{currentLang === 'ar' ? 'لا يوجد بدائل مسجلة بنفس الاسم العلمي' : 'No substitutes found with same generic name.'}</span>
           )}
         </div>
       </section>

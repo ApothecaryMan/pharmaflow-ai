@@ -31,7 +31,7 @@ export interface Drug {
   /** Product name in Arabic (الاسم عربي) */
   nameArabic?: string;
   /** Generic/scientific name */
-  genericName: string;
+  genericName: string[];
   /** Category classification */
   category: string;
   /** Selling price per pack */

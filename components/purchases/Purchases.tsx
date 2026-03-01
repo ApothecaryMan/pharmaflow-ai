@@ -924,18 +924,21 @@ export const Purchases: React.FC<PurchasesProps> = ({
       if (filter === 'out-stock' && d.stock > 0) return false;
 
       // 2. Search Filter
-      if (searchMode === 'ingredient') {
-        return d.activeIngredients && d.activeIngredients.some((ing) => regex.test(ing));
+      if (searchMode === 'ingredient' || searchMode === 'generic') {
+        return Array.isArray(d.genericName) 
+          ? d.genericName.some((gn) => regex.test(gn))
+          : (d.genericName as any) && regex.test(d.genericName as any);
       }
 
-      const searchableText =
-        d.name +
-        ' ' +
-        (d.dosageForm || '') +
-        ' ' +
-        (d.internalCode || '') +
-        ' ' +
-        (d.barcode || '');
+      const searchableText = [
+        d.name,
+        d.dosageForm,
+        d.internalCode,
+        d.barcode,
+        ...(Array.isArray(d.genericName) ? d.genericName : [d.genericName]),
+      ]
+        .filter(Boolean)
+        .join(' ');
       return regex.test(searchableText);
     })
     .slice(0, 30); // Limit to 30 results for performance
