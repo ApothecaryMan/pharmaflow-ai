@@ -1,6 +1,6 @@
 import type React from 'react';
-import { useState } from 'react';
-import { useRisk } from '../../../hooks/useRisk';
+import { useEffect, useState } from 'react';
+import type { ExpiryRiskItem, RiskSummary } from '../../../types/intelligence';
 import { formatCurrency, getCurrencySymbol } from '../../../utils/currency';
 import { SegmentedProgressCard } from '../../common/ProgressCard';
 import { SmallCard } from '../../common/SmallCard';
@@ -11,19 +11,26 @@ import { ExpiryRiskGrid } from './ExpiryRiskGrid';
 interface RiskPageProps {
   t: any;
   language?: string;
+  summary: RiskSummary | null;
+  items: ExpiryRiskItem[];
+  loading: boolean;
 }
 
-export const RiskPage: React.FC<RiskPageProps> = ({ t }) => {
-  const { summary, items, loading } = useRisk();
+export const RiskPage: React.FC<RiskPageProps> = ({ t, summary, items, loading }) => {
   const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
   const [selectedBatchIds, setSelectedBatchIds] = useState<string[]>([]);
 
-  const handleApplyDiscount = () => {
-    // Get batch IDs from current items
-    const batchIds = items.slice(0, 5).map((item) => item.batch_id);
-    setSelectedBatchIds(batchIds);
-    setIsDiscountModalOpen(true);
-  };
+  // Listen for global event from Header
+  useEffect(() => {
+    const handleGlobalDiscount = () => {
+      // Default to first 5 items if none selected (as per original logic)
+      const batchIds = items.slice(0, 5).map((item) => item.batch_id);
+      setSelectedBatchIds(batchIds);
+      setIsDiscountModalOpen(true);
+    };
+    window.addEventListener('OPEN_DISCOUNT_MODAL' as any, handleGlobalDiscount);
+    return () => window.removeEventListener('OPEN_DISCOUNT_MODAL' as any, handleGlobalDiscount);
+  }, [items]);
 
   // Loading skeleton
   if (loading) {
@@ -87,9 +94,9 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t }) => {
         <div className='p-8 text-center bg-transparent'>
           <span className='material-symbols-rounded text-5xl text-emerald-500 mb-4'>verified</span>
           <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
-            {t.intelligence.risk.empty.title}
+            {t?.intelligence?.risk?.empty?.title || 'No risks identified'}
           </h3>
-          <p className='text-gray-500'>{t.intelligence.risk.empty.subtitle}</p>
+          <p className='text-gray-500'>{t?.intelligence?.risk?.empty?.subtitle || 'All batches are well within expiry'}</p>
         </div>
       </div>
     );
@@ -156,28 +163,11 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t }) => {
       </div>
 
       {/* Detailed Grid */}
-      <div className='bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 flex-1 flex flex-col overflow-hidden'>
+      <div className='bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex-1 flex flex-col overflow-hidden'>
         <div className='flex justify-between items-center px-4 py-4 shrink-0'>
           <h3 className='text-lg font-bold text-gray-900 dark:text-white'>
-            {t.intelligence.risk.sections.expiryAnalysis}
+            {t?.intelligence?.risk?.sections?.expiryAnalysis || 'Expiry Analysis'}
           </h3>
-          <div className='flex gap-2'>
-            <button
-              type='button'
-              onClick={() => console.log('Create Return List')}
-              className='px-3 py-1.5 text-sm bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100'
-            >
-              {t.intelligence.risk.actions.createReturn}
-            </button>
-            <button
-              type='button'
-              onClick={handleApplyDiscount}
-              className='px-3 py-1.5 text-sm bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors border border-amber-100 flex items-center gap-1'
-            >
-              <span className='material-symbols-rounded text-lg font-icon'>sell</span>
-              {t.intelligence.risk.actions.applyDiscount}
-            </button>
-          </div>
         </div>
         <div className='flex-1 overflow-hidden'>
           <ExpiryRiskGrid data={items} t={t} />

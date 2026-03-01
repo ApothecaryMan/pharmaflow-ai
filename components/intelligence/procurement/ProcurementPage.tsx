@@ -1,9 +1,7 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import type React from 'react';
-import { useMemo, useState } from 'react';
-import { useProcurement } from '../../../hooks/useProcurement';
-import type { ProcurementItem } from '../../../types/intelligence';
-import { FilterDropdown } from '../../common/FilterDropdown';
+import { useEffect, useMemo, useState } from 'react';
+import type { ProcurementItem, ProcurementSummary } from '../../../types/intelligence';
 import { TanStackTable } from '../../common/TanStackTable';
 import { ConfidenceIndicator } from '../common/ConfidenceIndicator';
 import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
@@ -13,44 +11,39 @@ import { ProcurementKPIs } from './ProcurementKPIs';
 import { useSettings } from '../../../context';
 import { getDisplayName } from '../../../utils/drugDisplayName';
 
-// --- Local Components ---
-
-// StatusBadge moved to shared components
-
 interface ProcurementPageProps {
   t: any;
   language?: string;
+  summary: ProcurementSummary | null;
+  filteredItems: ProcurementItem[];
+  loading: boolean;
 }
 
-export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 'EN' }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
+export const ProcurementPage: React.FC<ProcurementPageProps> = ({
+  t,
+  language = 'EN',
+  summary,
+  filteredItems,
+  loading,
+}) => {
   const [isPOModalOpen, setIsPOModalOpen] = useState(false);
   const [selectedForPO, setSelectedForPO] = useState<string[]>([]);
-
-  const { summary, filteredItems, loading, suppliers, categories } = useProcurement({
-    supplierId: selectedSupplier,
-    categoryId: selectedCategory,
-  });
-
   const { textTransform } = useSettings();
 
-  // Build dropdown options
-  const supplierOptions = useMemo(
-    () => [
-      { label: t.intelligence.procurement.filters.all, value: 'all' },
-      ...suppliers.map((s) => ({ label: s.name, value: s.id })),
-    ],
-    [suppliers, t]
-  );
-
-  const categoryOptions = useMemo(
-    () => [
-      { label: t.intelligence.procurement.filters.all, value: 'all' },
-      ...categories.map((c) => ({ label: c.name, value: c.id })),
-    ],
-    [categories, t]
-  );
+  // Listen for global event from Header
+  useEffect(() => {
+    const handleGlobalPO = (e: any) => {
+      if (e.detail?.ids) {
+        setSelectedForPO(e.detail.ids);
+        setIsPOModalOpen(true);
+      }
+    };
+    window.addEventListener('OPEN_PO_MODAL' as any, handleGlobalPO);
+    (window as any).dispatchGlobalEvent = (name: string, data: any) => {
+        window.dispatchEvent(new CustomEvent(name, { detail: { ids: data } }));
+    };
+    return () => window.removeEventListener('OPEN_PO_MODAL' as any, handleGlobalPO);
+  }, []);
 
   const handleGeneratePO = (ids: string[]) => {
     setSelectedForPO(ids);
@@ -147,7 +140,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 
 
   // Loading skeleton
   if (loading) {
-    return <DashboardPageSkeleton withTopBar />;
+    return <DashboardPageSkeleton />;
   }
 
   return (
@@ -158,85 +151,6 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 
         onClose={() => setIsPOModalOpen(false)}
         selectedProductIds={selectedForPO}
       />
-
-      {/* Filters Toolbar */}
-      <div className='flex flex-wrap gap-3 items-center justify-between bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 px-4 py-3 shrink-0'>
-        <div className='flex flex-wrap gap-2 items-center'>
-          <div className='relative h-[42px] min-w-48'>
-            <FilterDropdown
-              floating
-              items={supplierOptions}
-              selectedItem={supplierOptions.find((i) => i.value === selectedSupplier)}
-              onSelect={(item) => setSelectedSupplier(item.value)}
-              keyExtractor={(item) => item.value}
-              renderItem={(item, isSelected) => (
-                <span
-                  className={`${isSelected ? 'font-bold text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}
-                >
-                  {item.label}
-                </span>
-              )}
-              renderSelected={(item) => (
-                <div className='flex items-center gap-2'>
-                  <span className='material-symbols-rounded text-gray-500 text-lg'>
-                    inventory_2
-                  </span>
-                  <span className='text-gray-500 text-xs'>
-                    {t.intelligence.procurement.filters.supplier}:
-                  </span>
-                  <span className='font-medium text-gray-900 dark:text-white text-sm'>
-                    {item?.label || t.intelligence.procurement.filters.select}
-                  </span>
-                </div>
-              )}
-              variant='input'
-              className='z-50'
-              minHeight={42}
-            />
-          </div>
-
-          <div className='relative h-[42px] min-w-48'>
-            <FilterDropdown
-              floating
-              items={categoryOptions}
-              selectedItem={categoryOptions.find((i) => i.value === selectedCategory)}
-              onSelect={(item) => setSelectedCategory(item.value)}
-              keyExtractor={(item) => item.value}
-              renderItem={(item, isSelected) => (
-                <span
-                  className={`${isSelected ? 'font-bold text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}
-                >
-                  {item.label}
-                </span>
-              )}
-              renderSelected={(item) => (
-                <div className='flex items-center gap-2'>
-                  <span className='material-symbols-rounded text-gray-500 text-lg'>category</span>
-                  <span className='text-gray-500 text-xs'>
-                    {t.intelligence.procurement.filters.category}:
-                  </span>
-                  <span className='font-medium text-gray-900 dark:text-white text-sm'>
-                    {item?.label || t.intelligence.procurement.filters.select}
-                  </span>
-                </div>
-              )}
-              variant='input'
-              className='z-40'
-              minHeight={42}
-            />
-          </div>
-        </div>
-
-        <div className='flex gap-2'>
-          <button
-            onClick={() => handleGeneratePO(filteredItems.map((i) => i.product_id))}
-            className='flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-xs active:scale-95'
-          >
-            <span className='material-symbols-rounded text-lg'>add_shopping_cart</span>
-            {t.intelligence.procurement.actions.generatePO}
-          </button>
-        </div>
-      </div>
 
       {/* KPIs */}
       <div className='shrink-0'>{summary && <ProcurementKPIs summary={summary} />}</div>
@@ -249,7 +163,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 
               data={filteredItems}
               columns={columns}
               isLoading={loading}
-              emptyMessage={t.intelligence.procurement.empty.title}
+              emptyMessage={t?.intelligence?.procurement?.empty?.title || 'No items to order'}
               tableId='procurement-table'
               lite={true}
               enableSearch={false}
@@ -264,9 +178,9 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({ t, language = 
                 inventory
               </span>
               <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
-                {t.intelligence.procurement.empty.title}
+                {t?.intelligence?.procurement?.empty?.title || 'No items needing order'}
               </h3>
-              <p className='text-gray-500'>{t.intelligence.procurement.empty.subtitle}</p>
+              <p className='text-gray-500'>{t?.intelligence?.procurement?.empty?.subtitle || 'Your inventory seems to be well stocked'}</p>
             </div>
           )}
         </div>

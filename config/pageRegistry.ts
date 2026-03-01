@@ -8,6 +8,7 @@ import { CustomerOverview } from '../components/customers/CustomerOverview';
 import { Dashboard } from '../components/dashboard/Dashboard';
 // Skeletons
 import { DashboardSkeleton } from '../components/dashboard/DashboardSkeletons';
+import { DashboardPageSkeleton } from '../components/intelligence/common/IntelligenceSkeletons';
 import { RealTimeSalesMonitor } from '../components/dashboard/RealTimeSalesMonitor';
 import { AdvancedSmCard } from '../components/experiments/AdvancedSmCard';
 import { DashboardExperiments } from '../components/experiments/DashboardExperiments';
@@ -486,6 +487,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'auto_graph',
     category: 'reports',
     requiredProps: ['color', 't', 'language'],
+    skeleton: DashboardPageSkeleton,
+    skeletonProps: { withTopBar: true },
     permission: 'reports.view_financial',
     layout: 'dashboard',
   },

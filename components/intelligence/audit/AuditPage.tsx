@@ -9,161 +9,123 @@ import { formatCurrency } from '../../../utils/currency';
 import { TransactionDetailModal } from './TransactionDetailModal';
 import { useSettings } from '../../../context';
 import { getDisplayName } from '../../../utils/drugDisplayName';
+import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
 
 interface AuditPageProps {
   t: any;
-  language: string;
+  language?: string;
+  transactions: AuditTransaction[];
+  loading: boolean;
+  globalFilter?: string;
 }
 
-export const AuditPage: React.FC<AuditPageProps> = ({ t, language }) => {
-  const { transactions, loading } = useAudit(200);
-  const [selectedTransaction, setSelectedTransaction] = useState<AuditTransaction | null>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [globalFilter, setGlobalFilter] = useState('');
-
+export const AuditPage: React.FC<AuditPageProps> = ({
+  t,
+  language = 'EN',
+  transactions,
+  loading,
+  globalFilter = '',
+}) => {
   const { textTransform } = useSettings();
 
-  // Define Columns
   const columnHelper = createColumnHelper<AuditTransaction>();
+
   const columns = useMemo<ColumnDef<AuditTransaction, any>[]>(
     () => [
       columnHelper.accessor('timestamp', {
-        header: t.intelligence.audit.columns.timestamp,
-        meta: { align: 'center' },
+        header: t?.intelligence?.audit?.grid?.columns?.date || 'Date',
+        meta: { align: 'start' },
+        cell: (info) => (
+          <div className='flex flex-col'>
+            <span className='font-medium text-gray-900 dark:text-white'>
+              {new Date(info.getValue()).toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </span>
+            <span className='text-xs text-gray-400'>
+              {new Date(info.getValue()).toLocaleTimeString(language === 'AR' ? 'ar-EG' : 'en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
+          </div>
+        ),
       }),
       columnHelper.accessor('type', {
-        header: t.intelligence.audit.columns.type,
-        cell: (info) => {
-          const type = info.getValue() as string;
-          let config = {
-            color: 'gray',
-            icon: 'edit',
-            label: t.intelligence.audit.types.adjustment,
-          };
-
-          if (type === 'SALE')
-            config = {
-              color: 'emerald',
-              icon: 'check_circle',
-              label: t.intelligence.audit.types.sale,
-            };
-          else if (type === 'RETURN')
-            config = {
-              color: 'red',
-              icon: 'keyboard_return',
-              label: t.intelligence.audit.types.return,
-            };
-          else if (type === 'VOID')
-            config = { color: 'gray', icon: 'cancel', label: t.intelligence.audit.types.void };
-
-          return (
-            <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
-            >
-              <span className='material-symbols-rounded text-sm'>{config.icon}</span>
-              {config.label}
-            </span>
-          );
-        },
+        header: t?.intelligence?.audit?.grid?.columns?.type || 'Type',
+        meta: { align: 'center' },
+        cell: (info) => (
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+              info.getValue() === 'SALE'
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+            }`}
+          >
+            {info.getValue() === 'SALE'
+              ? t?.intelligence?.audit?.types?.sale || 'Sale'
+              : t?.intelligence?.audit?.types?.return || 'Return'}
+          </span>
+        ),
       }),
       columnHelper.accessor('product_name', {
-        header: t.intelligence.audit.columns.product,
+        header: t?.intelligence?.audit?.grid?.columns?.product || 'Product',
+        meta: { align: 'start' },
         cell: (info) => (
-          <span className='font-medium text-gray-900 dark:text-white'>
+          <div className='font-medium text-gray-900 dark:text-white'>
             {getDisplayName({ name: info.getValue() }, textTransform)}
-          </span>
+          </div>
         ),
       }),
       columnHelper.accessor('quantity', {
-        header: t.intelligence.audit.columns.quantity,
-        cell: (info) => (
-          <span dir='ltr' className='text-gray-600 dark:text-gray-300'>
-            {info.getValue()}
-          </span>
-        ),
+        header: t?.intelligence?.audit?.grid?.columns?.qty || 'Qty',
+        meta: { align: 'center' },
+        cell: (info) => <span className='font-bold'>{info.getValue()}</span>,
       }),
       columnHelper.accessor('amount', {
-        header: t.intelligence.audit.columns.amount,
+        header: t?.intelligence?.audit?.grid?.columns?.amount || 'Amount',
+        meta: { align: 'end' },
         cell: (info) => (
-          <span dir='ltr' className='font-bold text-gray-900 dark:text-white'>
-            {formatCurrency(Math.abs(info.getValue()))}
+          <span className='font-mono font-bold text-gray-900 dark:text-white'>
+            {info.getValue().toFixed(2)}
           </span>
         ),
       }),
       columnHelper.accessor('cashier_name', {
-        header: t.intelligence.audit.columns.employee,
-        cell: (info) => <span className='text-gray-600 dark:text-gray-300'>{info.getValue()}</span>,
-      }),
-      columnHelper.accessor('has_anomaly', {
-        header: t.intelligence.audit.columns.notes,
-        cell: (info) =>
-          info.getValue() ? (
-            <span
-              className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 text-xs font-bold uppercase tracking-wider bg-transparent'
-              title={info.row.original.anomaly_reason}
-            >
-              <span className='material-symbols-rounded text-sm'>warning</span>
-              {t.intelligence.audit.alert}
-            </span>
-          ) : (
-            '-'
-          ),
+        header: t?.intelligence?.audit?.grid?.columns?.user || 'User',
+        meta: { align: 'start' },
+        cell: (info) => <span className='text-sm text-gray-600 dark:text-gray-400'>{info.getValue()}</span>,
       }),
     ],
     [columnHelper, t, language, textTransform]
   );
 
-  const handleViewTransaction = (transaction: AuditTransaction) => {
-    setSelectedTransaction(transaction);
-    setIsDetailModalOpen(true);
-  };
+  if (loading) {
+    return <DashboardPageSkeleton />;
+  }
 
   return (
     <div className='h-full flex flex-col overflow-hidden'>
-      {/* Transaction Detail Modal */}
-      <TransactionDetailModal
-        isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-        transaction={selectedTransaction}
-      />
-
-      {/* Search Section with Download Button (Title removed) */}
-      <div className='shrink-0 mb-4 flex items-center gap-2'>
-        <div className='w-full max-w-xl'>
-          <SearchInput
-            value={globalFilter}
-            onSearchChange={setGlobalFilter}
-            onClear={() => setGlobalFilter('')}
-            placeholder={t.intelligence.audit.searchPlaceholder}
-            icon='verified'
+      {/* Table Container - Bordered/Rounded */}
+      <div className='bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex-1 flex flex-col overflow-hidden'>
+        <div className='flex-1 overflow-hidden'>
+          <TanStackTable
+            data={transactions}
+            columns={columns}
+            isLoading={loading}
+            emptyMessage={t?.intelligence?.audit?.empty?.title || 'No logs found'}
+            tableId='audit-log-table'
+            lite={true}
+            enableSearch={true}
+            globalFilter={globalFilter}
+            enablePagination={true}
+            enableVirtualization={false}
+            pageSize='auto'
+            enableShowAll={true}
           />
         </div>
-        <button
-          type='button'
-          className='w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-gray-900 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-800 transition-all active:scale-95 shrink-0'
-          title={t.intelligence.audit.exportCSV}
-        >
-          <span className='material-symbols-rounded'>file_download</span>
-        </button>
-      </div>
-
-      {/* Table Section (Inside its own Container) */}
-      <div className='bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex-1 overflow-hidden'>
-        <TanStackTable
-          data={transactions}
-          columns={columns}
-          isLoading={loading}
-          onRowClick={handleViewTransaction}
-          emptyMessage={t.intelligence.audit.emptyMessage}
-          tableId='audit-log-table'
-          enableSearch={false}
-          lite={true}
-          globalFilter={globalFilter}
-          enablePagination={true}
-          enableVirtualization={false}
-          pageSize='auto'
-          enableShowAll={true}
-        />
       </div>
     </div>
   );

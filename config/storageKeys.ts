@@ -49,6 +49,10 @@ export const StorageKeys = {
   MIGRATION_BACKUP: 'pharma_backup_pre_migration_v1',
   CSV_LOADED_V5: 'pharma_csv_loaded_v5',
 
+  // Intelligence Dashboard
+  INTELLIGENCE_ACTIVE_TAB: 'pharma_intelligence_active_tab',
+  INTELLIGENCE_FINANCIALS_SUBTAB: 'pharma_intelligence_financials_subtab',
+
   // Time Service
   TIME_OFFSET: 'pharmaflow_time_offset',
   LAST_SYNC: 'pharmaflow_last_sync',

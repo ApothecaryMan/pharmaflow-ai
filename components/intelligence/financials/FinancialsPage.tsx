@@ -1,7 +1,7 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import type { ProductFinancialItem } from '../../../types/intelligence';
+import type { ProductFinancialItem, FinancialKPIs } from '../../../types/intelligence';
 import { formatCurrency } from '../../../utils/currency';
 import { SmallCard } from '../../common/SmallCard';
 import { TanStackTable } from '../../common/TanStackTable';
@@ -71,7 +71,6 @@ const productColumnHelper = createColumnHelper<ProductFinancialItem>();
 import { useFinancials } from '../../../hooks/useFinancials';
 import type { FinancialPeriod } from '../../../services/intelligence/intelligenceService';
 import { getCurrencySymbol } from '../../../utils/currency';
-import { FilterDropdown } from '../../common/FilterDropdown';
 import { SegmentedControl } from '../../common/SegmentedControl';
 import { DashboardPageSkeleton } from '../common/IntelligenceSkeletons';
 import { useSettings } from '../../../context';
@@ -80,36 +79,21 @@ import { getDisplayName } from '../../../utils/drugDisplayName';
 interface FinancialsPageProps {
   t: any;
   language?: string;
+  kpis: FinancialKPIs | null;
+  products: ProductFinancialItem[];
+  loading: boolean;
+  activeTab: 'products' | 'categories';
+  setActiveTab: (tab: 'products' | 'categories') => void;
 }
 
-export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
-  const [selectedPeriod, setSelectedPeriod] = useState<FinancialPeriod>('this_month');
-  const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
-  const { kpis, products, loading } = useFinancials(selectedPeriod);
-
+export const FinancialsPage: React.FC<FinancialsPageProps> = ({
+  t,
+  kpis,
+  products,
+  loading,
+  activeTab,
+}) => {
   const { textTransform } = useSettings();
-
-  const periodOptions = useMemo(
-    () => [
-      {
-        label: t.intelligence.financials.filters.periods.this_month,
-        value: 'this_month' as FinancialPeriod,
-      },
-      {
-        label: t.intelligence.financials.filters.periods.last_month,
-        value: 'last_month' as FinancialPeriod,
-      },
-      {
-        label: t.intelligence.financials.filters.periods.last_3_months,
-        value: 'last_3_months' as FinancialPeriod,
-      },
-      {
-        label: t.intelligence.financials.filters.periods.this_year,
-        value: 'this_year' as FinancialPeriod,
-      },
-    ],
-    [t]
-  );
 
   const categoryColumns = useMemo<ColumnDef<CategoryBreakdownItem, any>[]>(
     () => [
@@ -180,9 +164,6 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
     [t]
   );
 
-  /*
-   * Columns Definitions
-   */
   const productColumns = useMemo<ColumnDef<ProductFinancialItem, any>[]>(
     () => [
       productColumnHelper.accessor('product_name', {
@@ -257,11 +238,9 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
     [t, textTransform]
   );
 
-  const selectedOption = periodOptions.find((p) => p.value === selectedPeriod);
-
   // Loading skeleton
   if (loading || !kpis) {
-    return <DashboardPageSkeleton withTopBar />;
+    return <DashboardPageSkeleton />;
   }
 
   return (
@@ -314,68 +293,6 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
 
       {/* Tables Section */}
       <div className='bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex-1 flex flex-col overflow-hidden'>
-        <div className='flex items-center justify-between px-4 pt-4 mb-4 shrink-0'>
-          <SegmentedControl
-            value={activeTab}
-            onChange={(val) => setActiveTab(val as 'products' | 'categories')}
-            options={[
-              {
-                label: t.intelligence.financials.sections.productProfitability,
-                value: 'products',
-                icon: 'inventory_2',
-              },
-              {
-                label: t.intelligence.financials.sections.categoryBreakdown,
-                value: 'categories',
-                icon: 'category',
-              },
-            ]}
-            size='sm'
-            color='primary'
-            fullWidth={false}
-            variant='onPage'
-          />
-
-          <div className='flex items-center gap-2'>
-            <div className='relative min-w-16'>
-              <FilterDropdown
-                floating
-                items={periodOptions}
-                selectedItem={selectedOption}
-                onSelect={(item) => setSelectedPeriod(item.value)}
-                keyExtractor={(item) => item.value}
-                renderItem={(item, isSelected) => (
-                  <span
-                    className={`${isSelected ? 'font-bold text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}
-                  >
-                    {item.label}
-                  </span>
-                )}
-                renderSelected={(item) => (
-                  <div className='flex items-center gap-2'>
-                    <span className='material-symbols-rounded text-gray-400 text-lg'>
-                      calendar_today
-                    </span>
-                    <span className='font-medium text-gray-700 dark:text-gray-300 text-sm'>
-                      {item?.label || t.intelligence.financials.filters.select}
-                    </span>
-                  </div>
-                )}
-                variant='input'
-                className='z-50'
-                minHeight={36}
-              />
-            </div>
-
-            <button
-              className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 transition-all active:scale-95'
-              title={t.intelligence.financials.filters.export}
-            >
-              <span className='material-symbols-rounded'>file_download</span>
-            </button>
-          </div>
-        </div>
-
         <div className='flex-1 overflow-hidden'>
           {activeTab === 'products' ? (
             <div className='h-full overflow-hidden'>
@@ -391,7 +308,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({ t }) => {
                   enableShowAll={true}
                 />
               ) : (
-                <div className='text-center py-12 text-gray-500'>
+                <div className='text-center py-12 text-gray-500 text-sm'>
                   <span className='material-symbols-rounded text-4xl mb-2 opacity-20'>
                     inventory
                   </span>
