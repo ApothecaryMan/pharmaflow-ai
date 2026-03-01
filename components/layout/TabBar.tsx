@@ -13,13 +13,13 @@ import {
   arrayMove,
   horizontalListSortingStrategy,
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToHorizontalAxis } from '@dnd-kit/modifiers';
 import type React from 'react';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useLongPress } from '../../hooks/useLongPress';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { SaleTab } from '../../types';
@@ -94,6 +94,19 @@ const SortableTab = ({
   const hasItems = tab.cart.length > 0;
   const isPinned = tab.isPinned || false;
   const currentTouchTab = useRef<string | null>(null);
+  const tabRef = useRef<HTMLDivElement | null>(null);
+
+  const [showTooltip, setShowTooltip] = useState(false);
+  const badgeRef = useRef<HTMLElement | null>(null);
+
+  const handleBadgeMouseEnter = () => {
+    if (!hasItems) return;
+    setShowTooltip(true);
+  };
+
+  const handleBadgeMouseLeave = () => {
+    setShowTooltip(false);
+  };
 
   // Helper: Get tab context menu actions
   const getTabActions = () => [
@@ -133,7 +146,10 @@ const SortableTab = ({
 
   return (
     <div
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node);
+        tabRef.current = node;
+      }}
       style={style}
       {...attributes}
       {...listeners}
@@ -192,7 +208,7 @@ const SortableTab = ({
             if (e.key === 'Enter') handleRename(tab.id);
             if (e.key === 'Escape') setEditingTabId(null);
           }}
-          className='flex-1 w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-semibold text-gray-900 dark:text-white'
+          className='flex-1 w-full bg-white/60 dark:bg-gray-900/50 border-none rounded px-1.5 py-0 m-0 h-5 text-sm font-bold text-primary-900 dark:text-primary-100 focus:outline-none focus:ring-1 focus:ring-primary-500/40 shadow-inner'
           autoFocus
           onPointerDown={(e) => e.stopPropagation()} // Prevent drag start on input interaction
           onClick={(e) => e.stopPropagation()}
@@ -211,6 +227,9 @@ const SortableTab = ({
           {/* Cart Badge */}
           {hasItems && (
             <span
+              ref={badgeRef}
+              onMouseEnter={handleBadgeMouseEnter}
+              onMouseLeave={handleBadgeMouseLeave}
               className={`
                     flex items-center justify-center h-5 min-w-[20px] px-1 rounded-full text-[10px] font-bold
                     ${
@@ -245,6 +264,33 @@ const SortableTab = ({
           <span className='material-symbols-rounded text-[13px]'>close</span>
         </button>
       )}
+
+      {/* Cart Items Tooltip (Immediate hover on badge) rendered in Portal */}
+      {showTooltip && hasItems && !isDragging && badgeRef.current && createPortal(
+        <div 
+          className="fixed z-[9999] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-xl shadow-black/10 dark:shadow-black/30 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-2 min-w-[200px] text-gray-800 dark:text-gray-200 pointer-events-none transition-all animate-in fade-in zoom-in-95 duration-200"
+          style={{
+            top: badgeRef.current.getBoundingClientRect().bottom + 8,
+            left: badgeRef.current.getBoundingClientRect().left - 100 + (badgeRef.current.offsetWidth / 2),
+          }}
+        >
+          <div className="text-[10px] font-black uppercase tracking-wider mb-2 border-b border-gray-200/50 dark:border-gray-800/50 pb-1 text-gray-500 flex items-center justify-between">
+            <span>{t.cartTitle || 'Cart Items'}</span>
+            <span className="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 px-1.5 rounded">{tab.cart.length}</span>
+          </div>
+          <ul className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto no-scrollbar">
+            {tab.cart.map(item => (
+              <li key={item.id} className="text-[11px] flex items-center justify-between gap-3 font-semibold">
+                <span className="truncate flex-1" dir="auto">{item.name} {item.dosageForm}</span>
+                <span className="tabular-nums text-primary-600 dark:text-primary-400 font-black">
+                  {item.quantity}{item.isUnit ? ' U' : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
@@ -277,9 +323,6 @@ export const TabBar: React.FC<TabBarProps> = ({
         delay: 250,
         tolerance: 5,
       },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
