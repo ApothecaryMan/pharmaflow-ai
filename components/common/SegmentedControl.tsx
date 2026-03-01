@@ -66,8 +66,8 @@ interface SegmentedControlProps<T> {
 
 const SIZE_CLASSES = {
   xs: {
-    button: 'py-1 px-2 text-xs min-w-[32px] h-[32px]',
-    iconSize: 'var(--icon-md)', // Standardized to 18px for better visibility
+    button: 'py-0.5 px-2 text-[11px] min-w-[28px] h-[26px]',
+    iconSize: 'var(--icon-sm)', // 14px
   },
   sm: {
     button: 'py-1.5 px-3 text-sm min-w-[38px] h-[38px]',
@@ -75,11 +75,11 @@ const SIZE_CLASSES = {
   },
   md: {
     button: 'py-2 px-4 text-base min-w-[44px] h-[44px]',
-    iconSize: 'var(--icon-navbar-dropdown)', // 18px
+    iconSize: 'var(--icon-md)', // 18px
   },
   lg: {
     button: 'py-2.5 px-5 text-lg min-w-[50px] h-[50px]',
-    iconSize: 'var(--icon-navbar-main)', // 22px
+    iconSize: 'var(--icon-lg)', //24
   },
 };
 
