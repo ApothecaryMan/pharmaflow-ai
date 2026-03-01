@@ -10,6 +10,7 @@ export const StorageKeys = {
   DEVELOPER_MODE: 'pharma_developerMode',
   POS_SIDEBAR_WIDTH: 'pos_sidebar_width',
   POS_TABS: 'pharma_pos_tabs',
+  POS_CLOSED_TABS: 'pharma_pos_closed_tabs',
   POS_ACTIVE_TAB_ID: 'pharma_pos_active_tab_id',
   POS_BRANCHES_VIEW_MODE: 'pharma_pos_branches_view_mode',
   PRINTER_SETTINGS: 'pharma_printer_config',

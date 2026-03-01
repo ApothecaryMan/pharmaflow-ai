@@ -726,6 +726,10 @@ export const TRANSLATIONS = {
       available: 'Available',
     },
     pos: {
+      closedTabsTitle: 'Recently Closed Tabs',
+      viewClosedTabs: 'View Closed Tabs History',
+      closedTabsEmpty: 'No recently closed tabs.',
+      restoreTab: 'Restore Tab',
       searchPlaceholder: 'Scan barcode, name, desc...',
       categories: {
         all: 'All',
@@ -2888,6 +2892,10 @@ export const TRANSLATIONS = {
       available: 'متاح',
     },
     pos: {
+      closedTabsTitle: 'التابات المغلقة مؤخراً',
+      viewClosedTabs: 'عرض سجل التابات المغلقة',
+      closedTabsEmpty: 'لا يوجد تابات مغلقة مؤخراً.',
+      restoreTab: 'استعادة التاب',
       searchPlaceholder: 'امسح الباركود، الاسم، الوصف...',
       categories: {
         all: 'الكل',

@@ -314,6 +314,8 @@ export interface SaleTab {
   customerCode?: string;
   /** Timestamp when first item was added to cart (for accurate processing time) */
   firstItemAt?: number;
+  /** Timestamp when tab was closed (for history) */
+  closedAt?: number;
 }
 
 /**

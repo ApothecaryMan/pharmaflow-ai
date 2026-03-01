@@ -34,6 +34,7 @@ interface TabBarProps {
   onTabRename: (tabId: string, newName: string) => void;
   onTogglePin: (tabId: string) => void;
   onTabReorder: (newOrder: SaleTab[]) => void;
+  onOpenClosedHistory: () => void;
   maxTabs: number;
   color?: string;
   t: typeof TRANSLATIONS.EN.pos; // Strict translation prop
@@ -305,6 +306,7 @@ export const TabBar: React.FC<TabBarProps> = ({
   onTabRename,
   onTogglePin,
   onTabReorder,
+  onOpenClosedHistory,
   maxTabs,
   color = 'blue',
   t,
@@ -396,6 +398,16 @@ export const TabBar: React.FC<TabBarProps> = ({
         {tabs.length < maxTabs && (
           <button
             onClick={onTabAdd}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              showMenu(e.clientX, e.clientY, [
+                {
+                  label: t.viewClosedTabs || 'View Closed Tabs History',
+                  icon: 'history',
+                  action: () => onOpenClosedHistory(),
+                }
+              ]);
+            }}
             className={`
               flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 backdrop-blur-md
               hover:bg-gray-50/80 dark:hover:bg-gray-800/40 hover:shadow-xs border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/30

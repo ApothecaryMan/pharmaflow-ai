@@ -31,6 +31,18 @@ export const formatExpiryDate = (expiryDate: any): string => {
 };
 
 /**
+ * Formats a timestamp into a 12-hour time string (HH:MM AM/PM).
+ */
+export const formatTime = (timestamp: number | undefined): string => {
+  if (!timestamp) return '';
+  return new Date(timestamp).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
+
+/**
  * Consolidates customer address components into a single string.
  */
 export const formatFullAddress = (customer: Customer | null, language: 'EN' | 'AR' = 'EN'): string | undefined => {

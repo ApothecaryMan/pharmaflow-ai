@@ -37,6 +37,7 @@ import { POSDrugBranches } from './ui/POSDrugBranches';
 import { POSDrugAnalytics } from './ui/POSDrugAnalytics';
 import { formatExpiryDate } from './utils/POSUtils';
 import { POSCustomerHistoryModal } from './ui/POSCustomerHistoryModal';
+import { ClosedTabsHistoryModal } from './ui/ClosedTabsHistoryModal';
 
 import { usePOSSidebarResizer } from './hooks/usePOSSidebarResizer';
 import { usePOSSearchAndFilters } from './hooks/usePOSSearchAndFilters';
@@ -104,6 +105,7 @@ export const POS: React.FC<POSProps> = ({
   const {
     tabs, activeTab, activeTabId, addTab, removeTab,
     switchTab, updateTab, renameTab, togglePin, reorderTabs, maxTabs,
+    closedTabs, restoreTab,
   } = usePOSTabs();
 
   const { currentShift } = useShift();
@@ -151,6 +153,7 @@ export const POS: React.FC<POSProps> = ({
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
   const [viewingDrugTab, setViewingDrugTab] = useState<'overview' | 'branches' | 'analytics'>('overview');
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isClosedTabsModalOpen, setIsClosedTabsModalOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
@@ -703,6 +706,7 @@ export const POS: React.FC<POSProps> = ({
         reorderTabs={reorderTabs}
         maxTabs={maxTabs}
         setShowDeliveryModal={setShowDeliveryModal}
+        onOpenClosedHistory={() => setIsClosedTabsModalOpen(true)}
       />
 
       {/* Main POS Content */}
@@ -1063,6 +1067,16 @@ export const POS: React.FC<POSProps> = ({
           color={color}
           t={t}
           language={language}
+        />
+
+        {/* Closed Tabs History Modal */}
+        <ClosedTabsHistoryModal
+          isOpen={isClosedTabsModalOpen}
+          onClose={() => setIsClosedTabsModalOpen(false)}
+          closedTabs={closedTabs}
+          onRestoreTab={restoreTab}
+          t={t}
+          isRTL={isRTL}
         />
 
         {/* Close Main POS Content div */}

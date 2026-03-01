@@ -34,6 +34,10 @@ export const usePOSTabs = () => {
     return tabs[0]?.id || '';
   });
 
+  const [closedTabs, setClosedTabs] = useState<SaleTab[]>(() => {
+    return storage.get<SaleTab[]>(StorageKeys.POS_CLOSED_TABS, []);
+  });
+
   // Save to storage whenever tabs change
   useEffect(() => {
     storage.set(StorageKeys.POS_TABS, tabs);
@@ -43,6 +47,11 @@ export const usePOSTabs = () => {
   useEffect(() => {
     storage.set(StorageKeys.POS_ACTIVE_TAB_ID, activeTabId);
   }, [activeTabId]);
+
+  // Save closed tabs
+  useEffect(() => {
+    storage.set(StorageKeys.POS_CLOSED_TABS, closedTabs);
+  }, [closedTabs]);
 
   // Add new tab
   const addTab = useCallback(() => {
@@ -59,6 +68,19 @@ export const usePOSTabs = () => {
   // Remove tab
   const removeTab = useCallback(
     (tabId: string) => {
+      // Find the tab being removed to potentially save it to history
+      const tabToRemove = tabs.find((t) => t.id === tabId);
+      
+      // Only save if it has items in the cart
+      if (tabToRemove && tabToRemove.cart.length > 0) {
+        setClosedTabs((prev) => {
+          // Remove if it already exists to prevent duplicates
+          const filtered = prev.filter(t => t.id !== tabId);
+          // Insert at the beginning with closedAt timestamp, keep max 10
+          return [{ ...tabToRemove, closedAt: Date.now() }, ...filtered].slice(0, 10);
+        });
+      }
+
       // We use current tabs state directly to calculate next state
       // preventing side effects inside the setter
       const newTabs = tabs.filter((t) => t.id !== tabId);
@@ -149,6 +171,27 @@ export const usePOSTabs = () => {
     });
   }, []);
 
+  // Restore closed tab
+  const restoreTab = useCallback(
+    (tabId: string) => {
+      if (tabs.length >= MAX_TABS) {
+        alert(`Maximum ${MAX_TABS} tabs allowed`);
+        return;
+      }
+
+      const tabToRestore = closedTabs.find((t) => t.id === tabId);
+      if (!tabToRestore) return;
+
+      // Remove from history
+      setClosedTabs((prev) => prev.filter((t) => t.id !== tabId));
+      
+      // Add back to active tabs and select it
+      setTabs((prev) => [...prev, tabToRestore]);
+      setActiveTabId(tabToRestore.id);
+    },
+    [tabs.length, closedTabs]
+  );
+
   // Get active tab
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
 
@@ -163,6 +206,8 @@ export const usePOSTabs = () => {
     renameTab,
     reorderTabs,
     togglePin,
+    restoreTab,
+    closedTabs,
     maxTabs: MAX_TABS,
   };
 };

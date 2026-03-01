@@ -15,6 +15,7 @@ interface POSPageHeaderProps {
   reorderTabs: (newOrder: SaleTab[]) => void;
   maxTabs: number;
   setShowDeliveryModal: (show: boolean) => void;
+  onOpenClosedHistory: () => void;
 }
 
 export const POSPageHeader: React.FC<POSPageHeaderProps> = ({
@@ -30,6 +31,7 @@ export const POSPageHeader: React.FC<POSPageHeaderProps> = ({
   reorderTabs,
   maxTabs,
   setShowDeliveryModal,
+  onOpenClosedHistory,
 }) => {
   return (
     <div className='flex items-center gap-4 px-2 min-h-12 shrink-0 py-1'>
@@ -57,6 +59,7 @@ export const POSPageHeader: React.FC<POSPageHeaderProps> = ({
           onTabRename={renameTab}
           onTogglePin={togglePin}
           onTabReorder={reorderTabs}
+          onOpenClosedHistory={onOpenClosedHistory}
           maxTabs={maxTabs}
           color={color}
           t={t}
