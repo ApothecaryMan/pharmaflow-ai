@@ -80,8 +80,8 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.6 : 1,
-    zIndex: isDragging ? 50 : 'auto',
+    opacity: 1,
+    zIndex: isDragging ? 100 : 'auto',
   };
 
   // Use common item for shared props like name, expiry, etc.
@@ -246,7 +246,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
       {...attributes}
       {...listeners}
       className={`flex flex-col p-2 rounded-xl bg-white dark:bg-gray-900 border transition-all touch-manipulation relative group outline-hidden
-        ${isDragging ? `shadow-xl ring-2 ring-primary-500 scale-[1.02] z-50 opacity-90` : ''}
+        ${isDragging ? `z-50 opacity-100` : ''}
         ${
           isHighlighted
             ? `border-primary-200 dark:border-primary-800 bg-primary-100/50 dark:bg-primary-900/30`

@@ -88,8 +88,8 @@ const SortableTab = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 50 : 'auto',
+    opacity: 1,
+    zIndex: isDragging ? 100 : 'auto',
   };
 
   const hasItems = tab.cart.length > 0;
@@ -162,7 +162,7 @@ const SortableTab = ({
             ? `bg-gray-50/80 dark:bg-gray-800/40 border border-gray-200/50 dark:border-gray-700/30 shadow-xs text-gray-900 dark:text-white`
             : 'bg-transparent border border-transparent hover:bg-gray-50/40 dark:hover:bg-gray-800/20 hover:border-gray-200/30 dark:hover:border-gray-700/20 text-gray-600 dark:text-gray-400'
         }
-        ${isDragging ? 'shadow-xl scale-105 ring-2 ring-primary-500/50 z-50 bg-gray-50/90 dark:bg-gray-800/80' : ''}
+        ${isDragging ? 'z-[100] shadow-2xl bg-white/95 dark:bg-gray-800/90 border-primary-500/50' : ''}
       `}
       onContextMenu={(e) => {
         e.preventDefault();

@@ -23,22 +23,14 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
       className='h-full flex flex-col overflow-hidden'
       dir={language === 'AR' ? 'rtl' : 'ltr'}
     >
-      {/* Header Section */}
-      <div className='mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0'>
-        <div>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-white mb-1 page-title'>
-            {t.intelligence.dashboard.title}
-          </h1>
-          <p className='text-gray-500 dark:text-gray-400 text-sm'>
-            {t.intelligence.dashboard.subtitle}
-          </p>
-        </div>
-
-        <div className='w-full md:w-auto'>
+      {/* Header Section (Centered Switcher, no title) */}
+      <div className='mb-4 flex items-center justify-center shrink-0'>
+        <div className='w-full md:w-auto flex justify-center'>
           <SegmentedControl
             value={activeTab}
             onChange={(val) => setActiveTab(val)}
             size='md'
+            iconSize='--icon-lg'
             variant='onPage'
             shape='pill'
             options={[

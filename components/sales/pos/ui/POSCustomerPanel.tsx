@@ -47,6 +47,21 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
   setPaymentMethod,
   onShowHistory,
 }) => {
+  const paymentOptions = [
+    {
+      label: t.cash || 'Cash',
+      value: 'cash' as const,
+      icon: 'payments',
+      activeColor: 'green',
+    },
+    {
+      label: t.visa || 'Visa',
+      value: 'visa' as const,
+      icon: 'credit_card',
+      activeColor: 'blue',
+    },
+  ];
+
   return (
     <div className={`${CARD_MD} p-3 border border-gray-200 dark:border-gray-800`}>
       {selectedCustomer ? (
@@ -121,22 +136,10 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
               value={paymentMethod}
               onChange={(val) => setPaymentMethod(val as 'cash' | 'visa')}
               color={color}
-              size='xs'
               variant='onPage'
-              options={[
-                {
-                  label: t.cash || 'Cash',
-                  value: 'cash',
-                  icon: 'payments',
-                  activeColor: 'green',
-                },
-                {
-                  label: t.visa || 'Visa',
-                  value: 'visa',
-                  icon: 'credit_card',
-                  activeColor: 'blue',
-                },
-              ]}
+              iconSize='--icon-lg'
+              size='xs'
+              options={paymentOptions}
             />
           </div>
         </div>
@@ -197,30 +200,20 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
             )}
           </div>
 
-          <div className='flex-none'>
-            <label className='block text-xs font-bold text-gray-400 uppercase mb-1'>
-              {t.paymentMethod}
-            </label>
+          <div className='flex flex-col gap-2 min-w-[140px]'>
+            <div className='flex items-center justify-between h-5'>
+              <label className='block text-xs font-bold text-gray-400 uppercase'>
+                {t.paymentMethod}
+              </label>
+            </div>
             <SegmentedControl
               value={paymentMethod}
               onChange={(val) => setPaymentMethod(val as 'cash' | 'visa')}
               color={color}
-              size='sm'
               variant='onPage'
-              options={[
-                {
-                  label: t.cash || 'Cash',
-                  value: 'cash',
-                  icon: 'payments',
-                  activeColor: 'green',
-                },
-                {
-                  label: t.visa || 'Visa',
-                  value: 'visa',
-                  icon: 'credit_card',
-                  activeColor: 'blue',
-                },
-              ]}
+              iconSize='--icon-lg'
+              size='xs'
+              options={paymentOptions}
             />
           </div>
         </div>

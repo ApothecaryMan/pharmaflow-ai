@@ -119,7 +119,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ t, language }) => {
   };
 
   return (
-    <div className='h-full flex flex-col space-y-4 overflow-hidden'>
+    <div className='h-full flex flex-col overflow-hidden'>
       {/* Transaction Detail Modal */}
       <TransactionDetailModal
         isOpen={isDetailModalOpen}
@@ -127,49 +127,43 @@ export const AuditPage: React.FC<AuditPageProps> = ({ t, language }) => {
         transaction={selectedTransaction}
       />
 
-      <div className='bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex-1 flex flex-col overflow-hidden'>
-        <div className='flex justify-between items-center px-4 pt-4 mb-4 shrink-0'>
-          <div className='flex items-center gap-4'>
-            <h3 className='text-lg font-bold text-gray-900 dark:text-white'>
-              {t.intelligence.audit.title}
-            </h3>
-            <div className='w-64'>
-              <SearchInput
-                value={globalFilter}
-                onSearchChange={setGlobalFilter}
-                onClear={() => setGlobalFilter('')}
-                placeholder={t.intelligence.audit.searchPlaceholder}
-              />
-            </div>
-          </div>
-          <div className='flex items-center gap-1'>
-            <button
-              type='button'
-              className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 transition-all active:scale-95'
-              title={t.intelligence.audit.exportCSV}
-            >
-              <span className='material-symbols-rounded'>file_download</span>
-            </button>
-          </div>
-        </div>
-
-        <div className='flex-1 overflow-hidden'>
-          <TanStackTable
-            data={transactions}
-            columns={columns}
-            isLoading={loading}
-            onRowClick={handleViewTransaction}
-            emptyMessage={t.intelligence.audit.emptyMessage}
-            tableId='audit-log-table'
-            enableSearch={false}
-            lite={true}
-            globalFilter={globalFilter}
-            enablePagination={true}
-            enableVirtualization={false}
-            pageSize='auto'
-            enableShowAll={true}
+      {/* Search Section with Download Button (Title removed) */}
+      <div className='shrink-0 mb-4 flex items-center gap-2'>
+        <div className='w-full max-w-xl'>
+          <SearchInput
+            value={globalFilter}
+            onSearchChange={setGlobalFilter}
+            onClear={() => setGlobalFilter('')}
+            placeholder={t.intelligence.audit.searchPlaceholder}
+            icon='verified'
           />
         </div>
+        <button
+          type='button'
+          className='w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-gray-900 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-800 transition-all active:scale-95 shrink-0'
+          title={t.intelligence.audit.exportCSV}
+        >
+          <span className='material-symbols-rounded'>file_download</span>
+        </button>
+      </div>
+
+      {/* Table Section (Inside its own Container) */}
+      <div className='bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex-1 overflow-hidden'>
+        <TanStackTable
+          data={transactions}
+          columns={columns}
+          isLoading={loading}
+          onRowClick={handleViewTransaction}
+          emptyMessage={t.intelligence.audit.emptyMessage}
+          tableId='audit-log-table'
+          enableSearch={false}
+          lite={true}
+          globalFilter={globalFilter}
+          enablePagination={true}
+          enableVirtualization={false}
+          pageSize='auto'
+          enableShowAll={true}
+        />
       </div>
     </div>
   );

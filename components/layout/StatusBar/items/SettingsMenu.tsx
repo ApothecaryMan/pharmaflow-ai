@@ -320,6 +320,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       onChange={(val) => setDarkMode(val as boolean)}
                       color={currentTheme.name.toLowerCase()}
                       size='xs'
+                      iconSize='--icon-lg'
                       fullWidth={false}
                       shape='pill'
                       options={[
@@ -469,6 +470,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   onChange={(val) => setNavStyle(val as 1 | 2 | 3)}
                   color={currentTheme.name.toLowerCase()}
                   size='xs'
+                  iconSize='--icon-lg'
                   fullWidth={false}
                   shape='pill'
                   options={[

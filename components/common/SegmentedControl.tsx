@@ -64,6 +64,7 @@ interface SegmentedControlProps<T> {
   fullWidth?: boolean; // If true, buttons use flex-1 for equal width. If false, buttons use natural width.
   shape?: SegmentedControlShape; // 'rounded-sm' (default) or 'pill' for circular style
   variant?: SegmentedControlVariant; // 'onCard' (default) or 'onPage' - controls dark mode background
+  iconSize?: string; // Optional custom icon size variable (e.g., '--icon-sm')
 }
 
 const SIZE_CLASSES = {
@@ -96,6 +97,7 @@ export function SegmentedControl<T extends string | number | boolean>({
   fullWidth = true,
   shape = 'rounded-sm',
   variant = 'onCard',
+  iconSize,
 }: SegmentedControlProps<T>) {
   const isPill = shape === 'pill';
   const containerRound = isPill ? 'rounded-full' : 'rounded-xl';
@@ -197,7 +199,8 @@ export function SegmentedControl<T extends string | number | boolean>({
           >
             {hasIcon && (
               <span
-                className={`material-symbols-rounded text-(${sizeClasses.iconSize})`}
+                className='material-symbols-rounded'
+                style={{ fontSize: `var(${iconSize || sizeClasses.iconSize})` }}
               >
                 {option.icon}
               </span>
