@@ -56,7 +56,7 @@ export const AVAILABLE_FONTS_AR: FontOption[] = [
   {
     label: 'آي بي إم بليكس',
     value: '"IBM Plex Sans Arabic"',
-    url: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100..700&display=swap',
+    url: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100;200;300;400;500;600;700&display=swap',
   },
   {
     label: 'كايرو',
