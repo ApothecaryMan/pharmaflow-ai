@@ -139,13 +139,13 @@ const SortableTab = ({
       {...listeners}
       className={`
         group relative flex items-center gap-2 pl-3 pr-8 py-2 rounded-xl transition-all duration-200 ease-out cursor-pointer
-        min-w-[100px] max-w-[180px] touch-manipulation
+        min-w-[100px] max-w-[180px] touch-manipulation backdrop-blur-md
         ${
           isActive
-            ? `bg-white dark:bg-gray-800 shadow-[0_0_0_1px_rgba(0,0,0,0.06)]`
-            : 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 text-gray-600 dark:text-gray-400'
+            ? `bg-gray-50/80 dark:bg-gray-800/40 border border-gray-200/50 dark:border-gray-700/30 shadow-xs text-gray-900 dark:text-white`
+            : 'bg-transparent border border-transparent hover:bg-gray-50/40 dark:hover:bg-gray-800/20 hover:border-gray-200/30 dark:hover:border-gray-700/20 text-gray-600 dark:text-gray-400'
         }
-        ${isDragging ? 'shadow-xl scale-105 ring-2 ring-blue-500 z-50 bg-white dark:bg-gray-800' : ''}
+        ${isDragging ? 'shadow-xl scale-105 ring-2 ring-primary-500/50 z-50 bg-gray-50/90 dark:bg-gray-800/80' : ''}
       `}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -353,8 +353,8 @@ export const TabBar: React.FC<TabBarProps> = ({
           <button
             onClick={onTabAdd}
             className={`
-              flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200
-              hover:bg-white dark:hover:bg-gray-800 hover:shadow-xs border border-transparent hover:border-gray-200 dark:hover:border-gray-700
+              flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 backdrop-blur-md
+              hover:bg-gray-50/80 dark:hover:bg-gray-800/40 hover:shadow-xs border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/30
               text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400
               shrink-0
             `}
