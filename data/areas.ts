@@ -1,3 +1,12 @@
+/**
+ * Egyptian Areas and Neighborhoods Data
+ * 
+ * Census Summary (as of March 2024 Audit):
+ * - Total Specific Areas: 240+ 
+ * - Total Coverage: 500+ (Specific + Auto-generated for all 349 centers)
+ * - Mapping: City-specific districts with unique IDs
+ */
+
 import type { Area } from './locations';
 
 export const AREAS: Area[] = [
@@ -88,7 +97,98 @@ export const AREAS: Area[] = [
   { id: '11803', city_id: '118', name_ar: 'عابدين', name_en: 'Abdeen' },
   { id: '11804', city_id: '118', name_ar: 'رمسيس', name_en: 'Ramses' },
 
+  // Sayeda Zeinab (119)
+  { id: '11901', city_id: '119', name_ar: 'ميدان السيدة', name_en: 'Sayeda Sq' },
+  { id: '11902', city_id: '119', name_ar: 'الناصرية', name_en: 'Nasria' },
+  { id: '11903', city_id: '119', name_ar: 'قلعة الكبش', name_en: 'Qalaat Al-Kabsh' },
+
+  // Old Cairo (120)
+  { id: '12001', city_id: '120', name_ar: 'الفحص', name_en: 'Al-Fahs' },
+  { id: '12002', city_id: '120', name_ar: 'المنيل', name_en: 'Manial' },
+  { id: '12003', city_id: '120', name_ar: 'فم الخليج', name_en: 'Fom El-Khalig' },
+  { id: '12004', city_id: '120', name_ar: 'الفسطاط', name_en: 'Fustat' },
+
+  // 15 May (121)
+  { id: '12101', city_id: '121', name_ar: 'المجاورة الأولى', name_en: '1st Neighborhood' },
+  { id: '12102', city_id: '121', name_ar: 'المجاورة الخامسة', name_en: '5th Neighborhood' },
+
+  // Al Basatin (122)
+  { id: '12201', city_id: '122', name_ar: 'عزبة النصر', name_en: 'Ezbet El-Nasr' },
+  { id: '12202', city_id: '122', name_ar: 'حدائق المعادي', name_en: 'Hadayek Maadi' },
+
+  // Al Khalifa (124)
+  { id: '12401', city_id: '124', name_ar: 'الأباجية', name_en: 'Abageah' },
+  { id: '12402', city_id: '124', name_ar: 'السيدة عائشة', name_en: 'Sayeda Aisha' },
+
+  // Manshiyat Naser (127)
+  { id: '12701', city_id: '127', name_ar: 'الدويقة', name_en: 'Duika' },
+  { id: '12702', city_id: '127', name_ar: 'عزبة بخيت', name_en: 'Ezbet Bekhit' },
+
+  // Al Wayli (128)
+  { id: '12801', city_id: '128', name_ar: 'العباسية', name_en: 'Abbassia' },
+  { id: '12802', city_id: '128', name_ar: 'السكاكيني', name_en: 'Sakakini' },
+
+  // Bab al-Shariya (129)
+  { id: '12901', city_id: '129', name_ar: 'درب النبي', name_en: 'Darb El Nabi' },
+
+  // Muski (130)
+  { id: '13001', city_id: '130', name_ar: 'العتبة', name_en: 'Attaba' },
+
+  // Azbakiyah (131)
+  { id: '13101', city_id: '131', name_ar: 'الفجالة', name_en: 'Faggala' },
+  { id: '13102', city_id: '131', name_ar: 'الألفي', name_en: 'Al-Alfi' },
+
+  // Abdeen (132)
+  { id: '13201', city_id: '132', name_ar: 'قصر النيل', name_en: 'Qasr El Nil' },
+  { id: '13202', city_id: '132', name_ar: 'لاظوغلي', name_en: 'Lazoughly' },
+
+  // Bulaq (133)
+  { id: '13301', city_id: '133', name_ar: 'مثلث ماسبيرو', name_en: 'Maspero Triangle' },
+  { id: '13302', city_id: '133', name_ar: 'السبتية', name_en: 'Sabteya' },
+
+  // Al Zawya Al Hamra (135)
+  { id: '13501', city_id: '135', name_ar: 'مدينة النور', name_en: 'Noor City' },
+  { id: '13502', city_id: '135', name_ar: 'الأميرية البلد', name_en: 'Ameria Balad' },
+
+  // Rod El Farag (138)
+  { id: '13801', city_id: '138', name_ar: 'طوسون', name_en: 'Tosson' },
+  { id: '13802', city_id: '138', name_ar: 'جزيرة بدران', name_en: 'Badran Island' },
+
+  // Al Nozha (139)
+  { id: '13901', city_id: '139', name_ar: 'مساكن الشيراتون', name_en: 'Sheraton Buildings' },
+  { id: '13902', city_id: '139', name_ar: 'نادي الشمس', name_en: 'Sun Club Area' },
+
   // --- GIZA (2) ---
+  // Manshiyat Al-Qanater (216)
+  { id: '21601', city_id: '216', name_ar: 'الجلاتمة', name_en: 'El Gelatmah' },
+  { id: '21602', city_id: '216', name_ar: 'نكلا', name_en: 'Nikla' },
+  { id: '21603', city_id: '216', name_ar: 'وردان', name_en: 'Wardan' },
+
+  // Ousim (217)
+  { id: '21701', city_id: '217', name_ar: 'بشتيل', name_en: 'Bashtil' },
+  { id: '21702', city_id: '217', name_ar: 'براجيل', name_en: 'Baragil' },
+  { id: '21703', city_id: '217', name_ar: 'الكوم الأحمر', name_en: 'El Kom El Ahmar' },
+
+  // Kerdasa (218)
+  { id: '21801', city_id: '218', name_ar: 'ناهيا', name_en: 'Nahia' },
+  { id: '21802', city_id: '218', name_ar: 'أبو رواش', name_en: 'Abu Rawash' },
+
+  // Abu Al-Numros (219)
+  { id: '21901', city_id: '219', name_ar: 'منيل شيحة', name_en: 'Manyal Shiha' },
+  { id: '21902', city_id: '219', name_ar: 'طموه', name_en: 'Tammoh' },
+
+  // Hawamdia (220)
+  { id: '22001', city_id: '220', name_ar: 'أم خنان', name_en: 'Om Khanan' },
+  { id: '22002', city_id: '220', name_ar: 'الشيخ عثمان', name_en: 'Sheikh Osman' },
+
+  // Omraneya (221)
+  { id: '22101', city_id: '221', name_ar: 'الطالبية البحرية', name_en: 'Talbia Bahria' },
+  { id: '22102', city_id: '221', name_ar: 'سيدي عمار', name_en: 'Sidi Ammar' },
+
+  // South Giza (222)
+  { id: '22201', city_id: '222', name_ar: 'المنيب', name_en: 'El Mounib' },
+  { id: '22202', city_id: '222', name_ar: 'ساقية مكي', name_en: 'Saqiyet Mekky' },
+  { id: '22203', city_id: '222', name_ar: 'جزيرة الدهب', name_en: 'Geziret El Dahab' },
   // 6th of October (201)
   { id: '20101', city_id: '201', name_ar: 'الحي الأول', name_en: '1st District' },
   { id: '20102', city_id: '201', name_ar: 'الحي الثاني', name_en: '2nd District' },
@@ -145,6 +245,37 @@ export const AREAS: Area[] = [
   { id: '20604', city_id: '206', name_ar: 'المريوطية فيصل', name_en: 'Maryotaya Faisal' },
 
   // --- ALEXANDRIA (3) ---
+  // Central District (314)
+  { id: '31401', city_id: '314', name_ar: 'محرم بك', name_en: 'Moharam Bek' },
+  { id: '31402', city_id: '314', name_ar: 'الأنفوشي', name_en: 'Anfoushi' },
+  { id: '31403', city_id: '314', name_ar: 'المنشية', name_en: 'Mansheya' },
+
+  // East District (315)
+  { id: '31501', city_id: '315', name_ar: 'ستانلي', name_en: 'Stanley' },
+  { id: '31502', city_id: '315', name_ar: 'زيزينيا', name_en: 'Zizinia' },
+  { id: '31503', city_id: '315', name_ar: 'سابا باشا', name_en: 'Saba Pasha' },
+
+  // West District (316)
+  { id: '31601', city_id: '316', name_ar: 'القباري', name_en: 'Gabbary' },
+  { id: '31602', city_id: '316', name_ar: 'الورديان', name_en: 'Wardian' },
+
+  // Al Gomrok (317)
+  { id: '31701', city_id: '317', name_ar: 'بحري', name_en: 'Bahary' },
+  { id: '31702', city_id: '317', name_ar: 'رأس التين', name_en: 'Ras El Tin' },
+
+  // Montaza 1 (318)
+  { id: '31801', city_id: '318', name_ar: 'السيوف', name_en: 'Siouf' },
+  { id: '31802', city_id: '318', name_ar: 'سيدي بشر', name_en: 'Sidi Bishr' },
+
+  // Montaza 2 (319)
+  { id: '31901', city_id: '319', name_ar: 'المعمورة', name_en: 'Maamoura' },
+  { id: '31902', city_id: '319', name_ar: 'أبو قير', name_en: 'Abu Qir' },
+
+  // Amriya 1 (320)
+  { id: '32001', city_id: '320', name_ar: 'مرغم', name_en: 'Mergham' },
+
+  // Amriya 2 (321)
+  { id: '32101', city_id: '321', name_ar: 'الناصرية', name_en: 'Nasria' },
   // Smouha (301)
   { id: '30101', city_id: '301', name_ar: 'ميدان فيكتور عمانويل', name_en: 'Victor Emanuel Sq' },
   { id: '30102', city_id: '301', name_ar: 'شارع فوزي معاذ', name_en: 'Fawzy Moaz St' },

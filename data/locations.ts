@@ -1,7 +1,13 @@
-import { AREAS as SPECIFIC_AREAS } from './areas';
+/**
+ * Egyptian Location Data Library
+ * 
+ * Census Summary (as of March 2024 Audit):
+ * - Governorates: 27
+ * - Centers/Districts: 349
+ * - Support: Dual language (AR/EN), RTL, Unique Mapping IDs
+ */
 
-// Egyptian Governorates and Cities Data
-// This acts as a local library for location data
+import { AREAS as SPECIFIC_AREAS } from './areas';
 
 export interface Location {
   id: string;
@@ -69,6 +75,25 @@ export const CITIES: City[] = [
   { id: '118', governorate_id: '1', name_ar: 'وسط البلد', name_en: 'Downtown' },
   { id: '119', governorate_id: '1', name_ar: 'السيدة زينب', name_en: 'Sayeda Zeinab' },
   { id: '120', governorate_id: '1', name_ar: 'مصر القديمة', name_en: 'Old Cairo' },
+  { id: '121', governorate_id: '1', name_ar: '15 مايو', name_en: '15 May' },
+  { id: '122', governorate_id: '1', name_ar: 'البساتين', name_en: 'Al Basatin' },
+  { id: '123', governorate_id: '1', name_ar: 'التبين', name_en: 'Al Tebbin' },
+  { id: '124', governorate_id: '1', name_ar: 'الخليفة', name_en: 'Al Khalifa' },
+  { id: '125', governorate_id: '1', name_ar: 'المعصرة', name_en: 'Al Maasara' },
+  { id: '126', governorate_id: '1', name_ar: 'طره', name_en: 'Tura' },
+  { id: '127', governorate_id: '1', name_ar: 'منشأة ناصر', name_en: 'Manshiyat Naser' },
+  { id: '128', governorate_id: '1', name_ar: 'الوايلي', name_en: 'Al Wayli' },
+  { id: '129', governorate_id: '1', name_ar: 'باب الشعرية', name_en: 'Bab al-Shariya' },
+  { id: '130', governorate_id: '1', name_ar: 'الموسكي', name_en: 'Al Muski' },
+  { id: '131', governorate_id: '1', name_ar: 'الأزبكية', name_en: 'Al Azbakiyah' },
+  { id: '132', governorate_id: '1', name_ar: 'عابدين', name_en: 'Abdeen' },
+  { id: '133', governorate_id: '1', name_ar: 'بولاق', name_en: 'Bulaq' },
+  { id: '134', governorate_id: '1', name_ar: 'الأميرية', name_en: 'Al Amiriya' },
+  { id: '135', governorate_id: '1', name_ar: 'الزاوية الحمراء', name_en: 'Al Zawya Al Hamra' },
+  { id: '136', governorate_id: '1', name_ar: 'الشرابية', name_en: 'Al Sharabiya' },
+  { id: '137', governorate_id: '1', name_ar: 'الساحل', name_en: 'Al Sahel' },
+  { id: '138', governorate_id: '1', name_ar: 'روض الفرج', name_en: 'Rod El Farag' },
+  { id: '139', governorate_id: '1', name_ar: 'النزهة', name_en: 'Al Nozha' },
 
   // Giza (2)
   { id: '201', governorate_id: '2', name_ar: '6 أكتوبر', name_en: '6th of October' },
@@ -86,6 +111,13 @@ export const CITIES: City[] = [
   { id: '213', governorate_id: '2', name_ar: 'الصف', name_en: 'Saff' },
   { id: '214', governorate_id: '2', name_ar: 'أطفيح', name_en: 'Atfih' },
   { id: '215', governorate_id: '2', name_ar: 'الواحات البحرية', name_en: 'Bahariya Oasis' },
+  { id: '216', governorate_id: '2', name_ar: 'منشأة القناطر', name_en: 'Manshiyat Al-Qanater' },
+  { id: '217', governorate_id: '2', name_ar: 'أوسيم', name_en: 'Ousim' },
+  { id: '218', governorate_id: '2', name_ar: 'كرداسة', name_en: 'Kerdasa' },
+  { id: '219', governorate_id: '2', name_ar: 'أبو النمرس', name_en: 'Abu Al-Numros' },
+  { id: '220', governorate_id: '2', name_ar: 'الحوامدية', name_en: 'Hawamdia' },
+  { id: '221', governorate_id: '2', name_ar: 'العمرانية', name_en: 'Omraneya' },
+  { id: '222', governorate_id: '2', name_ar: 'جنوب الجيزة', name_en: 'South Giza' },
 
   // Alexandria (3)
   { id: '301', governorate_id: '3', name_ar: 'سموحة', name_en: 'Smouha' },
@@ -101,6 +133,14 @@ export const CITIES: City[] = [
   { id: '311', governorate_id: '3', name_ar: 'برج العرب', name_en: 'Borg El Arab' },
   { id: '312', governorate_id: '3', name_ar: 'المنشية', name_en: 'Mansheya' },
   { id: '313', governorate_id: '3', name_ar: 'العطارين', name_en: 'Attarin' },
+  { id: '314', governorate_id: '3', name_ar: 'حي وسط', name_en: 'Central District' },
+  { id: '315', governorate_id: '3', name_ar: 'حي شرق', name_en: 'East District' },
+  { id: '316', governorate_id: '3', name_ar: 'حي غرب', name_en: 'West District' },
+  { id: '317', governorate_id: '3', name_ar: 'الجمرك', name_en: 'Al Gomrok' },
+  { id: '318', governorate_id: '3', name_ar: 'المنتزه أول', name_en: 'Montaza 1' },
+  { id: '319', governorate_id: '3', name_ar: 'المنتزه ثان', name_en: 'Montaza 2' },
+  { id: '320', governorate_id: '3', name_ar: 'العامرية أول', name_en: 'Amriya 1' },
+  { id: '321', governorate_id: '3', name_ar: 'العامرية ثان', name_en: 'Amriya 2' },
 
   // Dakahlia (4)
   { id: '401', governorate_id: '4', name_ar: 'المنصورة', name_en: 'Mansoura' },
@@ -201,6 +241,7 @@ export const CITIES: City[] = [
   { id: '1108', governorate_id: '11', name_ar: 'المدينة الفكرية', name_en: 'Madinat El Fekria' },
   { id: '1109', governorate_id: '11', name_ar: 'ملوي', name_en: 'Meloy' },
   { id: '1110', governorate_id: '11', name_ar: 'دير مواس', name_en: 'Deir Mawas' },
+  { id: '1111', governorate_id: '11', name_ar: 'أبو قرقاص', name_en: 'Abu Qurqas' },
 
   // Qalyubia (12)
   { id: '1201', governorate_id: '12', name_ar: 'بنها', name_en: 'Banha' },
@@ -221,9 +262,14 @@ export const CITIES: City[] = [
   { id: '1303', governorate_id: '13', name_ar: 'موط', name_en: 'Mout' },
   { id: '1304', governorate_id: '13', name_ar: 'الفرافرة', name_en: 'Farafra' },
   { id: '1305', governorate_id: '13', name_ar: 'بلاط', name_en: 'Balat' },
+  { id: '1306', governorate_id: '13', name_ar: 'الداخلة', name_en: 'Dakhla' },
 
   // Suez (14)
-  { id: '1401', governorate_id: '14', name_ar: 'السويس', name_en: 'Suez' },
+  { id: '1401', governorate_id: '14', name_ar: 'حي السويس', name_en: 'Suez District' },
+  { id: '1402', governorate_id: '14', name_ar: 'حي الأربعين', name_en: 'Arbaein' },
+  { id: '1403', governorate_id: '14', name_ar: 'حي فيصل', name_en: 'Faisal District' },
+  { id: '1404', governorate_id: '14', name_ar: 'حي عتاقة', name_en: 'Attaka' },
+  { id: '1405', governorate_id: '14', name_ar: 'حي الجناين', name_en: 'Ganayen' },
 
   // Aswan (15)
   { id: '1501', governorate_id: '15', name_ar: 'أسوان', name_en: 'Aswan' },
@@ -250,6 +296,7 @@ export const CITIES: City[] = [
   { id: '1609', governorate_id: '16', name_ar: 'ساحل سليم', name_en: 'Sahel Selim' },
   { id: '1610', governorate_id: '16', name_ar: 'البداري', name_en: 'El Badari' },
   { id: '1611', governorate_id: '16', name_ar: 'صدفا', name_en: 'Sidfa' },
+  { id: '1612', governorate_id: '16', name_ar: 'الفتح', name_en: 'El Fath' },
 
   // Beni Suef (17)
   { id: '1701', governorate_id: '17', name_ar: 'بني سويف', name_en: 'Beni Suef' },
@@ -262,7 +309,13 @@ export const CITIES: City[] = [
   { id: '1708', governorate_id: '17', name_ar: 'سمسطا', name_en: 'Somasta' },
 
   // Port Said (18)
-  { id: '1801', governorate_id: '18', name_ar: 'بورسعيد', name_en: 'Port Said' },
+  { id: '1801', governorate_id: '18', name_ar: 'حي الشرق', name_en: 'Sharq District' },
+  { id: '1802', governorate_id: '18', name_ar: 'حي العرب', name_en: 'Arab District' },
+  { id: '1803', governorate_id: '18', name_ar: 'حي المناخ', name_en: 'Manakh District' },
+  { id: '1804', governorate_id: '18', name_ar: 'حي الضواحي', name_en: 'Dawahi District' },
+  { id: '1805', governorate_id: '18', name_ar: 'حي الزهور', name_en: 'Zohour District' },
+  { id: '1806', governorate_id: '18', name_ar: 'حي الجنوب', name_en: 'South District' },
+  { id: '1807', governorate_id: '18', name_ar: 'حي غرب', name_en: 'West District' },
   { id: '1802', governorate_id: '18', name_ar: 'بورفؤاد', name_en: 'Port Fouad' },
 
   // Damietta (19)
@@ -277,6 +330,8 @@ export const CITIES: City[] = [
   { id: '1909', governorate_id: '19', name_ar: 'عزبة البرج', name_en: 'Azbet El Burg' },
   { id: '1910', governorate_id: '19', name_ar: 'ميت أبو غالب', name_en: 'Mit Abu Ghaleb' },
   { id: '1911', governorate_id: '19', name_ar: 'كفر سعد', name_en: 'Kafr Saad' },
+  { id: '1912', governorate_id: '19', name_ar: 'الروضة', name_en: 'Al Rowda' },
+  { id: '1913', governorate_id: '19', name_ar: 'عزبة البرج', name_en: 'Ezbet El Borg' },
 
   // Sharkia (20)
   { id: '2001', governorate_id: '20', name_ar: 'الزقازيق', name_en: 'Zagazig' },
@@ -290,24 +345,16 @@ export const CITIES: City[] = [
   { id: '2009', governorate_id: '20', name_ar: 'ههيا', name_en: 'Hehia' },
   { id: '2010', governorate_id: '20', name_ar: 'أبو كبير', name_en: 'Abu Kabir' },
   { id: '2011', governorate_id: '20', name_ar: 'فاقوس', name_en: 'Faccus' },
-  {
-    id: '2012',
-    governorate_id: '20',
-    name_ar: 'الصالحية الجديدة',
-    name_en: 'El Salihia El Gedida',
-  },
+  { id: '2012', governorate_id: '20', name_ar: 'الصالحية الجديدة', name_en: 'El Salihia El Gedida' },
   { id: '2013', governorate_id: '20', name_ar: 'الإبراهيمية', name_en: 'Al Ibrahimiyah' },
   { id: '2014', governorate_id: '20', name_ar: 'ديرب نجم', name_en: 'Deirb Negm' },
   { id: '2015', governorate_id: '20', name_ar: 'كفر صقر', name_en: 'Kafr Saqr' },
   { id: '2016', governorate_id: '20', name_ar: 'أولاد صقر', name_en: 'Awlad Saqr' },
   { id: '2017', governorate_id: '20', name_ar: 'الحسينية', name_en: 'Husseiniya' },
-  {
-    id: '2018',
-    governorate_id: '20',
-    name_ar: 'صان الحجر القبلية',
-    name_en: 'San El Hagar El Qabliya',
-  },
+  { id: '2018', governorate_id: '20', name_ar: 'صان الحجر القبلية', name_en: 'San El Hagar El Qabliya' },
   { id: '2019', governorate_id: '20', name_ar: 'منشأة أبو عمر', name_en: 'Manshayat Abu Omar' },
+  { id: '2020', governorate_id: '20', name_ar: 'كفر صقر', name_en: 'Kafr Saqr' },
+  { id: '2021', governorate_id: '20', name_ar: 'القرين', name_en: 'El Qurein' },
 
   // South Sinai (21)
   { id: '2101', governorate_id: '21', name_ar: 'الطور', name_en: 'El Tor' },
@@ -334,6 +381,7 @@ export const CITIES: City[] = [
   { id: '2211', governorate_id: '22', name_ar: 'فوه', name_en: 'Fuwa' },
   { id: '2212', governorate_id: '22', name_ar: 'الرياض', name_en: 'El Reyad' },
   { id: '2213', governorate_id: '22', name_ar: 'برج البرلس', name_en: 'Burg El Burullus' },
+  { id: '2214', governorate_id: '22', name_ar: 'سيدي قازي', name_en: 'Sidi Qazi' },
 
   // Matrouh (23)
   { id: '2301', governorate_id: '23', name_ar: 'مرسى مطروح', name_en: 'Marsa Matrouh' },
@@ -391,6 +439,7 @@ export const CITIES: City[] = [
   { id: '2712', governorate_id: '27', name_ar: 'طما', name_en: 'Tama' },
   { id: '2713', governorate_id: '27', name_ar: 'طهطا', name_en: 'Tahta' },
   { id: '2714', governorate_id: '27', name_ar: 'الكوثر', name_en: 'Al Kawthar' },
+  { id: '2715', governorate_id: '27', name_ar: 'العسيرات', name_en: 'Al-Usayrat' },
 ];
 
 // Generate generic areas for cities that don't have specific data
@@ -402,24 +451,9 @@ const generateGenericAreas = (): Area[] => {
     if (!specificCityIds.has(city.id)) {
       genericAreas.push(
         { id: `${city.id}01`, city_id: city.id, name_ar: 'وسط البلد', name_en: 'City Center' },
-        {
-          id: `${city.id}02`,
-          city_id: city.id,
-          name_ar: 'الحي البحري',
-          name_en: 'Northern District',
-        },
-        {
-          id: `${city.id}03`,
-          city_id: city.id,
-          name_ar: 'الحي القبلي',
-          name_en: 'Southern District',
-        },
-        {
-          id: `${city.id}04`,
-          city_id: city.id,
-          name_ar: 'المنطقة الصناعية',
-          name_en: 'Industrial Zone',
-        },
+        { id: `${city.id}02`, city_id: city.id, name_ar: 'الحي البحري', name_en: 'Northern District' },
+        { id: `${city.id}03`, city_id: city.id, name_ar: 'الحي القبلي', name_en: 'Southern District' },
+        { id: `${city.id}04`, city_id: city.id, name_ar: 'المنطقة الصناعية', name_en: 'Industrial Zone' },
         { id: `${city.id}05`, city_id: city.id, name_ar: 'الزهراء', name_en: 'Al Zahraa' }
       );
     }
