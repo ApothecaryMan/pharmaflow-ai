@@ -191,7 +191,8 @@ const SortableTab = ({
       {/* Pin Indicator */}
       {isPinned && (
         <span
-          className={`material-symbols-rounded text-[14px] ${isActive ? `text-primary-500` : 'text-gray-400'}`}
+          className={`material-symbols-rounded ${isActive ? `text-primary-500` : 'text-gray-400'}`}
+          style={{ fontSize: 'var(--icon-sm)' }}
         >
           push_pin
         </span>
@@ -209,6 +210,7 @@ const SortableTab = ({
             if (e.key === 'Escape') setEditingTabId(null);
           }}
           className='flex-1 w-full bg-white/60 dark:bg-gray-900/50 border-none rounded px-1.5 py-0 m-0 h-5 text-sm font-bold text-primary-900 dark:text-primary-100 focus:outline-none focus:ring-1 focus:ring-primary-500/40 shadow-inner'
+          dir='auto'
           autoFocus
           onPointerDown={(e) => e.stopPropagation()} // Prevent drag start on input interaction
           onClick={(e) => e.stopPropagation()}
@@ -255,13 +257,12 @@ const SortableTab = ({
           onPointerDown={(e) => e.stopPropagation()} // Prevent drag start when clicking close
           className={`
             absolute right-1.5 top-1/2 -translate-y-1/2
-            w-5 h-5 flex items-center justify-center rounded-full transition-all 
-            ${isActive ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100'}
-            hover:text-gray-600 dark:hover:text-gray-300
-            ${isActive ? 'text-gray-400' : 'text-gray-400'}
+            w-5 h-5 flex items-center justify-center rounded-full transition-colors 
+            ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
+            text-gray-400 hover:text-gray-700 dark:hover:text-gray-200
           `}
         >
-          <span className='material-symbols-rounded text-[13px]'>close</span>
+          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>close</span>
         </button>
       )}
 
@@ -403,7 +404,7 @@ export const TabBar: React.FC<TabBarProps> = ({
             `}
             title={t.tabs?.newTab || 'New Tab'}
           >
-            <span className='material-symbols-rounded text-[20px]'>add</span>
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-navbar-main)' }}>add</span>
           </button>
         )}
       </div>
