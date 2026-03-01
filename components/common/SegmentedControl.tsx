@@ -38,8 +38,10 @@ export interface SegmentedControlOption<T> {
   label: string;
   value: T;
   icon?: string;
+  dotColor?: string;
   activeColor?: string;
   count?: number | string;
+  fontFamily?: string;
   disabled?: boolean;
 }
 
@@ -67,24 +69,22 @@ interface SegmentedControlProps<T> {
 const SIZE_CLASSES = {
   xs: {
     button: 'py-0.5 px-2 text-[11px] min-w-[28px] h-[26px]',
-    iconSize: 'var(--icon-sm)', // 14px
+    iconSize: '--icon-xs', // 12px
   },
   sm: {
     button: 'py-1.5 px-3 text-sm min-w-[38px] h-[38px]',
-    iconSize: 'var(--icon-md)', // 18px
+    iconSize: '--icon-sm', // 14px
   },
   md: {
     button: 'py-2 px-4 text-base min-w-[44px] h-[44px]',
-    iconSize: 'var(--icon-md)', // 18px
+    iconSize: '--icon-md', // 18px
   },
   lg: {
     button: 'py-2.5 px-5 text-lg min-w-[50px] h-[50px]',
-    iconSize: 'var(--icon-lg)', //24
+    iconSize: '--icon-lg', // 24px
   },
 };
 
-// Use centralized color map from config/themeColors.ts
-import { COLOR_HEX_MAP } from '../../config/themeColors';
 
 export function SegmentedControl<T extends string | number | boolean>({
   options,
@@ -178,6 +178,7 @@ export function SegmentedControl<T extends string | number | boolean>({
         const isActive = value === option.value;
         const optionColor = option.activeColor || color;
         const hasIcon = !!option.icon;
+        const hasDot = !!option.dotColor;
         const hasLabel = !!option.label;
 
         return (
@@ -196,13 +197,22 @@ export function SegmentedControl<T extends string | number | boolean>({
           >
             {hasIcon && (
               <span
-                className='material-symbols-rounded'
-                style={{ fontSize: sizeClasses.iconSize }}
+                className={`material-symbols-rounded text-(${sizeClasses.iconSize})`}
               >
                 {option.icon}
               </span>
             )}
-            {hasLabel && <span>{option.label}</span>}
+            {hasDot && (
+              <div 
+                className="w-3 h-3 rounded-full shadow-sm"
+                style={{ backgroundColor: option.dotColor }}
+              />
+            )}
+            {hasLabel && (
+              <span style={option.fontFamily ? { fontFamily: option.fontFamily } : {}}>
+                {option.label}
+              </span>
+            )}
             {option.count !== undefined && (
               <span
                 className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold leading-none ${

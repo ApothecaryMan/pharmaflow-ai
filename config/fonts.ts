@@ -6,7 +6,7 @@ export interface FontOption {
 
 export const AVAILABLE_FONTS_EN: FontOption[] = [
   {
-    label: 'System Default',
+    label: 'Default',
     value: 'En-Firewall',
     url: '',
   },
@@ -49,32 +49,32 @@ export const AVAILABLE_FONTS_EN: FontOption[] = [
 
 export const AVAILABLE_FONTS_AR: FontOption[] = [
   {
-    label: 'System Default',
+    label: 'الافتراضي',
     value: 'Ar-Firewall',
     url: '',
   },
   {
-    label: 'IBM Plex Sans Arabic',
+    label: 'آي بي إم بليكس',
     value: '"IBM Plex Sans Arabic"',
     url: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@100..700&display=swap',
   },
   {
-    label: 'Cairo',
+    label: 'كايرو',
     value: 'Cairo',
     url: 'https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap',
   },
   {
-    label: 'Almarai',
+    label: 'المراعي',
     value: 'Almarai',
     url: 'https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap',
   },
   {
-    label: 'Tajawal',
+    label: 'تجول',
     value: 'Tajawal',
     url: 'https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap',
   },
   {
-    label: 'Noto Kufi Arabic',
+    label: 'نوتو كوفي',
     value: '"Noto Kufi Arabic"',
     url: 'https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@100..900&display=swap',
   },

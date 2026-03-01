@@ -183,7 +183,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             onClick={() => setIsOpen(!isOpen)}
             className={`flex items-center justify-center w-10 h-10 transition-colors ${isOpen ? 'text-blue-500' : 'text-gray-600 dark:text-gray-300'}`}
           >
-            <span className='material-symbols-rounded' style={{ fontSize: `${triggerSize}px` }}>
+            <span className={`material-symbols-rounded text-[${triggerSize}px]`}>
               settings
             </span>
           </button>
@@ -221,10 +221,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 {/* Left Side: Icon + Label */}
                 <div className='flex items-center gap-2'>
                   <span
-                    className='material-symbols-rounded text-[16px]'
+                    className='material-symbols-rounded text-(--icon-base)'
                     style={{ color: 'var(--text-secondary)' }}
                   >
-                    palette
+                    brightness_6
                   </span>
                   <span className='text-xs font-medium' style={{ color: 'var(--text-primary)' }}>
                     {t.themesMenu}
@@ -243,8 +243,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     type='button'
                   >
                     <span
-                      className={`material-symbols-rounded transition-transform ${themeExpanded ? 'rotate-180' : ''}`}
-                      style={{ fontSize: 'var(--status-icon-size, 16px)', color: 'var(--text-tertiary)' }}
+                      className={`material-symbols-rounded transition-transform text-(--icon-base) ${themeExpanded ? 'rotate-180' : ''}`}
+                      style={{ color: 'var(--text-tertiary)' }}
                     >
                       {themesPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
                     </span>
@@ -258,8 +258,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   className={`
                         ${
                           isMobile
-                            ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-3 rounded-lg'
-                            : `absolute w-48 rounded-lg shadow-xl border z-120 p-3 space-y-3 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                            ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/60 border-none shadow-none p-4 space-y-4 rounded-xl'
+                            : `absolute w-52 rounded-xl shadow-2xl border z-120 p-4 space-y-4 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                         }
                     `}
                   style={
@@ -275,31 +275,31 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   }
                 >
                   {/* Theme Selector */}
-                  <div className='space-y-1.5'>
-                    <label
-                      className='text-[10px] font-bold uppercase'
-                      style={{ color: 'var(--text-tertiary)' }}
-                    >
-                      {t.theme}
-                    </label>
-                    <div className='flex gap-1.5 flex-wrap'>
-                      {availableThemes.map((themeOption) => (
-                        <button
-                          key={themeOption.name}
-                          onClick={() => setTheme(themeOption)}
-                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${currentTheme.name === themeOption.name ? 'ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-600 scale-110' : ''}`}
-                          style={{ backgroundColor: themeOption.hex }}
-                          title={themeOption.name}
-                        >
-                          {currentTheme.name === themeOption.name && (
-                            <span className='material-symbols-rounded text-white drop-shadow-md' style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 4px)' }}>
-                              check
-                            </span>
-                          )}
-                        </button>
-                      ))}
+                    <div className='flex items-center gap-1.5'>
+                      <span
+                        className='material-symbols-rounded text-(--icon-sm)'
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        palette
+                      </span>
+                      <SegmentedControl
+                        value={currentTheme.name}
+                        onChange={(val) => {
+                          const theme = availableThemes.find((t) => t.name === val);
+                          if (theme) setTheme(theme);
+                        }}
+                        color={currentTheme.name.toLowerCase()}
+                        size='xs'
+                        fullWidth={false}
+                        shape='pill'
+                        options={availableThemes.map((theme) => ({
+                          label: '',
+                          value: theme.name,
+                          dotColor: theme.hex,
+                        }))}
+                      />
                     </div>
-                  </div>
+
 
                   {/* Dark Mode Toggle */}
                   <div className='flex items-center justify-between'>
@@ -308,18 +308,24 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       style={{ color: 'var(--text-primary)' }}
                     >
                       <span
-                        className='material-symbols-rounded'
-                        style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)', color: 'var(--text-secondary)' }}
+                        className='material-symbols-rounded text-(--icon-sm)'
+                        style={{ color: 'var(--text-secondary)' }}
                       >
-                        dark_mode
+                        brightness_6
                       </span>
                       {t.darkMode}
                     </label>
-                    <Switch
-                      checked={darkMode}
-                      onChange={setDarkMode}
-                      theme={currentTheme.name.toLowerCase()}
-                      activeColor={currentTheme.hex}
+                    <SegmentedControl
+                      value={darkMode}
+                      onChange={(val) => setDarkMode(val as boolean)}
+                      color={currentTheme.name.toLowerCase()}
+                      size='xs'
+                      fullWidth={false}
+                      shape='pill'
+                      options={[
+                        { label: '', value: false, icon: 'light_mode' },
+                        { label: '', value: true, icon: 'dark_mode' },
+                      ]}
                     />
                   </div>
                 </div>
@@ -332,7 +338,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               <div className='w-full flex items-center justify-between py-1 transition-colors'>
                 <div className='flex items-center gap-2'>
                   <span
-                    className='material-symbols-rounded text-[16px]'
+                    className='material-symbols-rounded text-(--icon-base)'
                     style={{ color: 'var(--text-secondary)' }}
                   >
                     blur_on
@@ -363,8 +369,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     type='button'
                   >
                     <span
-                      className={`material-symbols-rounded transition-transform ${blurOptionsExpanded ? 'rotate-180' : ''}`}
-                      style={{ fontSize: 'var(--status-icon-size, 16px)', color: 'var(--text-tertiary)' }}
+                      className={`material-symbols-rounded transition-transform text-(--icon-base) ${blurOptionsExpanded ? 'rotate-180' : ''}`}
+                      style={{ color: 'var(--text-tertiary)' }}
                     >
                       {blurOptionsPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
                     </span>
@@ -443,13 +449,19 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               )}
             </div>
 
-            {/* Nav Style Switch */}
+            {/* Nav Style Switch (Redesigned to be inline with icons) */}
             {setNavStyle && (
-              <div className='space-y-1.5'>
+              <div className='flex items-center justify-between'>
                 <label
-                  className='text-[10px] font-bold uppercase'
-                  style={{ color: 'var(--text-tertiary)' }}
+                  className='text-xs font-medium flex items-center gap-1.5'
+                  style={{ color: 'var(--text-primary)' }}
                 >
+                  <span
+                    className='material-symbols-rounded text-(--icon-sm)'
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    dashboard_customize
+                  </span>
                   {t.designStyle}
                 </label>
                 <SegmentedControl
@@ -457,9 +469,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   onChange={(val) => setNavStyle(val as 1 | 2 | 3)}
                   color={currentTheme.name.toLowerCase()}
                   size='xs'
+                  fullWidth={false}
+                  shape='pill'
                   options={[
-                    { label: t.designStyleFull, value: 1 },
-                    { label: t.designStyleNavbar, value: 2 },
+                    { label: '', value: 1, icon: 'view_sidebar' },
+                    { label: '', value: 2, icon: 'web_asset' },
                   ]}
                 />
               </div>
@@ -469,12 +483,18 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             <div className='border-t border-gray-100 dark:border-gray-800 my-1 opacity-50' />
 
             {/* --- Group 2: Language & Text --- */}
-            {/* Language Selector */}
-            <div className='space-y-1.5'>
+            {/* Language Selector (Redesigned to be inline with icons) */}
+            <div className='flex items-center justify-between'>
               <label
-                className='text-[10px] font-bold uppercase'
-                style={{ color: 'var(--text-tertiary)' }}
+                className='text-xs font-medium flex items-center gap-1.5'
+                style={{ color: 'var(--text-primary)' }}
               >
+                <span
+                  className='material-symbols-rounded text-(--icon-sm)'
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  translate
+                </span>
                 {t.language}
               </label>
               <SegmentedControl
@@ -482,10 +502,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 onChange={(val) => setLanguage(val as Language)}
                 color={currentTheme.name.toLowerCase()}
                 size='xs'
-                options={availableLanguages.map((lang) => ({
-                  label: lang.label,
-                  value: lang.code,
-                }))}
+                fullWidth={false}
+                shape='pill'
+                options={[
+                  { label: 'EN', value: 'EN' },
+                  { label: 'AR', value: 'AR' },
+                ]}
               />
             </div>
 
@@ -496,7 +518,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 style={{ color: 'var(--text-primary)' }}
               >
                 <span
-                  className='material-symbols-rounded text-[14px]'
+                  className='material-symbols-rounded text-(--icon-sm)'
                   style={{ color: 'var(--text-secondary)' }}
                 >
                   text_fields
@@ -522,7 +544,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               <div className='w-full flex items-center justify-between py-1 transition-colors'>
                 <div className='flex items-center gap-2'>
                   <span
-                    className='material-symbols-rounded text-[16px]'
+                    className='material-symbols-rounded text-(--icon-base)'
                     style={{ color: 'var(--text-secondary)' }}
                   >
                     font_download
@@ -546,8 +568,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     type='button'
                   >
                     <span
-                      className={`material-symbols-rounded transition-transform ${typographyExpanded ? 'rotate-180' : ''}`}
-                      style={{ fontSize: 'var(--status-icon-size, 16px)', color: 'var(--text-tertiary)' }}
+                      className={`material-symbols-rounded transition-transform text-(--icon-base) ${typographyExpanded ? 'rotate-180' : ''}`}
+                      style={{ color: 'var(--text-tertiary)' }}
                     >
                       {typographyPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
                     </span>
@@ -577,58 +599,76 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   }
                 >
                   {/* English Font Selection */}
-                  <div className='space-y-1.5'>
+                  <div className='space-y-2'>
                     <label
-                      className='text-[10px] font-bold uppercase'
-                      style={{ color: 'var(--text-tertiary)' }}
+                      className='text-xs font-medium flex items-center gap-1.5'
+                      style={{ color: 'var(--text-primary)' }}
                     >
+                      <span className='material-symbols-rounded text-(--icon-xs)'>text_fields</span>
                       {t.fontEN}
                     </label>
-                    <select
-                      value={fontFamilyEN}
-                      onChange={(e) => setFontFamilyEN(e.target.value)}
-                      className='w-full text-xs bg-transparent border rounded-md px-2 py-1 outline-hidden transition-colors hover:border-blue-400 focus:border-blue-500'
-                      style={{ color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-                    >
-                      {AVAILABLE_FONTS_EN.map((font) => (
-                        <option
-                          key={font.value}
-                          value={font.value}
-                          style={{ backgroundColor: 'var(--bg-primary)' }}
-                        >
-                          {font.label}
-                        </option>
-                      ))}
-                    </select>
+                    <div className='flex flex-wrap gap-1.5'>
+                      {AVAILABLE_FONTS_EN.map((font) => {
+                        const isSelected = fontFamilyEN === font.value;
+                        return (
+                          <button
+                            key={font.value}
+                            onClick={() => setFontFamilyEN(font.value)}
+                            className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all duration-200 active:scale-95 flex-grow sm:flex-grow-0 ${
+                              isSelected
+                                ? 'shadow-md border-transparent text-white'
+                                : 'bg-transparent border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            }`}
+                            style={{
+                              fontFamily: font.value,
+                              backgroundColor: isSelected ? 'var(--accent-primary)' : 'transparent',
+                              color: isSelected ? 'white' : 'var(--text-primary)',
+                              borderColor: isSelected ? 'var(--accent-primary)' : '',
+                            }}
+                          >
+                            {font.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Arabic Font Selection */}
-                  <div className='space-y-1.5'>
+                  <div className='space-y-2'>
                     <label
-                      className='text-[10px] font-bold uppercase'
-                      style={{ color: 'var(--text-tertiary)' }}
+                      className='text-xs font-medium flex items-center gap-1.5'
+                      style={{ color: 'var(--text-primary)' }}
                     >
+                      <span className='material-symbols-rounded text-(--icon-xs)'>translate</span>
                       {t.fontAR}
                     </label>
-                    <select
-                      value={fontFamilyAR}
-                      onChange={(e) => setFontFamilyAR(e.target.value)}
-                      className='w-full text-xs bg-transparent border rounded-md px-2 py-1 outline-hidden transition-colors hover:border-blue-400 focus:border-blue-500'
-                      style={{ color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}
-                    >
-                      {AVAILABLE_FONTS_AR.map((font) => (
-                        <option
-                          key={font.value}
-                          value={font.value}
-                          style={{ backgroundColor: 'var(--bg-primary)' }}
-                        >
-                          {font.label}
-                        </option>
-                      ))}
-                    </select>
+                    <div className='flex flex-wrap gap-1.5'>
+                      {AVAILABLE_FONTS_AR.map((font) => {
+                        const isSelected = fontFamilyAR === font.value;
+                        return (
+                          <button
+                            key={font.value}
+                            onClick={() => setFontFamilyAR(font.value)}
+                            className={`px-2.5 py-1.5 rounded-lg border text-sm transition-all duration-200 active:scale-95 flex-grow sm:flex-grow-0 ${
+                              isSelected
+                                ? 'shadow-md border-transparent text-white'
+                                : 'bg-transparent border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            }`}
+                            style={{
+                              fontFamily: font.value,
+                              backgroundColor: isSelected ? 'var(--accent-primary)' : 'transparent',
+                              color: isSelected ? 'white' : 'var(--text-primary)',
+                              borderColor: isSelected ? 'var(--accent-primary)' : '',
+                            }}
+                          >
+                            {font.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  {/* Graphic Style Toggle - Only visible in Arabic */}
+                  {/* Graphic Style SegmentedControl - Only visible in Arabic */}
                   {language === 'AR' && (
                     <div className='flex items-center justify-between py-1'>
                       <label
@@ -636,18 +676,32 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         style={{ color: 'var(--text-primary)' }}
                       >
                         <span
-                          className='material-symbols-rounded'
-                          style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)', color: 'var(--text-secondary)' }}
+                          className='material-symbols-rounded text-(--icon-sm)'
+                          style={{ color: 'var(--text-secondary)' }}
                         >
                           style
                         </span>
                         {t.graphicStyle}
                       </label>
-                      <Switch
-                        checked={graphicStyle}
-                        onChange={setGraphicStyle}
-                        theme={currentTheme.name.toLowerCase()}
-                        activeColor={currentTheme.hex}
+                      <SegmentedControl
+                        value={graphicStyle}
+                        onChange={(val) => setGraphicStyle(val as boolean)}
+                        color={currentTheme.name.toLowerCase()}
+                        size='xs'
+                        fullWidth={false}
+                        shape='pill'
+                        options={[
+                          { 
+                            label: 'جرافيكي', 
+                            value: false,
+                            fontFamily: fontFamilyAR 
+                          },
+                          { 
+                            label: 'جرافيكي', 
+                            value: true,
+                            fontFamily: '"HeadingFont"' 
+                          },
+                        ]}
                       />
                     </div>
                   )}
@@ -667,7 +721,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   style={{ color: 'var(--text-primary)' }}
                 >
                   <span
-                    className='material-symbols-rounded text-[14px]'
+                    className='material-symbols-rounded text-(--icon-sm)'
                     style={{ color: 'var(--text-secondary)' }}
                   >
                     filter_center_focus
@@ -691,7 +745,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   style={{ color: 'var(--text-primary)' }}
                 >
                   <span
-                    className='material-symbols-rounded text-[14px]'
+                    className='material-symbols-rounded text-(--icon-sm)'
                     style={{ color: 'var(--text-secondary)' }}
                   >
                     science
@@ -730,8 +784,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     {/* Left Side: Icon + Label */}
                     <div className='flex items-center gap-2'>
                       <span
-                        className='material-symbols-rounded'
-                        style={{ fontSize: 'var(--status-icon-size, 16px)', color: 'var(--text-secondary)' }}
+                        className='material-symbols-rounded text-(--icon-base)'
+                        style={{ color: 'var(--text-secondary)' }}
                       >
                         speed
                       </span>
@@ -761,8 +815,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         type='button'
                       >
                         <span
-                          className={`material-symbols-rounded transition-transform ${statusBarExpanded ? 'rotate-180' : ''}`}
-                          style={{ fontSize: 'var(--status-icon-size, 16px)', color: 'var(--text-tertiary)' }}
+                          className={`material-symbols-rounded transition-transform text-(--icon-base) ${statusBarExpanded ? 'rotate-180' : ''}`}
+                          style={{ color: 'var(--text-tertiary)' }}
                         >
                           {quickStatusesPos.side === 'left' ? 'chevron_left' : 'chevron_right'}
                         </span>
