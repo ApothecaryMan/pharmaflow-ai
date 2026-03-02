@@ -7,12 +7,14 @@ import { type MenuItem, PHARMACY_MENU } from '../../config/menuData';
 import { canPerformAction, type UserRole } from '../../config/permissions';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { MobileDrawer } from './MobileDrawer';
+import { MobileMedicineSearch } from '../mobile/MobileMedicineSearch';
+import { useData } from '../../services/DataContext';
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const STATIC_DOCK_VIEWS = ['dashboard', 'pos', 'inventory', 'purchases'] as const;
+const STATIC_DOCK_VIEWS = ['dashboard', 'medicine-search', 'pos', 'inventory'] as const;
 type StaticDockView = (typeof STATIC_DOCK_VIEWS)[number];
 
 const DEFAULT_ICON = 'circle';
@@ -277,6 +279,10 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     handleViewChange('dashboard');
   }, [handleViewChange]);
 
+  const handleMedicineSearchClick = useCallback(() => {
+    handleViewChange('medicine-search');
+  }, [handleViewChange]);
+
   const handlePosClick = useCallback(() => {
     handleViewChange('pos');
   }, [handleViewChange]);
@@ -290,15 +296,26 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   }, [handleViewChange]);
 
   const handleDynamicClick = useCallback(() => {
-    if (dynamicTab) {
-      handleViewChange(dynamicTab.id);
-    }
+    if (dynamicTab) handleViewChange(dynamicTab.id);
   }, [dynamicTab, handleViewChange]);
 
+  // --- RENDERING ---
   if (isStandalone) return null;
+
+  const { inventory } = useData();
 
   return (
     <>
+      {/* Mobile Search View Content - Overlay when active */}
+      {view === 'medicine-search' && (
+        <div className="md:hidden fixed inset-0 z-50 bg-gray-50 dark:bg-[#06080F] animate-fade-in">
+          <MobileMedicineSearch 
+            inventory={inventory} 
+            color={theme.primary}
+            onScanClick={() => console.log('Scan clicked')}
+          />
+        </div>
+      )}
       {/* Mobile Drawer */}
       <MobileDrawer
         isOpen={mobileMenuOpen}
@@ -340,6 +357,17 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
               label={t.nav?.dashboard || 'Dashboard'}
               theme={theme}
               onClick={handleDashboardClick}
+            />
+          ) || null}
+
+          {canPerformAction(userRole, 'inventory.view') && (
+            <DockButton
+              view='medicine-search'
+              currentView={view}
+              icon='search'
+              label={language === 'AR' ? 'بحث' : 'Search'}
+              theme={theme}
+              onClick={handleMedicineSearchClick}
             />
           ) || null}
 

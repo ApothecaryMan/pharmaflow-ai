@@ -13,7 +13,7 @@ interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   placeholder?: string;
   className?: string;
   wrapperClassName?: string;
-  icon?: string;
+  icon?: React.ReactNode;
   badge?: React.ReactNode;
   rounded?: 'xl' | 'full';
   color?: string;
@@ -190,7 +190,11 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         {/* If has active filters, we show them first? OR after icon? */}
         {/* Design: [Icon] [Pill] [Pill] [Input] [Clear] [Add Filter] */}
         <div className='flex items-center text-gray-400 select-none ps-2'>
-          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-navbar-main)' }}>{icon}</span>
+          {typeof icon === 'string' ? (
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-navbar-main)' }}>{icon}</span>
+          ) : (
+            icon
+          )}
         </div>
 
         {/* The Actual Input Container */}
@@ -201,7 +205,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             <input
               ref={ref}
               {...props}
-              type='text'
+              type='search'
               value={value}
               onChange={(e) => onSearchChange(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -209,6 +213,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               placeholder={hasActiveFilters ? placeholder?.split(',')[0] + '...' : placeholder}
               spellCheck='false'
               autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              inputMode="search"
               className={`
                 w-full bg-transparent
                 text-sm text-gray-900 dark:text-gray-100 
