@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { SearchInput } from '../common/SearchInput';
 import { useSettings } from '../../context/SettingsContext';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { parseSearchTerm } from '../../utils/searchUtils';
+import { parseSearchTerm, parsePriceRange } from '../../utils/searchUtils';
 import { Drug } from '../../types';
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
@@ -65,21 +65,50 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
     };
   }, []);
 
+  // Detect price range pattern: min/max/text
+  const priceRange = useMemo(() => parsePriceRange(searchTerm.trim()), [searchTerm]);
+
+  // The effective text to search (strips price prefix if present)
+  const effectiveSearchText = useMemo(() => {
+    if (priceRange) return priceRange.searchTerm;
+    return searchTerm;
+  }, [priceRange, searchTerm]);
+
   // Advanced filtering logic using searchUtils
   const filteredDrugs = useMemo(() => {
-    if (searchTerm.trim().length < 2) return [];
-    
-    const { mode, regex } = parseSearchTerm(searchTerm);
-    const trimmedSearch = searchTerm.trim();
+    // If we have a price range, allow empty text (just price filtering)
+    // Otherwise require at least 2 chars
+    if (!priceRange && searchTerm.trim().length < 2) return [];
+    if (priceRange && !priceRange.searchTerm && priceRange.minPrice >= 0) {
+      // Price range only, no text filter — show all in range
+      return inventory
+        .filter((drug) => drug.price >= priceRange.minPrice && drug.price <= priceRange.maxPrice)
+        .slice(0, 100);
+    }
+
+    const textToSearch = priceRange ? priceRange.searchTerm : searchTerm;
+    // Don't allow @ with price range
+    const { mode, regex } = parseSearchTerm(
+      priceRange ? textToSearch.replace(/^@/, '') : textToSearch
+    );
+    const trimmedSearch = textToSearch.trim();
+
+    // Need at least 1 char of actual text when combined with price range
+    if (priceRange && trimmedSearch.length < 1) return [];
 
     return inventory.filter((drug) => {
+      // Price range gate: reject immediately if outside range
+      if (priceRange && (drug.price < priceRange.minPrice || drug.price > priceRange.maxPrice)) {
+        return false;
+      }
+
       // 1. Exact match for barcode/code always works
       if (drug.barcode === trimmedSearch || drug.internalCode === trimmedSearch) {
         return true;
       }
 
-      // 2. Mode-based advanced filtering
-      if (mode === 'generic') {
+      // 2. Mode-based advanced filtering (only without price range)
+      if (!priceRange && mode === 'generic') {
         const isArray = Array.isArray(drug.genericName);
         return (isArray ? drug.genericName : [drug.genericName as unknown as string])
           .some((gn) => gn && regex.test(gn));
@@ -98,19 +127,21 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
 
       return regex.test(searchableText);
     }).slice(0, 100); // Limit results for mobile performance
-  }, [inventory, searchTerm]);
+  }, [inventory, searchTerm, priceRange]);
 
   // Pre-compute highlight regex ONCE per search term (memoized performance optimization)
   // Uses word-boundary \b so it only highlights at the START of words, not mid-word
   const highlightRegex = useMemo(() => {
-    if (!searchTerm.trim()) return null;
-    const rawTerm = searchTerm.trimStart().replace(/^[@#]/, '').trim();
+    // Use effective search text (strips price range prefix)
+    const textForHighlight = effectiveSearchText;
+    if (!textForHighlight.trim()) return null;
+    const rawTerm = textForHighlight.trimStart().replace(/^[@#]/, '').trim();
     if (!rawTerm) return null;
     const escaped = rawTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const words = escaped.split(/\s+/).filter(Boolean);
     if (words.length === 0) return null;
     return new RegExp(words.map(w => `\\b${w}`).join('|'), 'gi');
-  }, [searchTerm]);
+  }, [effectiveSearchText]);
 
   const highlightMatch = (text: string, term: string, forceHighlight: boolean = true) => {
     if (!highlightRegex) return text;
@@ -212,9 +243,14 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
             <div className="pt-3 px-2 shrink-0 flex items-center justify-between" dir={language === 'AR' ? 'rtl' : 'ltr'}>
               <h2 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-2">
                 {language === 'AR' ? 'نتائج البحث' : 'Search Results'} <span className="dark:text-gray-100 text-gray-500">({filteredDrugs.length})</span>
+                {priceRange && (
+                  <span className="normal-case tracking-normal text-primary-500 dark:text-primary-400 font-semibold">
+                    ({priceRange.minPrice}–{priceRange.maxPrice})
+                  </span>
+                )}
               </h2>
               <span className="text-[9px] text-gray-400 font-medium opacity-80">
-                {language === 'AR' ? 'استخدم @ للاسم العلمي' : 'Use @ for generic search'}
+                {language === 'AR' ? '@ علمي · سعر/سعر/اسم' : '@ generic · price/price/name'}
               </span>
             </div>
           </div>

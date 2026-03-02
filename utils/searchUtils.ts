@@ -43,6 +43,33 @@ export const createSearchRegex = (term: string): RegExp => {
 };
 
 /**
+ * parsePriceRange - Detects price range prefix in the format: min/max/searchText
+ *
+ * Examples:
+ * - "13/20/pana"  → { minPrice: 13, maxPrice: 20, searchTerm: "pana" }
+ * - "13/20/"      → { minPrice: 13, maxPrice: 20, searchTerm: "" }
+ * - "50/30/aspirin" → auto-swaps → { minPrice: 30, maxPrice: 50, searchTerm: "aspirin" }
+ *
+ * Returns null if the input doesn't match the pattern.
+ */
+export const parsePriceRange = (
+  term: string
+): { minPrice: number; maxPrice: number; searchTerm: string } | null => {
+  const match = term.match(/^(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)\/(.*)/);
+  if (!match) return null;
+
+  const a = parseFloat(match[1]);
+  const b = parseFloat(match[2]);
+  if (isNaN(a) || isNaN(b)) return null;
+
+  return {
+    minPrice: Math.min(a, b),
+    maxPrice: Math.max(a, b),
+    searchTerm: match[3], // everything after the second /
+  };
+};
+
+/**
  * parseSearchTerm - Detects search mode based on prefix characters (@, #).
  *
  * Supported Prefixes:
