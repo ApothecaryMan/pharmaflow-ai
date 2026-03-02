@@ -260,10 +260,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
       {/* Results List - Scrollable */}
       <div className="flex-1 overflow-y-auto min-h-0 flex flex-col w-full relative">
         {searchTerm && filteredDrugs.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-            <span className="material-symbols-rounded text-7xl text-gray-200 dark:text-gray-800 mb-6">
-              search_off
-            </span>
+          <div className="flex-1 flex flex-col items-center justify-start pt-6 p-6 text-center animate-fade-in">
             <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
               {t.pos.noResults || (language === 'AR' ? 'لا توجد نتائج' : 'No results found')}
             </h3>
@@ -373,13 +370,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
         )}
 
         {!searchTerm && (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
-            <div className="relative mb-8">
-              <div className="absolute inset-0 bg-primary-500/10 blur-3xl rounded-full" />
-              <span className="material-symbols-rounded text-[90px] text-primary-500/20 relative">
-                pill
-              </span>
-            </div>
+          <div className="flex-1 flex flex-col items-center justify-start pt-12 p-8 text-center animate-fade-in">
             <h3 className="text-xl font-black text-gray-900 dark:text-gray-100 mb-3 tracking-tight">
               {language === 'AR' ? 'ماذا تبحث عنه اليوم؟' : 'What are you looking for?'}
             </h3>
