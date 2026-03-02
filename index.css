@@ -244,6 +244,10 @@ layer(base);
     line-height: 1;
     vertical-align: middle;
   }
+
+  .font-fill {
+    font-variation-settings: 'FILL' 1 !important;
+  }
 }
 
 /* --- Real-Time Sales Animations --- */

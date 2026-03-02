@@ -190,11 +190,11 @@ const DockButton = React.memo<DockButtonProps>(
       <button
         onClick={onClick}
         className={`
-        flex-1 flex flex-col items-center justify-center gap-1.5 py-1.5 rounded-2xl transition-all duration-300
+        relative flex-1 flex flex-col items-center justify-center gap-1 py-1.5 rounded-full transition-all duration-500
         ${
           isActive
-            ? `text-primary-600 dark:text-primary-400`
-            : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'
+            ? `text-black dark:text-white z-10`
+            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
         }
         ${isDynamic ? 'animate-scale-in' : ''}
       `}
@@ -202,14 +202,14 @@ const DockButton = React.memo<DockButtonProps>(
         aria-current={isActive ? 'page' : undefined}
         type='button'
       >
-        <div className='relative'>
+        <div className='relative z-10 flex flex-col items-center justify-center min-h-[32px]'>
           {view === 'pos' ? (
             <svg
-              className={`w-[24px] h-[24px] transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}
+              className={`relative z-10 w-[22px] h-[22px] transition-transform duration-500 ${isActive ? 'scale-110' : ''}`}
               viewBox='0 0 24 24'
-              fill='none'
+              fill={isActive ? 'currentColor' : 'none'}
               stroke='currentColor'
-              strokeWidth='2'
+              strokeWidth='2.5'
               strokeLinecap='round'
               strokeLinejoin='round'
             >
@@ -219,14 +219,21 @@ const DockButton = React.memo<DockButtonProps>(
             </svg>
           ) : (
             <span
-              className={`material-symbols-rounded text-[24px] transition-all duration-300 ${isActive ? 'font-fill scale-110' : ''}`}
+              className={`relative z-10 material-symbols-rounded text-[24px] transition-all duration-500 ${isActive ? 'font-fill scale-110' : ''}`}
               aria-hidden='true'
             >
               {icon}
             </span>
           )}
+
+          {/* Flat & Transparent Floating Bean (Icon Only) */}
+          {isActive && (
+            <div 
+              className="absolute inset-x-[-14px] inset-y-[1px] bg-black/[0.08] dark:bg-white/10 rounded-full animate-scale-in pointer-events-none"
+            />
+          )}
         </div>
-        <span className={`text-[10px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+        <span className={`relative z-10 text-[10px] font-black ${isActive ? 'opacity-100' : 'opacity-60'}`}>
           {label}
         </span>
       </button>
@@ -307,20 +314,23 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
         profileImage={profileImage}
       />
 
-      {/* Mobile Bottom Navigation Bar */}
+      {/* Mobile Liquid Glass Navigation Bar */}
       <nav
         className='md:hidden fixed bottom-6 left-0 right-0 z-60 w-full safe-area-bottom px-4 pb-1'
         aria-label='Primary navigation'
       >
         <div
           className={`
-            flex items-stretch justify-around p-1.5 rounded-full
-            bg-white/95 dark:bg-gray-900/95 backdrop-blur-3xl
-            border border-gray-200/50 dark:border-gray-800/50
-            shadow-[0_-8px_32px_rgba(0,0,0,0.06)] dark:shadow-[0_-8px_32px_rgba(0,0,0,0.3)]
-            transition-all duration-300 ease-out
+            relative flex items-stretch justify-around p-1.5 rounded-full
+            bg-transparent backdrop-blur-3xl backdrop-saturate-200
+            border border-white/10 dark:border-white/5
+            shadow-[0_12px_40px_rgba(0,0,0,0.15),inset_1.5px_1.5px_0_rgba(255,255,255,0.4),inset_-1px_-1px_0_rgba(255,255,255,0.15)]
+            transition-all duration-500 ease-out
           `}
         >
+          {/* Subtle Liquid Glow Overlay */}
+          <div className="absolute inset-0 rounded-full bg-linear-to-br from-white/10 via-transparent to-transparent pointer-events-none" />
+          
           {/* Static Dock Items */}
           {canPerformAction(userRole, 'reports.view_inventory') && (
             <DockButton
@@ -331,7 +341,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
               theme={theme}
               onClick={handleDashboardClick}
             />
-          )}
+          ) || null}
 
           {canPerformAction(userRole, 'sale.create') && (
             <DockButton
@@ -342,7 +352,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
               theme={theme}
               onClick={handlePosClick}
             />
-          )}
+          ) || null}
 
           {canPerformAction(userRole, 'inventory.view') && (
             <DockButton
@@ -353,7 +363,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
               theme={theme}
               onClick={handleInventoryClick}
             />
-          )}
+          ) || null}
 
           {canPerformAction(userRole, 'purchase.view') && (
             <DockButton
@@ -364,7 +374,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
               theme={theme}
               onClick={handlePurchasesClick}
             />
-          )}
+          ) || null}
 
           {/* Dynamic 5th Slot */}
           {dynamicTab && (
