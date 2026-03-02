@@ -190,11 +190,11 @@ const DockButton = React.memo<DockButtonProps>(
       <button
         onClick={onClick}
         className={`
-        h-12 flex items-center justify-center rounded-3xl transition-fluid
+        flex-1 flex flex-col items-center justify-center gap-1.5 py-1.5 rounded-2xl transition-all duration-300
         ${
           isActive
-            ? `grow bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 px-4 gap-2 shadow-xs`
-            : 'w-12 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            ? `text-primary-600 dark:text-primary-400`
+            : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'
         }
         ${isDynamic ? 'animate-scale-in' : ''}
       `}
@@ -202,33 +202,33 @@ const DockButton = React.memo<DockButtonProps>(
         aria-current={isActive ? 'page' : undefined}
         type='button'
       >
-        {view === 'pos' ? (
-          <svg
-            className={`w-[24px] h-[24px] ${isActive ? '' : 'opacity-70'}`}
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-          >
-            <path d='M4 4h3l1 10h10l1-10H7' />
-            <circle cx='9' cy='19' r='1.5' />
-            <circle cx='17' cy='19' r='1.5' />
-          </svg>
-        ) : (
-          <span
-            className={`material-symbols-rounded text-[24px] ${isActive ? 'font-fill' : ''}`}
-            aria-hidden='true'
-          >
-            {icon}
-          </span>
-        )}
-        <div
-          className={`${isActive ? 'flex' : 'hidden'} items-center animate-word-entrance overflow-hidden`}
-        >
-          <div className='whitespace-nowrap font-bold text-sm truncate max-w-[80px]'>{label}</div>
+        <div className='relative'>
+          {view === 'pos' ? (
+            <svg
+              className={`w-[24px] h-[24px] transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            >
+              <path d='M4 4h3l1 10h10l1-10H7' />
+              <circle cx='9' cy='19' r='1.5' />
+              <circle cx='17' cy='19' r='1.5' />
+            </svg>
+          ) : (
+            <span
+              className={`material-symbols-rounded text-[24px] transition-all duration-300 ${isActive ? 'font-fill scale-110' : ''}`}
+              aria-hidden='true'
+            >
+              {icon}
+            </span>
+          )}
         </div>
+        <span className={`text-[10px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+          {label}
+        </span>
       </button>
     );
   }
@@ -307,17 +307,17 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
         profileImage={profileImage}
       />
 
-      {/* Mobile Floating Dock Navigation */}
+      {/* Mobile Bottom Navigation Bar */}
       <nav
-        className='md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-60 w-[92%] max-w-[400px] safe-area-bottom'
+        className='md:hidden fixed bottom-6 left-0 right-0 z-60 w-full safe-area-bottom px-4 pb-1'
         aria-label='Primary navigation'
       >
         <div
           className={`
-            flex items-center justify-between p-1.5 rounded-4xl
-            bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl
+            flex items-stretch justify-around p-1.5 rounded-full
+            bg-white/95 dark:bg-gray-900/95 backdrop-blur-3xl
             border border-gray-200/50 dark:border-gray-800/50
-            shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]
+            shadow-[0_-8px_32px_rgba(0,0,0,0.06)] dark:shadow-[0_-8px_32px_rgba(0,0,0,0.3)]
             transition-all duration-300 ease-out
           `}
         >
