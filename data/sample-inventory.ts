@@ -1966,8 +1966,9 @@ export const CSV_INVENTORY: Drug[] = [
     dbId: '5828',
     name: 'haema- 14',
     price: 18,
-    genericName:
-      'ferrous fumarate+vitamins(b1+b2+b6+b12+c+d+e)+folic acid+calcium+copper+linoleic acid+linolenic acid+manganese',
+    genericName: [
+      'ferrous fumarate+vitamins(b1+b2+b6+b12+c+d+e)+folic acid+calcium+copper+linoleic acid+linolenic acid+manganese'
+    ],
     class: 'anemia.iron supplement',
     category: 'Medicine',
     unitsPerPack: 2,
@@ -3187,8 +3188,9 @@ export const CSV_INVENTORY: Drug[] = [
     dbId: '16105',
     name: 'cempion 10',
     price: 125,
-    genericName:
-      'lactoferrin+colostrum+iron+vitamin b complex+folic acid+vitamin c+vitamin e+cocoa powder+zinc+seleni',
+    genericName: [
+      'lactoferrin+colostrum+iron+vitamin b complex+folic acid+vitamin c+vitamin e+cocoa powder+zinc+seleni'
+    ],
     class: 'iron supplement',
     category: 'Medicine',
     unitsPerPack: 1,
@@ -3208,7 +3210,7 @@ export const CSV_INVENTORY: Drug[] = [
     dbId: '19994',
     name: 'cerelac wheat 125 gm',
     price: 52,
-    genericName: '',
+    genericName: [],
     class: '',
     category: 'Medicine',
     unitsPerPack: 1,
@@ -5088,8 +5090,9 @@ export const CSV_INVENTORY: Drug[] = [
     dbId: '31336',
     name: 'sensotect',
     price: 80,
-    genericName:
-      'hyaluronic acid+chlorhexidine digluconate+clove oil+dill oil+dimethicone+propolis+peppermint',
+    genericName: [
+      'hyaluronic acid+chlorhexidine digluconate+clove oil+dill oil+dimethicone+propolis+peppermint'
+    ],
     class: 'oral ulcers   oral fungus    infant colic pain relief',
     category: 'Medicine',
     unitsPerPack: 1,
@@ -5109,7 +5112,7 @@ export const CSV_INVENTORY: Drug[] = [
     dbId: '14449',
     name: 'shaan hand 50 gm',
     price: 100,
-    genericName: '',
+    genericName: [],
     class: 'skin care',
     category: 'Medicine',
     unitsPerPack: 1,
@@ -5129,7 +5132,7 @@ export const CSV_INVENTORY: Drug[] = [
     dbId: '26894',
     name: 'shaan intimate feminine cleanser 220 ml',
     price: 110,
-    genericName: '',
+    genericName: [],
     class: 'vaginal wash',
     category: 'Medicine',
     unitsPerPack: 1,
@@ -5549,8 +5552,9 @@ export const CSV_INVENTORY: Drug[] = [
     dbId: '33865',
     name: 'vida queen skin 30 ml',
     price: 200,
-    genericName:
-      'hyaluronic acid + collagen(marine) + ascorbic acid(vitamin c) + mandelic acid + panthenol',
+    genericName: [
+      'hyaluronic acid + collagen(marine) + ascorbic acid(vitamin c) + mandelic acid + panthenol'
+    ],
     class: 'skin serum',
     category: 'Medicine',
     unitsPerPack: 1,

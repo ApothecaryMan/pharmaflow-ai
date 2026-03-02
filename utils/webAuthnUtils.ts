@@ -95,7 +95,7 @@ export const isConditionalUISupported = async (): Promise<boolean> => {
   }
 
   try {
-    // @ts-expect-error - Conditional mediation is new
+    // Conditional mediation is new
     return (await PublicKeyCredential.isConditionalMediationAvailable?.()) ?? false;
   } catch {
     return false;
@@ -141,7 +141,7 @@ export const registrationToJSON = (credential: PublicKeyCredential) => {
     response: {
       clientDataJSON: bufferToBase64(response.clientDataJSON),
       attestationObject: bufferToBase64(response.attestationObject),
-      // @ts-expect-error - transports might not be in all TS versions
+      // transports might not be in all TS versions
       transports: response.getTransports?.() ?? [],
     },
   };

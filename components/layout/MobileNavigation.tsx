@@ -192,7 +192,7 @@ const DockButton = React.memo<DockButtonProps>(
       <button
         onClick={onClick}
         className={`
-        relative flex-1 flex flex-col items-center justify-center gap-1 py-1.5 rounded-full transition-all duration-500
+        relative flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-full transition-all duration-500
         ${
           isActive
             ? `text-black dark:text-white z-10`
@@ -204,7 +204,7 @@ const DockButton = React.memo<DockButtonProps>(
         aria-current={isActive ? 'page' : undefined}
         type='button'
       >
-        <div className='relative z-10 flex flex-col items-center justify-center min-h-[32px]'>
+        <div className='relative z-10 flex flex-col items-center justify-center min-h-[30px]'>
           {view === 'pos' ? (
             <svg
               className={`relative z-10 w-[22px] h-[22px] transition-transform duration-500 ${isActive ? 'scale-110' : ''}`}
@@ -235,7 +235,7 @@ const DockButton = React.memo<DockButtonProps>(
             />
           )}
         </div>
-        <span className={`relative z-10 text-[10px] font-black ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+        <span className={`relative z-10 text-[10px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}>
           {label}
         </span>
       </button>
@@ -291,10 +291,6 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     handleViewChange('inventory');
   }, [handleViewChange]);
 
-  const handlePurchasesClick = useCallback(() => {
-    handleViewChange('purchases');
-  }, [handleViewChange]);
-
   const handleDynamicClick = useCallback(() => {
     if (dynamicTab) handleViewChange(dynamicTab.id);
   }, [dynamicTab, handleViewChange]);
@@ -338,16 +334,13 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
       >
         <div
           className={`
-            relative flex items-stretch justify-around p-1.5 rounded-full
-            bg-transparent backdrop-blur-3xl backdrop-saturate-200
-            border border-white/10 dark:border-white/5
-            shadow-[0_12px_40px_rgba(0,0,0,0.15),inset_1.5px_1.5px_0_rgba(255,255,255,0.4),inset_-1px_-1px_0_rgba(255,255,255,0.15)]
+            relative flex items-stretch justify-around p-1 rounded-full
+            bg-black/[0.08] dark:bg-black/40 backdrop-blur-[40px]
+            border border-black/10 dark:border-white/10
+            shadow-xl shadow-black/5
             transition-all duration-500 ease-out
           `}
         >
-          {/* Subtle Liquid Glow Overlay */}
-          <div className="absolute inset-0 rounded-full bg-linear-to-br from-white/10 via-transparent to-transparent pointer-events-none" />
-          
           {/* Static Dock Items */}
           {canPerformAction(userRole, 'reports.view_inventory') && (
             <DockButton
@@ -390,17 +383,6 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
               label={t.nav?.inventory || 'Inventory'}
               theme={theme}
               onClick={handleInventoryClick}
-            />
-          ) || null}
-
-          {canPerformAction(userRole, 'purchase.view') && (
-            <DockButton
-              view='purchases'
-              currentView={view}
-              icon='shopping_cart_checkout'
-              label={t.nav?.purchase || 'Purchase'}
-              theme={theme}
-              onClick={handlePurchasesClick}
             />
           ) || null}
 

@@ -207,7 +207,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       {
         id: '1',
         name: 'Panadol Extra 500mg',
-        genericName: 'Paracetamol',
+        genericName: ['Paracetamol'],
         quantity: 2,
         price: 15.5,
         costPrice: 10,
@@ -221,7 +221,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       {
         id: '2',
         name: 'Vitamin C 1000mg',
-        genericName: 'Ascorbic Acid',
+        genericName: ['Ascorbic Acid'],
         quantity: 3,
         price: 45.0,
         costPrice: 30,
@@ -235,7 +235,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       {
         id: '3',
         name: 'Face Mask (Premium)',
-        genericName: 'Mask',
+        genericName: ['Mask'],
         quantity: 5,
         price: 5.0,
         costPrice: 2,

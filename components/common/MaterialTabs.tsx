@@ -1,6 +1,6 @@
 import type React from 'react';
 
-interface MaterialTabsProps {
+interface MaterialTabsProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   index: number;
   total: number;
@@ -18,6 +18,7 @@ export const MaterialTabs: React.FC<MaterialTabsProps> = ({
   onClick,
   className = '',
   isSelected = false,
+  ...rest
 }) => {
   const isFirst = index === 0;
   const isLast = index === total - 1;
@@ -36,6 +37,7 @@ export const MaterialTabs: React.FC<MaterialTabsProps> = ({
   return (
     <div
       onClick={onClick}
+      {...rest}
       className={`group relative h-[72px] px-4 flex items-center transition-all cursor-pointer overflow-hidden outline-hidden focus:outline-hidden ring-0 focus:ring-0 ${roundedClass} ${
         isSelected
           ? `bg-primary-50 dark:bg-primary-950/20`
