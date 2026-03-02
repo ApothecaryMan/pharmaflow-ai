@@ -175,7 +175,7 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
   };
 
   return (
-    <div className="w-full relative overflow-hidden bg-black rounded-[24px] shadow-inner mb-3 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] animate-fade-in group" style={{ height: '180px' }}>
+    <div className="w-full relative overflow-hidden bg-black rounded-[32px] shadow-inner mb-3 transition-all duration-600 ease-[cubic-bezier(0.2,0.8,0.2,1)] animate-fade-in group" style={{ height: '180px' }}>
       
       {/* Video Feed */}
       <video
@@ -187,9 +187,9 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Modern Overlay Scanning Area */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center border-[20px] border-black/40 mix-blend-hard-light rounded-[24px]">
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center border-[20px] border-black/40 mix-blend-hard-light rounded-[32px]">
         <div 
-          className="w-full h-full border-2 rounded-[16px] relative overflow-hidden"
+          className="w-full h-full border-2 rounded-[12px] relative overflow-hidden"
           style={{ borderColor: color || 'var(--primary-color)' }}
         >
           {/* Scanning line animation */}

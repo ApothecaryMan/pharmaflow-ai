@@ -40,8 +40,8 @@ export const MaterialTabs: React.FC<MaterialTabsProps> = ({
       {...rest}
       className={`group relative h-[72px] px-4 flex items-center transition-all cursor-pointer overflow-hidden outline-hidden focus:outline-hidden ring-0 focus:ring-0 ${roundedClass} ${
         isSelected
-          ? `bg-primary-50 dark:bg-primary-950/20`
-          : 'bg-primary-50 hover:bg-primary-100 dark:bg-primary-950/20 dark:hover:bg-primary-900/30'
+          ? `bg-gray-200 dark:bg-gray-800`
+          : 'bg-gray-100 hover:bg-gray-200/70 dark:bg-gray-800/40 dark:hover:bg-gray-700/50'
       } ${className}`}
     >
       {children}

@@ -24,8 +24,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
   const t = TRANSLATIONS[language];
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
-  // Viewport height detection using Visual Viewport API
-  const [viewportHeight, setViewportHeight] = useState<number | string>('100%');
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [expandedDrugId, setExpandedDrugId] = useState<string | null>(null);
@@ -50,8 +49,6 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
 
     const handleResize = () => {
       const vpv = window.visualViewport!;
-      setViewportHeight(vpv.height);
-      
       // Determine if keyboard is likely open (standard heuristic)
       const isCurrentlyOpen = vpv.height < window.innerHeight * 0.85;
       setIsKeyboardOpen(isCurrentlyOpen);
@@ -148,8 +145,8 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
 
   return (
     <div 
-      className="flex flex-col bg-gray-50 dark:bg-[#0C111D] overflow-hidden relative"
-      style={{ height: viewportHeight }}
+      ref={containerRef}
+      className="flex flex-col bg-gray-50 dark:bg-[rgb(40,40,40)] overflow-hidden fixed inset-0"
       onContextMenu={(e) => e.preventDefault()}
       dir="ltr"
     >
@@ -158,25 +155,29 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
         className={`
           w-full z-50 shrink-0
           ${isKeyboardOpen 
-            ? 'bg-gray-50 dark:bg-[#0C111D] border-b border-gray-100 dark:border-gray-800 shadow-[0_10px_30px_rgba(0,0,0,0.05)] p-4' 
-            : 'bg-gray-50/80 dark:bg-[#0C111D]/80 backdrop-blur-xl border-b border-gray-100/50 dark:border-gray-800/50 p-4'
+            ? 'bg-gray-50 dark:bg-[rgb(40,40,40)] border-b border-gray-100 dark:border-[rgb(80,80,80)] p-4' 
+            : 'p-4 bg-gray-50/80 dark:bg-[rgb(40,40,40)]/80 backdrop-blur-xl border-b border-gray-100/50 dark:border-[rgb(80,80,80)]/50'
           }
         `}
       >
-        {isScannerOpen && (
-          <div className="w-full max-w-2xl mx-auto mb-3 px-2">
-            <InlineBarcodeScanner
-              onScanSuccess={(decodedText) => {
-                setSearchTerm(decodedText);
-                setIsScannerOpen(false);
-              }}
-              onClose={() => setIsScannerOpen(false)}
-              color={color}
-            />
+        <div 
+          className={`grid transition-all duration-400 ease-out ${isScannerOpen ? 'grid-rows-[1fr] opacity-100 mb-3' : 'grid-rows-[0fr] opacity-0 mb-0'}`}
+        >
+          <div className="overflow-hidden">
+            <div className="w-full max-w-2xl mx-auto px-2 pb-1">
+              <InlineBarcodeScanner
+                onScanSuccess={(decodedText) => {
+                  setSearchTerm(decodedText);
+                  setIsScannerOpen(false);
+                }}
+                onClose={() => setIsScannerOpen(false)}
+                color={color}
+              />
+            </div>
           </div>
-        )}
+        </div>
 
-        <div className="flex items-center w-full max-w-2xl mx-auto">
+        <div className="flex items-center w-full mx-auto">
           <div className="flex-1 min-w-0">
             <SearchInput
               ref={searchInputRef}
@@ -196,56 +197,37 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
                   </span>
                 </button>
               }
-              className={`
-                shadow-none
-                ${isKeyboardOpen 
-                  ? 'bg-white dark:bg-[#06080F] border-transparent rounded-2xl' 
-                  : 'bg-white dark:bg-[#06080F] border-gray-200/60 dark:border-gray-800/60 shadow-sm rounded-2xl'
-                }
+              wrapperClassName={`
+                bg-white border-gray-200 dark:!bg-[rgb(60,60,60)] dark:!border-[rgb(80,80,80)] shadow-none
               `}
+              className="!bg-transparent"
             />
-          </div>
-          
-          {/* Cancel Button */}
-          <div 
-            className={`
-              flex items-center overflow-hidden transition-all duration-300
-              ${isKeyboardOpen ? 'max-w-[100px] opacity-100 ms-3' : 'max-w-0 opacity-0 ms-0 pointer-events-none'}
-            `}
-          >
-            <button 
-              onClick={() => {
-                searchInputRef.current?.blur();
-                setSearchTerm('');
-              }}
-              className="text-primary-600 dark:text-primary-400 font-bold text-sm px-2 whitespace-nowrap active:opacity-50 transition-opacity"
-            >
-              {language === 'AR' ? 'إلغاء' : 'Cancel'}
-            </button>
           </div>
         </div>
 
         
-        {/* Search Results Summary */}
-        {searchTerm && (
-          <div className="pt-3 px-2 shrink-0 animate-fade-in">
-            <h2 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary-500" />
-              {language === 'AR' ? 'نتائج البحث' : 'Search Results'} ({filteredDrugs.length})
-            </h2>
+        {/* Search Results Summary - Transitioned to prevent jumps */}
+        <div className={`grid transition-all duration-300 ease-out ${searchTerm ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+          <div className="overflow-hidden">
+            <div className="pt-3 px-2 shrink-0 flex items-center justify-between" dir={language === 'AR' ? 'rtl' : 'ltr'}>
+              <h2 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                {language === 'AR' ? 'نتائج البحث' : 'Search Results'} <span className="dark:text-gray-100 text-gray-500">({filteredDrugs.length})</span>
+              </h2>
+              <span className="text-[9px] text-gray-400 font-medium opacity-80">
+                {language === 'AR' ? 'استخدم @ للاسم العلمي' : 'Use @ for generic search'}
+              </span>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Results List - Scrollable */}
       <div className="flex-1 overflow-y-auto min-h-0 flex flex-col w-full relative">
         {searchTerm && filteredDrugs.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-            <div className="w-24 h-24 rounded-full bg-white dark:bg-[#0C111D] flex items-center justify-center mb-6 shadow-sm">
-              <span className="material-symbols-rounded text-5xl text-gray-300 dark:text-gray-700">
-                search_off
-              </span>
-            </div>
+            <span className="material-symbols-rounded text-7xl text-gray-200 dark:text-gray-800 mb-6">
+              search_off
+            </span>
             <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
               {t.pos.noResults || (language === 'AR' ? 'لا توجد نتائج' : 'No results found')}
             </h3>
@@ -257,112 +239,98 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
           <div className="p-4 flex flex-col gap-1 pb-24" dir="ltr">
             {filteredDrugs.map((drug, index) => {
               const displayName = getDisplayName(drug, textTransform);
-              const isLongBrand = displayName.length > 18;
               const isExpanded = expandedDrugId === drug.id;
 
               return (
-                <MaterialTabs
-                  key={drug.id}
-                  index={index}
-                  total={filteredDrugs.length}
-                  isSelected={isExpanded}
-                  onPointerDown={() => handlePointerDown(drug.id)}
-                  onPointerUp={handlePointerUp}
-                  onPointerLeave={handlePointerUp}
-                  className={`
-                    !px-0 border border-gray-100/50 dark:border-gray-800/30 transition-all duration-500 ease-in-out
-                    ${isExpanded ? '!h-auto min-h-[120px] pt-4 shadow-xl !bg-white dark:!bg-[#151B28] z-10' : '!h-[80px] pt-1'}
-                  `}
-                  onClick={() => {
-                    // Clicking an expanded card collapses it
-                    if (isExpanded) setExpandedDrugId(null);
-                  }}
-                >
-                  <div className="flex items-start justify-between w-full h-full px-4 pb-2">
-                    <div className="flex-1 min-w-0 h-full flex flex-col px-1">
-                      <div className={`${isExpanded ? '' : 'my-auto'} w-full flex flex-col gap-0 transition-all`}>
-                        {/* Brand Name - Scrollable if too long */}
-                        <div className={`${isExpanded ? 'max-h-none h-auto' : 'max-h-[32px] overflow-y-auto'} scrollbar-hide shrink-0 transition-all`}>
-                           <h3 className={`font-bold text-gray-900 dark:text-gray-100 leading-[1.1] ${isExpanded ? 'text-base mb-1' : ''}`}>
+                  <div 
+                    key={drug.id}
+                    className="animate-stagger-fade-in"
+                    style={{ '--index': index } as React.CSSProperties}
+                  >
+                    <MaterialTabs
+                      index={index}
+                      total={filteredDrugs.length}
+                      isSelected={isExpanded}
+                      onPointerDown={() => handlePointerDown(drug.id)}
+                      onPointerUp={handlePointerUp}
+                      onPointerLeave={handlePointerUp}
+                      className={`
+                        !px-0 border border-gray-100/30 dark:border-gray-800/20 
+                        transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] 
+                        active:scale-[0.98] active:opacity-90 bg-white dark:!bg-black
+                        ${isExpanded ? '!h-auto pt-1 !bg-gray-100/80 z-10 shadow-sm' : 'h-[60px]'}
+                      `}
+                      onClick={() => {
+                        if (isExpanded) setExpandedDrugId(null);
+                      }}
+                    >
+                    <div className={`flex flex-col w-full px-4 justify-center ${isExpanded ? 'h-auto pt-2 pb-2' : 'h-full'}`}>
+                      {/* Brand Name & Price Row - Synced vertically */}
+                      <div className="flex items-center justify-between w-full gap-2">
+                        <div className="flex-1 min-w-0">
+                           <h3 className={`font-bold text-gray-900 dark:text-gray-100 leading-[1.1] ${isExpanded ? 'text-base mb-1' : 'line-clamp-2'}`}>
                              {highlightMatch(displayName, searchTerm, !searchTerm.startsWith('@'))}
                            </h3>
                          </div>
-
-                        {/* Generic Name - Scrollable area */}
-                        <div className={`pt-0.5 mt-0.5 transition-all duration-300`}>
-                           <p className={`text-gray-400 dark:text-gray-600 leading-[1.1] transition-all duration-300 ${isExpanded ? 'text-sm' : 'text-xs'}`}>
-                             {(() => {
-                               const genericNameStr = Array.isArray(drug.genericName) 
-                                 ? drug.genericName.join(' + ') 
-                                 : (drug.genericName as unknown as string);
-                               
-                               // Only highlight generic if explicitly searching for generic (@) 
-                               // or if the brand name DOES NOT contain a match (to explain deep search result)
-                               const { regex } = parseSearchTerm(searchTerm);
-                               const hasBrandMatch = regex.test(displayName);
-                               const shouldHighlightGeneric = searchTerm.startsWith('@') || !hasBrandMatch;
-                               
-                               return highlightMatch(genericNameStr, searchTerm, shouldHighlightGeneric);
-                             })()}
-                           </p>
-                          
-                          <div className={`grid transition-all duration-500 ease-in-out ${isExpanded ? 'grid-rows-[1fr] mt-2 opacity-100' : 'grid-rows-[0fr] opacity-0 overflow-hidden'}`}>
-                            <div className="overflow-hidden min-h-0">
-                              {drug.description && (
-                                <p className="text-xs text-gray-500 italic pt-2">
-                                  {drug.description}
-                                </p>
-                              )}
-                            </div>
+                        <div className="shrink-0 text-right">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className={`text-[11px] font-black transition-all ${drug.stock > 0 ? 'text-green-600/80 dark:text-green-500/80' : 'text-red-500/80'}`}>
+                              ({(() => {
+                                if (drug.stock <= 0) return '0';
+                                const unitsPerPack = drug.unitsPerPack || 1;
+                                const stockInPacks = drug.stock / unitsPerPack;
+                                return Number.isInteger(stockInPacks) 
+                                  ? stockInPacks.toString() 
+                                  : stockInPacks.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+                              })()})
+                            </span>
+                            <span className="font-black text-lg text-primary-600 dark:text-primary-400 tabular-nums transition-all">
+                              {(() => {
+                                const parts = formatCurrencyParts(drug.price);
+                                const isArabic = language === 'AR';
+                                return (
+                                  <span className="flex items-baseline gap-0.5">
+                                    {isArabic && <span className="text-[10px] font-bold opacity-60">{parts.symbol}</span>}
+                                    <span>{parts.amount}</span>
+                                    {!isArabic && <span className="text-[10px] font-bold opacity-60">{parts.symbol}</span>}
+                                  </span>
+                                );
+                              })()}
+                            </span>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div className={`ml-4 text-right shrink-0 ${isExpanded ? 'pt-1' : ''}`}>
-                      <div className="flex flex-col items-end">
-                        <div className="flex items-baseline gap-1">
-                          <span className="font-black text-lg text-primary-600 dark:text-primary-400 tabular-nums transition-all">
-                            {(() => {
-                              const parts = formatCurrencyParts(drug.price);
-                              const isArabic = language === 'AR';
-                              return (
-                                <span className="flex items-baseline gap-0.5">
-                                  {isArabic && (
-                                    <span className="text-[10px] font-bold opacity-60">
-                                      {parts.symbol}
-                                    </span>
-                                  )}
-                                  <span>{parts.amount}</span>
-                                  {!isArabic && (
-                                    <span className="text-[10px] font-bold opacity-60">
-                                      {parts.symbol}
-                                    </span>
-                                  )}
-                                </span>
-                              );
-                            })()}
-                          </span>
-                        </div>
-                        <div className={`text-base font-black transition-all ${drug.stock > 0 ? 'text-green-600 dark:text-green-500' : 'text-red-500'}`}>
+
+                      {/* Generic Name - Takes full width below */}
+                      <div className="w-full pt-0.5">
+                        <p className={`text-gray-400 dark:text-gray-600 leading-[1.1] transition-all duration-300 text-xs ${isExpanded ? '' : 'truncate'}`}>
                           {(() => {
-                            if (drug.stock <= 0) return '0';
-                            
-                            const unitsPerPack = drug.unitsPerPack || 1;
-                            const stockInPacks = drug.stock / unitsPerPack;
-                            
-                            // Show as decimal (e.g., 2.5) if there are partial packs
-                            return Number.isInteger(stockInPacks) 
-                              ? stockInPacks.toString() 
-                              : stockInPacks.toLocaleString('en-US', { 
-                                  minimumFractionDigits: 1, 
-                                  maximumFractionDigits: 2 
-                                });
+                            const genericNameStr = Array.isArray(drug.genericName) 
+                              ? drug.genericName.join(' + ') 
+                              : (drug.genericName as unknown as string);
+                            const { regex } = parseSearchTerm(searchTerm);
+                            const hasBrandMatch = regex.test(displayName);
+                            const shouldHighlightGeneric = searchTerm.startsWith('@') || !hasBrandMatch;
+                            return highlightMatch(genericNameStr, searchTerm, shouldHighlightGeneric);
                           })()}
+                        </p>
+                      </div>
+
+                      {/* Expanded Content */}
+                      <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isExpanded ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0'}`}>
+                        <div className="overflow-hidden min-h-0">
+                          {drug.description && (
+                            <div className="pt-2 border-t border-gray-200 dark:border-gray-700/50">
+                              <p className="text-[10px] text-gray-400 italic leading-relaxed">
+                                {drug.description}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
-                  </div>
-                </MaterialTabs>
+                  </MaterialTabs>
+                </div>
               );
             })}
           </div>
@@ -381,11 +349,41 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
             </h3>
             <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-sm">
               {language === 'AR' 
-                ? 'ابحث بسهولة عن الأدوية بالاسم العلمي أو التجاري أو عبر الباركود' 
-                : 'Easily search for medicines by brand name, generic name, or barcode'}
-            </p>
-          </div>
-        )}
+                  ? 'ابدأ البحث بالاسم أو الباركود أو المادة الفعالة' 
+                  : 'Search by name, barcode, or generic name'}
+              </p>
+            </div>
+          )}
+        <style>{`
+          @keyframes stagger-fade-in {
+            from {
+              opacity: 0;
+              transform: translateY(10px) scale(0.98);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+
+          .animate-stagger-fade-in {
+            animation: stagger-fade-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+            animation-delay: calc(var(--index) * 0.05s);
+          }
+
+          @keyframes scan-line {
+            0% { top: 0; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+          }
+          
+          /* Smooth scroll for the entire list */
+          .overflow-y-auto {
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+          }
+        `}</style>
       </div>
 
     </div>
