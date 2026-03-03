@@ -177,6 +177,7 @@ layer(base);
   .dark {
     --border-color: #374151; /* gray-700 */
     --text-secondary: #9ca3af; /* gray-400 */
+    --bg-internal-card: #202020;
   }
 
   /* PWA Styles - iOS/iPad Safe Areas & Standalone Mode */

@@ -92,11 +92,21 @@
         --color-primary-dark: var(--primary-800);
 
         /* Background Colors - Light Mode */
-        --bg-primary: #ffffff;
+        --bg-primary: #f9fafb; /* gray-50 */
         --bg-secondary: #f8fafc;
         --bg-tertiary: #f1f5f9;
         --bg-accent: var(--primary-50);
         --bg-hover: #f1f5f9;
+
+        --bg-navbar: #ffffff;
+        --bg-card: #ffffff;
+        --bg-search: #f9fafb;
+        --bg-surface-neutral: rgba(248, 249, 250, 0.8);
+        --bg-statusbar: var(--bg-secondary);
+        --bg-menu: #ffffff;
+        --bg-menu-hover: #f3f4f6;
+        --bg-navbar-hover: var(--bg-menu-hover);
+        --button-base-inactive: rgba(249, 250, 251, 0.2); /* gray-50/50 */
 
         /* Text Colors - Light Mode */
         --text-primary: #0f172a;
@@ -108,6 +118,8 @@
         --border-primary: #e2e8f0;
         --border-secondary: #cbd5e1;
         --border-accent: var(--primary-200);
+        --border-divider: #f3f4f6; /* gray-100 */
+        --border-search: #f3f4f6;
 
         /* Shadow Colors */
         --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -119,20 +131,32 @@
 
       /* Dark Mode Variables */
       .dark {
-        --bg-primary: #111827;
-        --bg-secondary: #1f2937;
-        --bg-tertiary: #374151;
+        --bg-primary: #282828; /* rgb(40,40,40) */
+        --bg-secondary: #1a1a1a;
+        --bg-tertiary: #333333;
         --bg-accent: #1e3a8a;
-        --bg-hover: #374151;
+        --bg-hover: rgba(60, 60, 60, 0.5);
+
+        --bg-navbar: #1f1f1f;
+        --bg-card: #323232;
+        --bg-search: #282828;
+        --bg-statusbar: var(--bg-navbar);
+        --bg-menu: #262626;
+        --bg-menu-hover: #323232;
+        --bg-navbar-hover: var(--bg-menu-hover);
+        --bg-surface-neutral: #2d2d2d;
+        --button-base-inactive: rgba(80, 80, 80, 0.4);
 
         --text-primary: #f3f4f6;
         --text-secondary: #d1d5db;
         --text-tertiary: #9ca3af;
         --text-inverse: #111827;
 
-        --border-primary: #374151;
-        --border-secondary: #4b5563;
+        --border-primary: #3d3d3d;
+        --border-secondary: #525252;
         --border-accent: var(--primary-700);
+        --border-divider: rgba(80, 80, 80, 0.5);
+        --border-search: rgba(80, 80, 80, 0.5);
 
         --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
         --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3);
@@ -230,7 +254,7 @@
     <link rel="stylesheet" href="/index.css" />
   </head>
   <body
-    class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-50 transition-colors duration-300"
+    class="bg-[#f9fafb] dark:bg-[#282828] text-gray-900 dark:text-gray-50 transition-colors duration-300"
   >
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>

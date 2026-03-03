@@ -28,6 +28,7 @@ interface ExpiryManagementProps {
   t: any;
   language?: string;
   onUpdateInventory?: (drug: Drug, batch?: StockBatch, action?: string) => void;
+  onBatchesChanged?: () => void;
 }
 
 interface BatchWithDrug extends StockBatch {
@@ -41,6 +42,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
   t,
   language,
   onUpdateInventory,
+  onBatchesChanged,
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const { success, error } = useAlert();
@@ -107,6 +109,9 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       
       if (onUpdateInventory) {
         onUpdateInventory({ ...selectedActionBatch.drug, stock: mutation.newStock }, selectedActionBatch); 
+      }
+      if (onBatchesChanged) {
+        onBatchesChanged();
       }
       
       // Update local batches logic ideally triggers from parent re-fetch, but typically we close the modal and rely on that.

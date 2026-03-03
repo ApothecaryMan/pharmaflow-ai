@@ -116,7 +116,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     menuLabelAr: 'تقويم الانتهاء',
     icon: 'calendar_today',
     category: 'inventory',
-    requiredProps: ['inventory', 'batches', 'color', 't', 'language', 'onUpdateInventory'],
+    requiredProps: ['inventory', 'batches', 'color', 't', 'language', 'onUpdateInventory', 'onBatchesChanged'],
     permission: 'inventory.view',
   },
   'inventory-beta': {

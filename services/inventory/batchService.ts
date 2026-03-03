@@ -339,6 +339,19 @@ export const getStockSummary = (
   };
 };
 
+/**
+ * Delete all batches associated with a specific drug ID
+ */
+export const deleteBatchesByDrugId = (drugId: string): number => {
+  const all = getAllBatchesRaw();
+  const filtered = all.filter((b) => b.drugId !== drugId);
+  const removedCount = all.length - filtered.length;
+  if (removedCount > 0) {
+    saveBatches(filtered);
+  }
+  return removedCount;
+};
+
 // Export as service object
 export const batchService = {
   getAllBatches,
@@ -354,4 +367,5 @@ export const batchService = {
   hasStock,
   migrateInventoryToBatches,
   getStockSummary,
+  deleteBatchesByDrugId,
 };

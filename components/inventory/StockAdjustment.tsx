@@ -137,24 +137,21 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       // The movement has batchId.
       if (movement.batchId) {
         await batchService.updateBatchQuantity(movement.batchId, movement.quantity);
-      } else {
-        // If no batch, we must update the drug total stock.
-        // However, our current architecture relies on updating batch OR drug stock.
-        // If we implemented total stock update in handleSave, we should replicate here.
-        // But handleSave only did batch update for approved.
-        // IMPORTANT: We need to handle non-batched items too!
-        // For now, let's assume we update the referenced batch.
-        // If generic stock, we'd need to fetch the drug and update it.
-        // But let's stick to the implementation plan: mostly batch based.
       }
 
-      // 3. Refresh
+      // 3. Sync Drug.stock with parent
+      const drug = inventory.find(d => d.id === movement.drugId);
+      if (drug) {
+        const updatedDrug = { ...drug, stock: movement.newStock };
+        onUpdateInventory([
+          ...inventory.map(d => d.id === drug.id ? updatedDrug : d)
+        ]);
+      }
+
+      // 4. Refresh
       loadHistory();
       success('Adjustment approved successfully');
       playSuccess();
-      // Also need to refresh global inventory? onUpdateInventory won't trigger from here easily
-      // unless we refetch everything.
-      // For now, let's rely on history update.
     } catch (e) {
       console.error('Approve failed', e);
       error('Failed to approve adjustment');

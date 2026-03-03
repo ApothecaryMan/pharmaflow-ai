@@ -261,6 +261,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       handleDeleteEmployee,
       handleCreatePurchaseReturn,
       getVerifiedDate,
+      setBatches,
     }),
     [
       setInventory,
@@ -288,6 +289,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       handleDeleteEmployee,
       handleCreatePurchaseReturn,
       getVerifiedDate,
+      setBatches,
     ]
   );
 

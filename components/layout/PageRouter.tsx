@@ -5,6 +5,7 @@ import { ROUTES } from '../../config/routes';
 import { useSettings } from '../../context';
 import { LandingPage } from '../layout/LandingPage';
 import { PageSkeletonRegistry } from '../skeletons/PageSkeletonRegistry';
+import { batchService } from '../../services/inventory/batchService';
 
 interface PageRouterProps {
   view: string;
@@ -138,6 +139,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   if (requiredProps.includes('onUpdateDrug')) props.onUpdateDrug = handlers.handleUpdateDrug;
   if (requiredProps.includes('onDeleteDrug')) props.onDeleteDrug = handlers.handleDeleteDrug;
   if (requiredProps.includes('onUpdateInventory')) props.onUpdateInventory = handlers.setInventory;
+  if (requiredProps.includes('onBatchesChanged')) props.onBatchesChanged = () => handlers.setBatches(batchService.getAllBatches());
   if (requiredProps.includes('onCompleteSale')) props.onCompleteSale = handlers.handleCompleteSale;
   if (requiredProps.includes('onUpdateSale')) props.onUpdateSale = handlers.handleUpdateSale;
   if (requiredProps.includes('onProcessReturn'))

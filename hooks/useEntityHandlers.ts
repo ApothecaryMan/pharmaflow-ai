@@ -305,8 +305,31 @@ export function useEntityHandlers({
       }
 
       try {
+        // Log deletion movement for remaining stock
+        const drug = inventory.find(d => d.id === id);
+        if (drug && drug.stock > 0) {
+          const performer = employees?.find(e => e.id === currentEmployeeId);
+          stockMovementService.logMovement({
+            drugId: drug.id,
+            drugName: drug.name,
+            branchId: activeBranchId,
+            type: 'adjustment',
+            quantity: -drug.stock,
+            previousStock: drug.stock,
+            newStock: 0,
+            reason: 'Product Deleted',
+            performedBy: currentEmployeeId!,
+            performedByName: performer?.name,
+            status: 'approved',
+          });
+        }
+
+        // Clean up orphaned batches
+        batchService.deleteBatchesByDrugId(id);
+
         await inventoryService.delete(id);
         setInventory((prev) => prev.filter((d) => d.id !== id));
+        setBatches(batchService.getAllBatches());
         
         auditService.log('inventory.delete', {
           userId: currentEmployeeId,
@@ -317,7 +340,7 @@ export function useEntityHandlers({
         error(`Failed to delete product: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [setInventory, currentEmployeeId, employees, error]
+    [setInventory, setBatches, inventory, currentEmployeeId, employees, activeBranchId, error]
   );
 
   const handleRestock = useCallback(
@@ -1125,6 +1148,7 @@ export function useEntityHandlers({
         // Update inventory state using the existing helper for now, but the logging is now via stockOps
         const updatedInventory = restoreStockForCancelledSale(sale, inventory);
         setInventory(updatedInventory);
+        setBatches(batchService.getAllBatches());
       }
 
       // Handle item modifications (for delivery orders)
