@@ -97,10 +97,10 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
 
   return (
     <div
-      className={`fixed w-64 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-99999 animate-fade-in origin-top ${
+      className={`fixed w-64 rounded-2xl shadow-xl border border-(--border-divider) overflow-hidden z-99999 animate-fade-in origin-top ${
         blur
           ? 'backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-backdrop-filter:bg-white/30'
-          : 'bg-white dark:bg-gray-800'
+          : 'bg-(--bg-menu)'
       }`}
       style={{
         top: position.top,
@@ -119,7 +119,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
             </div>
 
             {/* Submenu Items */}
-            <div className='px-2 mb-2'>
+            <div className='flex flex-col gap-1 px-2 mb-2'>
               {submenu.items.map((item, idx) => {
                 const itemLabel = typeof item === 'string' ? item : item.label;
                 const itemView = typeof item === 'object' && item.view ? item.view : null;
@@ -146,12 +146,12 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                           onClose();
                         }
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all text-start ${
+                      className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-all text-start ${
                         !isImplemented
                           ? 'opacity-50 cursor-not-allowed text-gray-400'
                           : isActive
-                            ? `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-semibold`
-                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-700'
+                            ? `bg-primary-100 dark:bg-primary-500/15 text-primary-700 dark:text-primary-400 font-semibold`
+                            : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-(--bg-menu-hover)'
                       }`}
                     >
                       <div className='flex items-center gap-2.5'>
@@ -166,7 +166,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                         <span>{getMenuTranslation(itemLabel, language)}</span>
                       </div>
                       {!isImplemented && (
-                        <span className='text-[10px] items-center px-1.5 py-0.5 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-400'>
+                        <span className='text-[10px] items-center px-1.5 py-0.5 rounded-full border border-(--border-divider) bg-(--bg-search) text-gray-400'>
                           Soon
                         </span>
                       )}
@@ -177,7 +177,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
             </div>
 
             {submenuIdx < (submenusToRender!.length || 0) - 1 && (
-              <div className='h-px bg-gray-100 dark:bg-gray-800 mx-4 my-1' />
+              <div className='border-b border-(--border-divider) mx-4 my-1' />
             )}
           </div>
         ))}

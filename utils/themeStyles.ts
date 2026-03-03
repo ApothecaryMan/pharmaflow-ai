@@ -8,7 +8,10 @@ export const SHADOW_CLASS = 'card-shadow';
 
 // Base card style: standard background with the consistent shadow
 // Note: Does not include padding or border-radius as these vary by component context
-export const CARD_BASE = `bg-white dark:bg-gray-900 ${SHADOW_CLASS}`;
+export const CARD_BASE = `bg-(--bg-card) ${SHADOW_CLASS} border border-transparent dark:border-(--border-divider)`;
+
+// Container surface: slightly lighter/transparent to distinctly wrap inner cards without melting
+export const CONTAINER_BASE = `bg-gray-50/50 dark:bg-gray-800/20 border border-transparent dark:border-(--border-divider) rounded-3xl`;
 
 // Common variations (optional, can be expanded)
 export const CARD_SM = `${CARD_BASE} rounded-xl`;
@@ -20,6 +23,7 @@ export const TABLE_HEADER_BASE =
 export const TABLE_ROW_BASE =
   'hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0';
 export const BUTTON_BASE = 'px-4 py-2 rounded-xl font-medium '; //transition-all active:scale-95
+export const BUTTON_INACTIVE = 'bg-(--button-base-inactive) border border-(--border-divider) text-gray-400 dark:text-gray-500 cursor-not-allowed';
 export const INPUT_BASE =
   'w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none outline-hidden placeholder:text-gray-400';
 

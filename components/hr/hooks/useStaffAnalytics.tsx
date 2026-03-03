@@ -304,7 +304,7 @@ export const useStaffAnalytics = ({
       if (revenueHero && staff.id === revenueHero.id)
         titles.push({
           type: 'revenue',
-          label: language === 'AR' ? 'بطل الإيرادات' : 'Revenue Hero',
+          label: language === 'AR' ? 'ملك الإيرادات' : 'Revenue Hero',
           icon: 'emoji_events',
           color: 'amber',
         });
@@ -313,7 +313,7 @@ export const useStaffAnalytics = ({
           type: 'speed',
           label: language === 'AR' ? 'سيد السرعة' : 'Speed Master',
           icon: 'bolt',
-          color: 'blue',
+          color: 'sky',
         });
       if (invoiceKing && staff.id === invoiceKing.id)
         titles.push({
@@ -554,7 +554,7 @@ export const useStaffAnalytics = ({
         hero: speedMaster,
         tooltip: getHeroTooltip(speedMaster, 'speed'),
         icon: 'bolt',
-        color: 'blue',
+        color: 'sky',
       },
       {
         id: 'invoices',
@@ -649,7 +649,11 @@ export const useStaffAnalytics = ({
                     {staff.titles.map((title, i) => (
                       <div
                         key={i}
-                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-${title.color}-50 dark:bg-${title.color}-900/20 border border-${title.color}-100 dark:border-${title.color}-900/30 text-${title.color}-600 dark:text-${title.color}-400 shadow-xs`}
+                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg border ${
+                          title.color === 'sky' || title.color === 'violet'
+                            ? `bg-${title.color}-500/10 dark:bg-${title.color}-500/20 border-${title.color}-200/50 dark:border-${title.color}-500/30 text-${title.color}-600 dark:text-${title.color}-400`
+                            : `bg-${title.color}-50 dark:bg-${title.color}-900/20 border-${title.color}-100 dark:border-${title.color}-900/30 text-${title.color}-600 dark:text-${title.color}-400`
+                        } shadow-xs`}
                         title={title.label}
                       >
                         <span className='material-symbols-rounded text-[12px]'>{title.icon}</span>

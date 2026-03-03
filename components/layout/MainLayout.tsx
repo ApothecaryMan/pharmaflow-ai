@@ -175,13 +175,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           {/* Main Content Area */}
           <div
             className='flex flex-1 overflow-hidden'
-            style={{ backgroundColor: 'var(--bg-primary)' }}
+            style={{ backgroundColor: 'var(--bg-navbar)' }}
           >
             {/* Sidebar */}
             {!isStandalone && (
               <aside
                 className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col ${LAYOUT_CONFIG.SIDEBAR_WIDTH} ${sidebarBlur ? 'backdrop-blur-xl' : ''} transition-all duration-300 ease-in-out`}
-                style={{ backgroundColor: 'var(--bg-primary)' }}
+                style={{ backgroundColor: 'var(--bg-navbar)' }}
               >
                 <SidebarContent
                   menuItems={filteredMenuItems}
@@ -220,7 +220,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
             {/* Actual Page Surface */}
             <main
-              className={`flex-1 h-full overflow-hidden relative ${isStandalone ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r border-gray-200 dark:border-gray-800 bg-[#f3f4f6] dark:bg-black shadow-inner'}`}
+              className={`flex-1 h-full overflow-hidden relative ${isStandalone ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r bg-(--bg-search) shadow-inner'}`}
+              style={{ borderColor: 'var(--border-divider)' }}
             >
               <div className={getContentContainerClasses(PAGE_REGISTRY[view]?.layout, isStandalone)}>
                 <div className='h-full w-full'>{children}</div>

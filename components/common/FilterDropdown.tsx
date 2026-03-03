@@ -168,10 +168,10 @@ export function FilterDropdown<T>({
                     --border-gray: #e5e7eb; /* gray-200 */
                 }
                 .dark {
-                    --bg-active: #1f2937; /* gray-800 */
-                    --bg-closed: #111827; /* gray-900 */
-                    --bg-input: #1f2937;
-                    --border-gray: #1f2937; /* gray-800 - match table/input */
+                    --bg-active: var(--bg-menu);
+                    --bg-closed: var(--bg-primary);
+                    --bg-input: var(--bg-navbar);
+                    --border-gray: var(--border-divider);
                 }
                 .filter-dropdown-scroll::-webkit-scrollbar { width: 2px; background: transparent; }
                 .filter-dropdown-scroll::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.6); border-radius: 9999px; }
@@ -244,7 +244,7 @@ export function FilterDropdown<T>({
         >
           <div className='min-h-0 overflow-hidden'>
             <div
-              className={`filter-dropdown-scroll border-t border-gray-100 dark:border-gray-800 max-h-40 overflow-y-auto ${effectiveIsOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}
+              className={`filter-dropdown-scroll max-h-40 overflow-y-auto ${effectiveIsOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}
             >
               {items
                 .filter(
@@ -253,7 +253,7 @@ export function FilterDropdown<T>({
                 .map((item) => (
                   <div
                     key={keyExtractor(item)}
-                    className='w-full cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-1 transition-colors'
+                    className='w-full cursor-pointer hover:bg-(--bg-menu-hover) px-3 py-1 transition-colors'
                     onClick={(e) => handleOptionClick(e, item)}
                   >
                     {renderItem(item, false)}

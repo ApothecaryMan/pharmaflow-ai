@@ -177,7 +177,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="flex flex-col bg-gray-50 dark:bg-[rgb(40,40,40)] overflow-hidden fixed inset-0"
+      className="flex flex-col bg-(--bg-search) overflow-hidden fixed inset-0"
       onContextMenu={(e) => e.preventDefault()}
       dir="ltr"
     >
@@ -186,8 +186,8 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
         className={`
           w-full z-50 shrink-0
           ${isKeyboardOpen 
-            ? 'bg-gray-50 dark:bg-[rgb(40,40,40)] border-b border-gray-100 dark:border-[rgb(80,80,80)] p-4' 
-            : 'p-4 bg-gray-50/80 dark:bg-[rgb(40,40,40)]/80 backdrop-blur-xl border-b border-gray-100/50 dark:border-[rgb(80,80,80)]/50'
+            ? 'bg-(--bg-search) border-b border-(--border-search) p-4' 
+            : 'p-4 bg-(--bg-search) border-b border-(--border-search)'
           }
         `}
       >
@@ -229,8 +229,9 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
                 </button>
               }
               wrapperClassName={`
-                bg-white border-gray-200 dark:!bg-[rgb(60,60,60)] dark:!border-[rgb(80,80,80)] shadow-none
+                bg-(--bg-navbar) shadow-none
               `}
+              style={{ borderColor: 'var(--border-search)' }}
               className="!bg-transparent"
             />
           </div>

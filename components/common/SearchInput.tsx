@@ -167,18 +167,22 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       showMenu(e.clientX, e.clientY, menuContent);
     };
 
+    const [isFocused, setIsFocused] = useState(false);
+
     return (
       <div
         className={`
             relative flex items-center flex-wrap gap-2
-            bg-white dark:bg-[#090C14]
-            border border-gray-200 dark:border-gray-800
+            bg-(--bg-navbar)
+            border border-(--border-search)
             transition-colors
-            focus-within:border-primary-500 dark:focus-within:border-primary-400
+            ${isFocused ? 'border-gray-400 dark:border-gray-500 shadow-sm' : ''}
             ${rounded === 'full' ? 'rounded-4xl px-1' : 'rounded-xl px-1'} 
             ${wrapperClassName}
          `}
         dir={dir}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
         // Mimic input focus styles on wrapper
         onClick={() => {
           if (ref && typeof ref !== 'function' && 'current' in ref) {
@@ -189,9 +193,20 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         {/* Leading Icon (or Filter Button if filters exist?) */}
         {/* If has active filters, we show them first? OR after icon? */}
         {/* Design: [Icon] [Pill] [Pill] [Input] [Clear] [Add Filter] */}
-        <div className='flex items-center text-gray-400 select-none ps-2'>
+        <div className={`
+          flex items-center select-none ps-2 transition-all duration-200
+          ${isFocused ? 'text-black dark:text-white' : 'text-gray-400'}
+        `}>
           {typeof icon === 'string' ? (
-            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-navbar-main)' }}>{icon}</span>
+            <span 
+              className='material-symbols-rounded' 
+              style={{ 
+                fontSize: 'var(--icon-navbar-main)',
+                fontVariationSettings: isFocused ? "'FILL' 0, 'wght' 700, 'GRAD' 0, 'opsz' 24" : "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24"
+              }}
+            >
+              {icon}
+            </span>
           ) : (
             icon
           )}
@@ -231,7 +246,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                     <span className={`
                         inline-flex items-center px-1 py-1 ms-0.5
                         rounded-[10px] 
-                        bg-gray-100 dark:bg-gray-800 
+                        bg-gray-100 dark:bg-(--bg-surface-neutral) 
                         text-[13px] font-black tracking-tight
                         text-gray-600 dark:text-gray-400 
                         shadow-sm transition-all animate-in fade-in duration-100
@@ -260,6 +275,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 collapsed={shouldCollapse}
                 onUpdate={(newVals) => onUpdateFilter && onUpdateFilter(groupId, newVals)}
                 onRemove={() => onUpdateFilter && onUpdateFilter(groupId, [])}
+                rounded={rounded}
               />
             );
           })}
@@ -283,10 +299,10 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           {/* Filter Actions Group (Restored Container) */}
           {filterConfigs.length > 0 && (
             <div className={`
-              flex items-center p-1 rounded-xl
-              border border-gray-200/60 dark:border-gray-700/60
-              bg-gray-50/50 dark:bg-gray-800/50
-              ms-1
+              flex items-center p-0.5 ${rounded === 'full' ? 'rounded-full ml-[-2px]' : 'rounded-xl'}
+              border border-gray-200/60 dark:border-(--border-divider)
+              bg-(--bg-surface-neutral)
+              ms-0.5
             `}>
               {/* Clear All Filters Button - Only if active filters exist */}
               {hasActiveFilters && (
@@ -306,15 +322,15 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 <button
                   type='button'
                   onClick={handleFilterClick}
-                  className='text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center w-6 h-6 transition-colors'
+                  className='text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center w-7 h-7 transition-colors'
                 >
-                  <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-navbar-main)' }}>tune</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: '22px' }}>tune</span>
                 </button>
               </Tooltip>
             </div>
           )}
 
-          {badge && <div className='pointer-events-none flex items-center ps-1'>{badge}</div>}
+          {badge && <div className='pointer-events-none flex items-center ps-1 pe-2'>{badge}</div>}
         </div>
       </div>
     );

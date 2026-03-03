@@ -160,11 +160,11 @@ export function SegmentedControl<T extends string | number | boolean>({
   return (
     <div
       ref={containerRef}
-      className={`relative flex p-1 gap-1 bg-gray-200/50 dark:bg-gray-700/50 ${containerRound} shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] isolate ${className}`}
+      className={`relative flex p-1 gap-1 bg-gray-200/50 dark:bg-black/20 ${containerRound} shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] isolate ${className}`}
     >
       {indicatorStyle && (
         <div
-          className={`absolute bg-white dark:bg-gray-700 ${indicatorRound} pointer-events-none z-0 ${
+          className={`absolute bg-white dark:bg-(--bg-card) border border-transparent dark:border-(--border-divider) ${indicatorRound} pointer-events-none z-0 ${
             !isFirstRender.current && !isRtlChange
               ? 'transition-all duration-300 ease-in-out'
               : ''
@@ -194,7 +194,7 @@ export function SegmentedControl<T extends string | number | boolean>({
             className={`${fullWidth ? 'flex-1' : 'flex-none'} ${sizeClasses.button} ${buttonRound} transition-colors z-10 relative flex items-center justify-center ${hasIcon && hasLabel ? 'gap-2' : 'gap-0'} whitespace-nowrap font-bold ${
               isActive
                 ? 'text-gray-900 dark:text-white'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/50'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white'
             } ${option.disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
           >
             {hasIcon && (

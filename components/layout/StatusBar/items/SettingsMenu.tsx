@@ -195,16 +195,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
           className={`
             absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
             ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
-            w-64 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-800 
+            w-64 bg-(--bg-menu) rounded-xl shadow-2xl border border-(--border-divider) 
             backdrop-blur-xs z-110 animate-fade-in
           `}
-          style={{
-            backgroundColor: 'var(--bg-primary)',
-            borderColor: 'var(--border-primary)',
-          }}
         >
           {/* Header */}
-          <div className='px-3 py-2 border-b' style={{ borderColor: 'var(--border-primary)' }}>
+          <div className='px-3 py-2 border-b border-(--border-divider) text-center'>
             <span className='text-xs font-bold' style={{ color: 'var(--text-primary)' }}>
               {t.settings}
             </span>
@@ -258,16 +254,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   className={`
                         ${
                           isMobile
-                            ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/60 border-none shadow-none p-4 space-y-4 rounded-xl'
-                            : `absolute w-52 rounded-xl shadow-2xl border z-120 p-4 space-y-4 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                            ? 'relative w-full mt-2 bg-(--bg-search) border-none shadow-none p-4 space-y-4 rounded-xl'
+                            : `absolute w-52 rounded-xl shadow-2xl border border-(--border-divider) bg-(--bg-menu) z-120 p-4 space-y-4 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                         }
                     `}
                   style={
                     isMobile
                       ? {}
                       : {
-                          backgroundColor: 'var(--bg-primary)',
-                          borderColor: 'var(--border-primary)',
                           // Dynamic Horizontal
                           [themesPos.side === 'left' ? 'right' : 'left']: '100%',
                           [themesPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
@@ -385,16 +379,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   className={`
                             ${
                               isMobile
-                                ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-1.5 rounded-lg'
-                                : `absolute w-56 rounded-lg shadow-xl border z-120 p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                                ? 'relative w-full mt-2 bg-(--bg-search) border-none shadow-none p-3 space-y-1.5 rounded-lg'
+                                : `absolute w-56 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}
                   style={
                     isMobile
                       ? {}
                       : {
-                          backgroundColor: 'var(--bg-primary)',
-                          borderColor: 'var(--border-primary)',
                           [blurOptionsPos.side === 'left' ? 'right' : 'left']: '100%',
                           [blurOptionsPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
                         }
@@ -482,7 +474,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             )}
 
             {/* Separator */}
-            <div className='border-t border-gray-100 dark:border-gray-800 my-1 opacity-50' />
+            <div className='border-t border-(--border-divider) my-1 opacity-50' />
 
             {/* --- Group 2: Language & Text --- */}
             {/* Language Selector (Redesigned to be inline with icons) */}
@@ -538,7 +530,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             </div>
 
             {/* Separator */}
-            <div className='border-t border-gray-100 dark:border-gray-800 my-1 opacity-50' />
+            <div className='border-t border-(--border-divider) my-1 opacity-50' />
 
             {/* --- Group 3: Typography --- */}
             <div className='space-y-1 relative' ref={typographyRef}>
@@ -585,16 +577,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   className={`
                             ${
                               isMobile
-                                ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-3 space-y-3 rounded-lg'
-                                : `absolute w-56 rounded-lg shadow-xl border z-120 p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                                ? 'relative w-full mt-2 bg-(--bg-search) border-none shadow-none p-3 space-y-3 rounded-lg'
+                                : `absolute w-56 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}
                   style={
                     isMobile
                       ? {}
                       : {
-                          backgroundColor: 'var(--bg-primary)',
-                          borderColor: 'var(--border-primary)',
                           [typographyPos.side === 'left' ? 'right' : 'left']: '100%',
                           [typographyPos.side === 'left' ? 'marginRight' : 'marginLeft']: '12px',
                         }
@@ -712,7 +702,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             </div>
 
             {/* Separator */}
-            <div className='border-t border-gray-100 dark:border-gray-800 my-1 opacity-50' />
+            <div className='border-t border-(--border-divider) my-1 opacity-50' />
 
             {/* --- Group 4: Workspace --- */}
             {/* Focus Mode Toggle */}
@@ -765,7 +755,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
             {/* Separator */}
             {setShowTicker && (
-              <div className='border-t border-gray-100 dark:border-gray-800 my-1 opacity-50' />
+              <div className='border-t border-(--border-divider) my-1 opacity-50' />
             )}
 
             {/* --- Status Bar Settings (Collapsible) --- */}
@@ -832,16 +822,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       className={`
                             ${
                               isMobile
-                                ? 'relative w-full mt-2 bg-gray-50 dark:bg-gray-800/50 border-none shadow-none p-2 space-y-1 rounded-lg'
-                                : `absolute w-48 rounded-lg shadow-xl border z-120 p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                                ? 'relative w-full mt-2 bg-(--bg-search) border-none shadow-none p-2 space-y-1 rounded-lg'
+                                : `absolute w-48 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}
                       style={
                         isMobile
                           ? {}
                           : {
-                              backgroundColor: 'var(--bg-primary)',
-                              borderColor: 'var(--border-primary)',
                               // Dynamic Horizontal
                               [quickStatusesPos.side === 'left' ? 'right' : 'left']: '100%',
                               [quickStatusesPos.side === 'left' ? 'marginRight' : 'marginLeft']:
@@ -851,7 +839,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     >
                       {/* Sales */}
                       {setShowTickerSales && canPerformAction(userRole, 'sale.view_history') && (
-                        <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50'>
+                        <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-(--bg-menu-hover)'>
                           <span
                             className='text-[11px] font-medium'
                             style={{ color: 'var(--text-secondary)' }}
@@ -869,7 +857,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       {/* Inventory */}
                       {setShowTickerInventory &&
                         canPerformAction(userRole, 'reports.view_inventory') && (
-                          <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50'>
+                          <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-(--bg-menu-hover)'>
                             <span
                               className='text-[11px] font-medium'
                               style={{ color: 'var(--text-secondary)' }}
@@ -886,7 +874,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         )}
                       {/* Customers */}
                       {setShowTickerCustomers && canPerformAction(userRole, 'customer.view') && (
-                        <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50'>
+                        <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-(--bg-menu-hover)'>
                           <span
                             className='text-[11px] font-medium'
                             style={{ color: 'var(--text-secondary)' }}
@@ -904,7 +892,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       {/* Top Seller */}
                       {setShowTickerTopSeller &&
                         canPerformAction(userRole, 'reports.view_financial') && (
-                          <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50'>
+                          <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-(--bg-menu-hover)'>
                             <span
                               className='text-[11px] font-medium'
                               style={{ color: 'var(--text-secondary)' }}

@@ -159,8 +159,8 @@ const SortableTab = ({
         min-w-[100px] max-w-[180px] touch-manipulation backdrop-blur-md
         ${
           isActive
-            ? `bg-gray-50/80 dark:bg-gray-800/40 border border-gray-200/50 dark:border-gray-700/30 shadow-xs text-gray-900 dark:text-white`
-            : 'bg-transparent border border-transparent hover:bg-gray-50/40 dark:hover:bg-gray-800/20 hover:border-gray-200/30 dark:hover:border-gray-700/20 text-gray-600 dark:text-gray-400'
+            ? `bg-gray-50/80 dark:bg-(--bg-surface-neutral) border border-gray-200/50 dark:border-(--border-divider) shadow-xs text-gray-900 dark:text-white`
+            : 'bg-transparent border border-transparent hover:bg-gray-50/40 dark:hover:bg-(--bg-surface-neutral) hover:border-gray-200/30 dark:hover:border-(--border-divider) text-gray-600 dark:text-gray-400'
         }
         ${isDragging ? 'z-[100] shadow-2xl bg-white/95 dark:bg-gray-800/90 border-primary-500/50' : ''}
       `}
@@ -210,7 +210,7 @@ const SortableTab = ({
             if (e.key === 'Enter') handleRename(tab.id);
             if (e.key === 'Escape') setEditingTabId(null);
           }}
-          className='flex-1 w-full bg-white/60 dark:bg-gray-900/50 border-none rounded px-1.5 py-0 m-0 h-5 text-sm font-bold text-primary-900 dark:text-primary-100 focus:outline-none focus:ring-1 focus:ring-primary-500/40 shadow-inner'
+          className='flex-1 w-full bg-white/60 dark:bg-(--bg-surface-neutral) border-none rounded px-1.5 py-0 m-0 h-5 text-sm font-bold text-primary-900 dark:text-primary-100 focus:outline-none focus:ring-1 focus:ring-primary-500/40 shadow-inner'
           dir='auto'
           autoFocus
           onPointerDown={(e) => e.stopPropagation()} // Prevent drag start on input interaction
@@ -410,7 +410,7 @@ export const TabBar: React.FC<TabBarProps> = ({
             }}
             className={`
               flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 backdrop-blur-md
-              hover:bg-gray-50/80 dark:hover:bg-gray-800/40 hover:shadow-xs border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/30
+              hover:bg-gray-50/80 dark:hover:bg-(--bg-surface-neutral) hover:shadow-xs border border-transparent hover:border-gray-200/50 dark:hover:border-(--border-divider)
               text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400
               shrink-0
             `}

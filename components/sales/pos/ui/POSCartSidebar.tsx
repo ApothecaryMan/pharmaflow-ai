@@ -4,10 +4,11 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import React, { useCallback } from 'react';
 import { canPerformAction, type UserRole } from '../../../../config/permissions';
 import type { CartItem, Drug, Employee, Language } from '../../../../types';
-import { CARD_MD } from '../../../../utils/themeStyles';
+import { BUTTON_INACTIVE, CARD_MD } from '../../../../utils/themeStyles';
 import { PriceDisplay } from '../../../common/TanStackTable';
 import { Tooltip } from '../../../common/Tooltip';
 import { SortableCartItem } from '../SortableCartItem';
+
 
 const cartScrollStyles = `
   .cart-scroll::-webkit-scrollbar { width: 2px; background: transparent; }
@@ -169,11 +170,11 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
       <div
         ref={sidebarRef}
         style={{ '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}
-        className={`w-full lg:w-(--sidebar-width) ${CARD_MD} border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden isolate relative h-full ${
+        className={`w-full lg:w-(--sidebar-width) ${CARD_MD} border border-gray-200 dark:border-(--border-divider) flex flex-col overflow-hidden isolate relative h-full ${
           mobileTab === 'products' ? 'hidden lg:flex' : 'flex'
         }`}
       >
-        <div className="px-4 py-3.5 border-b border-gray-200/60 dark:border-gray-800/60 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl shrink-0 flex items-center justify-between sticky top-0 z-10 rounded-t-2xl">
+        <div className="px-4 py-3.5 border-b border-gray-200/60 dark:border-(--border-divider) bg-white/70 dark:bg-(--bg-card) backdrop-blur-xl shrink-0 flex items-center justify-between sticky top-0 z-10 rounded-t-2xl">
           <div className="flex items-center gap-3">
             {/* Title */}
             <h2 className="text-[15px] font-black text-gray-800 dark:text-gray-100 uppercase tracking-tight leading-none">
@@ -356,9 +357,9 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
           )}
         </div>
 
-        <div className="px-4 py-4 border-t border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md space-y-4 shrink-0 rounded-b-2xl">
+        <div className="px-4 py-4 border-t border-gray-200/60 dark:border-(--border-divider) bg-white/50 dark:bg-(--bg-card) backdrop-blur-md space-y-4 shrink-0 rounded-b-2xl">
           {/* Summary Card with Glassmorphism */}
-          <div className="bg-gray-50/80 dark:bg-gray-800/40 rounded-2xl p-3 border border-gray-200/50 dark:border-gray-700/30 space-y-2.5">
+          <div className="bg-(--bg-surface-neutral) dark:bg-(--bg-surface-neutral) rounded-2xl p-3 border border-gray-200/50 dark:border-(--border-divider) space-y-2.5">
             {/* Subtotal Row */}
             {grossSubtotal !== cartTotal && (
               <div className="flex items-center justify-between text-[11px] text-gray-500 font-bold uppercase tracking-wider">
@@ -429,10 +430,12 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                     !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
                   }
                   className={`flex-1 py-2.5 rounded-xl ${
-                    paymentMethod === 'visa' 
-                      ? 'bg-blue-600 enabled:hover:bg-blue-700' 
-                      : 'bg-emerald-600 enabled:hover:bg-emerald-700'
-                  } disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none text-white font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}>
+                    !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
+                      ? BUTTON_INACTIVE
+                      : paymentMethod === 'visa' 
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer' 
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
+                  } font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}>
                   <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
                     {paymentMethod === 'visa' ? 'credit_card' : 'payments'}
                   </span>
@@ -446,7 +449,11 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   disabled={
                     !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
                   }
-                  className={`w-12 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 enabled:hover:bg-gray-50 dark:enabled:hover:bg-gray-700 disabled:opacity-50 disabled:pointer-events-none transition-colors flex justify-center items-center shrink-0`}
+                  className={`w-12 py-2.5 rounded-xl ${
+                    !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
+                      ? BUTTON_INACTIVE
+                      : 'bg-emerald-100 dark:bg-[#3c3c3c] border border-(--border-divider) text-emerald-700 dark:text-gray-300 cursor-pointer'
+                  } transition-colors flex justify-center items-center shrink-0`}
                   title={t.deliveryOrder}>
                   <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
                     local_shipping

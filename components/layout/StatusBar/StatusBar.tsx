@@ -180,7 +180,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
         dir='ltr'
         className='hidden md:flex items-center justify-between h-6 border-t shrink-0 select-none shadow-xs'
         style={{
-          backgroundColor: 'var(--bg-secondary)',
+          backgroundColor: 'var(--bg-statusbar)',
           borderColor: 'var(--border-primary)',
           '--status-icon-size': typeof iconSize === 'number' ? `${iconSize}px` : iconSize,
         } as React.CSSProperties}

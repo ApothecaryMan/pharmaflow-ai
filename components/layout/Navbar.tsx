@@ -260,7 +260,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     <nav
       className='h-12 flex items-center justify-between w-full px-4 sticky top-0 z-50'
       style={{
-        backgroundColor: 'var(--bg-primary)',
+        backgroundColor: 'var(--bg-navbar)',
       }}
     >
       {/* Logo & Title */}
@@ -307,15 +307,15 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   onMouseEnter={(e) => handleMouseEnter(module.id, e)}
                   onClick={(e) => handleModuleClick(module.id, hasPage, e)}
                   disabled={isEffectivelyDisabled}
-                  className={`main-nav-tab flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all duration-200 whitespace-nowrap relative type-interactive
+                  className={`main-nav-tab flex items-center gap-2 px-2 py-1 rounded-lg transition-all duration-200 whitespace-nowrap relative type-interactive
                       ${
                         isEffectivelyDisabled
                           ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
                           : isActive
-                            ? `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-semibold shadow-xs`
+                            ? `bg-primary-100 dark:bg-primary-500/15 text-primary-700 dark:text-primary-400 font-semibold shadow-xs`
                             : isDropdownOpen
-                              ? `bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 font-medium`
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-800 dark:hover:text-gray-200'
+                              ? `bg-(--bg-navbar-hover) text-gray-800 dark:text-gray-200 font-medium`
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-(--bg-navbar-hover) hover:text-gray-800 dark:hover:text-gray-200'
                       }
                     `}
                   title={!hasPage && navStyle !== 2 ? t.settings.comingSoon : ''}
@@ -353,7 +353,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
                   {isActive && hasPage && navStyle !== 2 && (
                     <div
-                      className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-primary-600 rounded-full`}
+                      className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-[1.5px] bg-primary-600 rounded-full`}
                     ></div>
                   )}
                 </button>
@@ -436,10 +436,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors relative
                               ${
                                 isActive
-                                  ? `bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400`
+                                  ? `bg-primary-100 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400`
                                   : isDropdownOpen
-                                    ? `bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200`
-                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                    ? `bg-(--bg-navbar-hover) text-gray-800 dark:text-gray-200`
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-(--bg-navbar-hover)'
                               }
                           `}
                   title={getMenuTranslation(settingsModule.label, language)}
@@ -485,13 +485,13 @@ const NavbarComponent: React.FC<NavbarProps> = ({
         <div className='relative' ref={profileRef}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className={`flex items-center gap-3 p-1 ltr:pr-3 rtl:pl-3 rounded-full transition-all ring-1 ring-transparent hover:ring-gray-200 dark:hover:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 ${showProfileMenu ? 'ring-gray-200 dark:ring-gray-700 bg-gray-50 dark:bg-gray-800' : ''}`}
+            className={`flex items-center gap-3 p-1 ltr:pr-3 rtl:pl-3 rounded-full transition-all border border-transparent hover:border-(--border-divider) hover:bg-(--bg-navbar-hover) ${showProfileMenu ? 'border-(--border-divider) bg-(--bg-navbar-hover)' : ''}`}
           >
             {profileImage ? (
               <img
                 src={profileImage}
                 alt='Profile'
-                className='w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-700'
+                className='w-8 h-8 rounded-full object-cover border border-(--border-divider)'
               />
             ) : (
               <Avatar
@@ -520,16 +520,16 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
           {/* Profile Dropdown */}
           {showProfileMenu && (
-            <div className='absolute ltr:right-0 rtl:left-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50 animate-fade-in'>
+            <div className='absolute ltr:right-0 rtl:left-0 mt-2 w-72 bg-(--bg-menu) rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_15px_rgba(0,0,0,0.4)] border border-(--border-divider) overflow-hidden z-50 animate-fade-in'>
               {/* User Info */}
-              <div className='p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/50'>
+              <div className='p-4 border-b border-(--border-divider) bg-(--bg-search)'>
                 <div className='flex items-center gap-3'>
                   <div className='relative group'>
                     {profileImage ? (
                       <img
                         src={profileImage}
                         alt='Profile'
-                        className='w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700'
+                        className='w-12 h-12 rounded-full object-cover border border-(--border-divider)'
                       />
                     ) : (
                       <Avatar
@@ -592,7 +592,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
               {/* Branch Management & Switcher (Admin Only) */}
               {(userRole === 'admin' || userRole === 'pharmacist_owner' || authService.getCurrentUserSync()?.username === import.meta.env.VITE_SUPER_USER) && (
-                <div className='p-2 border-t border-gray-100 dark:border-gray-800'>
+                <div className='p-2 border-t border-(--border-divider)'>
                   <div className='flex items-center justify-between px-2 mb-2'>
                     <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
                       {language === 'AR' ? 'الفروع' : 'Branches'}
@@ -602,7 +602,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         if (onNavigate) onNavigate('branch-management');
                         setShowProfileMenu(false);
                       }}
-                       className='text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors flex items-center gap-1 py-1 px-3 rounded-full border border-primary-100 dark:border-primary-900/50 hover:shadow-sm active:scale-95'
+                       className='text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-(--bg-menu-hover) transition-colors flex items-center gap-1 py-1 px-3 rounded-full border border-primary-100 dark:border-primary-900/50 hover:shadow-sm active:scale-95'
                     >
                       <span className='material-symbols-rounded' style={{ fontSize: '13px' }}>settings</span>
                       {language === 'AR' ? 'إدارة الفروع' : 'Manage Branches'}
@@ -621,8 +621,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                           className={`w-full p-2 text-sm font-medium rounded-lg transition-colors flex items-center justify-between
                             ${
                               activeBranchId === branch.id
-                                ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
-                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900/40'
+                                ? 'bg-primary-50 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400'
+                                : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
                             }
                           `}
                         >
@@ -637,7 +637,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                       ))}
                     </div>
                   ) : (
-                    <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700/50 flex items-center gap-2'>
+                    <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-500 dark:text-gray-400 bg-(--bg-search) rounded-lg border border-(--border-divider) flex items-center gap-2'>
                       <span className='material-symbols-rounded text-[16px] text-gray-400'>info</span>
                       {language === 'AR' ? 'يوجد فرع واحد فقط حالياً.' : 'Only one branch available.'}
                     </div>
@@ -648,13 +648,13 @@ const NavbarComponent: React.FC<NavbarProps> = ({
               {/* Settings have been moved to StatusBar Settings Menu */}
 
               {/* Printer Settings Button */}
-              <div className='p-2 border-t border-gray-100 dark:border-gray-800'>
+              <div className='p-2 border-t border-(--border-divider)'>
                 <button
                   onClick={() => {
                     setShowPrinterSettings(true);
                     setShowProfileMenu(false);
                   }}
-                  className={`w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors flex items-center justify-center gap-2`}
+                  className={`w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg transition-colors flex items-center justify-center gap-2`}
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>print</span>
                   {(t as any).printerSettings?.title || 'Printer Settings'}
@@ -662,10 +662,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
               </div>
 
               {/* Backup & Data Management */}
-              <div className='p-2 border-t border-gray-100 dark:border-gray-800 space-y-1'>
+              <div className='p-2 border-t border-(--border-divider) space-y-1'>
                 <button
                   onClick={() => backupService.exportBackup()}
-                  className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors flex items-center justify-center gap-2'
+                  className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg transition-colors flex items-center justify-center gap-2'
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>download</span>
                   {t.settings.exportBackup}
@@ -676,7 +676,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                       importRef.current?.click();
                     }
                   }}
-                  className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors flex items-center justify-center gap-2'
+                  className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg transition-colors flex items-center justify-center gap-2'
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>upload</span>
                   {t.settings.importBackup}
@@ -696,7 +696,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
               </div>
 
               {/* Sign Out */}
-              <div className='p-2 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/50'>
+              <div className='p-2 border-t border-(--border-divider) bg-(--bg-search)'>
                 <button
                   onClick={async () => {
                     if (isLoggingOut) return;
@@ -721,7 +721,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     }
                   }}
                   disabled={isLoggingOut}
-                  className='w-full p-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='w-full p-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white dark:hover:bg-red-500 dark:hover:text-white rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
                 >
                   {isLoggingOut ? (
                     <>

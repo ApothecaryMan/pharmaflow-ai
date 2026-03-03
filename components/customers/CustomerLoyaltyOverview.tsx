@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import type { Customer, Sale } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { SmallCard } from '../common/SmallCard';
 
 interface CustomerLoyaltyOverviewProps {
   customers: Customer[];
@@ -225,76 +226,43 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       className='h-full overflow-y-auto pe-2 space-y-4 animate-fade-in pb-10'
       dir={isRTL ? 'rtl' : 'ltr'}
     >
-      <h2 className='text-2xl font-medium tracking-tight mb-4 flex items-center gap-2'>
-        <span className='material-symbols-rounded text-amber-500'>stars</span>
+      <h1 className='text-2xl font-bold tracking-tight mb-4 page-title'>
         {t.loyalty?.overview || 'Loyalty Program Overview'}
-      </h2>
+      </h1>
 
       {/* Summary Cards */}
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>
         {/* Total Active Customers */}
-        <div
-          className={`p-5 rounded-3xl bg-primary-50 dark:bg-primary-900/20 ${CARD_BASE} flex flex-col justify-between min-h-[120px]`}
-        >
-          <div className={`text-primary-600 dark:text-primary-400 mb-1`}>
-            <span className='material-symbols-rounded text-3xl'>group</span>
-          </div>
-          <div>
-            <p
-              className={`text-xs font-bold text-primary-800 dark:text-primary-300 uppercase opacity-70`}
-            >
-              {t.loyalty?.activeCustomers || 'Active Customers'}
-            </p>
-            <p className={`text-2xl font-bold text-primary-900 dark:text-primary-100`}>
-              {loyaltyStats.activeCustomers}
-            </p>
-          </div>
-        </div>
+        <SmallCard
+          icon='group'
+          title={t.loyalty?.activeCustomers || 'Active Customers'}
+          value={loyaltyStats.activeCustomers}
+          iconColor='primary'
+        />
 
         {/* Total Points Issued */}
-        <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col justify-between min-h-[120px]`}>
-          <div className='text-amber-500 mb-1'>
-            <span className='material-symbols-rounded text-3xl'>stars</span>
-          </div>
-          <div>
-            <p className='text-xs font-bold text-gray-500 uppercase'>
-              {t.loyalty?.totalPoints || 'Total Points Issued'}
-            </p>
-            <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-              {loyaltyStats.totalPoints.toFixed(1)}
-            </p>
-          </div>
-        </div>
+        <SmallCard
+          icon='stars'
+          title={t.loyalty?.totalPoints || 'Total Points Issued'}
+          value={loyaltyStats.totalPoints.toFixed(1)}
+          iconColor='amber'
+        />
 
         {/* Average Points */}
-        <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col justify-between min-h-[120px]`}>
-          <div className='text-emerald-500 mb-1'>
-            <span className='material-symbols-rounded text-3xl'>trending_up</span>
-          </div>
-          <div>
-            <p className='text-xs font-bold text-gray-500 uppercase'>
-              {t.loyalty?.avgPoints || 'Avg Points/Customer'}
-            </p>
-            <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-              {loyaltyStats.avgPoints.toFixed(1)}
-            </p>
-          </div>
-        </div>
+        <SmallCard
+          icon='trending_up'
+          title={t.loyalty?.avgPoints || 'Avg Points/Customer'}
+          value={loyaltyStats.avgPoints.toFixed(1)}
+          iconColor='emerald'
+        />
 
         {/* Top Tier Customers */}
-        <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col justify-between min-h-[120px]`}>
-          <div className='text-purple-500 mb-1'>
-            <span className='material-symbols-rounded text-3xl'>workspace_premium</span>
-          </div>
-          <div>
-            <p className='text-xs font-bold text-gray-500 uppercase'>
-              {t.loyalty?.topTier || 'Top Tier (>1000)'}
-            </p>
-            <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
-              {loyaltyStats.topTierCount}
-            </p>
-          </div>
-        </div>
+        <SmallCard
+          icon='workspace_premium'
+          title={t.loyalty?.topTier || 'Top Tier (>1000)'}
+          value={loyaltyStats.topTierCount}
+          iconColor='purple'
+        />
       </div>
 
       {/* Charts Row */}

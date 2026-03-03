@@ -49,11 +49,15 @@ export const Switch: React.FC<SwitchProps> = ({
         backgroundColor: checked && activeColor ? activeColor : undefined,
       }}
       className={`w-12 h-6 rounded-full relative ${isRtlChange ? '' : 'transition-colors duration-200 ease-in-out'} focus:outline-hidden ${
-        checked ? (!activeColor ? (theme === 'primary' ? 'bg-primary-600' : `bg-${theme}-600`) : '') : 'bg-gray-200 dark:bg-gray-700'
+        checked ? (!activeColor ? (theme === 'primary' ? 'bg-primary-600' : `bg-${theme}-600`) : '') : 'bg-gray-200 shadow-inner dark:bg-black/30'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
     >
       <div
-        className={`absolute top-1 inset-s-1 w-4 h-4 rounded-full bg-white shadow-xs flex items-center justify-center ${
+        className={`absolute top-1 inset-s-1 w-4 h-4 rounded-full shadow-xs flex items-center justify-center ${
+          checked 
+            ? 'bg-gray-50 dark:bg-gray-200' 
+            : 'bg-white dark:bg-(--bg-card) border border-transparent dark:border-(--border-divider)'
+        } ${
           isRtlChange ? '' : 'transition-transform duration-200 ease-in-out'
         } ${
           checked ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'
@@ -71,7 +75,7 @@ export const Switch: React.FC<SwitchProps> = ({
           </svg>
         ) : (
           <svg
-            className='w-3 h-3 text-gray-400'
+            className='w-3 h-3 text-gray-400 dark:text-gray-500'
             fill='none'
             viewBox='0 0 24 24'
             stroke='currentColor'

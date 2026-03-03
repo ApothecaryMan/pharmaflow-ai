@@ -162,7 +162,7 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Content Wrapper */}
       <div
-        className={`relative w-full ${maxWidthClass} bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-in max-h-[95vh] border border-gray-200 dark:border-gray-700 select-none ${className}`}
+        className={`relative w-full ${maxWidthClass} bg-white dark:bg-(--bg-card) rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-in max-h-[95vh] border border-gray-200 dark:border-(--border-divider) select-none ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {title ? (
@@ -198,7 +198,7 @@ export const Modal: React.FC<ModalProps> = ({
                 {!hideCloseButton && (
                   <button
                     onClick={onClose}
-                    className='w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+                    className='w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-(--bg-surface-neutral) transition-colors'
                   >
                     <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>close</span>
                   </button>

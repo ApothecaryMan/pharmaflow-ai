@@ -145,7 +145,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
         {!hideSearch && (
           <div
             className='px-3 py-3 sticky top-0 z-10'
-            style={{ backgroundColor: 'var(--bg-primary)' }}
+            style={{ backgroundColor: 'var(--bg-navbar)' }}
           >
             <div className='relative'>
               <SearchInput
@@ -154,10 +154,8 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                 onClear={() => setSearchQuery('')}
                 placeholder={`${language === 'AR' ? 'بحث في' : 'Search in'} ${getMenuTranslation(activeModuleData?.label || '', language)}...`}
                 color={theme}
-                className='rounded-lg border ps-9 pe-9'
+                wrapperClassName='!bg-(--bg-card)'
                 style={{
-                  backgroundColor: 'var(--bg-secondary)',
-                  borderColor: 'var(--border-primary)',
                   color: 'var(--text-primary)',
                 }}
               />
@@ -187,14 +185,14 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                     className='my-3 mx-3'
                     style={{
                       height: '1px',
-                      backgroundColor: 'var(--border-primary)',
+                      backgroundColor: 'var(--border-divider)',
                       opacity: 0.5,
                     }}
                   />
                 )}
 
                 {/* Items List */}
-                <div className='space-y-0.5'>
+                <div className='space-y-1'>
                   {submenu.items.slice(0, 15).map((item, idx) => {
                     const itemLabel = typeof item === 'string' ? item : item.label;
                     const itemIcon = typeof item === 'object' ? item.icon : undefined;
@@ -213,12 +211,12 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                             handleItemClick(submenu.label, itemLabel);
                           }
                         }}
-                        className={`w-full flex items-center gap-2.5 ltr:text-left rtl:text-right px-3 py-2 rounded-lg transition-all type-interactive ${
+                        className={`w-full flex items-center gap-2.5 ltr:text-left rtl:text-right px-3 py-1.5 rounded-lg transition-all type-interactive ${
                           !isImplemented
                             ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
                             : isActive
-                              ? `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-semibold`
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                              ? `bg-primary-100 dark:bg-primary-500/15 text-primary-700 dark:text-primary-400 font-semibold`
+                              : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-(--bg-menu-hover)'
                         }`}
                       >
                         {itemIcon && (

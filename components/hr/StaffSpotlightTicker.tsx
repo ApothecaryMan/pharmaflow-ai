@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useSettings } from '../../context';
 import { formatCurrency } from '../../utils/currency';
+import { CARD_BASE } from '../../utils/themeStyles';
 import { InsightTooltip } from '../common/InsightTooltip';
 import { Tooltip } from '../common/Tooltip';
 import type { StaffSpotlightTickerProps } from './types/staffOverview.types';
@@ -32,14 +33,17 @@ export const StaffSpotlightTicker: React.FC<StaffSpotlightTickerProps> = ({
         <div
           key={item.id}
           className={`
-            relative p-4 rounded-2xl border bg-white dark:bg-gray-900 
-            border-gray-100 dark:border-gray-800 card-shadow 
+            relative p-4 rounded-3xl ${CARD_BASE}
             flex flex-col group overflow-hidden
           `}
         >
           {/* Background Glow */}
           <div
-            className={`absolute -right-10 -top-10 w-32 h-32 blur-3xl opacity-10 bg-${item.color}-500 transition-opacity group-hover:opacity-20`}
+            className={`absolute -right-10 -top-10 w-32 h-32 blur-3xl opacity-15 dark:opacity-30 ${
+              item.color === 'sky' ? 'bg-sky-500' : 
+              item.color === 'blue' ? 'bg-blue-500' : 
+              `bg-${item.color}-500`
+            } transition-opacity group-hover:opacity-40`}
           />
 
           {/* Header: Label & Icon */}

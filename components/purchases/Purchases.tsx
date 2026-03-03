@@ -31,6 +31,7 @@ import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDro
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { useSmartDirection } from '../common/SmartInputs';
+import { FilterPill, type FilterConfig } from '../common/FilterPill';
 import { TanStackTable } from '../common/TanStackTable';
 
 interface PurchasesProps {
@@ -114,8 +115,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const [isSupplierOpen, setIsSupplierOpen] = useState(false);
 
   const [focusedInput, setFocusedInput] = useState<{ id: string; field: string } | null>(null);
-  const [filter, setFilter] = useState<'all' | 'in-stock' | 'out-stock'>('all');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedCartIndex, setSelectedCartIndex] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -126,11 +126,19 @@ export const Purchases: React.FC<PurchasesProps> = ({
   });
   const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
 
-  const filterOptions = [
-    { id: 'all', label: t.filters?.all || 'All' },
-    { id: 'in-stock', label: t.filters?.inStock || 'In Stock' },
-    { id: 'out-stock', label: t.filters?.outOfStock || 'Out Stock' },
-  ];
+  const purchaseFilterConfigs: FilterConfig[] = useMemo(() => [
+    {
+      id: 'stockStatus',
+      label: t.headers?.stock || 'Stock',
+      icon: 'inventory_2',
+      mode: 'single',
+      options: [
+        { label: t.filters?.all || 'All', value: 'all' },
+        { label: t.filters?.inStock || 'In Stock', value: 'in-stock' },
+        { label: t.filters?.outOfStock || 'Out Stock', value: 'out-stock' },
+      ],
+    },
+  ], [t]);
 
   const supplierDropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -920,8 +928,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const filteredDrugs = (inventory || [])
     .filter((d) => {
       // 1. Stock Filter
-      if (filter === 'in-stock' && d.stock <= 0) return false;
-      if (filter === 'out-stock' && d.stock > 0) return false;
+      const stockFilter = activeFilters['stockStatus']?.[0];
+      if (stockFilter === 'in-stock' && d.stock <= 0) return false;
+      if (stockFilter === 'out-stock' && d.stock > 0) return false;
 
       // 2. Search Filter
       if (searchMode === 'ingredient' || searchMode === 'generic') {
@@ -1002,92 +1011,10 @@ export const Purchases: React.FC<PurchasesProps> = ({
           <p className='text-sm text-gray-500'>{t.subtitle}</p>
         </div>
         <div className='flex items-center gap-2'>
-          {/* Status Filter (History Mode Only) */}
-          {mode === 'history' && (
-            <>
-              <div className='flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl me-2'>
-                <DatePicker
-                  value={dateRange.from}
-                  onChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
-                  label={t.fromDate || 'From'}
-                  color='gray'
-                  icon='calendar_today'
-                  translations={{
-                    cancel: t.cancel || 'Cancel',
-                    ok: t.ok || 'OK',
-                    hour: t.hour || 'Hour',
-                    minute: t.minute || 'Minute',
-                    am: t.time?.am || t.am || 'AM',
-                    pm: t.time?.pm || t.pm || 'PM',
-                  }}
-                />
-                <span className='text-gray-400 material-symbols-rounded px-1 text-lg rtl:rotate-180'>
-                  arrow_forward
-                </span>
-                <DatePicker
-                  value={dateRange.to}
-                  onChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
-                  label={t.toDate || 'To'}
-                  color='gray'
-                  icon='event'
-                  translations={{
-                    cancel: t.cancel || 'Cancel',
-                    ok: t.ok || 'OK',
-                    hour: t.hour || 'Hour',
-                    minute: t.minute || 'Minute',
-                    am: t.time?.am || t.am || 'AM',
-                    pm: t.time?.pm || t.pm || 'PM',
-                  }}
-                />
-              </div>
-            </>
-          )}
-
-          <SegmentedControl
-            value={mode}
-            onChange={(val) => setMode(val as 'create' | 'history')}
-            color={color}
-            shape='pill'
-            size='sm'
-            options={[
-              { label: t.newPurchase, value: 'create' },
-              { label: t.viewHistory, value: 'history' },
-            ]}
-          />
-        </div>
-      </div>
-
-      {mode === 'create' ? (
-        <div className='flex flex-col gap-4 h-full overflow-hidden'>
-          {/* TOP: Search Controls */}
-          <div
-            className={`${CARD_BASE} p-4 rounded-xl flex flex-col xl:flex-row gap-4 items-end shrink-0`}
-          >
-            {/* Drug Search & Filter */}
-            <div className='flex-[1.5] w-full flex gap-2'>
-              <FilterDropdown
-                items={filterOptions}
-                selectedItem={filterOptions.find((o) => o.id === filter)}
-                isOpen={isFilterOpen}
-                onToggle={() => setIsFilterOpen(!isFilterOpen)}
-                onSelect={(item) => {
-                  setFilter(item.id as any);
-                  setIsFilterOpen(false);
-                }}
-                keyExtractor={(item) => item.id}
-                renderItem={(item, isSelected) => (
-                  <div className='flex items-center justify-between w-full'>
-                    <span>{item.label}</span>
-                    {isSelected && <span className='material-symbols-rounded text-sm'>check</span>}
-                  </div>
-                )}
-                renderSelected={(item) => item?.label}
-                className='w-32 h-[42px]'
-                variant='input'
-                color={color}
-              />
-
-              <div className='relative flex-1' ref={searchRef}>
+          {mode === 'create' && (
+            <div className='flex items-center gap-3'>
+              {/* Drug Search & Pill Filters */}
+              <div className='relative w-48 xl:w-120' ref={searchRef}>
                 <SearchInput
                   ref={searchInputRef}
                   value={search}
@@ -1098,7 +1025,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   onKeyDown={onDrugSearchKeyDown}
                   placeholder={t.placeholders?.searchDrug || 'Search products...'}
                   color={color}
-                  className="h-[42px]"
+                  className='h-9 text-sm'
+                  rounded='full'
+                  filterConfigs={purchaseFilterConfigs}
+                  activeFilters={activeFilters}
+                  onUpdateFilter={(groupId, values) => setActiveFilters((prev) => ({ ...prev, [groupId]: values }))}
                 />
 
                 <SearchDropdown
@@ -1119,7 +1050,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       width: 'flex-1',
                       className: 'text-gray-900 dark:text-gray-400',
                       render: (drug: Drug) => (
-                        <span className={`truncate`}>{getDisplayName(drug, textTransform)}</span>
+                        <span className='truncate'>
+                          {getDisplayName(drug, textTransform)}
+                        </span>
                       ),
                     },
                     {
@@ -1149,15 +1082,9 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   emptyMessage={t.noResults}
                 />
               </div>
-            </div>
 
-            {/* Supplier Select */}
-            <div className='flex-1 w-full'>
-              <label className='text-xs font-bold text-gray-400 uppercase mb-2 block'>
-                {t.selectSupplier}
-              </label>
-
-              <div ref={supplierDropdownRef} className='relative'>
+              {/* Supplier Selection */}
+              <div className='relative w-48 xl:w-90' ref={supplierDropdownRef}>
                 <SearchInput
                   value={
                     supplierSearch ||
@@ -1176,11 +1103,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     if (!isSupplierOpen || filteredSuppliers.length === 0) return;
                     onSupplierSearchKeyDown(e);
                   }}
-                  // Clear handled via value update, explicit functionality if needed
                   dir={supplierSearchDir}
-                  placeholder={t.placeholders?.searchSupplier || 'Search and select supplier...'}
+                  placeholder={
+                    t.placeholders?.searchSupplier || 'Search and select supplier...'
+                  }
                   color={color}
-                  className="h-[42px]"
+                  className='h-9 text-sm'
+                  rounded='full'
+                  icon='store'
                 />
 
                 <SearchDropdown
@@ -1212,7 +1142,63 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 />
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Status Filter (History Mode Only) */}
+          {mode === 'history' && (
+            <div className='flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl me-2'>
+              <DatePicker
+                value={dateRange.from}
+                onChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
+                label={t.fromDate || 'From'}
+                color='gray'
+                icon='calendar_today'
+                translations={{
+                  cancel: t.cancel || 'Cancel',
+                  ok: t.ok || 'OK',
+                  hour: t.hour || 'Hour',
+                  minute: t.minute || 'Minute',
+                  am: t.time?.am || t.am || 'AM',
+                  pm: t.time?.pm || t.pm || 'PM',
+                }}
+              />
+              <span className='text-gray-400 material-symbols-rounded px-1 text-lg rtl:rotate-180'>
+                arrow_forward
+              </span>
+              <DatePicker
+                value={dateRange.to}
+                onChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
+                label={t.toDate || 'To'}
+                color='gray'
+                icon='event'
+                translations={{
+                  cancel: t.cancel || 'Cancel',
+                  ok: t.ok || 'OK',
+                  hour: t.hour || 'Hour',
+                  minute: t.minute || 'Minute',
+                  am: t.time?.am || t.am || 'AM',
+                  pm: t.time?.pm || t.pm || 'PM',
+                }}
+              />
+            </div>
+          )}
+
+          <SegmentedControl
+            value={mode}
+            onChange={(val) => setMode(val as 'create' | 'history')}
+            color={color}
+            shape='pill'
+            size='sm'
+            options={[
+              { label: t.newPurchase, value: 'create' },
+              { label: t.viewHistory, value: 'history' },
+            ]}
+          />
+        </div>
+      </div>
+
+      {mode === 'create' ? (
+        <div className='flex flex-col gap-4 h-full overflow-hidden'>
           {/* BOTTOM: Order Cart */}
           <div className={`flex-1 ${CARD_BASE} p-5 rounded-3xl flex flex-col overflow-hidden`}>
             <div className='flex justify-between items-center mb-4 gap-4'>
@@ -1232,7 +1218,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   return (
                     <div className='flex items-center gap-3 animate-fadeIn'>
                       {/* Stock */}
-                      <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50'>
+                      <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-100 dark:border-(--border-divider)'>
                         <span className='material-symbols-rounded text-gray-400 text-lg'>
                           inventory_2
                         </span>
@@ -1249,7 +1235,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       </div>
 
                       {/* Expiry */}
-                      <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50'>
+                      <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-100 dark:border-(--border-divider)'>
                         <span className='material-symbols-rounded text-orange-400 text-lg'>
                           event_upcoming
                         </span>
@@ -1269,7 +1255,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       </div>
 
                       {/* Profit */}
-                      <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50'>
+                      <div className='flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-(--bg-internal-card) border border-gray-100 dark:border-(--border-divider)'>
                         <span
                           className={`material-symbols-rounded text-lg ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}
                         >
@@ -1294,7 +1280,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
               <div className='flex items-center gap-4'>
                 {/* System Order ID (Read Only) */}
                 <div className='group relative'>
-                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-3 left-1'>
+                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
                     {t.tableHeaders?.orderId || 'Order #'}
                   </label>
                   <div className='relative overflow-hidden h-8 flex items-center'>
@@ -1303,7 +1289,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       readOnly
                       value={invoiceId}
                       dir='ltr'
-                      className={`text-lg font-mono font-bold bg-transparent border border-transparent rounded-lg px-2 py-0.5 outline-hidden cursor-default w-36 text-left select-all transition-all duration-500 ease-out ${
+                      className={`text-lg font-mono font-bold bg-transparent border border-transparent rounded-lg px-2 py-0.5 outline-hidden cursor-default w-28 text-left select-all transition-all duration-500 ease-out ${
                         isOrderIdAnimating
                           ? 'text-green-500 dark:text-green-400 animate-[rollUp_0.5s_ease-out]'
                           : 'text-gray-500 dark:text-gray-400'
@@ -1317,7 +1303,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
                 {/* Manual Invoice ID */}
                 <div className='group relative'>
-                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-3 left-1'>
+                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1'>
                     {t.tableHeaders?.invId || 'Invoice #'}
                   </label>
                   <input
@@ -1331,23 +1317,28 @@ export const Purchases: React.FC<PurchasesProps> = ({
                 </div>
 
                 {/* Payment Method Toggle */}
-                <SegmentedControl
-                  value={paymentMethod}
-                  onChange={(val) => setPaymentMethod(val as 'cash' | 'credit')}
-                  color={color}
-                  size='sm'
-                  variant='onPage'
-                  options={[
-                    { label: t.cash || 'Cash', value: 'cash', activeColor: 'green' },
-                    { label: t.credit || 'Credit', value: 'credit', activeColor: 'blue' },
-                  ]}
-                  className='w-fit'
-                />
+                <div className='group relative'>
+                  <label className='text-[10px] uppercase font-bold text-gray-400 absolute -top-4 start-1 tracking-wider whitespace-nowrap'>
+                    {t.paymentMethod || 'Payment Method'}
+                  </label>
+                  <SegmentedControl
+                    value={paymentMethod}
+                    onChange={(val) => setPaymentMethod(val as 'cash' | 'credit')}
+                    color={color}
+                    size='xs'
+                    variant='onPage'
+                    options={[
+                      { label: t.cash || 'Cash', value: 'cash', activeColor: 'green' },
+                      { label: t.credit || 'Credit', value: 'credit', activeColor: 'blue' },
+                    ]}
+                    className='w-fit'
+                  />
+                </div>
               </div>
             </div>
 
             <div
-              className={`flex-1 space-y-3 mb-4 cart-scroll pe-3 ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
+              className={`flex-1 space-y-1.5 mb-4 cart-scroll pe-3 ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
               style={{
                 scrollbarWidth: 'thin',
                 scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
@@ -1381,8 +1372,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     onClick={() => setSelectedCartIndex(index)}
                     className={`p-3 rounded-2xl relative group pr-2 type-functional cursor-pointer transition-all ${
                       selectedCartIndex === index
-                        ? `bg-primary-50 dark:bg-gray-700`
-                        : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                        : 'bg-gray-50 dark:bg-(--bg-navbar) hover:bg-gray-100 dark:hover:bg-(--bg-surface-neutral)'
                     }`}
                     onContextMenu={(e) => {
                       e.preventDefault();
@@ -1443,8 +1434,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           value={item.quantity}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-gray-700`
-                              : 'bg-gray-50 dark:bg-gray-800'
+                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
                           }
                           onFocus={(e) => {
                             setSelectedCartIndex(index);
@@ -1478,8 +1469,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           })()}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-gray-700`
-                              : 'bg-gray-50 dark:bg-gray-800'
+                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
                           }
                           value={
                             focusedInput?.id === item.id && focusedInput?.field === 'expiryDate'
@@ -1526,8 +1517,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           value={item.costPrice}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-gray-700`
-                              : 'bg-gray-50 dark:bg-gray-800'
+                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
                           }
                           onFocus={(e) => {
                             setSelectedCartIndex(index);
@@ -1553,8 +1544,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           value={item.discount || 0}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-gray-700`
-                              : 'bg-gray-50 dark:bg-gray-800'
+                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
                           }
                           onFocus={(e) => {
                             setSelectedCartIndex(index);
@@ -1578,8 +1569,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           value={item.salePrice || 0}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-gray-700`
-                              : 'bg-gray-50 dark:bg-gray-800'
+                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
                           }
                           onFocus={(e) => {
                             setSelectedCartIndex(index);
@@ -1605,8 +1596,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           value={item.tax || 0}
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-gray-700`
-                              : 'bg-gray-50 dark:bg-gray-800'
+                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
                           }
                           onFocus={(e) => {
                             setSelectedCartIndex(index);
@@ -1627,8 +1618,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           onChange={() => {}} // Read only
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-gray-700`
-                              : 'bg-gray-50 dark:bg-gray-800'
+                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
                           }
                           className='opacity-75 pointer-events-none' // Visual cue
                         />
@@ -1648,8 +1639,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           onChange={() => {}} // Read only
                           labelBgClassName={
                             selectedCartIndex === index
-                              ? `bg-primary-50 dark:bg-gray-700`
-                              : 'bg-gray-50 dark:bg-gray-800'
+                              ? `bg-primary-50 dark:bg-(--bg-navbar)`
+                              : 'bg-gray-50 dark:bg-(--bg-navbar)'
                           }
                           className='opacity-75 pointer-events-none' // Visual cue
                         />

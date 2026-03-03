@@ -127,26 +127,17 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
       {/* Dropdown */}
       {isOpen && (
         <div
-          className='absolute bottom-full right-0 mb-1 w-72 rounded-lg shadow-xl border z-50'
+          className='absolute bottom-full right-0 mb-1 w-72 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-50'
           dir={isRTL ? 'rtl' : 'ltr'}
-          style={{
-            backgroundColor: 'var(--bg-primary)',
-            borderColor: 'var(--border-primary)',
-          }}
         >
           {/* Arrow Indicator - Always right-aligned since StatusBar is LTR */}
           <div
-            className='absolute bottom-[-5px] right-3 w-2.5 h-2.5 rotate-45 border-b border-r z-50'
-            style={{
-              backgroundColor: 'var(--bg-primary)',
-              borderColor: 'var(--border-primary)',
-            }}
+            className='absolute bottom-[-5px] right-3 w-2.5 h-2.5 rotate-45 border-b border-r border-(--border-divider) bg-(--bg-menu) z-50'
           />
 
           {/* Header */}
           <div
-            className='flex items-center justify-between px-3 py-2 border-b'
-            style={{ borderColor: 'var(--border-primary)' }}
+            className='flex items-center justify-between px-3 py-2 border-b border-(--border-divider)'
           >
             <span className='text-sm font-semibold' style={{ color: 'var(--text-primary)' }}>
               {t.notifications}
@@ -162,7 +153,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
           </div>
 
           {/* Notifications List */}
-          <div className='divide-y divide-gray-200/50 dark:divide-gray-700/50 max-h-80 overflow-y-auto rounded-b-lg'>
+          <div className='divide-y divide-(--border-divider) max-h-80 overflow-y-auto rounded-b-lg'>
             {state.notifications.length === 0 ? (
               <div
                 className='px-3 py-4 text-center text-sm'

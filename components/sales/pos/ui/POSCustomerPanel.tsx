@@ -63,7 +63,7 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
   ];
 
   return (
-    <div className={`${CARD_MD} p-3 border border-gray-200 dark:border-gray-800`}>
+    <div className={`${CARD_MD} p-3 border border-gray-200/50 dark:border-(--border-divider)`}>
       {selectedCustomer ? (
         // Locked Customer Card
         <div className='flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in'>

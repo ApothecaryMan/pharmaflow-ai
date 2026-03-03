@@ -761,10 +761,9 @@ export const POS: React.FC<POSProps> = ({
                 badge={
                   search.trim().length >= 2 ? (
                     <span
-                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 text-[10px] font-bold uppercase tracking-wider bg-transparent shadow-xs`}
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-primary-600 text-white text-[10px] font-bold uppercase tracking-wider shadow-sm`}
                     >
-                      <span className='material-symbols-rounded' style={{ fontSize: '14px' }}>inventory_2</span>
-                      {filteredDrugs.length}
+                      {filteredDrugs.length} RESULT
                     </span>
                   ) : undefined
                 }

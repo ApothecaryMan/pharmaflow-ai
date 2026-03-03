@@ -33,9 +33,9 @@ export const CustomTooltipContent = memo(
       );
 
       return (
-        <div className='backdrop-blur-md bg-white/80 dark:bg-gray-900/80 saturate-150 p-2.5 px-3.5 rounded-xl shadow-xl border border-white/20 dark:border-gray-700/50 flex flex-col gap-1.5'>
+        <div className='backdrop-blur-md bg-(--bg-card)/80 saturate-150 p-2.5 px-3.5 rounded-xl shadow-xl border border-(--border-divider) flex flex-col gap-1.5'>
           {/* Header: Date/Label */}
-          <div className='flex items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-1 mb-0.5'>
+          <div className='flex items-center justify-between gap-4 border-b border-(--border-divider) pb-1 mb-0.5'>
             <span className='text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider'>{label}</span>
             <span className='text-[10px] font-medium text-gray-400 dark:text-gray-500'>{primaryLabel || 'Overview'}</span>
           </div>
@@ -64,7 +64,7 @@ export const CustomTooltipContent = memo(
 
           {/* Comparison Section */}
           {showComparison && otherEmployees.length > 0 && (
-            <div className='flex flex-col gap-1 pt-1 border-t border-gray-100 dark:border-gray-800'>
+            <div className='flex flex-col gap-1 pt-1 border-t border-(--border-divider)'>
               {otherEmployees.map((emp: any, idx: number) => {
                 const employee = employees?.find((e: any) => e.id === emp.dataKey);
                 const name = employee?.name || emp.dataKey;
@@ -196,7 +196,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
 
   return (
     <div
-      className={`lg:col-span-2 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-xs border-2 border-gray-200 dark:border-transparent group ${className || ''}`}
+      className={`lg:col-span-2 bg-(--bg-card) p-5 rounded-2xl shadow-xs border border-(--border-divider) dark:border-(--border-divider) group ${className || ''}`}
     >
       {/* Header */}
       <div className={`flex items-center justify-between mb-4 ${headerClassName || ''}`}>

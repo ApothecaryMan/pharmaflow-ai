@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Customer, Sale } from '../../types';
-import { CARD_BASE } from '../../utils/themeStyles';
+import { CARD_BASE, CONTAINER_BASE } from '../../utils/themeStyles';
 import { SearchDropdown, type SearchDropdownColumn, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { SmallCard } from '../common/SmallCard';
@@ -233,31 +233,31 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       return {
         tier: 'Platinum',
         color: 'text-purple-600 dark:text-purple-400',
-        bg: 'bg-purple-50 dark:bg-purple-900/20',
-        border: 'border-purple-200 dark:border-purple-800',
+        bg: 'bg-purple-50 dark:bg-purple-500/10',
+        border: 'border-purple-200 dark:border-purple-500/20',
         icon: 'workspace_premium',
       };
     if (points > 1000)
       return {
         tier: 'Gold',
         color: 'text-yellow-600 dark:text-yellow-400',
-        bg: 'bg-yellow-50 dark:bg-yellow-900/20',
-        border: 'border-yellow-200 dark:border-yellow-800',
+        bg: 'bg-yellow-50 dark:bg-yellow-500/10',
+        border: 'border-yellow-200 dark:border-yellow-500/20',
         icon: 'military_tech',
       };
     if (points > 500)
       return {
         tier: 'Silver',
         color: 'text-gray-500 dark:text-gray-400',
-        bg: 'bg-gray-100 dark:bg-gray-800',
-        border: 'border-gray-200 dark:border-gray-700',
+        bg: 'bg-gray-100 dark:bg-gray-800/40',
+        border: 'border-gray-200 dark:border-gray-700/50',
         icon: 'shield',
       };
     return {
       tier: 'Bronze',
       color: 'text-orange-600 dark:text-orange-400',
-      bg: 'bg-orange-50 dark:bg-orange-900/20',
-      border: 'border-orange-200 dark:border-orange-800',
+      bg: 'bg-orange-50 dark:bg-orange-500/10',
+      border: 'border-orange-200 dark:border-orange-500/20',
       icon: 'badge',
     };
   };
@@ -294,10 +294,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <div className='flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 shrink-0 pe-2'>
-        <h1 className='text-2xl font-bold tracking-tight flex items-center gap-2 page-title'>
-          <span className='material-symbols-rounded text-gray-900 dark:text-gray-100'>
-            person_search
-          </span>
+        <h1 className='text-2xl font-bold tracking-tight page-title'>
           {t.loyalty?.lookup || 'Customer Loyalty Lookup'}
         </h1>
 
@@ -344,7 +341,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
 
       {/* Results */}
       {selectedCustomer === null && searchTerm && !showDropdown && (
-        <div className={`p-8 rounded-3xl bg-gray-50 dark:bg-gray-900/50 ${CARD_BASE} text-center`}>
+        <div className={`p-8 ${CONTAINER_BASE} text-center`}>
           <span className='material-symbols-rounded text-5xl text-gray-300 dark:text-gray-600 mb-2'>
             person_search
           </span>
@@ -358,7 +355,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
         <div className='flex-1 flex flex-col min-h-0 pb-4 pe-2'>
           {/* Customer Profile Card */}
           <div
-            className={`p-6 rounded-3xl bg-white/50 dark:bg-gray-900/50 backdrop-blur-xs border border-gray-100 dark:border-gray-800 ${CARD_BASE} flex flex-col h-full overflow-hidden`}
+            className={`p-6 ${CONTAINER_BASE} flex flex-col h-full overflow-hidden`}
           >
             <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4'>
               <div className='flex items-center gap-4'>
@@ -393,7 +390,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
 
               {/* Tier Badge */}
               <div
-                className={`flex flex-col items-center p-3 rounded-2xl border-2 ${tierInfo?.bg} ${tierInfo?.border} bg-white/50 dark:bg-gray-900/50 min-w-[100px]`}
+                className={`flex flex-col items-center p-3 rounded-2xl border-2 ${tierInfo?.bg} ${tierInfo?.border} min-w-[100px]`}
               >
                 <span className={`material-symbols-rounded text-4xl ${tierInfo?.color}`}>
                   {tierInfo?.icon}

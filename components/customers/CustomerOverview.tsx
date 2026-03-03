@@ -16,6 +16,7 @@ import { getLocationName } from '../../data/locations';
 import type { Customer, Sale } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { ExpandedModal } from '../common/ExpandedModal';
+import { SmallCard } from '../common/SmallCard';
 
 interface CustomerOverviewProps {
   customers: Customer[];
@@ -266,58 +267,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
     </button>
   );
 
-  // Stat Card Component
-  const StatCard = ({
-    icon,
-    title,
-    value,
-    subtitle,
-    trend,
-    trendUp,
-    onClick,
-    colorClass = '',
-  }: {
-    icon: string;
-    title: string;
-    value: string | number;
-    subtitle?: string;
-    trend?: string;
-    trendUp?: boolean;
-    onClick?: () => void;
-    colorClass?: string;
-  }) => (
-    <div
-      className={`p-5 rounded-3xl flex flex-col justify-between min-h-[140px] group relative cursor-pointer ${colorClass || CARD_BASE}`}
-      onClick={onClick}
-    >
-      <div className='absolute top-3 right-3 rtl:right-auto rtl:left-3'>
-        <ExpandButton
-          onClick={(e) => {
-            e?.stopPropagation?.();
-            onClick?.();
-          }}
-        />
-      </div>
-      <div className={`text-primary-500 mb-2`}>
-        <span className='material-symbols-rounded text-3xl'>{icon}</span>
-      </div>
-      <div>
-        <p className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1'>{title}</p>
-        <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>{value}</p>
-        {subtitle && <p className='text-xs text-gray-400 mt-1'>{subtitle}</p>}
-        {trend && (
-          <div
-            className={`flex items-center gap-1 mt-2 text-xs font-medium ${trendUp ? 'text-emerald-600' : 'text-red-500'}`}
-          >
-            <span className='material-symbols-rounded text-[14px]'>
-              {trendUp ? 'trending_up' : 'trending_down'}
-            </span>
-            {trend}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+
 
   return (
     <div className='h-full overflow-y-auto pe-2 space-y-4 pb-10'>
@@ -328,43 +278,76 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
       {/* Row 1: Key Metrics */}
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4'>
         {/* Total Customers */}
-        <StatCard
-          icon='group'
-          title={t?.totalCustomers || 'Total Customers'}
-          value={totalCustomers}
-          subtitle={`${activeCustomers} ${t?.active || 'Active'} • ${inactiveCustomers} ${t?.inactive || 'Inactive'}`}
+        <div
           onClick={() => setExpandedView('total')}
-          colorClass={`bg-primary-50 dark:bg-primary-950/20 border border-primary-100 dark:border-primary-900`}
-        />
+          className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
+        >
+          <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
+            open_in_full
+          </span>
+          <SmallCard
+            icon='group'
+            title={t?.totalCustomers || 'Total Customers'}
+            value={totalCustomers}
+            subValue={`${activeCustomers} ${t?.active || 'Active'} • ${inactiveCustomers} ${t?.inactive || 'Inactive'}`}
+            iconColor='primary'
+          />
+        </div>
 
         {/* Customer Lifetime Value */}
-        <StatCard
-          icon='attach_money'
-          title={t?.lifetimeValue || 'Avg. Lifetime Value'}
-          value={`$${customerLifetimeValue.toFixed(2)}`}
-          subtitle={t?.perCustomer || 'Per Customer'}
+        <div
           onClick={() => setExpandedView('lifetimeValue')}
-        />
+          className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
+        >
+          <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
+            open_in_full
+          </span>
+          <SmallCard
+            icon='attach_money'
+            title={t?.lifetimeValue || 'Avg. Lifetime Value'}
+            value={customerLifetimeValue}
+            type='currency'
+            currencyLabel='$'
+            subValue={t?.perCustomer || 'Per Customer'}
+            iconColor='emerald'
+          />
+        </div>
 
         {/* New Customers */}
-        <StatCard
-          icon='person_add'
-          title={t?.newCustomers || 'New Customers'}
-          value={newCustomersThisWeek}
-          subtitle={`${t?.thisWeek || 'This Week'}`}
-          trend={`${newCustomersThisMonth} ${t?.thisMonth || 'This Month'}`}
-          trendUp={newCustomersThisMonth > 0}
+        <div
           onClick={() => setExpandedView('newCustomers')}
-        />
+          className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
+        >
+          <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
+            open_in_full
+          </span>
+          <SmallCard
+            icon='person_add'
+            title={t?.newCustomers || 'New Customers'}
+            value={newCustomersThisWeek}
+            subValue={`${t?.thisWeek || 'This Week'}`}
+            trend={newCustomersThisMonth > 0 ? 'up' : 'neutral'}
+            trendValue={`${newCustomersThisMonth} ${t?.thisMonth || 'This Month'}`}
+            iconColor='blue'
+          />
+        </div>
 
         {/* Loyalty Points */}
-        <StatCard
-          icon='loyalty'
-          title={t?.loyaltyPoints || 'Loyalty Points'}
-          value={totalLoyaltyPoints.toLocaleString()}
-          subtitle={`${t?.avgPoints || 'Avg'}: ${avgPointsPerCustomer.toFixed(0)} pts`}
+        <div
           onClick={() => setExpandedView('loyaltyPoints')}
-        />
+          className='cursor-pointer transition-transform active:scale-95 touch-manipulation relative group'
+        >
+          <span className='material-symbols-rounded absolute top-2 right-2 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-sm rtl:right-auto rtl:left-2 z-10'>
+            open_in_full
+          </span>
+          <SmallCard
+            icon='loyalty'
+            title={t?.loyaltyPoints || 'Loyalty Points'}
+            value={totalLoyaltyPoints}
+            subValue={`${t?.avgPoints || 'Avg'}: ${avgPointsPerCustomer.toFixed(0)} pts`}
+            iconColor='amber'
+          />
+        </div>
       </div>
 
       {/* Row 2: Charts */}
@@ -496,7 +479,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           </div>
 
           <div className='grid grid-cols-2 gap-4 mb-4'>
-            <div className='p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20'>
+            <div className='p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-transparent dark:border-blue-500/20'>
               <p className='text-xs font-bold text-blue-600 dark:text-blue-400 uppercase'>
                 {t?.withInsurance || 'With Insurance'}
               </p>
@@ -507,7 +490,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 {healthInsights.insuranceRate.toFixed(1)}%
               </p>
             </div>
-            <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
+            <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-transparent dark:border-gray-700/50'>
               <p className='text-xs font-bold text-gray-500 uppercase'>
                 {t?.chronicConditions || 'Chronic Conditions'}
               </p>
@@ -522,7 +505,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
             {healthInsights.conditions.slice(0, 4).map((condition) => (
               <div
                 key={condition.name}
-                className='flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800/30'
+                className='flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800/40 border border-transparent dark:border-gray-700/50'
               >
                 <span className='text-sm text-gray-700 dark:text-gray-300'>{condition.name}</span>
                 <span className='text-xs font-bold text-gray-500 bg-white dark:bg-gray-800 px-2 py-1 rounded-md'>
@@ -546,7 +529,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           </div>
 
           <div className='grid grid-cols-3 gap-3'>
-            <div className='p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 text-center'>
+            <div className='p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-transparent dark:border-emerald-500/20 text-center'>
               <p className='text-2xl font-bold text-emerald-600 dark:text-emerald-400'>
                 {engagementMetrics.activeRate.toFixed(0)}%
               </p>
@@ -554,13 +537,13 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 {t?.activeRate || 'Active Rate'}
               </p>
             </div>
-            <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-center'>
+            <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-transparent dark:border-gray-700/50 text-center'>
               <p className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
                 {engagementMetrics.avgDaysSinceVisit}
               </p>
               <p className='text-xs text-gray-500 dark:text-gray-400'>{t?.avgDays || 'Avg Days'}</p>
             </div>
-            <div className='p-3 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-center'>
+            <div className='p-3 rounded-xl bg-orange-50 dark:bg-orange-500/10 border border-transparent dark:border-orange-500/20 text-center'>
               <p className='text-2xl font-bold text-orange-600 dark:text-orange-400'>
                 {engagementMetrics.inactiveCustomers}
               </p>
@@ -585,7 +568,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           </div>
 
           <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
-            <div className='p-4 rounded-2xl bg-linear-to-br from-amber-50 to-amber-100 dark:from-amber-950/40 dark:to-amber-900/20 border border-amber-200 dark:border-amber-800/50'>
+            <div className='p-4 rounded-2xl bg-linear-to-br from-amber-50 to-amber-100 dark:from-amber-500/10 dark:to-amber-500/5 border border-amber-200 dark:border-amber-500/20'>
               <div className='flex items-center gap-2 mb-2'>
                 <span className='material-symbols-rounded text-amber-500'>star</span>
                 <span className='text-xs font-bold text-amber-700 dark:text-amber-400 uppercase'>
@@ -598,7 +581,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className='text-xs text-amber-600 dark:text-amber-400'>$1000+</p>
             </div>
 
-            <div className='p-4 rounded-2xl bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-950/40 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800/50'>
+            <div className='p-4 rounded-2xl bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-500/5 border border-blue-200 dark:border-blue-500/20'>
               <div className='flex items-center gap-2 mb-2'>
                 <span className='material-symbols-rounded text-blue-500'>verified</span>
                 <span className='text-xs font-bold text-blue-700 dark:text-blue-400 uppercase'>
@@ -611,7 +594,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className='text-xs text-blue-600 dark:text-blue-400'>$100-$1000</p>
             </div>
 
-            <div className='p-4 rounded-2xl bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800/40 dark:to-gray-700/20 border border-gray-200 dark:border-gray-700'>
+            <div className='p-4 rounded-2xl bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-800/30 border border-gray-200 dark:border-gray-700/50'>
               <div className='flex items-center gap-2 mb-2'>
                 <span className='material-symbols-rounded text-gray-500'>person</span>
                 <span className='text-xs font-bold text-gray-600 dark:text-gray-400 uppercase'>
@@ -624,7 +607,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className='text-xs text-gray-500 dark:text-gray-400'>&lt;$100</p>
             </div>
 
-            <div className='p-4 rounded-2xl bg-linear-to-br from-red-50 to-red-100 dark:from-red-950/40 dark:to-red-900/20 border border-red-200 dark:border-red-800/50'>
+            <div className='p-4 rounded-2xl bg-linear-to-br from-red-50 to-red-100 dark:from-red-500/10 dark:to-red-500/5 border border-red-200 dark:border-red-500/20'>
               <div className='flex items-center gap-2 mb-2'>
                 <span className='material-symbols-rounded text-red-500'>warning</span>
                 <span className='text-xs font-bold text-red-700 dark:text-red-400 uppercase'>
@@ -821,7 +804,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         <div className='space-y-6'>
           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
             <div
-              className={`p-6 rounded-2xl bg-primary-50 dark:bg-primary-950/20 border border-primary-100 dark:border-primary-900`}
+              className={`p-6 rounded-2xl bg-primary-50 dark:bg-primary-500/10 border border-primary-100 dark:border-primary-500/20`}
             >
               <p
                 className={`text-sm font-bold text-primary-800 dark:text-primary-300 uppercase mb-2`}
@@ -832,7 +815,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 {totalCustomers}
               </p>
             </div>
-            <div className='p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900'>
+            <div className='p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20'>
               <p className='text-sm font-bold text-emerald-800 dark:text-emerald-300 uppercase mb-2'>
                 {t?.active || 'Active'}
               </p>
@@ -840,7 +823,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 {activeCustomers}
               </p>
             </div>
-            <div className='p-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700'>
+            <div className='p-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50'>
               <p className='text-sm font-bold text-gray-500 uppercase mb-2'>
                 {t?.inactive || 'Inactive'}
               </p>
@@ -966,7 +949,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               {segmentation.vip.slice(0, 10).map((c) => (
                 <div
                   key={c.id}
-                  className='p-2 rounded-lg bg-amber-50 dark:bg-amber-950/20 flex justify-between items-center'
+                  className='p-2 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-transparent dark:border-amber-500/20 flex justify-between items-center'
                 >
                   <span className='text-sm text-gray-900 dark:text-gray-100'>{c.name}</span>
                   <span className='text-sm font-bold text-amber-600'>
@@ -987,7 +970,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               {segmentation.atRisk.slice(0, 10).map((c) => (
                 <div
                   key={c.id}
-                  className='p-2 rounded-lg bg-red-50 dark:bg-red-950/20 flex justify-between items-center'
+                  className='p-2 rounded-lg bg-red-50 dark:bg-red-500/10 border border-transparent dark:border-red-500/20 flex justify-between items-center'
                 >
                   <div>
                     <span className='text-sm text-gray-900 dark:text-gray-100'>{c.name}</span>
@@ -1015,7 +998,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
       >
         <div className='space-y-6'>
           <div className='grid grid-cols-2 gap-4'>
-            <div className='p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20'>
+            <div className='p-4 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-transparent dark:border-blue-500/20'>
               <p className='text-sm font-bold text-blue-600 dark:text-blue-400 uppercase'>
                 {t?.withInsurance || 'With Insurance'}
               </p>
@@ -1026,7 +1009,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 {healthInsights.insuranceRate.toFixed(1)}% of customers
               </p>
             </div>
-            <div className='p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
+            <div className='p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-transparent dark:border-gray-700/50'>
               <p className='text-sm font-bold text-gray-500 uppercase'>
                 {t?.withoutInsurance || 'Without Insurance'}
               </p>
@@ -1047,7 +1030,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
                 return (
                   <div
                     key={condition.name}
-                    className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between'
+                    className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-transparent dark:border-gray-700/50 flex items-center justify-between'
                   >
                     <span className='text-sm text-gray-700 dark:text-gray-300'>
                       {condition.name}

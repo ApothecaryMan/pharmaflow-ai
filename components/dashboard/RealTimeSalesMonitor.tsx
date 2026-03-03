@@ -38,6 +38,7 @@ import { SmallCard } from '../common/SmallCard';
 import { useRealTimeSalesAnalytics } from './useRealTimeSalesAnalytics';
 import { useSettings } from '../../context';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { CARD_BASE } from '../../utils/themeStyles';
 
 interface RealTimeSalesMonitorProps {
   sales: Sale[];
@@ -365,7 +366,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* Left Column: Transactions + Insight Cards */}
         <div className='lg:col-span-3 flex flex-col gap-4'>
           {/* Recent Transactions Feed */}
-          <div className='p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow flex flex-col h-[437px] overflow-hidden'>
+          <div className={`p-5 rounded-3xl ${CARD_BASE} flex flex-col h-[437px] overflow-hidden`}>
             <div className='flex items-center justify-between mb-4'>
               <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
                 <span className='material-symbols-rounded text-gray-400 text-xl'>history</span>
@@ -391,7 +392,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
             <div className='flex-1 overflow-y-auto custom-scrollbar'>
               <table className='w-full text-left rtl:text-right border-collapse'>
-                <thead className='sticky top-0 bg-white dark:bg-gray-900 z-10'>
+                <thead className='sticky top-0 bg-(--bg-card) z-10'>
                   <tr className='border-b border-gray-100 dark:border-gray-800 text-xs font-bold text-gray-500 uppercase tracking-wider'>
                     <th className='pb-3 px-2'>Time</th>
                     <th className='pb-3 px-2'>ID</th>
@@ -490,7 +491,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           {/* --- Insight Cards (Moved from bottom) --- */}
           <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3'>
             {/* Hourly Sales Rate */}
-            <div className='md:col-span-2 p-4 rounded-2xl bg-white dark:bg-gray-900 card-shadow flex flex-col justify-center'>
+            <div className={`md:col-span-2 p-4 rounded-2xl ${CARD_BASE} flex flex-col justify-center`}>
               <p className='text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5'>
                 Sales Rate
               </p>
@@ -501,7 +502,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             </div>
 
             {/* Hourly Invoice Rate */}
-            <div className='md:col-span-2 p-4 rounded-2xl bg-white dark:bg-gray-900 card-shadow flex flex-col justify-center'>
+            <div className={`md:col-span-2 p-4 rounded-2xl ${CARD_BASE} flex flex-col justify-center`}>
               <p className='text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5'>
                 Invoices
               </p>
@@ -512,7 +513,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             </div>
 
             {/* New Customers Per Hour */}
-            <div className='md:col-span-2 p-4 rounded-2xl bg-white dark:bg-gray-900 card-shadow flex flex-col justify-center'>
+            <div className={`md:col-span-2 p-4 rounded-2xl ${CARD_BASE} flex flex-col justify-center`}>
               <p className='text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5'>
                 New Cust.
               </p>
@@ -586,7 +587,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           />
 
           {/* Top Products List */}
-          <div className='p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow flex-1 flex flex-col'>
+          <div className={`p-5 rounded-3xl ${CARD_BASE} flex-1 flex flex-col`}>
             <div className='flex items-center justify-between mb-4'>
               <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
                 <span className='material-symbols-rounded text-yellow-500 text-[20px]'>
@@ -642,7 +643,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       {/* --- SECONDARY CONTENT GRID (Restored Cards) --- */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4'>
         {/* Payment Methods Chart */}
-        <div className='p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow min-h-[300px] flex flex-col'>
+        <div className={`p-5 rounded-3xl ${CARD_BASE} min-h-[300px] flex flex-col`}>
           <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 mb-4'>
             Payment Methods
           </h3>
@@ -706,7 +707,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         </div>
 
         {/* Category Distribution */}
-        <div className='p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow min-h-[300px] flex flex-col'>
+        <div className={`p-5 rounded-3xl ${CARD_BASE} min-h-[300px] flex flex-col`}>
           <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 mb-4'>
             Sales by Category
           </h3>
@@ -849,7 +850,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         </div>
 
         {/* Returns Summary */}
-        <div className='p-5 rounded-3xl bg-white dark:bg-gray-900 card-shadow min-h-[300px] flex flex-col'>
+        <div className={`p-5 rounded-3xl ${CARD_BASE} min-h-[300px] flex flex-col`}>
           <div className='flex items-center justify-between mb-4'>
             <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200'>Return Activity</h3>
             <span className='text-xs font-bold px-2 py-1 bg-rose-100 text-rose-700 rounded-lg'>
@@ -922,7 +923,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         t={t}
       >
         <div className='space-y-6'>
-          <div className='bg-white dark:bg-gray-900 p-6 rounded-3xl card-shadow'>
+          <div className={`p-6 rounded-3xl ${CARD_BASE}`}>
             <div className='h-[400px]'>
               <ResponsiveContainer width='100%' height='100%'>
                 <AreaChart data={hourlyData}>
@@ -1005,7 +1006,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         color='blue'
         t={t}
       >
-        <div className='bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden'>
+        <div className={`rounded-3xl ${CARD_BASE} overflow-hidden`}>
           <table className='w-full text-left rtl:text-right'>
             <thead className='bg-gray-50 dark:bg-gray-800/50'>
               <tr>
@@ -1046,7 +1047,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         color='purple'
         t={t}
       >
-        <div className='bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden'>
+        <div className={`rounded-3xl ${CARD_BASE} overflow-hidden`}>
           <div className='p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center'>
             <h3 className='font-bold text-lg'>Top Performing Products</h3>
             <div className='flex gap-2'>

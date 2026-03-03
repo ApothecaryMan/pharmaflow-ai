@@ -30,6 +30,7 @@ interface FilterPillProps {
   onUpdate: (values: any[]) => void;
   onRemove: () => void;
   collapsed?: boolean;
+  rounded?: 'xl' | 'full';
 }
 
 export const FilterPill: React.FC<FilterPillProps> = ({
@@ -38,6 +39,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
   onUpdate,
   onRemove,
   collapsed = false,
+  rounded = 'full',
 }) => {
   const { language } = useSettings();
   const t = TRANSLATIONS[language];
@@ -63,7 +65,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
 
     const menuContent = (
       <div className='font-sans'>
-        <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-gray-100 dark:border-gray-800 mb-1'>
+        <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-(--border-divider) mb-1'>
           {config.label}
         </div>
 
@@ -77,7 +79,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
               <div className="flex items-center gap-2">
                   <span>{option.label}</span>
                   {isDefault && (
-                       <span className="inline-flex items-center px-1 py-0 rounded-sm border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50 leading-none h-4">
+                       <span className="inline-flex items-center px-1 py-0 rounded-sm border border-(--border-divider) text-gray-500 dark:text-gray-400 text-[9px] font-semibold uppercase tracking-wider bg-(--bg-surface-neutral) leading-none h-4">
                           DEF
                        </span>
                   )}
@@ -157,10 +159,10 @@ export const FilterPill: React.FC<FilterPillProps> = ({
         className={`
           flex items-center gap-1.5 
           leading-none select-none cursor-pointer transition-all duration-200
-          border border-gray-200 dark:border-gray-700
-          bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700
-          text-gray-700 dark:text-gray-200 
-          rounded-lg
+          border border-(--border-divider)
+          bg-(--bg-surface-neutral) hover:bg-(--bg-menu-hover)
+          text-gray-700 dark:text-white 
+          rounded-full
           ${collapsed ? 'ps-1.5 pe-1 py-1' : 'ps-2 pe-1 py-1'}
           active:scale-95
         `}

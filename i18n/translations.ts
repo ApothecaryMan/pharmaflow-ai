@@ -610,6 +610,7 @@ export const TRANSLATIONS = {
       unknown: 'Unknown',
       cash: 'Cash',
       credit: 'Credit',
+      paymentMethod: 'Payment Method',
       pending: 'Save as Pending',
       startSearching: 'Start searching for products to add to purchase order',
       noResults: 'No results found',
@@ -2709,7 +2710,7 @@ export const TRANSLATIONS = {
       },
     },
     purchases: {
-      title: 'شراء جديد',
+      title: 'شــــــــــراء جديد',
       subtitle: 'إعادة تعبئة المخزون من الموردين',
       selectSupplier: 'اختر المورد',
       searchDrug: 'بحث عن دواء للشراء...',
@@ -2732,14 +2733,14 @@ export const TRANSLATIONS = {
       placeholders: {
         searchHistory: 'بحث برقم، مورد...',
         searchSupplier: 'بحث واختيار المورد...',
-        enterId: 'أدخل الرقم',
+        enterId: 'أدخـــــــــــل الرقم',
         searchDrug: 'بحث عن دواء...',
       },
       pack: 'علبة',
       unit: 'وحدة',
       // Table headers
       tableHeaders: {
-        orderId: 'رقم الطلب',
+        orderId: 'رقم الاوردر',
         invId: 'رقم الفاتورة',
         date: 'التاريخ',
         supplier: 'المورد',
@@ -2785,6 +2786,7 @@ export const TRANSLATIONS = {
       unknown: 'غير معروف',
       cash: 'نقدي',
       credit: 'آجل',
+      paymentMethod: 'طريقة الدفع',
       pending: 'حفظ كمعلق',
       startSearching: 'ابدأ البحث عن منتجات لإضافتها لأمر الشراء',
       noResults: 'لا توجد نتائج',

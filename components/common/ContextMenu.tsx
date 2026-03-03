@@ -85,7 +85,7 @@ export const useContextMenu = () => {
  * A simple horizontal separator line for the context menu.
  */
 export const ContextMenuSeparator: React.FC = () => (
-  <div className='h-px bg-gray-100 dark:bg-gray-800 my-1' />
+  <div className='border-b border-(--border-divider) my-1' />
 );
 
 interface ContextMenuItemProps extends Omit<ContextMenuAction, 'action' | 'separator'> {
@@ -124,7 +124,7 @@ export const ContextMenuItem: React.FC<ContextMenuItemProps> = ({
                     ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
                     : isGlass
                       ? 'text-gray-900 dark:text-gray-100 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:ps-4'
-                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:ps-4'
+                      : 'text-gray-700 dark:text-white hover:bg-(--bg-menu-hover) hover:ps-4'
                 }
                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
                 ${className}
@@ -173,7 +173,7 @@ export const ContextMenuCheckboxItem: React.FC<{
                     ? 'opacity-50 cursor-not-allowed'
                     : isGlass
                       ? 'hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:ps-4'
-                      : 'hover:bg-gray-50 dark:hover:bg-gray-800 hover:ps-4'
+                      : 'hover:bg-(--bg-menu-hover) hover:ps-4'
                 }
             `}
     >
@@ -328,11 +328,11 @@ export const ContextMenuProvider: React.FC<{
       {menu.isVisible && (
         <div
           ref={menuRef}
-          className={`fixed z-9999 min-w-[180px] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 py-1 px-1 animate-scale-in origin-top-left overflow-hidden
+          className={`fixed z-9999 min-w-[180px] rounded-2xl shadow-xl border border-(--border-divider) py-1 px-1 animate-scale-in origin-top-left overflow-hidden
                 ${
                   enableGlassEffect
                     ? 'backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-backdrop-filter:bg-white/30'
-                    : 'bg-white dark:bg-gray-900'
+                    : 'bg-(--bg-menu)'
                 }
             `}
           style={{
