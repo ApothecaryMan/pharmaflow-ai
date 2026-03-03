@@ -45,6 +45,7 @@ export const THEMES: ThemeColor[] = [
   { name: 'Green', primary: 'green', hex: COLOR_HEX_MAP.green },
   { name: 'Blue', primary: 'blue', hex: COLOR_HEX_MAP.blue },
   { name: 'Purple', primary: 'purple', hex: COLOR_HEX_MAP.purple },
+  { name: 'Orange', primary: 'orange', hex: COLOR_HEX_MAP.orange },
 ];
 
 /**

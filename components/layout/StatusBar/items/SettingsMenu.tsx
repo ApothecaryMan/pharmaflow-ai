@@ -255,7 +255,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         ${
                           isMobile
                             ? 'relative w-full mt-2 bg-(--bg-search) border-none shadow-none p-4 space-y-4 rounded-xl'
-                            : `absolute w-52 rounded-xl shadow-2xl border border-(--border-divider) bg-(--bg-menu) z-120 p-4 space-y-4 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                            : `absolute w-64 rounded-xl shadow-2xl border border-(--border-divider) bg-(--bg-menu) z-120 p-4 space-y-4 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                         }
                     `}
                   style={
@@ -284,7 +284,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         }}
                         color={currentTheme.name.toLowerCase()}
                         size='xs'
-                        fullWidth={false}
+                        fullWidth={true}
+                        className='flex-1'
                         shape='pill'
                         options={availableThemes.map((theme) => ({
                           label: '',
@@ -380,7 +381,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                             ${
                               isMobile
                                 ? 'relative w-full mt-2 bg-(--bg-search) border-none shadow-none p-3 space-y-1.5 rounded-lg'
-                                : `absolute w-56 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                                : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}
                   style={
@@ -463,7 +464,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   color={currentTheme.name.toLowerCase()}
                   size='xs'
                   iconSize='--icon-lg'
-                  fullWidth={false}
+                  fullWidth={true}
+                  className='max-w-[100px]'
                   shape='pill'
                   options={[
                     { label: '', value: 1, icon: 'view_sidebar' },
@@ -496,7 +498,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 onChange={(val) => setLanguage(val as Language)}
                 color={currentTheme.name.toLowerCase()}
                 size='xs'
-                fullWidth={false}
+                fullWidth={true}
+                className='max-w-[100px]'
                 shape='pill'
                 options={[
                   { label: 'EN', value: 'EN' },
@@ -578,7 +581,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                             ${
                               isMobile
                                 ? 'relative w-full mt-2 bg-(--bg-search) border-none shadow-none p-3 space-y-3 rounded-lg'
-                                : `absolute w-56 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                                : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}
                   style={
@@ -680,7 +683,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         onChange={(val) => setGraphicStyle(val as boolean)}
                         color={currentTheme.name.toLowerCase()}
                         size='xs'
-                        fullWidth={false}
+                        fullWidth={true}
+                        className='flex-1'
                         shape='pill'
                         options={[
                           { 
@@ -823,7 +827,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                             ${
                               isMobile
                                 ? 'relative w-full mt-2 bg-(--bg-search) border-none shadow-none p-2 space-y-1 rounded-lg'
-                                : `absolute w-48 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                                : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}
                       style={

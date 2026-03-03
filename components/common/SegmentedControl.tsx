@@ -32,7 +32,7 @@
  */
 
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export interface SegmentedControlOption<T> {
   label: string;
@@ -114,7 +114,7 @@ export function SegmentedControl<T extends string | number | boolean>({
   const activeColor = activeOption?.activeColor || color;
   const sizeClasses = SIZE_CLASSES[size];
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const updateIndicator = () => {
       const container = containerRef.current;
       if (!container) return;
@@ -132,14 +132,24 @@ export function SegmentedControl<T extends string | number | boolean>({
           setIsRtlChange(true);
         }
 
-        setIndicatorStyle({
+        const rect = {
           width: activeSegment.offsetWidth,
           height: activeSegment.offsetHeight,
-          top: activeSegment.offsetTop,
-          left: activeSegment.offsetLeft,
+          x: activeSegment.offsetLeft,
+          y: activeSegment.offsetTop,
+        };
+
+        setIndicatorStyle({
+          width: `${rect.width}px`,
+          height: `${rect.height}px`,
+          transform: `translate3d(${rect.x}px, ${rect.y}px, 0)`,
         });
 
-        isFirstRender.current = false;
+        if (isFirstRender.current) {
+          requestAnimationFrame(() => {
+            isFirstRender.current = false;
+          });
+        }
 
         if (isDirChange) {
           setTimeout(() => {
@@ -149,12 +159,15 @@ export function SegmentedControl<T extends string | number | boolean>({
       }
     };
 
-    requestAnimationFrame(() => {
-      updateIndicator();
-    });
+    // Calculate immediately and also on next frame for safety
+    updateIndicator();
+    const rafId = requestAnimationFrame(updateIndicator);
 
     window.addEventListener('resize', updateIndicator);
-    return () => window.removeEventListener('resize', updateIndicator);
+    return () => {
+      window.removeEventListener('resize', updateIndicator);
+      cancelAnimationFrame(rafId);
+    };
   }, [value, options]);
 
   return (
@@ -164,14 +177,15 @@ export function SegmentedControl<T extends string | number | boolean>({
     >
       {indicatorStyle && (
         <div
-          className={`absolute bg-white dark:bg-(--bg-card) border border-transparent dark:border-(--border-divider) ${indicatorRound} pointer-events-none z-0 ${
+          className={`absolute top-0 left-0 bg-white dark:bg-(--bg-card) border border-transparent dark:border-(--border-divider) ${indicatorRound} pointer-events-none z-0 ${
             !isFirstRender.current && !isRtlChange
-              ? 'transition-all duration-300 ease-in-out'
+              ? 'transition-[transform,width,height] duration-200 ease-out'
               : ''
           }`}
           style={{
             ...indicatorStyle,
             boxShadow: 'rgba(0, 0, 0, 0.09) 0px 3px 12px',
+            willChange: 'transform, width, height',
           }}
         />
       )}
