@@ -8,6 +8,7 @@ import { inventoryService } from '../services/inventory/inventoryService';
 import { stockMovementService } from '../services/inventory/stockMovement/stockMovementService';
 import { migrationService } from '../services/migration';
 import { restoreStockForCancelledSale } from '../services/salesHelpers';
+import * as stockOps from '../utils/stockOperations';
 import type { AppSettings } from '../services/settings/types';
 import type {
   BatchAllocation,
@@ -212,6 +213,15 @@ export function useEntityHandlers({
         const result = await inventoryService.create(drug);
         setInventory((prev) => [...prev, result]);
         
+        // Log initial stock movement
+        if (result.stock > 0) {
+          stockOps.logInitialStock(result, {
+            branchId: activeBranchId,
+            performedBy: currentEmployeeId || 'System',
+            performedByName: employees?.find((e) => e.id === currentEmployeeId)?.name,
+          });
+        }
+
         // Update batches state
         setBatches(batchService.getAllBatches());
 
@@ -248,9 +258,28 @@ export function useEntityHandlers({
       }
 
       try {
+        const oldDrug = inventory.find(d => d.id === drug.id);
         const result = await inventoryService.update(drug.id, drug);
         setInventory((prev) => prev.map((d) => (d.id === drug.id ? result : d)));
         
+        // Detect and log stock changes (Manual Edit)
+        if (oldDrug && oldDrug.stock !== result.stock) {
+          stockOps.adjustStock(
+            oldDrug,
+            result.stock,
+            'Manual Edit',
+            {
+              branchId: activeBranchId,
+              performedBy: currentEmployeeId,
+              performedByName: employees?.find((e) => e.id === currentEmployeeId)?.name,
+            },
+            {
+              notes: 'Pharmacist manual stock correction',
+              status: 'approved',
+            }
+          );
+        }
+
         auditService.log('inventory.update', {
           userId: currentEmployeeId,
           details: `Updated drug: ${drug.name}`,
@@ -305,39 +334,27 @@ export function useEntityHandlers({
       setInventory((prev) =>
         prev.map((d) => {
           if (d.id === id) {
-            const drug = d;
-            const unitsToAdd = isUnit ? qty : qty * (drug.unitsPerPack || 1);
-            const newStockValue = validateStock(drug.stock + unitsToAdd);
-
-            // Log Stock Movement
             const performer = employees?.find((e) => e.id === currentEmployeeId);
-            stockMovementService.logMovement({
-              drugId: drug.id,
-              drugName: drug.name,
-              branchId: activeBranchId,
-              type: 'adjustment',
-              quantity: unitsToAdd,
-              previousStock: drug.stock,
-              newStock: newStockValue,
-              reason: 'Manual Restock / Adjustment',
-              performedBy: currentEmployeeId!,
-              performedByName: performer?.name,
-              status: 'approved',
-            });
+            const mutation = stockOps.addStock(
+              d,
+              qty,
+              !!isUnit,
+              d.expiryDate,
+              d.costPrice,
+              'adjustment',
+              'Manual Restock / Adjustment',
+              {
+                branchId: activeBranchId,
+                performedBy: currentEmployeeId!,
+                performedByName: performer?.name,
+              },
+              'RESTOCK',
+              'MANUAL_RESTOCK'
+            );
 
-            // Issue 6 Fix: Create an explicit batch for restocked items
-            batchService.createBatch({
-              drugId: drug.id,
-              quantity: unitsToAdd,
-              expiryDate: drug.expiryDate, // Use existing expiry by default
-              costPrice: drug.costPrice,
-              purchaseId: 'RESTOCK',
-              dateReceived: new Date().toISOString(),
-              batchNumber: 'MANUAL_RESTOCK',
-            });
             setTimeout(() => setBatches(batchService.getAllBatches()), 0);
 
-            return { ...drug, stock: newStockValue };
+            return { ...d, stock: mutation.newStock };
           }
           return d;
         })
@@ -514,10 +531,6 @@ export function useEntityHandlers({
         const sourceDrug = currentInventory.find((d) => d.id === purchasedItem.drugId);
         if (!sourceDrug) return;
 
-        const unitsToAdd = purchasedItem.isUnit
-          ? purchasedItem.quantity
-          : purchasedItem.quantity * (sourceDrug.unitsPerPack || 1);
-
         const purchaseExpiry = purchasedItem.expiryDate || sourceDrug.expiryDate;
 
         const sameExpiryEntry = currentInventory.find(
@@ -527,62 +540,49 @@ export function useEntityHandlers({
             d.expiryDate === purchaseExpiry
         );
 
-        let targetDrugId = sourceDrug.id;
-        let previousStock = sourceDrug.stock;
+        const isNewEntry = !sameExpiryEntry;
+        const targetId = isNewEntry ? idGenerator.generate('inventory') : sameExpiryEntry.id;
+        const targetDrug = isNewEntry ? sourceDrug : sameExpiryEntry;
 
-        if (sameExpiryEntry) {
-          targetDrugId = sameExpiryEntry.id;
-          previousStock = sameExpiryEntry.stock;
-          
-          currentInventory = currentInventory.map((d) =>
-            d.id === sameExpiryEntry.id
-              ? {
-                  ...d,
-                  stock: validateStock(d.stock + unitsToAdd),
-                  costPrice: purchasedItem.costPrice,
-                }
-              : d
-          );
-        } else {
-          targetDrugId = idGenerator.generate('inventory');
-          previousStock = 0; 
+        const mutation = stockOps.addStock(
+          { ...targetDrug, id: targetId },
+          purchasedItem.quantity,
+          !!purchasedItem.isUnit,
+          purchaseExpiry,
+          purchasedItem.costPrice,
+          'purchase',
+          `Purchase Order #${purchase.invoiceId}`,
+          {
+            branchId: branchCode,
+            performedBy: currentEmployeeId!,
+            performedByName: performer?.name,
+          },
+          purchase.id,
+          purchase.invoiceId,
+          isNewEntry ? 0 : undefined
+        );
+
+        if (isNewEntry) {
           newEntries.push({
             ...sourceDrug,
-            id: targetDrugId,
-            stock: unitsToAdd,
+            id: targetId,
+            stock: mutation.unitsChanged,
             costPrice: purchasedItem.costPrice,
             expiryDate: purchaseExpiry,
             createdAt: new Date().toISOString(),
           });
           currentInventory.push(newEntries[newEntries.length - 1]);
+        } else {
+          currentInventory = currentInventory.map((d) =>
+            d.id === targetId
+              ? {
+                  ...d,
+                  stock: mutation.newStock,
+                  costPrice: purchasedItem.costPrice,
+                }
+              : d
+          );
         }
-
-        // 1. Create Batch (Issue 4 Fix: Centralized logic, Issue 5 Fix: Accurate drugId)
-        batchService.createBatch({
-          drugId: targetDrugId,
-          quantity: unitsToAdd,
-          expiryDate: purchaseExpiry,
-          costPrice: purchasedItem.costPrice,
-          purchaseId: purchase.id,
-          dateReceived: new Date().toISOString(),
-          batchNumber: purchase.invoiceId,
-        });
-
-        // 2. Log Movement (Issue 5 Fix: Accurate previousStock and newStock)
-        stockMovementService.logMovement({
-          drugId: targetDrugId,
-          drugName: sourceDrug.name,
-          branchId: branchCode,
-          type: 'purchase',
-          quantity: unitsToAdd,
-          previousStock: previousStock,
-          newStock: validateStock(previousStock + unitsToAdd),
-          reason: `Purchase Order #${purchase.invoiceId}`,
-          referenceId: purchase.id,
-          performedBy: currentEmployeeId!,
-          performedByName: performer?.name,
-          status: 'approved',
-        });
       });
 
       setBatches(batchService.getAllBatches());
@@ -718,30 +718,24 @@ export function useEntityHandlers({
         prev.map((drug) => {
           const returnedItem = returnData.items.find((i) => i.drugId === drug.id);
           if (returnedItem) {
-            const unitsToRemove = returnedItem.isUnit
-              ? returnedItem.quantityReturned
-              : returnedItem.quantityReturned * (drug.unitsPerPack || 1);
-
-            // Log Stock Movement
             const performer = employees?.find((e) => e.id === currentEmployeeId);
-            stockMovementService.logMovement({
-              drugId: drug.id,
-              drugName: drug.name,
-              branchId: activeBranchId,
-              type: 'return_supplier',
-              quantity: -unitsToRemove,
-              previousStock: drug.stock,
-              newStock: validateStock(drug.stock - unitsToRemove),
-              reason: `Purchase Return #${returnData.id}`,
-              referenceId: returnData.id,
-              performedBy: currentEmployeeId!,
-              performedByName: performer?.name,
-              status: 'approved',
-            });
+            const mutation = stockOps.deductStockSimple(
+              drug,
+              returnedItem.quantityReturned,
+              !!returnedItem.isUnit,
+              'return_supplier',
+              `Purchase Return #${returnData.id}`,
+              {
+                branchId: activeBranchId,
+                performedBy: currentEmployeeId!,
+                performedByName: performer?.name,
+              },
+              returnData.id
+            );
 
             return {
               ...drug,
-              stock: validateStock(drug.stock - unitsToRemove),
+              stock: mutation.newStock,
             };
           }
           return drug;
@@ -1028,27 +1022,18 @@ export function useEntityHandlers({
 
         // 7. Log Stock Movement
         const performer = employees?.find((e) => e.id === currentEmployeeId);
-        newSale.items.forEach((item) => {
-          const drug = inventory.find((d) => d.id === item.id);
-          const quantityToDeduct = item.isUnit
-            ? item.quantity
-            : item.quantity * (drug?.unitsPerPack || 1);
-
-          stockMovementService.logMovement({
-            drugId: item.id,
-            drugName: item.name,
+        const stockMutations = stockOps.bulkDeductStock(
+          newSale.items,
+          inventory,
+          'sale',
+          `Sale Transaction #${serialId}`,
+          {
             branchId: getBranchCode(),
-            type: 'sale',
-            quantity: -quantityToDeduct,
-            previousStock: drug?.stock || 0,
-            newStock: validateStock((drug?.stock || 0) - quantityToDeduct),
-            reason: `Sale Transaction #${serialId}`,
-            referenceId: serialId,
             performedBy: currentEmployeeId!,
             performedByName: performer?.name,
-            status: 'approved',
-          });
-        });
+          },
+          serialId
+        );
 
         success(`Order #${serialId} completed!`);
         return true;
@@ -1116,39 +1101,30 @@ export function useEntityHandlers({
           return;
         }
 
-        const updatedInventory = restoreStockForCancelledSale(sale, inventory);
-        setInventory(updatedInventory);
-        auditService.log('sale.cancel', {
-          userId: currentEmployeeId,
-          details: `Cancelled Sale #${saleId}`,
-          entityId: saleId,
-        });
-
-        // Log Stock Movement
         const performer = employees?.find((e) => e.id === currentEmployeeId);
         sale.items.forEach((item) => {
           const drug = inventory.find((d) => d.id === item.id);
           if (drug) {
-            const unitsToRestore = item.isUnit
-              ? item.quantity
-              : item.quantity * (drug.unitsPerPack || 1);
-
-            stockMovementService.logMovement({
-              drugId: drug.id,
-              drugName: drug.name,
-              branchId: getBranchCode(),
-              type: 'correction', // Cancellation return
-              quantity: unitsToRestore,
-              previousStock: drug.stock,
-              newStock: validateStock(drug.stock + unitsToRestore),
-              reason: `Sale Cancellation #${saleId}`,
-              referenceId: saleId,
-              performedBy: currentEmployeeId!,
-              performedByName: performer?.name,
-              status: 'approved',
-            });
+            stockOps.returnStock(
+              drug,
+              item.quantity,
+              !!item.isUnit,
+              item.batchAllocations,
+              'correction',
+              `Sale Cancellation #${saleId}`,
+              {
+                branchId: getBranchCode(),
+                performedBy: currentEmployeeId!,
+                performedByName: performer?.name,
+              },
+              saleId
+            );
           }
         });
+        
+        // Update inventory state using the existing helper for now, but the logging is now via stockOps
+        const updatedInventory = restoreStockForCancelledSale(sale, inventory);
+        setInventory(updatedInventory);
       }
 
       // Handle item modifications (for delivery orders)
@@ -1177,18 +1153,28 @@ export function useEntityHandlers({
           );
 
           if (!newItem) {
-            // Item was deleted - return all stock to batches
-            if (oldItem.batchAllocations) {
-              batchService.returnStock(oldItem.batchAllocations);
-            }
+            // Item was deleted - return all stock
+            const performer = employees?.find((e) => e.id === currentEmployeeId);
+            stockOps.returnStock(
+              inventory.find(d => d.id === oldItem.id)!,
+              oldItem.quantity,
+              !!oldItem.isUnit,
+              oldItem.batchAllocations,
+              'correction',
+              `Item Removed from Delivery #${sale.id}`,
+              {
+                branchId: getBranchCode(),
+                performedBy: currentEmployeeId!,
+                performedByName: performer?.name,
+              },
+              sale.id
+            );
 
             // Update Drug.stock
             setInventory((prev) =>
               prev.map((drug) => {
                 if (drug.id === oldItem.id) {
-                  const unitsToRestore = oldItem.isUnit
-                    ? oldItem.quantity
-                    : oldItem.quantity * (drug.unitsPerPack || 1);
+                  const unitsToRestore = stockOps.resolveUnits(oldItem.quantity, !!oldItem.isUnit, drug.unitsPerPack);
                   return { ...drug, stock: validateStock(drug.stock + unitsToRestore) };
                 }
                 return drug;
@@ -1202,9 +1188,7 @@ export function useEntityHandlers({
               dosageForm: oldItem.dosageForm,
               previousQuantity: oldItem.quantity,
               newQuantity: 0,
-              stockReturned: oldItem.isUnit
-                ? oldItem.quantity
-                : oldItem.quantity * (oldItem.unitsPerPack || 1),
+              stockReturned: stockOps.resolveUnits(oldItem.quantity, !!oldItem.isUnit, oldItem.unitsPerPack || 1),
             });
           } else {
             // Check for quantity changes
@@ -1223,22 +1207,23 @@ export function useEntityHandlers({
 
               if (diff > 0) {
                 // Quantity reduced - return partial stock
-                if (oldItem.batchAllocations && oldItem.batchAllocations.length > 0) {
-                  // Return from last allocated batches first (LIFO for returns)
-                  let remaining = diff;
-                  const sortedAllocs = [...oldItem.batchAllocations].reverse();
-                  const returnsToMake: BatchAllocation[] = [];
-
-                  for (const alloc of sortedAllocs) {
-                    if (remaining <= 0) break;
-                    const returnQty = Math.min(alloc.quantity, remaining);
-                    returnsToMake.push({ ...alloc, quantity: returnQty });
-                    remaining -= returnQty;
-                  }
-
-                  batchService.returnStock(returnsToMake);
-                  setBatches(batchService.getAllBatches());
-                }
+                const performer = employees?.find((e) => e.id === currentEmployeeId);
+                stockOps.returnStock(
+                  drug,
+                  diff,
+                  true, // units
+                  oldItem.batchAllocations,
+                  'correction',
+                  `Quantity Reduced in Delivery #${sale.id}`,
+                  {
+                    branchId: getBranchCode(),
+                    performedBy: currentEmployeeId!,
+                    performedByName: performer?.name,
+                  },
+                  sale.id
+                );
+                
+                setBatches(batchService.getAllBatches());
 
                 setInventory((prev) =>
                   prev.map((d) => {
@@ -1259,22 +1244,34 @@ export function useEntityHandlers({
                   stockReturned: diff,
                 });
               } else if (diff < 0) {
-                // Quantity increased - allocate more from batches
-                const additionalNeeded = Math.abs(diff);
-                const newAllocations = batchService.allocateStock(drug.id, additionalNeeded, true);
+                // Quantity increased - allocate more
+                const performer = employees?.find((e) => e.id === currentEmployeeId);
+                const mutation = stockOps.deductStock(
+                  drug,
+                  Math.abs(diff),
+                  true, // units
+                  'sale',
+                  `Quantity Increased in Delivery #${sale.id}`,
+                  {
+                    branchId: getBranchCode(),
+                    performedBy: currentEmployeeId!,
+                    performedByName: performer?.name,
+                  },
+                  sale.id
+                );
 
-                if (newAllocations) {
+                if (mutation) {
                   // Merge allocations
                   newItem.batchAllocations = [
                     ...(oldItem.batchAllocations || []),
-                    ...newAllocations,
+                    ...(mutation.allocations || []),
                   ];
                   setBatches(batchService.getAllBatches());
 
                   setInventory((prev) =>
                     prev.map((d) => {
                       if (d.id === oldItem.id) {
-                        return { ...d, stock: validateStock(d.stock - additionalNeeded) };
+                        return { ...d, stock: mutation.newStock };
                       }
                       return d;
                     })
@@ -1287,15 +1284,8 @@ export function useEntityHandlers({
                     dosageForm: oldItem.dosageForm,
                     previousQuantity: oldItem.quantity,
                     newQuantity: newItem.quantity,
-                    stockDeducted: additionalNeeded,
+                    stockDeducted: Math.abs(diff),
                   });
-                } else {
-                  console.error(
-                    '[handleUpdateSale] Failed to allocate stock for item:',
-                    oldItem.name,
-                    'Quantity:',
-                    additionalNeeded
-                  );
                 }
               }
             }
@@ -1320,22 +1310,32 @@ export function useEntityHandlers({
             (old) => old.id === newItem.id && old.isUnit === newItem.isUnit
           );
           if (!existsInOld) {
-            // This is a NEW item - allocate stock for it
+            // This is a NEW item - allocate stock
             const drug = inventory.find((d) => d.id === newItem.id);
             if (drug) {
-              const unitsToAllocate = newItem.isUnit
-                ? newItem.quantity
-                : newItem.quantity * (drug.unitsPerPack || 1);
-              const allocations = batchService.allocateStock(drug.id, unitsToAllocate, true);
+              const performer = employees?.find((e) => e.id === currentEmployeeId);
+              const mutation = stockOps.deductStock(
+                drug,
+                newItem.quantity,
+                !!newItem.isUnit,
+                'sale',
+                `Item Added to Delivery #${sale.id}`,
+                {
+                  branchId: getBranchCode(),
+                  performedBy: currentEmployeeId!,
+                  performedByName: performer?.name,
+                },
+                sale.id
+              );
 
-              if (allocations) {
-                newItem.batchAllocations = allocations;
+              if (mutation) {
+                newItem.batchAllocations = mutation.allocations;
                 setBatches(batchService.getAllBatches());
 
                 setInventory((prev) =>
                   prev.map((d) => {
                     if (d.id === newItem.id) {
-                      return { ...d, stock: validateStock(d.stock - unitsToAllocate) };
+                      return { ...d, stock: mutation.newStock };
                     }
                     return d;
                   })
@@ -1348,13 +1348,8 @@ export function useEntityHandlers({
                   dosageForm: newItem.dosageForm,
                   previousQuantity: 0,
                   newQuantity: newItem.quantity,
-                  stockDeducted: unitsToAllocate,
+                  stockDeducted: mutation.unitsChanged,
                 });
-              } else {
-                console.error(
-                  '[handleUpdateSale] Failed to allocate stock for NEW item:',
-                  newItem.name
-                );
               }
             }
           }
@@ -1468,46 +1463,32 @@ export function useEntityHandlers({
         })
       );
 
-      // Restore inventory (INTEGER UNITS)
+      // Restore inventory
       setInventory((prev) =>
         prev.map((drug) => {
           const returnedItem = returnData.items.find((i) => i.drugId === drug.id);
           if (returnedItem) {
-            let quantityToRestore = 0;
+            const performer = employees?.find((e) => e.id === currentEmployeeId);
+            const mutation = stockOps.returnStock(
+              drug,
+              returnedItem.quantityReturned,
+              !!returnedItem.isUnit,
+              sales.find((s) => s.id === returnData.saleId)?.items.find((i) => i.id === drug.id)?.batchAllocations,
+              'return_customer',
+              `Return for Sale #${returnData.saleId}`,
+              {
+                branchId: getBranchCode(),
+                performedBy: currentEmployeeId!,
+                performedByName: performer?.name,
+              },
+              returnData.id
+            );
 
-            if (returnedItem.isUnit) {
-              quantityToRestore = returnedItem.quantityReturned;
-            } else {
-              quantityToRestore = returnedItem.quantityReturned * (drug.unitsPerPack || 1);
-            }
-
-            // Restore stock to batches if we can find the original allocations
-            const sale = sales.find(s => s.id === returnData.saleId);
-            const soldItem = sale?.items.find(i => i.id === drug.id);
-            if (soldItem?.batchAllocations) {
-              // We return a proportional amount of stock to batches
-              // For simplicity in returns, we might return to the latest allocation or spread it.
-              // Here we just return the full amount to the first batch found in allocations for that item (simplified)
-              // Better: use batchService.returnStock with a sliced allocation representing the returned amount.
-              const returnsToMake: BatchAllocation[] = [];
-              let remainingToReturn = quantityToRestore;
-              
-              for (const alloc of soldItem.batchAllocations) {
-                 if (remainingToReturn <= 0) break;
-                 const returnQty = Math.min(alloc.quantity, remainingToReturn);
-                 returnsToMake.push({...alloc, quantity: returnQty});
-                 remainingToReturn -= returnQty;
-              }
-              
-              if (returnsToMake.length > 0) {
-                batchService.returnStock(returnsToMake);
-                setBatches(batchService.getAllBatches());
-              }
-            }
+            setBatches(batchService.getAllBatches());
 
             return {
               ...drug,
-              stock: validateStock(drug.stock + quantityToRestore),
+              stock: mutation.newStock,
             };
           }
           return drug;
@@ -1532,32 +1513,6 @@ export function useEntityHandlers({
         userId: currentEmployeeId || 'System',
         details: `Processed Return for Sale #${returnData.saleId}`,
         entityId: returnData.id,
-      });
-
-      // Log Stock Movement
-      const performer = employees?.find((e) => e.id === currentEmployeeId);
-      returnData.items.forEach((item) => {
-        const drug = inventory.find((d) => d.id === item.drugId);
-        if (drug) {
-          const unitsToRestore = item.isUnit
-            ? item.quantityReturned
-            : item.quantityReturned * (drug.unitsPerPack || 1);
-
-          stockMovementService.logMovement({
-            drugId: drug.id,
-            drugName: drug.name,
-            branchId: getBranchCode(),
-            type: 'return_customer',
-            quantity: unitsToRestore,
-            previousStock: drug.stock,
-            newStock: validateStock(drug.stock + unitsToRestore),
-            reason: `Return for Sale #${returnData.saleId}`,
-            referenceId: returnData.id,
-            performedBy: currentEmployeeId!,
-            performedByName: performer?.name,
-            status: 'approved',
-          });
-        }
       });
 
       success(`Return processed successfully. Refund: ${returnData.totalRefund.toFixed(2)} L.E`);

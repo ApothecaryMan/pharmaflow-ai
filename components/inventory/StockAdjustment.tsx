@@ -6,6 +6,7 @@ import { type StockMovement, stockMovementService } from '../../services/invento
 import { batchService } from '../../services/inventory/batchService';
 import type { Drug, StockBatch } from '../../types';
 import { getDisplayName, getFullDisplayName } from '../../utils/drugDisplayName';
+import * as stockOps from '../../utils/stockOperations';
 import { idGenerator } from '../../utils/idGenerator';
 import { parseSearchTerm } from '../../utils/searchUtils';
 import { storage } from '../../utils/storage';
@@ -443,33 +444,26 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       for (const item of adjustments) {
         // Only log actual changes
         if (item.difference !== 0) {
-          await stockMovementService.logMovement({
-            drugId: item.drugId,
-            drugName: item.drugName,
-            branchId: '', // Service uses default
-            type: 'adjustment',
-            quantity: item.difference,
-            previousStock: item.currentStock,
-            newStock: item.newStock,
-            reason: item.reason,
-            notes: item.notes,
+          const drug = inventory.find(d => d.id === item.drugId);
+          if (!drug) continue;
 
-            transactionId: transactionId,
-            batchId: item.batchId, // Log batch ID
-            expiryDate: item.expiryDate,
-            performedBy: currentEmployeeId,
-            performedByName: currentEmployeeName,
-            status: status,
-            reviewedBy: isManager ? currentEmployeeId : undefined,
-            reviewedAt: isManager ? new Date().toISOString() : undefined,
-          });
-
-          // Update Batch/Inventory ONLY if approved
-          if (status === 'approved') {
-            if (item.batchId) {
-              await batchService.updateBatchQuantity(item.batchId, item.difference);
+          stockOps.adjustStock(
+            drug,
+            item.newStock,
+            item.reason,
+            {
+              branchId: '', // Utility uses default if empty
+              performedBy: currentEmployeeId,
+              performedByName: currentEmployeeName,
+            },
+            {
+              batchId: item.batchId,
+              notes: item.notes,
+              transactionId: transactionId,
+              status: status,
+              expiryDate: item.expiryDate,
             }
-          }
+          );
         }
       }
 

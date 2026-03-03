@@ -203,6 +203,11 @@ export const Inventory: React.FC<InventoryProps> = ({
     if (editingDrug) {
       onUpdateDrug({ ...editingDrug, ...submissionData } as Drug);
       setIsModalOpen(false);
+    } else if (formData.name && formData.expiryDate) {
+      // New drug (Add or Duplicate)
+      onAddDrug(submissionData as Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'>);
+      setIsModalOpen(false);
+      if (mode === 'add') setMode('list');
     }
   };
 

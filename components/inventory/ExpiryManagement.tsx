@@ -15,6 +15,7 @@ import { useStatusBar } from '../layout/StatusBar';
 import { useAlert, useSettings } from '../../context';
 import { stockMovementService } from '../../services/inventory';
 import { batchService } from '../../services/inventory/batchService';
+import * as stockOps from '../../utils/stockOperations';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
@@ -81,25 +82,23 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       const defaultNote = activeModal === 'damage' ? 'Damaged from Expiry Module' : 'Returned from Expiry Module';
       const entityType = activeModal === 'damage' ? 'generic' : 'returns';
       
-      await stockMovementService.logMovement({
-        drugId: selectedActionBatch.drugId,
-        drugName: selectedActionBatch.drug.name,
-        branchId: '', 
-        type: typeStr as any,
-        quantity: -qty, // Deducting
-        previousStock: selectedActionBatch.quantity,
-        newStock: selectedActionBatch.quantity - qty,
-        reason: reasonStr,
-        notes: actionNotes || defaultNote,
-        transactionId: idGenerator.generate(entityType),
-        batchId: selectedActionBatch.id,
-        expiryDate: selectedActionBatch.expiryDate,
-        performedBy: currentEmployeeId,
-        performedByName: employee?.name || 'System User',
-        status: 'approved',
-      });
-
-      await batchService.updateBatchQuantity(selectedActionBatch.id, -qty);
+      const mutation = stockOps.deductFromBatch(
+        selectedActionBatch.drug,
+        selectedActionBatch.id,
+        qty,
+        typeStr as any,
+        reasonStr,
+        {
+          branchId: '', // Utility uses default if empty
+          performedBy: currentEmployeeId,
+          performedByName: employee?.name || 'System User',
+        },
+        {
+          notes: actionNotes || defaultNote,
+          referenceId: idGenerator.generate(entityType),
+          expiryDate: selectedActionBatch.expiryDate,
+        }
+      );
 
       success(
         t.expiryManagement?.actionSuccess || 
@@ -107,7 +106,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       );
       
       if (onUpdateInventory) {
-        onUpdateInventory({ ...selectedActionBatch.drug, stock: Math.max(0, selectedActionBatch.drug.stock - qty) }, selectedActionBatch); 
+        onUpdateInventory({ ...selectedActionBatch.drug, stock: mutation.newStock }, selectedActionBatch); 
       }
       
       // Update local batches logic ideally triggers from parent re-fetch, but typically we close the modal and rely on that.

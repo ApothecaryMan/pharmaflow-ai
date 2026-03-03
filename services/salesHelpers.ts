@@ -8,22 +8,20 @@ import {
 } from '../types';
 import { idGenerator } from '../utils/idGenerator';
 import { validateStock } from '../utils/inventory';
+import * as stockOps from '../utils/stockOperations';
 
 // --- Cancellation Logic ---
 export const restoreStockForCancelledSale = (sale: Sale, inventory: Drug[]): Drug[] => {
-  // Return stock to original batches
-  for (const item of sale.items) {
-    if (item.batchAllocations && item.batchAllocations.length > 0) {
-      batchService.returnStock(item.batchAllocations);
-    }
-  }
+  // Logic: The stock movement logging and batch restoration are now handled 
+  // by the caller (hook) using stockOps.returnStock.
+  // This helper remains for the bulk state update of the drug inventory array.
 
   // Return updated inventory array
   return inventory.map((drug) => {
     const matchingItems = sale.items.filter((i) => i.id === drug.id);
     if (matchingItems.length > 0) {
       const totalUnitsToRestore = matchingItems.reduce((sum, item) => {
-        const units = item.isUnit ? item.quantity : item.quantity * (drug.unitsPerPack || 1);
+        const units = stockOps.resolveUnits(item.quantity, !!item.isUnit, drug.unitsPerPack);
         return sum + units;
       }, 0);
       return {

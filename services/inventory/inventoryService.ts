@@ -130,15 +130,6 @@ export const createInventoryService = (): InventoryService => ({
     return true;
   },
 
-  updateStock: async (id: string, quantity: number): Promise<Drug> => {
-    const drug = await drugCacheService.getById(id);
-    if (!drug) throw new Error('Drug not found');
-    
-    drug.stock = validateStock(drug.stock + quantity);
-    await drugCacheService.upsert(drug);
-    return drug;
-  },
-
   getStats: async (branchId?: string): Promise<InventoryStats> => {
     const all = await inventoryService.getAll(branchId);
     const now = new Date();
