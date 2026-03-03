@@ -13,8 +13,6 @@ import { SmartInput } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
 import { useStatusBar } from '../layout/StatusBar';
 import { useAlert, useSettings } from '../../context';
-import { stockMovementService } from '../../services/inventory';
-import { batchService } from '../../services/inventory/batchService';
 import * as stockOps from '../../utils/stockOperations';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
@@ -44,6 +42,8 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
   onUpdateInventory,
   onBatchesChanged,
 }) => {
+  const { branchCode } = useSettings();
+  const [loading, setLoading] = useState(true);
   const { getVerifiedDate } = useStatusBar();
   const { success, error } = useAlert();
   const { showMenu, hideMenu } = useContextMenu();
@@ -79,7 +79,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       const employees = storage.get<any[]>(StorageKeys.EMPLOYEES, []);
       const employee = employees.find(e => e.id === currentEmployeeId);
       
-      const typeStr = activeModal === 'damage' ? 'adjustment' : 'purchase_return';
+      const typeStr = activeModal === 'damage' ? 'damage' : 'return_supplier';
       const reasonStr = activeModal === 'damage' ? 'expired' : 'other';
       const defaultNote = activeModal === 'damage' ? 'Damaged from Expiry Module' : 'Returned from Expiry Module';
       const entityType = activeModal === 'damage' ? 'generic' : 'returns';
@@ -91,7 +91,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
         typeStr as any,
         reasonStr,
         {
-          branchId: '', // Utility uses default if empty
+          branchId: branchCode, // Pulled from useSettings
           performedBy: currentEmployeeId,
           performedByName: employee?.name || 'System User',
         },

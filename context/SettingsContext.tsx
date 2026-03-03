@@ -73,6 +73,8 @@ export interface SettingsState {
   showTickerCustomers: boolean;
   showTickerTopSeller: boolean;
   graphicStyle: boolean;
+  // Metadata
+  branchCode: string;
 }
 
 // Context Type
@@ -129,6 +131,7 @@ const defaultSettings: SettingsState = {
   showTickerCustomers: true,
   showTickerTopSeller: true,
   graphicStyle: false,
+  branchCode: 'branch_main',
 };
 
 // Load settings from storage
@@ -176,6 +179,7 @@ const loadSettings = (): SettingsState => {
       hideInactiveModules: hideInactiveModules ?? defaultSettings.hideInactiveModules,
       developerMode: developerMode ?? defaultSettings.developerMode,
       graphicStyle: storage.get('pharma_graphicStyle', defaultSettings.graphicStyle),
+      branchCode: storage.get('pharma_branchCode', defaultSettings.branchCode),
     };
   } catch (e) {
     console.warn('Failed to migrate old settings:', e);

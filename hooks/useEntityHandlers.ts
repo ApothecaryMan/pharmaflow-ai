@@ -35,10 +35,7 @@ import { validateDrug, validateSaleData, validateStockAvailability } from '../ut
 import { useShift } from './useShift';
 
 // Helper to get current branchCode synchronously from storage (DEPRECATED: Use activeBranchId from props)
-const getBranchCode = (): string => {
-  const settings = storage.get<Partial<AppSettings>>(StorageKeys.SETTINGS, {});
-  return settings.branchCode || 'branch_main';
-};
+// Removed getBranchCode as everything now uses activeBranchId
 
 export interface EntityHandlers {
   // Drug/Inventory handlers
@@ -371,8 +368,8 @@ export function useEntityHandlers({
                 performedBy: currentEmployeeId!,
                 performedByName: performer?.name,
               },
-              'RESTOCK',
-              'MANUAL_RESTOCK'
+              'RESTOCK', // referenceId
+              'MANUAL_RESTOCK' // batchNumber
             );
 
             setTimeout(() => setBatches(batchService.getAllBatches()), 0);
@@ -953,7 +950,7 @@ export function useEntityHandlers({
 
         const newSale: Sale = {
           id: serialId,
-          branchId: getBranchCode(),
+          branchId: activeBranchId,
           date: saleDate.toISOString(),
           soldByEmployeeId: currentEmployeeId || undefined,
           dailyOrderNumber,
@@ -1051,7 +1048,7 @@ export function useEntityHandlers({
           'sale',
           `Sale Transaction #${serialId}`,
           {
-            branchId: getBranchCode(),
+            branchId: activeBranchId,
             performedBy: currentEmployeeId!,
             performedByName: performer?.name,
           },
@@ -1136,7 +1133,7 @@ export function useEntityHandlers({
               'correction',
               `Sale Cancellation #${saleId}`,
               {
-                branchId: getBranchCode(),
+                branchId: activeBranchId,
                 performedBy: currentEmployeeId!,
                 performedByName: performer?.name,
               },
@@ -1187,7 +1184,7 @@ export function useEntityHandlers({
               'correction',
               `Item Removed from Delivery #${sale.id}`,
               {
-                branchId: getBranchCode(),
+                branchId: activeBranchId,
                 performedBy: currentEmployeeId!,
                 performedByName: performer?.name,
               },
@@ -1240,7 +1237,7 @@ export function useEntityHandlers({
                   'correction',
                   `Quantity Reduced in Delivery #${sale.id}`,
                   {
-                    branchId: getBranchCode(),
+                    branchId: activeBranchId,
                     performedBy: currentEmployeeId!,
                     performedByName: performer?.name,
                   },
@@ -1277,7 +1274,7 @@ export function useEntityHandlers({
                   'sale',
                   `Quantity Increased in Delivery #${sale.id}`,
                   {
-                    branchId: getBranchCode(),
+                    branchId: activeBranchId,
                     performedBy: currentEmployeeId!,
                     performedByName: performer?.name,
                   },
@@ -1345,7 +1342,7 @@ export function useEntityHandlers({
                 'sale',
                 `Item Added to Delivery #${sale.id}`,
                 {
-                  branchId: getBranchCode(),
+                  branchId: activeBranchId,
                   performedBy: currentEmployeeId!,
                   performedByName: performer?.name,
                 },
@@ -1451,7 +1448,7 @@ export function useEntityHandlers({
       // Add return record with branchId injected
       const returnWithBranch: Return = {
         ...returnData,
-        branchId: getBranchCode(), // Inject current branch
+        branchId: activeBranchId, // Inject current branch
       };
       setReturns((prev) => [returnWithBranch, ...prev]);
 
@@ -1501,7 +1498,7 @@ export function useEntityHandlers({
               'return_customer',
               `Return for Sale #${returnData.saleId}`,
               {
-                branchId: getBranchCode(),
+                branchId: activeBranchId,
                 performedBy: currentEmployeeId!,
                 performedByName: performer?.name,
               },

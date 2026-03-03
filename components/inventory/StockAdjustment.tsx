@@ -58,6 +58,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   color = 'blue',
   t,
 }) => {
+  const { branchCode } = useSettings();
   const [searchTerm, setSearchTerm] = useState('');
   const [adjustments, setAdjustments] = useState<AdjustmentItem[]>([]);
   const { success, error, info, warning } = useAlert();
@@ -449,7 +450,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             item.newStock,
             item.reason,
             {
-              branchId: '', // Utility uses default if empty
+              branchId: branchCode, // Pulled from useSettings
               performedBy: currentEmployeeId,
               performedByName: currentEmployeeName,
             },
@@ -470,7 +471,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           id: idGenerator.generate('generic'),
           drugId: item.drugId,
           drugName: item.drugName,
-          branchId: '',
+          branchId: branchCode,
           type: 'adjustment' as const,
           quantity: item.difference,
           previousStock: item.currentStock,
