@@ -6,6 +6,7 @@ import { StorageKeys } from '../../../../config/storageKeys';
 import { storage } from '../../../../utils/storage';
 import type { Drug } from '../../../../types';
 import { PriceDisplay } from '../../../common/TanStackTable';
+import { formatExpiryDate } from '../../../../utils/expiryUtils';
 
 interface POSDrugBranchesProps {
   viewingDrug: Drug;
@@ -131,7 +132,7 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className="text-xs font-bold tabular-nums text-gray-600 dark:text-gray-400">
-                      {new Date(item.expiryDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
+                      {formatExpiryDate(item.expiryDate)}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -192,7 +193,7 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
                 <div className="flex flex-col">
                   <span className="text-[9px] font-bold text-gray-400 uppercase">{currentLang === 'ar' ? 'الصلاحية' : 'Expiry'}</span>
                   <span className="text-[11px] font-black text-gray-600 dark:text-gray-400 tabular-nums">
-                    {new Date(item.expiryDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
+                    {formatExpiryDate(item.expiryDate)}
                   </span>
                 </div>
                 <div className="flex flex-col items-end">

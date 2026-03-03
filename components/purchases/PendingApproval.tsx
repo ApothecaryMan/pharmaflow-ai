@@ -6,7 +6,7 @@ import { type Purchase, PurchaseItem } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import {
   checkExpiryStatus,
-  formatExpiryDisplay,
+  formatExpiryDate,
   getExpiryStatusConfig,
 } from '../../utils/expiryUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
@@ -373,7 +373,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
                                 <span
                                   className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
                                 >
-                                  {formatExpiryDisplay(item.expiryDate)}
+                                  {formatExpiryDate(item.expiryDate)}
                                 </span>
                               );
                             })()

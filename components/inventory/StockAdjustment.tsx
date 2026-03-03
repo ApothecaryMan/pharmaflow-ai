@@ -12,8 +12,9 @@ import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { DatePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
+import { formatExpiryDate } from '../../utils/expiryUtils';
 import { usePosSounds } from '../common/hooks/usePosSounds';
-import { Modal } from '../common/Modal'; // Assuming Modal exists, verified in Inventory.tsx
+import { Modal } from '../common/Modal';
 import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
@@ -584,7 +585,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           return (
             <div className='flex flex-col'>
               <div className='text-sm text-gray-900 dark:text-gray-100'>
-                {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'N/A'}
+                {item.expiryDate ? formatExpiryDate(item.expiryDate) : 'N/A'}
               </div>
               {item.batchId && (
                 <span className='text-sm text-gray-400'>#{item.batchId.substring(0, 8)}</span>

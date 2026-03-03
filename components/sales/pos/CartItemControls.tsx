@@ -1,7 +1,7 @@
 import React from 'react';
 import { canPerformAction, type UserRole } from '../../../config/permissions';
 import type { CartItem, Drug } from '../../../types';
-import { formatExpiryDate } from './utils/POSUtils';
+import { formatExpiryDate, parseExpiryEndOfMonth } from '../../../utils/expiryUtils';
 
 export interface CartItemExpiryBadgeProps {
   item: CartItem;
@@ -24,7 +24,7 @@ export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
 }) => {
   const getBadgeColor = () => {
     const today = new Date();
-    const expiry = new Date(item.expiryDate);
+    const expiry = parseExpiryEndOfMonth(item.expiryDate);
     const monthDiff = (expiry.getFullYear() - today.getFullYear()) * 12 + (expiry.getMonth() - today.getMonth());
     if (monthDiff <= 0) return 'bg-red-500';
     if (monthDiff <= 3) return 'bg-orange-500';

@@ -1,7 +1,8 @@
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Drug } from '../../types';
+import type { Drug, StockBatch } from '../../types';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
+import { formatExpiryDate, checkExpiryStatus, getExpiryStatusConfig, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { useContextMenu } from '../common/ContextMenu';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
@@ -169,18 +170,8 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
     // Play sound callback
     playBeep();
 
-    // Format expiry date to MM/YY
-    let formattedExpiry = '';
-    if (drug.expiryDate) {
-      const date = new Date(drug.expiryDate);
-      if (!isNaN(date.getTime())) {
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = String(date.getFullYear()).slice(-2);
-        formattedExpiry = `${month}/${year}`;
-      } else {
-        formattedExpiry = drug.expiryDate;
-      }
-    }
+      // Format expiry date to MM/YY
+      const formattedExpiry = drug.expiryDate ? formatExpiryDate(drug.expiryDate) : '';
 
     setQueue((prev) => {
       // Check if item already exists with same drug ID and expiry
@@ -241,15 +232,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   };
 
   const updateExpiryAndBatch = (id: string, newBatch: Drug) => {
-    let formattedExpiry = '';
-    if (newBatch.expiryDate) {
-      const date = new Date(newBatch.expiryDate);
-      if (!isNaN(date.getTime())) {
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = String(date.getFullYear()).slice(-2);
-        formattedExpiry = `${month}/${year}`;
-      }
-    }
+    const formattedExpiry = newBatch.expiryDate ? formatExpiryDate(newBatch.expiryDate) : '';
 
     setQueue((prev) =>
       prev.map((item) =>
@@ -486,22 +469,16 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                   {/* Expiry Badge with Context Menu */}
                   <div className='flex items-center gap-1'>
                     <span
-                      className={`text-[10px] font-bold text-white px-3 h-7 flex items-center justify-center rounded-lg shadow-xs cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${(() => {
-                        if (!item.drug.expiryDate) return 'bg-gray-400';
-                        const today = new Date();
-                        const expiry = new Date(item.drug.expiryDate);
-                        const monthDiff =
-                          (expiry.getFullYear() - today.getFullYear()) * 12 +
-                          (expiry.getMonth() - today.getMonth());
-                        if (monthDiff <= 0) return 'bg-red-500';
-                        if (monthDiff <= 3) return 'bg-orange-500';
-                        return 'bg-gray-500 dark:bg-gray-600';
-                      })()}`}
+                      className={(() => {
+                        const status = checkExpiryStatus(item.drug.expiryDate || '');
+                        const config = getExpiryStatusConfig(status);
+                        return `h-7 flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-bold border cursor-pointer select-none transition-all active:scale-95 hover:ring-2 hover:ring-white/50 border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 bg-transparent`;
+                      })()}
                       onClick={(e) => {
                         e.stopPropagation();
                         const normalize = (s: string | undefined) => (s || '').toLowerCase().trim();
 
-                        const sameNameBatches = inventory
+                        const batchMenuItems = inventory
                           .filter((d) => {
                             // 1. Strong Match: Same Barcode
                             if (d.barcode && item.drug.barcode && d.barcode === item.drug.barcode)
@@ -514,18 +491,16 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                             );
                           })
                           .sort(
-                            (a, b) =>
-                              new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
-                          );
-
-                        const batchMenuItems = sameNameBatches.map((batch) => ({
-                          label: `${new Date(batch.expiryDate).toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' })} • ${batch.stock} ${t.menu?.pack || 'Pack'}`,
-                          icon: batch.id === item.drug.id ? 'check_circle' : undefined,
-                          disabled: batch.stock <= 0,
-                          action: () => {
-                            updateExpiryAndBatch(item.id, batch);
-                          },
-                        }));
+                            (a: Drug, b: Drug) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime()
+                          )
+                          .map((d: Drug) => ({
+                            label: `${formatExpiryDate(d.expiryDate)} • ${d.stock} ${t.menu?.pack || 'Pack'}`,
+                            icon: d.id === item.drug.id ? 'check_circle' : undefined,
+                            disabled: d.stock <= 0,
+                            action: () => {
+                              updateExpiryAndBatch(item.id, d);
+                            },
+                          }));
                         showMenu(e.clientX, e.clientY, batchMenuItems);
                       }}
                       title={t.clickToSelectBatch || 'Click to select batch'}

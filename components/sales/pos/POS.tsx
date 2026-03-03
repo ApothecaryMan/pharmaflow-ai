@@ -15,6 +15,7 @@ import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '
 import { getArabicDisplayName, getDisplayName } from '../../../utils/drugDisplayName';
 import { formatStock } from '../../../utils/inventory';
 import { parseSearchTerm } from '../../../utils/searchUtils';
+import { formatExpiryDate, parseExpiryEndOfMonth } from '../../../utils/expiryUtils';
 
 import { useContextMenu } from '../../common/ContextMenu';
 import { FilterDropdown } from '../../common/FilterDropdown';
@@ -35,7 +36,6 @@ import { DeliveryOrdersModal } from './DeliveryOrdersModal';
 import { POSDrugOverview } from './ui/POSDrugOverview';
 import { POSDrugBranches } from './ui/POSDrugBranches';
 import { POSDrugAnalytics } from './ui/POSDrugAnalytics';
-import { formatExpiryDate } from './utils/POSUtils';
 import { POSCustomerHistoryModal } from './ui/POSCustomerHistoryModal';
 import { ClosedTabsHistoryModal } from './ui/ClosedTabsHistoryModal';
 
@@ -301,7 +301,7 @@ export const POS: React.FC<POSProps> = ({
 
     // Sort batches by expiry date (asc)
     Object.values(groups).forEach((group) => {
-      group.sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+      group.sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
     });
 
     return Object.values(groups);
@@ -350,7 +350,7 @@ export const POS: React.FC<POSProps> = ({
     });
     // Sort all arrays in the map once
     map.forEach((batches) => {
-      batches.sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+      batches.sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
     });
     return map;
   }, [inventory]);

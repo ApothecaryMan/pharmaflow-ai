@@ -281,9 +281,8 @@ export const SmartDateInput: React.FC<SmartDateInputProps> = ({
       const year = 2000 + parseInt(yearStr, 10); // Assume 20xx
 
       if (month >= 1 && month <= 12) {
-        // Get last day of the month
-        const lastDay = new Date(year, month, 0).getDate();
-        const formattedDate = `${year}-${monthStr.padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}`;
+        // Return YYYY-MM format only
+        const formattedDate = `${year}-${monthStr.padStart(2, '0')}`;
         onChange(formattedDate);
         setDisplayValue(formatToDisplay(formattedDate));
         return;

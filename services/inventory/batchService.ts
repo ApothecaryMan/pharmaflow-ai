@@ -9,6 +9,7 @@ import { StorageKeys } from '../../config/storageKeys';
 import type { BatchAllocation, Drug, StockBatch } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
+import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 
 // --- Storage Access ---
 const getAllBatchesRaw = (): StockBatch[] => {
@@ -125,10 +126,10 @@ export const allocateStockBulk = (
     const drugBatches = allBatches
       .filter((b) => b.drugId === req.drugId)
       .filter((b) => {
-        const exp = new Date(b.expiryDate);
+        const exp = parseExpiryEndOfMonth(b.expiryDate);
         return !isNaN(exp.getTime()) && exp > new Date();
       })
-      .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+      .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
 
     const totalAvailable = drugBatches.reduce((sum, b) => sum + b.quantity, 0);
     if (totalAvailable < req.quantity) {
@@ -181,11 +182,11 @@ export const allocateStock = (
   const batches = getAllBatches(drugId)
     // Filter out expired batches (robust date check)
     .filter((b) => {
-      const exp = new Date(b.expiryDate);
+      const exp = parseExpiryEndOfMonth(b.expiryDate);
       return !isNaN(exp.getTime()) && exp > new Date();
     })
     // Sort by expiry date (earliest first - FEFO)
-    .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+    .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
 
   // Check total available
   const totalAvailable = batches.reduce((sum, b) => sum + b.quantity, 0);
@@ -266,7 +267,7 @@ export const getTotalStock = (drugId: string): number => {
 export const getEarliestExpiry = (drugId: string): string | null => {
   const batches = getAllBatches(drugId)
     .filter((b) => b.quantity > 0)
-    .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+    .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
 
   return batches.length > 0 ? batches[0].expiryDate : null;
 };
@@ -333,7 +334,7 @@ export const getStockSummary = (
     batchCount: batches.length,
     earliestExpiry: getEarliestExpiry(drugId),
     batches: batches.sort(
-      (a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
+      (a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime()
     ),
   };
 };

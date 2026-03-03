@@ -4,17 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import { canPerformAction, type UserRole } from '../../config/permissions';
 import { useAlert, useSettings } from '../../context';
-import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useLongPress } from '../../hooks/useLongPress';
 import { settingsService } from '../../services';
 import type { Drug, Purchase, PurchaseItem, PurchaseReturn, Supplier } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import {
   checkExpiryStatus,
-  formatExpiryDisplay,
+  formatExpiryDate,
   getExpiryStatusConfig,
   getExpiryStatusStyle,
-  parseExpiryDisplay,
   sanitizeExpiryInput,
 } from '../../utils/expiryUtils';
 import { formatStock } from '../../utils/inventory';
@@ -1059,12 +1057,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       header: t.headers?.expiry || 'Expiry',
                       width: 'w-24 shrink-0',
                       className: 'justify-center text-center text-gray-900 dark:text-gray-400',
-                      render: (drug: Drug) => {
-                        if (!drug.expiryDate) return '---';
-                        const date = new Date(drug.expiryDate);
-                        if (isNaN(date.getTime())) return drug.expiryDate;
-                        return `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
-                      },
+                      render: (drug: Drug) => formatExpiryDate(drug.expiryDate),
                     },
                     {
                       header: t.headers?.stock || 'Stock',
@@ -1244,12 +1237,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                             {t.cartFields?.expiry || 'Expiry'}
                           </span>
                           <span className='text-xs font-bold text-gray-700 dark:text-gray-200 font-mono leading-none'>
-                            {invItem.expiryDate
-                              ? new Date(invItem.expiryDate).toLocaleDateString('en-US', {
-                                  month: '2-digit',
-                                  year: 'numeric',
-                                })
-                              : ''}
+                            {formatExpiryDate(invItem.expiryDate)}
                           </span>
                         </div>
                       </div>
@@ -1474,8 +1462,8 @@ export const Purchases: React.FC<PurchasesProps> = ({
                           }
                           value={
                             focusedInput?.id === item.id && focusedInput?.field === 'expiryDate'
-                              ? parseExpiryDisplay(item.expiryDate || '')
-                              : formatExpiryDisplay(item.expiryDate || '')
+                              ? (item.expiryDate?.includes('-') ? item.expiryDate.split('-')[1] + item.expiryDate.split('-')[0].slice(2) : item.expiryDate)
+                              : formatExpiryDate(item.expiryDate || '')
                           }
                           onFocus={(e) => {
                             setSelectedCartIndex(index);
@@ -2069,7 +2057,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                                 <span
                                   className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
                                 >
-                                  {formatExpiryDisplay(item.expiryDate)}
+                                  {formatExpiryDate(item.expiryDate)}
                                 </span>
                               );
                             })()

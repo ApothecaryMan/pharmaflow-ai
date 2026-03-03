@@ -3,6 +3,7 @@ import { useSettings } from '../../../../context';
 import type { Drug } from '../../../../types';
 import { getArabicDisplayName, getDisplayName } from '../../../../utils/drugDisplayName';
 import { PriceDisplay } from '../../../common/TanStackTable';
+import { formatExpiryDate, parseExpiryEndOfMonth } from '../../../../utils/expiryUtils';
 
 interface POSDrugOverviewProps {
   viewingDrug: Drug;
@@ -59,7 +60,7 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
             <div className="px-4 py-2 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/50 text-center min-w-[120px]">
               <span className="block text-[10px] font-black uppercase text-amber-600 dark:text-amber-400 mb-0.5">{currentLang === 'ar' ? 'أقرب صلاحية' : 'Next Expiry'}</span>
               <span className="text-xl font-black text-amber-700 dark:text-amber-300 tabular-nums uppercase">
-                {new Date(drugBatches[0].expiryDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
+                {formatExpiryDate(drugBatches[0].expiryDate)}
               </span>
             </div>
           )}
@@ -211,14 +212,14 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
                 {drugBatches.map((batch, idx) => {
-                  const isExpiring = new Date(batch.expiryDate).getTime() < new Date().getTime() + (90 * 24 * 60 * 60 * 1000);
+                  const isExpiring = parseExpiryEndOfMonth(batch.expiryDate).getTime() < new Date().getTime() + (90 * 24 * 60 * 60 * 1000);
                   return (
                     <tr key={idx} className={idx === 0 ? "bg-amber-50/30 dark:bg-amber-900/5" : "hover:bg-gray-50/50 dark:hover:bg-gray-800/10"}>
                       <td className="px-3 py-2 font-bold tabular-nums text-gray-500">{batch.internalCode || batch.id.slice(0, 5)}</td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1.5">
                           <span className="font-bold tabular-nums text-gray-700 dark:text-gray-300">
-                            {new Date(batch.expiryDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
+                            {formatExpiryDate(batch.expiryDate)}
                           </span>
                           {isExpiring && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" title="Expiring Soon" />}
                         </div>

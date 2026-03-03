@@ -7,6 +7,7 @@ import type { Drug } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { validateStock } from '../../utils/inventory';
 import * as batchService from './batchService';
+import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 
 import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
@@ -81,7 +82,7 @@ export const createInventoryService = (): InventoryService => ({
     if (filters.expiringSoon) {
       const threshold = new Date();
       threshold.setDate(threshold.getDate() + filters.expiringSoon);
-      results = results.filter((d) => new Date(d.expiryDate) <= threshold);
+      results = results.filter((d) => parseExpiryEndOfMonth(d.expiryDate) <= threshold);
     }
     if (filters.search) {
       const q = filters.search.toLowerCase();
@@ -147,7 +148,7 @@ export const createInventoryService = (): InventoryService => ({
       totalProducts: all.length,
       totalValue: all.reduce((sum, d) => sum + d.price * d.stock, 0),
       lowStockCount: all.filter((d) => d.stock < 10 && d.stock > 0).length,
-      expiringSoonCount: all.filter((d) => new Date(d.expiryDate) <= thirtyDays).length,
+      expiringSoonCount: all.filter((d) => parseExpiryEndOfMonth(d.expiryDate) <= thirtyDays).length,
       outOfStockCount: all.filter((d) => d.stock === 0).length,
     };
   },
@@ -161,7 +162,7 @@ export const createInventoryService = (): InventoryService => ({
     const all = await inventoryService.getAll(branchId);
     const threshold = new Date();
     threshold.setDate(threshold.getDate() + days);
-    return all.filter((d) => new Date(d.expiryDate) <= threshold);
+    return all.filter((d) => parseExpiryEndOfMonth(d.expiryDate) <= threshold);
   },
 
   save: async (inventory: Drug[]): Promise<void> => {

@@ -11,6 +11,7 @@ import { SmallCard } from '../common/SmallCard';
 import { CARD_LG } from '../../utils/themeStyles';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatCurrency } from '../../utils/currency';
+import { formatExpiryDate, checkExpiryStatus, getExpiryStatusConfig } from '../../utils/expiryUtils';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartInput } from '../common/SmartInputs';
 
@@ -401,18 +402,18 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                   ) : (
                                     <span className="text-[10px] text-slate-400">-</span>
                                   )}
-                                  {m.expiryDate && (
-                                    <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider bg-transparent ${
-                                      new Date(m.expiryDate) < new Date() ? 'border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400' :
-                                      new Date(m.expiryDate) < new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) ? 'border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400' :
-                                      'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'
-                                    }`}>
-                                      <span className="material-symbols-rounded text-sm">
-                                        {new Date(m.expiryDate) < new Date() ? 'event_busy' : 'event_available'}
+                                  {m.expiryDate && (() => {
+                                    const status = checkExpiryStatus(m.expiryDate);
+                                    const config = getExpiryStatusConfig(status);
+                                    return (
+                                      <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider bg-transparent border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400`}>
+                                        <span className="material-symbols-rounded text-sm">
+                                          {status === 'invalid' ? 'event_busy' : 'event_available'}
+                                        </span>
+                                        {formatExpiryDate(m.expiryDate)}
                                       </span>
-                                      {new Date(m.expiryDate).toLocaleDateString()}
-                                    </span>
-                                  )}
+                                    );
+                                  })()}
                                 </div>
                               </td>
                               <td className="py-2">

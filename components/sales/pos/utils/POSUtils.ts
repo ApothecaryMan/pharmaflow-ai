@@ -1,34 +1,13 @@
 import type { CartItem, Customer, Sale, Drug } from '../../../../types';
 import { getLocationName } from '../../../../data/locations';
 
+import { formatExpiryDate as formatExpiryDateShared } from '../../../../utils/expiryUtils';
+
 /**
  * Standardizes the display of expiry dates.
- * Handles Date objects, ISO strings, and MM/YYYY strings.
+ * Re-exported from shared utilities.
  */
-export const formatExpiryDate = (expiryDate: any): string => {
-  if (!expiryDate) return '-';
-
-  // If it's a standard Date or ISO string
-  const dateObj = new Date(expiryDate);
-  if (!isNaN(dateObj.getTime())) {
-    return dateObj.toLocaleDateString('en-US', {
-      month: '2-digit',
-      year: '2-digit',
-    });
-  }
-
-  // Fallback for MM/YYYY strings
-  if (typeof expiryDate === 'string' && expiryDate.includes('/')) {
-    const parts = expiryDate.split('/');
-    if (parts.length === 2) {
-      const month = parts[0].padStart(2, '0');
-      const year = parts[1].length === 4 ? parts[1].slice(-2) : parts[1];
-      return `${month}/${year}`;
-    }
-  }
-
-  return expiryDate;
-};
+export const formatExpiryDate = formatExpiryDateShared;
 
 /**
  * Formats a timestamp into a 12-hour time string (HH:MM AM/PM).

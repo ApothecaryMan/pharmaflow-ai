@@ -26,6 +26,7 @@ import { Modal } from '../common/Modal';
 import { SmallCard } from '../common/SmallCard';
 import { useDashboardAnalytics } from './useDashboardAnalytics';
 import { useSettings } from '../../context';
+import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 
 interface DashboardProps {
   inventory: Drug[];
@@ -242,10 +243,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
     return inventory
       .filter((d) => {
-        const expDate = new Date(d.expiryDate);
+        const expDate = parseExpiryEndOfMonth(d.expiryDate);
         return expDate <= threeMonthsFromNow;
       })
-      .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+      .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
   }, [inventory]);
 
   // --- RECENT TRANSACTIONS (exclude fully returned orders) ---
@@ -304,7 +305,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const getDaysUntilExpiry = (dateStr: string) => {
-    const diff = new Date(dateStr).getTime() - new Date().getTime();
+    const diff = parseExpiryEndOfMonth(dateStr).getTime() - new Date().getTime();
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
@@ -620,7 +621,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                       </div>
                       <span className='text-xs text-gray-400 font-medium shrink-0 ms-2 bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded-lg'>
-                        {item.expiryDate}
+                        {formatExpiryDate(item.expiryDate)}
                       </span>
                     </div>
                   );

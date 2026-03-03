@@ -14,6 +14,7 @@ import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatStock, formatStockParts, validateStock } from '../../utils/inventory';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
+import { formatExpiryDate, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { FilterDropdown, SegmentedControl } from '../common';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
@@ -263,7 +264,7 @@ export const Inventory: React.FC<InventoryProps> = ({
 
         result = result.filter((d) => {
           if (!d.expiryDate) return values.includes('all');
-          const expiry = new Date(d.expiryDate);
+          const expiry = parseExpiryEndOfMonth(d.expiryDate);
 
           if (values.includes('expired')) {
             return expiry < currentMonthStart;
@@ -303,8 +304,8 @@ export const Inventory: React.FC<InventoryProps> = ({
       const sortedGroup = [...group].sort((a, b) => {
         if (!a.expiryDate) return 1;
         if (!b.expiryDate) return -1;
-        const dateA = new Date(a.expiryDate).getTime();
-        const dateB = new Date(b.expiryDate).getTime();
+        const dateA = parseExpiryEndOfMonth(a.expiryDate).getTime();
+        const dateB = parseExpiryEndOfMonth(b.expiryDate).getTime();
         return isNaN(dateA) ? 1 : isNaN(dateB) ? -1 : dateA - dateB;
       });
 
@@ -527,9 +528,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               <div
                 className={`flex items-center justify-center w-full gap-1 tabular-nums text-sm ${colorClass} ${isDropdownTrigger ? 'cursor-pointer hover:opacity-70' : ''}`}
               >
-                {!isNaN(date.getTime())
-                  ? date.toLocaleDateString('en-US', { month: '2-digit', year: 'numeric' })
-                  : val}
+                {formatExpiryDate(val)}
               </div>
             );
           };
@@ -632,7 +631,7 @@ export const Inventory: React.FC<InventoryProps> = ({
           if (!row.expiryDate) return 'valid';
           const now = getVerifiedDate();
           const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-          const expiry = new Date(row.expiryDate);
+          const expiry = parseExpiryEndOfMonth(row.expiryDate);
           if (expiry < currentMonthStart) return 'expired';
           const nearExpiredLimit = new Date(currentMonthStart);
           nearExpiredLimit.setMonth(currentMonthStart.getMonth() + 6);

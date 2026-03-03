@@ -20,6 +20,7 @@ import { batchService } from '../inventory/batchService';
 import { inventoryService } from '../inventory/inventoryService';
 import { returnService } from '../returns/returnService';
 import { salesService } from '../sales/salesService';
+import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 
 // === Period Helpers ===
 
@@ -345,13 +346,13 @@ export const intelligenceService = {
 
     // Filter batches expiring within 90 days with stock > 0
     const expiringBatches = allBatches.filter((batch) => {
-      const expiryDate = new Date(batch.expiryDate);
+      const expiryDate = parseExpiryEndOfMonth(batch.expiryDate);
       return batch.quantity > 0 && expiryDate <= ninetyDaysFromNow && expiryDate > now;
     });
 
     const riskItems: ExpiryRiskItem[] = expiringBatches.map((batch) => {
       const drug = drugMap.get(batch.drugId);
-      const expiryDate = new Date(batch.expiryDate);
+      const expiryDate = parseExpiryEndOfMonth(batch.expiryDate);
       const daysUntilExpiry = Math.ceil(
         (expiryDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)
       );

@@ -18,7 +18,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بيسبايلير 120',
     costPrice: 698.1,
     stock: 1590,
-    expiryDate: '2027-09-28',
+    expiryDate: '2027-09',
     minStock: 10,
   },
   {
@@ -38,7 +38,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ميداثيتك 5مجم/مل 10',
     costPrice: 100.19,
     stock: 670,
-    expiryDate: '2028-01-06',
+    expiryDate: '2028-01',
     minStock: 10,
   },
   {
@@ -58,7 +58,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'تريو-كلار 42',
     costPrice: 189.44,
     stock: 1050,
-    expiryDate: '2027-04-16',
+    expiryDate: '2027-04',
     minStock: 10,
   },
   {
@@ -78,7 +78,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'داسيورد 50 مجم 60',
     costPrice: 5782.69,
     stock: 396,
-    expiryDate: '2028-01-08',
+    expiryDate: '2028-01',
     minStock: 10,
   },
   {
@@ -98,7 +98,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'دولفن كيه 75مجم/3مل 6',
     costPrice: 34.26,
     stock: 234,
-    expiryDate: '2028-10-02',
+    expiryDate: '2028-10',
     minStock: 10,
   },
   {
@@ -118,7 +118,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كابرون 500مجم/5 مل 6',
     costPrice: 75.34,
     stock: 198,
-    expiryDate: '2026-12-30',
+    expiryDate: '2026-12',
     minStock: 10,
   },
   {
@@ -138,7 +138,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'نيوروتون 6',
     costPrice: 52.79,
     stock: 420,
-    expiryDate: '2028-05-08',
+    expiryDate: '2028-05',
     minStock: 10,
   },
   {
@@ -158,7 +158,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ستيميولان 1جم/5مل 6',
     costPrice: 36.89,
     stock: 228,
-    expiryDate: '2026-07-11',
+    expiryDate: '2026-07',
     minStock: 10,
   },
   {
@@ -178,7 +178,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'موبيك 15مجم/1.5مل 5',
     costPrice: 27.77,
     stock: 685,
-    expiryDate: '2028-06-14',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -198,7 +198,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'نالوفين 20مجم/مل 5',
     costPrice: 152.8,
     stock: 440,
-    expiryDate: '2026-07-17',
+    expiryDate: '2026-07',
     minStock: 10,
   },
   {
@@ -218,7 +218,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ساكروفير 100مجم/5مل 5',
     costPrice: 175.55,
     stock: 505,
-    expiryDate: '2026-10-02',
+    expiryDate: '2026-10',
     minStock: 10,
   },
   {
@@ -238,7 +238,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'باريتفا 4 مجم 28',
     costPrice: 1842.35,
     stock: 428,
-    expiryDate: '2026-12-06',
+    expiryDate: '2026-12',
     minStock: 10,
   },
   {
@@ -258,7 +258,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'جاناجليب بلس 50/1000مجم 28',
     costPrice: 132.77,
     stock: 464,
-    expiryDate: '2027-02-03',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -278,7 +278,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'الكابرس 10مجم 30',
     costPrice: 69.11,
     stock: 363,
-    expiryDate: '2027-04-13',
+    expiryDate: '2027-04',
     minStock: 10,
   },
   {
@@ -298,7 +298,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اموفاج 500 مجم 30',
     costPrice: 6.7,
     stock: 354,
-    expiryDate: '2026-10-23',
+    expiryDate: '2026-10',
     minStock: 10,
   },
   {
@@ -318,7 +318,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اموستجمين0.5مجم/مل 3',
     costPrice: 3.54,
     stock: 228,
-    expiryDate: '2028-03-04',
+    expiryDate: '2028-03',
     minStock: 10,
   },
   {
@@ -338,7 +338,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اموتريل 0.5مجم 30',
     costPrice: 10.38,
     stock: 135,
-    expiryDate: '2026-10-09',
+    expiryDate: '2026-10',
     minStock: 10,
   },
   {
@@ -358,7 +358,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اموتريل 2مجم 30',
     costPrice: 16.47,
     stock: 54,
-    expiryDate: '2026-08-10',
+    expiryDate: '2026-08',
     minStock: 10,
   },
   {
@@ -378,7 +378,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'انتودين 20مجم/2مل 3',
     costPrice: 31.4,
     stock: 177,
-    expiryDate: '2026-12-25',
+    expiryDate: '2026-12',
     minStock: 10,
   },
   {
@@ -398,7 +398,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'انتودين 40مجم 30',
     costPrice: 69.09,
     stock: 408,
-    expiryDate: '2026-10-10',
+    expiryDate: '2026-10',
     minStock: 10,
   },
   {
@@ -418,7 +418,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'استونين اتش 0.1مجم 30',
     costPrice: 13.55,
     stock: 342,
-    expiryDate: '2027-07-03',
+    expiryDate: '2027-07',
     minStock: 10,
   },
   {
@@ -438,7 +438,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بي-كوم فورت 30',
     costPrice: 9.51,
     stock: 408,
-    expiryDate: '2027-11-20',
+    expiryDate: '2027-11',
     minStock: 10,
   },
   {
@@ -458,7 +458,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بون كال 500مجم 30',
     costPrice: 14.96,
     stock: 306,
-    expiryDate: '2028-12-07',
+    expiryDate: '2028-12',
     minStock: 10,
   },
   {
@@ -478,7 +478,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كالهيبارين 5000 3',
     costPrice: 127.89,
     stock: 186,
-    expiryDate: '2028-09-19',
+    expiryDate: '2028-09',
     minStock: 10,
   },
   {
@@ -498,7 +498,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كارلول-في 6.25مجم 30',
     costPrice: 12.35,
     stock: 288,
-    expiryDate: '2028-10-20',
+    expiryDate: '2028-10',
     minStock: 10,
   },
   {
@@ -518,7 +518,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ديورجوي 60مجم 3',
     costPrice: 43.61,
     stock: 60,
-    expiryDate: '2027-02-03',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -538,7 +538,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ايمبايفورم 12.5/1000مجم 30',
     costPrice: 190.37,
     stock: 129,
-    expiryDate: '2027-12-17',
+    expiryDate: '2027-12',
     minStock: 10,
   },
   {
@@ -558,7 +558,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'امبايفورم 12.5/500مجم 30',
     costPrice: 125.89,
     stock: 282,
-    expiryDate: '2027-08-30',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -578,7 +578,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'امبايفورم 5/500مجم 30',
     costPrice: 129.66,
     stock: 237,
-    expiryDate: '2027-02-09',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -598,7 +598,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'امبايماكس 10مجم 30',
     costPrice: 111.59,
     stock: 123,
-    expiryDate: '2028-03-30',
+    expiryDate: '2028-03',
     minStock: 10,
   },
   {
@@ -618,7 +618,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيبيوريك 80مجم 30',
     costPrice: 125.08,
     stock: 102,
-    expiryDate: '2027-11-14',
+    expiryDate: '2027-11',
     minStock: 10,
   },
   {
@@ -638,7 +638,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فلاميفاست 50 مجم 30',
     costPrice: 44.8,
     stock: 189,
-    expiryDate: '2028-05-26',
+    expiryDate: '2028-05',
     minStock: 10,
   },
   {
@@ -658,7 +658,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فليكسيلاكس 30',
     costPrice: 62.43,
     stock: 276,
-    expiryDate: '2027-02-20',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -678,7 +678,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فورهير اند نيلز 30',
     costPrice: 9.4,
     stock: 219,
-    expiryDate: '2028-07-09',
+    expiryDate: '2028-07',
     minStock: 10,
   },
   {
@@ -698,7 +698,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'جاست ريج 50 مجم/5مل 3',
     costPrice: 22.47,
     stock: 273,
-    expiryDate: '2028-09-22',
+    expiryDate: '2028-09',
     minStock: 10,
   },
   {
@@ -718,7 +718,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'يماريل 1مجم 30',
     costPrice: 10.44,
     stock: 390,
-    expiryDate: '2027-09-30',
+    expiryDate: '2027-09',
     minStock: 10,
   },
   {
@@ -738,7 +738,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'يماريل 2 مجم 30',
     costPrice: 12.58,
     stock: 297,
-    expiryDate: '2027-08-22',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -758,7 +758,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هيموكيون 10 مجم / مل 3',
     costPrice: 25.7,
     stock: 339,
-    expiryDate: '2026-12-29',
+    expiryDate: '2026-12',
     minStock: 10,
   },
   {
@@ -778,7 +778,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هيموستوب 250مجم/2مل 3',
     costPrice: 19.09,
     stock: 438,
-    expiryDate: '2027-01-31',
+    expiryDate: '2027-01',
     minStock: 10,
   },
   {
@@ -798,7 +798,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هاي كروم 30',
     costPrice: 13.9,
     stock: 135,
-    expiryDate: '2028-10-22',
+    expiryDate: '2028-10',
     minStock: 10,
   },
   {
@@ -818,7 +818,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هيبوبرس 25مجم 30',
     costPrice: 13.14,
     stock: 42,
-    expiryDate: '2026-09-23',
+    expiryDate: '2026-09',
     minStock: 10,
   },
   {
@@ -838,7 +838,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كيتولجين 100مجم 3',
     costPrice: 4.25,
     stock: 465,
-    expiryDate: '2027-04-06',
+    expiryDate: '2027-04',
     minStock: 10,
   },
   {
@@ -858,7 +858,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'لافيوريكس 40مجم/4مل 3',
     costPrice: 10.2,
     stock: 417,
-    expiryDate: '2027-04-03',
+    expiryDate: '2027-04',
     minStock: 10,
   },
   {
@@ -878,7 +878,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'لودوز 10 / 6.25 مجم 30',
     costPrice: 45.83,
     stock: 156,
-    expiryDate: '2028-08-30',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -898,7 +898,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'لودوز 6.25/2.5 مجم 30',
     costPrice: 21.29,
     stock: 405,
-    expiryDate: '2027-09-21',
+    expiryDate: '2027-09',
     minStock: 10,
   },
   {
@@ -918,7 +918,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'لودوز 6.25/5 مجم 30',
     costPrice: 21.09,
     stock: 318,
-    expiryDate: '2026-12-09',
+    expiryDate: '2026-12',
     minStock: 10,
   },
   {
@@ -938,7 +938,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ميلوكام 15مجم/2مل 3',
     costPrice: 12.92,
     stock: 321,
-    expiryDate: '2026-07-24',
+    expiryDate: '2026-07',
     minStock: 10,
   },
   {
@@ -958,7 +958,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ميداثيتك 15مجم/3مل 3',
     costPrice: 52.06,
     stock: 402,
-    expiryDate: '2027-04-19',
+    expiryDate: '2027-04',
     minStock: 10,
   },
   {
@@ -978,7 +978,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ميرفيناسين ام ار 5/50مجم 30',
     costPrice: 292.31,
     stock: 405,
-    expiryDate: '2028-11-15',
+    expiryDate: '2028-11',
     minStock: 10,
   },
   {
@@ -998,7 +998,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'موتيجست بلس 2/125 مجم 30',
     costPrice: 33.44,
     stock: 147,
-    expiryDate: '2026-08-07',
+    expiryDate: '2026-08',
     minStock: 10,
   },
   {
@@ -1018,7 +1018,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'نيوروفيناك 30',
     costPrice: 18.22,
     stock: 306,
-    expiryDate: '2027-07-05',
+    expiryDate: '2027-07',
     minStock: 10,
   },
   {
@@ -1038,7 +1038,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'نيتروكير 6.5مجم 30',
     costPrice: 18.45,
     stock: 405,
-    expiryDate: '2028-06-08',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -1058,7 +1058,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كويتكول اكس ار 300مجم 30',
     costPrice: 241.21,
     stock: 378,
-    expiryDate: '2027-07-12',
+    expiryDate: '2027-07',
     minStock: 10,
   },
   {
@@ -1078,7 +1078,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كويتكول اكس ار 500مجم 30',
     costPrice: 88.28,
     stock: 342,
-    expiryDate: '2027-04-24',
+    expiryDate: '2027-04',
     minStock: 10,
   },
   {
@@ -1098,7 +1098,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'رويسان 4مجم 30',
     costPrice: 31.23,
     stock: 408,
-    expiryDate: '2028-10-11',
+    expiryDate: '2028-10',
     minStock: 10,
   },
   {
@@ -1118,7 +1118,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سايميثيكون 80مجم 30',
     costPrice: 5.05,
     stock: 276,
-    expiryDate: '2028-03-15',
+    expiryDate: '2028-03',
     minStock: 10,
   },
   {
@@ -1138,7 +1138,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ستيميولان 400مجم 30',
     costPrice: 34.83,
     stock: 33,
-    expiryDate: '2027-10-14',
+    expiryDate: '2027-10',
     minStock: 10,
   },
   {
@@ -1158,7 +1158,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ستيميولان 800مجم 30',
     costPrice: 53.73,
     stock: 459,
-    expiryDate: '2028-08-16',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -1178,7 +1178,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ثيروسيل 50مجم 30',
     costPrice: 53.04,
     stock: 474,
-    expiryDate: '2028-05-30',
+    expiryDate: '2028-05',
     minStock: 10,
   },
   {
@@ -1198,7 +1198,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'تونوكلون 200مجم 30',
     costPrice: 11.89,
     stock: 195,
-    expiryDate: '2026-12-28',
+    expiryDate: '2026-12',
     minStock: 10,
   },
   {
@@ -1218,7 +1218,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'تونوكلون 400مجم 30',
     costPrice: 11.04,
     stock: 237,
-    expiryDate: '2027-05-09',
+    expiryDate: '2027-05',
     minStock: 10,
   },
   {
@@ -1238,7 +1238,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فالبام 5مجم/مل 3',
     costPrice: 5.01,
     stock: 210,
-    expiryDate: '2028-08-17',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -1258,7 +1258,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيسرا 5مجم/2مل 3',
     costPrice: 27.82,
     stock: 78,
-    expiryDate: '2026-07-22',
+    expiryDate: '2026-07',
     minStock: 10,
   },
   {
@@ -1278,7 +1278,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيكسابورت 30',
     costPrice: 99.98,
     stock: 153,
-    expiryDate: '2027-03-14',
+    expiryDate: '2027-03',
     minStock: 10,
   },
   {
@@ -1298,7 +1298,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'يوسترتك 30',
     costPrice: 9.06,
     stock: 381,
-    expiryDate: '2027-02-07',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -1318,7 +1318,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'زولام 0.25مجم 30',
     costPrice: 18.07,
     stock: 111,
-    expiryDate: '2027-08-11',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -1338,7 +1338,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'الكابرس 5مجم 20',
     costPrice: 50.03,
     stock: 268,
-    expiryDate: '2027-08-27',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -1358,7 +1358,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'الكابرس بلس 10/160مجم 20',
     costPrice: 66.5,
     stock: 82,
-    expiryDate: '2028-10-18',
+    expiryDate: '2028-10',
     minStock: 10,
   },
   {
@@ -1378,7 +1378,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'الكابرس تريو 10/320/25مجم 14',
     costPrice: 86.33,
     stock: 90,
-    expiryDate: '2027-10-04',
+    expiryDate: '2027-10',
     minStock: 10,
   },
   {
@@ -1398,7 +1398,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'الكابرس تريو 5/160/12.5مجم 14',
     costPrice: 72.83,
     stock: 56,
-    expiryDate: '2026-07-21',
+    expiryDate: '2026-07',
     minStock: 10,
   },
   {
@@ -1418,7 +1418,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'الكابرس تريو 5/160/25مجم 14',
     costPrice: 97.04,
     stock: 246,
-    expiryDate: '2027-02-04',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -1438,7 +1438,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'الوكال 320مجم 20',
     costPrice: 3.2,
     stock: 184,
-    expiryDate: '2026-09-24',
+    expiryDate: '2026-09',
     minStock: 10,
   },
   {
@@ -1458,7 +1458,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اموسار 25مجم 20',
     costPrice: 22.74,
     stock: 90,
-    expiryDate: '2028-03-15',
+    expiryDate: '2028-03',
     minStock: 10,
   },
   {
@@ -1478,7 +1478,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اموستجمين 20',
     costPrice: 5.14,
     stock: 296,
-    expiryDate: '2027-02-26',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -1498,7 +1498,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بيتو-12 1 مجم / مل 2',
     costPrice: 9.18,
     stock: 264,
-    expiryDate: '2028-03-14',
+    expiryDate: '2028-03',
     minStock: 10,
   },
   {
@@ -1518,7 +1518,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بيستول 10مجم 20',
     costPrice: 29.75,
     stock: 212,
-    expiryDate: '2028-03-20',
+    expiryDate: '2028-03',
     minStock: 10,
   },
   {
@@ -1538,7 +1538,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بيستول 5مجم 20',
     costPrice: 21.43,
     stock: 222,
-    expiryDate: '2028-05-24',
+    expiryDate: '2028-05',
     minStock: 10,
   },
   {
@@ -1558,7 +1558,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بيستول بلس 5/12.5 مجم 20',
     costPrice: 22.14,
     stock: 50,
-    expiryDate: '2027-01-21',
+    expiryDate: '2027-01',
     minStock: 10,
   },
   {
@@ -1578,7 +1578,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كارباتول 200مجم 20',
     costPrice: 30.38,
     stock: 66,
-    expiryDate: '2028-01-03',
+    expiryDate: '2028-01',
     minStock: 10,
   },
   {
@@ -1598,7 +1598,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كارتيلجين 20',
     costPrice: 11.92,
     stock: 238,
-    expiryDate: '2026-08-26',
+    expiryDate: '2026-08',
     minStock: 10,
   },
   {
@@ -1618,7 +1618,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كوراسور 150مجم 20',
     costPrice: 31.75,
     stock: 116,
-    expiryDate: '2028-12-02',
+    expiryDate: '2028-12',
     minStock: 10,
   },
   {
@@ -1638,7 +1638,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كورتيلون 0.1مجم 20',
     costPrice: 12.69,
     stock: 188,
-    expiryDate: '2028-03-01',
+    expiryDate: '2028-03',
     minStock: 10,
   },
   {
@@ -1658,7 +1658,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سي ريتارد+زنك 20',
     costPrice: 60.94,
     stock: 238,
-    expiryDate: '2027-11-12',
+    expiryDate: '2027-11',
     minStock: 10,
   },
   {
@@ -1678,7 +1678,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ديبراتيوكس 10مجم 20',
     costPrice: 148.14,
     stock: 144,
-    expiryDate: '2026-07-18',
+    expiryDate: '2026-07',
     minStock: 10,
   },
   {
@@ -1698,7 +1698,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ديبراتيوكس 20مجم 20',
     costPrice: 254.54,
     stock: 202,
-    expiryDate: '2028-08-10',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -1718,7 +1718,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ديابترون 40 مجم 20 3',
     costPrice: 3.51,
     stock: 250,
-    expiryDate: '2027-12-18',
+    expiryDate: '2027-12',
     minStock: 10,
   },
   {
@@ -1738,7 +1738,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ديابترون 80 مجم 20',
     costPrice: 5.43,
     stock: 40,
-    expiryDate: '2026-09-15',
+    expiryDate: '2026-09',
     minStock: 10,
   },
   {
@@ -1758,7 +1758,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ديارول 0.5مجم 20',
     costPrice: 8.73,
     stock: 158,
-    expiryDate: '2026-10-08',
+    expiryDate: '2026-10',
     minStock: 10,
   },
   {
@@ -1778,7 +1778,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ديارول 1مجم 20',
     costPrice: 10.84,
     stock: 102,
-    expiryDate: '2028-07-21',
+    expiryDate: '2028-07',
     minStock: 10,
   },
   {
@@ -1798,7 +1798,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'دايارول 2مجم 20',
     costPrice: 14.68,
     stock: 54,
-    expiryDate: '2028-06-29',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -1818,7 +1818,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'دوكسيرازول 30 مجم 14 ه',
     costPrice: 39.93,
     stock: 236,
-    expiryDate: '2028-08-21',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -1838,7 +1838,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'دوكسيرازول 60 مجم 14',
     costPrice: 65.97,
     stock: 88,
-    expiryDate: '2027-01-31',
+    expiryDate: '2027-01',
     minStock: 10,
   },
   {
@@ -1858,7 +1858,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ايفيجاد 75مجم 14',
     costPrice: 57.92,
     stock: 276,
-    expiryDate: '2027-11-26',
+    expiryDate: '2027-11',
     minStock: 10,
   },
   {
@@ -1878,7 +1878,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اميتركس 20',
     costPrice: 35.44,
     stock: 118,
-    expiryDate: '2026-12-02',
+    expiryDate: '2026-12',
     minStock: 10,
   },
   {
@@ -1898,7 +1898,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'استيكان 20مجم 7',
     costPrice: 82.63,
     stock: 196,
-    expiryDate: '2027-09-05',
+    expiryDate: '2027-09',
     minStock: 10,
   },
   {
@@ -1918,7 +1918,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'يوثيروكس 100 ميكروجرام 50',
     costPrice: 43.32,
     stock: 146,
-    expiryDate: '2028-06-19',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -1938,7 +1938,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيبيوريك 40مجم 20',
     costPrice: 54.73,
     stock: 160,
-    expiryDate: '2027-01-09',
+    expiryDate: '2027-01',
     minStock: 10,
   },
   {
@@ -1958,7 +1958,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فلوكسامو 1جم 16',
     costPrice: 76.87,
     stock: 120,
-    expiryDate: '2026-11-10',
+    expiryDate: '2026-11',
     minStock: 10,
   },
   {
@@ -1980,7 +1980,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هيما-كابس 14',
     costPrice: 15.83,
     stock: 202,
-    expiryDate: '2027-04-03',
+    expiryDate: '2027-04',
     minStock: 10,
   },
   {
@@ -2000,7 +2000,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هيموكيون 10 مجم 20',
     costPrice: 13.9,
     stock: 172,
-    expiryDate: '2028-04-01',
+    expiryDate: '2028-04',
     minStock: 10,
   },
   {
@@ -2020,7 +2020,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هيموستوب 250مجم 20',
     costPrice: 22.59,
     stock: 48,
-    expiryDate: '2028-11-15',
+    expiryDate: '2028-11',
     minStock: 10,
   },
   {
@@ -2040,7 +2040,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هيبوبرس-دي 20',
     costPrice: 13.29,
     stock: 184,
-    expiryDate: '2028-02-05',
+    expiryDate: '2028-02',
     minStock: 10,
   },
   {
@@ -2060,7 +2060,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ابياموكس 250مجم 12',
     costPrice: 4.31,
     stock: 102,
-    expiryDate: '2028-07-05',
+    expiryDate: '2028-07',
     minStock: 10,
   },
   {
@@ -2080,7 +2080,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كابرون 500 مجم 20',
     costPrice: 90.16,
     stock: 314,
-    expiryDate: '2026-07-14',
+    expiryDate: '2026-07',
     minStock: 10,
   },
   {
@@ -2100,7 +2100,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كاست 5مجم 14',
     costPrice: 46.83,
     stock: 276,
-    expiryDate: '2026-11-15',
+    expiryDate: '2026-11',
     minStock: 10,
   },
   {
@@ -2120,7 +2120,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كيتولجين 25مجم 30',
     costPrice: 4.6,
     stock: 70,
-    expiryDate: '2028-04-29',
+    expiryDate: '2028-04',
     minStock: 10,
   },
   {
@@ -2140,7 +2140,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'لاكتوديل 2.5مجم 20',
     costPrice: 58.82,
     stock: 160,
-    expiryDate: '2027-10-13',
+    expiryDate: '2027-10',
     minStock: 10,
   },
   {
@@ -2160,7 +2160,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'لافيوريكس 20مجم 20',
     costPrice: 6.22,
     stock: 72,
-    expiryDate: '2026-08-02',
+    expiryDate: '2026-08',
     minStock: 10,
   },
   {
@@ -2180,7 +2180,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'لافيوريكس 40مجم 20',
     costPrice: 8.23,
     stock: 124,
-    expiryDate: '2028-04-28',
+    expiryDate: '2028-04',
     minStock: 10,
   },
   {
@@ -2200,7 +2200,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'لو استيرول 10مجم 20',
     costPrice: 52.74,
     stock: 174,
-    expiryDate: '2026-12-05',
+    expiryDate: '2026-12',
     minStock: 10,
   },
   {
@@ -2220,7 +2220,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ماركوفين 400مجم 20',
     costPrice: 7.15,
     stock: 180,
-    expiryDate: '2027-10-10',
+    expiryDate: '2027-10',
     minStock: 10,
   },
   {
@@ -2240,7 +2240,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'مايكيلون 20',
     costPrice: 6.21,
     stock: 64,
-    expiryDate: '2028-07-14',
+    expiryDate: '2028-07',
     minStock: 10,
   },
   {
@@ -2260,7 +2260,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اوميز 20مجم 14',
     costPrice: 42.27,
     stock: 196,
-    expiryDate: '2027-12-28',
+    expiryDate: '2027-12',
     minStock: 10,
   },
   {
@@ -2280,7 +2280,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بي.تي.بي 500مجم 20',
     costPrice: 8.35,
     stock: 312,
-    expiryDate: '2028-07-19',
+    expiryDate: '2028-07',
     minStock: 10,
   },
   {
@@ -2300,7 +2300,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'رومارين 25مجم 20',
     costPrice: 11.01,
     stock: 210,
-    expiryDate: '2027-12-25',
+    expiryDate: '2027-12',
     minStock: 10,
   },
   {
@@ -2320,7 +2320,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'روابراكسين 10مجم 20',
     costPrice: 3.83,
     stock: 172,
-    expiryDate: '2028-04-26',
+    expiryDate: '2028-04',
     minStock: 10,
   },
   {
@@ -2340,7 +2340,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سبازمودين 5مجم 20',
     costPrice: 6.21,
     stock: 226,
-    expiryDate: '2028-08-20',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -2360,7 +2360,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'توبوبرازان 20مجم 14',
     costPrice: 86.49,
     stock: 50,
-    expiryDate: '2026-11-25',
+    expiryDate: '2026-11',
     minStock: 10,
   },
   {
@@ -2380,7 +2380,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فازوتال 400مجم 20',
     costPrice: 14.74,
     stock: 88,
-    expiryDate: '2027-02-01',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -2400,7 +2400,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'زيفو رابيد 8مجم 20',
     costPrice: 76.48,
     stock: 108,
-    expiryDate: '2026-10-28',
+    expiryDate: '2026-10',
     minStock: 10,
   },
   {
@@ -2420,7 +2420,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اكني فري 0.025% 30 جرام',
     costPrice: 8.45,
     stock: 54,
-    expiryDate: '2027-02-15',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -2440,7 +2440,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اكني فري 0.05% 30 جرام',
     costPrice: 18.45,
     stock: 142,
-    expiryDate: '2027-11-10',
+    expiryDate: '2027-11',
     minStock: 10,
   },
   {
@@ -2460,7 +2460,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اكتوزون 30مجم 10',
     costPrice: 24.86,
     stock: 57,
-    expiryDate: '2027-04-22',
+    expiryDate: '2027-04',
     minStock: 10,
   },
   {
@@ -2480,7 +2480,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اكتوزون 45مجم 10',
     costPrice: 40.2,
     stock: 147,
-    expiryDate: '2028-09-28',
+    expiryDate: '2028-09',
     minStock: 10,
   },
   {
@@ -2500,7 +2500,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اميكاسين 500مجم 1 - آمون',
     costPrice: 22.17,
     stock: 85,
-    expiryDate: '2027-03-17',
+    expiryDate: '2027-03',
     minStock: 10,
   },
   {
@@ -2520,7 +2520,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اميكاسين امون 100مجم/2مل',
     costPrice: 4.25,
     stock: 80,
-    expiryDate: '2028-12-14',
+    expiryDate: '2028-12',
     minStock: 10,
   },
   {
@@ -2540,7 +2540,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اموكومب 15 جم',
     costPrice: 9.81,
     stock: 94,
-    expiryDate: '2027-02-16',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -2560,7 +2560,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اموفلام 100 مجم 10',
     costPrice: 4.85,
     stock: 35,
-    expiryDate: '2027-01-29',
+    expiryDate: '2027-01',
     minStock: 10,
   },
   {
@@ -2580,7 +2580,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اموفيت كالسيوم 12',
     costPrice: 7.76,
     stock: 65,
-    expiryDate: '2027-06-01',
+    expiryDate: '2027-06',
     minStock: 10,
   },
   {
@@ -2600,7 +2600,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اموفيت سي 12',
     costPrice: 5.88,
     stock: 43,
-    expiryDate: '2028-11-25',
+    expiryDate: '2028-11',
     minStock: 10,
   },
   {
@@ -2620,7 +2620,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'انتيفلام 1% ايمل 20 جم',
     costPrice: 6.05,
     stock: 120,
-    expiryDate: '2027-10-25',
+    expiryDate: '2027-10',
     minStock: 10,
   },
   {
@@ -2640,7 +2640,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'انتينال زجاجة 60 مل',
     costPrice: 16.41,
     stock: 55,
-    expiryDate: '2027-04-30',
+    expiryDate: '2027-04',
     minStock: 10,
   },
   {
@@ -2660,7 +2660,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'انتودين 10مجم 10',
     costPrice: 7.81,
     stock: 127,
-    expiryDate: '2027-10-20',
+    expiryDate: '2027-10',
     minStock: 10,
   },
   {
@@ -2680,7 +2680,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'انتودين 20مجم 10',
     costPrice: 10.29,
     stock: 104,
-    expiryDate: '2028-06-17',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -2700,7 +2700,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ابيدون 125 مل',
     costPrice: 21.21,
     stock: 89,
-    expiryDate: '2027-05-28',
+    expiryDate: '2027-05',
     minStock: 10,
   },
   {
@@ -2720,7 +2720,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ابيجينت 0.1% 15 جم',
     costPrice: 3.13,
     stock: 133,
-    expiryDate: '2028-06-13',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -2740,7 +2740,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ابيجينت 3مجم/جم',
     costPrice: 3.44,
     stock: 137,
-    expiryDate: '2028-01-20',
+    expiryDate: '2028-01',
     minStock: 10,
   },
   {
@@ -2760,7 +2760,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ابيجنت 3 مجم/مل 5 مل',
     costPrice: 3.35,
     stock: 129,
-    expiryDate: '2027-01-18',
+    expiryDate: '2027-01',
     minStock: 10,
   },
   {
@@ -2780,7 +2780,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ابيجينت-بي عين/اذن 5 مل',
     costPrice: 4.59,
     stock: 16,
-    expiryDate: '2028-05-11',
+    expiryDate: '2028-05',
     minStock: 10,
   },
   {
@@ -2800,7 +2800,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ابيجينت-بي 5 ج عين',
     costPrice: 4.86,
     stock: 44,
-    expiryDate: '2027-08-01',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -2820,7 +2820,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ارجيدرم-بي 15 جم',
     costPrice: 4.22,
     stock: 52,
-    expiryDate: '2027-09-01',
+    expiryDate: '2027-09',
     minStock: 10,
   },
   {
@@ -2840,7 +2840,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ارجيدرم-بي 40 جم',
     costPrice: 6.28,
     stock: 41,
-    expiryDate: '2028-06-15',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -2860,7 +2860,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اريثريكس 100مجم 10',
     costPrice: 18.63,
     stock: 84,
-    expiryDate: '2027-02-21',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -2880,7 +2880,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ازالايد 200 مجم / 5مل 15 مل',
     costPrice: 33.42,
     stock: 33,
-    expiryDate: '2027-06-17',
+    expiryDate: '2027-06',
     minStock: 10,
   },
   {
@@ -2900,7 +2900,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ازيلاست بلاس 125/50 مكجم للانف 25 مل',
     costPrice: 89.47,
     stock: 116,
-    expiryDate: '2027-11-01',
+    expiryDate: '2027-11',
     minStock: 10,
   },
   {
@@ -2920,7 +2920,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بي.بي.سي. ة 25 مل',
     costPrice: 39.68,
     stock: 18,
-    expiryDate: '2028-08-14',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -2940,7 +2940,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بيبي كير 30 جرام',
     costPrice: 30.78,
     stock: 120,
-    expiryDate: '2027-07-27',
+    expiryDate: '2027-07',
     minStock: 10,
   },
   {
@@ -2960,7 +2960,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بيبي 30 جم',
     costPrice: 32.58,
     stock: 40,
-    expiryDate: '2028-09-08',
+    expiryDate: '2028-09',
     minStock: 10,
   },
   {
@@ -2980,7 +2980,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بيكلو 50ميكرو/جرعة انف 200 جرعة',
     costPrice: 35.44,
     stock: 31,
-    expiryDate: '2027-02-12',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -3000,7 +3000,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بيتافوس 2 مل',
     costPrice: 27.6,
     stock: 70,
-    expiryDate: '2028-01-20',
+    expiryDate: '2028-01',
     minStock: 10,
   },
   {
@@ -3020,7 +3020,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بيتاسليك محلول 30 مل',
     costPrice: 8.09,
     stock: 81,
-    expiryDate: '2027-02-10',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -3040,7 +3040,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كانيمازول 1% 20 جم',
     costPrice: 3.16,
     stock: 139,
-    expiryDate: '2028-08-07',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -3060,7 +3060,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كارلول-في 12.5مجم 10',
     costPrice: 6.37,
     stock: 109,
-    expiryDate: '2027-10-13',
+    expiryDate: '2027-10',
     minStock: 10,
   },
   {
@@ -3080,7 +3080,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كازيت 40/10 مجم 7',
     costPrice: 41.24,
     stock: 34,
-    expiryDate: '2027-08-22',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -3100,7 +3100,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سيبيون 100 مجم / مل 30 مل',
     costPrice: 4.47,
     stock: 133,
-    expiryDate: '2026-11-25',
+    expiryDate: '2026-11',
     minStock: 10,
   },
   {
@@ -3120,7 +3120,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سيفادرين 500مجم',
     costPrice: 4.48,
     stock: 73,
-    expiryDate: '2027-03-24',
+    expiryDate: '2027-03',
     minStock: 10,
   },
   {
@@ -3140,7 +3140,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سيفوتاكس 1جم تي ثري ايه',
     costPrice: 26.98,
     stock: 146,
-    expiryDate: '2028-10-13',
+    expiryDate: '2028-10',
     minStock: 10,
   },
   {
@@ -3160,7 +3160,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سيفوتريكس 1جم',
     costPrice: 31.97,
     stock: 104,
-    expiryDate: '2028-03-06',
+    expiryDate: '2028-03',
     minStock: 10,
   },
   {
@@ -3180,7 +3180,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سيفوتريكس 250 مجم',
     costPrice: 10.81,
     stock: 82,
-    expiryDate: '2026-11-19',
+    expiryDate: '2026-11',
     minStock: 10,
   },
   {
@@ -3202,7 +3202,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سمبيون 10',
     costPrice: 97.76,
     stock: 108,
-    expiryDate: '2026-08-21',
+    expiryDate: '2026-08',
     minStock: 10,
   },
   {
@@ -3222,7 +3222,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سيريلاك 125 جم',
     costPrice: 35.46,
     stock: 69,
-    expiryDate: '2028-04-15',
+    expiryDate: '2028-04',
     minStock: 10,
   },
   {
@@ -3242,7 +3242,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سيتازيم 1 جم 1',
     costPrice: 30.99,
     stock: 82,
-    expiryDate: '2027-02-01',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -3262,7 +3262,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سيتازيم 500مجم 1',
     costPrice: 18.43,
     stock: 21,
-    expiryDate: '2027-08-02',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -3282,7 +3282,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كوليكروم 4% قطرة 10 مل',
     costPrice: 6.01,
     stock: 27,
-    expiryDate: '2028-09-04',
+    expiryDate: '2028-09',
     minStock: 10,
   },
   {
@@ -3302,7 +3302,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سي-ريتارد 500مجم 10',
     costPrice: 30.78,
     stock: 97,
-    expiryDate: '2026-12-18',
+    expiryDate: '2026-12',
     minStock: 10,
   },
   {
@@ -3322,7 +3322,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سيكلوبنتولات 1% للعين 5 مل',
     costPrice: 6.59,
     stock: 58,
-    expiryDate: '2028-08-21',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -3342,7 +3342,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سيرينول 60 مل',
     costPrice: 11.88,
     stock: 118,
-    expiryDate: '2027-08-18',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -3362,7 +3362,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'دانوفران 8مجم',
     costPrice: 36.6,
     stock: 93,
-    expiryDate: '2027-06-18',
+    expiryDate: '2027-06',
     minStock: 10,
   },
   {
@@ -3382,7 +3382,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'دافيكين 120مل',
     costPrice: 10.56,
     stock: 26,
-    expiryDate: '2026-07-15',
+    expiryDate: '2026-07',
     minStock: 10,
   },
   {
@@ -3402,7 +3402,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'دلتاكلاف 642.9مجم/5مل',
     costPrice: 80.1,
     stock: 99,
-    expiryDate: '2026-09-18',
+    expiryDate: '2026-09',
     minStock: 10,
   },
   {
@@ -3422,7 +3422,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ديكسارون بلس للعين والأذن 5 مل',
     costPrice: 6.07,
     stock: 99,
-    expiryDate: '2028-07-22',
+    expiryDate: '2028-07',
     minStock: 10,
   },
   {
@@ -3442,7 +3442,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ديكسارون بلس العين / الأذن',
     costPrice: 5.26,
     stock: 112,
-    expiryDate: '2028-06-02',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -3462,7 +3462,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'دياكس 220مجم/5مل 60 مل',
     costPrice: 26.49,
     stock: 140,
-    expiryDate: '2028-11-05',
+    expiryDate: '2028-11',
     minStock: 10,
   },
   {
@@ -3482,7 +3482,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اكماسونيد 9مجم 10',
     costPrice: 105.14,
     stock: 108,
-    expiryDate: '2027-02-26',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -3502,7 +3502,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ام- اكس 1مجم 10',
     costPrice: 130.6,
     stock: 16,
-    expiryDate: '2028-06-12',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -3522,7 +3522,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ام اكس 3 مجم/مل 1',
     costPrice: 61.57,
     stock: 32,
-    expiryDate: '2027-05-01',
+    expiryDate: '2027-05',
     minStock: 10,
   },
   {
@@ -3542,7 +3542,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'انيماكس حقنة شرجية 120 مل',
     costPrice: 24.47,
     stock: 59,
-    expiryDate: '2028-05-11',
+    expiryDate: '2028-05',
     minStock: 10,
   },
   {
@@ -3562,7 +3562,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'استيكانا 10مجم 14',
     costPrice: 38.26,
     stock: 82,
-    expiryDate: '2026-12-30',
+    expiryDate: '2026-12',
     minStock: 10,
   },
   {
@@ -3582,7 +3582,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيكسون 120مجم 10',
     costPrice: 18.01,
     stock: 106,
-    expiryDate: '2027-03-28',
+    expiryDate: '2027-03',
     minStock: 10,
   },
   {
@@ -3602,7 +3602,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فلادازول 500مجم 4',
     costPrice: 22.08,
     stock: 86,
-    expiryDate: '2027-01-17',
+    expiryDate: '2027-01',
     minStock: 10,
   },
   {
@@ -3622,7 +3622,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فلادازول 500 مجم 5',
     costPrice: 7.93,
     stock: 62,
-    expiryDate: '2028-01-28',
+    expiryDate: '2028-01',
     minStock: 10,
   },
   {
@@ -3642,7 +3642,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فلوروسين 20مجم 10',
     costPrice: 6.87,
     stock: 153,
-    expiryDate: '2028-05-13',
+    expiryDate: '2028-05',
     minStock: 10,
   },
   {
@@ -3662,7 +3662,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيوسي توب سي 15 جرام',
     costPrice: 28.21,
     stock: 85,
-    expiryDate: '2028-07-30',
+    expiryDate: '2028-07',
     minStock: 10,
   },
   {
@@ -3682,7 +3682,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فانجيسيف 1% 15 جرام',
     costPrice: 7.14,
     stock: 151,
-    expiryDate: '2027-11-22',
+    expiryDate: '2027-11',
     minStock: 10,
   },
   {
@@ -3702,7 +3702,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فانجيسيف 250مجم 10',
     costPrice: 29.97,
     stock: 148,
-    expiryDate: '2028-09-23',
+    expiryDate: '2028-09',
     minStock: 10,
   },
   {
@@ -3722,7 +3722,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'جاست ريج 100مجم 5',
     costPrice: 4.76,
     stock: 25,
-    expiryDate: '2027-03-22',
+    expiryDate: '2027-03',
     minStock: 10,
   },
   {
@@ -3742,7 +3742,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'جاست ريج 24مجم/5مل 125 مل',
     costPrice: 28.14,
     stock: 37,
-    expiryDate: '2026-07-16',
+    expiryDate: '2026-07',
     minStock: 10,
   },
   {
@@ -3762,7 +3762,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'يماريل 3 مجم 30',
     costPrice: 15.58,
     stock: 75,
-    expiryDate: '2027-08-30',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -3782,7 +3782,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'جي-رييتور 24 مجم / 5 مل 125 مل',
     costPrice: 5.27,
     stock: 129,
-    expiryDate: '2028-10-09',
+    expiryDate: '2028-10',
     minStock: 10,
   },
   {
@@ -3802,7 +3802,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هيرو برو 7.5 مل',
     costPrice: 163.38,
     stock: 85,
-    expiryDate: '2026-08-07',
+    expiryDate: '2026-08',
     minStock: 10,
   },
   {
@@ -3822,7 +3822,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هيرو في د3 فم 15 مل',
     costPrice: 23.12,
     stock: 50,
-    expiryDate: '2028-05-06',
+    expiryDate: '2028-05',
     minStock: 10,
   },
   {
@@ -3842,7 +3842,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هيرو في d3 + k2 فم 10 مل',
     costPrice: 63.01,
     stock: 94,
-    expiryDate: '2027-09-05',
+    expiryDate: '2027-09',
     minStock: 10,
   },
   {
@@ -3862,7 +3862,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هاي بيوتك 312مجم/5مل 60 مل',
     costPrice: 37.21,
     stock: 62,
-    expiryDate: '2027-05-14',
+    expiryDate: '2027-05',
     minStock: 10,
   },
   {
@@ -3882,7 +3882,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هاي بيوتك ان 600مجم 80 مل',
     costPrice: 62.58,
     stock: 88,
-    expiryDate: '2028-07-21',
+    expiryDate: '2028-07',
     minStock: 10,
   },
   {
@@ -3902,7 +3902,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هيبنور 7.5 مجم 10',
     costPrice: 7.82,
     stock: 40,
-    expiryDate: '2027-08-14',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -3922,7 +3922,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هيبوبرس 12.5مجم 10',
     costPrice: 3.49,
     stock: 25,
-    expiryDate: '2027-08-01',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -3942,7 +3942,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'هيبوسيك 20مجم 14',
     costPrice: 37.38,
     stock: 124,
-    expiryDate: '2027-06-15',
+    expiryDate: '2027-06',
     minStock: 10,
   },
   {
@@ -3962,7 +3962,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ابياموكس 200مجم/5مل 80 مل',
     costPrice: 9.72,
     stock: 17,
-    expiryDate: '2028-04-12',
+    expiryDate: '2028-04',
     minStock: 10,
   },
   {
@@ -3982,7 +3982,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ابياموكس 400مجم 80 مل',
     costPrice: 62.29,
     stock: 152,
-    expiryDate: '2026-07-30',
+    expiryDate: '2026-07',
     minStock: 10,
   },
   {
@@ -4002,7 +4002,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ابياموكس 500مجم 12',
     costPrice: 39.41,
     stock: 70,
-    expiryDate: '2026-11-18',
+    expiryDate: '2026-11',
     minStock: 10,
   },
   {
@@ -4022,7 +4022,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اليادين 0.05% محلول الأنف 10 مل',
     costPrice: 3,
     stock: 23,
-    expiryDate: '2026-12-21',
+    expiryDate: '2026-12',
     minStock: 10,
   },
   {
@@ -4042,7 +4042,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كبريتاج صابون 100 جم',
     costPrice: 41.14,
     stock: 53,
-    expiryDate: '2027-07-07',
+    expiryDate: '2027-07',
     minStock: 10,
   },
   {
@@ -4062,7 +4062,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كاست 10مجم 10',
     costPrice: 43.15,
     stock: 24,
-    expiryDate: '2027-12-23',
+    expiryDate: '2027-12',
     minStock: 10,
   },
   {
@@ -4082,7 +4082,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كيتولجين 100مجم 5',
     costPrice: 3.53,
     stock: 104,
-    expiryDate: '2028-07-27',
+    expiryDate: '2028-07',
     minStock: 10,
   },
   {
@@ -4102,7 +4102,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كيتولجين 2.5% 15 جم',
     costPrice: 12.09,
     stock: 94,
-    expiryDate: '2028-09-04',
+    expiryDate: '2028-09',
     minStock: 10,
   },
   {
@@ -4122,7 +4122,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كيتولجين 2.5% 40 جم',
     costPrice: 18.34,
     stock: 149,
-    expiryDate: '2026-11-18',
+    expiryDate: '2026-11',
     minStock: 10,
   },
   {
@@ -4142,7 +4142,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كيتولجين 200مجم 10',
     costPrice: 21.49,
     stock: 65,
-    expiryDate: '2027-11-10',
+    expiryDate: '2027-11',
     minStock: 10,
   },
   {
@@ -4162,7 +4162,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كلوزيبام 2.5مجم/مل 15 مل فم',
     costPrice: 26.21,
     stock: 130,
-    expiryDate: '2028-07-25',
+    expiryDate: '2028-07',
     minStock: 10,
   },
   {
@@ -4182,7 +4182,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ليل 100 جم',
     costPrice: 100.05,
     stock: 153,
-    expiryDate: '2028-01-15',
+    expiryDate: '2028-01',
     minStock: 10,
   },
   {
@@ -4202,7 +4202,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ليفوكسين 250 مجم 5',
     costPrice: 33.03,
     stock: 127,
-    expiryDate: '2028-12-17',
+    expiryDate: '2028-12',
     minStock: 10,
   },
   {
@@ -4222,7 +4222,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ليفوكسين 500 مجم 5',
     costPrice: 66.26,
     stock: 16,
-    expiryDate: '2027-07-12',
+    expiryDate: '2027-07',
     minStock: 10,
   },
   {
@@ -4242,7 +4242,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ليفوكسين 500مجم 100 مل',
     costPrice: 45.88,
     stock: 103,
-    expiryDate: '2028-04-01',
+    expiryDate: '2028-04',
     minStock: 10,
   },
   {
@@ -4262,7 +4262,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ليفوكسين 5مجم للعين 5 مل',
     costPrice: 8.05,
     stock: 81,
-    expiryDate: '2028-01-16',
+    expiryDate: '2028-01',
     minStock: 10,
   },
   {
@@ -4282,7 +4282,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'لوبرال 30 مجم 5',
     costPrice: 22.06,
     stock: 78,
-    expiryDate: '2027-05-18',
+    expiryDate: '2027-05',
     minStock: 10,
   },
   {
@@ -4302,7 +4302,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'لوراتان 5مجم/5مل 100 مل',
     costPrice: 9.36,
     stock: 118,
-    expiryDate: '2028-08-09',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -4322,7 +4322,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ام بي ايه 40مجم/مل',
     costPrice: 6.91,
     stock: 72,
-    expiryDate: '2027-05-09',
+    expiryDate: '2027-05',
     minStock: 10,
   },
   {
@@ -4342,7 +4342,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ماركوفين 100مجم/5مل 120 مل',
     costPrice: 4.12,
     stock: 28,
-    expiryDate: '2027-12-27',
+    expiryDate: '2027-12',
     minStock: 10,
   },
   {
@@ -4362,7 +4362,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ميجاليز 125 مل',
     costPrice: 22.55,
     stock: 22,
-    expiryDate: '2028-05-23',
+    expiryDate: '2028-05',
     minStock: 10,
   },
   {
@@ -4382,7 +4382,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ميلوكام 15مجم 5',
     costPrice: 5.47,
     stock: 140,
-    expiryDate: '2027-12-30',
+    expiryDate: '2027-12',
     minStock: 10,
   },
   {
@@ -4402,7 +4402,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ميبادرينال 50 كربوله',
     costPrice: 289.23,
     stock: 148,
-    expiryDate: '2028-06-11',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -4422,7 +4422,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ميداثيتك 7.5مجم 10',
     costPrice: 6.51,
     stock: 47,
-    expiryDate: '2028-08-14',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -4442,7 +4442,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'مينالاكس 10',
     costPrice: 16.16,
     stock: 18,
-    expiryDate: '2028-05-02',
+    expiryDate: '2028-05',
     minStock: 10,
   },
   {
@@ -4462,7 +4462,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'موبيلات 20جرام',
     costPrice: 7.85,
     stock: 94,
-    expiryDate: '2028-08-28',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -4482,7 +4482,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'موسيدين 5مجم/5مل 60 مل',
     costPrice: 14.99,
     stock: 139,
-    expiryDate: '2027-06-10',
+    expiryDate: '2027-06',
     minStock: 10,
   },
   {
@@ -4502,7 +4502,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'موسيدين بلاس اس ار 10',
     costPrice: 8.29,
     stock: 44,
-    expiryDate: '2026-09-30',
+    expiryDate: '2026-09',
     minStock: 10,
   },
   {
@@ -4522,7 +4522,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'موتيل فاست 10',
     costPrice: 22.21,
     stock: 16,
-    expiryDate: '2026-09-07',
+    expiryDate: '2026-09',
     minStock: 10,
   },
   {
@@ -4542,7 +4542,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ميوكوسول 125مجم/5مل 120مل',
     costPrice: 20.34,
     stock: 25,
-    expiryDate: '2027-06-19',
+    expiryDate: '2027-06',
     minStock: 10,
   },
   {
@@ -4562,7 +4562,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ميوريلاكس 10',
     costPrice: 3.57,
     stock: 37,
-    expiryDate: '2028-07-26',
+    expiryDate: '2028-07',
     minStock: 10,
   },
   {
@@ -4582,7 +4582,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'نازوتال 2جم/100مل',
     costPrice: 5.14,
     stock: 151,
-    expiryDate: '2027-08-27',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -4602,7 +4602,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'نازوتال مركب 15 مل للانف',
     costPrice: 7.36,
     stock: 25,
-    expiryDate: '2028-12-19',
+    expiryDate: '2028-12',
     minStock: 10,
   },
   {
@@ -4622,7 +4622,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'نيو مايكليون 120 مل',
     costPrice: 6.41,
     stock: 107,
-    expiryDate: '2026-12-12',
+    expiryDate: '2026-12',
     minStock: 10,
   },
   {
@@ -4642,7 +4642,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'نيوزولين للعين والانف',
     costPrice: 2.92,
     stock: 128,
-    expiryDate: '2027-07-13',
+    expiryDate: '2027-07',
     minStock: 10,
   },
   {
@@ -4662,7 +4662,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'نيستوجين 3 200 جم',
     costPrice: 78.09,
     stock: 46,
-    expiryDate: '2026-11-12',
+    expiryDate: '2026-11',
     minStock: 10,
   },
   {
@@ -4682,7 +4682,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'نيدو 1 بلس 288 جم',
     costPrice: 132.27,
     stock: 83,
-    expiryDate: '2028-03-05',
+    expiryDate: '2028-03',
     minStock: 10,
   },
   {
@@ -4702,7 +4702,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'نو-ميجران زد 2.5مجم 2',
     costPrice: 19.05,
     stock: 52,
-    expiryDate: '2027-05-03',
+    expiryDate: '2027-05',
     minStock: 10,
   },
   {
@@ -4722,7 +4722,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اواكيور 15 جم',
     costPrice: 11.74,
     stock: 142,
-    expiryDate: '2027-03-07',
+    expiryDate: '2027-03',
     minStock: 10,
   },
   {
@@ -4742,7 +4742,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اوراكيور 30 جم',
     costPrice: 17.49,
     stock: 62,
-    expiryDate: '2026-08-13',
+    expiryDate: '2026-08',
     minStock: 10,
   },
   {
@@ -4762,7 +4762,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اوتال اذن 5 مل',
     costPrice: 16.58,
     stock: 158,
-    expiryDate: '2028-10-15',
+    expiryDate: '2028-10',
     minStock: 10,
   },
   {
@@ -4782,7 +4782,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بنتولات قطرة عين 10 مل',
     costPrice: 6.49,
     stock: 125,
-    expiryDate: '2028-05-30',
+    expiryDate: '2028-05',
     minStock: 10,
   },
   {
@@ -4802,7 +4802,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بيبزول 20مجم 14',
     costPrice: 38.4,
     stock: 103,
-    expiryDate: '2027-12-01',
+    expiryDate: '2027-12',
     minStock: 10,
   },
   {
@@ -4822,7 +4822,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بيبزول 40مجم 14',
     costPrice: 60.41,
     stock: 120,
-    expiryDate: '2028-05-28',
+    expiryDate: '2028-05',
     minStock: 10,
   },
   {
@@ -4842,7 +4842,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيلوزاك 10مجم 10',
     costPrice: 7.86,
     stock: 141,
-    expiryDate: '2026-10-24',
+    expiryDate: '2026-10',
     minStock: 10,
   },
   {
@@ -4862,7 +4862,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيلوزاك 20مجم 10',
     costPrice: 7.68,
     stock: 37,
-    expiryDate: '2028-06-22',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -4882,7 +4882,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بولي فريش 0.2% قطرة للعين 30*0.4مل',
     costPrice: 85.05,
     stock: 159,
-    expiryDate: '2027-02-14',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -4902,7 +4902,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بروكتو 4 5',
     costPrice: 3.14,
     stock: 154,
-    expiryDate: '2026-12-30',
+    expiryDate: '2026-12',
     minStock: 10,
   },
   {
@@ -4922,7 +4922,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بروكتو-فور 15 جرام',
     costPrice: 4.63,
     stock: 118,
-    expiryDate: '2028-04-24',
+    expiryDate: '2028-04',
     minStock: 10,
   },
   {
@@ -4942,7 +4942,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'بروكتو-4 30 جرام',
     costPrice: 8.72,
     stock: 115,
-    expiryDate: '2028-09-19',
+    expiryDate: '2028-09',
     minStock: 10,
   },
   {
@@ -4962,7 +4962,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'كينيدين سلفات 200مجم 10',
     costPrice: 4.02,
     stock: 29,
-    expiryDate: '2028-11-10',
+    expiryDate: '2028-11',
     minStock: 10,
   },
   {
@@ -4982,7 +4982,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ريبافيرين 200مجم 10',
     costPrice: 34.34,
     stock: 33,
-    expiryDate: '2027-08-04',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -5002,7 +5002,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'روابراكسين 10مجم 5',
     costPrice: 3.59,
     stock: 139,
-    expiryDate: '2027-07-14',
+    expiryDate: '2027-07',
     minStock: 10,
   },
   {
@@ -5022,7 +5022,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'روابراكسين فورت 20مجم 10',
     costPrice: 4.05,
     stock: 93,
-    expiryDate: '2028-05-28',
+    expiryDate: '2028-05',
     minStock: 10,
   },
   {
@@ -5042,7 +5042,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'روابراكسين فورت 30مجم 5',
     costPrice: 4.44,
     stock: 31,
-    expiryDate: '2026-11-28',
+    expiryDate: '2026-11',
     minStock: 10,
   },
   {
@@ -5062,7 +5062,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'روكسيد 300مجم 5',
     costPrice: 15.09,
     stock: 93,
-    expiryDate: '2027-01-26',
+    expiryDate: '2027-01',
     minStock: 10,
   },
   {
@@ -5082,7 +5082,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'اس 26 جولد ال اف لبن 400جم',
     costPrice: 207.73,
     stock: 35,
-    expiryDate: '2028-03-28',
+    expiryDate: '2028-03',
     minStock: 10,
   },
   {
@@ -5104,7 +5104,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سنسوتكت',
     costPrice: 68.78,
     stock: 22,
-    expiryDate: '2027-06-04',
+    expiryDate: '2027-06',
     minStock: 10,
   },
   {
@@ -5124,7 +5124,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'شان لليدين 50 جم',
     costPrice: 73.55,
     stock: 75,
-    expiryDate: '2028-09-14',
+    expiryDate: '2028-09',
     minStock: 10,
   },
   {
@@ -5144,7 +5144,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'شان منظف للعناية الشخصية بالسيدات 220 مل',
     costPrice: 74.74,
     stock: 35,
-    expiryDate: '2028-08-20',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -5164,7 +5164,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'سبازمو رواتينكس 5',
     costPrice: 5.97,
     stock: 46,
-    expiryDate: '2028-10-10',
+    expiryDate: '2028-10',
     minStock: 10,
   },
   {
@@ -5184,7 +5184,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ستيجمايد 60مجم/5مل 120مل',
     costPrice: 6.98,
     stock: 148,
-    expiryDate: '2026-09-13',
+    expiryDate: '2026-09',
     minStock: 10,
   },
   {
@@ -5204,7 +5204,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'ستيميولان 200مجم/مل 120 مل',
     costPrice: 54.38,
     stock: 150,
-    expiryDate: '2026-10-14',
+    expiryDate: '2026-10',
     minStock: 10,
   },
   {
@@ -5224,7 +5224,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'تافاسين 500مجم 5',
     costPrice: 61.43,
     stock: 151,
-    expiryDate: '2027-02-28',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -5244,7 +5244,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'تافاسين 500مجم 100 مل',
     costPrice: 69.35,
     stock: 64,
-    expiryDate: '2026-11-10',
+    expiryDate: '2026-11',
     minStock: 10,
   },
   {
@@ -5264,7 +5264,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'تافاسين 750مجم 5',
     costPrice: 73.85,
     stock: 57,
-    expiryDate: '2028-06-15',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -5284,7 +5284,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'تليبريكس-35 50 مل',
     costPrice: 148.03,
     stock: 112,
-    expiryDate: '2028-12-18',
+    expiryDate: '2028-12',
     minStock: 10,
   },
   {
@@ -5304,7 +5304,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'تونوكلون ريتارد 200مجم 10',
     costPrice: 3.65,
     stock: 153,
-    expiryDate: '2028-10-12',
+    expiryDate: '2028-10',
     minStock: 10,
   },
   {
@@ -5324,7 +5324,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'توب-فور 15جرام',
     costPrice: 13.07,
     stock: 136,
-    expiryDate: '2026-08-27',
+    expiryDate: '2026-08',
     minStock: 10,
   },
   {
@@ -5344,7 +5344,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'توب-فلام 15 جم',
     costPrice: 13.99,
     stock: 138,
-    expiryDate: '2027-05-25',
+    expiryDate: '2027-05',
     minStock: 10,
   },
   {
@@ -5364,7 +5364,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'تراي امسينولون 4مجم 10',
     costPrice: 4.2,
     stock: 140,
-    expiryDate: '2028-03-27',
+    expiryDate: '2028-03',
     minStock: 10,
   },
   {
@@ -5384,7 +5384,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'تريكونال 150مجم 1',
     costPrice: 16.65,
     stock: 38,
-    expiryDate: '2028-06-26',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -5404,7 +5404,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'تريكونال 50مجم 7',
     costPrice: 44.21,
     stock: 123,
-    expiryDate: '2026-09-14',
+    expiryDate: '2026-09',
     minStock: 10,
   },
   {
@@ -5424,7 +5424,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'توسكان 100 مل',
     costPrice: 18.44,
     stock: 91,
-    expiryDate: '2027-07-14',
+    expiryDate: '2027-07',
     minStock: 10,
   },
   {
@@ -5444,7 +5444,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'التراسولف 10',
     costPrice: 20.03,
     stock: 157,
-    expiryDate: '2026-07-09',
+    expiryDate: '2026-07',
     minStock: 10,
   },
   {
@@ -5464,7 +5464,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'التراسولف 120 مل',
     costPrice: 29.27,
     stock: 133,
-    expiryDate: '2027-11-30',
+    expiryDate: '2027-11',
     minStock: 10,
   },
   {
@@ -5484,7 +5484,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فالبام 2مجم 10',
     costPrice: 2.11,
     stock: 73,
-    expiryDate: '2026-11-05',
+    expiryDate: '2026-11',
     minStock: 10,
   },
   {
@@ -5504,7 +5504,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فالبام 2مجم/5مل 120مل',
     costPrice: 5.16,
     stock: 130,
-    expiryDate: '2027-07-06',
+    expiryDate: '2027-07',
     minStock: 10,
   },
   {
@@ -5524,7 +5524,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فاردي 20مجم 4',
     costPrice: 37.54,
     stock: 11,
-    expiryDate: '2026-10-09',
+    expiryDate: '2026-10',
     minStock: 10,
   },
   {
@@ -5544,7 +5544,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيرميزول 200مجم /5مل 30 مل',
     costPrice: 16.08,
     stock: 98,
-    expiryDate: '2028-09-08',
+    expiryDate: '2028-09',
     minStock: 10,
   },
   {
@@ -5566,7 +5566,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيدا كوين سكين 30 مل',
     costPrice: 179.39,
     stock: 77,
-    expiryDate: '2027-08-21',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -5586,7 +5586,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيجور 50مجم 1',
     costPrice: 2.41,
     stock: 66,
-    expiryDate: '2028-04-18',
+    expiryDate: '2028-04',
     minStock: 10,
   },
   {
@@ -5606,7 +5606,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيجوران 50مجم 4',
     costPrice: 8.31,
     stock: 36,
-    expiryDate: '2027-01-24',
+    expiryDate: '2027-01',
     minStock: 10,
   },
   {
@@ -5626,7 +5626,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيوتك للاذن 10مل',
     costPrice: 17.54,
     stock: 66,
-    expiryDate: '2027-05-23',
+    expiryDate: '2027-05',
     minStock: 10,
   },
   {
@@ -5646,7 +5646,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيسرا 50مجم 10',
     costPrice: 1.95,
     stock: 116,
-    expiryDate: '2027-02-04',
+    expiryDate: '2027-02',
     minStock: 10,
   },
   {
@@ -5666,7 +5666,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيتاماونت مضاد الاكسدة 10',
     costPrice: 15.85,
     stock: 88,
-    expiryDate: '2027-11-29',
+    expiryDate: '2027-11',
     minStock: 10,
   },
   {
@@ -5686,7 +5686,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيتاماونت 10',
     costPrice: 19.49,
     stock: 29,
-    expiryDate: '2028-01-26',
+    expiryDate: '2028-01',
     minStock: 10,
   },
   {
@@ -5706,7 +5706,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فيتاماونت فيتامينات 120 مل',
     costPrice: 25.59,
     stock: 124,
-    expiryDate: '2027-03-13',
+    expiryDate: '2027-03',
     minStock: 10,
   },
   {
@@ -5726,7 +5726,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'فوميستوب 10',
     costPrice: 5.2,
     stock: 128,
-    expiryDate: '2027-08-24',
+    expiryDate: '2027-08',
     minStock: 10,
   },
   {
@@ -5746,7 +5746,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'وينتريست 50 جم',
     costPrice: 65.41,
     stock: 84,
-    expiryDate: '2028-08-11',
+    expiryDate: '2028-08',
     minStock: 10,
   },
   {
@@ -5766,7 +5766,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'زينوماج 10',
     costPrice: 4.77,
     stock: 117,
-    expiryDate: '2027-09-11',
+    expiryDate: '2027-09',
     minStock: 10,
   },
   {
@@ -5786,7 +5786,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'زينوس فواكه 6',
     costPrice: 2.41,
     stock: 36,
-    expiryDate: '2028-01-31',
+    expiryDate: '2028-01',
     minStock: 10,
   },
   {
@@ -5806,7 +5806,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'زيثرون 200مجم/5مل 15 مل',
     costPrice: 41.44,
     stock: 27,
-    expiryDate: '2026-07-17',
+    expiryDate: '2026-07',
     minStock: 10,
   },
   {
@@ -5826,7 +5826,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'زيثرون 200 مجم 25 مل',
     costPrice: 66.79,
     stock: 12,
-    expiryDate: '2027-04-02',
+    expiryDate: '2027-04',
     minStock: 10,
   },
   {
@@ -5846,7 +5846,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'زيثرون 500مجم 3',
     costPrice: 39.31,
     stock: 19,
-    expiryDate: '2027-06-08',
+    expiryDate: '2027-06',
     minStock: 10,
   },
   {
@@ -5866,7 +5866,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'زيثرون 500مجم 5',
     costPrice: 74.47,
     stock: 114,
-    expiryDate: '2028-06-01',
+    expiryDate: '2028-06',
     minStock: 10,
   },
   {
@@ -5886,7 +5886,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'زيثروكان 100مجم/5مل باودر لعمل 15مل',
     costPrice: 21.97,
     stock: 23,
-    expiryDate: '2027-05-08',
+    expiryDate: '2027-05',
     minStock: 10,
   },
   {
@@ -5906,7 +5906,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'زيثروكان 200مجم/5مل 15 مل',
     costPrice: 48.23,
     stock: 103,
-    expiryDate: '2028-11-12',
+    expiryDate: '2028-11',
     minStock: 10,
   },
   {
@@ -5926,7 +5926,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'زيثروكان 500مجم 3',
     costPrice: 47.2,
     stock: 159,
-    expiryDate: '2027-04-04',
+    expiryDate: '2027-04',
     minStock: 10,
   },
   {
@@ -5946,7 +5946,7 @@ export const CSV_INVENTORY: Drug[] = [
     nameArabic: 'زولام 0.5 مجم 10',
     costPrice: 9.88,
     stock: 52,
-    expiryDate: '2028-07-07',
+    expiryDate: '2028-07',
     minStock: 10,
   },
 ];

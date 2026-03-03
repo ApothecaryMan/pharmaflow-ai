@@ -18,6 +18,7 @@ import { batchService } from '../../services/inventory/batchService';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { StorageKeys } from '../../config/storageKeys';
+import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 
 interface ExpiryManagementProps {
   inventory: Drug[];
@@ -162,7 +163,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
       // Only show batches that still have stock
       if (batch.quantity <= 0) return;
 
-      const expiry = new Date(batch.expiryDate);
+      const expiry = parseExpiryEndOfMonth(batch.expiryDate);
       const isExpired = expiry < today;
       const isNear30 = !isExpired && expiry <= near30Date;
       const isNear90 = !isExpired && !isNear30 && expiry <= near90Date;
@@ -205,7 +206,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
     near90Date.setDate(today.getDate() + 90);
 
     return enrichedBatches.filter((item) => {
-      const expiry = new Date(item.expiryDate);
+      const expiry = parseExpiryEndOfMonth(item.expiryDate);
       if (filterMode === 'expired') return expiry < today;
       if (filterMode === 'near30') return expiry >= today && expiry <= near30Date;
       if (filterMode === 'near90') return expiry > near30Date && expiry <= near90Date;
@@ -295,7 +296,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
         accessorKey: 'expiryDate',
         header: t.expiryManagement?.table?.expiryDate || 'Expiry Date',
         cell: ({ row }) => {
-          const expiry = new Date(row.original.expiryDate);
+          const expiry = parseExpiryEndOfMonth(row.original.expiryDate);
           const now = getVerifiedDate();
           const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
           

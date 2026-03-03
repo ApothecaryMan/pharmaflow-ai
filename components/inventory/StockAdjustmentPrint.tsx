@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { StockMovement } from '../../services/inventory/stockMovement/types';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { formatExpiryDate } from '../../utils/expiryUtils';
 
 interface StockAdjustmentPrintProps {
   isRTL: boolean;
@@ -151,12 +152,7 @@ export const StockAdjustmentPrint: React.FC<StockAdjustmentPrintProps> = ({
                       </div>
                     </td>
                     <td className='py-0.5 text-center font-bold text-black whitespace-nowrap'>
-                      {item.expiryDate
-                        ? new Date(item.expiryDate).toLocaleDateString('en-US', {
-                            month: 'numeric',
-                            year: 'numeric',
-                          })
-                        : '-'}
+                      {formatExpiryDate(item.expiryDate)}
                     </td>
                     <td className='py-0.5 text-center text-black tabular-nums'>
                       {item.previousStock}

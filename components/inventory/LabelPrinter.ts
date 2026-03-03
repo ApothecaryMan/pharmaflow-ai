@@ -9,6 +9,7 @@ import { StorageKeys } from '../../config/storageKeys';
 import type { Drug } from '../../types';
 import { encodeCode128 } from '../../utils/barcodeEncoders';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { formatExpiryDate } from '../../utils/expiryUtils';
 import { getPrinterSettings, printLabelSilently } from '../../utils/qzPrinter';
 import { storage } from '../../utils/storage';
 import type { LabelDesign, LabelElement, SavedTemplate } from './studio/types';
@@ -138,13 +139,7 @@ export const getLabelElementContent = (
       return (drug as any).unit || '';
     case 'expiryDate':
       if (expiryOverride) return expiryOverride;
-      // If drug has expiry date, use it, otherwise show generic format MM/YYYY
-      return drug.expiryDate
-        ? new Date(drug.expiryDate).toLocaleDateString('en-GB', {
-            month: '2-digit',
-            year: 'numeric',
-          })
-        : 'MM/YYYY';
+      return drug.expiryDate ? formatExpiryDate(drug.expiryDate) : 'MM/YY';
     case 'genericName':
       return Array.isArray(drug.genericName) ? drug.genericName.join(' + ') : drug.genericName || '';
     default:

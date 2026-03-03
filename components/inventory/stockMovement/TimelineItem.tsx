@@ -1,6 +1,7 @@
 import React from 'react';
 import { StockMovementType } from '../../../types';
 import { formatCurrency } from '../../../utils/currency';
+import { formatExpiryDate, checkExpiryStatus, getExpiryStatusConfig } from '../../../utils/expiryUtils';
 
 interface TimelineItemProps {
   type: StockMovementType;
@@ -167,22 +168,18 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                 </span>
               )}
 
-              {expiryDate && (
-                <span
-                  className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-black border ${
-                    new Date(expiryDate) < new Date()
-                      ? 'text-rose-700 bg-rose-50 border-rose-100 dark:bg-rose-900/20 dark:border-rose-900/30'
-                      : new Date(expiryDate) < new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
-                        ? 'text-amber-700 bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-900/30'
-                        : 'text-emerald-700 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-900/30'
-                  }`}
-                >
-                  <span className='material-symbols-rounded text-[14px]'>
-                    {new Date(expiryDate) < new Date() ? 'event_busy' : 'event_available'}
+              {expiryDate && (() => {
+                const status = checkExpiryStatus(expiryDate);
+                const config = getExpiryStatusConfig(status);
+                return (
+                  <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-black border border-${config.color}-100 dark:border-${config.color}-900/30 text-${config.color}-700 bg-${config.color}-50 dark:bg-${config.color}-900/20`}>
+                    <span className='material-symbols-rounded text-[14px]'>
+                      {status === 'invalid' ? 'event_busy' : 'event_available'}
+                    </span>
+                    {formatExpiryDate(expiryDate)}
                   </span>
-                  {new Date(expiryDate).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </span>
-              )}
+                );
+              })()}
 
               {reason && (
                 <span className='text-xs text-slate-400 dark:text-slate-500 italic font-medium px-1 flex items-center gap-1'>

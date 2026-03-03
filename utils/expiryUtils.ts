@@ -5,6 +5,47 @@
  * - YY: Year (00-99)
  */
 
+/**
+ * Standardizes the display of expiry dates as MM/YY.
+ * Handles Date objects, ISO strings (YYYY-MM-DD), YYYY-MM strings, and MM/YYYY strings.
+ */
+export const formatExpiryDate = (expiryDate: any): string => {
+  if (!expiryDate) return '-';
+
+  // Handle YYYY-MM strings directly for efficiency
+  if (typeof expiryDate === 'string' && /^\d{4}-\d{2}$/.test(expiryDate)) {
+    const [year, month] = expiryDate.split('-');
+    return `${month}/${year.slice(-2)}`;
+  }
+
+  // Handle YYYY-MM-DD strings directly
+  if (typeof expiryDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(expiryDate)) {
+    const [year, month] = expiryDate.split('-');
+    return `${month}/${year.slice(-2)}`;
+  }
+
+  // Fallback for Date objects or ISO strings
+  const dateObj = new Date(expiryDate);
+  if (!isNaN(dateObj.getTime())) {
+    return dateObj.toLocaleDateString('en-US', {
+      month: '2-digit',
+      year: '2-digit',
+    });
+  }
+
+  // Fallback for MM/YYYY or MM/YY strings
+  if (typeof expiryDate === 'string' && expiryDate.includes('/')) {
+    const parts = expiryDate.split('/');
+    if (parts.length === 2) {
+      const month = parts[0].padStart(2, '0');
+      const year = parts[1].length === 4 ? parts[1].slice(-2) : parts[1];
+      return `${month}/${year}`;
+    }
+  }
+
+  return expiryDate;
+};
+
 export type ExpiryStatus = 'valid' | 'invalid' | 'near-expiry' | 'incomplete';
 
 /**
@@ -164,6 +205,31 @@ export const getExpiryStatusStyle = (
         return 'bg-red-100 text-red-700';
     }
   }
+};
+
+/**
+ * Parses an expiry date string (YYYY-MM-DD or YYYY-MM) and returns a Date object
+ * representing the LAST second of the LAST day of that month.
+ * This is used for logical calculations (isExpired, nearExpiry) so that
+ * an item labeled 2024-03 expires on 2024-03-31 23:59:59.
+ * 
+ * @param dateStr - Expiry date string (YYYY-MM or YYYY-MM-DD)
+ * @returns Date object at the end of the month
+ */
+export const parseExpiryEndOfMonth = (dateStr: string): Date => {
+  if (!dateStr) return new Date(0);
+
+  const parts = dateStr.split('-');
+  const year = parseInt(parts[0]);
+  const month = parseInt(parts[1]);
+
+  // Create date for the first day of the NEXT month, then subtract 1 millisecond
+  // months in JS Date are 0-indexed (0=Jan, 11=Dec)
+  // To get end of month M, we go to start of month M+1 (which is index M)
+  const date = new Date(year, month, 1);
+  date.setMilliseconds(-1);
+  
+  return date;
 };
 
 /**
