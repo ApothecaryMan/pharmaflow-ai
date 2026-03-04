@@ -190,9 +190,13 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
         const [inv, sal, sup, pur, pRet, ret, cust, emp, bat] = results;
 
-        setInventoryState(
-          inv.length > 0 ? inv : initialInventory.length > 0 ? initialInventory : []
-        );
+        if (import.meta.env.DEV && inv.length === 0 && initialInventory.length > 0) {
+          console.log('🌱 Seeding initial inventory for development...');
+          await inventoryService.save(initialInventory, finalBranchId);
+          inv.push(...initialInventory);
+        }
+
+        setInventoryState(inv);
         setSalesState(sal);
         setSuppliersState(
           sup.length > 0 ? sup : initialSuppliers.length > 0 ? initialSuppliers : []
