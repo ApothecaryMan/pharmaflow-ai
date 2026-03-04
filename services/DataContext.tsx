@@ -258,26 +258,26 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   }, [inventory, isLoading]);
   */
   useEffect(() => {
-    if (!isLoading) salesService.save(sales);
-  }, [sales, isLoading]);
+    if (!isLoading) salesService.save(sales, activeBranchId);
+  }, [sales, isLoading, activeBranchId]);
   useEffect(() => {
-    if (!isLoading) supplierService.save(suppliers);
-  }, [suppliers, isLoading]);
+    if (!isLoading) supplierService.save(suppliers, activeBranchId);
+  }, [suppliers, isLoading, activeBranchId]);
   useEffect(() => {
-    if (!isLoading) purchaseService.save(purchases);
-  }, [purchases, isLoading]);
+    if (!isLoading) purchaseService.save(purchases, activeBranchId);
+  }, [purchases, isLoading, activeBranchId]);
   useEffect(() => {
-    if (!isLoading) returnService.savePurchaseReturns(purchaseReturns);
-  }, [purchaseReturns, isLoading]);
+    if (!isLoading) returnService.savePurchaseReturns(purchaseReturns, activeBranchId);
+  }, [purchaseReturns, isLoading, activeBranchId]);
   useEffect(() => {
-    if (!isLoading) returnService.saveSalesReturns(returns);
-  }, [returns, isLoading]);
+    if (!isLoading) returnService.saveSalesReturns(returns, activeBranchId);
+  }, [returns, isLoading, activeBranchId]);
   useEffect(() => {
-    if (!isLoading) customerService.save(customers);
-  }, [customers, isLoading]);
+    if (!isLoading) customerService.save(customers, activeBranchId);
+  }, [customers, isLoading, activeBranchId]);
   useEffect(() => {
-    if (!isLoading) employeeService.save(employees);
-  }, [employees, isLoading]);
+    if (!isLoading) employeeService.save(employees, activeBranchId);
+  }, [employees, isLoading, activeBranchId]);
   useEffect(() => {
     if (!isLoading) {
       // batchService.saveBatches is not exported by bundle usually, 

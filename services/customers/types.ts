@@ -32,5 +32,5 @@ export interface CustomerService {
   redeemLoyaltyPoints(id: string, points: number): Promise<Customer>;
   getStats(): Promise<CustomerStats>;
   getVip(): Promise<Customer[]>;
-  save(customers: Customer[]): Promise<void>;
+  save(customers: Customer[], branchId?: string): Promise<void>;
 }

@@ -183,7 +183,7 @@ export const createSalesService = (): SalesService => ({
     return results;
   },
 
-  save: async (sales: Sale[]): Promise<void> => {
+  save: async (sales: Sale[], branchId?: string): Promise<void> => {
     // 1. Group sales by Shard Key
     const shards: Record<string, Sale[]> = {};
 
@@ -193,19 +193,20 @@ export const createSalesService = (): SalesService => ({
       shards[key].push(sale);
     });
 
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
 
     // 2. Process each relevant shard
     Object.entries(shards).forEach(([key, branchSales]) => {
       const currentShard = storage.get<Sale[]>(key, []);
 
       // Keep items from OTHER branches
-      const otherBranchSales = currentShard.filter((s) => s.branchId && s.branchId !== branchCode);
+      const otherBranchSales = currentShard.filter((s) => s.branchId && s.branchId !== effectiveBranchId);
 
-      // Combine
+      // Combine and deduplicate by ID
       const merged = [...otherBranchSales, ...branchSales];
-      storage.set(key, merged);
+      const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
+      
+      storage.set(key, uniqueMerged);
     });
   },
 });

@@ -140,13 +140,16 @@ export const createPurchaseService = (): PurchaseService => ({
     };
   },
 
-  save: async (purchases: Purchase[]): Promise<void> => {
+  save: async (purchases: Purchase[], branchId?: string): Promise<void> => {
     const all = getRawAll();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    const otherBranchItems = all.filter((p) => p.branchId && p.branchId !== branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const otherBranchItems = all.filter((p) => p.branchId && p.branchId !== effectiveBranchId);
+    
+    // Merge and deduplicate by ID
     const merged = [...otherBranchItems, ...purchases];
-    storage.set(StorageKeys.PURCHASES, merged);
+    const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
+    
+    storage.set(StorageKeys.PURCHASES, uniqueMerged);
   },
 });
 

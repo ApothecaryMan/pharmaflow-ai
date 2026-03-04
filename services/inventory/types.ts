@@ -35,5 +35,5 @@ export interface InventoryService {
   getStats(): Promise<InventoryStats>;
   getLowStock(threshold?: number): Promise<Drug[]>;
   getExpiringSoon(days?: number): Promise<Drug[]>;
-  save(inventory: Drug[]): Promise<void>;
+  save(inventory: Drug[], branchId?: string): Promise<void>;
 }

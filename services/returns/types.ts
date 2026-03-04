@@ -18,6 +18,6 @@ export interface ReturnService {
   createPurchaseReturn(ret: Omit<PurchaseReturn, 'id'>): Promise<PurchaseReturn>;
 
   // Save
-  saveSalesReturns(returns: Return[]): Promise<void>;
-  savePurchaseReturns(returns: PurchaseReturn[]): Promise<void>;
+  saveSalesReturns(returns: Return[], branchId?: string): Promise<void>;
+  savePurchaseReturns(returns: PurchaseReturn[], branchId?: string): Promise<void>;
 }

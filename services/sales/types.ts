@@ -34,5 +34,5 @@ export interface SalesService {
   delete(id: string): Promise<boolean>;
   getStats(): Promise<SalesStats>;
   filter(filters: SalesFilters): Promise<Sale[]>;
-  save(sales: Sale[]): Promise<void>;
+  save(sales: Sale[], branchId?: string): Promise<void>;
 }

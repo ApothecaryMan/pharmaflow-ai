@@ -70,23 +70,28 @@ export const createReturnService = (): ReturnService => ({
   },
 
   // Save
-  // Save
-  saveSalesReturns: async (returns: Return[]): Promise<void> => {
+  saveSalesReturns: async (returns: Return[], branchId?: string): Promise<void> => {
     const all = getRawSalesReturns();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    const otherBranchItems = all.filter((r) => r.branchId && r.branchId !== branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const otherBranchItems = all.filter((r) => r.branchId && r.branchId !== effectiveBranchId);
+    
+    // Merge and deduplicate by ID
     const merged = [...otherBranchItems, ...returns];
-    storage.set(StorageKeys.RETURNS, merged);
+    const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
+    
+    storage.set(StorageKeys.RETURNS, uniqueMerged);
   },
 
-  savePurchaseReturns: async (returns: PurchaseReturn[]): Promise<void> => {
+  savePurchaseReturns: async (returns: PurchaseReturn[], branchId?: string): Promise<void> => {
     const all = getRawPurchaseReturns();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    const otherBranchItems = all.filter((r) => r.branchId && r.branchId !== branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const otherBranchItems = all.filter((r) => r.branchId && r.branchId !== effectiveBranchId);
+    
+    // Merge and deduplicate by ID
     const merged = [...otherBranchItems, ...returns];
-    storage.set(StorageKeys.PURCHASE_RETURNS, merged);
+    const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
+    
+    storage.set(StorageKeys.PURCHASE_RETURNS, uniqueMerged);
   },
 });
 

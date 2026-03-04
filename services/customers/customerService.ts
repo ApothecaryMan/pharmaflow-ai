@@ -124,13 +124,16 @@ export const createCustomerService = (): CustomerService => ({
     return all.filter((c) => c.vip);
   },
 
-  save: async (customers: Customer[]): Promise<void> => {
+  save: async (customers: Customer[], branchId?: string): Promise<void> => {
     const all = getRawAll();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    const otherBranchItems = all.filter((c) => c.branchId && c.branchId !== branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const otherBranchItems = all.filter((c) => c.branchId && c.branchId !== effectiveBranchId);
+    
+    // Merge and deduplicate by ID
     const merged = [...otherBranchItems, ...customers];
-    storage.set(StorageKeys.CUSTOMERS, merged);
+    const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
+    
+    storage.set(StorageKeys.CUSTOMERS, uniqueMerged);
   },
 });
 

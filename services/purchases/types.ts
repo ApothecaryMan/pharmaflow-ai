@@ -33,5 +33,5 @@ export interface PurchaseService {
   receive(id: string): Promise<Purchase>;
   delete(id: string): Promise<boolean>;
   getStats(): Promise<PurchaseStats>;
-  save(purchases: Purchase[]): Promise<void>;
+  save(purchases: Purchase[], branchId?: string): Promise<void>;
 }

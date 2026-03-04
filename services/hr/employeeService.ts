@@ -15,7 +15,7 @@ export interface EmployeeService {
   create(employee: Employee): Promise<Employee>;
   update(id: string, employee: Partial<Employee>): Promise<Employee>;
   delete(id: string): Promise<boolean>;
-  save(employees: Employee[]): Promise<void>;
+  save(employees: Employee[], branchId?: string): Promise<void>;
 }
 
 const getRawAll = (): Employee[] => {
@@ -73,13 +73,16 @@ export const createEmployeeService = (): EmployeeService => ({
     return true;
   },
 
-  save: async (employees: Employee[]): Promise<void> => {
+  save: async (employees: Employee[], branchId?: string): Promise<void> => {
     const all = getRawAll();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    const otherBranchItems = all.filter((e) => e.branchId && e.branchId !== branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const otherBranchItems = all.filter((e) => e.branchId && e.branchId !== effectiveBranchId);
+    
+    // Merge and deduplicate by ID
     const merged = [...otherBranchItems, ...employees];
-    storage.set(StorageKeys.EMPLOYEES, merged);
+    const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
+    
+    storage.set(StorageKeys.EMPLOYEES, uniqueMerged);
   },
 });
 

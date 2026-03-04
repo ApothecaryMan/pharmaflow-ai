@@ -18,5 +18,5 @@ export interface SupplierService {
   create(supplier: Omit<Supplier, 'id'>): Promise<Supplier>;
   update(id: string, supplier: Partial<Supplier>): Promise<Supplier>;
   delete(id: string): Promise<boolean>;
-  save(suppliers: Supplier[]): Promise<void>;
+  save(suppliers: Supplier[], branchId?: string): Promise<void>;
 }

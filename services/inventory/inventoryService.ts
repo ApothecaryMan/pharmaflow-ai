@@ -165,17 +165,19 @@ export const createInventoryService = (): InventoryService => ({
     return all.filter((d) => parseExpiryEndOfMonth(d.expiryDate) <= threshold);
   },
 
-  save: async (inventory: Drug[]): Promise<void> => {
+  save: async (inventory: Drug[], branchId?: string): Promise<void> => {
     // Note: We avoid doing full-array save in the new architecture 
     // to benefit from differential writes, but we keep this for compatibility 
     // with parts of the app that still use bulk replacement.
     const all = await drugCacheService.loadAll();
-    const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    const otherBranchItems = all.filter((d) => d.branchId && d.branchId !== branchCode);
+    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const otherBranchItems = all.filter((d) => d.branchId && d.branchId !== effectiveBranchId);
 
+    // Merge and deduplicate by ID
     const merged = [...otherBranchItems, ...inventory];
-    await drugCacheService.saveAll(merged);
+    const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
+    
+    await drugCacheService.saveAll(uniqueMerged);
   },
 });
 
