@@ -12,6 +12,7 @@ import type { Drug } from '../../types';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
 import { Tooltip } from '../common/Tooltip';
+import { CARD_LG, INPUT_BASE } from '../../utils/themeStyles';
 
 interface AddProductProps {
   inventory: Drug[];
@@ -23,8 +24,6 @@ interface AddProductProps {
   onCancel?: () => void;
 }
 
-const CARD_BASE = 'bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-xs shadow-gray-200/50 dark:shadow-none';
-const INPUT_CLASSES = 'w-full px-3 py-2.5 bg-gray-50/50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all text-gray-900 dark:text-gray-100 placeholder-gray-400';
 
 export const AddProduct: React.FC<AddProductProps> = ({
   inventory,
@@ -272,8 +271,8 @@ export const AddProduct: React.FC<AddProductProps> = ({
         {/* Left Column: Data Entry (8/12) */}
         <div className="lg:col-span-8 space-y-6">
           {/* Section 1: Identification */}
-          <div className={`${CARD_BASE} rounded-3xl p-4 space-y-4`}>
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2 mb-4">
+          <div className={`${CARD_LG} p-4 space-y-4`}>
+            <div className="flex items-center justify-between border-b border-(--border-divider) pb-2 mb-4">
               <h3 className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                 {t.sections?.identification}
               </h3>
@@ -291,7 +290,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   placeholder={t.placeholders?.brandName}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className={INPUT_CLASSES}
+                  className={INPUT_BASE}
                 />
               </div>
 
@@ -303,7 +302,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   placeholder={t.placeholders?.nameArabic}
                   value={formData.nameArabic}
                   onChange={(e) => setFormData({ ...formData, nameArabic: e.target.value })}
-                  className={INPUT_CLASSES}
+                  className={INPUT_BASE}
                   dir="rtl"
                 />
               </div>
@@ -318,7 +317,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   placeholder={t.placeholders?.genericName}
                   value={formData.genericName?.join(', ') || ''}
                   onChange={(e) => setFormData({ ...formData, genericName: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-                  className={INPUT_CLASSES}
+                  className={INPUT_BASE}
                 />
               </div>
 
@@ -326,7 +325,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1">
                   {t.fields?.barcode}
                 </label>
-                <div className={`${INPUT_CLASSES} flex flex-wrap gap-2 p-1.5 min-h-[44px] focus-within:ring-2 focus-within:ring-blue-500 transition-all`}>
+                <div className={`${INPUT_BASE} flex flex-wrap gap-2 p-1.5 min-h-[44px] focus-within:ring-2 focus-within:ring-blue-500 transition-all`}>
                   {formData.barcode && (
                     <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[11px] font-bold border border-blue-100 dark:border-blue-800">
                       {formData.barcode}
@@ -375,7 +374,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                     placeholder={t.placeholders?.internalCode}
                     value={formData.internalCode}
                     onChange={(e) => setFormData({ ...formData, internalCode: e.target.value })}
-                    className={`${INPUT_CLASSES} font-mono pr-12`}
+                    className={`${INPUT_BASE} font-mono pr-12`}
                   />
                   <button
                     type="button"
@@ -390,8 +389,8 @@ export const AddProduct: React.FC<AddProductProps> = ({
           </div>
 
           {/* Section 2: Classification */}
-          <div className={`${CARD_BASE} rounded-3xl p-4 space-y-4`}>
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2 mb-4">
+          <div className={`${CARD_LG} p-4 space-y-4`}>
+            <div className="flex items-center justify-between border-b border-(--border-divider) pb-2 mb-4">
               <h3 className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                 {t.sections?.classification}
               </h3>
@@ -459,7 +458,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                     placeholder={t.placeholders?.manufacturer}
                     value={formData.manufacturer}
                     onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
-                    className={INPUT_CLASSES}
+                    className={INPUT_BASE}
                   />
                 </div>
 
@@ -495,7 +494,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   placeholder={t.placeholders?.description}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className={`${INPUT_CLASSES} flex-1 resize-none h-full`}
+                  className={`${INPUT_BASE} flex-1 resize-none h-full`}
                 />
               </div>
             </div>
@@ -506,8 +505,8 @@ export const AddProduct: React.FC<AddProductProps> = ({
         {/* Right Column: Inventory & Finance (4/12) */}
         <div className="lg:col-span-4 space-y-6">
           {/* Section 4: Inventory & Storage */}
-          <div className={`${CARD_BASE} rounded-3xl p-4 space-y-5`}>
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2 mb-4">
+          <div className={`${CARD_LG} p-4 space-y-5`}>
+            <div className="flex items-center justify-between border-b border-(--border-divider) pb-2 mb-4">
               <h3 className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                 {t.sections?.inventory}
               </h3>
@@ -523,7 +522,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   type="number"
                   required
                   step="0.01"
-                  className={INPUT_CLASSES}
+                  className={INPUT_BASE}
                   value={formData.stock}
                   onChange={(e) => setFormData({ ...formData, stock: parseFloat(e.target.value) || 0 })}
                 />
@@ -536,7 +535,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 <input
                   type="number"
                   min="1"
-                  className={INPUT_CLASSES}
+                  className={INPUT_BASE}
                   value={formData.unitsPerPack}
                   onChange={(e) => setFormData({ ...formData, unitsPerPack: parseInt(e.target.value) || 1 })}
                 />
@@ -548,7 +547,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 </label>
                 <input
                   type="number"
-                  className={INPUT_CLASSES}
+                  className={INPUT_BASE}
                   value={formData.minStock}
                   onChange={(e) => setFormData({ ...formData, minStock: parseInt(e.target.value) || 0 })}
                 />
@@ -562,15 +561,15 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   required
                   value={formData.expiryDate}
                   onChange={(val) => setFormData({ ...formData, expiryDate: val })}
-                  className={INPUT_CLASSES}
+                  className={INPUT_BASE}
                 />
               </div>
             </div>
           </div>
 
           {/* Section 5: Financials */}
-          <div className={`${CARD_BASE} rounded-3xl p-4 space-y-5`}>
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2 mb-4">
+          <div className={`${CARD_LG} p-4 space-y-5`}>
+            <div className="flex items-center justify-between border-b border-(--border-divider) pb-2 mb-4">
               <h3 className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                 {t.sections?.financial}
               </h3>
@@ -587,7 +586,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                     type="number"
                     required
                     step="0.01"
-                    className={INPUT_CLASSES}
+                    className={INPUT_BASE}
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                   />
@@ -601,7 +600,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                     type="number"
                     step="0.01"
                     required
-                    className={INPUT_CLASSES}
+                    className={INPUT_BASE}
                     value={formData.costPrice}
                     onChange={(e) => setFormData({ ...formData, costPrice: parseFloat(e.target.value) || 0 })}
                   />
@@ -616,7 +615,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   <input
                     type="number"
                     step="0.1"
-                    className={INPUT_CLASSES}
+                    className={INPUT_BASE}
                     value={formData.tax}
                     onChange={(e) => setFormData({ ...formData, tax: parseFloat(e.target.value) || 0 })}
                   />
@@ -627,7 +626,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
         </div>
 
         {/* Action Bar: Sticky Bottom */}
-        <div className={`${hideHeader ? 'absolute' : 'fixed'} bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 p-4 z-40 lg:pl-[64px]`}>
+        <div className={`${hideHeader ? 'absolute' : 'fixed'} bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-(--border-divider) p-4 z-40 lg:pl-[64px]`}>
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             {/* Left side: Secondary actions */}
             <div className="flex-1">

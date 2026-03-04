@@ -25,6 +25,6 @@ export const TABLE_ROW_BASE =
 export const BUTTON_BASE = 'px-4 py-2 rounded-xl font-medium '; //transition-all active:scale-95
 export const BUTTON_INACTIVE = 'bg-(--button-base-inactive) border border-(--border-divider) text-gray-400 dark:text-gray-500 cursor-not-allowed';
 export const INPUT_BASE =
-  'w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none outline-hidden placeholder:text-gray-400';
+  'w-full px-3 py-2.5 rounded-xl bg-(--bg-input) border border-(--border-search) outline-hidden focus:border-gray-400 dark:focus:border-gray-500 focus:shadow-sm text-sm transition-colors duration-0 text-gray-900 dark:text-gray-100 placeholder-gray-400';
 
 export const THEME_COLORS = ['blue', 'purple', 'green', 'orange', 'red', 'pink', 'cyan', 'teal'];

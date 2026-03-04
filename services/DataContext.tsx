@@ -201,37 +201,37 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         setPurchaseReturnsState(pRet);
         setReturnsState(ret);
         setCustomersState(cust);
-        setEmployeesState(emp);
-        setBatchesState(bat);
-
-        // Seed SUPER User logic
+        // Seed SUPER User logic (Synchronous seeding to prevent race conditions)
         const superUser = import.meta.env.VITE_SUPER_USER;
         const superPass = import.meta.env.VITE_SUPER_PASS;
 
         if (superUser && superPass) {
           const superUserExists = emp.some((e) => e.username === superUser);
           if (!superUserExists) {
-            import('../services/auth/hashUtils').then(async ({ hashPassword }) => {
-              const passwordHash = await hashPassword(superPass);
-              const superUserObj: Employee = {
-                id: 'SUPER-ADMIN',
-                employeeCode: 'EMP-000',
-                name: 'SUPER',
-                username: superUser,
-                password: passwordHash,
-                role: 'admin' as any,
-                position: 'Super Admin',
-                department: 'it',
-                phone: '00000000000',
-                startDate: new Date().toISOString().split('T')[0],
-                status: 'active',
-              };
-              await employeeService.create(superUserObj);
-              setEmployeesState((prev) => [...prev, superUserObj]);
-              console.log('✨ Super Admin seeded successfully from ENV');
-            });
+            const { hashPassword } = await import('../services/auth/hashUtils');
+            const passwordHash = await hashPassword(superPass);
+            const superUserObj: Employee = {
+              id: 'SUPER-ADMIN',
+              employeeCode: 'EMP-000',
+              name: 'SUPER',
+              username: superUser,
+              password: passwordHash,
+              role: 'admin' as any,
+              position: 'Super Admin',
+              department: 'it',
+              phone: '00000000000',
+              startDate: new Date().toISOString().split('T')[0],
+              status: 'active',
+              branchId: finalBranchId,
+            };
+            await employeeService.create(superUserObj);
+            emp.push(superUserObj); // Update the local array before state set
+            console.log('✨ Super Admin seeded successfully from ENV');
           }
         }
+
+        setEmployeesState(emp);
+        setBatchesState(bat);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {

@@ -125,6 +125,15 @@ export const createInventoryService = (): InventoryService => ({
     return updated;
   },
 
+  updateStock: async (id: string, quantity: number): Promise<Drug> => {
+    const drug = await drugCacheService.getById(id);
+    if (!drug) throw new Error('Drug not found');
+    
+    const updated = { ...drug, stock: (drug.stock || 0) + quantity };
+    await drugCacheService.upsert(updated);
+    return updated;
+  },
+
   delete: async (id: string): Promise<boolean> => {
     await drugCacheService.remove(id);
     return true;

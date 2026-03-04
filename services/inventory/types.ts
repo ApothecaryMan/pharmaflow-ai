@@ -30,6 +30,7 @@ export interface InventoryService {
   filter(filters: InventoryFilters): Promise<Drug[]>;
   create(drug: Omit<Drug, 'id'>): Promise<Drug>;
   update(id: string, drug: Partial<Drug>): Promise<Drug>;
+  updateStock(id: string, quantity: number): Promise<Drug>;
   delete(id: string): Promise<boolean>;
   getStats(): Promise<InventoryStats>;
   getLowStock(threshold?: number): Promise<Drug[]>;

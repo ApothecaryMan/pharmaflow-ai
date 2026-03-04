@@ -63,8 +63,8 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       if (selectedEmployees.includes(emp.id)) {
         return employeeService.update(emp.id, { branchId: savedBranch.id });
       } else if (emp.branchId === savedBranch.id) {
-        // If they were in this branch but now deselected, clear it (or assign to default)
-        return employeeService.update(emp.id, { branchId: 'branch_main' });
+        // If they were in this branch but now deselected, clear it
+        return employeeService.update(emp.id, { branchId: '' });
       }
       return Promise.resolve();
     });
@@ -75,9 +75,11 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
     loadData();
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm(t.settings.deleteBranchConfirm)) {
-      branchService.delete(id);
+  const handleDelete = async (id: string, name: string) => {
+    if (window.confirm(`${t.settings.deleteBranchConfirm || 'Are you sure you want to deactivate this branch?'} (${name})`)) {
+      // Hardening: Instead of hard deletion, we deactivate (Soft Delete/Archive)
+      // because historical records (sales/inventory) might depend on this ID.
+      await branchService.update(id, { status: 'inactive' });
       loadData();
     }
   };
@@ -123,11 +125,14 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
                 <span className="material-symbols-rounded text-base mr-2">location_on</span>
                 {branch.address || 'No address set'}
               </div>
-              <div className="flex items-center text-sm text-zinc-600 dark:text-zinc-400">
-                <span className="material-symbols-rounded text-base mr-2">group</span>
-                {employees.filter(e => e.branchId === branch.id).length} Employees
-              </div>
             </div>
+
+            {branch.phone && (
+              <div className="flex items-center text-xs text-zinc-500 mb-4 px-2 py-1 bg-zinc-50 dark:bg-zinc-800/50 rounded-md w-fit">
+                <span className="material-symbols-rounded text-sm mr-1">call</span>
+                {branch.phone}
+              </div>
+            )}
 
             <div className="flex gap-2">
               <button
@@ -138,10 +143,10 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
                 Edit
               </button>
               <button
-                onClick={() => handleDelete(branch.id)}
+                onClick={() => handleDelete(branch.id, branch.name)}
                 className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
               >
-                <span className="material-symbols-rounded">delete</span>
+                <span className="material-symbols-rounded">block</span>
               </button>
             </div>
           </div>
@@ -186,12 +191,34 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
                 <option value="inactive">Inactive</option>
               </select>
             </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-zinc-500 mb-1">{t.settings?.branchAddress || 'Address'}</label>
+              <input
+                type="text"
+                placeholder="Full address"
+                value={editingBranch?.address || ''}
+                onChange={(e) => setEditingBranch({ ...editingBranch, address: e.target.value })}
+                className="w-full px-4 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-zinc-500 mb-1">{t.settings?.branchPhone || 'Phone Number'}</label>
+              <input
+                type="text"
+                placeholder="+20..."
+                value={editingBranch?.phone || ''}
+                onChange={(e) => setEditingBranch({ ...editingBranch, phone: e.target.value })}
+                className="w-full px-4 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
+              />
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-zinc-500 mb-2">{t.settings.assignEmployees}</label>
             <div className="max-h-48 overflow-y-auto border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 space-y-1">
-              {employees.map((emp) => (
+              {employees
+                .filter(emp => emp.id !== 'SUPER-ADMIN' && emp.employeeCode !== 'EMP-000')
+                .map((emp) => (
                 <label 
                   key={emp.id} 
                   className="flex items-center p-2 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded cursor-pointer"

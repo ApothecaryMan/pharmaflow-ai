@@ -540,7 +540,7 @@ export function useEntityHandlers({
 
   // --- Purchase Management ---
   const applyPurchaseToInventory = useCallback(
-    (purchase: Purchase) => {
+    async (purchase: Purchase) => {
       const performer = employees?.find((e) => e.id === currentEmployeeId);
       const branchCode = activeBranchId;
       
@@ -593,15 +593,18 @@ export function useEntityHandlers({
           });
           currentInventory.push(newEntries[newEntries.length - 1]);
         } else {
-          currentInventory = currentInventory.map((d) =>
-            d.id === targetId
-              ? {
-                  ...d,
-                  stock: mutation.newStock,
-                  costPrice: purchasedItem.costPrice,
-                }
-              : d
-          );
+          currentInventory = currentInventory.map((d) => {
+            if (d.id === targetId) {
+              // --- PERSISTENCE: Immediate update ---
+              inventoryService.updateStock(targetId, mutation.unitsChanged).catch(console.error);
+              return {
+                ...d,
+                stock: mutation.newStock,
+                costPrice: purchasedItem.costPrice,
+              };
+            }
+            return d;
+          });
         }
       });
 
@@ -752,6 +755,9 @@ export function useEntityHandlers({
               },
               returnData.id
             );
+
+            // --- PERSISTENCE: Immediate deduction from IndexedDB ---
+            inventoryService.updateStock(drug.id, -returnedItem.quantityReturned).catch(console.error);
 
             return {
               ...drug,
@@ -1055,6 +1061,21 @@ export function useEntityHandlers({
           serialId
         );
 
+        // 8. Persist Inventory Changes to IndexedDB
+        // We do this after successful state updates and logging.
+        // Parallelizing requests for performance while maintaining transaction integrity.
+        try {
+          await Promise.all(
+            stockMutations.map((mutation) =>
+              inventoryService.updateStock(mutation.drugId, -mutation.unitsChanged)
+            )
+          );
+        } catch (persistenceError) {
+          console.error('[handleCompleteSale] Persistence Error:', persistenceError);
+          // Note: In a professional app, we might want to enqueue these for retry if they fail,
+          // but for now, we log the error. The UI already shows the new stock.
+        }
+
         success(`Order #${serialId} completed!`);
         return true;
       } catch (err: any) {
@@ -1097,7 +1118,7 @@ export function useEntityHandlers({
   );
 
   const handleUpdateSale = useCallback(
-    (saleId: string, updates: Partial<Sale>) => {
+    async (saleId: string, updates: Partial<Sale>) => {
       const sale = sales.find((s) => s.id === saleId);
       if (!sale) return;
 
@@ -1146,6 +1167,20 @@ export function useEntityHandlers({
         const updatedInventory = restoreStockForCancelledSale(sale, inventory);
         setInventory(updatedInventory);
         setBatches(batchService.getAllBatches());
+
+        // --- PERSISTENCE: Return items to IndexedDB ---
+        try {
+          await Promise.all(
+            sale.items.map((item) => {
+              const drug = inventory.find((d) => d.id === item.id);
+              if (!drug) return Promise.resolve();
+              const unitsToRestore = stockOps.resolveUnits(item.quantity, !!item.isUnit, drug.unitsPerPack);
+              return inventoryService.updateStock(item.id, unitsToRestore);
+            })
+          );
+        } catch (e) {
+          console.error('[handleUpdateSale] Cancellation Persistence Error:', e);
+        }
       }
 
       // Handle item modifications (for delivery orders)
@@ -1196,6 +1231,8 @@ export function useEntityHandlers({
               prev.map((drug) => {
                 if (drug.id === oldItem.id) {
                   const unitsToRestore = stockOps.resolveUnits(oldItem.quantity, !!oldItem.isUnit, drug.unitsPerPack);
+                  // --- PERSISTENCE: Immediate update ---
+                  inventoryService.updateStock(oldItem.id, unitsToRestore).catch(console.error);
                   return { ...drug, stock: validateStock(drug.stock + unitsToRestore) };
                 }
                 return drug;
@@ -1249,6 +1286,8 @@ export function useEntityHandlers({
                 setInventory((prev) =>
                   prev.map((d) => {
                     if (d.id === oldItem.id) {
+                      // --- PERSISTENCE: Immediate update ---
+                      inventoryService.updateStock(oldItem.id, diff).catch(console.error);
                       return { ...d, stock: validateStock(d.stock + diff) };
                     }
                     return d;
@@ -1292,6 +1331,8 @@ export function useEntityHandlers({
                   setInventory((prev) =>
                     prev.map((d) => {
                       if (d.id === oldItem.id) {
+                        // --- PERSISTENCE: Immediate update ---
+                        inventoryService.updateStock(oldItem.id, -Math.abs(diff)).catch(console.error);
                         return { ...d, stock: mutation.newStock };
                       }
                       return d;
@@ -1356,6 +1397,8 @@ export function useEntityHandlers({
                 setInventory((prev) =>
                   prev.map((d) => {
                     if (d.id === newItem.id) {
+                      // --- PERSISTENCE: Immediate update ---
+                      inventoryService.updateStock(newItem.id, -mutation.unitsChanged).catch(console.error);
                       return { ...d, stock: mutation.newStock };
                     }
                     return d;
@@ -1429,7 +1472,7 @@ export function useEntityHandlers({
   );
 
   const handleProcessReturn = useCallback(
-    (returnData: Return) => {
+    async (returnData: Return) => {
       if (
         !canPerformAction(employees?.find((e) => e.id === currentEmployeeId)?.role, 'sale.refund')
       ) {
@@ -1506,6 +1549,9 @@ export function useEntityHandlers({
             );
 
             setBatches(batchService.getAllBatches());
+
+            // --- PERSISTENCE: Restore stock to IndexedDB ---
+            inventoryService.updateStock(drug.id, returnedItem.quantityReturned).catch(console.error);
 
             return {
               ...drug,

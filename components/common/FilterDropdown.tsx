@@ -143,13 +143,13 @@ export function FilterDropdown<T>({
   const currentBg = effectiveIsOpen ? bgOpen : bgClosed;
   const currentBorder =
     onBackground || effectiveIsOpen || isInput || !isTransparent
-      ? 'var(--border-gray)'
+      ? 'var(--border-search)'
       : 'transparent';
 
   const outerClasses = `relative inline-block ${className}`;
   const outerStyle = floating && minHeight ? { ...style, height: minHeight, minHeight } : style;
 
-  const innerClasses = `relative w-full flex flex-col overflow-hidden border transition-all duration-300 outline-hidden group
+  const innerClasses = `relative w-full flex flex-col overflow-hidden border transition-all duration-0 outline-hidden group
                     ${rounded === 'full' ? 'rounded-[20px]' : 'rounded-xl'}
                     ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
                     ${effectiveIsOpen || isAnimating ? zIndexHigh : 'z-0'}
@@ -164,14 +164,10 @@ export function FilterDropdown<T>({
                 :root {
                     --bg-active: white;
                     --bg-closed: white;
-                    --bg-input: #f9fafb;
-                    --border-gray: #e5e7eb; /* gray-200 */
                 }
                 .dark {
                     --bg-active: var(--bg-menu);
                     --bg-closed: var(--bg-primary);
-                    --bg-input: var(--bg-navbar);
-                    --border-gray: var(--border-divider);
                 }
                 .filter-dropdown-scroll::-webkit-scrollbar { width: 2px; background: transparent; }
                 .filter-dropdown-scroll::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.6); border-radius: 9999px; }
@@ -235,7 +231,7 @@ export function FilterDropdown<T>({
 
         {/* Dropdown Menu Container */}
         <div
-          className='w-full overflow-hidden transition-all duration-300'
+          className='w-full overflow-hidden transition-all duration-0'
           style={{
             display: 'grid',
             gridTemplateRows: effectiveIsOpen ? '1fr' : '0fr',

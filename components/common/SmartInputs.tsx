@@ -1,5 +1,5 @@
-import type React from 'react';
 import { type InputHTMLAttributes, useEffect, useMemo, useRef, useState } from 'react';
+import { INPUT_BASE } from '../../utils/themeStyles';
 
 /**
  * @module SmartInputs
@@ -156,7 +156,7 @@ export const SmartInput: React.FC<SmartInputProps> = ({
       value={value}
       placeholder={placeholder}
       dir={dir} // Calculated direction takes precedence, but props.dir would be overridden here.
-      className={className}
+      className={className || INPUT_BASE}
     />
   );
 };
@@ -191,7 +191,7 @@ export const SmartTextarea: React.FC<SmartTextareaProps> = ({
       value={value}
       placeholder={placeholder}
       dir={dir}
-      className={className}
+      className={className || INPUT_BASE}
     />
   );
 };
@@ -310,7 +310,7 @@ export const SmartDateInput: React.FC<SmartDateInputProps> = ({
       ref={inputRef}
       type='text'
       inputMode='numeric'
-      className={className}
+      className={className || INPUT_BASE}
       style={style}
       required={required}
       placeholder={isFocused ? 'MMYY' : placeholder || 'MM/YY'}
@@ -367,7 +367,7 @@ export const SmartPhoneInput: React.FC<SmartSpecializedInputProps> = ({
       dir='ltr'
       value={value}
       onChange={handleChange}
-      className={className}
+      className={className || INPUT_BASE}
     />
   );
 };
@@ -406,7 +406,7 @@ export const SmartEmailInput: React.FC<SmartSpecializedInputProps> = ({
       dir='ltr'
       value={value}
       onChange={handleChange}
-      className={className}
+      className={className || INPUT_BASE}
     />
   );
 };
@@ -469,6 +469,7 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
   const inputRef = externalRef || internalRef;
   const containerRef = useRef<HTMLDivElement>(null);
   const [isCapsLock, setIsCapsLock] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   // Auto-detect text direction
   const dir = useSmartDirection(value, placeholder);
@@ -548,16 +549,12 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
         disabled={disabled}
         dir={dir}
         spellCheck='false'
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
         className={`
-          w-full px-3 py-2.5 rounded-xl
-          bg-white dark:bg-gray-900
-          border border-gray-200 dark:border-gray-800
-          hover:border-gray-300 dark:hover:border-gray-700
-          focus:outline-hidden focus:ring-0
-          focus:border-primary-500 dark:focus:border-primary-400
-          focus:hover:border-primary-500 dark:focus:hover:border-primary-400
-          text-gray-900 dark:text-gray-100 placeholder-gray-400
-          shadow-xs ${className}
+          ${INPUT_BASE}
+          shadow-xs
+          ${className}
         `}
       />
 
@@ -577,17 +574,18 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
           {/* Visible ghost text as a Badge */}
           <span
             className={`
-            inline-flex items-center px-1 py-1 ms-0.5
-            rounded-[10px]
-            bg-gray-100 dark:bg-gray-800 
-            text-[13px] font-black tracking-tight
+            inline-flex items-center px-1.5 py-1 ms-1
+            rounded-[8px]
+            bg-gray-100 dark:bg-(--bg-surface-neutral)
+            text-[12px] font-black tracking-tight
             text-gray-600 dark:text-gray-400 
-            shadow-sm transition-all animate-in fade-in duration-100
+            shadow-sm border border-transparent dark:border-(--border-divider)
+            transition-all animate-in fade-in duration-200
             ${isCapsLock ? 'uppercase' : ''}
           `}
           >
             {isCapsLock ? ghostText.toUpperCase() : ghostText}
-            <span className="material-symbols-rounded text-[14px] ms-1 opacity-60">keyboard_tab</span>
+            <span className="material-symbols-rounded text-[14px] ms-1 opacity-70">keyboard_tab</span>
           </span>
         </div>
       )}
