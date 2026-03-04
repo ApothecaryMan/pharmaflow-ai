@@ -40,7 +40,7 @@ export const createEmployeeService = (): EmployeeService => ({
     
     // Assign ID if missing
     if (!employee.id) {
-      employee.id = idGenerator.generate('employees');
+      employee.id = idGenerator.generate('employees', effectiveBranchId);
     }
     
     // Inject branchId

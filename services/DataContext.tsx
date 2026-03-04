@@ -173,6 +173,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         const finalBranchId = session?.branchId || activeBranch?.id || 'branch_main';
         setActiveBranchId(finalBranchId);
 
+        // Sync settingsService with the active branch so idGenerator (which reads storage directly) is in sync
+        await settingsService.setMultiple({ branchCode: finalBranchId });
+
         const [results, _] = await Promise.all([
           Promise.all([
             inventoryService.getAll(finalBranchId),
@@ -192,8 +195,13 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
         if (import.meta.env.DEV && inv.length === 0 && initialInventory.length > 0) {
           console.log('🌱 Seeding initial inventory for development...');
-          await inventoryService.save(initialInventory, finalBranchId);
-          inv.push(...initialInventory);
+          // Ensure every seeded item has the correct branchId
+          const seededInventory = initialInventory.map(item => ({
+            ...item,
+            branchId: finalBranchId
+          }));
+          await inventoryService.save(seededInventory, finalBranchId);
+          inv.push(...seededInventory);
         }
 
         setInventoryState(inv);

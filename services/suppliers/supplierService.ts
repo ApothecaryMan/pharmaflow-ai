@@ -43,7 +43,7 @@ export const createSupplierService = (): SupplierService => ({
     const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
     const newSupplier: Supplier = {
       ...supplier,
-      id: idGenerator.generate('suppliers'),
+      id: idGenerator.generate('suppliers', effectiveBranchId),
       branchId: effectiveBranchId,
     } as Supplier;
     all.push(newSupplier);

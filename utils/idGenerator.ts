@@ -140,12 +140,17 @@ export const idGenerator = {
   /**
    * Generates the next ID for a given entity type
    * @param type The type of entity (e.g., 'sales', 'inventory')
+   * @param branchCode Optional branch code to use. If not provided, reads from settings.
    * @returns Formatted ID string (e.g., "B1-1050")
    */
-  generate: (type: EntityType): string => {
-    // 1. Get Branch Code directly from storage to avoid circular dependency
-    const settings = storage.get<Partial<AppSettings>>(StorageKeys.SETTINGS, {});
-    const branchCode = settings.branchCode || DEFAULT_BRANCH_CODE;
+  generate: (type: EntityType, branchCode?: string): string => {
+    // 1. Get Branch Code: parameter > storage > default
+    let effectiveBranchCode = branchCode;
+    
+    if (!effectiveBranchCode) {
+      const settings = storage.get<Partial<AppSettings>>(StorageKeys.SETTINGS, {});
+      effectiveBranchCode = settings.branchCode || DEFAULT_BRANCH_CODE;
+    }
 
     // 2. Get current sequences
     const sequences = storage.get<SequenceMap>(StorageKeys.SEQUENCES, {});
@@ -169,6 +174,6 @@ export const idGenerator = {
     });
 
     // 7. Format and Return
-    return `${branchCode}-${nextSeq.toString().padStart(ID_PADDING, '0')}`;
+    return `${effectiveBranchCode}-${nextSeq.toString().padStart(ID_PADDING, '0')}`;
   },
 };

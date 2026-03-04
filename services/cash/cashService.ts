@@ -73,7 +73,7 @@ export const createCashService = (): CashServiceInterface => ({
     const settings = await settingsService.getAll();
 
     const newShift: Shift = {
-      id: idGenerator.generate('shifts'),
+      id: idGenerator.generate('shifts', settings.branchCode),
       status: 'open',
       openTime: new Date().toISOString(),
       openedBy,
@@ -131,7 +131,7 @@ export const createCashService = (): CashServiceInterface => ({
     if (shiftIndex === -1) throw new Error('Shift not found');
 
     const newTx: CashTransaction = {
-      id: idGenerator.generate('transactions'),
+      id: idGenerator.generate('transactions', all[shiftIndex].branchId),
       ...transaction,
     };
 

@@ -62,7 +62,7 @@ export const createCustomerService = (): CustomerService => ({
     const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
     const newCustomer: Customer = {
       ...customer,
-      id: idGenerator.generate('customers'),
+      id: idGenerator.generate('customers', effectiveBranchId),
       createdAt: new Date().toISOString(),
       points: customer.points || 0,
       totalPurchases: customer.totalPurchases || 0,

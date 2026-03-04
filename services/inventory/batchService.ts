@@ -52,10 +52,11 @@ export const getBatchById = (batchId: string): StockBatch | null => {
  */
 export const createBatch = (batch: Omit<StockBatch, 'id'>, branchId?: string): StockBatch => {
   const all = getAllBatchesRaw();
+  const effectiveBranchId = branchId || batch.branchId;
   const newBatch: StockBatch = {
     ...batch,
-    id: idGenerator.generate('batch'),
-    branchId: branchId || batch.branchId, // Prefer explicit branchId
+    id: idGenerator.generate('batch', effectiveBranchId),
+    branchId: effectiveBranchId,
   };
   all.push(newBatch);
   saveBatches(all);
@@ -296,7 +297,7 @@ export const migrateInventoryToBatches = (inventory: Drug[]): number => {
     if (existingDrugIds.has(drug.id) || drug.stock <= 0) continue;
 
     newBatches.push({
-      id: idGenerator.generate('batch'),
+      id: idGenerator.generate('batch', drug.branchId),
       drugId: drug.id,
       quantity: drug.stock,
       expiryDate: drug.expiryDate,

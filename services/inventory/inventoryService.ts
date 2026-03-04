@@ -97,7 +97,7 @@ export const createInventoryService = (): InventoryService => ({
     const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
     const newDrug: Drug = {
       ...drug,
-      id: idGenerator.generate('inventory'),
+      id: idGenerator.generate('inventory', effectiveBranchId),
       branchId: effectiveBranchId,
     } as Drug;
     
