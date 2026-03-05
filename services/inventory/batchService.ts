@@ -274,6 +274,43 @@ export const getEarliestExpiry = (drugId: string): string | null => {
 };
 
 /**
+ * Get earliest expiry dates for multiple drugs in a single storage read.
+ * Returns a map of drugId → earliest expiry date (or null).
+ */
+export const getEarliestExpiriesBulk = (drugIds: string[]): Record<string, string | null> => {
+  const allBatches = getAllBatchesRaw();
+  const result: Record<string, string | null> = {};
+
+  // Group active batches by drugId (single pass)
+  const batchesByDrug = new Map<string, StockBatch[]>();
+  for (const batch of allBatches) {
+    if (batch.quantity > 0 && drugIds.includes(batch.drugId)) {
+      const arr = batchesByDrug.get(batch.drugId);
+      if (arr) arr.push(batch);
+      else batchesByDrug.set(batch.drugId, [batch]);
+    }
+  }
+
+  for (const drugId of drugIds) {
+    const drugBatches = batchesByDrug.get(drugId);
+    if (!drugBatches || drugBatches.length === 0) {
+      result[drugId] = null;
+      continue;
+    }
+    // Find minimum expiry
+    let earliest = drugBatches[0];
+    for (let i = 1; i < drugBatches.length; i++) {
+      if (parseExpiryEndOfMonth(drugBatches[i].expiryDate).getTime() < parseExpiryEndOfMonth(earliest.expiryDate).getTime()) {
+        earliest = drugBatches[i];
+      }
+    }
+    result[drugId] = earliest.expiryDate;
+  }
+
+  return result;
+};
+
+/**
  * Check if sufficient stock is available
  */
 export const hasStock = (drugId: string, quantityNeeded: number): boolean => {
@@ -365,6 +402,7 @@ export const batchService = {
   returnStock,
   getTotalStock,
   getEarliestExpiry,
+  getEarliestExpiriesBulk,
   hasStock,
   migrateInventoryToBatches,
   getStockSummary,

@@ -185,6 +185,28 @@ export const createStockMovementService = (): StockMovementService => ({
       storage.set(StorageKeys.STOCK_MOVEMENTS, all);
     }
   },
+
+  logMovementsBulk: async (
+    movements: Omit<StockMovement, 'id' | 'timestamp'>[]
+  ): Promise<void> => {
+    if (movements.length === 0) return;
+
+    const all = getRawMovements();
+    const settings = await settingsService.getAll();
+    const timestamp = new Date().toISOString();
+
+    for (const movement of movements) {
+      const effectiveBranchId = movement.branchId || settings.branchCode;
+      all.push({
+        ...movement,
+        id: idGenerator.generate('movement', effectiveBranchId),
+        branchId: effectiveBranchId,
+        timestamp,
+      });
+    }
+
+    storage.set(StorageKeys.STOCK_MOVEMENTS, all);
+  },
 });
 
 export const stockMovementService = createStockMovementService();

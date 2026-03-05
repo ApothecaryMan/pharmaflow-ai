@@ -970,6 +970,10 @@ export function useEntityHandlers({
 
         // Pre-map sold items for O(1) lookup
         const soldItemsMap = new Map(saleData.items.map((item) => [item.id, item]));
+        const soldDrugIds = saleData.items.map((item) => item.id);
+
+        // Bulk fetch earliest expiries (single localStorage read)
+        const earliestExpiries = batchService.getEarliestExpiriesBulk(soldDrugIds);
 
         // Update Inventory State
         setInventory((prev) =>
@@ -985,7 +989,7 @@ export function useEntityHandlers({
               return {
                 ...drug,
                 stock: validateStock(newStock),
-                expiryDate: batchService.getEarliestExpiry(drug.id) || drug.expiryDate,
+                expiryDate: earliestExpiries[drug.id] || drug.expiryDate,
               };
             }
             return drug;
@@ -1046,34 +1050,50 @@ export function useEntityHandlers({
           entityId: serialId,
         });
 
-        // 7. Log Stock Movement
+        // 7. Log Stock Movements (bulk — single localStorage write)
         const performer = employees?.find((e) => e.id === currentEmployeeId);
-        const stockMutations = stockOps.bulkDeductStock(
-          newSale.items,
-          inventory,
-          'sale',
-          `Sale Transaction #${serialId}`,
-          {
+        const movementEntries: Omit<import('../services/inventory/stockMovement/types').StockMovement, 'id' | 'timestamp'>[] = [];
+
+        newSale.items.forEach((item) => {
+          const drug = inventory.find((d) => d.id === item.id);
+          if (!drug) return;
+          const unitsToDeduct = item.isUnit
+            ? item.quantity
+            : item.quantity * (drug.unitsPerPack || 1);
+          const previousStock = drug.stock;
+          const newStock = validateStock(previousStock - unitsToDeduct);
+
+          movementEntries.push({
+            drugId: drug.id,
+            drugName: drug.name,
             branchId: activeBranchId,
+            type: 'sale',
+            quantity: -unitsToDeduct,
+            previousStock,
+            newStock,
+            reason: `Sale Transaction #${serialId}`,
+            referenceId: serialId,
             performedBy: currentEmployeeId!,
             performedByName: performer?.name,
-          },
-          serialId
-        );
+            status: 'approved',
+          });
+        });
 
-        // 8. Persist Inventory Changes to IndexedDB
-        // We do this after successful state updates and logging.
-        // Parallelizing requests for performance while maintaining transaction integrity.
+        // Fire bulk movement log (single read-modify-write)
+        stockMovementService.logMovementsBulk(movementEntries);
+
+        // 8. Persist Inventory Changes to IndexedDB (single transaction)
         try {
-          await Promise.all(
-            stockMutations.map((mutation) =>
-              inventoryService.updateStock(mutation.drugId, -mutation.unitsChanged)
-            )
-          );
+          const stockMutations = newSale.items.map((item) => {
+            const drug = inventory.find((d) => d.id === item.id);
+            const unitsToDeduct = item.isUnit
+              ? item.quantity
+              : item.quantity * (drug?.unitsPerPack || 1);
+            return { id: item.id, quantity: -unitsToDeduct };
+          });
+          await inventoryService.updateStockBulk(stockMutations);
         } catch (persistenceError) {
           console.error('[handleCompleteSale] Persistence Error:', persistenceError);
-          // Note: In a professional app, we might want to enqueue these for retry if they fail,
-          // but for now, we log the error. The UI already shows the new stock.
         }
 
         success(`Order #${serialId} completed!`);

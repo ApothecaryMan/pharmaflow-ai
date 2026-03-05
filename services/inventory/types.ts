@@ -31,6 +31,7 @@ export interface InventoryService {
   create(drug: Omit<Drug, 'id'>): Promise<Drug>;
   update(id: string, drug: Partial<Drug>): Promise<Drug>;
   updateStock(id: string, quantity: number): Promise<Drug>;
+  updateStockBulk(mutations: { id: string; quantity: number }[]): Promise<void>;
   delete(id: string): Promise<boolean>;
   getStats(): Promise<InventoryStats>;
   getLowStock(threshold?: number): Promise<Drug[]>;

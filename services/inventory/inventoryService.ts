@@ -134,6 +134,10 @@ export const createInventoryService = (): InventoryService => ({
     return updated;
   },
 
+  updateStockBulk: async (mutations: { id: string; quantity: number }[]): Promise<void> => {
+    return drugCacheService.updateStockBulk(mutations);
+  },
+
   delete: async (id: string): Promise<boolean> => {
     await drugCacheService.remove(id);
     return true;

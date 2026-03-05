@@ -83,5 +83,36 @@ export const drugCacheService = {
         request.onerror = () => reject(request.error);
       });
     });
+  },
+
+  /**
+   * Bulk update stock quantities in a single IndexedDB transaction.
+   * Reads each drug by ID, applies the delta, and writes back — all in one transaction.
+   */
+  async updateStockBulk(mutations: { id: string; quantity: number }[]): Promise<void> {
+    if (mutations.length === 0) return;
+
+    return runTransaction(STORES.DRUGS, 'readwrite', (transaction) => {
+      const store = transaction.objectStore(STORES.DRUGS);
+
+      return new Promise<void>((resolve, reject) => {
+        let completed = 0;
+        const total = mutations.length;
+
+        for (const mutation of mutations) {
+          const getReq = store.get(mutation.id);
+          getReq.onsuccess = () => {
+            const drug = getReq.result as Drug | undefined;
+            if (drug) {
+              drug.stock = (drug.stock || 0) + mutation.quantity;
+              store.put(drug);
+            }
+            completed++;
+            if (completed === total) resolve();
+          };
+          getReq.onerror = () => reject(getReq.error);
+        }
+      });
+    });
   }
 };

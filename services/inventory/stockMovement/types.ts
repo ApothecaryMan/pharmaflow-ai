@@ -81,6 +81,7 @@ export interface StockMovementService {
   getAll: () => Promise<StockMovement[]>;
   getByDrugId: (drugId: string) => Promise<StockMovement[]>;
   logMovement: (movement: Omit<StockMovement, 'id' | 'timestamp'>) => Promise<StockMovement>;
+  logMovementsBulk: (movements: Omit<StockMovement, 'id' | 'timestamp'>[]) => Promise<void>;
   getHistory: (filters: StockMovementFilters) => Promise<StockMovement[] | PaginatedStockMovements>;
   getSummaryByDrug: (drugId: string, filters: StockMovementFilters) => Promise<StockMovementSummary>;
   getKPISummary: (filters: StockMovementFilters) => Promise<StockMovementKPISummary>;
