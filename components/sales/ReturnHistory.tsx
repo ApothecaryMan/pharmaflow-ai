@@ -75,14 +75,14 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
         meta: { align: 'start' },
       },
       {
-        accessorKey: 'date',
-        header: t.headers.date,
-        meta: { align: 'center' },
-      },
-      {
         accessorKey: 'saleId',
         header: t.headers.saleId,
         meta: { align: 'start' },
+      },
+      {
+        accessorKey: 'date',
+        header: t.headers.date,
+        meta: { align: 'center' },
       },
       {
         id: 'customerName',
@@ -113,20 +113,22 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
           const reason = info.getValue() as string;
           const style =
             reason === 'damaged'
-              ? { color: 'red', icon: 'broken_image' }
+              ? { textColor: 'text-red-500', borderColor: 'border-red-500', icon: 'broken_image' }
               : reason === 'defective'
-                ? { color: 'red', icon: 'build_circle' }
+                ? { textColor: 'text-red-500', borderColor: 'border-red-500', icon: 'build_circle' }
                 : reason === 'expired'
-                  ? { color: 'orange', icon: 'event_busy' }
+                  ? { textColor: 'text-orange-500', borderColor: 'border-orange-500', icon: 'event_busy' }
                   : reason === 'wrong_item'
-                    ? { color: 'purple', icon: 'error' }
+                    ? { textColor: 'text-teal-500', borderColor: 'border-teal-500', icon: 'error' }
+                  : reason === 'customer_request'
+                    ? { textColor: 'text-blue-500', borderColor: 'border-blue-500', icon: 'person' }
                     : reason === 'overage'
-                      ? { color: 'primary', icon: 'add_circle' }
-                      : { color: 'gray', icon: 'help' };
+                      ? { textColor: 'text-emerald-500', borderColor: 'border-emerald-500', icon: 'add_circle' }
+                      : { textColor: 'text-gray-500', borderColor: 'border-gray-500', icon: 'help' };
 
           return (
             <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border bg-transparent border-${style.color}-200 dark:border-${style.color}-900/50 text-${style.color}-700 dark:text-${style.color}-400 text-xs font-bold uppercase tracking-wider`}
+              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border bg-transparent ${style.borderColor} ${style.textColor} text-[10px] font-black uppercase tracking-wider`}
             >
               <span className='material-symbols-rounded text-sm'>{style.icon}</span>
               {t.reasons?.[reason] || reason}
@@ -136,6 +138,26 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
       },
     ],
     [t, locale, sales, color, textTransform]
+  );
+
+  const filterableColumns = useMemo(
+    () => [
+      {
+        id: 'reason',
+        label: t.headers.reason,
+        icon: 'help',
+        mode: 'multiple' as const,
+        options: [
+          { label: t.reasons?.customer_request || 'Customer Request', value: 'customer_request' },
+          { label: t.reasons?.damaged || 'Damaged', value: 'damaged' },
+          { label: t.reasons?.defective || 'Defective', value: 'defective' },
+          { label: t.reasons?.expired || 'Expired', value: 'expired' },
+          { label: t.reasons?.wrong_item || 'Wrong Item', value: 'wrong_item' },
+          { label: t.reasons?.overage || 'Overage', value: 'overage' },
+        ],
+      },
+    ],
+    [t]
   );
 
   // Filter returns by date only (text search handled by TanStackTable globalFilter)
@@ -168,48 +190,18 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
         </div>
       </div>
 
-      {/* Filters */}
-      <div className='flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center py-2'>
-        <div className='relative group w-full sm:w-auto'>
-          <SearchInput
-            value={searchTerm}
-            onSearchChange={setSearchTerm}
-            placeholder={t.searchPlaceholder || 'Search returns...'}
-            wrapperClassName='w-full sm:w-96'
-            className='py-3'
-          />
-        </div>
 
-        <div className='flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl'>
-          <DatePicker
-            value={dateRange.from}
-            onChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
-            label={datePickerTranslations?.from || t.fromDate || 'From'}
-            color='gray'
-            icon='calendar_today'
-          />
-          <span className='text-gray-400 material-symbols-rounded px-1 text-lg rtl:rotate-180'>
-            arrow_forward
-          </span>
-          <DatePicker
-            value={dateRange.to}
-            onChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
-            label={datePickerTranslations?.to || t.toDate || 'To'}
-            color='gray'
-            icon='event'
-          />
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className={`flex-1 overflow-hidden ${CARD_BASE} rounded-xl p-0 flex flex-col`}>
+      {/* Table Section */}
+      <div className='flex-1 flex flex-col min-h-0'>
         <TanStackTable
           data={filteredReturns}
           columns={columns}
           tableId='return_history'
           globalFilter={searchTerm}
           onSearchChange={setSearchTerm}
-          enableTopToolbar={false}
+          filterableColumns={filterableColumns}
+          enableTopToolbar={true}
+          enableSearch={true}
           searchPlaceholder={t.searchPlaceholder}
           onRowClick={(row) => setSelectedReturn(row)}
           onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
@@ -218,6 +210,29 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
           enableVirtualization={false}
           pageSize='auto'
           enableShowAll={true}
+          rightCustomControls={
+            <div className='flex items-center bg-gray-100 dark:bg-gray-800 p-0.5 rounded-full border border-gray-200 dark:border-gray-700'>
+              <DatePicker
+                value={dateRange.from}
+                onChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
+                label={datePickerTranslations?.from || t.fromDate || 'From'}
+                color='gray'
+                icon='calendar_today'
+                className="!py-1.5"
+              />
+              <span className='text-gray-400 material-symbols-rounded px-1 text-sm rtl:rotate-180'>
+                arrow_forward
+              </span>
+              <DatePicker
+                value={dateRange.to}
+                onChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
+                label={datePickerTranslations?.to || t.toDate || 'To'}
+                color='gray'
+                icon='event'
+                className="!py-1.5"
+              />
+            </div>
+          }
         />
       </div>
 
@@ -293,17 +308,19 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
                     const reason = selectedReturn.reason;
                     const style =
                       reason === 'damaged'
-                        ? { color: 'red', icon: 'broken_image' }
+                        ? { textColor: 'text-red-500', borderColor: 'border-red-500', icon: 'broken_image' }
                         : reason === 'defective'
-                          ? { color: 'red', icon: 'build_circle' }
-                          : reason === 'expired'
-                            ? { color: 'orange', icon: 'event_busy' }
-                            : reason === 'wrong_item'
-                              ? { color: 'purple', icon: 'error' }
-                              : { color: 'gray', icon: 'help' };
+                          ? { textColor: 'text-red-500', borderColor: 'border-red-500', icon: 'build_circle' }
+                        : reason === 'expired'
+                          ? { textColor: 'text-orange-500', borderColor: 'border-orange-500', icon: 'event_busy' }
+                        : reason === 'wrong_item'
+                          ? { textColor: 'text-teal-500', borderColor: 'border-teal-500', icon: 'error' }
+                        : reason === 'customer_request'
+                          ? { textColor: 'text-blue-500', borderColor: 'border-blue-500', icon: 'person' }
+                        : { textColor: 'text-gray-500', borderColor: 'border-gray-500', icon: 'help' };
                     return (
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border bg-transparent border-${style.color}-200 dark:border-${style.color}-900/50 text-${style.color}-700 dark:text-${style.color}-400 text-xs font-bold uppercase tracking-wider`}
+                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border bg-transparent ${style.borderColor} ${style.textColor} text-[10px] font-black uppercase tracking-wider`}
                       >
                         <span className='material-symbols-rounded text-sm'>{style.icon}</span>
                         {t.reasons?.[reason] || reason}

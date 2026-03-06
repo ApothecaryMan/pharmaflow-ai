@@ -97,35 +97,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         meta: { align: 'start' },
       },
       {
-        // Hidden column to enable deep search into item names/barcodes/customer
-        id: 'searchContent',
-        accessorFn: (sale) => {
-          const itemsSearch = sale.items
-            .map((item) => `${item.name} ${item.barcode || ''}`)
-            .join(' ');
-          return `${sale.id} ${sale.customerName || ''} ${sale.customerCode || ''} ${itemsSearch}`;
-        },
-        meta: { hideFromSettings: true },
-        enableGlobalFilter: true,
-      },
-      {
         accessorKey: 'date',
         header: t.headers.date,
         meta: { align: 'center' },
-      },
-      {
-        id: 'customerType',
-        accessorFn: (sale) => (sale.customerName ? 'registered' : 'guest'),
-        header: t.headers.customerType || 'Customer Type',
-        meta: { hideFromSettings: true },
-        enableGlobalFilter: false,
-      },
-      {
-        id: 'itemsCount',
-        accessorFn: (sale) => (sale.items.length >= 5 ? 'bulk' : 'single'),
-        header: t.headers.itemsCount || 'Items Count',
-        meta: { hideFromSettings: true },
-        enableGlobalFilter: false,
       },
       {
         accessorKey: 'customerName',
@@ -204,7 +178,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
           if (sale.hasReturns) {
             return (
-              <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+              <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-orange-500 text-orange-500 text-[10px] font-black uppercase tracking-wider bg-transparent'>
                 <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>assignment_return</span>
                 -${totalReturned.toFixed(2)}
               </span>
@@ -213,7 +187,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
           if (sale.status === 'cancelled') {
             return (
-              <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+              <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-red-500 text-red-500 text-[10px] font-black uppercase tracking-wider bg-transparent'>
                 <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>cancel</span>
                 {t.cancelled || 'Cancelled'}
               </span>
@@ -221,7 +195,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           }
 
           return (
-            <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+            <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-emerald-500 text-emerald-500 text-[10px] font-black uppercase tracking-wider bg-transparent'>
               <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>check_circle</span>
               {t.completed || 'Completed'}
             </span>
@@ -236,13 +210,13 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     () => [
       {
         id: 'status',
-        label: t.status || 'Status',
+        label: t.status,
         icon: 'dynamic_feed',
         mode: 'multiple' as const,
         options: [
-          { label: t.completed || 'Completed', value: 'completed', icon: 'check_circle' },
-          { label: t.cancelled || 'Cancelled', value: 'cancelled', icon: 'cancel' },
-          { label: t.returns?.title || 'Returned', value: 'returned', icon: 'assignment_return' },
+          { label: t.completed, value: 'completed', icon: 'check_circle' },
+          { label: t.cancelled, value: 'cancelled', icon: 'cancel' },
+          { label: t.returns?.returned || 'Returned', value: 'returned', icon: 'assignment_return' },
         ],
       },
       {
@@ -253,26 +227,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         options: [
           { label: t.cash, value: 'cash', icon: 'payments' },
           { label: t.visa, value: 'visa', icon: 'credit_card' },
-        ],
-      },
-      {
-        id: 'customerType',
-        label: t.headers.customerType || 'Customer Type',
-        icon: 'person',
-        mode: 'single' as const,
-        options: [
-          { label: t.global?.walkIn || 'Guest', value: 'guest', icon: 'person_outline' },
-          { label: t.global?.registered || 'Registered', value: 'registered', icon: 'how_to_reg' },
-        ],
-      },
-      {
-        id: 'itemsCount',
-        label: t.headers.itemsCount || 'Items Count',
-        icon: 'shopping_basket',
-        mode: 'single' as const,
-        options: [
-          { label: t.global?.singleItem || 'Single Item', value: 'single', icon: 'filter_1' },
-          { label: t.global?.bulkItems || 'Bulk Items (5+)', value: 'bulk', icon: 'filter_9_plus' },
         ],
       },
     ],
@@ -389,46 +343,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         )}
       </div>
 
-      {/* Filters */}
-      <div className='flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center py-2'>
-        <div className='flex flex-wrap items-center gap-3 w-full sm:flex-1'>
-          <div className='flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-1 rounded-full border border-gray-200 dark:border-gray-700'>
-            <DatePicker
-              value={startDate}
-              onChange={setStartDate}
-              label={t.dateFrom || 'From'}
-              color={color}
-              icon='calendar_today'
-              locale={locale}
-              translations={datePickerTranslations}
-            />
-            <span className='text-gray-300 dark:text-gray-700 rtl:rotate-180'>
-              <span className='material-symbols-rounded text-[16px]'>arrow_forward</span>
-            </span>
-            <DatePicker
-              value={endDate}
-              onChange={setEndDate}
-              label={t.dateTo || 'To'}
-              color={color}
-              icon='event'
-              locale={locale}
-              translations={datePickerTranslations}
-            />
-          </div>
-        </div>
-
-        <button
-          onClick={exportToCSV}
-          disabled={filteredSales.length === 0}
-          className={`px-4 py-2.5 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 text-gray-700 dark:text-gray-200`}
-        >
-          <span className='material-symbols-rounded text-lg'>download</span>
-          <span className='hidden md:inline'>{t.exportCSV}</span>
-        </button>
-      </div>
 
       {/* Table Section */}
-      <div className={`flex-1 overflow-hidden ${CARD_BASE} rounded-xl p-0 flex flex-col`}>
+      <div className='flex-1 flex flex-col min-h-0'>
         <TanStackTable
           data={filteredSales}
           columns={tableColumns}
@@ -442,13 +359,51 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           filterableColumns={filterableColumns}
           onRowClick={(sale) => setSelectedSale(sale)}
           emptyMessage={t.noResults}
-          lite={true}
+          lite={false}
           dense={true}
           initialSorting={[{ id: 'date', desc: true }]}
           enablePagination={true}
           enableVirtualization={false}
           pageSize='auto'
           enableShowAll={true}
+          rightCustomControls={
+            <>
+              <div className='flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-0.5 rounded-full border border-gray-200 dark:border-gray-700'>
+                <DatePicker
+                  value={startDate}
+                  onChange={setStartDate}
+                  label={t.dateFrom || 'From'}
+                  color={color}
+                  icon='calendar_today'
+                  locale={locale}
+                  translations={datePickerTranslations}
+                  className="!py-1.5"
+                />
+                <span className='text-gray-300 dark:text-gray-700 rtl:rotate-180'>
+                  <span className='material-symbols-rounded text-[14px]'>arrow_forward</span>
+                </span>
+                <DatePicker
+                  value={endDate}
+                  onChange={setEndDate}
+                  label={t.dateTo || 'To'}
+                  color={color}
+                  icon='event'
+                  locale={locale}
+                  translations={datePickerTranslations}
+                  className="!py-1.5"
+                />
+              </div>
+
+              <button
+                onClick={exportToCSV}
+                disabled={filteredSales.length === 0}
+                className='h-9 px-3 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-xs font-semibold disabled:opacity-50 text-gray-700 dark:text-gray-200'
+              >
+                <span className='material-symbols-rounded text-lg'>download</span>
+                <span className='hidden lg:inline'>{t.exportCSV}</span>
+              </button>
+            </>
+          }
         />
       </div>
 

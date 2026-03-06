@@ -979,6 +979,9 @@ export const TRANSLATIONS = {
     salesHistory: {
       title: 'Sales History',
       subtitle: 'View and manage past transactions',
+      status: 'Status',
+      completed: 'Completed',
+      cancelled: 'Cancelled',
       searchPlaceholder: 'Search customer, ID, or item name...',
       dateFrom: 'From',
       dateTo: 'To',
@@ -1275,7 +1278,7 @@ export const TRANSLATIONS = {
       headers: {
         returnId: 'Return ID',
         date: 'Date',
-        saleId: 'Sale ID',
+        saleId: 'Invoice Number',
         customer: 'Customer',
         refundAmount: 'Refund Amount',
         reason: 'Reason',
@@ -3053,6 +3056,9 @@ export const TRANSLATIONS = {
     salesHistory: {
       title: 'سجل المبيعــــــــات',
       subtitle: 'عرض وإدارة المعاملات السابقة',
+      status: 'الحالة',
+      completed: 'مكتمل',
+      cancelled: 'ملغي',
       searchPlaceholder: 'بحث بالعميل، المعرف أو اسم المنتج...',
       dateFrom: 'من',
       dateTo: 'إلى',
@@ -3501,7 +3507,7 @@ export const TRANSLATIONS = {
       headers: {
         returnId: 'رقم المرتجع',
         date: 'التاريخ',
-        saleId: 'رقم البيع',
+        saleId: 'رقم الفاتورة',
         customer: 'العميل',
         refundAmount: 'مبلغ الاسترداد',
         reason: 'السبب',

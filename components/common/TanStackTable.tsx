@@ -250,6 +250,10 @@ interface TanStackTableProps<TData, TValue> {
   initialFilters?: Record<string, any[]>;
   onFilterChange?: (filters: Record<string, any[]>) => void;
   enableGlobalSearchFocus?: boolean; // New: capture global keydown for search
+  leftCustomControls?: React.ReactNode;
+  rightCustomControls?: React.ReactNode;
+  enableTopToolbar?: boolean;
+  enableShowAll?: boolean;
 }
 
 // Helper to get stored settings
@@ -323,7 +327,9 @@ export function TanStackTable<TData, TValue>({
   initialFilters = {},
   onFilterChange,
   enableGlobalSearchFocus = true,
-}: TanStackTableProps<TData, TValue> & { enableTopToolbar?: boolean; enableShowAll?: boolean }) {
+  leftCustomControls,
+  rightCustomControls,
+}: TanStackTableProps<TData, TValue>) {
   // Detect RTL direction
   const isRtl = typeof document !== 'undefined' && document.dir === 'rtl';
 
@@ -845,23 +851,37 @@ export function TanStackTable<TData, TValue>({
     <div className='flex flex-col h-full w-full'>
       {/* Header Controls */}
       {enableTopToolbar && (
-        <div className={`flex items-center justify-between ${enableSearch ? 'mb-4' : ''}`}>
-          <div className='w-full max-w-xl'>
+        <div className={`flex flex-wrap items-center gap-4 justify-between ${enableSearch || leftCustomControls || rightCustomControls ? 'mb-4' : ''}`}>
+          <div className='flex items-center gap-3 flex-1 min-w-0'>
+            {leftCustomControls && (
+              <div className='flex items-center gap-2'>
+                {leftCustomControls}
+              </div>
+            )}
+            
             {enableSearch && (
-              <SearchInput
-                ref={searchInputRef}
-                value={globalFilter ?? ''}
-                onSearchChange={(val) => setGlobalFilter(val)}
-                onClear={() => setGlobalFilter('')}
-                placeholder={searchPlaceholder}
-                color={color}
-                // New Integrated Props
-                filterConfigs={filterableColumns}
-                activeFilters={activeFiltersRecord}
-                onUpdateFilter={handleFilterUpdate}
-              />
+              <div className='w-full max-w-xl'>
+                <SearchInput
+                  ref={searchInputRef}
+                  value={globalFilter ?? ''}
+                  onSearchChange={(val) => setGlobalFilter(val)}
+                  onClear={() => setGlobalFilter('')}
+                  placeholder={searchPlaceholder}
+                  color={color}
+                  // New Integrated Props
+                  filterConfigs={filterableColumns}
+                  activeFilters={activeFiltersRecord}
+                  onUpdateFilter={handleFilterUpdate}
+                />
+              </div>
             )}
           </div>
+
+          {rightCustomControls && (
+            <div className='flex items-center gap-2'>
+              {rightCustomControls}
+            </div>
+          )}
         </div>
       )}
 

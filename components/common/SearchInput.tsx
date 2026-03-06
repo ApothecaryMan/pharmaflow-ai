@@ -300,9 +300,12 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           {filterConfigs.length > 0 && (
             <div className={`
               flex items-center p-0.5 ${rounded === 'full' ? 'rounded-full ml-[-2px]' : 'rounded-xl'}
-              border border-gray-200/60 dark:border-(--border-divider)
-              bg-(--bg-surface-neutral)
-              ms-0.5
+              border transition-all duration-200 ms-0.5
+              ${
+                hasActiveFilters
+                  ? 'border-gray-200/60 dark:border-(--border-divider) bg-(--bg-surface-neutral)'
+                  : 'border-transparent bg-transparent hover:border-gray-200/60 dark:hover:border-(--border-divider) hover:bg-(--bg-surface-neutral)'
+              }
             `}>
               {/* Clear All Filters Button - Only if active filters exist */}
               {hasActiveFilters && (
