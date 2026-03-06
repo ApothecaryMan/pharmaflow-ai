@@ -164,6 +164,13 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setIsOpen(!isOpen);
   };
 
+  const closeAllSubmenus = () => {
+    setThemeExpanded(false);
+    setTypographyExpanded(false);
+    setBlurOptionsExpanded(false);
+    setStatusBarExpanded(false);
+  };
+
   return (
     <div
       className={`relative ${showTrigger && triggerVariant === 'statusBar' ? 'h-full flex items-center' : ''}`}
@@ -207,7 +214,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
           </div>
 
           {/* Settings Content */}
-          <div className='p-3 space-y-3' style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}>
+          <div 
+            className='p-3 space-y-3' 
+            style={{ direction: language === 'AR' ? 'rtl' : 'ltr' }}
+            onClick={(e) => {
+              // If clicking on the container itself (empty space), close submenus
+              if (e.target === e.currentTarget) closeAllSubmenus();
+            }}
+          >
             {/* --- Group 1: Appearance --- */}
 
             {/* Themes Nested Menu (Replaces old selector) */}
@@ -231,9 +245,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 <div className='flex items-center gap-2'>
                   <button
                     onClick={() => {
-                      checkThemesPos(); // Check position
-                      setThemeExpanded(!themeExpanded);
-                      if (!themeExpanded) setStatusBarExpanded(false);
+                      const newState = !themeExpanded;
+                      closeAllSubmenus();
+                      if (newState) {
+                        checkThemesPos();
+                        setThemeExpanded(true);
+                      }
                     }}
                     className='transition-colors'
                     type='button'
@@ -353,12 +370,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   />
                   <button
                     onClick={() => {
-                      checkBlurOptionsPos();
-                      setBlurOptionsExpanded(!blurOptionsExpanded);
-                      if (!blurOptionsExpanded) {
-                        setStatusBarExpanded(false);
-                        setThemeExpanded(false);
-                        setTypographyExpanded(false);
+                      const newState = !blurOptionsExpanded;
+                      closeAllSubmenus();
+                      if (newState) {
+                        checkBlurOptionsPos();
+                        setBlurOptionsExpanded(true);
                       }
                     }}
                     className='transition-colors'
@@ -554,11 +570,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 <div className='flex items-center gap-2'>
                   <button
                     onClick={() => {
-                      checkTypographyPos();
-                      setTypographyExpanded(!typographyExpanded);
-                      if (!typographyExpanded) {
-                        setStatusBarExpanded(false);
-                        setThemeExpanded(false);
+                      const newState = !typographyExpanded;
+                      closeAllSubmenus();
+                      if (newState) {
+                        checkTypographyPos();
+                        setTypographyExpanded(true);
                       }
                     }}
                     className='transition-colors'
@@ -602,7 +618,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       <span className='material-symbols-rounded text-(--icon-xs)'>text_fields</span>
                       {t.fontEN}
                     </label>
-                    <div className='flex flex-wrap gap-1.5'>
+                    <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none'>
                       {AVAILABLE_FONTS_EN.map((font) => {
                         const isSelected = fontFamilyEN === font.value;
                         return (
@@ -628,7 +644,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       <span className='material-symbols-rounded text-(--icon-xs)'>translate</span>
                       {t.fontAR}
                     </label>
-                    <div className='flex flex-wrap gap-1.5'>
+                    <div className='flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none'>
                       {AVAILABLE_FONTS_AR.map((font) => {
                         const isSelected = fontFamilyAR === font.value;
                         return (
