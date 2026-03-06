@@ -11,7 +11,7 @@ import { idGenerator } from '../../utils/idGenerator';
 import { parseSearchTerm } from '../../utils/searchUtils';
 import { storage } from '../../utils/storage';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { DatePicker } from '../common/DatePicker';
+import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { formatExpiryDate } from '../../utils/expiryUtils';
 import { usePosSounds } from '../common/hooks/usePosSounds';
@@ -58,11 +58,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   color = 'blue',
   t,
 }) => {
-  const { branchCode } = useSettings();
+  const { branchCode, language, textTransform } = useSettings();
   const [searchTerm, setSearchTerm] = useState('');
   const [adjustments, setAdjustments] = useState<AdjustmentItem[]>([]);
   const { success, error, info, warning } = useAlert();
-  const { textTransform } = useSettings();
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [history, setHistory] = useState<StockMovement[]>([]);
   const [lastTransaction, setLastTransaction] = useState<StockMovement[]>([]);
@@ -1050,27 +1049,14 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               </button>
 
               {/* Date Range */}
-              <div className='flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-1 rounded-full border border-gray-200 dark:border-gray-700 h-8'>
-                <DatePicker
-                  value={dateRange.from}
-                  onChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
-                  label={t.common?.fromDate || 'From'}
-                  color={color}
-                  icon='calendar_today'
-                  className='py-0.5! px-2! text-xs! border-0 bg-transparent h-6!'
-                />
-                <span className='text-gray-300 dark:text-gray-600 rtl:rotate-180 flex items-center'>
-                  <span className='material-symbols-rounded text-[14px]'>arrow_forward</span>
-                </span>
-                <DatePicker
-                  value={dateRange.to}
-                  onChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
-                  label={t.common?.toDate || 'To'}
-                  color={color}
-                  icon='event'
-                  className='py-0.5! px-2! text-xs! border-0 bg-transparent h-6!'
-                />
-              </div>
+              <DateRangePicker
+                startDate={dateRange.from}
+                endDate={dateRange.to}
+                onStartDateChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
+                onEndDateChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
+                color={color}
+                locale={language === 'AR' ? 'ar-EG' : 'en-US'}
+              />
 
               {/* Filter Pending/All (Right Aligned in mobile, auto in desktop) */}
               <div className='ml-auto xl:ml-0 flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg h-8 items-center'>

@@ -20,7 +20,7 @@ import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
-import { DatePicker } from '../common/DatePicker';
+import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { FloatingInput } from '../common/FloatingInput';
 import { usePosSounds } from '../common/hooks/usePosSounds';
@@ -1139,41 +1139,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
           {/* Status Filter (History Mode Only) */}
           {mode === 'history' && (
-            <div className='flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl me-2'>
-              <DatePicker
-                value={dateRange.from}
-                onChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
-                label={t.fromDate || 'From'}
+              <DateRangePicker
+                startDate={dateRange.from}
+                endDate={dateRange.to}
+                onStartDateChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
+                onEndDateChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
                 color='gray'
-                icon='calendar_today'
-                translations={{
-                  cancel: t.cancel || 'Cancel',
-                  ok: t.ok || 'OK',
-                  hour: t.hour || 'Hour',
-                  minute: t.minute || 'Minute',
-                  am: t.time?.am || t.am || 'AM',
-                  pm: t.time?.pm || t.pm || 'PM',
-                }}
+                locale={language === 'AR' ? 'ar-EG' : 'en-US'}
               />
-              <span className='text-gray-400 material-symbols-rounded px-1 text-lg rtl:rotate-180'>
-                arrow_forward
-              </span>
-              <DatePicker
-                value={dateRange.to}
-                onChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
-                label={t.toDate || 'To'}
-                color='gray'
-                icon='event'
-                translations={{
-                  cancel: t.cancel || 'Cancel',
-                  ok: t.ok || 'OK',
-                  hour: t.hour || 'Hour',
-                  minute: t.minute || 'Minute',
-                  am: t.time?.am || t.am || 'AM',
-                  pm: t.time?.pm || t.pm || 'PM',
-                }}
-              />
-            </div>
           )}
 
           <SegmentedControl

@@ -1,6 +1,31 @@
 import type React from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { BUTTON_BASE } from '../../utils/themeStyles';
+
+// --- Unified Translations ---
+
+const DATE_PICKER_TRANSLATIONS: Record<string, any> = {
+  'en-US': {
+    cancel: 'Cancel',
+    ok: 'OK',
+    hour: 'Hour',
+    minute: 'Minute',
+    am: 'AM',
+    pm: 'PM',
+    from: 'From',
+    to: 'To',
+  },
+  'ar-EG': {
+    cancel: 'إلغاء',
+    ok: 'موافق',
+    hour: 'ساعة',
+    minute: 'دقيقة',
+    am: 'ص',
+    pm: 'م',
+    from: 'من',
+    to: 'إلى',
+  },
+};
 
 // --- Wheel Picker Component ---
 
@@ -134,7 +159,7 @@ const WheelPicker: React.FC<WheelPickerProps> = ({
       {/* Layer 1: Background (Normal / Faded) */}
       <div
         ref={containerRef}
-        className='h-full overflow-y-auto no-scrollbar snap-y snap-mandatory py-[80px] relative z-10 text-gray-500/60 dark:text-gray-400/60'
+        className='h-full overflow-y-auto no-scrollbar snap-y snap-mandatory py-[80px] relative z-10 text-gray-500/60 dark:text-gray-500/60'
         style={{
           WebkitMaskImage:
             'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.1) 10%, black 40%, black 60%, rgba(0,0,0,0.1) 90%, transparent 100%)',
@@ -158,7 +183,7 @@ const WheelPicker: React.FC<WheelPickerProps> = ({
       >
         <div
           ref={highlightItemsRef}
-          className='absolute top-0 left-0 w-full pt-[80px]'
+          className='absolute top-0 left-0 w-full pt-[80px] text-gray-900 dark:text-white'
           style={{ willChange: 'transform' }}
         >
           <ItemList isLens={true} />
@@ -175,6 +200,7 @@ interface DatePickerProps {
   color: string;
   placeholder?: string;
   icon?: string;
+  iconPosition?: 'start' | 'end';
   locale?: string;
   translations?: {
     cancel: string;
@@ -187,6 +213,7 @@ interface DatePickerProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   rounded?: 'full' | 'xl' | 'lg' | 'md' | 'none';
+  variant?: 'default' | 'ghost' | 'pill-dark';
 }
 
 export const DatePicker: React.FC<DatePickerProps> = ({
@@ -196,21 +223,18 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   color,
   placeholder,
   icon = 'calendar_today',
+  iconPosition = 'start',
   locale = 'en-US',
-  translations = {
-    cancel: 'Cancel',
-    ok: 'OK',
-    hour: 'Hour',
-    minute: 'Minute',
-    am: 'AM',
-    pm: 'PM',
-  },
+  translations: customTranslations,
   className = '',
   size = 'sm',
   rounded = 'full',
+  variant = 'default',
 }) => {
+  const translations = customTranslations || DATE_PICKER_TRANSLATIONS[locale] || DATE_PICKER_TRANSLATIONS['en-US'];
   // --- State ---
   const [isOpen, setIsOpen] = useState(false);
+  const [alignRight, setAlignRight] = useState(false);
 
   // Dates
   // selectedDate: The actual value committed
@@ -223,16 +247,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   // Refs
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Positioning State
-  const [isPositioned, setIsPositioned] = useState(false);
-  const [position, setPosition] = useState<{ top: number; left: number; transformOrigin: string }>({
-    top: 0,
-    left: 0,
-    transformOrigin: 'top center',
-  });
-
-  // --- Effects ---
 
   // Sync state with props
   useEffect(() => {
@@ -248,6 +262,22 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       setViewDate(new Date());
     }
   }, [value, isOpen]);
+
+  // Handle alignment check
+  useLayoutEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      // Dropdown width is fixed at 380px roughly
+      const dropdownWidth = 380;
+      
+      // If the button's left position + dropdown width exceeds window width, align right
+      if (rect.left + dropdownWidth > window.innerWidth) {
+        setAlignRight(true);
+      } else {
+        setAlignRight(false);
+      }
+    }
+  }, [isOpen]);
 
   // Handle Outside Click & Scroll
   useEffect(() => {
@@ -287,41 +317,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     };
   }, [isOpen]);
 
-  // Calculate Position
-  useLayoutEffect(() => {
-    if (isOpen && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      const DROPDOWN_WIDTH = 320;
-      const DROPDOWN_HEIGHT = 400;
-      const GAP = 8;
-      const VIEWPORT_PADDING = 10;
 
-      let top = rect.bottom + GAP;
-      let left = rect.left + rect.width / 2 - DROPDOWN_WIDTH / 2;
-      let transformOrigin = 'top center';
-
-      if (top + DROPDOWN_HEIGHT > window.innerHeight - VIEWPORT_PADDING) {
-        if (rect.top - DROPDOWN_HEIGHT - GAP > VIEWPORT_PADDING) {
-          top = rect.top - DROPDOWN_HEIGHT - GAP;
-          transformOrigin = 'bottom center';
-        }
-      }
-
-      if (left + DROPDOWN_WIDTH > window.innerWidth - VIEWPORT_PADDING) {
-        left = window.innerWidth - DROPDOWN_WIDTH - VIEWPORT_PADDING;
-        transformOrigin = transformOrigin.replace('center', 'right');
-      }
-      if (left < VIEWPORT_PADDING) {
-        left = VIEWPORT_PADDING;
-        transformOrigin = transformOrigin.replace('center', 'left');
-      }
-
-      setPosition({ top, left, transformOrigin });
-      setIsPositioned(true);
-    } else {
-      setIsPositioned(false);
-    }
-  }, [isOpen]);
 
   // --- Wheel Logic ---
 
@@ -512,6 +508,23 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     },
   };
 
+  const getVariantStyles = () => {
+    if (variant === 'ghost') {
+      return value
+        ? 'bg-white dark:bg-(--bg-card) border-transparent text-gray-900 dark:text-white font-bold shadow-[rgba(0,0,0,0.09)_0px_3px_12px]'
+        : 'bg-transparent border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-white/50 dark:hover:bg-(--bg-card)/50 font-bold';
+    }
+
+    if (variant === 'pill-dark') {
+      return 'bg-white dark:bg-black/40 border-transparent text-gray-700 dark:text-gray-400 shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none hover:bg-gray-50 dark:hover:bg-black/60 font-medium';
+    }
+    
+    // Default variant
+    return value
+      ? 'bg-primary-200 dark:bg-primary-800/60 border-primary-400 dark:border-primary-600/50 text-primary-900 dark:text-primary-50 font-semibold shadow-xs'
+      : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700/60 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-white dark:hover:bg-gray-800';
+  };
+
   return (
     <div className='relative inline-block'>
       {/* --- Trigger Button --- */}
@@ -525,19 +538,17 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           setIsOpen(!isOpen);
         }}
         className={`
-                    flex items-center border transition-all select-none outline-hidden focus:ring-0
-                    ${styles[size]}
-                    ${styles.rounded[rounded]}
-                    
-                    ${
-                      value
-                        ? `bg-primary-200 dark:bg-primary-800 border-primary-400 dark:border-primary-600 text-primary-900 dark:text-primary-50 font-semibold shadow-xs`
-                        : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-white dark:hover:bg-gray-800'
-                    }
-                    ${className}
-                `}
+          flex items-center transition-all select-none outline-hidden focus:ring-0
+          ${variant === 'default' ? 'border' : 'border'}
+          ${styles[size]}
+          ${styles.rounded[rounded]}
+          ${getVariantStyles()}
+          ${className}
+        `}
       >
-        <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>{icon}</span>
+        {iconPosition === 'start' && (
+          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>{icon}</span>
+        )}
         <span className='text-sm font-medium whitespace-nowrap'>
           {value
             ? new Date(value).toLocaleString(locale, {
@@ -548,38 +559,38 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               })
             : placeholder || label}
         </span>
+        {iconPosition === 'end' && (
+          <span className='material-symbols-rounded ml-1.5' style={{ fontSize: 'var(--icon-md)' }}>{icon}</span>
+        )}
 
         {value && (
           <div
             onClick={clearSelection}
-            className={`w-5 h-5 rounded-full flex items-center justify-center transform hover:scale-110 active:scale-95 transition-all ml-1 hover:bg-primary-200 dark:hover:bg-primary-800`}
+            className={`flex items-center justify-center ml-1.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors`}
           >
             <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>close</span>
           </div>
         )}
       </button>
 
-      {/* --- Portal Dropdown --- */}
-      {isOpen &&
-        isPositioned &&
-        createPortal(
-          <div
-            ref={dropdownRef}
-            className='fixed z-99999 animate-fade-in'
-            style={{
-              top: position.top,
-              left: position.left,
-              transformOrigin: position.transformOrigin,
-            }}
-            dir={locale === 'ar-EG' || locale.startsWith('ar') ? 'rtl' : 'ltr'}
-          >
+      {/* --- Dropdown --- */}
+      {isOpen && (
+        <div
+          ref={dropdownRef}
+          className={`absolute z-[99999] animate-fade-in mt-2 ${alignRight ? 'right-0' : 'left-0'}`}
+          style={{
+            top: '100%',
+            transformOrigin: alignRight ? 'top right' : 'top left',
+          }}
+          dir={locale === 'ar-EG' || locale.startsWith('ar') ? 'rtl' : 'ltr'}
+        >
             <div
-              className={`bg-white dark:bg-gray-900 ${styles.dropdownRounded[rounded]} shadow-2xl border border-gray-200 dark:border-gray-800 p-5 w-[380px] select-none`}
+              className={`bg-white dark:bg-(--bg-card) ${styles.dropdownRounded[rounded]} shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-gray-200 dark:border-(--border-divider) p-5 w-[380px] select-none`}
             >
               {/* iOS Style Wheel Layout */}
               <div className='relative flex items-center justify-center gap-2 mb-4'>
                 {/* Unified Highlight Bar */}
-                <div className='absolute top-1/2 -translate-y-1/2 left-0 right-0 h-[42px] bg-gray-100/50 dark:bg-gray-800/40 rounded-xl z-0'></div>
+                <div className='absolute top-1/2 -translate-y-1/2 left-0 right-0 h-[42px] bg-gray-100/60 dark:bg-black/20 rounded-xl z-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]'></div>
 
                 {tempDate && (
                   <>
@@ -609,7 +620,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                       width='75px'
                     />
 
-                    <div className='w-px h-20 bg-gray-200 dark:bg-gray-800 mx-1 self-center opacity-50' />
+                    <div className='w-px h-20 bg-gray-200 dark:bg-(--border-divider) mx-1 self-center opacity-50' />
 
                     {/* Hour */}
                     <WheelPicker
@@ -641,24 +652,97 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               </div>
 
               {/* Footer Actions */}
-              <div className='flex items-center justify-end gap-2 border-t border-gray-100 dark:border-gray-800 pt-3'>
+              <div className='flex items-center justify-end gap-2 border-t border-gray-100 dark:border-(--border-divider) pt-4 mt-2'>
                 <button
-                  onClick={() => setIsOpen(false)}
-                  className='px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors'
+                  type='button'
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsOpen(false);
+                  }}
+                  className='px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-colors'
                 >
                   {translations.cancel}
                 </button>
                 <button
-                  onClick={confirmSelection}
-                  className={`px-6 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg active:scale-95 transition-all`}
+                  type='button'
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    confirmSelection();
+                  }}
+                  className={`${BUTTON_BASE} text-sm font-medium text-white border border-transparent dark:border-(--border-divider) active:scale-95 transition-all`}
                 >
                   {translations.ok}
                 </button>
               </div>
             </div>
-          </div>,
-          document.body
+          </div>
         )}
+    </div>
+  );
+};
+
+export interface DateRangePickerProps {
+  startDate: string;
+  endDate: string;
+  onStartDateChange: (value: string) => void;
+  onEndDateChange: (value: string) => void;
+  startLabel?: string;
+  endLabel?: string;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+  color?: string;
+  locale?: string;
+}
+
+export const DateRangePicker: React.FC<DateRangePickerProps> = ({
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
+  startLabel,
+  endLabel,
+  size = 'sm',
+  className = '',
+  color = 'primary',
+  locale = 'en-US',
+}) => {
+  const t = DATE_PICKER_TRANSLATIONS[locale] || DATE_PICKER_TRANSLATIONS['en-US'];
+
+  return (
+    <div
+      className={`inline-flex items-center gap-1 bg-gray-100/80 dark:bg-black/20 p-1 rounded-full border border-gray-200/50 dark:border-white/5 ${className}`}
+    >
+      <DatePicker
+        value={endDate}
+        onChange={onEndDateChange}
+        label={endLabel || t.to}
+        color={color}
+        size={size}
+        variant='pill-dark'
+        locale={locale}
+        translations={t}
+        iconPosition="end"
+        icon="calendar_today"
+      />
+      
+      <span className='material-symbols-rounded text-gray-400 dark:text-gray-600 px-1 text-sm rtl:rotate-180'>
+        arrow_back
+      </span>
+
+      <DatePicker
+        value={startDate}
+        onChange={onStartDateChange}
+        label={startLabel || t.from}
+        color={color}
+        size={size}
+        variant='pill-dark'
+        locale={locale}
+        translations={t}
+        iconPosition="end"
+        icon="calendar_today"
+      />
     </div>
   );
 };

@@ -5,7 +5,7 @@ import { TRANSLATIONS } from '../../i18n/translations';
 import { stockMovementService } from '../../services/inventory/stockMovement/stockMovementService';
 import { StockMovement, StockMovementSummary, Drug } from '../../types';
 import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
-import { DatePicker } from '../common/DatePicker';
+import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { TimelineItem } from './stockMovement';
 import { SmallCard } from '../common/SmallCard';
 import { CARD_LG } from '../../utils/themeStyles';
@@ -215,19 +215,14 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
 
           {/* Date Range & Actions */}
           <div className="flex flex-wrap items-center gap-2">
-            <DatePicker
-              value={dateRange.start}
-              onChange={(val) => setDateRange(prev => ({ ...prev, start: val }))}
-              label={isRTL ? 'من' : 'From'}
+            <DateRangePicker
+              startDate={dateRange.start}
+              endDate={dateRange.end}
+              onStartDateChange={(val) => setDateRange(prev => ({ ...prev, start: val }))}
+              onEndDateChange={(val) => setDateRange(prev => ({ ...prev, end: val }))}
               color={themeColor}
-              size="md"
-            />
-            <DatePicker
-              value={dateRange.end}
-              onChange={(val) => setDateRange(prev => ({ ...prev, end: val }))}
-              label={isRTL ? 'إلى' : 'To'}
-              color={themeColor}
-              size="md"
+              size="sm"
+              locale={language === 'AR' ? 'ar-EG' : 'en-US'}
             />
             <button
               onClick={exportCSV}

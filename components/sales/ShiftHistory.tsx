@@ -5,7 +5,7 @@ import { useShift } from '../../hooks/useShift';
 import type { Employee, Shift } from '../../types';
 import { createSearchRegex } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { DatePicker } from '../common/DatePicker';
+import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
@@ -354,29 +354,14 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
             />
           </div>
 
-          <div className='flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-1 rounded-full border border-gray-200 dark:border-gray-700'>
-            <DatePicker
-              value={startDate}
-              onChange={setStartDate}
-              label={t.shiftHistory?.dateFrom || 'From'}
+            <DateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
               color={color}
-              icon='calendar_today'
               locale={locale}
-              translations={datePickerTranslations}
             />
-            <span className='text-gray-300 dark:text-gray-700 rtl:rotate-180'>
-              <span className='material-symbols-rounded text-[16px]'>arrow_forward</span>
-            </span>
-            <DatePicker
-              value={endDate}
-              onChange={setEndDate}
-              label={t.shiftHistory?.dateTo || 'To'}
-              color={color}
-              icon='event'
-              locale={locale}
-              translations={datePickerTranslations}
-            />
-          </div>
         </div>
 
         <button

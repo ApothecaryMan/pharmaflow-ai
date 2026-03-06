@@ -8,7 +8,7 @@ import { CartItem, type Return, type Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
-import { DatePicker } from '../common/DatePicker';
+import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { HelpButton, HelpModal } from '../common/HelpModal';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
@@ -230,27 +230,14 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
           pageSize='auto'
           enableShowAll={true}
           rightCustomControls={
-            <div className='flex items-center bg-gray-100 dark:bg-gray-800 p-0.5 rounded-full border border-gray-200 dark:border-gray-700'>
-              <DatePicker
-                value={dateRange.from}
-                onChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
-                label={datePickerTranslations?.from || t.fromDate || 'From'}
+              <DateRangePicker
+                startDate={dateRange.from}
+                endDate={dateRange.to}
+                onStartDateChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
+                onEndDateChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
                 color='gray'
-                icon='calendar_today'
-                className="!py-1.5"
+                locale={locale}
               />
-              <span className='text-gray-400 material-symbols-rounded px-1 text-sm rtl:rotate-180'>
-                arrow_forward
-              </span>
-              <DatePicker
-                value={dateRange.to}
-                onChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
-                label={datePickerTranslations?.to || t.toDate || 'To'}
-                color='gray'
-                icon='event'
-                className="!py-1.5"
-              />
-            </div>
           }
         />
       </div>

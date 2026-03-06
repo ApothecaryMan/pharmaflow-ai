@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSettings } from '../../context';
 import { useColumnReorder } from '../../hooks/useColumnReorder';
 import { useLongPress } from '../../hooks/useLongPress';
 import { settingsService } from '../../services';
@@ -16,7 +17,7 @@ import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
 import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
-import { DatePicker } from '../common/DatePicker';
+import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { FloatingInput } from '../common/FloatingInput';
 import { usePosSounds } from '../common/hooks/usePosSounds';
@@ -46,6 +47,8 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
+  const { language } = useSettings();
+  const locale = language === 'AR' ? 'ar-EG' : 'en-US';
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
   const [supplierSearch, setSupplierSearch] = useState('');
@@ -1162,27 +1165,14 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                   </div>
                 )}
               </div>
-              <div className='flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-full me-2'>
-                <DatePicker
-                  value={dateRange.from}
-                  onChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
-                  label={t.fromDate || 'From'}
-                  color='gray'
-                  icon='calendar_today'
-                  className='py-1 px-3 text-xs h-[32px] focus:ring-0 hover:bg-white dark:hover:bg-gray-800'
-                />
-                <span className='text-gray-400 material-symbols-rounded px-1 text-lg rtl:rotate-180'>
-                  arrow_forward
-                </span>
-                <DatePicker
-                  value={dateRange.to}
-                  onChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
-                  label={t.toDate || 'To'}
-                  color='gray'
-                  icon='event'
-                  className='py-1 px-3 text-xs h-[32px] focus:ring-0 hover:bg-white dark:hover:bg-gray-800'
-                />
-              </div>
+              <DateRangePicker
+                startDate={dateRange.from}
+                endDate={dateRange.to}
+                onStartDateChange={(val) => setDateRange((prev) => ({ ...prev, from: val }))}
+                onEndDateChange={(val) => setDateRange((prev) => ({ ...prev, to: val }))}
+                color='gray'
+                locale={locale}
+              />
             </>
           )}
 

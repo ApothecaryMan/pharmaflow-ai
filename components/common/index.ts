@@ -7,7 +7,7 @@ export {
   useContextMenuTrigger,
 } from './ContextMenu';
 export { DataTable } from './DataTable';
-export { DatePicker } from './DatePicker';
+export { DatePicker, DateRangePicker } from './DatePicker';
 export { ExpandedModal } from './ExpandedModal';
 export { FilterDropdown, type FilterDropdownProps } from './FilterDropdown';
 export { HelpButton, HelpModal } from './HelpModal';

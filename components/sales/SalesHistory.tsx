@@ -7,7 +7,7 @@ import type { Return, Sale, Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { createSearchRegex } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
-import { DatePicker } from '../common/DatePicker';
+import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { HelpButton, HelpModal } from '../common/HelpModal';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
@@ -368,31 +368,14 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           enableShowAll={true}
           rightCustomControls={
             <>
-              <div className='flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-0.5 rounded-full border border-gray-200 dark:border-gray-700'>
-                <DatePicker
-                  value={startDate}
-                  onChange={setStartDate}
-                  label={t.dateFrom || 'From'}
-                  color={color}
-                  icon='calendar_today'
-                  locale={locale}
-                  translations={datePickerTranslations}
-                  className="!py-1.5"
-                />
-                <span className='text-gray-300 dark:text-gray-700 rtl:rotate-180'>
-                  <span className='material-symbols-rounded text-[14px]'>arrow_forward</span>
-                </span>
-                <DatePicker
-                  value={endDate}
-                  onChange={setEndDate}
-                  label={t.dateTo || 'To'}
-                  color={color}
-                  icon='event'
-                  locale={locale}
-                  translations={datePickerTranslations}
-                  className="!py-1.5"
-                />
-              </div>
+              <DateRangePicker
+                startDate={startDate}
+                endDate={endDate}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+                color={color}
+                locale={locale}
+              />
 
               <button
                 onClick={exportToCSV}
