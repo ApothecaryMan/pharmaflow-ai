@@ -201,6 +201,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
             branchId: finalBranchId
           }));
           await inventoryService.save(seededInventory, finalBranchId);
+          batchService.migrateInventoryToBatches(seededInventory);
           inv.push(...seededInventory);
         }
 

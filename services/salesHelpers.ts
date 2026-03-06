@@ -60,7 +60,7 @@ export const calculateOrderModifications = (
 
     if (!newItem) {
       // ITEM REMOVED
-      if (oldItem.batchAllocations) batchService.returnStock(oldItem.batchAllocations);
+      if (oldItem.batchAllocations) batchService.returnStock(oldItem.batchAllocations, oldItem.id);
 
       // Restore inventory
       currentInventory = currentInventory.map((d) => {

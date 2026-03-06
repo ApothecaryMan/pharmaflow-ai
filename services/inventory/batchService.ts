@@ -232,23 +232,45 @@ export const allocateStock = (
 /**
  * Return stock to original batches
  * Used when order is cancelled or items are removed
+ * 
+ * If the original batch is missing (e.g. deleted or moved), it attempts to
+ * find another batch for the same drug and expiry date, or creates a new one.
  *
  * @param allocations - The batch allocations to return
+ * @param drugId - Optional drugId for fallback recreation
  */
-export const returnStock = (allocations: BatchAllocation[]): void => {
+export const returnStock = (allocations: BatchAllocation[], drugId?: string): void => {
   if (!allocations || allocations.length === 0) return;
 
   const all = getAllBatchesRaw();
 
   for (const alloc of allocations) {
-    const batch = all.find((b) => b.id === alloc.batchId);
+    let batch = all.find((b) => b.id === alloc.batchId);
+    
+    // Fallback: If specific batch ID is missing, try to find by drugId + expiry
+    if (!batch && drugId) {
+      batch = all.find((b) => b.drugId === drugId && b.expiryDate === alloc.expiryDate);
+    }
+
     if (batch) {
       // Return to existing batch
       batch.quantity += alloc.quantity;
+    } else if (drugId) {
+      // Batch missing and no match by expiry -> Recreate the batch
+      // This ensures stock is not "lost" to the system
+      const newBatch: StockBatch = {
+        id: idGenerator.generate('batch', drugId), // Regenerate or use old ID? Better regenerate
+        drugId,
+        quantity: alloc.quantity,
+        expiryDate: alloc.expiryDate,
+        costPrice: 0, // Unknown at this point, but better than losing stock
+        dateReceived: new Date().toISOString(),
+        batchNumber: 'RECREATED',
+      };
+      all.push(newBatch);
+      console.log(`[BatchService] Recreated missing batch for drug ${drugId} during return.`);
     } else {
-      // Batch was removed (was empty), need to recreate it
-      // This shouldn't normally happen in the short delivery window
-      console.warn(`Batch ${alloc.batchId} not found for return. Stock may be lost.`);
+      console.warn(`Batch ${alloc.batchId} not found for return and no drugId provided for fallback. Stock may be lost.`);
     }
   }
 

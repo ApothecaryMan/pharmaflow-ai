@@ -211,7 +211,7 @@ export const returnStock = (
     }
     
     if (returnsToMake.length > 0) {
-      batchService.returnStock(returnsToMake);
+      batchService.returnStock(returnsToMake, drug.id);
     }
   }
 
