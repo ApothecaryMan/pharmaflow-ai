@@ -3,15 +3,18 @@ import React from 'react';
 import { useMemo, useState } from 'react';
 import { useSettings } from '../../context';
 import { RETURN_HISTORY_HELP } from '../../i18n/helpInstructions';
+import { TRANSLATIONS } from '../../i18n/translations';
 import { CartItem, type Return, type Sale } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { useContextMenu } from '../common/ContextMenu';
 import { DatePicker } from '../common/DatePicker';
 import { HelpButton, HelpModal } from '../common/HelpModal';
+import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
 import { TanStackTable } from '../common/TanStackTable';
+import { SaleDetailModal } from './SaleDetailModal';
 
 interface ReturnHistoryProps {
   returns: Return[];
@@ -49,6 +52,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>({ from: '', to: '' });
 
   const [selectedReturn, setSelectedReturn] = useState<Return | null>(null);
+  const [viewedSale, setViewedSale] = useState<Sale | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const { textTransform } = useSettings();
   const { showMenu } = useContextMenu();
@@ -78,6 +82,21 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
         accessorKey: 'saleId',
         header: t.headers.saleId,
         meta: { align: 'start' },
+        cell: (info) => {
+          const sid = info.getValue() as string;
+          return (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const sale = sales.find((s) => s.id === sid);
+                if (sale) setViewedSale(sale);
+              }}
+              className='text-primary-600 dark:text-primary-400 hover:underline font-bold text-xs'
+            >
+              #{sid}
+            </button>
+          );
+        },
       },
       {
         accessorKey: 'date',
@@ -241,144 +260,115 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
         <Modal
           isOpen={true}
           onClose={() => setSelectedReturn(null)}
-          size='2xl'
+          size='lg'
           zIndex={50}
           title={t.modal?.title || 'Return Details'}
-          icon='assignment_return'
-          footer={
-            <div className='flex justify-end'>
-              <button
-                onClick={() => setSelectedReturn(null)}
-                className='px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
-              >
-                {t.modal?.close || 'Close'}
-              </button>
-            </div>
-          }
+          icon='receipt_long'
         >
-          <div className='space-y-6'>
+          <div className='space-y-4'>
             {/* Return Information Section */}
-            <div>
-              <h3 className='text-sm font-medium text-gray-500 dark:text-gray-400 mb-4 flex items-center gap-2'>
-                <span className='material-symbols-rounded text-[18px]'>info</span>
-                {t.modal?.returnInfo || 'Return Information'}
-              </h3>
+            <div className='grid grid-cols-2 gap-4 text-sm'>
+              <div className='space-y-0.5'>
+                <p className='text-gray-500 text-xs'>{t.headers?.returnId || 'Return ID'}</p>
+                <p className='font-medium text-gray-900 dark:text-gray-100'>
+                  {selectedReturn.id || '001'}
+                </p>
+              </div>
+              <div className='space-y-0.5 text-end'>
+                <p className='text-gray-500 text-xs'>{t.headers?.date || 'Date'}</p>
+                <p className='font-medium text-gray-700 dark:text-gray-300'>
+                  {new Date(selectedReturn.date).toLocaleDateString(locale, {
+                    numberingSystem: 'latn',
+                  })}
+                </p>
+              </div>
 
-              <div className='grid grid-cols-2 gap-y-6 gap-x-4'>
-                <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
-                    {t.headers?.returnId || 'Return ID'}
-                  </label>
-                  <p className='font-bold text-gray-900 dark:text-white font-mono text-sm'>
-                    {selectedReturn.id || '001'}
-                  </p>
-                </div>
-                <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
-                    {t.headers?.date || 'Date'}
-                  </label>
-                  <p className='font-bold text-gray-900 dark:text-white text-sm'>
-                    {new Date(selectedReturn.date).toLocaleDateString()}
-                  </p>
-                </div>
+              <div className='space-y-0.5'>
+                <p className='text-gray-500 text-xs'>{t.headers?.saleId || 'Sale ID'}</p>
+                <p className='font-medium text-gray-900 dark:text-gray-100 uppercase'>
+                  {selectedReturn.saleId}
+                </p>
+              </div>
+              <div className='space-y-0.5 text-end'>
+                <p className='text-gray-500 text-xs'>{t.headers?.customer || 'Customer'}</p>
+                <p className='font-medium text-gray-900 dark:text-gray-100'>
+                  {sales.find((s) => s.id === selectedReturn.saleId)?.customerName ||
+                    'Walk-in Customer'}
+                </p>
+              </div>
 
-                <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
-                    {t.headers?.saleId || 'Sale ID'}
-                  </label>
-                  <p className='font-bold text-gray-900 dark:text-white font-mono text-sm'>
-                    {selectedReturn.saleId}
-                  </p>
-                </div>
-                <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
-                    {t.headers?.customer || 'Customer'}
-                  </label>
-                  <p className='font-bold text-gray-900 dark:text-white text-sm'>
-                    {sales.find((s) => s.id === selectedReturn.saleId)?.customerName ||
-                      'Walk-in Customer'}
-                  </p>
-                </div>
-
-                <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
-                    {t.headers?.reason || 'Reason'}
-                  </label>
-                  {(() => {
-                    const reason = selectedReturn.reason;
-                    const style =
-                      reason === 'damaged'
-                        ? { textColor: 'text-red-500', borderColor: 'border-red-500', icon: 'broken_image' }
-                        : reason === 'defective'
-                          ? { textColor: 'text-red-500', borderColor: 'border-red-500', icon: 'build_circle' }
-                        : reason === 'expired'
-                          ? { textColor: 'text-orange-500', borderColor: 'border-orange-500', icon: 'event_busy' }
-                        : reason === 'wrong_item'
-                          ? { textColor: 'text-teal-500', borderColor: 'border-teal-500', icon: 'error' }
-                        : reason === 'customer_request'
-                          ? { textColor: 'text-blue-500', borderColor: 'border-blue-500', icon: 'person' }
-                        : { textColor: 'text-gray-500', borderColor: 'border-gray-500', icon: 'help' };
-                    return (
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border bg-transparent ${style.borderColor} ${style.textColor} text-[10px] font-black uppercase tracking-wider`}
-                      >
-                        <span className='material-symbols-rounded text-sm'>{style.icon}</span>
-                        {t.reasons?.[reason] || reason}
-                      </span>
-                    );
-                  })()}
-                </div>
-                <div>
-                  <label className='block text-xs font-medium text-gray-500 mb-1'>
-                    {t.headers?.totalRefund || 'Total Refund'}
-                  </label>
-                  <p className='font-bold text-red-600 text-sm'>
-                    ${selectedReturn.totalRefund.toFixed(2)}
-                  </p>
-                </div>
+              <div className='space-y-1'>
+                <p className='text-gray-500 text-xs'>{t.headers?.reason || 'Reason'}</p>
+                {(() => {
+                  const reason = selectedReturn.reason;
+                  const style =
+                    reason === 'damaged'
+                      ? { textColor: 'text-red-500', borderColor: 'border-red-500', icon: 'broken_image' }
+                      : reason === 'defective'
+                        ? { textColor: 'text-red-500', borderColor: 'border-red-500', icon: 'build_circle' }
+                      : reason === 'expired'
+                        ? { textColor: 'text-orange-500', borderColor: 'border-orange-500', icon: 'event_busy' }
+                      : reason === 'wrong_item'
+                        ? { textColor: 'text-teal-500', borderColor: 'border-teal-500', icon: 'error' }
+                      : reason === 'customer_request'
+                        ? { textColor: 'text-blue-500', borderColor: 'border-blue-500', icon: 'person' }
+                      : { textColor: 'text-gray-500', borderColor: 'border-gray-500', icon: 'help' };
+                  return (
+                    <span
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border bg-transparent ${style.borderColor} ${style.textColor} text-[10px] font-black uppercase tracking-wider`}
+                    >
+                      <span className='material-symbols-rounded text-[14px]'>{style.icon}</span>
+                      {t.reasons?.[reason] || reason}
+                    </span>
+                  );
+                })()}
+              </div>
+              <div className='space-y-0.5 text-end'>
+                <p className='text-gray-500 text-xs'>{t.headers?.totalRefund || 'Total Refund'}</p>
+                <p className='font-bold text-red-500 text-base'>
+                  ${selectedReturn.totalRefund.toFixed(2)}
+                </p>
               </div>
             </div>
 
-            {/* Returned Items Section */}
-            <div>
-              <h3 className='text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2'>
-                <span className='material-symbols-rounded text-[18px]'>inventory_2</span>
+            <div className='border-t border-gray-100 dark:border-gray-800 pt-3'>
+              <p className='text-xs font-bold text-gray-400 uppercase mb-2'>
                 {t.modal?.itemsReturned || 'Returned Items'}
-              </h3>
-
-              <div className='space-y-2'>
+              </p>
+              <div className='flex flex-col gap-1'>
                 {selectedReturn.items.map((item, idx) => (
-                  <div
+                  <MaterialTabs
                     key={idx}
-                    className='p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex justify-between items-center group hover:border-gray-200 dark:hover:border-gray-700 transition-colors'
+                    index={idx}
+                    total={selectedReturn.items.length}
+                    color={color}
+                    className='h-auto py-3 bg-red-50/10 dark:bg-red-900/5'
                   >
-                    <div>
-                      <p className='font-bold text-gray-900 dark:text-white text-sm mb-1'>
-                        {getDisplayName(item, textTransform)}
-                      </p>
-                      <p className='text-xs text-gray-500'>
-                        <span className='opacity-70'>{t.modal?.qty || 'Quantity'}:</span>{' '}
-                        {item.quantityReturned} <span className='mx-1 opacity-30'>|</span>
-                        <span className='opacity-70'>{t.modal?.refund || 'Refund'}:</span> $
-                        {item.refundAmount.toFixed(2)} <span className='mx-1 opacity-30'>|</span>
-                        <span className='opacity-70'>{t.modal?.unit || 'Unit'}:</span>{' '}
-                        {item.isUnit ? t.modal?.unitLabel || 'Unit' : t.modal?.packLabel || 'Pack'}
-                      </p>
+                    <div className='flex justify-between items-center w-full' dir='ltr'>
+                      <div className='text-left'>
+                        <p className='font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1 item-name'>
+                          {getDisplayName({ name: item.name, dosageForm: item.dosageForm }, textTransform)}
+                        </p>
+                        <div className='text-xs text-gray-500 flex flex-row items-center gap-1 mt-0.5' dir='ltr'>
+                          <span className='shrink-0'>{t.modal?.qty}:</span>
+                          <span className='font-bold shrink-0'>{item.quantityReturned}</span>
+                          <span className='text-[8px] border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-1 py-1 leading-none rounded-sm font-bold tracking-tighter uppercase whitespace-nowrap'>
+                            {item.isUnit ? t.modal?.unit : t.modal?.pack}
+                          </span>
+                        </div>
+                      </div>
+                      <div className='font-bold text-red-600 dark:text-red-400 text-right'>
+                        <span className='tabular-nums'>${item.refundAmount.toFixed(2)}</span>
+                      </div>
                     </div>
-                    <p className='font-bold text-red-600 text-sm'>
-                      ${item.refundAmount.toFixed(2)}
-                    </p>
-                  </div>
+                  </MaterialTabs>
                 ))}
               </div>
             </div>
 
             {selectedReturn.notes && (
-              <div>
-                <h3 className='text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-2'>
-                  <span className='material-symbols-rounded text-[18px]'>notes</span>
-                  {t.headers?.notes || 'Notes'}
-                </h3>
+              <div className='border-t border-gray-100 dark:border-gray-800 pt-3'>
+                <p className='text-xs font-bold text-gray-400 uppercase mb-2'>{t.headers?.notes || 'Notes'}</p>
                 <div className='p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 text-amber-900 dark:text-amber-100 border border-amber-100 dark:border-amber-900/30 text-sm'>
                   {selectedReturn.notes}
                 </div>
@@ -387,6 +377,17 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
           </div>
         </Modal>
       )}
+
+      {/* Sale Details Modal (View Only for Return History) */}
+      <SaleDetailModal
+        sale={viewedSale}
+        isOpen={!!viewedSale}
+        onClose={() => setViewedSale(null)}
+        t={TRANSLATIONS[(language || 'EN') as keyof typeof TRANSLATIONS].salesHistory}
+        language={language}
+        color={color}
+        textTransform={textTransform}
+      />
 
       {/* Help */}
       <HelpButton

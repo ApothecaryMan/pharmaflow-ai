@@ -19,6 +19,7 @@ import {
   type InvoiceTemplateOptions,
   printInvoice,
 } from './InvoiceTemplate';
+import { SaleDetailModal } from './SaleDetailModal';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -54,7 +55,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
-  const [returnModalOpen, setReturnModalOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const { textTransform } = useSettings();
 
@@ -282,7 +282,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
     const rows = filteredSales.map((sale) => [
       sale.id,
-      new Date(sale.date).toLocaleString(),
+      new Date(sale.date).toLocaleString(locale, { numberingSystem: 'latn' }),
       sale.customerName || 'Guest',
       sale.customerCode || '-',
       sale.paymentMethod === 'visa' ? 'Visa' : 'Cash',
@@ -407,276 +407,21 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         />
       </div>
 
-      {/* Detail Modal - hide when return modal is open */}
-      {selectedSale && !returnModalOpen && (
-        <Modal
-          isOpen={true}
-          onClose={() => setSelectedSale(null)}
-          size='lg'
-          title={t.modal.title}
-          icon='receipt_long'
-          className='overscroll-contain'
-        >
-          <div className='space-y-4'>
-            <div className='grid grid-cols-2 gap-4 text-sm'>
-              <div>
-                <p className='text-gray-500 text-xs'>{t.modal.date}</p>
-                <p className='font-medium text-gray-700 dark:text-gray-300 mt-0.5 flex items-center gap-1.5'>
-                  {(() => {
-                    const d = new Date(selectedSale.date);
-                    const dateStr = d.toLocaleDateString('en-US');
-                    let timeStr = d.toLocaleTimeString('en-US', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true,
-                    });
-                    if (language === 'AR') {
-                      timeStr = timeStr.replace('AM', 'ص').replace('PM', 'م');
-                    }
-                    return (
-                      <>
-                        <span>{dateStr}</span>
-                        <span className='text-gray-300 dark:text-gray-700 font-bold'>•</span>
-                        <span>{timeStr}</span>
-                      </>
-                    );
-                  })()}
-                </p>
-              </div>
-              <div className='text-end'>
-                <p className='text-gray-500 text-xs'>{t.modal.id}</p>
-                <span className='text-sm text-gray-600 dark:text-gray-400 font-medium mt-0.5'>
-                  {selectedSale.id}
-                </span>
-              </div>
-              <div>
-                <p className='text-gray-500 text-xs'>{t.modal.customer}</p>
-                <div className='flex items-center gap-2 mt-0.5'>
-                  <p className='font-bold text-gray-900 dark:text-gray-100'>
-                    {selectedSale.customerName || 'Guest'}
-                  </p>
-                  {selectedSale.customerCode && (
-                    <>
-                      <span className='text-gray-300 dark:text-gray-700'>•</span>
-                      <span className='text-sm text-gray-600 dark:text-gray-400 font-medium'>
-                        {selectedSale.customerCode}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className='text-end'>
-                <p className='text-gray-500 text-xs'>{t.modal.payment}</p>
-                <div className='font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5 justify-end mt-0.5'>
-                  <span className='material-symbols-rounded text-[18px] text-gray-400'>
-                    {selectedSale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
-                  </span>
-                  {selectedSale.paymentMethod === 'visa' ? t.visa : t.cash}
-                </div>
-              </div>
-            </div>
-
-            <div className='border-t border-gray-100 dark:border-gray-800 pt-3'>
-              <p className='text-xs font-bold text-gray-400 uppercase mb-2'>{t.modal.items}</p>
-              <div className='flex flex-col gap-1'>
-                {selectedSale.items.map((item, idx) => {
-                  const effectivePrice =
-                    item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price;
-                  const lineKey = `${item.id}_${idx}`;
-                  const returnedQty =
-                    selectedSale.itemReturnedQuantities?.[lineKey] ||
-                    selectedSale.itemReturnedQuantities?.[item.id] ||
-                    0;
-                  const hasReturn = returnedQty > 0;
-                  const isFullyReturned = returnedQty >= item.quantity;
-
-                  return (
-                    <MaterialTabs
-                      key={idx}
-                      index={idx}
-                      total={selectedSale.items.length}
-                      color={color}
-                      className={`h-auto py-3 transition-all ${hasReturn ? 'border-2 border-orange-500/40 bg-orange-50/30 dark:bg-orange-900/10' : ''}`}
-                    >
-                      <div className='flex justify-between items-center w-full' dir='ltr'>
-                        <div className='text-left'>
-                          <p className='font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1 item-name'>
-                            {getDisplayName({ name: item.name, dosageForm: item.dosageForm }, textTransform)}
-                          </p>
-                          <div
-                            className='text-xs text-gray-500 flex flex-row items-center gap-1 mt-0.5'
-                            dir='ltr'
-                          >
-                            <span className='shrink-0'>{t.modal.qty}:</span>
-                            <span className='font-bold shrink-0'>{item.quantity}</span>
-                            {item.isUnit && (
-                              <span className='text-[8px] border border-sky-200 dark:border-sky-800 text-sky-600 dark:text-sky-400 px-1 py-1 leading-none rounded-sm font-bold tracking-tighter uppercase whitespace-nowrap'>
-                                {language === 'AR' ? 'وحدة' : 'UNIT'}
-                              </span>
-                            )}
-                            {userRole !== 'delivery' && (
-                              <>
-                                <span className='opacity-50 text-[10px] shrink-0'>x</span>
-                                <span className='shrink-0 tabular-nums'>
-                                  ${effectivePrice.toFixed(2)}
-                                </span>
-                                {item.discount && item.discount > 0 ? (
-                                  <span className='text-green-600 dark:text-green-400 shrink-0'>
-                                    (-{item.discount}%)
-                                  </span>
-                                ) : (
-                                  ''
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <div className='font-medium text-gray-700 dark:text-gray-300 text-right flex flex-col items-end'>
-                          {hasReturn && (
-                            <span
-                              className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1 ${isFullyReturned ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 mb-1'} whitespace-nowrap`}
-                            >
-                              <span className='material-symbols-rounded text-[13px]'>
-                                {isFullyReturned ? 'assignment_return' : 'replay'}
-                              </span>
-                              {isFullyReturned
-                                ? language === 'AR'
-                                  ? 'مرتجع كلي'
-                                  : 'FULLY RETURNED'
-                                : language === 'AR'
-                                  ? `مرتجع (${returnedQty})`
-                                  : `RETURNED (${returnedQty})`}
-                            </span>
-                          )}
-                          {!isFullyReturned && (
-                            <div>
-                              <span className='tabular-nums'>
-                                $
-                                {(
-                                  effectivePrice *
-                                  (item.quantity - returnedQty) *
-                                  (1 - (item.discount || 0) / 100)
-                                ).toFixed(2)}
-                              </span>
-                              {hasReturn && (
-                                <span className='text-[10px] block text-gray-400 leading-none mt-0.5 line-through tabular-nums'>
-                                  $
-                                  {(
-                                    effectivePrice *
-                                    item.quantity *
-                                    (1 - (item.discount || 0) / 100)
-                                  ).toFixed(2)}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </MaterialTabs>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div
-              className={`${selectedSale.subtotal !== selectedSale.total && userRole !== 'delivery' ? 'border-t border-gray-100 dark:border-gray-800 pt-3' : ''} space-y-2 text-sm`}
-            >
-              {selectedSale.subtotal !== undefined &&
-                selectedSale.subtotal !== selectedSale.total &&
-                userRole !== 'delivery' && (
-                  <div className='flex justify-between text-gray-500'>
-                    <span>{t.modal.subtotal}</span>
-                    <span>${selectedSale.subtotal.toFixed(2)}</span>
-                  </div>
-                )}
-              {/* {selectedSale.globalDiscount !== undefined && selectedSale.globalDiscount > 0 && (
-                           <div className="flex justify-between text-green-600 dark:text-green-400">
-                               <span>{t.modal.discount} ({selectedSale.globalDiscount}%)</span>
-                               <span>-${(selectedSale.subtotal! * selectedSale.globalDiscount / 100).toFixed(2)}</span>
-                           </div>
-                       )} */}
-              {Number(selectedSale.deliveryFee) > 0 && (
-                <div className='flex justify-between text-gray-500'>
-                  <span>{t.pos?.deliveryOrder || t.deliveryFee || 'Delivery'}</span>
-                  <span>+${selectedSale.deliveryFee!.toFixed(2)}</span>
-                </div>
-              )}
-              <div className='flex justify-between text-lg font-bold text-gray-900 dark:text-white py-3 border-t border-gray-100 dark:border-gray-800 tabular-nums'>
-                <span>{t.modal.total}</span>
-                <span>${selectedSale.total.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className='pt-4 border-t border-gray-100 dark:border-gray-800 flex gap-3 mt-0'>
-            {(() => {
-              // Check if there are any items that can still be returned (using lineKey pattern)
-              const hasItemsToReturn = selectedSale.items.some((item, index) => {
-                const lineKey = `${item.id}_${index}`;
-                const returnedQty =
-                  selectedSale.itemReturnedQuantities?.[lineKey] ||
-                  selectedSale.itemReturnedQuantities?.[item.id] ||
-                  0;
-                return returnedQty < item.quantity;
-              });
-
-              // Check if sale is in current shift (for cashier)
-              const isSaleInCurrentShift =
-                !!currentShift && new Date(selectedSale.date) >= new Date(currentShift.openTime);
-              const canRefund =
-                canPerformAction(userRole, 'sale.refund') &&
-                (userRole !== 'cashier' || isSaleInCurrentShift);
-
-              return (
-                <>
-                  {hasItemsToReturn && canRefund && (
-                    <button
-                      onClick={() => setReturnModalOpen(true)}
-                      aria-label={t.returns?.processReturn || 'Process Return'}
-                      className={`flex-1 py-2.5 rounded-full font-medium text-white bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center gap-2`}
-                    >
-                      <span className='material-symbols-rounded'>assignment_return</span>
-                      {t.returns?.processReturn || 'Process Return'}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handlePrint(selectedSale)}
-                    aria-label={t.modal.print}
-                    className={`flex-1 py-2.5 rounded-full font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors flex items-center justify-center gap-2`}
-                  >
-                    <span className='material-symbols-rounded'>print</span>
-                    {t.modal.print}
-                  </button>
-                </>
-              );
-            })()}
-          </div>
-        </Modal>
-      )}
-
-      {/* Return Modal */}
-      {selectedSale && returnModalOpen && (
-        <ReturnModal
-          isOpen={returnModalOpen}
-          sale={selectedSale}
-          onClose={() => {
-            setReturnModalOpen(false);
-            setSelectedSale(null);
-          }}
-          onConfirm={(returnData) => {
-            onProcessReturn(returnData);
-            setReturnModalOpen(false);
-            setSelectedSale(null);
-          }}
-          color={color}
-          t={t}
-          language={language}
-          userRole={userRole}
-          currentDailyRefunds={currentDailyRefunds}
-          currentShift={currentShift}
-          currentEmployeeId={currentEmployeeId}
-        />
-      )}
+      {/* Sale Details Modal (includes Return logic internally) */}
+      <SaleDetailModal
+        sale={selectedSale}
+        isOpen={!!selectedSale}
+        onClose={() => setSelectedSale(null)}
+        t={t}
+        language={language}
+        color={color}
+        textTransform={textTransform}
+        userRole={userRole}
+        currentShift={currentShift}
+        currentEmployeeId={currentEmployeeId}
+        currentDailyRefunds={currentDailyRefunds}
+        onProcessReturn={onProcessReturn}
+      />
 
       {/* Help */}
       <HelpButton

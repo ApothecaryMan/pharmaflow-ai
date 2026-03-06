@@ -1300,6 +1300,7 @@ export const TRANSLATIONS = {
       },
       modal: {
         title: 'Return Details',
+        returnInfo: 'Return Information',
         itemsReturned: 'Items Returned',
         item: 'Item',
         qty: 'Qty',
@@ -3529,6 +3530,7 @@ export const TRANSLATIONS = {
       },
       modal: {
         title: 'تفاصيل المرتجع',
+        returnInfo: 'معلومات المرتجع',
         itemsReturned: 'الأصناف المرتجعة',
         item: 'الصنف',
         qty: 'الكمية',
