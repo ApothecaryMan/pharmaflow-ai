@@ -1073,6 +1073,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   isVisible={showSuggestions && !!search.trim()}
                   highlightedIndex={selectedSuggestionIndex}
                   emptyMessage={t.noResults}
+                  className="-start-1/2 w-[700px] lg:w-[900px]"
                 />
               </div>
 

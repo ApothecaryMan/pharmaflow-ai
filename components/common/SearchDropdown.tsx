@@ -14,6 +14,7 @@ interface SearchDropdownProps<T extends { id: string | number }> {
   emptyMessage?: React.ReactNode;
   isVisible?: boolean; // Controlled visibility
   highlightedIndex?: number; // Index of the currently highlighted result
+  className?: string; // Custom class for the dropdown container
 }
 
 export function SearchDropdown<T extends { id: string | number }>({
@@ -23,6 +24,7 @@ export function SearchDropdown<T extends { id: string | number }>({
   emptyMessage = 'No results found',
   isVisible = true,
   highlightedIndex = -1,
+  className = 'left-0 right-0',
 }: SearchDropdownProps<T>) {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const rowRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
@@ -41,20 +43,20 @@ export function SearchDropdown<T extends { id: string | number }>({
 
   if (results.length === 0) {
     return (
-      <div className='absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 p-4 text-center text-gray-500 text-sm z-50'>
+      <div className={`absolute top-full mt-2 bg-white dark:bg-(--bg-card) rounded-xl shadow-xl border border-gray-100 dark:border-(--border-divider) p-4 text-center text-gray-500 text-sm z-50 ${className}`}>
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div className='absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden isolate z-40'>
+    <div className={`absolute top-full mt-1.5 bg-white dark:bg-(--bg-card) rounded-xl shadow-xl border border-gray-100 dark:border-(--border-divider) overflow-hidden isolate z-40 ${className}`}>
       {/* Fixed Header Row */}
-      <div className='flex items-stretch w-full bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-xs border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold uppercase tracking-wider text-gray-400 rounded-t-xl'>
+      <div className='flex items-stretch w-full bg-gray-50/95 dark:bg-(--bg-card) backdrop-blur-xs border-b border-gray-100 dark:border-(--border-divider) text-[10px] font-bold uppercase tracking-wider text-gray-400 rounded-t-xl'>
         {columns.map((col, index) => (
           <div
             key={index}
-            className={`${col.width || 'flex-1'} p-2 border-e border-gray-100 dark:border-gray-800 last:border-e-0 ${col.className || ''}`}
+            className={`${col.width || 'flex-1'} p-2 border-e border-gray-100 dark:border-(--border-divider) last:border-e-0 ${col.className || ''}`}
           >
             {col.header}
           </div>
@@ -74,17 +76,17 @@ export function SearchDropdown<T extends { id: string | number }>({
               rowRefs.current[index] = el;
             }}
             onClick={() => onSelect(item)}
-            className={`w-full text-start border-b border-gray-50 dark:border-gray-800/50 last:border-0 transition-colors group ${
+            className={`w-full text-start border-b border-gray-50 dark:border-(--border-divider) last:border-0 transition-colors group ${
               highlightedIndex === index
-                ? 'bg-blue-50/50 dark:bg-blue-900/20'
-                : 'hover:bg-gray-50 dark:hover:bg-gray-800/40'
+                ? 'bg-blue-50/50 dark:bg-primary-900/20'
+                : 'hover:bg-gray-50 dark:hover:bg-(--bg-hover)'
             }`}
           >
-            <div className='flex items-stretch w-full text-sm text-gray-600 dark:text-gray-300'>
+            <div className='flex items-stretch w-full text-sm text-gray-600 dark:text-white'>
               {columns.map((col, colIndex) => (
                 <div
                   key={colIndex}
-                  className={`${col.width || 'flex-1'} py-1.5 px-3 border-e border-gray-100/80 dark:border-gray-800/80 last:border-e-0 flex items-center ${col.className || ''}`}
+                  className={`${col.width || 'flex-1'} py-1.5 px-3 border-e border-gray-100/80 dark:border-(--border-divider) last:border-e-0 flex items-center ${col.className || ''}`}
                 >
                   {col.render(item)}
                 </div>
