@@ -115,6 +115,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: 'customer-dashboard',
         label: 'Customer Dashboard',
         items: [
+          { label: 'Customer Density Map', view: 'customer-density-map', icon: 'map' },
           { label: 'Customer Overview', view: 'customer-overview', icon: 'groups' },
           { label: 'Loyalty Overview', view: 'loyalty-overview', icon: 'loyalty' },
           { label: 'Customer Loyalty', view: 'loyalty-lookup', icon: 'card_membership' },

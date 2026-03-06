@@ -2737,7 +2737,7 @@ export const TRANSLATIONS = {
       placeholders: {
         searchHistory: 'بحث برقم، مورد...',
         searchSupplier: 'بحث واختيار المورد...',
-        enterId: 'أدخـــــــــــل الرقم',
+        enterId: 'أدخــــل الرقم',
         searchDrug: 'بحث عن دواء...',
       },
       pack: 'علبة',

@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import React, { type ComponentType } from 'react';
 import { Login } from '../components/auth/Login';
 import { CustomerHistory } from '../components/customers/CustomerHistory';
 import { CustomerLoyaltyLookup } from '../components/customers/CustomerLoyaltyLookup';
@@ -52,7 +52,7 @@ export interface PageConfig {
   category?: string;
   permission?: PermissionAction;
   skeleton?: ComponentType<any>;
-  layout?: 'standard' | 'full-bleed' | 'dashboard' | 'split' | 'auth';
+  layout?: 'standard' | 'full-bleed' | 'dashboard' | 'split' | 'auth' | 'full-screen';
   skeletonProps?: Record<string, any>;
 }
 
@@ -542,6 +542,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     icon: 'search',
     category: 'inventory',
     permission: 'inventory.view',
+  },
+  'customer-density-map': {
+    id: 'customer-density-map',
+    component: React.lazy(() => import('../components/customers/CustomerDensityMap')) as any,
+    menuLabel: 'Customer Density Map',
+    menuLabelAr: 'خريطة كثافة العملاء',
+    icon: 'map',
+    category: 'customer-dashboard',
+    requiredProps: ['color', 't', 'language'],
+    permission: 'customer.view',
+    layout: 'full-screen',
   },
 };
 

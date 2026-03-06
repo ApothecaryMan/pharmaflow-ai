@@ -47,7 +47,7 @@ export const LAYOUT_CONFIG = {
  * @returns A string of Tailwind CSS classes
  */
 export const getContentContainerClasses = (
-  layout: 'standard' | 'full-bleed' | 'dashboard' | 'split' | 'auth' | undefined,
+  layout: 'standard' | 'full-bleed' | 'dashboard' | 'split' | 'auth' | 'full-screen' | undefined,
   isStandalone: boolean
 ): string => {
   // Initial common classes
@@ -55,8 +55,8 @@ export const getContentContainerClasses = (
   const base = 'h-full overflow-y-auto main-content-scroll scrollbar-gutter-stable';
 
   // 1. Standalone / Auth views take full screen with no padding
-  if (isStandalone || layout === 'auth') {
-    return `${base} w-full`;
+  if (isStandalone || layout === 'auth' || layout === 'full-screen') {
+    return `${base} w-full ${layout === 'full-screen' ? 'h-full p-0 m-0 overflow-hidden' : ''}`;
   }
 
   // 2. Full-bleed views (e.g. POS)
