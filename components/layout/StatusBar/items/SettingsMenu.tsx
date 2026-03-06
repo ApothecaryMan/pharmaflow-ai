@@ -609,17 +609,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           <button
                             key={font.value}
                             onClick={() => setFontFamilyEN(font.value)}
-                            className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all duration-200 active:scale-95 flex-grow sm:flex-grow-0 ${
-                              isSelected
-                                ? 'shadow-md border-transparent text-white'
-                                : 'bg-transparent border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                            }`}
-                            style={{
-                              fontFamily: font.value,
-                              backgroundColor: isSelected ? 'var(--accent-primary)' : 'transparent',
-                              color: isSelected ? 'white' : 'var(--text-primary)',
-                              borderColor: isSelected ? 'var(--accent-primary)' : '',
-                            }}
+                            className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all duration-200 active:scale-95 flex-shrink-0 ${isSelected ? 'shadow-md border-transparent text-white' : 'bg-transparent border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}
+                            style={{ fontFamily: font.value, backgroundColor: isSelected ? (darkMode ? 'var(--accent-primary)' : 'transparent') : 'transparent', color: isSelected ? (darkMode ? 'white' : 'black') : 'var(--text-primary)', borderColor: isSelected ? (darkMode ? 'var(--accent-primary)' : 'black') : '' }}
                           >
                             {font.label}
                           </button>
@@ -644,17 +635,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           <button
                             key={font.value}
                             onClick={() => setFontFamilyAR(font.value)}
-                            className={`px-2.5 py-1.5 rounded-lg border text-sm transition-all duration-200 active:scale-95 flex-grow sm:flex-grow-0 ${
-                              isSelected
-                                ? 'shadow-md border-transparent text-white'
-                                : 'bg-transparent border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                            }`}
-                            style={{
-                              fontFamily: font.value,
-                              backgroundColor: isSelected ? 'var(--accent-primary)' : 'transparent',
-                              color: isSelected ? 'white' : 'var(--text-primary)',
-                              borderColor: isSelected ? 'var(--accent-primary)' : '',
-                            }}
+                            className={`px-2.5 py-1.5 rounded-lg border text-sm transition-all duration-200 active:scale-95 flex-shrink-0 ${isSelected ? 'shadow-md border-transparent text-white' : 'bg-transparent border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}
+                            style={{ fontFamily: font.value, backgroundColor: isSelected ? (darkMode ? 'var(--accent-primary)' : 'transparent') : 'transparent', color: isSelected ? (darkMode ? 'white' : 'black') : 'var(--text-primary)', borderColor: isSelected ? (darkMode ? 'var(--accent-primary)' : 'black') : '' }}
                           >
                             {font.label}
                           </button>
