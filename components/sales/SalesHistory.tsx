@@ -97,9 +97,35 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         meta: { align: 'start' },
       },
       {
+        // Hidden column to enable deep search into item names/barcodes/customer
+        id: 'searchContent',
+        accessorFn: (sale) => {
+          const itemsSearch = sale.items
+            .map((item) => `${item.name} ${item.barcode || ''}`)
+            .join(' ');
+          return `${sale.id} ${sale.customerName || ''} ${sale.customerCode || ''} ${itemsSearch}`;
+        },
+        meta: { hideFromSettings: true },
+        enableGlobalFilter: true,
+      },
+      {
         accessorKey: 'date',
         header: t.headers.date,
         meta: { align: 'center' },
+      },
+      {
+        id: 'customerType',
+        accessorFn: (sale) => (sale.customerName ? 'registered' : 'guest'),
+        header: t.headers.customerType || 'Customer Type',
+        meta: { hideFromSettings: true },
+        enableGlobalFilter: false,
+      },
+      {
+        id: 'itemsCount',
+        accessorFn: (sale) => (sale.items.length >= 5 ? 'bulk' : 'single'),
+        header: t.headers.itemsCount || 'Items Count',
+        meta: { hideFromSettings: true },
+        enableGlobalFilter: false,
       },
       {
         accessorKey: 'customerName',
@@ -165,6 +191,11 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       },
       {
         id: 'status',
+        accessorFn: (sale) => {
+          if (sale.status === 'cancelled') return 'cancelled';
+          if (sale.hasReturns) return 'returned';
+          return 'completed';
+        },
         header: t.status || 'Status',
         meta: { align: 'end' },
         cell: ({ row }) => {
@@ -201,35 +232,80 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
     [t, textTransform]
   );
 
-  const filteredSales = sales.filter((sale) => {
-    const searchRegex = createSearchRegex(searchTerm);
-    const matchesTerm =
-      searchRegex.test(sale.customerName || '') ||
-      searchRegex.test(sale.id) ||
-      sale.items.some(
-        (item) => searchRegex.test(item.name) || (item.barcode && searchRegex.test(item.barcode))
+  const filterableColumns = React.useMemo(
+    () => [
+      {
+        id: 'status',
+        label: t.status || 'Status',
+        icon: 'dynamic_feed',
+        mode: 'multiple' as const,
+        options: [
+          { label: t.completed || 'Completed', value: 'completed', icon: 'check_circle' },
+          { label: t.cancelled || 'Cancelled', value: 'cancelled', icon: 'cancel' },
+          { label: t.returns?.title || 'Returned', value: 'returned', icon: 'assignment_return' },
+        ],
+      },
+      {
+        id: 'paymentMethod',
+        label: t.headers.payment,
+        icon: 'payments',
+        mode: 'single' as const,
+        options: [
+          { label: t.cash, value: 'cash', icon: 'payments' },
+          { label: t.visa, value: 'visa', icon: 'credit_card' },
+        ],
+      },
+      {
+        id: 'customerType',
+        label: t.headers.customerType || 'Customer Type',
+        icon: 'person',
+        mode: 'single' as const,
+        options: [
+          { label: t.global?.walkIn || 'Guest', value: 'guest', icon: 'person_outline' },
+          { label: t.global?.registered || 'Registered', value: 'registered', icon: 'how_to_reg' },
+        ],
+      },
+      {
+        id: 'itemsCount',
+        label: t.headers.itemsCount || 'Items Count',
+        icon: 'shopping_basket',
+        mode: 'single' as const,
+        options: [
+          { label: t.global?.singleItem || 'Single Item', value: 'single', icon: 'filter_1' },
+          { label: t.global?.bulkItems || 'Bulk Items (5+)', value: 'bulk', icon: 'filter_9_plus' },
+        ],
+      },
+    ],
+    [t]
+  );
+
+  const filteredSales = React.useMemo(() => {
+    return sales.filter((sale) => {
+      // 1. Date Filtering (Manual because TanStackTable doesn't have a built-in range filter UI yet)
+      const saleDate = new Date(sale.date);
+      const start = startDate ? new Date(startDate) : null;
+      const end = endDate ? new Date(endDate) : null;
+
+      if (start) {
+        start.setHours(0, 0, 0, 0);
+        if (saleDate < start) return false;
+      }
+      if (end) {
+        end.setHours(23, 59, 59, 999);
+        if (saleDate > end) return false;
+      }
+
+      // 2. Role Restrictions
+      const isPrivileged = ['admin', 'pharmacist_owner', 'pharmacist_manager', 'manager'].includes(
+        userRole
       );
+      if (!isPrivileged && canPerformAction(userRole, 'sale.view_assigned_only')) {
+        return sale.deliveryEmployeeId === currentEmployeeId;
+      }
 
-    if (!matchesTerm) return false;
-
-    const saleDate = new Date(sale.date);
-    const start = startDate ? new Date(startDate) : null;
-    const end = endDate ? new Date(endDate) : null;
-
-    if (start && saleDate < start) return false;
-    if (end && saleDate > end) return false;
-
-    // Restriction: View assigned orders only (Delivery Agent)
-    // FIX: Admins, Owners, and Managers should always see everything even if they have this permission (e.g. from ALL_PERMISSIONS)
-    const isPrivileged = ['admin', 'pharmacist_owner', 'pharmacist_manager', 'manager'].includes(
-      userRole
-    );
-    if (!isPrivileged && canPerformAction(userRole, 'sale.view_assigned_only')) {
-      return sale.deliveryEmployeeId === currentEmployeeId;
-    }
-
-    return true;
-  });
+      return true;
+    });
+  }, [sales, startDate, endDate, userRole, currentEmployeeId]);
 
   const totalRevenue = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
 
@@ -316,19 +392,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       {/* Filters */}
       <div className='flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center py-2'>
         <div className='flex flex-wrap items-center gap-3 w-full sm:flex-1'>
-          <div className='relative group flex-1'>
-            <SearchInput
-              name='salesSearch'
-              autoComplete='off'
-              spellCheck={false}
-              value={searchTerm}
-              onSearchChange={setSearchTerm}
-              placeholder={t.searchPlaceholder || 'Search sales…'}
-              className='ps-10'
-              wrapperClassName='w-full'
-            />
-          </div>
-
           <div className='flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-1 rounded-full border border-gray-200 dark:border-gray-700'>
             <DatePicker
               value={startDate}
@@ -365,13 +428,18 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       </div>
 
       {/* Table Section */}
-      <div className='flex-1 flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900'>
+      <div className={`flex-1 overflow-hidden ${CARD_BASE} rounded-xl p-0 flex flex-col`}>
         <TanStackTable
           data={filteredSales}
           columns={tableColumns}
           tableId='sales_history_table'
           color={color}
-          enableTopToolbar={false} // We have custom filters above
+          enableTopToolbar={true}
+          enableSearch={true}
+          searchPlaceholder={t.searchPlaceholder || 'Search sales…'}
+          globalFilter={searchTerm}
+          onSearchChange={setSearchTerm}
+          filterableColumns={filterableColumns}
           onRowClick={(sale) => setSelectedSale(sale)}
           emptyMessage={t.noResults}
           lite={true}
