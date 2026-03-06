@@ -216,6 +216,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               userRole={userRole}
               isStandalone={isStandalone}
               profileImage={profileImage}
+              currentEmployeeId={currentEmployeeId}
+              onSelectEmployee={setCurrentEmployeeId}
+              employees={employees}
             />
 
             {/* Actual Page Surface */}

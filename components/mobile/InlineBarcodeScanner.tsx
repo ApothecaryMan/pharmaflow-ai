@@ -41,7 +41,6 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
   const initScanner = async () => {
     try {
       setError(null);
-      
       if (!detectorRef.current) {
         detectorRef.current = new BarcodeDetector({
           formats: [
@@ -203,13 +202,27 @@ export const InlineBarcodeScanner: React.FC<InlineBarcodeScannerProps> = ({
         </div>
       </div>
 
-      {/* Loading Skeleton */}
+      {/* Loading Skeleton or Dev Mode Message */}
       {!isReady && !error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-gray-900">
            <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin mb-3"></div>
            <p className="text-white/70 text-xs font-medium">
              {language === 'AR' ? 'جاري تشغيل الكاميرا...' : 'Starting camera...'}
            </p>
+        </div>
+      )}
+
+      {isReady && import.meta.env.DEV && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-gray-900/40 backdrop-blur-sm z-20 text-center">
+          <span className="material-symbols-rounded text-primary-400 text-3xl mb-2">developer_mode</span>
+          <p className="text-white text-sm font-bold mb-1">
+            {language === 'AR' ? 'وضع التطوير نشط' : 'Development Mode'}
+          </p>
+          <p className="text-white/70 text-[10px] max-w-[180px]">
+            {language === 'AR' 
+              ? 'تم تعطيل الكاميرا تلقائياً لتسريع التحميل. يمكنك إدخال الكود يدوياً.' 
+              : 'Camera disabled to prevent hanging. Please enter code manually.'}
+          </p>
         </div>
       )}
 

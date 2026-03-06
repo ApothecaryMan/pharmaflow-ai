@@ -534,6 +534,15 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     requiredProps: ['language', 'color'],
     permission: 'settings.update',
   },
+  'medicine-search': {
+    id: 'medicine-search',
+    component: () => null, // Rendered as overlay in MobileNavigation
+    menuLabel: 'Medicine Search',
+    menuLabelAr: 'بحث الأدوية',
+    icon: 'search',
+    category: 'inventory',
+    permission: 'inventory.view',
+  },
 };
 
 // Helper function to get page config

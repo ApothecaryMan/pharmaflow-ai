@@ -192,7 +192,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
         `}
       >
         <div 
-          className={`grid transition-all duration-400 ease-out ${isScannerOpen ? 'grid-rows-[1fr] opacity-100 mb-3' : 'grid-rows-[0fr] opacity-0 mb-0'}`}
+          className={`grid transition-all duration-250 ease-[cubic-bezier(0.2,0,0,1)] ${isScannerOpen ? 'grid-rows-[1fr] opacity-100 mb-3' : 'grid-rows-[0fr] opacity-0 mb-0'}`}
         >
           <div className="overflow-hidden">
             <div className="w-full max-w-2xl mx-auto px-2 pb-1">
@@ -278,7 +278,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
               return (
                   <div 
                     key={drug.id}
-                    className="animate-stagger-fade-in"
+                    className={index < 20 ? "animate-stagger-fade-in" : ""}
                     style={{ '--index': index } as React.CSSProperties}
                   >
                     <MaterialTabs
@@ -290,68 +290,70 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
                       onPointerLeave={handlePointerUp}
                       className={`
                         !px-0 border border-gray-100/30 dark:border-gray-800/20 
-                        transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] 
-                        active:scale-[0.98] active:opacity-90 bg-white dark:!bg-black
-                        ${isExpanded ? '!h-auto pt-1 !bg-gray-100/80 z-10 shadow-sm' : 'h-[60px]'}
+                        transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] 
+                        bg-white dark:!bg-(--bg-secondary)
+                        ${isExpanded ? 'pt-1 border-(--border-divider) z-10 shadow-sm' : ''}
                       `}
                       onClick={() => {
                         if (isExpanded) setExpandedDrugId(null);
                       }}
                     >
-                    <div className={`flex flex-col w-full px-4 justify-center ${isExpanded ? 'h-auto pt-2 pb-2' : 'h-full'}`}>
-                      {/* Brand Name & Price Row - Synced vertically */}
-                      <div className="flex items-center justify-between w-full gap-2">
-                        <div className="flex-1 min-w-0">
-                           <h3 className={`font-bold text-gray-900 dark:text-gray-100 leading-[1.1] ${isExpanded ? 'text-base mb-1' : 'line-clamp-2'}`}>
-                             {highlightMatch(displayName, searchTerm, !searchTerm.startsWith('@'))}
-                           </h3>
-                         </div>
-                        <div className="shrink-0 text-right">
-                          <div className="flex items-baseline gap-1.5">
-                            <span className={`text-[11px] font-black transition-all ${drug.stock > 0 ? 'text-green-600/80 dark:text-green-500/80' : 'text-red-500/80'}`}>
-                              ({(() => {
-                                if (drug.stock <= 0) return '0';
-                                const unitsPerPack = drug.unitsPerPack || 1;
-                                const stockInPacks = drug.stock / unitsPerPack;
-                                return Number.isInteger(stockInPacks) 
-                                  ? stockInPacks.toString() 
-                                  : stockInPacks.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
-                              })()})
-                            </span>
-                            <span className="font-black text-lg text-primary-600 dark:text-primary-400 tabular-nums transition-all">
-                              {(() => {
-                                const parts = formatCurrencyParts(drug.price);
-                                const isArabic = language === 'AR';
-                                return (
-                                  <span className="flex items-baseline gap-0.5">
-                                    {isArabic && <span className="text-[10px] font-bold opacity-60">{parts.symbol}</span>}
-                                    <span>{parts.amount}</span>
-                                    {!isArabic && <span className="text-[10px] font-bold opacity-60">{parts.symbol}</span>}
-                                  </span>
-                                );
-                              })()}
-                            </span>
+                    <div className="flex flex-col w-full px-4">
+                      {/* Fixed Header - Stable Height and Positioning */}
+                      <div className="h-[60px] flex flex-col justify-center">
+                        <div className="flex items-center justify-between w-full gap-2">
+                          <div className="flex-1 min-w-0">
+                             <h3 className={`font-bold text-gray-900 dark:text-gray-100 leading-[1.1] ${isExpanded ? 'text-base mb-1' : 'line-clamp-2'}`}>
+                               {highlightMatch(displayName, searchTerm, !searchTerm.startsWith('@'))}
+                             </h3>
+                           </div>
+                          <div className="shrink-0 text-right">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className={`text-[11px] font-black transition-all ${drug.stock > 0 ? 'text-green-600/80 dark:text-green-500/80' : 'text-red-500/80'}`}>
+                                ({(() => {
+                                  if (drug.stock <= 0) return '0';
+                                  const unitsPerPack = drug.unitsPerPack || 1;
+                                  const stockInPacks = drug.stock / unitsPerPack;
+                                  return Number.isInteger(stockInPacks) 
+                                    ? stockInPacks.toString() 
+                                    : stockInPacks.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+                                })()})
+                              </span>
+                              <span className="font-black text-lg text-primary-600 dark:text-primary-400 tabular-nums transition-all">
+                                {(() => {
+                                  const parts = formatCurrencyParts(drug.price);
+                                  const isArabic = language === 'AR';
+                                  return (
+                                    <span className="flex items-baseline gap-0.5">
+                                      {isArabic && <span className="text-[10px] font-bold opacity-60">{parts.symbol}</span>}
+                                      <span>{parts.amount}</span>
+                                      {!isArabic && <span className="text-[10px] font-bold opacity-60">{parts.symbol}</span>}
+                                    </span>
+                                  );
+                                })()}
+                              </span>
+                            </div>
                           </div>
+                        </div>
+
+                        {/* Generic Name - Inside Fixed Header */}
+                        <div className="w-full pt-0.5">
+                          <p className={`text-gray-400 dark:text-gray-600 leading-[1.1] transition-all duration-200 text-xs ${isExpanded ? '' : 'truncate'}`}>
+                            {(() => {
+                              const genericNameStr = Array.isArray(drug.genericName) 
+                                ? drug.genericName.join(' + ') 
+                                : (drug.genericName as unknown as string);
+                              const { regex } = parseSearchTerm(searchTerm);
+                              const hasBrandMatch = regex.test(displayName);
+                              const shouldHighlightGeneric = searchTerm.startsWith('@') || !hasBrandMatch;
+                              return highlightMatch(genericNameStr, searchTerm, shouldHighlightGeneric);
+                            })()}
+                          </p>
                         </div>
                       </div>
 
-                      {/* Generic Name - Takes full width below */}
-                      <div className="w-full pt-0.5">
-                        <p className={`text-gray-400 dark:text-gray-600 leading-[1.1] transition-all duration-300 text-xs ${isExpanded ? '' : 'truncate'}`}>
-                          {(() => {
-                            const genericNameStr = Array.isArray(drug.genericName) 
-                              ? drug.genericName.join(' + ') 
-                              : (drug.genericName as unknown as string);
-                            const { regex } = parseSearchTerm(searchTerm);
-                            const hasBrandMatch = regex.test(displayName);
-                            const shouldHighlightGeneric = searchTerm.startsWith('@') || !hasBrandMatch;
-                            return highlightMatch(genericNameStr, searchTerm, shouldHighlightGeneric);
-                          })()}
-                        </p>
-                      </div>
-
-                      {/* Expanded Content */}
-                      <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isExpanded ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0'}`}>
+                      {/* Expanding Content Container */}
+                      <div className={`grid transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isExpanded ? 'grid-rows-[1fr] opacity-100 pb-3' : 'grid-rows-[0fr] opacity-0'}`}>
                         <div className="overflow-hidden min-h-0">
                           {drug.description && (
                             <div className="pt-2 border-t border-gray-200 dark:border-gray-700/50">
@@ -395,8 +397,8 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
           }
 
           .animate-stagger-fade-in {
-            animation: stagger-fade-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-            animation-delay: calc(var(--index) * 0.05s);
+            animation: stagger-fade-in 0.3s ease-out both;
+            animation-delay: calc(var(--index) * 0.03s);
           }
 
           @keyframes scan-line {
