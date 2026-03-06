@@ -18,14 +18,10 @@ interface MobileMedicineSearchProps {
   onScanClick?: () => void;
   cart: CartItem[];
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
-  designMode: CartDesignMode;
-  setDesignMode: (mode: CartDesignMode) => void;
   onAddToCart: (drug: Drug, isUnit?: boolean, qty?: number) => void;
   onRemoveFromCart: (id: string, isUnit: boolean) => void;
   onUpdateQuantity: (id: string, isUnit: boolean, delta: number) => void;
 }
-
-type CartDesignMode = 'stealth' | 'tray' | 'magic';
 
 export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
   inventory,
@@ -33,8 +29,6 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
   onScanClick,
   cart,
   setCart,
-  designMode,
-  setDesignMode,
   onAddToCart,
   onRemoveFromCart,
   onUpdateQuantity,
@@ -258,19 +252,6 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
               className="!bg-transparent"
             />
           </div>
-
-          {/* Design Mode Switcher (Temporary for Preview) */}
-          <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-full ms-2 gap-1 overflow-hidden shrink-0">
-            {(['stealth', 'tray', 'magic'] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setDesignMode(m)}
-                className={`text-[9px] font-black px-2 py-1 rounded-full transition-all ${designMode === m ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-100'}`}
-              >
-                {m.toUpperCase()}
-              </button>
-            ))}
-          </div>
         </div>
 
         
@@ -307,153 +288,26 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
           </div>
         ) : (
           <div className="p-4 flex flex-col gap-1 pb-24" dir="ltr">
-            {filteredDrugs.map((drug, index) => {
-              const displayName = getDisplayName(drug, textTransform);
-              const isExpanded = expandedDrugId === drug.id;
-
-              return (
-                  <div 
-                    key={drug.id}
-                    className={index < 20 ? "animate-stagger-fade-in" : ""}
-                    style={{ '--index': index } as React.CSSProperties}
-                  >
-                    <MaterialTabs
-                      index={index}
-                      total={filteredDrugs.length}
-                      isSelected={isExpanded}
-                      onPointerDown={() => handlePointerDown(drug.id)}
-                      onPointerUp={handlePointerUp}
-                      onPointerLeave={handlePointerUp}
-                      className={`
-                        !px-0 border border-gray-100/30 dark:border-gray-800/20 
-                        transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] 
-                        bg-white dark:!bg-(--bg-secondary)
-                        ${isExpanded ? 'pt-1 border-(--border-divider) z-10 shadow-sm' : ''}
-                      `}
-                      onClick={() => {
-                        if (isExpanded) {
-                          setExpandedDrugId(null);
-                        } else {
-                          // Concept 1 & 2: Instant add on click if not expanded? 
-                          // Or let's just make it click to expand, and add "Add" button inside.
-                          setExpandedDrugId(drug.id);
-                        }
-                      }}
-                    >
-                    <div className="flex flex-col w-full px-4">
-                      {/* Fixed Header - Stable Height and Positioning */}
-                      <div className="h-[60px] flex flex-col justify-center">
-                        <div className="flex items-center justify-between w-full gap-2">
-                          <div className="flex-1 min-w-0">
-                             <h3 className={`font-bold text-gray-900 dark:text-gray-100 leading-[1.1] ${isExpanded ? 'text-base mb-1' : 'line-clamp-2'}`}>
-                               {highlightMatch(displayName, searchTerm, !searchTerm.startsWith('@'))}
-                             </h3>
-                           </div>
-                          <div className="shrink-0 text-right flex items-center gap-2">
-                             {/* Instant Add Button for Stealth/Tray when not expanded */}
-                             {!isExpanded && (
-                               <button
-                                 onClick={(e) => {
-                                   e.stopPropagation();
-                                   onAddToCart(drug);
-                                 }}
-                                 className="w-8 h-8 rounded-full bg-primary-500/10 text-primary-600 flex items-center justify-center active:scale-90 transition-transform"
-                               >
-                                 <span className="material-symbols-rounded text-xl">add</span>
-                               </button>
-                             )}
-
-                            <div className="flex flex-col items-baseline gap-0.5">
-                              <span className={`text-[10px] font-black transition-all ${drug.stock > 0 ? 'text-green-600/80 dark:text-green-500/80' : 'text-red-500/80'}`}>
-                                ({(() => {
-                                  if (drug.stock <= 0) return '0';
-                                  const unitsPerPack = drug.unitsPerPack || 1;
-                                  const stockInPacks = drug.stock / unitsPerPack;
-                                  return Number.isInteger(stockInPacks) 
-                                    ? stockInPacks.toString() 
-                                    : stockInPacks.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
-                                })()})
-                              </span>
-                              <span className="font-black text-lg text-primary-600 dark:text-primary-400 tabular-nums transition-all">
-                                {(() => {
-                                  const parts = formatCurrencyParts(drug.price);
-                                  const isArabic = language === 'AR';
-                                  return (
-                                    <span className="flex items-baseline gap-0.5">
-                                      {isArabic && <span className="text-[10px] font-bold opacity-60">{parts.symbol}</span>}
-                                      <span>{parts.amount}</span>
-                                      {!isArabic && <span className="text-[10px] font-bold opacity-60">{parts.symbol}</span>}
-                                    </span>
-                                  );
-                                })()}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Generic Name - Inside Fixed Header */}
-                        <div className="w-full pt-0.5">
-                          <p className={`text-gray-400 dark:text-gray-600 leading-[1.1] transition-all duration-200 text-xs ${isExpanded ? '' : 'truncate'}`}>
-                            {(() => {
-                              const genericNameStr = Array.isArray(drug.genericName) 
-                                ? drug.genericName.join(' + ') 
-                                : (drug.genericName as unknown as string);
-                              const { regex } = parseSearchTerm(searchTerm);
-                              const hasBrandMatch = regex.test(displayName);
-                              const shouldHighlightGeneric = searchTerm.startsWith('@') || !hasBrandMatch;
-                              return highlightMatch(genericNameStr, searchTerm, shouldHighlightGeneric);
-                            })()}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Expanding Content Container */}
-                      <div className={`grid transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isExpanded ? 'grid-rows-[1fr] opacity-100 pb-3' : 'grid-rows-[0fr] opacity-0'}`}>
-                        <div className="overflow-hidden min-h-0">
-                          {/* Design Concept 3: Quantity Controls directly in search result when expanded */}
-                          <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800/50 mt-1">
-                             <div className="flex flex-col">
-                               <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">{language === 'AR' ? 'تحكم في الكمية' : 'Quantity Control'}</span>
-                               <span className="text-[9px] text-gray-500 opacity-60">{language === 'AR' ? 'أضف للعربة فوراً' : 'Add to cart instantly'}</span>
-                             </div>
-
-                             <div className="flex items-center gap-3">
-                                {designMode === 'magic' && (
-                                   <CartItemQuantityControl 
-                                      item={cart.find(c => c.id === drug.id) || { ...drug, quantity: 0, isUnit: false } as CartItem}
-                                      packItem={cart.find(c => c.id === drug.id && !c.isUnit)}
-                                      unitItem={cart.find(c => c.id === drug.id && c.isUnit)}
-                                      hasDualMode={!!drug.unitsPerPack && drug.unitsPerPack > 1}
-                                      updateQuantity={onUpdateQuantity}
-                                      addToCart={(d, isUnit, qty) => onAddToCart(d, isUnit, qty)}
-                                   />
-                                )}
-                                
-                                {designMode !== 'magic' && (
-                                   <button 
-                                     onClick={() => onAddToCart(drug)}
-                                     className="px-4 py-2 bg-primary-600 text-white rounded-xl text-xs font-black shadow-lg shadow-primary-500/20 active:scale-95 transition-all"
-                                   >
-                                     {language === 'AR' ? 'أضف للعربة' : 'Add to Cart'}
-                                   </button>
-                                )}
-                             </div>
-                          </div>
-
-                          {drug.description && (
-                            <div className="pt-2 mt-2">
-                              <p className="text-[10px] text-gray-400 italic leading-relaxed">
-                                {drug.description}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </MaterialTabs>
-                </div>
-              );
-            })}
+            {filteredDrugs.map((drug, index) => (
+              <MedicineSearchItem
+                key={drug.id}
+                drug={drug}
+                index={index}
+                searchTerm={searchTerm}
+                totalResults={filteredDrugs.length}
+                isExpanded={expandedDrugId === drug.id}
+                onToggleExpand={() => setExpandedDrugId(expandedDrugId === drug.id ? null : drug.id)}
+                onPointerDown={handlePointerDown}
+                onPointerUp={handlePointerUp}
+                highlightMatch={highlightMatch}
+                language={language}
+                textTransform={textTransform}
+                cart={cart}
+                onAddToCart={onAddToCart}
+                onUpdateQuantity={onUpdateQuantity}
+                inventory={inventory}
+              />
+            ))}
           </div>
         )}
 
@@ -501,6 +355,125 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
         `}</style>
       </div>
 
+    </div>
+  );
+};
+// --- HELPER COMPONENTS ---
+
+const DrugActionPill: React.FC<{
+  drug: Drug;
+  cart: CartItem[];
+  isExpanded: boolean;
+  language: string;
+  onAddToCart: (drug: Drug) => void;
+}> = ({ drug, cart, isExpanded, language, onAddToCart }) => {
+  const currentQtyInCart = cart
+    .filter(c => c.id === drug.id)
+    .reduce((sum, c) => sum + (c.isUnit ? c.quantity / (drug.unitsPerPack || 1) : c.quantity), 0);
+  const isOutOfStock = currentQtyInCart >= drug.stock;
+  
+  const parts = formatCurrencyParts(drug.price);
+  const isArabic = language === 'AR';
+
+  return (
+    <div className="shrink-0 relative">
+      <div className={`absolute -top-2.5 right-1 z-20 px-1.5 py-0.5 rounded-full text-[9px] font-black shadow-lg border-2 border-white dark:border-(--bg-secondary) animate-in zoom-in duration-300 ${drug.stock > 0 ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+        {drug.stock <= 0 ? '0' : (drug.stock / (drug.unitsPerPack || 1)).toLocaleString('en-US', { maximumFractionDigits: 1 })}
+      </div>
+
+      <div className={`flex items-center h-8 rounded-full border bg-transparent transition-all duration-300 ${isExpanded ? 'border-primary-500/50 ring-1 ring-primary-500/10' : 'border-gray-200 dark:border-white/20'}`}>
+        <div className="ps-2.5 pe-1.5 py-0.5 flex items-center">
+          <span className="font-black text-[13px] text-primary-600 dark:text-primary-400 tabular-nums">
+            <span className="flex items-baseline gap-0.5">
+              {isArabic && <span className="text-[8px] font-black opacity-60">{parts.symbol}</span>}
+              <span>{parts.amount}</span>
+              {!isArabic && <span className="text-[8px] font-black opacity-60">{parts.symbol}</span>}
+            </span>
+          </span>
+        </div>
+        <div className="w-px h-1/2 bg-gray-200 dark:bg-white/20" />
+        <button
+          onClick={(e) => { e.stopPropagation(); if (!isOutOfStock) onAddToCart(drug); }}
+          disabled={isOutOfStock}
+          className={`h-full px-2.5 flex items-center justify-center active:scale-90 transition-all rounded-e-full ${isOutOfStock ? 'text-gray-300 dark:text-gray-600 opacity-50' : 'text-primary-600 dark:text-primary-400 hover:bg-primary-500/10'}`}
+        >
+          <span className="material-symbols-rounded font-fill text-[18px]">
+            {isOutOfStock ? 'block' : (isExpanded ? 'shopping_cart_checkout' : 'add')}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const MedicineSearchItem: React.FC<{
+  drug: Drug;
+  index: number;
+  searchTerm: string;
+  totalResults: number;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onPointerDown: (id: string) => void;
+  onPointerUp: () => void;
+  highlightMatch: (text: string, term: string, force?: boolean) => React.ReactNode;
+  language: string;
+  textTransform: any;
+  cart: CartItem[];
+  onAddToCart: (drug: Drug) => void;
+  onUpdateQuantity: (id: string, isUnit: boolean, delta: number) => void;
+  inventory: Drug[];
+}> = ({ drug, index, searchTerm, totalResults, isExpanded, onToggleExpand, onPointerDown, onPointerUp, highlightMatch, language, textTransform, cart, onAddToCart, onUpdateQuantity, inventory }) => {
+  const displayName = getDisplayName(drug, textTransform);
+  const genericNameStr = Array.isArray(drug.genericName) ? drug.genericName.join(' + ') : String(drug.genericName || '');
+  
+  return (
+    <div className={index < 20 ? "animate-stagger-fade-in" : ""} style={{ '--index': index } as any}>
+      <MaterialTabs
+        index={index}
+        total={totalResults}
+        isSelected={isExpanded}
+        onPointerDown={() => onPointerDown(drug.id)}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
+        className={`!px-0 !h-auto !min-h-[72px] border border-gray-100/30 dark:border-gray-800/20 transition-all bg-white dark:!bg-(--bg-secondary) ${isExpanded ? 'pt-1 border-(--border-divider) z-10 shadow-sm' : ''}`}
+        onClick={onToggleExpand}
+      >
+        <div className="flex flex-col w-full px-4 text-left">
+          <div className="h-[60px] flex items-center justify-between w-full gap-2">
+            <div className="flex-1 min-w-0">
+              <h3 className={`font-bold text-gray-900 dark:text-gray-100 leading-tight ${isExpanded ? 'text-base' : 'line-clamp-2'}`}>
+                {highlightMatch(displayName, searchTerm, !searchTerm.startsWith('@'))}
+              </h3>
+              <p className={`text-gray-400 dark:text-gray-600 text-xs mt-0.5 ${isExpanded ? '' : 'truncate'}`}>
+                {highlightMatch(genericNameStr, searchTerm, searchTerm.startsWith('@') || !new RegExp(parseSearchTerm(searchTerm).regex.source, 'i').test(displayName))}
+              </p>
+            </div>
+            <DrugActionPill drug={drug} cart={cart} isExpanded={isExpanded} language={language} onAddToCart={onAddToCart} />
+          </div>
+
+          <div className={`grid transition-all duration-300 ${isExpanded ? 'grid-rows-[1fr] pb-3' : 'grid-rows-[0fr] opacity-0 overflow-hidden'}`}>
+            <div className="overflow-hidden">
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800/50 mt-1">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">{language === 'AR' ? 'تحكم في الكمية' : 'Quantity'}</span>
+                  <span className="text-[9px] text-gray-500 opacity-60">{language === 'AR' ? 'أضف للعربة' : 'Add to cart'}</span>
+                </div>
+                <CartItemQuantityControl
+                  item={cart.find(c => c.id === drug.id) || { ...drug, quantity: 0, isUnit: false } as CartItem}
+                  packItem={cart.find(c => c.id === drug.id && !c.isUnit)}
+                  unitItem={cart.find(c => c.id === drug.id && c.isUnit)}
+                  hasDualMode={!!drug.unitsPerPack && drug.unitsPerPack > 1}
+                  updateQuantity={onUpdateQuantity}
+                  addToCart={onAddToCart}
+                  allBatches={inventory.filter(b => b.name === drug.name && b.dosageForm === drug.dosageForm)}
+                  isMobile={true}
+                />
+              </div>
+              {drug.description && <p className="pt-2 mt-2 text-[10px] text-gray-400 italic leading-relaxed">{drug.description}</p>}
+            </div>
+          </div>
+        </div>
+      </MaterialTabs>
     </div>
   );
 };

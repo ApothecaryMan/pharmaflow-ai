@@ -12,7 +12,9 @@ export interface CartItemExpiryBadgeProps {
   showMenu: (x: number, y: number, items: any[]) => void;
   onSelectBatch: (currentItem: CartItem, newBatch: Drug, packQty: number, unitQty: number) => void;
 }
-
+// ==========================================
+// 1. EXPIRY & BATCH SELECTION COMPONENT
+// ==========================================
 export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
   item,
   allBatches,
@@ -33,8 +35,9 @@ export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
 
   return (
     <div className='flex items-center gap-1'>
-      <span
-        className={`text-[9px] font-bold text-white w-[38px] h-[18px] flex items-center justify-center rounded shadow-sm cursor-pointer hover:ring-2 hover:ring-white/50 transition-all ${getBadgeColor()}`}
+      <button
+        type="button"
+        className={`text-[10px] font-black text-white px-2 h-6 flex items-center justify-center rounded-lg shadow-sm cursor-pointer border border-black/5 dark:border-white/5 ${getBadgeColor()}`}
         onClick={(e) => {
           e.stopPropagation();
           const batchMenuItems = allBatches.map((batch) => ({
@@ -52,7 +55,7 @@ export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
         onPointerDown={(e) => e.stopPropagation()}
       >
         {formatExpiryDate(item.expiryDate)}
-      </span>
+      </button>
     </div>
   );
 };
@@ -66,7 +69,9 @@ export interface CartItemDiscountControlProps {
   updateItemDiscount: (id: string, isUnit: boolean, discount: number) => void;
   setGlobalDiscount: (discount: number) => void;
 }
-
+// ==========================================
+// 2. ITEM DISCOUNT CONTROL COMPONENT
+// ==========================================
 export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = ({
   item,
   packItem,
@@ -137,7 +142,7 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
           if (unitItem) updateItemDiscount(unitItem.id, true, finalVal);
           if (finalVal > 0) setGlobalDiscount(0);
         }}
-        className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+        className={`w-8 min-w-0 h-full text-[10px] font-black text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
           hasDiscount
             ? 'text-emerald-700 dark:text-emerald-300 placeholder-emerald-300'
             : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
@@ -154,8 +159,12 @@ export interface CartItemQuantityControlProps {
   hasDualMode: boolean;
   updateQuantity: (id: string, isUnit: boolean, delta: number) => void;
   addToCart: (drug: Drug, isUnitMode?: boolean, quantity?: number) => void;
+  allBatches?: Drug[];
+  isMobile?: boolean; // New prop for UI separation
 }
-
+// ==========================================
+// 3. QUANTITY STEPPER (DESKTOP & MOBILE)
+// ==========================================
 export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = ({
   item,
   packItem,
@@ -163,65 +172,140 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
   hasDualMode,
   updateQuantity,
   addToCart,
+  allBatches,
+  isMobile = false,
 }) => {
-  return (
-    <div
-      className={`flex items-center bg-white dark:bg-gray-900 rounded-lg border shadow-sm h-6 overflow-hidden w-14 shrink-0 transition-colors ${
-        hasDualMode && (!packItem || packItem.quantity === 0) && (!unitItem || unitItem.quantity === 0)
-          ? 'border-yellow-400 dark:border-yellow-500 ring-1 ring-yellow-400/20'
-          : 'border-gray-200 dark:border-gray-700'
-      }`}
-    >
-      <input
-        type='number'
-        min={hasDualMode ? '0' : '1'}
-        step='any'
-        placeholder={hasDualMode ? 'P' : '1'}
-        value={packItem?.quantity === 0 ? '' : packItem?.quantity || ''}
-        onClick={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
-        onWheel={(e) => (e.target as HTMLInputElement).blur()}
-        onChange={(e) => {
-          const val = e.target.value === '' ? (hasDualMode ? 0 : 1) : parseFloat(e.target.value);
-          if (isNaN(val)) return;
-          const minVal = hasDualMode ? 0 : 1;
-          const clampedVal = Math.max(minVal, val);
-          if (packItem) {
-            updateQuantity(packItem.id, false, clampedVal - packItem.quantity);
-          } else if (clampedVal > 0) {
-            addToCart(item, false, clampedVal);
-          }
-        }}
-        className={`h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 shrink-0 min-w-0 ${
-          hasDualMode ? 'w-7' : 'w-full'
-        } text-primary-600 dark:text-primary-400`}
-      />
+  const unitsPerPack = item.unitsPerPack || 1;
 
-      {hasDualMode && <div className='w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0'></div>}
+  const totalStockUnits = React.useMemo(() => {
+    if (!allBatches || allBatches.length === 0) return (item.stock || 0) * unitsPerPack;
+    return allBatches.reduce((sum, b) => sum + b.stock, 0) * unitsPerPack;
+  }, [allBatches, item.stock, unitsPerPack]);
 
-      {hasDualMode && (
+  const renderDesktopUI = () => {
+    return (
+      <div
+        className={`flex items-center bg-white dark:bg-gray-900 rounded-lg border shadow-sm h-6 overflow-hidden w-14 shrink-0 transition-colors ${
+          hasDualMode && (!packItem || packItem.quantity === 0) && (!unitItem || unitItem.quantity === 0)
+            ? 'border-yellow-400 dark:border-yellow-500 ring-1 ring-yellow-400/20'
+            : 'border-gray-200 dark:border-gray-700'
+        }`}
+      >
         <input
           type='number'
-          min='0'
-          placeholder='U'
-          title={`1 Pack = ${item.unitsPerPack || 1} Units`}
-          value={unitItem?.quantity === 0 ? '' : unitItem?.quantity || ''}
+          min={hasDualMode ? '0' : '1'}
+          step='any'
+          placeholder={hasDualMode ? 'P' : '1'}
+          value={packItem?.quantity === 0 ? '' : packItem?.quantity || ''}
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
           onWheel={(e) => (e.target as HTMLInputElement).blur()}
           onChange={(e) => {
-            const val = e.target.value === '' ? 0 : parseInt(e.target.value);
+            const val = e.target.value === '' ? (hasDualMode ? 0 : 1) : parseFloat(e.target.value);
             if (isNaN(val)) return;
-            const clampedVal = Math.max(0, val);
-            if (unitItem) {
-              updateQuantity(unitItem.id, true, clampedVal - unitItem.quantity);
+            const minVal = hasDualMode ? 0 : 1;
+            const clampedVal = Math.max(minVal, val);
+            if (packItem) {
+              updateQuantity(packItem.id, false, clampedVal - packItem.quantity);
             } else if (clampedVal > 0) {
-              addToCart(item, true, clampedVal);
+              addToCart(item, false, clampedVal);
             }
           }}
-          className={`w-7 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-primary-600 dark:text-primary-400 placeholder-primary-200 shrink-0`}
+          className={`h-full text-[10px] font-black text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 shrink-0 min-w-0 ${
+            hasDualMode ? 'w-7' : 'w-full'
+          } text-primary-600 dark:text-primary-400`}
         />
-      )}
-    </div>
-  );
+
+        {hasDualMode && <div className='w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0'></div>}
+
+        {hasDualMode && (
+          <input
+            type='number'
+            min='0'
+            placeholder='U'
+            title={`1 Pack = ${item.unitsPerPack || 1} Units`}
+            value={unitItem?.quantity === 0 ? '' : unitItem?.quantity || ''}
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onWheel={(e) => (e.target as HTMLInputElement).blur()}
+            onChange={(e) => {
+              const val = e.target.value === '' ? 0 : parseInt(e.target.value);
+              if (isNaN(val)) return;
+              const clampedVal = Math.max(0, val);
+              if (unitItem) {
+                updateQuantity(unitItem.id, true, clampedVal - unitItem.quantity);
+              } else if (clampedVal > 0) {
+                addToCart(item, true, clampedVal);
+              }
+            }}
+            className={`w-7 min-w-0 h-full text-[10px] font-black text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-primary-600 dark:text-primary-400 placeholder-primary-200 shrink-0`}
+          />
+        )}
+      </div>
+    );
+  };
+
+  const renderMobileUI = () => {
+    // CURRENTLY SAME AS DESKTOP BUT SEPARATED FOR EASY EDITING
+    const renderMobileStepper = (isUnit: boolean) => {
+      const targetItem = isUnit ? unitItem : packItem;
+      const qty = targetItem?.quantity || 0;
+      const otherQty = (isUnit ? packItem : unitItem)?.quantity || 0;
+      const placeholder = isUnit ? 'U' : (hasDualMode ? 'P' : '1');
+      
+      const currentOtherUnits = isUnit ? (otherQty * unitsPerPack) : otherQty;
+      const availableForThisModeRaw = totalStockUnits - currentOtherUnits;
+      const maxForThisMode = isUnit ? availableForThisModeRaw : Math.floor(availableForThisModeRaw / unitsPerPack);
+      
+      const isAtMax = qty >= maxForThisMode;
+
+      return (
+        <div className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm h-6 overflow-hidden transition-all bg-white dark:bg-gray-900">
+          <button
+            onClick={(e) => { e.stopPropagation(); if (qty > 0) updateQuantity(item.id, isUnit, -1); }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="w-6 h-full flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 text-gray-400 dark:text-gray-600 active:scale-90 transition-all disabled:opacity-30"
+            disabled={qty === 0}
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>remove</span>
+          </button>
+          
+          <input
+            type="number"
+            min="0"
+            max={maxForThisMode}
+            placeholder={placeholder}
+            value={qty === 0 ? '' : qty}
+            readOnly // On mobile, maybe only +/- are better or keyboard triggered separately
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            className={`w-8 h-full text-[10px] font-black text-center bg-transparent border-none focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 dark:placeholder-gray-700 text-primary-600 dark:text-primary-400`}
+          />
+
+          <button
+            onClick={(e) => { e.stopPropagation(); if (qty < maxForThisMode) { if (qty > 0) updateQuantity(item.id, isUnit, 1); else addToCart(item, isUnit, 1); } }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className={`w-6 h-full flex items-center justify-center transition-all ${isAtMax ? 'text-gray-300 dark:text-gray-800 cursor-not-allowed' : 'hover:bg-black/5 dark:hover:bg-white/5 text-primary-600 dark:text-primary-400 active:scale-90'}`}
+            disabled={isAtMax}
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>add</span>
+          </button>
+        </div>
+      );
+    };
+
+    return (
+      <div className="flex items-center gap-2 shrink-0" dir="ltr">
+        {renderMobileStepper(false)}
+        {hasDualMode && (
+          <>
+            <div className="w-px h-4 bg-gray-200 dark:bg-gray-800 shrink-0" />
+            {renderMobileStepper(true)}
+          </>
+        )}
+      </div>
+    );
+  };
+
+  return isMobile ? renderMobileUI() : renderDesktopUI();
 };

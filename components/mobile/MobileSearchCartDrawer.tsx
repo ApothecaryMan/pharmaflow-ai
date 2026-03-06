@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { POSCartSidebar, type POSCartSidebarProps } from '../sales/pos/ui/POSCartSidebar';
 import { useData } from '../../services/DataContext';
 import { useSettings } from '../../context/SettingsContext';
@@ -9,8 +9,20 @@ interface MobileSearchCartDrawerProps extends Partial<POSCartSidebarProps> {
   cart: any[];
   onUpdateQuantity: (id: string, isUnit: boolean, delta: number) => void;
   onRemove: (id: string, isUnit: boolean) => void;
+  /** الإجمالي بعد خصومات الأصناف */
   total: number;
+  /** الإجمالي قبل أي خصم */
+  grossSubtotal?: number;
   totalItems: number;
+  updateItemDiscount: (id: string, isUnit: boolean, discount: number) => void;
+  toggleUnitMode: (id: string, currentIsUnit: boolean) => void;
+  showMenu: any;
+  batchesMap: Map<string, any[]>;
+  switchBatchWithAutoSplit: (currentItem: any, newBatch: any, packQty: number, unitQty: number) => void;
+  addToCart: (drug: any, isUnit?: boolean, quantity?: number) => void;
+  removeDrugFromCart: (id: string) => void;
+  /** مسح العربة بالكامل بعد إتمام البيع */
+  onClearCart?: () => void;
 }
 
 export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
@@ -20,12 +32,54 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
   onUpdateQuantity,
   onRemove,
   total,
+  grossSubtotal,
   totalItems,
+  updateItemDiscount,
+  toggleUnitMode,
+  showMenu,
+  batchesMap,
+  switchBatchWithAutoSplit,
+  addToCart,
+  removeDrugFromCart,
+  onClearCart,
 }) => {
   const { employees } = useData();
   const { language } = useSettings();
 
+  // --- Local checkout state ---
+  const [isCheckoutMode, setIsCheckoutMode] = useState(false);
+  const [isDeliveryMode, setIsDeliveryMode] = useState(false);
+  const [amountPaid, setAmountPaid] = useState('');
+
   if (!isOpen) return null;
+
+  // الإجمالي قبل الخصم (ممرر من الوالد أو محسوب هنا)
+  const rawSubtotal = grossSubtotal ?? cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+  // Grouping logic for POSCartSidebar
+  const mergedIds = Array.from(new Set(cart.map(i => i.id)));
+  const mergedCartItems = mergedIds.map(id => {
+    const items = cart.filter(i => i.id === id);
+    const pack = items.find(i => !i.isUnit);
+    const unit = items.find(i => i.isUnit);
+    const common = pack || unit;
+    return {
+      id,
+      common,
+      pack,
+      unit
+    };
+  });
+
+  const handleCheckout = () => {
+    // في هذا السياق (عربة البحث المتنقلة) نقوم فقط بالغلق ومسح العربة
+    // يمكن تطوير هذا لاحقاً ليرتبط بـ DataContext.addSale
+    setIsCheckoutMode(false);
+    setIsDeliveryMode(false);
+    setAmountPaid('');
+    onClearCart?.();
+    onClose();
+  };
 
   // Mocking required props for POSCartSidebar while keeping it simple
   const sidebarProps: any = {
@@ -40,54 +94,62 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
       emptyCart: language === 'AR' ? 'العربة فارغة' : 'Empty Cart',
       viewCart: language === 'AR' ? 'عرض العربة' : 'View Cart',
       total: language === 'AR' ? 'الإجمالي' : 'Total',
+      subtotal: language === 'AR' ? 'المجموع الفرعي' : 'Subtotal',
+      orderDiscount: language === 'AR' ? 'خصم إضافي' : 'Order Discount',
       completeOrder: language === 'AR' ? 'إتمام' : 'Done',
+      remainder: language === 'AR' ? 'الباقي' : 'Change',
+      noOpenShift: language === 'AR' ? 'لا يوجد وردية مفتوحة' : 'No open shift',
     },
+    // cartTotal = الإجمالي بعد خصومات الأصناف (الصحيح للعرض)
     cartTotal: total,
-    sidebarWidth: window.innerWidth,
+    sidebarWidth: typeof window !== 'undefined' ? window.innerWidth : 400,
     startResizing: () => {},
     sidebarRef: { current: null },
     cartSensors: [],
     handleCartDragEnd: () => {},
-    mergedCartItems: cart.map(item => ({
-      id: item.id,
-      common: item,
-      pack: !item.isUnit ? item : null,
-      unit: item.isUnit ? item : null,
-    })),
+    mergedCartItems,
     highlightedIndex: -1,
     setHighlightedIndex: () => {},
     color: 'var(--primary-600)',
-    showMenu: () => {},
+    showMenu,
     removeFromCart: onRemove,
-    toggleUnitMode: () => {},
-    updateItemDiscount: () => {},
+    toggleUnitMode,
+    updateItemDiscount,
     setGlobalDiscount: () => {},
     updateQuantity: onUpdateQuantity,
-    addToCart: () => {},
-    removeDrugFromCart: () => {},
-    batchesMap: new Map(),
-    switchBatchWithAutoSplit: () => {},
+    addToCart,
+    removeDrugFromCart,
+    batchesMap,
+    switchBatchWithAutoSplit,
     currentLang: language.toLowerCase(),
     globalDiscount: 0,
     setSearch: () => {},
     searchInputRef: { current: null },
     userRole: 'pharmacist',
-    grossSubtotal: total,
+    // grossSubtotal = الإجمالي قبل الخصم - يظهر السطر الفرعي فقط إذا اختلف عن cartTotal
+    grossSubtotal: rawSubtotal,
     orderDiscountPercent: 0,
     hasOpenShift: true,
-    isCheckoutMode: false,
-    setIsCheckoutMode: () => {},
-    isDeliveryMode: false,
-    setIsDeliveryMode: () => {},
-    amountPaid: '',
-    setAmountPaid: () => {},
-    isValidOrder: true,
-    handleCheckout: () => onClose(),
+    // Local checkout state - يُمرَّر لـ POSCartSidebar ليتحكم في عرض واجهة الدفع
+    isCheckoutMode,
+    setIsCheckoutMode: (val: boolean) => {
+      setIsCheckoutMode(val);
+      if (!val) setAmountPaid('');
+    },
+    isDeliveryMode,
+    setIsDeliveryMode: (val: boolean) => {
+      setIsDeliveryMode(val);
+    },
+    amountPaid,
+    setAmountPaid,
+    isValidOrder: cart.length > 0,
+    handleCheckout,
     deliveryEmployeeId: '',
     setDeliveryEmployeeId: () => {},
     employees: employees || [],
     isRTL: language === 'AR',
     paymentMethod: 'cash',
+    isMobile: true,
   };
 
   return (

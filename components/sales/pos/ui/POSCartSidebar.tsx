@@ -64,6 +64,7 @@ export interface POSCartSidebarProps {
   employees: Employee[];
   isRTL: boolean;
   paymentMethod: 'cash' | 'visa';
+  isMobile?: boolean; // New prop for UI separation
 }
 
 export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
@@ -113,6 +114,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   employees,
   isRTL,
   paymentMethod,
+  isMobile = false,
 }) => {
   const handleSearchInTable = useCallback(
     (term: string) => {
@@ -278,7 +280,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
             {/* Mobile Back Button */}
             <button
               onClick={() => setMobileTab('products')}
-              className="lg:hidden w-9 h-9 rounded-xl bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 flex items-center justify-center transition-all active:scale-95 border border-gray-200/50 dark:border-gray-700/50"
+              className="lg:hidden w-9 h-9 rounded-xl bg-white dark:bg-[#3c3c3c] text-gray-500 flex items-center justify-center transition-all active:scale-95 border border-gray-200/50 dark:border-(--border-divider)"
             >
               <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>close</span>
             </button>
@@ -286,7 +288,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
         </div>
 
         <div
-          className={`flex-1 p-2 space-y-2 cart-scroll ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
+          className={`flex-1 p-1 space-y-1 cart-scroll ${cart.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}
           dir='ltr'
         >
           <style>{cartScrollStyles}</style>
@@ -348,6 +350,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                         globalDiscount={globalDiscount}
                         onSearchInTable={handleSearchInTable}
                         userRole={userRole}
+                        isMobile={isMobile}
                       />
                     </div>
                   );
@@ -436,29 +439,33 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                         ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer' 
                         : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
                   } font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}>
-                  <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
-                    {paymentMethod === 'visa' ? 'credit_card' : 'payments'}
-                  </span>
+                  {!isMobile && (
+                    <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
+                      {paymentMethod === 'visa' ? 'credit_card' : 'payments'}
+                    </span>
+                  )}
                   {t.completeOrder}
                 </button>
-                <button
-                  onClick={() => {
-                    setIsDeliveryMode(true);
-                    setIsCheckoutMode(false);
-                  }}
-                  disabled={
-                    !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
-                  }
-                  className={`w-12 py-2.5 rounded-xl ${
-                    !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
-                      ? BUTTON_INACTIVE
-                      : 'bg-emerald-100 dark:bg-[#3c3c3c] border border-(--border-divider) text-emerald-700 dark:text-gray-300 cursor-pointer'
-                  } transition-colors flex justify-center items-center shrink-0`}
-                  title={t.deliveryOrder}>
-                  <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
-                    local_shipping
-                  </span>
-                </button>
+                {!isMobile && (
+                  <button
+                    onClick={() => {
+                      setIsDeliveryMode(true);
+                      setIsCheckoutMode(false);
+                    }}
+                    disabled={
+                      !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
+                    }
+                    className={`w-12 py-2.5 rounded-xl ${
+                      !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
+                        ? BUTTON_INACTIVE
+                        : 'bg-emerald-100 dark:bg-[#3c3c3c] border border-(--border-divider) text-emerald-700 dark:text-gray-300 cursor-pointer'
+                    } transition-colors flex justify-center items-center shrink-0`}
+                    title={t.deliveryOrder}>
+                    <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
+                      local_shipping
+                    </span>
+                  </button>
+                )}
               </div>
 
               {/* Checkout Mode - Expands from 0 to full width */}
@@ -474,7 +481,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                       if (el && isCheckoutMode) setTimeout(() => el.focus(), 50);
                     }}
                     type='number'
-                    inputMode='decimal'
+                    inputMode='tel'
                     value={amountPaid}
                     onChange={(e) => setAmountPaid(e.target.value)}
                     placeholder={cartTotal.toString()}

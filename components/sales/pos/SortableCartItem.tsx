@@ -37,6 +37,7 @@ export interface SortableCartItemProps {
   globalDiscount?: number;
   onSearchInTable: (term: string) => void;
   userRole: UserRole;
+  isMobile?: boolean;
 }
 
 export const calculateItemTotal = (item: CartItem) => {
@@ -71,6 +72,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
   globalDiscount,
   onSearchInTable,
   userRole,
+  isMobile,
 }) => {
   const { textTransform } = useSettings();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -245,12 +247,12 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
       style={style}
       {...attributes}
       {...listeners}
-      className={`flex flex-col p-2 rounded-xl bg-white dark:bg-gray-900 border transition-all touch-manipulation relative group outline-hidden
+      className={`flex flex-col p-1.5 rounded-2xl transition-all touch-manipulation relative group outline-hidden
         ${isDragging ? `z-50 opacity-100` : ''}
         ${
           isHighlighted
-            ? `border-primary-200 dark:border-primary-800 bg-primary-100/50 dark:bg-primary-900/30`
-            : 'border-gray-100 dark:border-gray-800'
+            ? `border-primary-400/30 dark:border-primary-500/30 bg-primary-50/50 dark:bg-primary-900/10 border`
+            : 'bg-[#f9fafb] dark:bg-[#282828] border border-black/5 dark:border-white/10'
         }`}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -280,6 +282,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
         {/* Unified 'Rest' Section: Date, Controls, Price */}
         <div className='flex items-center gap-2 shrink-0 ml-auto'>
           {/* Expiry Date Badge with Batch Details */}
+          {/* Expiry Date Badge */}
           <CartItemExpiryBadge
             item={item}
             allBatches={allBatches}
@@ -290,28 +293,28 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
             onSelectBatch={onSelectBatch}
           />
 
-          {/* Controls */}
-          <div className='flex items-center gap-1'>
-            {/* Smart Discount Logic Info */}
-            <CartItemDiscountControl
-              item={item}
-              packItem={packItem}
-              unitItem={unitItem}
-              globalDiscount={globalDiscount}
-              userRole={userRole}
-              updateItemDiscount={updateItemDiscount}
-              setGlobalDiscount={setGlobalDiscount}
-            />
+          {/* Smart Discount Logic Info */}
+          <CartItemDiscountControl
+            item={item}
+            packItem={packItem}
+            unitItem={unitItem}
+            globalDiscount={globalDiscount}
+            userRole={userRole}
+            updateItemDiscount={updateItemDiscount}
+            setGlobalDiscount={setGlobalDiscount}
+          />
 
-            {/* Dual Qty Control */}
-            <CartItemQuantityControl
-              item={item}
-              packItem={packItem}
-              unitItem={unitItem}
-              hasDualMode={hasDualMode}
-              updateQuantity={updateQuantity}
-              addToCart={addToCart}
-            />
+          {/* Dual Qty Control */}
+          <CartItemQuantityControl
+            item={item}
+            packItem={packItem}
+            unitItem={unitItem}
+            hasDualMode={hasDualMode}
+            updateQuantity={updateQuantity}
+            addToCart={addToCart}
+            allBatches={allBatches}
+            isMobile={isMobile}
+          />
 
             {/* Total Price (Sum of both) */}
             <div className='text-sm font-bold text-gray-900 dark:text-white w-16 shrink-0 text-end tabular-nums'>
@@ -338,6 +341,5 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
           </div>
         </div>
       </div>
-    </div>
   );
 });
