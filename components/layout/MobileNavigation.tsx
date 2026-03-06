@@ -8,10 +8,12 @@ import { canPerformAction, type UserRole } from '../../config/permissions';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { MobileDrawer } from './MobileDrawer';
 import { MobileMedicineSearch } from '../mobile/MobileMedicineSearch';
+import { MobileSearchCartDrawer } from '../mobile/MobileSearchCartDrawer';
 import { useData } from '../../services/DataContext';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { useSmartDirection } from '../common/SmartInputs';
-import type { Employee } from '../../types';
+import { formatCurrencyParts } from '../../utils/currency';
+import type { Employee, CartItem } from '../../types';
 
 // ============================================================================
 // CONSTANTS
@@ -465,6 +467,44 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   if (isStandalone) return null;
 
   const { inventory } = useData();
+  const { playSuccess } = usePosSounds();
+  const [cart, setCart] = React.useState<CartItem[]>([]);
+  const [cartDesignMode, setCartDesignMode] = React.useState<'stealth' | 'tray' | 'magic'>('stealth');
+  const [isCartOpen, setIsCartOpen] = React.useState(false);
+
+  // --- CART LOGIC ---
+  const addToCart = React.useCallback((drug: any, isUnit: boolean = false, quantity: number = 1) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.id === drug.id && item.isUnit === isUnit);
+      if (existing) {
+        return prev.map(item => 
+          item.id === drug.id && item.isUnit === isUnit 
+            ? { ...item, quantity: item.quantity + quantity } 
+            : item
+        );
+      }
+      return [...prev, { ...drug, quantity, isUnit }];
+    });
+    if (window.navigator.vibrate) window.navigator.vibrate(10);
+    playSuccess();
+  }, [playSuccess]);
+
+  const removeFromCart = React.useCallback((id: string, isUnit: boolean) => {
+    setCart(prev => prev.filter(item => !(item.id === id && item.isUnit === isUnit)));
+  }, []);
+
+  const updateQuantity = React.useCallback((id: string, isUnit: boolean, delta: number) => {
+    setCart(prev => prev.map(item => {
+      if (item.id === id && item.isUnit === isUnit) {
+        const newQty = Math.max(0, item.quantity + delta);
+        return { ...item, quantity: newQty };
+      }
+      return item;
+    }).filter(item => item.quantity > 0));
+  }, []);
+
+  const cartTotal = React.useMemo(() => cart.reduce((acc, item) => acc + (item.price * item.quantity), 0), [cart]);
+  const cartTotalItems = React.useMemo(() => cart.length, [cart]);
 
   return (
     <>
@@ -475,6 +515,13 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
             inventory={inventory} 
             color={theme.primary}
             onScanClick={() => console.log('Scan clicked')}
+            cart={cart}
+            setCart={setCart}
+            designMode={cartDesignMode}
+            setDesignMode={setCartDesignMode}
+            onAddToCart={addToCart}
+            onRemoveFromCart={removeFromCart}
+            onUpdateQuantity={updateQuantity}
           />
         </div>
       )}
@@ -544,8 +591,13 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
                     <div className="absolute inset-0 bg-black/[0.1] dark:bg-white/10 rounded-full animate-scale-in" />
                   )}
                   <span className={`relative z-10 material-symbols-rounded text-[26px] transition-all duration-500 ${view === 'medicine-search' ? 'font-fill scale-110' : ''}`}>
-                    search
+                    {cartDesignMode === 'magic' && cart.length > 0 ? (view === 'medicine-search' ? 'shopping_bag' : 'search') : 'search'}
                   </span>
+                  {cartDesignMode === 'magic' && cart.length > 0 && (
+                    <div className="absolute -top-1 -right-1 z-20 w-5 h-5 bg-primary-600 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg animate-scale-in border-2 border-white dark:border-[#06080F]">
+                      {cart.length}
+                    </div>
+                  )}
                 </button>
               </div>
             )}
@@ -622,7 +674,84 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
           </>
         )}
       </nav>
+
+      {/* --- MOBILE SEARCH CART UI (Layered on top of Dock) --- */}
+      {view === 'medicine-search' && (
+        <>
+          {/* Concept 1: Stealth Pill UI */}
+          {cartDesignMode === 'stealth' && cart.length > 0 && (
+            <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] animate-slide-up">
+               <button 
+                 onClick={() => setIsCartOpen(true)}
+                 className="flex items-center gap-3 px-6 py-3 rounded-full bg-black/90 dark:bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-white active:scale-95 transition-all"
+               >
+                 <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-600 text-[10px] font-black">
+                   {cartTotalItems}
+                 </div>
+                 <span className="text-[13px] font-bold tabular-nums tracking-tight">
+                   <PriceDisplay value={cartTotal} />
+                 </span>
+                 <span className="material-symbols-rounded text-lg opacity-60">shopping_bag</span>
+               </button>
+            </div>
+          )}
+
+          {/* Concept 2: Interactive Tray UI */}
+          {cartDesignMode === 'tray' && cart.length > 0 && (
+            <div className="md:hidden fixed bottom-0 left-0 right-0 z-[100] animate-slide-up">
+               <div className="mx-4 mb-4 p-3 rounded-2xl bg-white/90 dark:bg-[#12141A]/95 backdrop-blur-3xl border border-gray-200 dark:border-gray-800 shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center justify-between">
+                  <div className="flex -space-x-2 overflow-hidden items-center">
+                     {cart.slice(-4).reverse().map((item, i) => (
+                       <div key={`${item.id}-${i}`} className="w-10 h-10 rounded-full bg-primary-600 border-2 border-white dark:border-[#12141A] flex items-center justify-center text-[8px] font-bold text-white shadow-sm ring-1 ring-black/5">
+                          {item.name.charAt(0)}
+                       </div>
+                     ))}
+                     {cart.length > 4 && (
+                       <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 border-2 border-white dark:border-[#12141A] flex items-center justify-center text-[10px] font-bold text-gray-500">
+                         +{cart.length - 4}
+                       </div>
+                     )}
+                  </div>
+                  
+                  <button 
+                    onClick={() => setIsCartOpen(true)}
+                    className="flex items-center gap-3 ps-4 pe-2 py-2 rounded-xl bg-primary-600 text-white font-black text-xs active:scale-95 transition-all"
+                  >
+                    <span><PriceDisplay value={cartTotal} /></span>
+                    <span className="bg-white/20 px-2 py-1 rounded-lg">VIEW</span>
+                  </button>
+               </div>
+            </div>
+          )}
+
+          {/* Design Switcher Overlay Label */}
+          <div className="fixed top-20 right-4 z-[100] pointer-events-none opacity-40">
+             <span className="text-[10px] font-black bg-gray-800 text-white px-2 py-0.5 rounded uppercase tracking-widest italic">{cartDesignMode} MODE</span>
+          </div>
+
+          <MobileSearchCartDrawer 
+             isOpen={isCartOpen}
+             onClose={() => setIsCartOpen(false)}
+             cart={cart}
+             onUpdateQuantity={updateQuantity}
+             onRemove={removeFromCart}
+             total={cartTotal}
+             totalItems={cartTotalItems}
+          />
+        </>
+      )}
     </>
+  );
+};
+
+// --- HELPERS ---
+const PriceDisplay: React.FC<{ value: number }> = ({ value }) => {
+  const parts = formatCurrencyParts(value);
+  return (
+     <span className="flex items-baseline gap-0.5">
+        <span>{parts.amount}</span>
+        <span className="text-[0.8em] opacity-60 font-medium">{parts.symbol}</span>
+     </span>
   );
 };
 

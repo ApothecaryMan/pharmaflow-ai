@@ -3,26 +3,49 @@ import { SearchInput } from '../common/SearchInput';
 import { useSettings } from '../../context/SettingsContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { parseSearchTerm, parsePriceRange } from '../../utils/searchUtils';
-import { Drug } from '../../types';
+import { Drug, CartItem } from '../../types';
 import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { InlineBarcodeScanner } from './InlineBarcodeScanner';
 import { MaterialTabs } from '../common/MaterialTabs';
+import { MobileSearchCartDrawer } from './MobileSearchCartDrawer';
+import { CartItemQuantityControl } from '../sales/pos/CartItemControls';
+import { usePosSounds } from '../common/hooks/usePosSounds';
 
 interface MobileMedicineSearchProps {
   inventory: Drug[];
   color: string;
   onScanClick?: () => void;
+  cart: CartItem[];
+  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
+  designMode: CartDesignMode;
+  setDesignMode: (mode: CartDesignMode) => void;
+  onAddToCart: (drug: Drug, isUnit?: boolean, qty?: number) => void;
+  onRemoveFromCart: (id: string, isUnit: boolean) => void;
+  onUpdateQuantity: (id: string, isUnit: boolean, delta: number) => void;
 }
+
+type CartDesignMode = 'stealth' | 'tray' | 'magic';
 
 export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
   inventory,
   color,
   onScanClick,
+  cart,
+  setCart,
+  designMode,
+  setDesignMode,
+  onAddToCart,
+  onRemoveFromCart,
+  onUpdateQuantity,
 }) => {
   const { language, textTransform } = useSettings();
   const t = TRANSLATIONS[language];
+  const { playSuccess } = usePosSounds();
+
+  // --- STATE ---
   const [searchTerm, setSearchTerm] = useState('');
+  
   const searchInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
@@ -33,7 +56,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
   const handlePointerDown = (id: string) => {
     longPressTimer.current = setTimeout(() => {
       setExpandedDrugId(prev => prev === id ? null : id);
-      // Give haptic feedback if available - Double sharp pulse for premium feel
+      // Give haptic feedback - Double sharp pulse
       if (window.navigator.vibrate) window.navigator.vibrate([10, 30, 10]);
     }, 600);
   };
@@ -235,6 +258,19 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
               className="!bg-transparent"
             />
           </div>
+
+          {/* Design Mode Switcher (Temporary for Preview) */}
+          <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-full ms-2 gap-1 overflow-hidden shrink-0">
+            {(['stealth', 'tray', 'magic'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setDesignMode(m)}
+                className={`text-[9px] font-black px-2 py-1 rounded-full transition-all ${designMode === m ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-100'}`}
+              >
+                {m.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
 
         
@@ -295,7 +331,13 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
                         ${isExpanded ? 'pt-1 border-(--border-divider) z-10 shadow-sm' : ''}
                       `}
                       onClick={() => {
-                        if (isExpanded) setExpandedDrugId(null);
+                        if (isExpanded) {
+                          setExpandedDrugId(null);
+                        } else {
+                          // Concept 1 & 2: Instant add on click if not expanded? 
+                          // Or let's just make it click to expand, and add "Add" button inside.
+                          setExpandedDrugId(drug.id);
+                        }
                       }}
                     >
                     <div className="flex flex-col w-full px-4">
@@ -307,9 +349,22 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
                                {highlightMatch(displayName, searchTerm, !searchTerm.startsWith('@'))}
                              </h3>
                            </div>
-                          <div className="shrink-0 text-right">
-                            <div className="flex items-baseline gap-1.5">
-                              <span className={`text-[11px] font-black transition-all ${drug.stock > 0 ? 'text-green-600/80 dark:text-green-500/80' : 'text-red-500/80'}`}>
+                          <div className="shrink-0 text-right flex items-center gap-2">
+                             {/* Instant Add Button for Stealth/Tray when not expanded */}
+                             {!isExpanded && (
+                               <button
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   onAddToCart(drug);
+                                 }}
+                                 className="w-8 h-8 rounded-full bg-primary-500/10 text-primary-600 flex items-center justify-center active:scale-90 transition-transform"
+                               >
+                                 <span className="material-symbols-rounded text-xl">add</span>
+                               </button>
+                             )}
+
+                            <div className="flex flex-col items-baseline gap-0.5">
+                              <span className={`text-[10px] font-black transition-all ${drug.stock > 0 ? 'text-green-600/80 dark:text-green-500/80' : 'text-red-500/80'}`}>
                                 ({(() => {
                                   if (drug.stock <= 0) return '0';
                                   const unitsPerPack = drug.unitsPerPack || 1;
@@ -355,8 +410,38 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
                       {/* Expanding Content Container */}
                       <div className={`grid transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isExpanded ? 'grid-rows-[1fr] opacity-100 pb-3' : 'grid-rows-[0fr] opacity-0'}`}>
                         <div className="overflow-hidden min-h-0">
+                          {/* Design Concept 3: Quantity Controls directly in search result when expanded */}
+                          <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800/50 mt-1">
+                             <div className="flex flex-col">
+                               <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">{language === 'AR' ? 'تحكم في الكمية' : 'Quantity Control'}</span>
+                               <span className="text-[9px] text-gray-500 opacity-60">{language === 'AR' ? 'أضف للعربة فوراً' : 'Add to cart instantly'}</span>
+                             </div>
+
+                             <div className="flex items-center gap-3">
+                                {designMode === 'magic' && (
+                                   <CartItemQuantityControl 
+                                      item={cart.find(c => c.id === drug.id) || { ...drug, quantity: 0, isUnit: false } as CartItem}
+                                      packItem={cart.find(c => c.id === drug.id && !c.isUnit)}
+                                      unitItem={cart.find(c => c.id === drug.id && c.isUnit)}
+                                      hasDualMode={!!drug.unitsPerPack && drug.unitsPerPack > 1}
+                                      updateQuantity={onUpdateQuantity}
+                                      addToCart={(d, isUnit, qty) => onAddToCart(d, isUnit, qty)}
+                                   />
+                                )}
+                                
+                                {designMode !== 'magic' && (
+                                   <button 
+                                     onClick={() => onAddToCart(drug)}
+                                     className="px-4 py-2 bg-primary-600 text-white rounded-xl text-xs font-black shadow-lg shadow-primary-500/20 active:scale-95 transition-all"
+                                   >
+                                     {language === 'AR' ? 'أضف للعربة' : 'Add to Cart'}
+                                   </button>
+                                )}
+                             </div>
+                          </div>
+
                           {drug.description && (
-                            <div className="pt-2 border-t border-gray-200 dark:border-gray-700/50">
+                            <div className="pt-2 mt-2">
                               <p className="text-[10px] text-gray-400 italic leading-relaxed">
                                 {drug.description}
                               </p>
