@@ -516,7 +516,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     }
 
     if (variant === 'pill-dark') {
-      return 'bg-white dark:bg-black/40 border-transparent text-gray-700 dark:text-gray-400 shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none hover:bg-gray-50 dark:hover:bg-black/60 font-medium';
+      return value
+        ? 'bg-white dark:bg-(--bg-card) border-transparent text-gray-900 dark:text-white font-bold shadow-[rgba(0,0,0,0.09)_0px_3px_12px]'
+        : 'bg-transparent border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-white/50 dark:hover:bg-(--bg-card)/50 font-bold';
     }
     
     // Default variant
@@ -712,25 +714,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   return (
     <div
-      className={`inline-flex items-center gap-1 bg-gray-100/80 dark:bg-black/20 p-1 rounded-full border border-gray-200/50 dark:border-white/5 ${className}`}
+      className={`relative inline-flex items-center p-1 gap-1 bg-gray-200/50 dark:bg-black/20 rounded-full shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] ${className}`}
     >
-      <DatePicker
-        value={endDate}
-        onChange={onEndDateChange}
-        label={endLabel || t.to}
-        color={color}
-        size={size}
-        variant='pill-dark'
-        locale={locale}
-        translations={t}
-        iconPosition="end"
-        icon="calendar_today"
-      />
-      
-      <span className='material-symbols-rounded text-gray-400 dark:text-gray-600 px-1 text-sm rtl:rotate-180'>
-        arrow_back
-      </span>
-
       <DatePicker
         value={startDate}
         onChange={onStartDateChange}
@@ -740,7 +725,24 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         variant='pill-dark'
         locale={locale}
         translations={t}
-        iconPosition="end"
+        iconPosition="start"
+        icon="calendar_today"
+      />
+      
+      <span className='material-symbols-rounded text-gray-400 dark:text-gray-600 px-1 text-sm rtl:rotate-180'>
+        arrow_forward
+      </span>
+
+      <DatePicker
+        value={endDate}
+        onChange={onEndDateChange}
+        label={endLabel || t.to}
+        color={color}
+        size={size}
+        variant='pill-dark'
+        locale={locale}
+        translations={t}
+        iconPosition="start"
         icon="calendar_today"
       />
     </div>
