@@ -28,17 +28,10 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title='تطبيق سياسة تخفيض' size='md' icon='sell'>
       <div className='space-y-5'>
         {/* Info Banner */}
-        <div className='bg-amber-50 text-amber-700 px-4 py-3 rounded-xl text-sm flex items-start gap-3'>
-          <span className='material-symbols-rounded text-xl shrink-0'>warning</span>
-          <p>
-            سيتم تطبيق التخفيض على <strong>{selectedBatchIds.length}</strong> باتش
-            {productName && (
-              <>
-                {' '}
-                من <strong>{productName}</strong>
-              </>
-            )}
-            . يمكنك تعديل نسبة التخفيض ومدته قبل التطبيق.
+        <div className='bg-rose-50 dark:bg-rose-900/20 p-4 flex gap-3 text-rose-700 dark:text-rose-400'>
+          <span className='material-symbols-rounded shrink-0' style={{ fontSize: 'var(--icon-lg)' }}>warning</span>
+          <p className='text-xs font-medium'>
+            {t?.intelligence?.risk?.discount?.warning || 'Discounting items can help recover value, but ensure it complies with local regulations.'}
           </p>
         </div>
 
@@ -49,28 +42,26 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
           </label>
           <div className='flex gap-3'>
             <button
-              type='button'
-              onClick={() => setDiscountType('percentage')}
-              className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${
-                discountType === 'percentage'
+              onClick={() => setType('PERCENTAGE')}
+              className={`flex-1 p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                type === 'PERCENTAGE'
                   ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-                  : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
+                  : 'border-[--border-divider] text-gray-500 hover:border-gray-300'
               }`}
             >
-              <span className='material-symbols-rounded text-2xl mb-1 font-icon'>percent</span>
-              <p className='font-medium'>نسبة مئوية</p>
+              <span className='material-symbols-rounded mb-1 font-icon' style={{ fontSize: 'var(--icon-lg)' }}>percent</span>
+              <span className='text-sm font-bold'>{t?.intelligence?.risk?.discount?.percentage || 'Percentage'}</span>
             </button>
             <button
-              type='button'
-              onClick={() => setDiscountType('fixed')}
-              className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${
-                discountType === 'fixed'
+              onClick={() => setType('FIXED')}
+              className={`flex-1 p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                type === 'FIXED'
                   ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-                  : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
+                  : 'border-[--border-divider] text-gray-500 hover:border-gray-300'
               }`}
             >
-              <span className='material-symbols-rounded text-2xl mb-1 font-icon'>payments</span>
-              <p className='font-medium'>مبلغ ثابت</p>
+              <span className='material-symbols-rounded mb-1 font-icon' style={{ fontSize: 'var(--icon-lg)' }}>payments</span>
+              <span className='text-sm font-bold'>{t?.intelligence?.risk?.discount?.fixed || 'Fixed Amount'}</span>
             </button>
           </div>
         </div>
@@ -78,17 +69,17 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
         {/* Discount Value */}
         <div>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-            {discountType === 'percentage' ? 'نسبة التخفيض (%)' : 'مبلغ التخفيض (ج.م)'}
+            {type === 'PERCENTAGE' ? 'نسبة التخفيض (%)' : 'مبلغ التخفيض (ج.م)'}
           </label>
           <input
             type='number'
             value={discountValue}
             onChange={(e) => setDiscountValue(Number(e.target.value))}
             min={1}
-            max={discountType === 'percentage' ? 100 : undefined}
+            max={type === 'PERCENTAGE' ? 100 : undefined}
             className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-hidden transition-all text-lg font-bold text-center'
           />
-          {discountType === 'percentage' && (
+          {type === 'PERCENTAGE' && (
             <div className='flex gap-2 mt-2'>
               {[10, 15, 20, 25, 30].map((val) => (
                 <button
@@ -132,12 +123,11 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
             إلغاء
           </button>
           <button
-            type='button'
-            onClick={handleApply}
-            className='px-6 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 transition-all transform active:scale-95 font-medium flex items-center gap-2'
+            onClick={handleApply} // Changed from onClose to handleApply
+            className='flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2'
           >
-            <span className='material-symbols-rounded font-icon'>check_circle</span>
-            تطبيق التخفيض
+            <span className='material-symbols-rounded font-icon' style={{ fontSize: 'var(--icon-base)' }}>check_circle</span>
+            {t?.settings?.common?.apply || 'Apply Discount'}
           </button>
         </div>
       </div>

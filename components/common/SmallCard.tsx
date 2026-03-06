@@ -67,8 +67,8 @@ export const SmallCard = ({
   }, [value, type]);
 
   const iconContent = (
-    <div className={`shrink-0 text-${iconColor}-600 dark:text-${iconColor}-400 relative`}>
-      <span className='material-symbols-rounded text-[38px] leading-none'>{icon}</span>
+    <div className={`shrink-0 text-${iconColor}-600 dark:text-${iconColor}-400 relative flex items-center justify-center`}>
+      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-2xl)', lineHeight: 1 }}>{icon}</span>
       {iconOverlay}
     </div>
   );
@@ -128,7 +128,7 @@ export const SmallCard = ({
               >
                 {trend && trend !== 'unchanged' && (
                   <div className='flex items-center gap-1 shrink-0'>
-                    <span className='material-symbols-rounded text-sm'>
+                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>
                       {trend === 'up' ? 'trending_up' : 'trending_down'}
                     </span>
                     <span>{trendValue}</span>

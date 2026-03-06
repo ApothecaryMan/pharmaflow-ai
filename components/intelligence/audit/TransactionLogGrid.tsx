@@ -55,7 +55,7 @@ export const TransactionLogGrid: React.FC<TransactionLogGridProps> = ({ data, on
             <span
               className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
             >
-              <span className='material-symbols-rounded text-sm'>{config.icon}</span>
+              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>{config.icon}</span>
               {config.label}
             </span>
           );

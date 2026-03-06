@@ -308,7 +308,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
               />
             ) : (
               <div className='bg-(--bg-card) rounded-xl border-2 border-(--border-primary) dark:border-(--border-divider) p-12 text-center h-full flex flex-col items-center justify-center text-gray-500 text-sm'>
-                <span className='material-symbols-rounded text-4xl mb-2 opacity-20'>
+                <span className='material-symbols-rounded mb-2 opacity-20' style={{ fontSize: 'var(--icon-xl)' }}>
                   inventory
                 </span>
                 <p>{t.intelligence.financials.sections.noData}</p>

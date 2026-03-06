@@ -63,9 +63,9 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
         return (
           <button
             onClick={() => (window as any).dispatchGlobalEvent?.('OPEN_PO_MODAL', procurement.filteredItems.map(i => i.product_id))}
-            className='flex items-center gap-2 px-4 py-2 bg-blue-100/80 dark:bg-blue-900/20 hover:bg-blue-200/80 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-900/50 rounded-xl text-sm font-semibold transition-all active:scale-95'
+            className='flex items-center gap-2 px-4 py-2 bg-emerald-100/80 dark:bg-emerald-900/20 hover:bg-emerald-200/80 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30 hover:border-emerald-300 dark:hover:border-emerald-900/50 rounded-xl text-sm font-semibold transition-all active:scale-95'
           >
-            <span className='material-symbols-rounded text-lg'>add_shopping_cart</span>
+            <span className='material-symbols-rounded font-icon' style={{ fontSize: 'var(--icon-lg)' }}>add_shopping_cart</span>
             {t.intelligence.procurement.actions.generatePO}
           </button>
         );
@@ -84,7 +84,7 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
               onClick={() => (window as any).dispatchGlobalEvent?.('OPEN_DISCOUNT_MODAL')}
               className='px-3 py-1.5 text-sm bg-amber-100/80 dark:bg-amber-900/20 hover:bg-amber-200/80 dark:hover:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30 hover:border-amber-300 dark:hover:border-amber-900/50 rounded-xl transition-all font-semibold flex items-center gap-1 active:scale-95'
             >
-              <span className='material-symbols-rounded text-lg font-icon'>sell</span>
+              <span className='material-symbols-rounded font-icon' style={{ fontSize: 'var(--icon-lg)' }}>sell</span>
               {t.intelligence.risk.actions.applyDiscount}
             </button>
           </div>
@@ -148,14 +148,14 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
               keyExtractor={(item) => item.value}
               renderItem={(item, isSelected) => (
                 <span
-                  className={`${isSelected ? 'font-bold text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}
+                  className={`${isSelected ? 'font-bold text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}
                 >
                   {item.label}
                 </span>
               )}
               renderSelected={(item) => (
                 <div className='flex items-center gap-1.5'>
-                  <span className='material-symbols-rounded text-gray-500 text-base'>
+                  <span className='material-symbols-rounded text-gray-500' style={{ fontSize: 'var(--icon-base)' }}>
                     inventory_2
                   </span>
                   <span className='text-gray-900 dark:text-white text-xs font-medium'>
@@ -175,14 +175,14 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
               keyExtractor={(item) => item.value}
               renderItem={(item, isSelected) => (
                 <span
-                  className={`${isSelected ? 'font-bold text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}
+                  className={`${isSelected ? 'font-bold text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}
                 >
                   {item.label}
                 </span>
               )}
               renderSelected={(item) => (
                 <div className='flex items-center gap-1.5'>
-                  <span className='material-symbols-rounded text-gray-500 text-base'>category</span>
+                  <span className='material-symbols-rounded text-gray-500' style={{ fontSize: 'var(--icon-base)' }}>category</span>
                   <span className='text-gray-900 dark:text-white text-xs font-medium'>
                     {item?.label}
                   </span>
@@ -211,14 +211,14 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
               keyExtractor={(item) => item.value}
               renderItem={(item, isSelected) => (
                 <span
-                  className={`${isSelected ? 'font-bold text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}
+                  className={`${isSelected ? 'font-bold text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}
                 >
                   {item.label}
                 </span>
               )}
               renderSelected={(item) => (
                 <div className='flex items-center gap-2'>
-                  <span className='material-symbols-rounded text-gray-400 text-base'>
+                  <span className='material-symbols-rounded text-gray-400' style={{ fontSize: 'var(--icon-base)' }}>
                     calendar_today
                   </span>
                   <span className='font-medium text-gray-700 dark:text-gray-300 text-xs'>
@@ -233,7 +233,7 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
             <button
               className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 transition-all active:scale-95'
             >
-              <span className='material-symbols-rounded'>file_download</span>
+              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>file_download</span>
             </button>
           </div>
         );
@@ -242,7 +242,7 @@ export const IntelligenceDashboard: React.FC<IntelligenceDashboardProps> = ({ t,
           <button
             className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 transition-all active:scale-95'
           >
-            <span className='material-symbols-rounded'>file_download</span>
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>file_download</span>
           </button>
         );
       default:

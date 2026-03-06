@@ -69,7 +69,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                   <span
                     className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
                   >
-                    <span className='material-symbols-rounded text-sm'>{config.icon}</span>
+                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>{config.icon}</span>
                     {config.label}
                   </span>
                 );
@@ -99,7 +99,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         {/* Anomaly Warning */}
         {transaction.has_anomaly && (
           <div className='bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2'>
-            <span className='material-symbols-rounded'>warning</span>
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>warning</span>
             <span>تنبيه: {transaction.anomaly_reason || 'تم اكتشاف شذوذ في هذه العملية'}</span>
           </div>
         )}
@@ -107,11 +107,10 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         {/* Actions */}
         <div className='flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700'>
           <button
-            type='button'
             onClick={() => console.log('Print receipt')}
             className='px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors font-medium flex items-center gap-2'
           >
-            <span className='material-symbols-rounded text-lg'>print</span>
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>print</span>
             طباعة
           </button>
           <button

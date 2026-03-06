@@ -92,13 +92,13 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   const color = config.color;
 
   const sizeStyles = size === 'sm' ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1';
-  const iconSize = size === 'sm' ? 'text-xs' : 'text-sm';
+  const iconSize = size === 'sm' ? 'var(--icon-xs)' : 'var(--icon-sm)';
 
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 font-bold uppercase tracking-wider bg-transparent ${sizeStyles} ${className}`}
     >
-      <span className={`material-symbols-rounded ${iconSize}`}>{config.icon}</span>
+      <span className='material-symbols-rounded' style={{ fontSize: iconSize }}>{config.icon}</span>
       {finalLabel}
     </span>
   );

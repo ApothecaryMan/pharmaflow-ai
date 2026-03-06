@@ -18,11 +18,11 @@ export const GeneratePOModal: React.FC<GeneratePOModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title='إنشاء طلب شراء' size='lg' icon='shopping_cart'>
       <div className='space-y-4'>
-        <div className='bg-gray-50 dark:bg-neutral-800/50 text-gray-700 dark:text-gray-300 px-4 py-3 rounded-xl text-sm flex items-start gap-3'>
-          <span className='material-symbols-rounded text-xl shrink-0'>info</span>
-          <p>
-            سيتم إنشاء مسودة طلب شراء لـ <strong>{selectedProductIds.length}</strong> أصناف مختارة.
-            يمكنك مراجعة الكميات والأسعار قبل الإرسال للمورد.
+        {/* Info Banner */}
+        <div className='bg-emerald-50 dark:bg-emerald-900/20 p-4 flex gap-3 text-emerald-700 dark:text-emerald-400'>
+          <span className='material-symbols-rounded shrink-0' style={{ fontSize: 'var(--icon-lg)' }}>info</span>
+          <p className='text-xs font-medium'>
+            {t?.intelligence?.procurement?.po?.info || 'Generate a purchase order for the selected items to replenish your inventory.'}
           </p>
         </div>
 
@@ -45,10 +45,10 @@ export const GeneratePOModal: React.FC<GeneratePOModalProps> = ({
           </button>
           <button
             onClick={onClose}
-            className='px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 transition-all transform active:scale-95 font-medium flex items-center gap-2'
+            className='flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2'
           >
-            <span className='material-symbols-rounded'>send</span>
-            إنشاء الطلب
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>send</span>
+            {t?.intelligence?.procurement?.buttons?.sendPO || 'Send PO'}
           </button>
         </div>
       </div>

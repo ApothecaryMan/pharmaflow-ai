@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { BUTTON_BASE } from '../../utils/themeStyles';
 
 // --- Unified Translations ---
@@ -234,7 +235,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const translations = customTranslations || DATE_PICKER_TRANSLATIONS[locale] || DATE_PICKER_TRANSLATIONS['en-US'];
   // --- State ---
   const [isOpen, setIsOpen] = useState(false);
-  const [alignRight, setAlignRight] = useState(false);
+  const [alignMode, setAlignMode] = useState<'left' | 'center' | 'right'>('center');
 
   // Dates
   // selectedDate: The actual value committed
@@ -263,19 +264,39 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     }
   }, [value, isOpen]);
 
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+
   // Handle alignment check
   useLayoutEffect(() => {
     if (isOpen && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       // Dropdown width is fixed at 380px roughly
       const dropdownWidth = 380;
+      const dropdownHeight = 350; // estimated height
       
-      // If the button's left position + dropdown width exceeds window width, align right
-      if (rect.left + dropdownWidth > window.innerWidth) {
-        setAlignRight(true);
-      } else {
-        setAlignRight(false);
+      // Try to center below the button
+      let left = rect.left + (rect.width / 2) - (dropdownWidth / 2);
+      let top = rect.bottom + 8; // mt-2 equivalent
+      let mode: 'left' | 'center' | 'right' = 'center';
+      
+      // Ensure it doesn't go off the right edge
+      if (left + dropdownWidth > window.innerWidth - 8) {
+        left = window.innerWidth - dropdownWidth - 8;
+        mode = 'right';
+      } 
+      // Ensure it doesn't go off the left edge
+      else if (left < 8) {
+        left = 8;
+        mode = 'left';
       }
+      
+      // Check bottom overflow
+      if (top + dropdownHeight > window.innerHeight && rect.top - dropdownHeight > 0) {
+        top = rect.top - dropdownHeight - 8;
+      }
+      
+      setAlignMode(mode);
+      setPosition({ top, left });
     }
   }, [isOpen]);
 
@@ -518,7 +539,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     if (variant === 'pill-dark') {
       return value
         ? 'bg-(--bg-card) border-transparent text-(--text-primary) font-bold shadow-[rgba(0,0,0,0.09)_0px_3px_12px]'
-        : 'bg-transparent border-transparent text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-card)/50 font-bold';
+        : 'bg-transparent border-transparent text-(--text-secondary) hover:text-(--text-primary) hover:bg-white dark:hover:bg-(--bg-card)/50 font-bold';
     }
     
     // Default variant
@@ -576,13 +597,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       </button>
 
       {/* --- Dropdown --- */}
-      {isOpen && (
+      {isOpen && createPortal(
         <div
           ref={dropdownRef}
-          className={`absolute z-[99999] animate-fade-in mt-2 ${alignRight ? 'right-0' : 'left-0'}`}
+          className={`fixed z-[99999] animate-fade-in`}
           style={{
-            top: '100%',
-            transformOrigin: alignRight ? 'top right' : 'top left',
+            top: position.top,
+            left: position.left,
+            transformOrigin: alignMode === 'right' ? 'top right' : alignMode === 'left' ? 'top left' : 'top center',
           }}
           dir={locale === 'ar-EG' || locale.startsWith('ar') ? 'rtl' : 'ltr'}
         >
@@ -679,7 +701,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
     </div>
   );
@@ -714,7 +737,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   return (
     <div
-      className={`relative inline-flex items-center p-1 gap-1 bg-(--bg-surface-neutral) rounded-full shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] ${className}`}
+      className={`relative inline-flex items-center p-1 gap-1 bg-gray-100/80 dark:bg-black/20 rounded-full shadow-[inset_0_0px_3px_1px_rgba(0,0,0,0.08)] dark:shadow-none ${className}`}
     >
       <DatePicker
         value={startDate}

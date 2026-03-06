@@ -11,7 +11,7 @@ interface KPICardProps {
     label?: string; // e.g., "vs last month"
   };
   icon?: string; // Material symbol name
-  color?: 'emerald' | 'blue' | 'amber' | 'red' | 'gray';
+  color?: 'emerald' | 'zinc' | 'amber' | 'red' | 'gray';
   onClick?: () => void;
   className?: string;
 }
@@ -22,13 +22,13 @@ export const KPICard: React.FC<KPICardProps> = ({
   subValue,
   trend,
   icon,
-  color = 'blue',
+  color = 'zinc',
   onClick,
   className = '',
 }) => {
   const colorMap = {
     emerald: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
-    blue: 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
+    zinc: 'bg-zinc-50 text-zinc-700 dark:bg-zinc-900/20 dark:text-zinc-400',
     amber: 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400',
     red: 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400',
     gray: 'bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
@@ -42,8 +42,8 @@ export const KPICard: React.FC<KPICardProps> = ({
       <div className='flex justify-between items-start mb-2'>
         <h3 className='text-sm font-medium text-gray-500 dark:text-gray-400'>{title}</h3>
         {icon && (
-          <div className={`p-1.5 rounded-lg ${colorMap[color]}`}>
-            <span className='material-symbols-rounded text-lg'>{icon}</span>
+          <div className={`w-10 h-10 rounded-xl bg-${color}-50 dark:bg-${color}-950/30 flex items-center justify-center text-${color}-600 dark:text-${color}-400 shrink-0`}>
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>{icon}</span>
           </div>
         )}
       </div>

@@ -31,8 +31,9 @@ export const TrendIndicator: React.FC<TrendIndicatorProps> = ({
 
   return (
     <span className={`inline-flex items-center gap-1 font-medium ${colorClass} ${className}`}>
-      <span className='material-symbols-rounded text-base'>{Icon}</span>
+      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>{Icon}</span>
       {showValue && value !== undefined && <span className='text-xs'>{Math.abs(value)}%</span>}
     </span>
   );
 };
+```

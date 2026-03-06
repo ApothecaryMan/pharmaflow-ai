@@ -103,8 +103,8 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
             <span className='font-bold text-emerald-600 dark:text-emerald-400'>{info.getValue()}</span>
             {info.row.original.skip_reason && (
               <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider bg-transparent'>
-                <span className='material-symbols-rounded text-xs'>block</span>
-                {t?.intelligence?.procurement?.grid?.skipped || 'Skipped'}
+                <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>block</span>
+                {t?.intelligence?.procurement?.blocked || 'Low Movement'}
               </span>
             )}
           </div>
@@ -126,10 +126,11 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
         cell: (info) => (
           <div className='flex justify-end'>
             <button
-              className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all active:scale-95'
               onClick={() => handleGeneratePO([info.row.original.product_id])}
+              className='p-1.5 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors'
+              title={t?.intelligence?.procurement?.generatePO || 'Generate PO'}
             >
-              <span className='material-symbols-rounded text-xl font-icon'>add_shopping_cart</span>
+              <span className='material-symbols-rounded font-icon' style={{ fontSize: 'var(--icon-lg)' }}>add_shopping_cart</span>
             </button>
           </div>
         ),
@@ -173,7 +174,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
           />
         ) : (
           <div className='bg-(--bg-card) rounded-xl border-2 border-(--border-primary) dark:border-(--border-divider) p-8 text-center h-full flex flex-col items-center justify-center'>
-            <span className='material-symbols-rounded text-5xl text-gray-400 mb-4 opacity-20'>
+            <span className='material-symbols-rounded text-gray-400 mb-4 opacity-20' style={{ fontSize: 'var(--icon-2xl)' }}>
               inventory
             </span>
             <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
