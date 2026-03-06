@@ -108,24 +108,22 @@ export const AuditPage: React.FC<AuditPageProps> = ({
 
   return (
     <div className='h-full flex flex-col overflow-hidden'>
-      {/* Table Container - Bordered/Rounded */}
-      <div className='bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex-1 flex flex-col overflow-hidden'>
-        <div className='flex-1 overflow-hidden'>
-          <TanStackTable
-            data={transactions}
-            columns={columns}
-            isLoading={loading}
-            emptyMessage={t?.intelligence?.audit?.empty?.title || 'No logs found'}
-            tableId='audit-log-table'
-            lite={true}
-            enableSearch={true}
-            globalFilter={globalFilter}
-            enablePagination={true}
-            enableVirtualization={false}
-            pageSize='auto'
-            enableShowAll={true}
-          />
-        </div>
+      {/* Table Container - Simplified since TanStackTable will provide card styling */}
+      <div className='flex-1 min-h-0'>
+        <TanStackTable
+          data={transactions}
+          columns={columns}
+          isLoading={loading}
+          emptyMessage={t?.intelligence?.audit?.empty?.title || 'No logs found'}
+          tableId='audit-log-table'
+          lite={false}
+          enableSearch={false}
+          globalFilter={globalFilter}
+          enablePagination={true}
+          enableVirtualization={false}
+          pageSize='auto'
+          enableShowAll={true}
+        />
       </div>
     </div>
   );

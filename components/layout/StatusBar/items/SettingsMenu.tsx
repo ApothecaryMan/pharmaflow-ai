@@ -254,7 +254,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   className={`
                         ${
                           isMobile
-                            ? 'relative w-full mt-2 bg-(--bg-search) border-none shadow-none p-4 space-y-4 rounded-xl'
+                            ? 'relative w-full mt-2 bg-(--bg-page-surface) border-none shadow-none p-4 space-y-4 rounded-xl'
                             : `absolute w-64 rounded-xl shadow-2xl border border-(--border-divider) bg-(--bg-menu) z-120 p-4 space-y-4 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                         }
                     `}
@@ -380,7 +380,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   className={`
                             ${
                               isMobile
-                                ? 'relative w-full mt-2 bg-(--bg-search) border-none shadow-none p-3 space-y-1.5 rounded-lg'
+                                ? 'relative w-full mt-2 bg-(--bg-page-surface) border-none shadow-none p-3 space-y-1.5 rounded-lg'
                                 : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}
@@ -580,7 +580,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   className={`
                             ${
                               isMobile
-                                ? 'relative w-full mt-2 bg-(--bg-search) border-none shadow-none p-3 space-y-3 rounded-lg'
+                                ? 'relative w-full mt-2 bg-(--bg-page-surface) border-none shadow-none p-3 space-y-3 rounded-lg'
                                 : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`
                             }
                         `}

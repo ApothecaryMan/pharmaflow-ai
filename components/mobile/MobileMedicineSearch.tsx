@@ -177,7 +177,7 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="flex flex-col bg-(--bg-search) overflow-hidden fixed inset-0"
+      className="flex flex-col bg-(--bg-page-surface) overflow-hidden fixed inset-0"
       onContextMenu={(e) => e.preventDefault()}
       dir="ltr"
     >
@@ -186,8 +186,8 @@ export const MobileMedicineSearch: React.FC<MobileMedicineSearchProps> = ({
         className={`
           w-full z-50 shrink-0
           ${isKeyboardOpen 
-            ? 'bg-(--bg-search) border-b border-(--border-search) p-4' 
-            : 'p-4 bg-(--bg-search) border-b border-(--border-search)'
+            ? 'bg-(--bg-page-surface) border-b border-(--border-search) p-4' 
+            : 'p-4 bg-(--bg-page-surface) border-b border-(--border-search)'
           }
         `}
       >

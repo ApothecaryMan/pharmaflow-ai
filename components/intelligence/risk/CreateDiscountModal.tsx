@@ -53,7 +53,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
               onClick={() => setDiscountType('percentage')}
               className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${
                 discountType === 'percentage'
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                  ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
                   : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
               }`}
             >
@@ -65,7 +65,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
               onClick={() => setDiscountType('fixed')}
               className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all ${
                 discountType === 'fixed'
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                  ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
                   : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
               }`}
             >
@@ -86,7 +86,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
             onChange={(e) => setDiscountValue(Number(e.target.value))}
             min={1}
             max={discountType === 'percentage' ? 100 : undefined}
-            className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-hidden transition-all text-lg font-bold text-center'
+            className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-hidden transition-all text-lg font-bold text-center'
           />
           {discountType === 'percentage' && (
             <div className='flex gap-2 mt-2'>
@@ -97,7 +97,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
                   onClick={() => setDiscountValue(val)}
                   className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     discountValue === val
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                       : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200'
                   }`}
                 >
@@ -118,7 +118,7 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
             value={validDays}
             onChange={(e) => setValidDays(Number(e.target.value))}
             min={1}
-            className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-hidden transition-all'
+            className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-hidden transition-all'
           />
         </div>
 

@@ -36,12 +36,12 @@ layer(base);
     var(--font-en), "Inter", var(--font-ar), "Cairo", -apple-system,
     BlinkMacSystemFont, "Roboto Flex", sans-serif;
 
-  /* Surface color palette */
-  --color-surface-50: #f9fafb;
-  --color-surface-100: #f3f4f6;
-  --color-surface-200: #e5e7eb;
-  --color-surface-800: #1f2937;
-  --color-surface-900: #111827;
+  /* Surface color palette - Neutral Zinc */
+  --color-surface-50: #fafafa;
+  --color-surface-100: #f4f4f5;
+  --color-surface-200: #e4e4e7;
+  --color-surface-800: #27272a;
+  --color-surface-900: #18181b;
 
   /* Primary dynamic colors */
   --color-primary-50: var(--primary-50);

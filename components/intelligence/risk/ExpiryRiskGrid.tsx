@@ -15,9 +15,10 @@ import { getDisplayName } from '../../../utils/drugDisplayName';
 interface ExpiryRiskGridProps {
   data: ExpiryRiskItem[];
   t?: any;
+  leftCustomControls?: React.ReactNode;
 }
 
-export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
+export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t, leftCustomControls }) => {
   // Infer language from T object or default (hacky but works if T structure is consistent)
   const language = t?.metadata?.language || 'EN'; // Placeholder if needed, or just pass 'EN' if not critical.
   // Actually usually T comes from useTranslation which doesn't expose language directly often?
@@ -48,7 +49,7 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
           const val = info.getValue();
           return (
             <span
-              className={`font-bold ${val < 30 ? 'text-red-600' : val < 60 ? 'text-amber-500' : 'text-blue-500'}`}
+              className={`font-bold ${val < 30 ? 'text-red-600' : val < 60 ? 'text-amber-500' : 'text-emerald-600'}`}
             >
               {val} {t?.intelligence?.risk?.grid?.day || 'day'}
             </span>
@@ -86,7 +87,7 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
           const action = info.row.original.recommended_action;
           return (
             <div className='flex justify-end'>
-              <button className='px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-sm text-xs font-medium transition-colors'>
+              <button className='px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 rounded-sm text-xs font-medium transition-colors'>
                 {action === 'DISCOUNT_AGGRESSIVE'
                   ? t?.intelligence?.risk?.grid?.actions?.discount50 || '50% Off'
                   : action === 'DISCOUNT_MODERATE'
@@ -108,7 +109,7 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
       <TanStackTable
         data={data}
         columns={columns}
-        lite={true}
+        lite={false}
         tableId='expiry-risk-table'
         enableSearch={false}
         emptyMessage={t?.intelligence?.risk?.grid?.empty || 'No risking items found'}
@@ -116,7 +117,9 @@ export const ExpiryRiskGrid: React.FC<ExpiryRiskGridProps> = ({ data, t }) => {
         enableVirtualization={false}
         pageSize='auto'
         enableShowAll={true}
+        leftCustomControls={leftCustomControls}
       />
     </div>
   );
 };
+

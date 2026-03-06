@@ -517,14 +517,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
     if (variant === 'pill-dark') {
       return value
-        ? 'bg-white dark:bg-(--bg-card) border-transparent text-gray-900 dark:text-white font-bold shadow-[rgba(0,0,0,0.09)_0px_3px_12px]'
-        : 'bg-transparent border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-white/50 dark:hover:bg-(--bg-card)/50 font-bold';
+        ? 'bg-(--bg-card) border-transparent text-(--text-primary) font-bold shadow-[rgba(0,0,0,0.09)_0px_3px_12px]'
+        : 'bg-transparent border-transparent text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-card)/50 font-bold';
     }
     
     // Default variant
     return value
       ? 'bg-primary-200 dark:bg-primary-800/60 border-primary-400 dark:border-primary-600/50 text-primary-900 dark:text-primary-50 font-semibold shadow-xs'
-      : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700/60 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-white dark:hover:bg-gray-800';
+      : 'bg-(--bg-card) dark:bg-gray-900 border-gray-200 dark:border-gray-700/60 text-(--text-secondary) hover:border-gray-300 dark:hover:border-gray-600 hover:bg-(--bg-card) dark:hover:bg-gray-800';
   };
 
   return (
@@ -714,7 +714,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   return (
     <div
-      className={`relative inline-flex items-center p-1 gap-1 bg-gray-200/50 dark:bg-black/20 rounded-full shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] ${className}`}
+      className={`relative inline-flex items-center p-1 gap-1 bg-(--bg-surface-neutral) rounded-full shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] ${className}`}
     >
       <DatePicker
         value={startDate}

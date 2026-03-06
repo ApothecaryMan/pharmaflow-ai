@@ -92,7 +92,7 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t, summary, items, loading }
           />
         </div>
         <div className='p-8 text-center bg-transparent'>
-          <span className='material-symbols-rounded text-5xl text-emerald-500 mb-4'>verified</span>
+          <span className='material-symbols-rounded text-emerald-500 mb-4' style={{ fontSize: 'var(--icon-2xl)' }}>verified</span>
           <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
             {t?.intelligence?.risk?.empty?.title || 'No risks identified'}
           </h3>
@@ -162,16 +162,17 @@ export const RiskPage: React.FC<RiskPageProps> = ({ t, summary, items, loading }
         />
       </div>
 
-      {/* Detailed Grid */}
-      <div className='bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex-1 flex flex-col overflow-hidden'>
-        <div className='flex justify-between items-center px-4 py-4 shrink-0'>
-          <h3 className='text-lg font-bold text-gray-900 dark:text-white'>
-            {t?.intelligence?.risk?.sections?.expiryAnalysis || 'Expiry Analysis'}
-          </h3>
-        </div>
-        <div className='flex-1 overflow-hidden'>
-          <ExpiryRiskGrid data={items} t={t} />
-        </div>
+      {/* Detailed Grid - Simplified since TanStackTable will provide card styling */}
+      <div className='flex-1 min-h-0'>
+        <ExpiryRiskGrid
+          data={items}
+          t={t}
+          leftCustomControls={
+            <h3 className='text-base font-bold text-gray-900 dark:text-white px-1'>
+              {t?.intelligence?.risk?.sections?.expiryAnalysis || 'Expiry Analysis'}
+            </h3>
+          }
+        />
       </div>
     </div>
   );

@@ -166,7 +166,7 @@ export const SidebarDropdown: React.FC<SidebarDropdownProps> = ({
                         <span>{getMenuTranslation(itemLabel, language)}</span>
                       </div>
                       {!isImplemented && (
-                        <span className='text-[10px] items-center px-1.5 py-0.5 rounded-full border border-(--border-divider) bg-(--bg-search) text-gray-400'>
+                        <span className='text-[10px] items-center px-1.5 py-0.5 rounded-full border border-(--border-divider) bg-(--bg-input) text-gray-400'>
                           Soon
                         </span>
                       )}

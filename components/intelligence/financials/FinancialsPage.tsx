@@ -264,7 +264,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
           type='currency'
           currencyLabel={getCurrencySymbol()}
           icon='account_balance_wallet'
-          iconColor='blue'
+          iconColor='gray'
           trend={kpis.gross_profit.change_direction}
           trendValue={`${kpis.gross_profit.change_percent}%`}
           trendLabel={t.intelligence.financials.kpis.compare}
@@ -291,46 +291,44 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
         />
       </div>
 
-      {/* Tables Section */}
-      <div className='bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex-1 flex flex-col overflow-hidden'>
-        <div className='flex-1 overflow-hidden'>
-          {activeTab === 'products' ? (
-            <div className='h-full overflow-hidden'>
-              {products.length > 0 ? (
-                <TanStackTable
-                  data={products}
-                  columns={productColumns}
-                  lite={true}
-                  tableId='product-financials-table'
-                  enablePagination={true}
-                  enableVirtualization={false}
-                  pageSize='auto'
-                  enableShowAll={true}
-                />
-              ) : (
-                <div className='text-center py-12 text-gray-500 text-sm'>
-                  <span className='material-symbols-rounded text-4xl mb-2 opacity-20'>
-                    inventory
-                  </span>
-                  <p>{t.intelligence.financials.sections.noData}</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className='h-full overflow-hidden'>
+      {/* Tables Section - Simplified since TanStackTable will provide card styling */}
+      <div className='flex-1 min-h-0'>
+        {activeTab === 'products' ? (
+          <div className='h-full overflow-hidden'>
+            {products.length > 0 ? (
               <TanStackTable
-                data={mockCategoryData}
-                columns={categoryColumns}
-                lite={true}
-                tableId='category-financials-table'
+                data={products}
+                columns={productColumns}
+                lite={false}
+                tableId='product-financials-table'
                 enablePagination={true}
                 enableVirtualization={false}
                 pageSize='auto'
                 enableShowAll={true}
               />
-            </div>
-          )}
-        </div>
+            ) : (
+              <div className='bg-(--bg-card) rounded-xl border-2 border-(--border-primary) dark:border-(--border-divider) p-12 text-center h-full flex flex-col items-center justify-center text-gray-500 text-sm'>
+                <span className='material-symbols-rounded text-4xl mb-2 opacity-20'>
+                  inventory
+                </span>
+                <p>{t.intelligence.financials.sections.noData}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className='h-full overflow-hidden'>
+            <TanStackTable
+              data={mockCategoryData}
+              columns={categoryColumns}
+              lite={false}
+              tableId='category-financials-table'
+              enablePagination={true}
+              enableVirtualization={false}
+              pageSize='auto'
+              enableShowAll={true}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

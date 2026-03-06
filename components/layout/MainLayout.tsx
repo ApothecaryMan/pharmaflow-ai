@@ -220,7 +220,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
             {/* Actual Page Surface */}
             <main
-              className={`flex-1 h-full overflow-hidden relative ${isStandalone ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r bg-(--bg-search) shadow-inner'}`}
+              className={`flex-1 h-full overflow-hidden relative ${isStandalone ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r bg-(--bg-page-surface) shadow-inner'}`}
               style={{ borderColor: 'var(--border-divider)' }}
             >
               <div className={getContentContainerClasses(PAGE_REGISTRY[view]?.layout, isStandalone)}>

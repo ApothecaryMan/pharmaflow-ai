@@ -32,7 +32,7 @@ export const ConfidenceIndicator: React.FC<ConfidenceIndicatorProps> = ({
   return (
     <div className='flex items-center gap-3'>
       <div
-        className={`flex-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden ${heightClass} min-w-[60px]`}
+        className={`flex-1 bg-gray-100 dark:bg-neutral-800/50 rounded-full overflow-hidden ${heightClass} min-w-[60px]`}
       >
         <div
           className={`h-full rounded-full transition-all duration-500 ${colorClass}`}

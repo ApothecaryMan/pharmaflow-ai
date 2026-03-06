@@ -522,7 +522,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
           {showProfileMenu && (
             <div className='absolute ltr:right-0 rtl:left-0 mt-2 w-72 bg-(--bg-menu) rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_15px_rgba(0,0,0,0.4)] border border-(--border-divider) overflow-hidden z-50 animate-fade-in'>
               {/* User Info */}
-              <div className='p-4 border-b border-(--border-divider) bg-(--bg-search)'>
+              <div className='p-4 border-b border-(--border-divider) bg-(--bg-page-surface)'>
                 <div className='flex items-center gap-3'>
                   <div className='relative group'>
                     {profileImage ? (
@@ -637,7 +637,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                       ))}
                     </div>
                   ) : (
-                    <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-500 dark:text-gray-400 bg-(--bg-search) rounded-lg border border-(--border-divider) flex items-center gap-2'>
+                    <div className='px-2.5 py-2 mt-1 mx-1 text-xs text-gray-500 dark:text-gray-400 bg-(--bg-page-surface) rounded-lg border border-(--border-divider) flex items-center gap-2'>
                       <span className='material-symbols-rounded text-[16px] text-gray-400'>info</span>
                       {language === 'AR' ? 'يوجد فرع واحد فقط حالياً.' : 'Only one branch available.'}
                     </div>
@@ -696,7 +696,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
               </div>
 
               {/* Sign Out */}
-              <div className='p-2 border-t border-(--border-divider) bg-(--bg-search)'>
+              <div className='p-2 border-t border-(--border-divider) bg-(--bg-page-surface)'>
                 <button
                   onClick={async () => {
                     if (isLoggingOut) return;

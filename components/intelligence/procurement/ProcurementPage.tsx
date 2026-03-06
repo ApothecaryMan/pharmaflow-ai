@@ -100,7 +100,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
         meta: { align: 'start' },
         cell: (info) => (
           <div className='flex items-center gap-2'>
-            <span className='font-bold text-blue-600 dark:text-blue-400'>{info.getValue()}</span>
+            <span className='font-bold text-emerald-600 dark:text-emerald-400'>{info.getValue()}</span>
             {info.row.original.skip_reason && (
               <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider bg-transparent'>
                 <span className='material-symbols-rounded text-xs'>block</span>
@@ -126,7 +126,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
         cell: (info) => (
           <div className='flex justify-end'>
             <button
-              className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all active:scale-95'
+              className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all active:scale-95'
               onClick={() => handleGeneratePO([info.row.original.product_id])}
             >
               <span className='material-symbols-rounded text-xl font-icon'>add_shopping_cart</span>
@@ -155,35 +155,33 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
       {/* KPIs */}
       <div className='shrink-0'>{summary && <ProcurementKPIs summary={summary} />}</div>
 
-      {/* Main Grid Container */}
-      <div className='bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 flex-1 flex flex-col overflow-hidden'>
-        <div className='flex-1 overflow-hidden'>
-          {filteredItems.length > 0 ? (
-            <TanStackTable
-              data={filteredItems}
-              columns={columns}
-              isLoading={loading}
-              emptyMessage={t?.intelligence?.procurement?.empty?.title || 'No items to order'}
-              tableId='procurement-table'
-              lite={true}
-              enableSearch={false}
-              enablePagination={true}
-              enableVirtualization={false}
-              pageSize='auto'
-              enableShowAll={true}
-            />
-          ) : (
-            <div className='bg-white dark:bg-gray-800 rounded-xl p-8 text-center h-full flex flex-col items-center justify-center'>
-              <span className='material-symbols-rounded text-5xl text-gray-400 mb-4 opacity-20'>
-                inventory
-              </span>
-              <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
-                {t?.intelligence?.procurement?.empty?.title || 'No items needing order'}
-              </h3>
-              <p className='text-gray-500'>{t?.intelligence?.procurement?.empty?.subtitle || 'Your inventory seems to be well stocked'}</p>
-            </div>
-          )}
-        </div>
+      {/* Main Grid Container - Simplified since TanStackTable will provide card styling */}
+      <div className='flex-1 min-h-0'>
+        {filteredItems.length > 0 ? (
+          <TanStackTable
+            data={filteredItems}
+            columns={columns}
+            isLoading={loading}
+            emptyMessage={t?.intelligence?.procurement?.empty?.title || 'No items to order'}
+            tableId='procurement-table'
+            lite={false}
+            enableSearch={false}
+            enablePagination={true}
+            enableVirtualization={false}
+            pageSize='auto'
+            enableShowAll={true}
+          />
+        ) : (
+          <div className='bg-(--bg-card) rounded-xl border-2 border-(--border-primary) dark:border-(--border-divider) p-8 text-center h-full flex flex-col items-center justify-center'>
+            <span className='material-symbols-rounded text-5xl text-gray-400 mb-4 opacity-20'>
+              inventory
+            </span>
+            <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
+              {t?.intelligence?.procurement?.empty?.title || 'No items needing order'}
+            </h3>
+            <p className='text-gray-500'>{t?.intelligence?.procurement?.empty?.subtitle || 'Your inventory seems to be well stocked'}</p>
+          </div>
+        )}
       </div>
     </div>
   );
