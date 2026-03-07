@@ -24,6 +24,7 @@ import { useLongPress } from '../../hooks/useLongPress';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { SaleTab } from '../../types';
 import { useContextMenu } from '../common/ContextMenu';
+import { useSettings } from '../../context';
 
 interface TabBarProps {
   tabs: SaleTab[];
@@ -80,6 +81,7 @@ const SortableTab = ({
   onCloseOthers,
   t,
 }: SortableTabProps) => {
+  const { tooltipBlur } = useSettings();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: tab.id,
     disabled: tab.isPinned,
@@ -234,11 +236,12 @@ const SortableTab = ({
               onMouseEnter={handleBadgeMouseEnter}
               onMouseLeave={handleBadgeMouseLeave}
               className={`
-                    flex items-center justify-center h-5 min-w-[20px] px-1 rounded-full text-[10px] font-bold
+                    flex items-center justify-center h-4.5 min-w-[18px] px-1.5 rounded-full text-[9px] font-black
+                    transition-all duration-300 animate-scale-in
                     ${
                       isActive
-                        ? `bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300`
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                        ? `bg-primary-500 dark:bg-primary-400 text-gray-50 dark:text-(--bg-surface-neutral) shadow-none`
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 opacity-60'
                     }
                 `}
             >
@@ -270,20 +273,27 @@ const SortableTab = ({
       {/* Cart Items Tooltip (Immediate hover on badge) rendered in Portal */}
       {showTooltip && hasItems && !isDragging && badgeRef.current && createPortal(
         <div 
-          className="fixed z-[9999] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-xl shadow-black/10 dark:shadow-black/30 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-2 min-w-[200px] text-gray-800 dark:text-gray-200 pointer-events-none transition-all animate-in fade-in zoom-in-95 duration-200"
+          className={`
+            fixed z-[9999] shadow-xl border rounded-xl p-2 min-w-[200px] pointer-events-none transition-all animate-in fade-in zoom-in-95 duration-200
+            ${
+              tooltipBlur
+                ? 'backdrop-blur-2xl bg-(--bg-menu)/30 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] border-(--border-divider)'
+                : 'bg-(--bg-menu) border-(--border-divider)'
+            }
+            text-(--text-primary)
+          `}
           style={{
             top: badgeRef.current.getBoundingClientRect().bottom + 8,
             left: badgeRef.current.getBoundingClientRect().left - 100 + (badgeRef.current.offsetWidth / 2),
           }}
         >
-          <div className="text-[10px] font-black uppercase tracking-wider mb-2 border-b border-gray-200/50 dark:border-gray-800/50 pb-1 text-gray-500 flex items-center justify-between">
+          <div className="text-[10px] font-black uppercase tracking-wider mb-2 border-b border-(--border-divider) pb-1 text-(--text-tertiary) flex items-center justify-between">
             <span>{t.cartTitle || 'Cart Items'}</span>
-            <span className="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 px-1.5 rounded">{tab.cart.length}</span>
           </div>
-          <ul className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto no-scrollbar">
+          <ul className="flex flex-col gap-1.5 no-scrollbar">
             {tab.cart.map(item => (
               <li key={item.id} className="text-[11px] flex items-center justify-between gap-3 font-semibold">
-                <span className="truncate flex-1" dir="auto">{item.name} {item.dosageForm}</span>
+                <span className="truncate flex-1" dir="auto" style={{ color: 'var(--text-primary)' }}>{item.name} {item.dosageForm}</span>
                 <span className="tabular-nums text-primary-600 dark:text-primary-400 font-black">
                   {item.quantity}{item.isUnit ? ' U' : ''}
                 </span>
