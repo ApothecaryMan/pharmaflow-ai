@@ -122,9 +122,7 @@ export const ContextMenuItem: React.FC<ContextMenuItemProps> = ({
                 ${
                   danger
                     ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                    : isGlass
-                      ? 'text-gray-900 dark:text-gray-100 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:ps-4'
-                      : 'text-gray-700 dark:text-white hover:bg-(--bg-menu-hover) hover:ps-4'
+                    : 'text-gray-700 dark:text-white hover:bg-(--bg-menu-hover) hover:ps-4'
                 }
                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
                 ${className}
@@ -171,9 +169,7 @@ export const ContextMenuCheckboxItem: React.FC<{
                 ${
                   disabled
                     ? 'opacity-50 cursor-not-allowed'
-                    : isGlass
-                      ? 'hover:bg-gray-200/60 dark:hover:bg-gray-700/60 hover:ps-4'
-                      : 'hover:bg-(--bg-menu-hover) hover:ps-4'
+                    : 'hover:bg-(--bg-menu-hover) hover:ps-4'
                 }
             `}
     >
@@ -331,7 +327,7 @@ export const ContextMenuProvider: React.FC<{
           className={`fixed z-9999 min-w-[180px] rounded-2xl shadow-xl border border-(--border-divider) py-1 px-1 animate-scale-in origin-top-left overflow-hidden
                 ${
                   enableGlassEffect
-                    ? 'backdrop-blur-xl bg-white/60 dark:bg-gray-800/60 saturate-150 supports-backdrop-filter:bg-white/30'
+                    ? 'backdrop-blur-2xl bg-(--bg-menu)/30 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]'
                     : 'bg-(--bg-menu)'
                 }
             `}

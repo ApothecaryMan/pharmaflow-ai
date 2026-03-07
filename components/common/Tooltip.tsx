@@ -160,8 +160,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
                 fixed px-2 py-1 
                 ${
                   tooltipBlur
-                    ? 'backdrop-blur-xl bg-white/70 dark:bg-gray-800/75 saturate-150 border-white/40 dark:border-white/10 shadow-xl'
-                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/50 shadow-2xl'
+                    ? 'backdrop-blur-2xl bg-(--bg-menu)/30 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]'
+                    : 'bg-(--bg-menu) border-(--border-divider) shadow-2xl'
                 }
                 text-gray-900 dark:text-white text-[10px] 
                 rounded-lg z-9999 border
@@ -182,7 +182,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
               <div
                 className={`
                     absolute w-2 h-2 
-                    bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/50
+                    bg-(--bg-menu)
                     ${
                       placement === 'top'
                         ? 'top-full -mt-1 border-b border-r'
