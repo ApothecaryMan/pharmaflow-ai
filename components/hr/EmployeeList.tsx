@@ -1,10 +1,5 @@
 import {
   type ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  useReactTable,
 } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
@@ -14,10 +9,13 @@ import { authService, type UserSession } from '../../services/auth/authService';
 import type { Employee } from '../../types';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
-import { Modal } from '../common/Modal';
+import { Modal, BUTTON_CLOSE_BASE } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
+import { BUTTON_BASE } from '../../utils/themeStyles';
+import { FilterPill, type FilterConfig } from '../common/FilterPill';
 import { SmartEmailInput, SmartInput, SmartPhoneInput } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
+import { INPUT_BASE } from '../../utils/themeStyles';
 
 // --- Smart Roles Configuration ---
 // Dependency Matrix: Defines valid roles for each department
@@ -69,8 +67,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
 
   // Form State (extends Employee with form-only fields like oldPassword for verification)
   const [formData, setFormData] = useState<Partial<Employee> & { oldPassword?: string }>({});
@@ -187,17 +183,39 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
     };
   }, [employees]);
 
+  // --- Filter Configs ---
+  const employeeFilterConfigs = useMemo<FilterConfig[]>(() => [
+    {
+      id: 'status',
+      label: t.employeeList.status,
+      icon: 'rule',
+      mode: 'multiple',
+      options: Object.entries(t.employeeList.statusOptions)
+        .filter(([key]) => key !== 'all')
+        .map(([key, label]) => ({
+          label: label as string,
+          value: key,
+          icon: key === 'active' ? 'check_circle' : key === 'holiday' ? 'beach_access' : 'cancel',
+          color: key === 'active' ? 'emerald' : key === 'holiday' ? 'amber' : 'gray'
+        }))
+    },
+    {
+      id: 'department',
+      label: t.employeeList.department,
+      icon: 'business',
+      mode: 'multiple',
+      options: availableDepartments.map(d => ({
+        label: d.label,
+        value: d.key,
+        icon: 'folder'
+      }))
+    }
+  ], [t, availableDepartments]);
+
   const filteredEmployees = useMemo(() => {
     // Hide Super Admin from the list
-    let data = employees.filter((e) => e.id !== 'SUPER-ADMIN' && e.employeeCode !== 'EMP-000');
-
-    // Status Filter
-    if (statusFilter !== 'all') {
-      data = data.filter((e) => e.status === statusFilter);
-    }
-
-    return data;
-  }, [employees, statusFilter]);
+    return employees.filter((e) => e.id !== 'SUPER-ADMIN' && e.employeeCode !== 'EMP-000');
+  }, [employees]);
 
   // --- Columns ---
   const columns = useMemo<ColumnDef<Employee>[]>(
@@ -245,7 +263,12 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
             <span
               className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
             >
-              <span className='material-symbols-rounded text-sm'>{config.icon}</span>
+              <span 
+                className='material-symbols-rounded'
+                style={{ fontSize: 'var(--icon-lg)' }}
+              >
+                {config.icon}
+              </span>
               {t.employeeList.statusOptions[status] || status}
             </span>
           );
@@ -263,7 +286,12 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
               }}
               className='p-1 text-gray-400 hover:text-emerald-600 transition-colors'
             >
-              <span className='material-symbols-rounded text-[20px]'>visibility</span>
+              <span 
+                className='material-symbols-rounded'
+                style={{ fontSize: 'var(--icon-lg)' }}
+              >
+                visibility
+              </span>
             </button>
             {canPerformAction(userRole, 'users.manage') && (
               <>
@@ -274,7 +302,12 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   }}
                   className='p-1 text-gray-400 hover:text-primary-600 transition-colors'
                 >
-                  <span className='material-symbols-rounded text-[20px]'>edit</span>
+                  <span 
+                    className='material-symbols-rounded'
+                    style={{ fontSize: 'var(--icon-lg)' }}
+                  >
+                    edit
+                  </span>
                 </button>
                 <button
                   onClick={(e) => {
@@ -283,7 +316,12 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   }}
                   className='p-1 text-gray-400 hover:text-red-600 transition-colors'
                 >
-                  <span className='material-symbols-rounded text-[20px]'>delete</span>
+                  <span 
+                    className='material-symbols-rounded'
+                    style={{ fontSize: 'var(--icon-lg)' }}
+                  >
+                    delete
+                  </span>
                 </button>
               </>
             )}
@@ -428,48 +466,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         </div>
 
         <div className='flex flex-col md:flex-row gap-3 w-full md:w-auto'>
-          {/* Status Filter */}
-          <SegmentedControl
-            value={statusFilter}
-            onChange={(val) => setStatusFilter(val as string)}
-            variant='onPage'
-            size='sm'
-            options={[
-              { label: t.employeeList.statusOptions.all, count: counts.all, value: 'all' },
-              {
-                label: t.employeeList.statusOptions.active,
-                count: counts.active,
-                value: 'active',
-                activeColor: 'green',
-              },
-              {
-                label: t.employeeList.statusOptions.inactive,
-                count: counts.inactive,
-                value: 'inactive',
-                activeColor: 'gray',
-              },
-              {
-                label: t.employeeList.statusOptions.holiday,
-                count: counts.holiday,
-                value: 'holiday',
-                activeColor: 'amber',
-              },
-            ]}
-          />
-
-          {/* Search */}
-          <div className='relative w-full md:w-64'>
-            <span className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-              <span className='material-symbols-rounded text-gray-400'>search</span>
-            </span>
-            <SmartInput
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t.global?.actions?.search || 'Search...'}
-              className='w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500/20 transition-all outline-hidden'
-            />
-          </div>
-
           {canPerformAction(userRole, 'users.manage') && (
             <button
               onClick={() => {
@@ -479,7 +475,12 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
               }}
               className={`flex items-center justify-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all active:scale-95 whitespace-nowrap`}
             >
-              <span className='material-symbols-rounded'>add</span>
+              <span 
+                className='material-symbols-rounded'
+                style={{ fontSize: 'var(--icon-base)' }}
+              >
+                add
+              </span>
               <span>{t.employeeList.addEmployee}</span>
             </button>
           )}
@@ -495,13 +496,13 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
           color={color}
           emptyMessage='No employees found'
           onRowClick={handleView}
-          globalFilter={searchQuery}
-          enableSearch={false}
-          enableTopToolbar={false}
+          enableSearch={true}
+          enableTopToolbar={true}
           enablePagination={true}
           enableVirtualization={false}
           pageSize='auto'
           enableShowAll={true}
+          filterableColumns={employeeFilterConfigs}
         />
       </div>
 
@@ -512,8 +513,25 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         title={editingEmployee ? t.employeeList.editEmployee : t.employeeList.addEmployee}
         icon='badge'
         size='4xl'
+        height='80vh'
         // Hide header close button when using tabs; ensure a cancel button exists in footer
         hideCloseButton={true}
+        footer={
+          <div className='flex items-center justify-end gap-3'>
+            <button
+              onClick={closeModal}
+              className={`${BUTTON_CLOSE_BASE} px-4 py-2 text-gray-600 dark:text-gray-300 rounded-lg font-medium`}
+            >
+              {t.employeeList.modal.cancel}
+            </button>
+            <button
+              onClick={handleSave}
+              className={`${BUTTON_BASE} px-8 py-2.5 text-(--text-primary) font-bold`}
+            >
+              {t.employeeList.modal.save}
+            </button>
+          </div>
+        }
         headerActions={
           <SegmentedControl
             options={[
@@ -539,91 +557,109 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
             value={activeTab}
             onChange={(value) => setActiveTab(value as 'general' | 'credentials' | 'documents')}
             color={color}
+            iconSize='--icon-lg'
           />
         }
       >
-        <div className='flex gap-8 p-4'>
-          {/* Left Side - Image Upload (Fixed Width) */}
-          <div className='flex flex-col items-center gap-3 shrink-0 pt-2'>
+        <div className='space-y-6'>
+          {/* Top Section - Profile Picture & Identity */}
+          <div className='flex flex-col items-center justify-center gap-4 pb-6'>
             <div className='relative group'>
-              {formData.image ? (
-                <img
-                  src={formData.image}
-                  alt='Employee'
-                  className='w-32 h-32 rounded-3xl object-cover shadow-xs border border-gray-100 dark:border-gray-700'
-                />
-              ) : (
-                <div
-                  className={`w-32 h-32 rounded-3xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center text-primary-600 dark:text-primary-400 text-4xl font-bold border border-primary-100 dark:border-primary-900/30`}
+              <div className='relative'>
+                {formData.image ? (
+                  <img
+                    src={formData.image}
+                    alt='Employee'
+                    className='w-32 h-32 rounded-[2rem] object-cover shadow-xl border-4 border-white dark:border-(--bg-card) ring-1 ring-(--border-divider)'
+                  />
+                ) : (
+                  <div
+                    className={`w-32 h-32 rounded-[2rem] bg-gray-200 dark:bg-zinc-900/50 flex items-center justify-center text-gray-500 dark:text-gray-400 text-4xl font-bold border border-(--border-divider) shadow-inner animate-in fade-in zoom-in duration-500`}
+                  >
+                    {getInitials(formData.name || '') === '?' || !formData.name?.trim() ? (
+                      <span className='material-symbols-rounded' style={{ fontSize: '3rem' }}>photo_camera</span>
+                    ) : (
+                      getInitials(formData.name)
+                    )}
+                  </div>
+                )}
+                
+                <label
+                  className='absolute inset-0 flex items-center justify-center bg-black/60 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer backdrop-blur-[4px] border-2 border-white/10 overflow-hidden'
+                  title={language === 'AR' ? 'تغيير الصورة' : 'Change Image'}
                 >
-                  {getInitials(formData.name || '')}
-                </div>
-              )}
-              <label
-                className='absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-[2px]'
-                title={language === 'AR' ? 'تغيير الصورة' : 'Change Image'}
-              >
-                <span className='material-symbols-rounded text-white text-3xl drop-shadow-md'>
-                  photo_camera
-                </span>
-                <input
-                  type='file'
-                  accept='image/*'
-                  className='hidden'
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      if (file.size > 500 * 1024) {
-                        playError();
-                        alert(
-                          language === 'AR'
-                            ? 'حجم الصورة كبير جداً (الحد الأقصى 500KB)'
-                            : 'Image too large (max 500KB)'
-                        );
-                        return;
+                  <input
+                    type='file'
+                    accept='image/*'
+                    className='hidden'
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 500 * 1024) {
+                          playError();
+                          alert(
+                            language === 'AR'
+                              ? 'حجم الصورة كبير جداً (الحد الأقصى 500KB)'
+                              : 'Image too large (max 500KB)'
+                          );
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setFormData({ ...formData, image: reader.result as string });
+                        };
+                        reader.readAsDataURL(file);
                       }
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setFormData({ ...formData, image: reader.result as string });
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                />
-              </label>
-              {formData.image && (
+                    }}
+                  />
+                </label>
+              </div>
+
+              {formData.image ? (
                 <button
                   type='button'
                   onClick={() => setFormData({ ...formData, image: undefined })}
-                  className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-7 h-7 bg-gray-100 dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-700 rounded-lg text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all active:scale-90 flex items-center justify-center shadow-inner`}
+                  className={`absolute -top-1 ${language === 'AR' ? '-right-1' : '-left-1'} w-8 h-8 bg-white dark:bg-(--bg-card) ${BUTTON_CLOSE_BASE} rounded-xl text-gray-400 hover:text-red-500 shadow-lg hover:shadow-red-500/10 flex items-center justify-center z-10`}
                   title={language === 'AR' ? 'إزالة الصورة' : 'Remove Image'}
                 >
                   <span
-                    className='material-symbols-rounded text-[18px]'
-                    style={{ fontVariationSettings: "'wght' 700" }}
+                    className='material-symbols-rounded'
+                    style={{ 
+                      fontSize: 'var(--icon-lg)',
+                      fontVariationSettings: "'wght' 700" 
+                    }}
                   >
                     close
                   </span>
                 </button>
-              )}
+              ) : null}
             </div>
-            <div className='text-center'>
-              <p className='text-xs font-medium text-gray-500 mb-0.5'>
-                {language === 'AR' ? 'صورة شخصية' : 'Profile Photo'}
-              </p>
-              <p className='text-[10px] text-gray-400'>Max 500KB</p>
+            
+            <div className='text-center space-y-1'>
+              <h3 className='text-lg font-bold text-(--text-primary)'>
+                {formData.name || (language === 'AR' ? 'موظف جديد' : 'New Employee')}
+              </h3>
+              <div className='flex items-center gap-2 justify-center'>
+                <span className='px-2 py-0.5 rounded-full bg-(--bg-surface-neutral) text-(--text-tertiary) text-[10px] font-bold uppercase tracking-wider border border-(--border-divider)'>
+                  {availableRoles.find(r => r.key === (formData.role || 'pharmacist'))?.label}
+                </span>
+                <span className='w-1 h-1 rounded-full bg-(--border-divider)' />
+                <span className='text-[10px] text-gray-400 font-medium uppercase tracking-tight'>
+                  Maximum 500KB
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Right Side - Form Fields */}
-          <div className='flex-1 space-y-6'>
-            {/* Tab Content */}
+          {/* Main Form Area */}
+          <div className='space-y-6'>
             {activeTab === 'general' ? (
-              <>
-                {/* Compact Grid Layout for General Info */}
-                <div className='grid grid-cols-12 gap-x-4 gap-y-5 pt-1'>
-                  {/* Row 1: Name (8) + Status (4) */}
-                  <div className='col-span-8 space-y-1.5'>
+              <div className='animate-in fade-in slide-in-from-bottom-2 duration-300'>
+                {/* General Info Card */}
+                <div className='bg-(--bg-surface-neutral)/50 rounded-2xl p-5 border border-(--border-divider) space-y-5'>
+                  <div className='grid grid-cols-12 gap-x-4 gap-y-5'>
+                  {/* Row 1: Names (EN + AR) */}
+                  <div className='col-span-6 space-y-1.5'>
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
                       {t.employeeList.name}
                     </label>
@@ -632,46 +668,24 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder={t.employeeList.name}
                       autoFocus
-                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500/20 transition-all outline-hidden'
+                      className={INPUT_BASE}
                       required
                     />
                   </div>
-                  <div className='col-span-4 space-y-1.5'>
+                  <div className='col-span-6 space-y-1.5'>
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
-                      {t.employeeList.status}
+                      {language === 'AR' ? 'الاسم بالكامل (عربي)' : 'Full Name (Arabic)'}
                     </label>
-                    <div className='relative h-[42px]'>
-                      <FilterDropdown
-                        className='absolute top-0 left-0 w-full z-30'
-                        minHeight='42px'
-                        items={Object.entries(t.employeeList.statusOptions)
-                          .filter(([key]) => key !== 'all')
-                          .map(([key, label]) => ({ key, label: label as string }))}
-                        selectedItem={Object.entries(t.employeeList.statusOptions)
-                          .map(([key, label]) => ({ key, label: label as string }))
-                          .find((s) => s.key === (formData.status || 'active'))}
-                        isOpen={isStatusOpen}
-                        onToggle={() => {
-                          setIsStatusOpen(!isStatusOpen);
-                          setIsDepartmentOpen(false);
-                          setIsRoleOpen(false);
-                        }}
-                        onSelect={(item) => {
-                          setFormData({ ...formData, status: item.key as any });
-                          setIsStatusOpen(false);
-                        }}
-                        renderItem={(item) => <span className='text-sm'>{item.label}</span>}
-                        renderSelected={(item) => (
-                          <span className='text-sm'>{item?.label || t.employeeList.status}</span>
-                        )}
-                        keyExtractor={(item) => item.key}
-                        variant='input'
-                        color={color}
-                      />
-                    </div>
+                    <SmartInput
+                      value={formData.nameArabic || ''}
+                      onChange={(e) => setFormData({ ...formData, nameArabic: e.target.value })}
+                      placeholder={t.employeeList.nameArabic || (language === 'AR' ? 'الاسم بالكامل...' : 'Full Name in Arabic...')}
+                      className={INPUT_BASE}
+                      dir='rtl'
+                    />
                   </div>
 
-                  {/* Row 2: Role (4) + Dept (4) + Position (4) */}
+                  {/* Row 2: Dept (4) + Role (4) + Status (4) */}
                   <div className='col-span-4 space-y-1.5'>
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
                       {t.employeeList.department}
@@ -741,18 +755,52 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   </div>
                   <div className='col-span-4 space-y-1.5'>
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
+                      {t.employeeList.status}
+                    </label>
+                    <div className='relative h-[42px]'>
+                      <FilterDropdown
+                        className='absolute top-0 left-0 w-full z-30'
+                        minHeight='42px'
+                        items={Object.entries(t.employeeList.statusOptions)
+                          .filter(([key]) => key !== 'all')
+                          .map(([key, label]) => ({ key, label: label as string }))}
+                        selectedItem={Object.entries(t.employeeList.statusOptions)
+                          .map(([key, label]) => ({ key, label: label as string }))
+                          .find((s) => s.key === (formData.status || 'active'))}
+                        isOpen={isStatusOpen}
+                        onToggle={() => {
+                          setIsStatusOpen(!isStatusOpen);
+                          setIsDepartmentOpen(false);
+                          setIsRoleOpen(false);
+                        }}
+                        onSelect={(item) => {
+                          setFormData({ ...formData, status: item.key as any });
+                          setIsStatusOpen(false);
+                        }}
+                        renderItem={(item) => <span className='text-sm'>{item.label}</span>}
+                        renderSelected={(item) => (
+                          <span className='text-sm'>{item?.label || t.employeeList.status}</span>
+                        )}
+                        keyExtractor={(item) => item.key}
+                        variant='input'
+                        color={color}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Row 3: Position (4) + Phone (4) + Email (4) */}
+                  <div className='col-span-4 space-y-1.5'>
+                    <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
                       {t.employeeList.position}
                     </label>
                     <SmartInput
                       value={formData.position || ''}
                       onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                       placeholder={t.employeeList.position}
-                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
+                      className={INPUT_BASE}
                     />
                   </div>
-
-                  {/* Row 3: Phone (6) + Email (6) */}
-                  <div className='col-span-6 space-y-1.5'>
+                  <div className='col-span-4 space-y-1.5'>
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
                       {t.employeeList.phone}
                     </label>
@@ -760,10 +808,10 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       value={formData.phone || ''}
                       onChange={(val) => setFormData({ ...formData, phone: val })}
                       placeholder={t.employeeList.phone}
-                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
+                      className={INPUT_BASE}
                     />
                   </div>
-                  <div className='col-span-6 space-y-1.5'>
+                  <div className='col-span-4 space-y-1.5'>
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
                       {t.employeeList.email}
                     </label>
@@ -771,7 +819,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       value={formData.email || ''}
                       onChange={(val) => setFormData({ ...formData, email: val })}
                       placeholder={t.employeeList.email}
-                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
+                      className={INPUT_BASE}
                     />
                   </div>
 
@@ -788,7 +836,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         }
                         placeholder='0.00'
                         type='number'
-                        className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden pl-9'
+                        className={`${INPUT_BASE} uppercase font-bold tracking-widest pl-9`}
                       />
                       <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium'>
                         $
@@ -803,17 +851,21 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       value={formData.notes || ''}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       placeholder={language === 'AR' ? 'ملاحظات إضافية...' : 'Additional notes...'}
-                      className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
+                      className={INPUT_BASE}
                     />
                   </div>
+                  </div>
                 </div>
-              </>
+              </div>
             ) : activeTab === 'credentials' ? (
-              <>
-                {/* Credentials Tab */}
-                <div className='space-y-4'>
-                  <div className='flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800'>
-                    <span className={`material-symbols-rounded text-primary-500 text-lg`}>
+              <div className='animate-in fade-in slide-in-from-bottom-2 duration-300'>
+                {/* Credentials Card */}
+                <div className='bg-(--bg-surface-neutral)/50 rounded-2xl p-5 border border-(--border-divider) space-y-4'>
+                  <div className='flex items-center gap-2 pb-2 border-b border-(--border-divider)'>
+                    <span 
+                      className={`material-symbols-rounded text-primary-500`}
+                      style={{ fontSize: 'var(--icon-base)' }}
+                    >
                       lock
                     </span>
                     <h3 className='text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider'>
@@ -821,23 +873,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                     </h3>
                   </div>
 
-                  <div className='bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30 rounded-xl p-4'>
-                    <div className='flex items-start gap-3'>
-                      <span className='material-symbols-rounded text-blue-600 dark:text-blue-400 text-xl mt-0.5'>
-                        info
-                      </span>
-                      <div className='flex-1'>
-                        <p className='text-sm font-medium text-blue-900 dark:text-blue-100 mb-1'>
-                          {language === 'AR' ? 'معلومات الدخول للنظام' : 'System Login Information'}
-                        </p>
-                        <p className='text-xs text-blue-700 dark:text-blue-300'>
-                          {language === 'AR'
-                            ? 'استخدم هذه البيانات للدخول إلى النظام. تأكد من استخدام كلمة مرور قوية.'
-                            : 'Use these credentials to login to the system. Make sure to use a strong password.'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
 
                   <div className='grid grid-cols-2 gap-4 pt-4'>
                     <div className='space-y-1.5'>
@@ -848,7 +883,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         value={formData.username || ''}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                         placeholder={t.employeeList.usernamePlaceholder || 'Login Username'}
-                        className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
+                        className={INPUT_BASE}
                       />
                     </div>
                     {/* Biometric Setup Section */}
@@ -941,11 +976,12 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         className={`flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border-2 transition-all font-medium ${
                           formData.biometricCredentialId
                             ? `bg-green-50 border-green-200 text-green-700 dark:bg-green-900/10 dark:border-green-800/30 dark:text-green-400`
-                            : `border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800`
+                            : `border-(--border-divider) text-(--text-tertiary) hover:text-(--text-primary) hover:bg-(--bg-surface-neutral) transition-all`
                         }`}
                       >
                         <span
-                          className={`material-symbols-rounded text-lg ${formData.biometricCredentialId ? 'text-green-500' : ''}`}
+                          className={`material-symbols-rounded ${formData.biometricCredentialId ? 'text-green-500' : ''}`}
+                          style={{ fontSize: 'var(--icon-lg)' }}
                         >
                           {formData.biometricCredentialId ? 'fingerprint_check' : 'fingerprint'}
                         </span>
@@ -971,14 +1007,14 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         placeholder={t.employeeList.passwordPlaceholder || 'Login Password'}
                         type='password'
-                        className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
+                        className={INPUT_BASE}
                       />
                     </div>
                   )}
 
                   {/* Password Change Section - Only when EDITING and user WANTS to change */}
                   {editingEmployee && editingEmployee.password && (
-                    <div className='pt-4 border-t border-gray-100 dark:border-gray-800'>
+                    <div className='pt-4 border-t border-(--border-divider)'>
                       {!wantsToChangePassword ? (
                         /* Button to initiate password change */
                         <button
@@ -986,9 +1022,19 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                           onClick={() => setWantsToChangePassword(true)}
                           className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors'
                         >
-                          <span className='material-symbols-rounded text-lg'>key</span>
+                          <span 
+                            className='material-symbols-rounded'
+                            style={{ fontSize: 'var(--icon-lg)' }}
+                          >
+                            key
+                          </span>
                           {language === 'AR' ? 'تغيير كلمة المرور' : 'Change Password'}
-                          <span className='material-symbols-rounded text-lg'>chevron_right</span>
+                          <span 
+                            className='material-symbols-rounded'
+                            style={{ fontSize: 'var(--icon-lg)' }}
+                          >
+                            chevron_right
+                          </span>
                         </button>
                       ) : (
                         /* Password change form */
@@ -996,19 +1042,35 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                           <div className='flex items-center justify-between'>
                             <div className='flex items-center gap-2'>
                               <span
-                                className={`material-symbols-rounded text-primary-500 text-lg`}
+                                className={`material-symbols-rounded text-primary-500`}
+                                style={{ fontSize: 'var(--icon-base)' }}
                               >
                                 key
                               </span>
                               <h4 className='text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider'>
                                 {language === 'AR' ? 'تغيير كلمة المرور' : 'Change Password'}
                               </h4>
-                              {isOldPasswordVerified && (
+                              {isOldPasswordVerified ? (
                                 <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'>
-                                  <span className='material-symbols-rounded text-sm'>
+                                  <span 
+                                    className='material-symbols-rounded'
+                                    style={{ fontSize: 'var(--icon-md)' }}
+                                  >
                                     check_circle
                                   </span>
                                   {language === 'AR' ? 'تم التحقق' : 'Verified'}
+                                </span>
+                              ) : (
+                                <span className='inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800/50'>
+                                  <span 
+                                    className='material-symbols-rounded'
+                                    style={{ fontSize: 'var(--icon-md)' }}
+                                  >
+                                    info
+                                  </span>
+                                  {language === 'AR'
+                                    ? 'أدخل كلمة المرور الحالية للتحقق من هويتك'
+                                    : 'Enter current password to verify your identity'}
                                 </span>
                               )}
                             </div>
@@ -1022,21 +1084,18 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                               }}
                               className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
                             >
-                              <span className='material-symbols-rounded'>close</span>
+                              <span 
+                                className='material-symbols-rounded'
+                                style={{ fontSize: 'var(--icon-lg)' }}
+                              >
+                                close
+                              </span>
                             </button>
                           </div>
 
                           {!isOldPasswordVerified ? (
                             /* Step 1: Verify Old Password */
                             <div className='space-y-3'>
-                              <div className='bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3'>
-                                <p className='text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2'>
-                                  <span className='material-symbols-rounded text-sm'>info</span>
-                                  {language === 'AR'
-                                    ? 'أدخل كلمة المرور الحالية للتحقق من هويتك قبل تغييرها'
-                                    : 'Enter current password to verify your identity before changing it'}
-                                </p>
-                              </div>
                               <div className='flex gap-3'>
                                 <div className='flex-1 space-y-1.5'>
                                   <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
@@ -1054,18 +1113,10 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                         : 'Enter current password'
                                     }
                                     type='password'
-                                    className={`w-full px-4 py-2.5 rounded-xl border ${passwordError ? 'border-red-400 dark:border-red-500' : 'border-gray-200 dark:border-gray-700'} bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden`}
+                                    className={passwordError ? `${INPUT_BASE} border-red-400 dark:border-red-500` : INPUT_BASE}
                                   />
-                                  {passwordError && (
-                                    <p className='text-xs text-red-500 dark:text-red-400 flex items-center gap-1 px-1'>
-                                      <span className='material-symbols-rounded text-sm'>
-                                        error
-                                      </span>
-                                      {passwordError}
-                                    </p>
-                                  )}
                                 </div>
-                                <div className='flex items-end pb-0.5'>
+                                <div className='flex items-end'>
                                   <button
                                     type='button'
                                     onClick={async () => {
@@ -1091,6 +1142,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                         playSuccess();
                                         setIsOldPasswordVerified(true);
                                         setPasswordError('');
+                                        setFormData({ ...formData, password: '' });
                                       } else {
                                         playError();
                                         setPasswordError(
@@ -1100,22 +1152,39 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                         );
                                       }
                                     }}
-                                    className={`px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all active:scale-95 font-medium flex items-center gap-2`}
+                                    className={`h-[42px] px-4 bg-primary-500 hover:bg-primary-600 text-white rounded-xl transition-all active:scale-95 font-medium flex items-center gap-2`}
                                   >
-                                    <span className='material-symbols-rounded text-[18px]'>
+                                    <span 
+                                      className='material-symbols-rounded'
+                                      style={{ fontSize: 'var(--icon-lg)' }}
+                                    >
                                       verified_user
                                     </span>
                                     {language === 'AR' ? 'تحقق' : 'Verify'}
                                   </button>
                                 </div>
                               </div>
+                              {passwordError && (
+                                <p className='text-xs text-red-500 dark:text-red-400 flex items-center gap-1 px-1 mt-1'>
+                                  <span 
+                                    className='material-symbols-rounded'
+                                    style={{ fontSize: 'var(--icon-md)' }}
+                                  >
+                                    error
+                                  </span>
+                                  {passwordError}
+                                </p>
+                              )}
                             </div>
                           ) : (
                             /* Step 2: Enter New Password (only after verification) */
                             <div className='space-y-3'>
-                              <div className='bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800/30 rounded-xl p-3'>
+                              <div className='border border-(--border-divider) rounded-xl p-3'>
                                 <p className='text-xs text-green-800 dark:text-green-200 flex items-center gap-2'>
-                                  <span className='material-symbols-rounded text-sm'>
+                                  <span 
+                                    className='material-symbols-rounded'
+                                    style={{ fontSize: 'var(--icon-md)' }}
+                                  >
                                     check_circle
                                   </span>
                                   {language === 'AR'
@@ -1138,7 +1207,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                       : 'Enter new password'
                                   }
                                   type='password'
-                                  className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all outline-hidden'
+                                  className={INPUT_BASE}
                                 />
                               </div>
                             </div>
@@ -1149,9 +1218,14 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   )}
 
                   {editingEmployee && !editingEmployee.password && (
-                    <div className='bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3 mt-4'>
+                    <div className='border border-(--border-divider) rounded-xl p-3 mt-4'>
                       <p className='text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2'>
-                        <span className='material-symbols-rounded text-sm'>warning</span>
+                        <span 
+                          className='material-symbols-rounded'
+                          style={{ fontSize: 'var(--icon-md)' }}
+                        >
+                          warning
+                        </span>
                         {language === 'AR'
                           ? 'هذا الموظف ليس لديه كلمة مرور. أضف كلمة مرور جديدة من الأعلى.'
                           : 'This employee has no password. Add a new password above.'}
@@ -1159,13 +1233,16 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                     </div>
                   )}
                 </div>
-              </>
+              </div>
             ) : activeTab === 'documents' ? (
-              <>
-                {/* Documents Tab */}
-                <div className='space-y-4'>
-                  <div className='flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800'>
-                    <span className={`material-symbols-rounded text-primary-500 text-lg`}>
+              <div className='animate-in fade-in slide-in-from-bottom-2 duration-300'>
+                {/* Documents Card */}
+                <div className='bg-(--bg-surface-neutral)/50 rounded-2xl p-5 border border-(--border-divider) space-y-4'>
+                  <div className='flex items-center gap-2 pb-2 border-b border-(--border-divider)'>
+                    <span 
+                      className={`material-symbols-rounded text-primary-500`}
+                      style={{ fontSize: 'var(--icon-base)' }}
+                    >
                       description
                     </span>
                     <h3 className='text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider'>
@@ -1173,31 +1250,17 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                     </h3>
                   </div>
 
-                  <div className='bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30 rounded-xl p-4'>
-                    <div className='flex items-start gap-3'>
-                      <span className='material-symbols-rounded text-blue-600 dark:text-blue-400 text-xl mt-0.5'>
-                        info
-                      </span>
-                      <div className='flex-1'>
-                        <p className='text-sm font-medium text-blue-900 dark:text-blue-100 mb-1'>
-                          {language === 'AR'
-                            ? 'رفع المستندات المطلوبة'
-                            : 'Upload Required Documents'}
-                        </p>
-                        <p className='text-xs text-blue-700 dark:text-blue-300'>
-                          {language === 'AR'
-                            ? 'الحجم الأقصى للملف: 500 كيلوبايت | الصيغ المدعومة: JPG, PNG, PDF'
-                            : 'Max file size: 500KB | Supported formats: JPG, PNG, PDF'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
 
                   <div className='space-y-6 pt-4'>
                     {/* National ID Card - Both Faces */}
                     <div className='space-y-2'>
                       <label className='text-xs font-semibold text-gray-500 uppercase px-1 flex items-center gap-2'>
-                        <span className='material-symbols-rounded text-sm'>badge</span>
+                        <span 
+                          className='material-symbols-rounded'
+                          style={{ fontSize: 'var(--icon-md)' }}
+                        >
+                          badge
+                        </span>
                         {language === 'AR' ? 'البطاقة الشخصية' : 'National ID Card'}
                       </label>
                       <div className='flex items-center gap-4'>
@@ -1209,92 +1272,35 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                               alt='National ID Front'
                               className='h-24 w-auto rounded-xl object-contain'
                             />
-                            <button
-                              type='button'
-                              onClick={() =>
-                                setFormData({ ...formData, nationalIdCard: undefined })
-                              }
-                              className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-700 rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
-                            >
-                              <span
-                                className='material-symbols-rounded text-[16px]'
-                                style={{ fontVariationSettings: "'wght' 700" }}
-                              >
-                                close
-                              </span>
-                            </button>
-                          </div>
-                        ) : (
-                          <div className='flex-1'>
-                            <label className='flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer bg-gray-50 dark:bg-gray-800/50'>
-                              <span className='material-symbols-rounded text-gray-400'>upload</span>
-                              <span className='text-sm text-gray-600 dark:text-gray-300'>
-                                {language === 'AR' ? 'اضغط لرفع الوجه الأمامي' : 'Upload Front'}
-                              </span>
-                              <input
-                                type='file'
-                                accept='image/*'
-                                className='hidden'
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    if (file.size > 500 * 1024) {
-                                      playError();
-                                      alert(
-                                        language === 'AR'
-                                          ? 'حجم الملف كبير جداً (الحد الأقصى 500KB)'
-                                          : 'File too large (max 500KB)'
-                                      );
-                                      return;
-                                    }
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                      setFormData({
-                                        ...formData,
-                                        nationalIdCard: reader.result as string,
-                                      });
-                                    };
-                                    reader.readAsDataURL(file);
-                                  }
-                                }}
-                              />
-                            </label>
-                          </div>
-                        )}
-
-                        {/* Plus Icon / Back Face */}
-                        {formData.nationalIdCard && (
-                          <>
-                            {formData.nationalIdCardBack ? (
-                              <div className='relative group'>
-                                <img
-                                  src={formData.nationalIdCardBack}
-                                  alt='National ID Back'
-                                  className='h-24 w-auto rounded-xl object-contain'
-                                />
-                                <button
-                                  type='button'
-                                  onClick={() =>
-                                    setFormData({ ...formData, nationalIdCardBack: undefined })
-                                  }
-                                  className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-700 rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
-                                >
-                                  <span
-                                    className='material-symbols-rounded text-[16px]'
-                                    style={{ fontVariationSettings: "'wght' 700" }}
-                                  >
-                                    close
-                                  </span>
-                                </button>
-                              </div>
-                            ) : (
-                              <label
-                                className={`flex items-center justify-center w-24 h-24 border-2 border-dashed border-primary-300 dark:border-primary-600 rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-primary-50/50 dark:bg-primary-900/10`}
+                              <button
+                                type='button'
+                                onClick={() =>
+                                  setFormData({ ...formData, nationalIdCard: undefined })
+                                }
+                                className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
                               >
                                 <span
-                                  className={`material-symbols-rounded text-primary-500 text-2xl`}
+                                  className='material-symbols-rounded'
+                                  style={{ 
+                                    fontSize: 'var(--icon-md)',
+                                    fontVariationSettings: "'wght' 700" 
+                                  }}
                                 >
-                                  add
+                                  close
+                                </span>
+                              </button>
+                            </div>
+                          ) : (
+                            <div className='flex-1'>
+                              <label className='flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'>
+                                <span 
+                                  className='material-symbols-rounded text-gray-400'
+                                  style={{ fontSize: 'var(--icon-base)' }}
+                                >
+                                  upload
+                                </span>
+                                <span className='text-sm text-gray-600 dark:text-gray-300'>
+                                  {language === 'AR' ? 'اضغط لرفع الوجه الأمامي' : 'Upload Front'}
                                 </span>
                                 <input
                                   type='file'
@@ -1316,7 +1322,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                       reader.onloadend = () => {
                                         setFormData({
                                           ...formData,
-                                          nationalIdCardBack: reader.result as string,
+                                          nationalIdCard: reader.result as string,
                                         });
                                       };
                                       reader.readAsDataURL(file);
@@ -1324,24 +1330,95 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                   }}
                                 />
                               </label>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
+                            </div>
+                          )}
 
-                    {/* Syndicate Cards - Side by Side - Only for Pharmacists */}
-                    {(formData.role || 'pharmacist') === 'pharmacist' && (
-                      <div className='grid grid-cols-2 gap-4'>
-                        {/* Main Syndicate Card */}
+                          {/* Plus Icon / Back Face */}
+                          {formData.nationalIdCard && (
+                            <>
+                              {formData.nationalIdCardBack ? (
+                                <div className='relative group'>
+                                  <img
+                                    src={formData.nationalIdCardBack}
+                                    alt='National ID Back'
+                                    className='h-24 w-auto rounded-xl object-contain'
+                                  />
+                                  <button
+                                    type='button'
+                                    onClick={() =>
+                                      setFormData({ ...formData, nationalIdCardBack: undefined })
+                                    }
+                                    className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
+                                  >
+                                    <span
+                                      className='material-symbols-rounded'
+                                      style={{ 
+                                        fontSize: 'var(--icon-md)',
+                                        fontVariationSettings: "'wght' 700" 
+                                      }}
+                                    >
+                                      close
+                                    </span>
+                                  </button>
+                                </div>
+                              ) : (
+                                <label
+                                  className={`flex items-center justify-center w-24 h-24 border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50`}
+                                >
+                                  <span
+                                    className={`material-symbols-rounded text-primary-500`}
+                                    style={{ fontSize: 'var(--icon-lg)' }}
+                                  >
+                                    add
+                                  </span>
+                                  <input
+                                    type='file'
+                                    accept='image/*'
+                                    className='hidden'
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        if (file.size > 500 * 1024) {
+                                          playError();
+                                          alert(
+                                            language === 'AR'
+                                              ? 'حجم الملف كبير جداً (الحد الأقصى 500KB)'
+                                              : 'File too large (max 500KB)'
+                                          );
+                                          return;
+                                        }
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => {
+                                          setFormData({
+                                            ...formData,
+                                            nationalIdCardBack: reader.result as string,
+                                          });
+                                        };
+                                        reader.readAsDataURL(file);
+                                      }
+                                    }}
+                                  />
+                                </label>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Syndicate Cards - Side by Side - Only for Pharmacists */}
+                      {(formData.role || 'pharmacist') === 'pharmacist' && (
                         <div className='space-y-2'>
                           <label className='text-xs font-semibold text-gray-500 uppercase px-1 flex items-center gap-2'>
-                            <span className='material-symbols-rounded text-sm'>
+                            <span 
+                              className='material-symbols-rounded'
+                              style={{ fontSize: 'var(--icon-md)' }}
+                            >
                               card_membership
                             </span>
-                            {language === 'AR' ? 'كارنية النقابة الرئيسية' : 'Main Syndicate Card'}
+                            {language === 'AR' ? 'كارنيهات النقابة' : 'Syndicate Cards'}
                           </label>
                           <div className='flex items-center gap-4'>
+                            {/* Main Syndicate Card */}
                             {formData.mainSyndicateCard ? (
                               <div className='relative group'>
                                 <img
@@ -1354,11 +1431,14 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                   onClick={() =>
                                     setFormData({ ...formData, mainSyndicateCard: undefined })
                                   }
-                                  className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-700 rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
+                                  className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
                                 >
                                   <span
-                                    className='material-symbols-rounded text-[16px]'
-                                    style={{ fontVariationSettings: "'wght' 700" }}
+                                    className='material-symbols-rounded'
+                                    style={{ 
+                                      fontSize: 'var(--icon-md)',
+                                      fontVariationSettings: "'wght' 700" 
+                                    }}
                                   >
                                     close
                                   </span>
@@ -1366,12 +1446,15 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                               </div>
                             ) : (
                               <div className='flex-1'>
-                                <label className='flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer bg-gray-50 dark:bg-gray-800/50'>
-                                  <span className='material-symbols-rounded text-gray-400'>
+                                <label className='flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50'>
+                                  <span 
+                                    className='material-symbols-rounded text-gray-400'
+                                    style={{ fontSize: 'var(--icon-base)' }}
+                                  >
                                     upload
                                   </span>
                                   <span className='text-sm text-gray-600 dark:text-gray-300'>
-                                    {language === 'AR' ? 'رفع' : 'Upload'}
+                                    {language === 'AR' ? 'كارنية النقابة الرئيسية' : 'Main Syndicate Card'}
                                   </span>
                                   <input
                                     type='file'
@@ -1403,48 +1486,47 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                 </label>
                               </div>
                             )}
-                          </div>
-                        </div>
 
-                        {/* Sub Syndicate Card */}
-                        <div className='space-y-2'>
-                          <label className='text-xs font-semibold text-gray-500 uppercase px-1 flex items-center gap-2'>
-                            <span className='material-symbols-rounded text-sm'>
-                              workspace_premium
-                            </span>
-                            {language === 'AR' ? 'كارنية النقابة الفرعية' : 'Sub Syndicate Card'}
-                          </label>
-                          <div className='flex items-center gap-4'>
-                            {formData.subSyndicateCard ? (
-                              <div className='relative group'>
-                                <img
-                                  src={formData.subSyndicateCard}
-                                  alt='Sub Syndicate Card'
-                                  className='h-24 w-auto rounded-xl object-contain'
-                                />
-                                <button
-                                  type='button'
-                                  onClick={() =>
-                                    setFormData({ ...formData, subSyndicateCard: undefined })
-                                  }
-                                  className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 border-2 border-gray-50 dark:border-gray-700 rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
+                            {/* Sub Syndicate Card - Appears when Main is uploaded */}
+                            {formData.mainSyndicateCard && (
+                              <>
+                                {formData.subSyndicateCard ? (
+                                  <div className='relative group'>
+                                    <img
+                                      src={formData.subSyndicateCard}
+                                      alt='Sub Syndicate Card'
+                                      className='h-24 w-auto rounded-xl object-contain'
+                                    />
+                                    <button
+                                      type='button'
+                                      onClick={() =>
+                                        setFormData({ ...formData, subSyndicateCard: undefined })
+                                      }
+                                      className={`absolute -top-2.5 ${language === 'AR' ? '-left-2.5' : '-right-2.5'} w-6 h-6 bg-gray-100 dark:bg-gray-800 ${BUTTON_CLOSE_BASE} rounded-md text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-inner`}
+                                    >
+                                      <span
+                                        className='material-symbols-rounded'
+                                        style={{ 
+                                          fontSize: 'var(--icon-md)',
+                                          fontVariationSettings: "'wght' 700" 
+                                        }}
+                                      >
+                                        close
+                                      </span>
+                                    </button>
+                                </div>
+                              ) : (
+                                <label
+                                  className={`flex flex-col items-center justify-center w-32 h-24 border-2 border-dashed border-(--border-divider) rounded-xl hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer bg-(--bg-input)/50 gap-1`}
                                 >
                                   <span
-                                    className='material-symbols-rounded text-[16px]'
-                                    style={{ fontVariationSettings: "'wght' 700" }}
+                                    className={`material-symbols-rounded text-primary-500`}
+                                    style={{ fontSize: 'var(--icon-base)' }}
                                   >
-                                    close
+                                    add
                                   </span>
-                                </button>
-                              </div>
-                            ) : (
-                              <div className='flex-1'>
-                                <label className='flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer bg-gray-50 dark:bg-gray-800/50'>
-                                  <span className='material-symbols-rounded text-gray-400'>
-                                    upload
-                                  </span>
-                                  <span className='text-sm text-gray-600 dark:text-gray-300'>
-                                    {language === 'AR' ? 'رفع' : 'Upload'}
+                                  <span className='text-[10px] font-bold text-gray-400 uppercase'>
+                                    {language === 'AR' ? 'الفرعية' : 'Sub'}
                                   </span>
                                   <input
                                     type='file'
@@ -1474,33 +1556,17 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                                     }}
                                   />
                                 </label>
-                              </div>
-                            )}
-                          </div>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
-              </>
+              </div>
             ) : null}
           </div>
-        </div>
-
-        {/* Footer Actions */}
-        <div className='flex items-center justify-end gap-3 pt-6 mt-6 border-t border-gray-100 dark:border-gray-800'>
-          <button
-            onClick={closeModal}
-            className='px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors font-medium'
-          >
-            {t.employeeList.modal.cancel}
-          </button>
-          <button
-            onClick={handleSave}
-            className={`px-8 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all active:scale-95 font-bold`}
-          >
-            {t.employeeList.modal.save}
-          </button>
         </div>
       </Modal>
 
@@ -1513,7 +1579,21 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         }}
         title={t.employeeList.viewDetails}
         size='3xl'
+        height='80vh'
         hideCloseButton={true}
+        footer={
+          <div className='flex items-center justify-end gap-3'>
+            <button
+              onClick={() => {
+                setViewingEmployee(null);
+                setActiveViewTab('general');
+              }}
+              className={`${BUTTON_CLOSE_BASE} px-4 py-2 text-gray-600 dark:text-gray-300 rounded-lg font-medium`}
+            >
+              {t.employeeList.modal.cancel}
+            </button>
+          </div>
+        }
         headerActions={
           <SegmentedControl
             options={[
@@ -1538,27 +1618,31 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
             value={activeViewTab}
             onChange={(value) => setActiveViewTab(value as 'general' | 'credentials' | 'documents')}
             color={color}
-            size='sm'
+            iconSize='--icon-lg'
           />
         }
       >
-        <div className='p-5 space-y-5'>
+        <div className='space-y-5'>
           {viewingEmployee && (
             <>
               {activeViewTab === 'general' ? (
                 <>
-                  <div className='flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800'>
+                  <div className='flex items-center gap-4 p-4 bg-(--bg-surface-neutral) rounded-xl border border-transparent dark:border-(--border-divider)'>
                     {viewingEmployee.image ? (
                       <img
                         src={viewingEmployee.image}
                         alt={viewingEmployee.name}
-                        className='w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700'
+                        className='w-16 h-16 rounded-full object-cover border-2 border-white dark:border-(--bg-card) ring-1 ring-(--border-divider)'
                       />
                     ) : (
                       <div
-                        className={`w-12 h-12 rounded-full flex items-center justify-center bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xl font-bold`}
+                        className={`w-16 h-16 rounded-full flex items-center justify-center bg-gray-200 dark:bg-zinc-900/50 text-gray-500 dark:text-gray-400 text-2xl font-bold border border-(--border-divider)`}
                       >
-                        {getInitials(viewingEmployee.name)}
+                        {getInitials(viewingEmployee.name || '') === '?' || !viewingEmployee.name?.trim() ? (
+                          <span className='material-symbols-rounded block' style={{ fontSize: '2rem' }}>person</span>
+                        ) : (
+                          getInitials(viewingEmployee.name)
+                        )}
                       </div>
                     )}
                     <div className='flex-1'>
@@ -1566,7 +1650,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         {viewingEmployee.name}
                         {viewingEmployee.biometricCredentialId && (
                           <span
-                            className='material-symbols-rounded text-green-500 text-sm align-middle ml-2'
+                            className='material-symbols-rounded text-green-500 align-middle ml-2'
+                            style={{ fontSize: 'var(--icon-lg)' }}
                             title={language === 'AR' ? 'البصمة مفعلة' : 'Fingerprint Enabled'}
                           >
                             fingerprint
@@ -1591,7 +1676,12 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                           <span
                             className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
                           >
-                            <span className='material-symbols-rounded text-xs'>{config.icon}</span>
+                            <span 
+                              className='material-symbols-rounded'
+                              style={{ fontSize: 'var(--icon-md)' }}
+                            >
+                              {config.icon}
+                            </span>
                             {t.employeeList.statusOptions[status]}
                           </span>
                         );
@@ -1599,67 +1689,68 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                     </div>
                   </div>
 
-                  <div className='grid grid-cols-2 gap-x-6 gap-y-4'>
-                    <div>
-                      <label className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
+                  <div className='grid grid-cols-2 gap-x-6 gap-y-4 pt-2'>
+                    <div className='space-y-1.5'>
+                      <div className='text-xs font-semibold text-gray-500 uppercase px-1'>
                         {t.employeeList.position}
-                      </label>
-                      <p className='text-sm font-medium text-gray-900 dark:text-white leading-snug'>
-                        {viewingEmployee.position}
-                      </p>
+                      </div>
+                      <div className='text-sm font-medium text-gray-900 dark:text-white bg-white dark:bg-(--bg-card) px-3 py-2.5 rounded-lg border border-(--border-divider) shadow-xs min-h-[42px] flex items-center'>
+                        {viewingEmployee.position || '-'}
+                      </div>
                     </div>
-
-                    <div>
-                      <label className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
+                    <div className='space-y-1.5'>
+                      <div className='text-xs font-semibold text-gray-500 uppercase px-1'>
                         {t.employeeList.role}
-                      </label>
-                      <p className='text-sm font-medium text-gray-900 dark:text-white leading-snug'>
-                        {t.employeeList.roles[viewingEmployee.role]}
-                      </p>
+                      </div>
+                      <div className='text-sm font-medium text-gray-900 dark:text-white bg-white dark:bg-(--bg-card) px-3 py-2.5 rounded-lg border border-(--border-divider) shadow-xs min-h-[42px] flex items-center'>
+                        {t.employeeList.roles[viewingEmployee.role] || '-'}
+                      </div>
                     </div>
-
-                    <div>
-                      <label className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
+                    <div className='space-y-1.5'>
+                      <div className='text-xs font-semibold text-gray-500 uppercase px-1'>
                         {t.employeeList.phone}
-                      </label>
-                      <p className='text-sm font-medium text-gray-900 dark:text-white leading-snug'>
-                        {viewingEmployee.phone}
-                      </p>
+                      </div>
+                      <div
+                        className='text-sm font-medium text-gray-900 dark:text-white bg-white dark:bg-(--bg-card) px-3 py-2.5 rounded-lg border border-(--border-divider) shadow-xs min-h-[42px] flex items-center'
+                        dir='ltr'
+                      >
+                        {viewingEmployee.phone || '-'}
+                      </div>
                     </div>
-
-                    <div>
-                      <label className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
+                    <div className='space-y-1.5'>
+                      <div className='text-xs font-semibold text-gray-500 uppercase px-1'>
                         {t.employeeList.email}
-                      </label>
-                      <p className='text-sm font-medium text-gray-900 dark:text-white leading-snug truncate'>
+                      </div>
+                      <div className='text-sm font-medium text-gray-900 dark:text-white bg-white dark:bg-(--bg-card) px-3 py-2.5 rounded-lg border border-(--border-divider) shadow-xs truncate min-h-[42px] flex items-center'>
                         {viewingEmployee.email || '-'}
-                      </p>
+                      </div>
                     </div>
-
-                    <div>
-                      <label className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
+                    <div className='space-y-1.5'>
+                      <div className='text-xs font-semibold text-gray-500 uppercase px-1'>
                         {t.employeeList.salary}
-                      </label>
-                      <p className='text-sm font-medium text-gray-900 dark:text-white leading-snug'>
+                      </div>
+                      <div className='text-sm font-medium text-gray-900 dark:text-white bg-white dark:bg-(--bg-card) px-3 py-2.5 rounded-lg border border-(--border-divider) shadow-xs min-h-[42px] flex items-center'>
                         {viewingEmployee.salary ? viewingEmployee.salary.toLocaleString() : '-'}
-                      </p>
+                      </div>
                     </div>
-
-                    <div>
-                      <label className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
+                    <div className='col-span-2 space-y-1.5'>
+                      <div className='text-xs font-semibold text-gray-500 uppercase px-1'>
                         {t.employeeList.notes}
-                      </label>
-                      <p className='text-sm text-gray-600 dark:text-gray-400 leading-snug'>
+                      </div>
+                      <div className='text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-(--bg-card) p-2.5 rounded-lg border border-(--border-divider) shadow-xs min-h-[5rem] whitespace-pre-wrap leading-relaxed space-y-0'>
                         {viewingEmployee.notes || '-'}
-                      </p>
+                      </div>
                     </div>
                   </div>
                 </>
               ) : activeViewTab === 'credentials' ? (
                 <div className='space-y-4'>
-                  <div className='bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30 rounded-xl p-4'>
+                  <div className='bg-primary-50/50 dark:bg-primary-900/10 border border-(--border-divider) rounded-xl p-4'>
                     <div className='flex items-start gap-3'>
-                      <span className='material-symbols-rounded text-blue-600 dark:text-blue-400 text-xl mt-0.5'>
+                      <span 
+                        className='material-symbols-rounded text-primary-600 dark:text-primary-400 mt-0.5'
+                        style={{ fontSize: 'var(--icon-lg)' }}
+                      >
                         lock_person
                       </span>
                       <div className='flex-1'>
@@ -1672,20 +1763,20 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                     </div>
                   </div>
 
-                  <div className='grid grid-cols-2 gap-4'>
-                    <div>
-                      <label className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
+                  <div className='grid grid-cols-2 gap-4 pt-2'>
+                    <div className='bg-(--bg-card) p-3 rounded-xl border border-(--border-divider) shadow-sm'>
+                      <label className='text-xs font-semibold text-gray-500 uppercase px-1 block mb-1'>
                         {t.employeeList.username || 'Username'}
                       </label>
-                      <p className='text-sm font-medium text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800'>
+                      <p className='text-sm font-medium text-gray-900 dark:text-white px-1'>
                         {viewingEmployee.username || '-'}
                       </p>
                     </div>
-                    <div>
-                      <label className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
+                    <div className='bg-(--bg-card) p-3 rounded-xl border border-(--border-divider) shadow-sm'>
+                      <label className='text-xs font-semibold text-gray-500 uppercase px-1 block mb-1'>
                         {t.employeeList.password || 'Password'}
                       </label>
-                      <p className='text-sm font-medium text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800'>
+                      <p className='text-sm font-medium text-gray-900 dark:text-white px-1'>
                         ••••••••
                       </p>
                     </div>
@@ -1695,41 +1786,50 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                 <div className='space-y-6'>
                   {/* National ID Section */}
                   <div className='space-y-3'>
-                    <div className='flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800'>
-                      <span className='material-symbols-rounded text-gray-400 text-lg'>badge</span>
-                      <h3 className='text-xs font-bold text-gray-500 uppercase tracking-wider'>
+                    <div className='flex items-center gap-2 pb-2 border-b border-(--border-divider)'>
+                      <span 
+                        className='material-symbols-rounded text-gray-400'
+                        style={{ fontSize: 'var(--icon-base)' }}
+                      >
+                        badge
+                      </span>
+                      <h3 className='text-xs font-semibold text-gray-500 uppercase px-1'>
                         {language === 'AR' ? 'البطاقة الشخصية' : 'National ID Card'}
                       </h3>
                     </div>
                     {viewingEmployee.nationalIdCard || viewingEmployee.nationalIdCardBack ? (
-                      <div className='flex items-center gap-4'>
+                      <div className='grid grid-cols-1 gap-4'>
                         {viewingEmployee.nationalIdCard && (
                           <div className='space-y-1'>
-                            <span className='text-[10px] text-gray-400 uppercase px-1'>
+                            <span className='text-xs font-semibold text-gray-500 uppercase px-1'>
                               {language === 'AR' ? 'الوجه الأمامي' : 'Front Face'}
                             </span>
-                            <img
-                              src={viewingEmployee.nationalIdCard}
-                              alt='National ID Front'
-                              className='h-24 w-auto rounded-xl object-contain'
-                            />
+                            <div className='bg-(--bg-card) border border-(--border-divider) rounded-xl p-2 flex justify-center'>
+                              <img
+                                src={viewingEmployee.nationalIdCard}
+                                alt='National ID Front'
+                                className='max-w-full max-h-[400px] object-contain rounded-lg'
+                              />
+                            </div>
                           </div>
                         )}
                         {viewingEmployee.nationalIdCardBack && (
                           <div className='space-y-1'>
-                            <span className='text-[10px] text-gray-400 uppercase px-1'>
+                            <span className='text-xs font-semibold text-gray-500 uppercase px-1'>
                               {language === 'AR' ? 'الوجه الخلفي' : 'Back Face'}
                             </span>
-                            <img
-                              src={viewingEmployee.nationalIdCardBack}
-                              alt='National ID Back'
-                              className='h-24 w-auto rounded-xl object-contain'
-                            />
+                            <div className='bg-(--bg-card) border border-(--border-divider) rounded-xl p-2 flex justify-center'>
+                              <img
+                                src={viewingEmployee.nationalIdCardBack}
+                                alt='National ID Back'
+                                className='max-w-full max-h-[400px] object-contain rounded-lg'
+                              />
+                            </div>
                           </div>
                         )}
                       </div>
                     ) : (
-                      <div className='text-center py-8 bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700'>
+                      <div className='text-center py-8 bg-(--bg-card) border border-(--border-divider) border-dashed rounded-xl'>
                         <p className='text-sm text-gray-400'>
                           {language === 'AR' ? 'لا يوجد صور للبطاقة' : 'No ID card images uploaded'}
                         </p>
@@ -1740,43 +1840,50 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   {/* Syndicate Cards Section - Only for Pharmacists */}
                   {viewingEmployee.role === 'pharmacist' && (
                     <div className='space-y-3'>
-                      <div className='flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800'>
-                        <span className='material-symbols-rounded text-gray-400 text-lg'>
+                      <div className='flex items-center gap-2 pb-2 border-b border-(--border-divider)'>
+                        <span 
+                          className='material-symbols-rounded text-gray-400'
+                          style={{ fontSize: 'var(--icon-base)' }}
+                        >
                           card_membership
                         </span>
-                        <h3 className='text-xs font-bold text-gray-500 uppercase tracking-wider'>
+                        <h3 className='text-xs font-semibold text-gray-500 uppercase px-1'>
                           {language === 'AR' ? 'كارنيهات النقابة' : 'Syndicate Cards'}
                         </h3>
                       </div>
                       {viewingEmployee.mainSyndicateCard || viewingEmployee.subSyndicateCard ? (
-                        <div className='grid grid-cols-2 gap-4'>
+                        <div className='grid grid-cols-1 gap-4'>
                           {viewingEmployee.mainSyndicateCard && (
                             <div className='space-y-1'>
-                              <span className='text-[10px] text-gray-400 uppercase px-1'>
+                              <span className='text-xs font-semibold text-gray-500 uppercase px-1'>
                                 {language === 'AR' ? 'النقابة الرئيسية' : 'Main Syndicate'}
                               </span>
-                              <img
-                                src={viewingEmployee.mainSyndicateCard}
-                                alt='Main Syndicate'
-                                className='h-24 w-auto rounded-xl object-contain'
-                              />
+                              <div className='bg-(--bg-card) border border-(--border-divider) rounded-xl p-2 flex justify-center'>
+                                <img
+                                  src={viewingEmployee.mainSyndicateCard}
+                                  alt='Main Syndicate'
+                                  className='max-w-full max-h-[400px] object-contain rounded-lg'
+                                />
+                              </div>
                             </div>
                           )}
                           {viewingEmployee.subSyndicateCard && (
                             <div className='space-y-1'>
-                              <span className='text-[10px] text-gray-400 uppercase px-1'>
+                              <span className='text-xs font-semibold text-gray-500 uppercase px-1'>
                                 {language === 'AR' ? 'النقابة الفرعية' : 'Sub Syndicate'}
                               </span>
-                              <img
-                                src={viewingEmployee.subSyndicateCard}
-                                alt='Sub Syndicate'
-                                className='h-24 w-auto rounded-xl object-contain'
-                              />
+                              <div className='bg-(--bg-card) border border-(--border-divider) rounded-xl p-2 flex justify-center'>
+                                <img
+                                  src={viewingEmployee.subSyndicateCard}
+                                  alt='Sub Syndicate'
+                                  className='max-w-full max-h-[400px] object-contain rounded-lg'
+                                />
+                              </div>
                             </div>
                           )}
                         </div>
                       ) : (
-                        <div className='text-center py-8 bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-700'>
+                        <div className='text-center py-8 bg-(--bg-card) border border-(--border-divider) border-dashed rounded-xl'>
                           <p className='text-sm text-gray-400'>
                             {language === 'AR'
                               ? 'لا يوجد صور للكارنيهات'
@@ -1791,20 +1898,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
             </>
           )}
         </div>
-
-        {viewingEmployee && (
-          <div className='flex items-center justify-end gap-3 pt-6 mt-6 border-t border-gray-100 dark:border-gray-800'>
-            <button
-              onClick={() => {
-                setViewingEmployee(null);
-                setActiveViewTab('general');
-              }}
-              className='px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors font-medium'
-            >
-              {t.employeeList.modal.cancel}
-            </button>
-          </div>
-        )}
       </Modal>
     </div>
   );

@@ -22,9 +22,9 @@ export const TABLE_HEADER_BASE =
   'px-4 py-3 text-xs font-bold text-(--text-tertiary) uppercase tracking-wider bg-(--bg-input)';
 export const TABLE_ROW_BASE =
   'hover:bg-(--bg-input) transition-colors border-b border-(--border-divider) last:border-0';
-export const BUTTON_BASE = 'px-4 py-2 rounded-xl bg-(--button-base-active) font-medium transition-all hover:opacity-90 active:scale-95 ';
+export const BUTTON_BASE = 'px-4 py-2 rounded-xl bg-gray-300 dark:bg-zinc-900/80 border border-transparent dark:border-(--border-divider) font-medium transition-all hover:opacity-80 cursor-pointer ';
 export const BUTTON_INACTIVE = 'bg-(--button-base-inactive) border border-(--border-divider) text-(--text-tertiary) cursor-not-allowed';
 export const INPUT_BASE =
-  'w-full px-3 py-2.5 rounded-xl bg-(--bg-input) border border-(--border-search) outline-hidden focus:border-gray-400 dark:focus:border-gray-500 focus:shadow-sm text-sm transition-colors duration-0 text-(--text-primary) placeholder-(--text-tertiary)';
+  'w-full px-3 py-2.5 rounded-xl bg-(--bg-input) border border-(--border-divider) outline-hidden focus:border-gray-400 dark:focus:border-gray-500 focus:shadow-sm text-sm transition-colors duration-0 text-(--text-primary) placeholder-(--text-tertiary)';
 
 export const THEME_COLORS = ['zinc', 'purple', 'green', 'orange', 'red', 'pink', 'teal'];

@@ -759,6 +759,7 @@ export interface Employee {
 
   // --- Personal Info ---
   name: string; // Full name (English)
+  nameArabic?: string; // Full name (Arabic)
   phone: string; // Required, validated by SmartPhoneInput
   email?: string; // Optional, validated by SmartEmailInput
 
