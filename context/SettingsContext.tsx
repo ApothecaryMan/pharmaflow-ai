@@ -62,6 +62,7 @@ export interface SettingsState {
   sidebarBlur: boolean;
   menuBlur: boolean;
   tooltipBlur: boolean;
+  settingsBlur: boolean;
   sidebarVisible: boolean;
   // Developer
   hideInactiveModules: boolean;
@@ -93,6 +94,7 @@ export interface SettingsContextType extends SettingsState {
   setSidebarBlur: (blur: boolean) => void;
   setMenuBlur: (blur: boolean) => void;
   setTooltipBlur: (blur: boolean) => void;
+  setSettingsBlur: (blur: boolean) => void;
   setSidebarVisible: (visible: boolean) => void;
   // Developer Actions
   setHideInactiveModules: (hide: boolean) => void;
@@ -122,14 +124,15 @@ const defaultSettings: SettingsState = {
   sidebarBlur: false,
   menuBlur: false,
   tooltipBlur: false,
+  settingsBlur: false,
   sidebarVisible: false,
   hideInactiveModules: true,
   developerMode: false,
-  showTicker: true,
-  showTickerSales: true,
-  showTickerInventory: true,
-  showTickerCustomers: true,
-  showTickerTopSeller: true,
+  showTicker: false,
+  showTickerSales: false,
+  showTickerInventory: false,
+  showTickerCustomers: false,
+  showTickerTopSeller: false,
   graphicStyle: false,
   branchCode: 'branch_main',
 };
@@ -175,6 +178,7 @@ const loadSettings = (): SettingsState => {
       sidebarBlur: storage.get('pharma_sidebarBlur', defaultSettings.sidebarBlur),
       menuBlur: storage.get('pharma_menuBlur', defaultSettings.menuBlur),
       tooltipBlur: storage.get('pharma_tooltipBlur', defaultSettings.tooltipBlur),
+      settingsBlur: storage.get('pharma_settingsBlur', defaultSettings.settingsBlur),
       sidebarVisible: sidebarVisible ?? defaultSettings.sidebarVisible,
       hideInactiveModules: hideInactiveModules ?? defaultSettings.hideInactiveModules,
       developerMode: developerMode ?? defaultSettings.developerMode,
@@ -300,6 +304,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       sidebarBlur: dropdownBlur,
       menuBlur: dropdownBlur,
       tooltipBlur: dropdownBlur,
+      settingsBlur: dropdownBlur,
     }));
   }, []);
 
@@ -313,6 +318,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const setTooltipBlur = useCallback((tooltipBlur: boolean) => {
     setSettings((prev) => ({ ...prev, tooltipBlur }));
+  }, []);
+
+  const setSettingsBlur = useCallback((settingsBlur: boolean) => {
+    setSettings((prev) => ({ ...prev, settingsBlur }));
   }, []);
 
   const setSidebarVisible = useCallback((sidebarVisible: boolean) => {
@@ -363,6 +372,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setSidebarBlur,
       setMenuBlur,
       setTooltipBlur,
+      setSettingsBlur,
       setSidebarVisible,
       setHideInactiveModules,
       setDeveloperMode,

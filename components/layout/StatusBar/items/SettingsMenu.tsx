@@ -61,6 +61,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setMenuBlur,
     tooltipBlur,
     setTooltipBlur,
+    settingsBlur,
+    setSettingsBlur,
     showTicker,
     setShowTicker,
     showTickerSales,
@@ -202,8 +204,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
           className={`
             absolute ${dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'} 
             ${align === 'start' ? 'inset-s-0 origin-top-start' : 'inset-e-0 origin-top-end'}
-            w-64 bg-(--bg-menu) rounded-xl shadow-2xl border border-(--border-divider) 
-            backdrop-blur-xs z-110 animate-fade-in
+            w-64 rounded-xl shadow-2xl border border-(--border-divider) z-110 animate-fade-in
+            ${
+              settingsBlur
+                ? 'backdrop-blur-2xl bg-(--bg-menu)/30 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]'
+                : 'bg-(--bg-menu)'
+            }
           `}
         >
           {/* Header */}
@@ -271,8 +277,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   className={`
                         ${
                           isMobile
-                            ? 'relative w-full mt-2 bg-(--bg-page-surface) border-none shadow-none p-4 space-y-4 rounded-xl'
-                            : `absolute w-64 rounded-xl shadow-2xl border border-(--border-divider) bg-(--bg-menu) z-120 p-4 space-y-4 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                            ? `relative w-full mt-2 ${settingsBlur ? 'bg-(--bg-menu)/50 saturate-150 backdrop-blur-xl' : 'bg-(--bg-page-surface)'} border-none shadow-none p-4 space-y-4 rounded-xl`
+                            : `absolute w-64 rounded-xl shadow-2xl border border-(--border-divider) z-120 p-4 space-y-4 ${themesPos.align === 'top' ? 'top-0' : 'bottom-0'} ${
+                                settingsBlur
+                                  ? 'backdrop-blur-2xl bg-(--bg-menu)/85 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]'
+                                  : 'bg-(--bg-menu)'
+                              }`
                         }
                     `}
                   style={
@@ -396,8 +406,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   className={`
                             ${
                               isMobile
-                                ? 'relative w-full mt-2 bg-(--bg-page-surface) border-none shadow-none p-3 space-y-1.5 rounded-lg'
-                                : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                                ? `relative w-full mt-2 ${settingsBlur ? 'bg-(--bg-menu)/50 saturate-150 backdrop-blur-xl' : 'bg-(--bg-page-surface)'} border-none shadow-none p-3 space-y-1.5 rounded-lg`
+                                : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) z-120 p-3 space-y-1.5 ${blurOptionsPos.align === 'top' ? 'top-0' : 'bottom-0'} ${
+                                    settingsBlur
+                                      ? 'backdrop-blur-2xl bg-(--bg-menu)/85 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]'
+                                      : 'bg-(--bg-menu)'
+                                  }`
                             }
                         `}
                   style={
@@ -451,6 +465,19 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     <Switch
                       checked={tooltipBlur || false}
                       onChange={(val) => setTooltipBlur?.(val)}
+                      theme={currentTheme.name.toLowerCase()}
+                      activeColor={currentTheme.hex}
+                    />
+                  </div>
+
+                  {/* Settings Blur */}
+                  <div className='flex items-center justify-between py-1'>
+                    <span className='text-xs' style={{ color: 'var(--text-primary)' }}>
+                      {(t as any).settingsBlur || 'Settings Blur'}
+                    </span>
+                    <Switch
+                      checked={settingsBlur || false}
+                      onChange={(val) => setSettingsBlur?.(val)}
                       theme={currentTheme.name.toLowerCase()}
                       activeColor={currentTheme.hex}
                     />
@@ -596,8 +623,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   className={`
                             ${
                               isMobile
-                                ? 'relative w-full mt-2 bg-(--bg-page-surface) border-none shadow-none p-3 space-y-3 rounded-lg'
-                                : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                                ? `relative w-full mt-2 ${settingsBlur ? 'bg-(--bg-menu)/50 saturate-150 backdrop-blur-xl' : 'bg-(--bg-page-surface)'} border-none shadow-none p-3 space-y-3 rounded-lg`
+                                : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) z-120 p-3 space-y-3 ${typographyPos.align === 'top' ? 'top-0' : 'bottom-0'} ${
+                                    settingsBlur
+                                      ? 'backdrop-blur-2xl bg-(--bg-menu)/85 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]'
+                                      : 'bg-(--bg-menu)'
+                                  }`
                             }
                         `}
                   style={
@@ -824,8 +855,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       className={`
                             ${
                               isMobile
-                                ? 'relative w-full mt-2 bg-(--bg-search) border-none shadow-none p-2 space-y-1 rounded-lg'
-                                : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) bg-(--bg-menu) z-120 p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'}`
+                                ? `relative w-full mt-2 ${settingsBlur ? 'bg-(--bg-menu)/50 saturate-150 backdrop-blur-xl' : 'bg-(--bg-search)'} border-none shadow-none p-2 space-y-1 rounded-lg`
+                                : `absolute w-64 rounded-lg shadow-xl border border-(--border-divider) z-120 p-2 space-y-1 ${quickStatusesPos.align === 'top' ? 'top-0' : 'bottom-0'} ${
+                                    settingsBlur
+                                      ? 'backdrop-blur-2xl bg-(--bg-menu)/85 saturate-200 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]'
+                                      : 'bg-(--bg-menu)'
+                                  }`
                             }
                         `}
                       style={
