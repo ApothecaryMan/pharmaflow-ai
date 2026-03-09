@@ -166,6 +166,12 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         }
 
         // 1. Initialize Active Branch
+        const allBranches = branchService.getAll();
+        if (allBranches.length === 0) {
+          setIsLoading(false);
+          return;
+        }
+
         const activeBranch = branchService.getActive();
         const session = await authService.getCurrentUser();
         
@@ -192,6 +198,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         ]);
 
         const [inv, sal, sup, pur, pRet, ret, cust, emp, bat] = results;
+
 
         if (import.meta.env.DEV && inv.length === 0 && initialInventory.length > 0) {
           console.log('🌱 Seeding initial inventory for development...');
@@ -270,39 +277,33 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     if (!isLoading) inventoryService.save(inventory);
   }, [inventory, isLoading]);
   */
-  useEffect(() => {
-    if (!isLoading) salesService.save(sales, activeBranchId);
-  }, [sales, isLoading, activeBranchId]);
-  useEffect(() => {
-    if (!isLoading) supplierService.save(suppliers, activeBranchId);
-  }, [suppliers, isLoading, activeBranchId]);
-  useEffect(() => {
-    if (!isLoading) purchaseService.save(purchases, activeBranchId);
-  }, [purchases, isLoading, activeBranchId]);
-  useEffect(() => {
-    if (!isLoading) returnService.savePurchaseReturns(purchaseReturns, activeBranchId);
-  }, [purchaseReturns, isLoading, activeBranchId]);
-  useEffect(() => {
-    if (!isLoading) returnService.saveSalesReturns(returns, activeBranchId);
-  }, [returns, isLoading, activeBranchId]);
-  useEffect(() => {
-    if (!isLoading) customerService.save(customers, activeBranchId);
-  }, [customers, isLoading, activeBranchId]);
-  useEffect(() => {
-    if (!isLoading) employeeService.save(employees, activeBranchId);
-  }, [employees, isLoading, activeBranchId]);
+  // Save effects: isLoading is a guard only, NOT a dependency.
+  // Including isLoading in deps would cause an extra save fire when loading finishes,
+  // creating a race condition window where refreshAll could overwrite newly added items.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!isLoading) salesService.save(sales, activeBranchId); }, [sales, activeBranchId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!isLoading) supplierService.save(suppliers, activeBranchId); }, [suppliers, activeBranchId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!isLoading) purchaseService.save(purchases, activeBranchId); }, [purchases, activeBranchId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!isLoading) returnService.savePurchaseReturns(purchaseReturns, activeBranchId); }, [purchaseReturns, activeBranchId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!isLoading) returnService.saveSalesReturns(returns, activeBranchId); }, [returns, activeBranchId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!isLoading) customerService.save(customers, activeBranchId); }, [customers, activeBranchId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!isLoading) employeeService.save(employees, activeBranchId); }, [employees, activeBranchId]);
   useEffect(() => {
     if (!isLoading) {
-      // batchService.saveBatches is not exported by bundle usually, 
-      // but we need to ensure localStorage is in sync. 
-      // The batchService uses StorageKeys.STOCK_BATCHES
       import('../utils/storage').then(({ storage }) => {
         import('../config/storageKeys').then(({ StorageKeys }) => {
           storage.set(StorageKeys.STOCK_BATCHES, batches);
         });
       });
     }
-  }, [batches, isLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batches]);
 
   // Actions
   const setInventory = useCallback(
@@ -436,7 +437,12 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
   const addEmployee = useCallback(async (employee: Employee) => {
     const newEmployee = await employeeService.create({ ...employee, branchId: activeBranchId });
-    setEmployeesState((prev) => [...prev, newEmployee]);
+    // Immediately persist to avoid race with refreshAll useEffect overwriting state
+    setEmployeesState((prev) => {
+      const updated = [...prev, newEmployee];
+      employeeService.save(updated, activeBranchId);
+      return updated;
+    });
     return newEmployee;
   }, [activeBranchId]);
 
@@ -496,12 +502,17 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     []
   );
 
-  // Trigger data reload when branch changes
+
+
+  // Trigger data reload when branch changes (not on initial load - that's handled in loadData)
   useEffect(() => {
     if (activeBranchId && !isLoading) {
       refreshAll();
     }
-  }, [activeBranchId, refreshAll, isLoading]);
+    // isLoading intentionally excluded: we only want to fire on branch switch, not when loading finishes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBranchId]);
+
 
   const value = useMemo<DataContextType>(
     () => ({

@@ -94,7 +94,8 @@ export const createInventoryService = (): InventoryService => ({
   },
 
   create: async (drug: Omit<Drug, 'id'>, branchId?: string): Promise<Drug> => {
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    // Priority: explicit param > entity's own branchId > settingsService fallback
+    const effectiveBranchId = branchId || (drug as any).branchId || (await settingsService.getAll()).branchCode;
     const newDrug: Drug = {
       ...drug,
       id: idGenerator.generate('inventory', effectiveBranchId),

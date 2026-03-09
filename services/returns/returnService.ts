@@ -33,7 +33,8 @@ export const createReturnService = (): ReturnService => ({
 
   createSalesReturn: async (ret: Omit<Return, 'id'>, branchId?: string): Promise<Return> => {
     const all = getRawSalesReturns();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    // Priority: explicit param > entity's own branchId > settingsService fallback
+    const effectiveBranchId = branchId || (ret as any).branchId || (await settingsService.getAll()).branchCode;
     const newReturn: Return = {
       ...ret,
       id: idGenerator.generate('returns', effectiveBranchId),
@@ -58,7 +59,8 @@ export const createReturnService = (): ReturnService => ({
 
   createPurchaseReturn: async (ret: Omit<PurchaseReturn, 'id'>, branchId?: string): Promise<PurchaseReturn> => {
     const all = getRawPurchaseReturns();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    // Priority: explicit param > entity's own branchId > settingsService fallback
+    const effectiveBranchId = branchId || (ret as any).branchId || (await settingsService.getAll()).branchCode;
     const newReturn: PurchaseReturn = {
       ...ret,
       id: idGenerator.generate('returns', effectiveBranchId),

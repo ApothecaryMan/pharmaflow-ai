@@ -40,7 +40,8 @@ export const createSupplierService = (): SupplierService => ({
 
   create: async (supplier: Omit<Supplier, 'id'>, branchId?: string): Promise<Supplier> => {
     const all = getRawAll();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    // Priority: explicit param > entity's own branchId > settingsService fallback
+    const effectiveBranchId = branchId || (supplier as any).branchId || (await settingsService.getAll()).branchCode;
     const newSupplier: Supplier = {
       ...supplier,
       id: idGenerator.generate('suppliers', effectiveBranchId),

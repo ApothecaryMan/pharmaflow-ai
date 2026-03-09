@@ -63,7 +63,8 @@ export const createPurchaseService = (): PurchaseService => ({
 
   create: async (purchase: Omit<Purchase, 'id'>, branchId?: string): Promise<Purchase> => {
     const all = getRawAll();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    // Priority: explicit param > entity's own branchId > settingsService fallback
+    const effectiveBranchId = branchId || (purchase as any).branchId || (await settingsService.getAll()).branchCode;
     const newPurchase: Purchase = {
       ...purchase,
       id: idGenerator.generate('purchases', effectiveBranchId),

@@ -99,20 +99,14 @@ export const branchService = {
   },
 
   /**
-   * Migration helper: ensures at least one default branch exists.
-   * Creates "Main Branch" if the branches list is empty.
+   * Migration helper: ensures an active branch is selected if any exist.
+   * Returns null if no branches exist (triggers onboarding).
    */
-  ensureDefaultBranch(): Branch {
+  ensureDefaultBranch(): Branch | null {
     const branches = this.getAll();
     
     if (branches.length === 0) {
-      const defaultBranch = this.create({
-        name: 'Main Branch',
-        code: 'MN01',
-        status: 'active',
-      });
-      this.setActive(defaultBranch.id);
-      return defaultBranch;
+      return null;
     }
 
     // If active branch is missing or invalid, pick the first one
@@ -123,6 +117,6 @@ export const branchService = {
       return firstBranch;
     }
 
-    return branches.find(b => b.id === activeId)!;
+    return branches.find(b => b.id === activeId) || null;
   },
 };

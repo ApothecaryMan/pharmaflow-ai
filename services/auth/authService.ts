@@ -127,18 +127,17 @@ export const authService = {
     }
 
     // 2. Check real Employees (Importing dynamically to avoid circular dependencies)
-    const { storage } = await import('../../utils/storage');
-    const { StorageKeys } = await import('../../config/storageKeys');
+    const { employeeCacheService } = await import('../hr/employeeCacheService');
     const { verifyPassword } = await import('./hashUtils');
     
-    // Using raw storage access to get all employees across all branches
-    const allEmployees = storage.get<any[]>(StorageKeys.EMPLOYEES, []);
+    // Fetch all employees from IndexedDB
+    const allEmployees = await employeeCacheService.loadAll();
     
     let employee = null;
     for (const e of allEmployees) {
       if (e.username === username || e.employeeCode === username) {
-        // Check if plain text matches or if it's a valid hash
-        const isPasswordMatch = e.password === password || await verifyPassword(password, e.password);
+        // Check if password matches
+        const isPasswordMatch = await verifyPassword(password, e.password);
         if (isPasswordMatch) {
           employee = e;
           break;

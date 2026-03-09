@@ -59,7 +59,8 @@ export const createCustomerService = (): CustomerService => ({
 
   create: async (customer: Omit<Customer, 'id'>, branchId?: string): Promise<Customer> => {
     const all = getRawAll();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    // Priority: explicit param > entity's own branchId > settingsService fallback
+    const effectiveBranchId = branchId || (customer as any).branchId || (await settingsService.getAll()).branchCode;
     const newCustomer: Customer = {
       ...customer,
       id: idGenerator.generate('customers', effectiveBranchId),

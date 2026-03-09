@@ -76,7 +76,8 @@ export const createSalesService = (): SalesService => ({
   },
 
   create: async (sale: Omit<Sale, 'id'>, branchId?: string): Promise<Sale> => {
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    // Priority: explicit param > entity's own branchId > settingsService fallback
+    const effectiveBranchId = branchId || (sale as any).branchId || (await settingsService.getAll()).branchCode;
     const newSale: Sale = {
       ...sale,
       id: idGenerator.generate('sales', effectiveBranchId),
