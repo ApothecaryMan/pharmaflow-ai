@@ -309,7 +309,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           const theme = availableThemes.find((t) => t.name === val);
                           if (theme) setTheme(theme);
                         }}
-                        color={currentTheme.name.toLowerCase()}
+                        color={currentTheme?.name?.toLowerCase() || 'blue'}
                         size='xs'
                         fullWidth={true}
                         className='flex-1'
@@ -340,7 +340,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     <SegmentedControl
                       value={darkMode}
                       onChange={(val) => setDarkMode(val as boolean)}
-                      color={currentTheme.name.toLowerCase()}
+                      color={currentTheme?.name?.toLowerCase() || 'blue'}
                       size='xs'
                       iconSize='--icon-lg'
                       fullWidth={false}
@@ -375,7 +375,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   <Switch
                     checked={dropdownBlur || false}
                     onChange={(val) => setDropdownBlur?.(val)}
-                    theme={currentTheme.name.toLowerCase()}
+                    theme={currentTheme?.name?.toLowerCase() || 'blue'}
                     activeColor={currentTheme.hex}
                   />
                   <button

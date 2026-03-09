@@ -57,7 +57,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
       branchService.setActive(newBranch.id);
       await settingsService.setMultiple({ 
         branchCode: newBranch.id, 
-        theme: selectedTheme.name as any 
+        theme: selectedTheme 
       });
       
       onComplete();

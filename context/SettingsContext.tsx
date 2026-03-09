@@ -144,7 +144,12 @@ const loadSettings = (): SettingsState => {
   // Try loading unified settings object first
   const saved = storage.get<SettingsState | null>(STORAGE_KEY, null);
   if (saved) {
-    return { ...defaultSettings, ...saved };
+    const combined = { ...defaultSettings, ...saved };
+    // Defensive check: Ensure theme is a valid object with a name
+    if (!combined.theme || typeof combined.theme !== 'object' || !combined.theme.name) {
+      combined.theme = defaultSettings.theme;
+    }
+    return combined;
   }
 
   // Backward compatibility: Migrate from old individual keys

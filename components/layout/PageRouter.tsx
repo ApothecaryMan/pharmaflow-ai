@@ -76,24 +76,30 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   // RBAC: Check Page Permissions
   if (pageConfig.permission && !canPerformAction(userRole, pageConfig.permission)) {
     return (
-      <div className='flex flex-col items-center justify-center h-full animate-fade-in'>
-        <div className='w-24 h-24 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-6 border-4 border-red-100 dark:border-red-900/30'>
-          <span className='material-symbols-rounded text-5xl text-red-500'>lock</span>
+      <div className='flex flex-col items-center justify-center h-full p-8 animate-fade-in select-none text-center'>
+        <div className='mb-12'>
+          <div 
+            style={{ width: '180px', height: '180px' }}
+            className='rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center mx-auto border border-zinc-200 dark:border-zinc-700/50 shadow-sm'
+          >
+            <span 
+              style={{ fontSize: '96px' }}
+              className='material-symbols-rounded text-zinc-400 dark:text-zinc-500'
+            >
+              lock
+            </span>
+          </div>
         </div>
-        <h2 className='text-2xl font-bold text-gray-900 dark:text-white mb-2'>
+
+        <h2 className='text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 mb-3'>
           {language === 'AR' ? 'وصول مقيد' : 'Access Restricted'}
         </h2>
-        <p className='text-gray-500 dark:text-gray-400 text-center max-w-md'>
+        
+        <p className='text-base text-zinc-500 dark:text-zinc-400 mb-0 max-w-sm leading-relaxed font-medium'>
           {language === 'AR'
             ? 'عذراً، ليس لديك الصلاحيات اللازمة للوصول إلى هذه الصفحة. يرجى التواصل مع المسؤول.'
             : "Sorry, you don't have the necessary permissions to access this page. Please contact your administrator."}
         </p>
-        <button
-          onClick={() => setView(ROUTES.DASHBOARD)}
-          className='mt-8 px-6 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold hover:opacity-90 transition-opacity active:scale-95'
-        >
-          {language === 'AR' ? 'العودة للرئيسية' : 'Back to Dashboard'}
-        </button>
       </div>
     );
   }

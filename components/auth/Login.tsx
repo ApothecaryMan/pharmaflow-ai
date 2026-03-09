@@ -231,7 +231,8 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                       validationErrors: { ...prev.validationErrors, username: undefined },
                     }));
                   }}
-                  className={`w-full bg-zinc-900 border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-1 focus:ring-green-500/20`}
+                  className={`w-full bg-zinc-900 border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-1 focus:ring-green-500/20 placeholder:text-left`}
+                  dir='ltr'
                 />
                 {state.validationErrors.username && (
                   <p className='text-xs text-red-500 mt-1 pl-1'>
@@ -262,13 +263,14 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                         validationErrors: { ...prev.validationErrors, password: undefined },
                       }));
                     }}
-                    className={`w-full bg-zinc-900 border ${state.validationErrors.password ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-1 focus:ring-green-500/20 ${language === 'AR' ? 'pl-10' : 'pr-10'}`}
+                    className={`w-full bg-zinc-900 border ${state.validationErrors.password ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-1 focus:ring-green-500/20 pr-10 placeholder:text-left`}
+                    dir='ltr'
                   />
                   <button
                     type='button'
                     onClick={toggleShowPassword}
                     aria-label={state.showPassword ? 'Hide password' : 'Show password'}
-                    className={`absolute ${language === 'AR' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors focus:outline-hidden focus:text-green-500`}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors focus:outline-hidden focus:text-green-500`}
                   >
                     {state.showPassword ? (
                       <svg
