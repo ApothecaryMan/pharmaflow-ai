@@ -2,7 +2,6 @@
 // REFACTORED: MobileDrawer.tsx - Production-Ready Implementation
 // ============================================================================
 
-import { Avatar } from '@mui/material';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
@@ -229,22 +228,27 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
         <div className='p-6 pb-4 flex items-center justify-between border-b border-gray-200/30 dark:border-gray-800/30'>
           <div className='flex items-center gap-3'>
             <div className='relative'>
-              <Avatar
-                src={safeProfileImage}
-                sx={{
-                  bgcolor: theme.hex,
-                  width: 44,
-                  height: 44,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                }}
-                alt='User profile'
-              >
-                {!safeProfileImage && (
-                  <span className='material-symbols-rounded text-white' aria-hidden='true'>
-                    person
-                  </span>
-                )}
-              </Avatar>
+                <div
+                  className="flex items-center justify-center rounded-full"
+                  style={{
+                    backgroundColor: theme.hex,
+                    width: '44px',
+                    height: '44px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  }}
+                >
+                  {safeProfileImage ? (
+                    <img 
+                      src={safeProfileImage} 
+                      alt="User profile" 
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className='material-symbols-rounded text-white' aria-hidden='true'>
+                      person
+                    </span>
+                  )}
+                </div>
               <div
                 className='absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full'
                 aria-label='Online status'

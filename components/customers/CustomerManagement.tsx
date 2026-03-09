@@ -1,4 +1,3 @@
-import { Avatar } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
@@ -309,18 +308,17 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           const c = info.row.original;
           return (
             <div className='flex items-center gap-3 w-full h-full'>
-              <Avatar
-                sx={{
-                  bgcolor: 'primary.main',
-                  width: 32,
-                  height: 32,
+              <div
+                className="flex items-center justify-center rounded-full text-white font-bold"
+                style={{
+                  backgroundColor: 'var(--color-primary)',
+                  width: '32px',
+                  height: '32px',
                   fontSize: '0.8rem',
-                  fontWeight: 'bold',
-                  color: '#fff',
                 }}
               >
                 {c.name.substring(0, 2).toUpperCase()}
-              </Avatar>
+              </div>
               <div className='flex flex-col min-w-0 overflow-hidden'>
                 <div className='font-medium truncate leading-tight'>{c.name}</div>
                 {(c.governorate || c.city) && (

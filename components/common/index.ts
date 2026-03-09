@@ -6,7 +6,6 @@ export {
   useContextMenu,
   useContextMenuTrigger,
 } from './ContextMenu';
-export { DataTable } from './DataTable';
 export { DatePicker, DateRangePicker } from './DatePicker';
 export { ExpandedModal } from './ExpandedModal';
 export { FilterDropdown, type FilterDropdownProps } from './FilterDropdown';
