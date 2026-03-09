@@ -33,7 +33,7 @@ export const employeeCacheService = {
       store.clear();
 
       for (const employee of employees) {
-        store.put(employee);
+        store.add(employee);
       }
 
       return Promise.resolve();

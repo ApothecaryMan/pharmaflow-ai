@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'pharmaflow_db';
-const DB_VERSION = 3;
+const DB_VERSION = 2;
 
 export const STORES = {
   DRUGS: 'drugs',
@@ -56,14 +56,13 @@ export const openDB = (): Promise<IDBDatabase> => {
         });
       }
 
-      // Employees store (recreate on upgrade to fix index constraints)
-      if (database.objectStoreNames.contains(STORES.EMPLOYEES)) {
-        database.deleteObjectStore(STORES.EMPLOYEES);
+      // Employees store
+      if (!database.objectStoreNames.contains(STORES.EMPLOYEES)) {
+        const employeeStore = database.createObjectStore(STORES.EMPLOYEES, { keyPath: 'id' });
+        employeeStore.createIndex('username', 'username', { unique: true });
+        employeeStore.createIndex('employeeCode', 'employeeCode', { unique: true });
+        employeeStore.createIndex('branchId', 'branchId', { unique: false });
       }
-      const employeeStore = database.createObjectStore(STORES.EMPLOYEES, { keyPath: 'id' });
-      employeeStore.createIndex('username', 'username', { unique: false });
-      employeeStore.createIndex('employeeCode', 'employeeCode', { unique: false });
-      employeeStore.createIndex('branchId', 'branchId', { unique: false });
     };
   });
 };
