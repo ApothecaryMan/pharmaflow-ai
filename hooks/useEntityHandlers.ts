@@ -5,6 +5,7 @@ import { useAlert } from '../context';
 import { auditService } from '../services/auditService';
 import { batchService } from '../services/inventory/batchService';
 import { inventoryService } from '../services/inventory/inventoryService';
+import { employeeService } from '../services/hr/employeeService';
 import { stockMovementService } from '../services/inventory/stockMovement/stockMovementService';
 import { migrationService } from '../services/migration';
 import { restoreStockForCancelledSale } from '../services/salesHelpers';
@@ -788,6 +789,8 @@ export function useEntityHandlers({
         error('Permission denied: Cannot add employees');
         return;
       }
+      // Persist to IndexedDB first
+      await employeeService.create({ ...employee, branchId: activeBranchId });
       setEmployees((prev) => [...prev, employee]);
       success('Employee added successfully');
       auditService.log('user.create', {
@@ -796,7 +799,7 @@ export function useEntityHandlers({
         entityId: employee.id,
       });
     },
-    [setEmployees, success, currentEmployeeId, employees, error]
+    [setEmployees, success, currentEmployeeId, employees, error, activeBranchId]
   );
 
   const handleUpdateEmployee = useCallback(
@@ -814,6 +817,8 @@ export function useEntityHandlers({
         return;
       }
 
+      // Persist to IndexedDB
+      await employeeService.update(id, updates);
       setEmployees((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
       success('Employee updated successfully');
       auditService.log('user.update', {
@@ -849,6 +854,8 @@ export function useEntityHandlers({
         return;
       }
 
+      // Persist to IndexedDB
+      await employeeService.delete(id);
       setEmployees((prev) => prev.filter((e) => e.id !== id));
       success('Employee deleted successfully');
       auditService.log('user.delete', {

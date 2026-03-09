@@ -277,9 +277,11 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     if (!isLoading) inventoryService.save(inventory);
   }, [inventory, isLoading]);
   */
-  // Save effects: isLoading is a guard only, NOT a dependency.
-  // Including isLoading in deps would cause an extra save fire when loading finishes,
-  // creating a race condition window where refreshAll could overwrite newly added items.
+  // Bulk-save effects for localStorage-based services.
+  // useEntityHandlers only updates React state (for RBAC + audit), so these
+  // hooks are the actual persistence mechanism.
+  // Note: Employees are excluded — they use IndexedDB differential writes
+  // and are persisted directly in the handler/service layer.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (!isLoading) salesService.save(sales, activeBranchId); }, [sales, activeBranchId]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -292,8 +294,6 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   useEffect(() => { if (!isLoading) returnService.saveSalesReturns(returns, activeBranchId); }, [returns, activeBranchId]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (!isLoading) customerService.save(customers, activeBranchId); }, [customers, activeBranchId]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (!isLoading) employeeService.save(employees, activeBranchId); }, [employees, activeBranchId]);
   useEffect(() => {
     if (!isLoading) {
       import('../utils/storage').then(({ storage }) => {
@@ -437,12 +437,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
   const addEmployee = useCallback(async (employee: Employee) => {
     const newEmployee = await employeeService.create({ ...employee, branchId: activeBranchId });
-    // Immediately persist to avoid race with refreshAll useEffect overwriting state
-    setEmployeesState((prev) => {
-      const updated = [...prev, newEmployee];
-      employeeService.save(updated, activeBranchId);
-      return updated;
-    });
+    setEmployeesState((prev) => [...prev, newEmployee]);
     return newEmployee;
   }, [activeBranchId]);
 
