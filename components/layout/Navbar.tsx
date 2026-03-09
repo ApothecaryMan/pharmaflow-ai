@@ -1,4 +1,3 @@
-import { Avatar } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
 import type { UserRole } from '../../config/permissions';
@@ -494,16 +493,16 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                 className='w-8 h-8 rounded-full object-cover border border-(--border-divider)'
               />
             ) : (
-              <Avatar
-                sx={{
-                  bgcolor: currentTheme.hex,
-                  width: 32,
-                  height: 32,
-                  border: '1px solid rgba(255,255,255,0.2)',
+              <div
+                className="flex items-center justify-center rounded-full border border-white/20"
+                style={{
+                  backgroundColor: currentTheme.hex,
+                  width: '32px',
+                  height: '32px',
                 }}
               >
                 <span className='material-symbols-rounded text-white' style={{ fontSize: 'var(--icon-md)' }}>store</span>
-              </Avatar>
+              </div>
             )}
             <div className='hidden md:flex flex-col items-start'>
               <span className='text-xs font-bold text-gray-700 dark:text-gray-200 leading-none mb-0.5'>
@@ -532,18 +531,18 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         className='w-12 h-12 rounded-full object-cover border border-(--border-divider)'
                       />
                     ) : (
-                      <Avatar
-                        sx={{
-                          bgcolor: currentTheme.hex,
-                          width: 48,
-                          height: 48,
-                          border: '1px solid rgba(255,255,255,0.2)',
+                      <div
+                        className="flex items-center justify-center rounded-full border border-white/10"
+                        style={{
+                          backgroundColor: currentTheme.hex,
+                          width: '48px',
+                          height: '48px',
                         }}
                       >
                         <span className='material-symbols-rounded text-white' style={{ fontSize: 'var(--icon-lg)' }}>
                           store
                         </span>
-                      </Avatar>
+                      </div>
                     )}
                     <button
                       onClick={() => fileInputRef.current?.click()}
