@@ -120,7 +120,6 @@ export function FilterDropdown<T>({
     onToggle: handleToggle,
     onSelect: (item) => {
       onSelect(item);
-      if (!isControlled) setInternalIsOpen(false);
     },
     keyExtractor,
     onEnter,
@@ -133,42 +132,34 @@ export function FilterDropdown<T>({
 
   // Design Tokens & Variable Inversion
   const bgClosed = onBackground
-    ? 'var(--bg-closed)'
+    ? 'var(--bg-secondary)'
     : isInput
       ? 'var(--bg-input)'
       : isTransparent
         ? 'transparent'
-        : 'var(--bg-active)';
-  const bgOpen = 'var(--bg-active)';
+        : 'var(--bg-card)';
+  const bgOpen = isInput ? 'var(--bg-input)' : 'var(--bg-card)';
   const currentBg = effectiveIsOpen ? bgOpen : bgClosed;
   const currentBorder =
     onBackground || effectiveIsOpen || isInput || !isTransparent
-      ? 'var(--border-search)'
+      ? 'var(--border-divider)'
       : 'transparent';
 
   const outerClasses = `relative inline-block ${className}`;
   const outerStyle = floating && minHeight ? { ...style, height: minHeight, minHeight } : style;
 
-  const innerClasses = `relative w-full flex flex-col overflow-hidden border transition-all duration-0 outline-hidden group
+  const innerClasses = `relative w-full flex flex-col overflow-hidden border outline-hidden group
                     ${rounded === 'full' ? 'rounded-[20px]' : 'rounded-xl'}
                     ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
                     ${effectiveIsOpen || isAnimating ? zIndexHigh : 'z-0'}
                     ${onBackground ? 'shadow-xs' : ''}
-                    motion-safe:transition-all motion-reduce:transition-none
+                    transition-all duration-300
                     ${floating ? 'absolute top-0 left-0' : ''}
                 `;
 
   return (
     <div ref={containerRef} className={outerClasses} style={outerStyle}>
       <style>{`
-                :root {
-                    --bg-active: white;
-                    --bg-closed: white;
-                }
-                .dark {
-                    --bg-active: var(--bg-menu);
-                    --bg-closed: var(--bg-primary);
-                }
                 .filter-dropdown-scroll::-webkit-scrollbar { width: 2px; background: transparent; }
                 .filter-dropdown-scroll::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.6); border-radius: 9999px; }
             `}</style>
@@ -181,8 +172,7 @@ export function FilterDropdown<T>({
         className={innerClasses}
         style={{
           backgroundColor: currentBg,
-          borderColor: effectiveIsOpen ? 'var(--color-primary-500)' : currentBorder,
-          willChange: isAnimating ? 'grid-template-rows, background-color, border-color' : 'auto',
+          borderColor: effectiveIsOpen ? 'var(--border-divider-strong)' : currentBorder,
           transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
         }}
         onClick={disabled ? undefined : handleClick}
@@ -231,11 +221,11 @@ export function FilterDropdown<T>({
 
         {/* Dropdown Menu Container */}
         <div
-          className='w-full overflow-hidden transition-all duration-0'
+          className='w-full overflow-hidden'
           style={{
             display: 'grid',
             gridTemplateRows: effectiveIsOpen ? '1fr' : '0fr',
-            transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: 'grid-template-rows 300ms cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
           <div className='min-h-0 overflow-hidden'>

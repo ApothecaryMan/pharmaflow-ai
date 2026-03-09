@@ -156,7 +156,7 @@ export const SmartInput: React.FC<SmartInputProps> = ({
       value={value}
       placeholder={placeholder}
       dir={dir} // Calculated direction takes precedence, but props.dir would be overridden here.
-      className={className || INPUT_BASE}
+      className={`${INPUT_BASE} ${className || ''}`}
     />
   );
 };
@@ -191,7 +191,7 @@ export const SmartTextarea: React.FC<SmartTextareaProps> = ({
       value={value}
       placeholder={placeholder}
       dir={dir}
-      className={className || INPUT_BASE}
+      className={`${INPUT_BASE} ${className || ''}`}
     />
   );
 };
@@ -367,7 +367,7 @@ export const SmartPhoneInput: React.FC<SmartSpecializedInputProps> = ({
       dir='ltr'
       value={value}
       onChange={handleChange}
-      className={className || INPUT_BASE}
+      className={`${INPUT_BASE} ${className || ''}`}
     />
   );
 };
@@ -406,7 +406,44 @@ export const SmartEmailInput: React.FC<SmartSpecializedInputProps> = ({
       dir='ltr'
       value={value}
       onChange={handleChange}
-      className={className || INPUT_BASE}
+      className={`${INPUT_BASE} ${className || ''}`}
+    />
+  );
+};
+
+/**
+ * **SmartPasswordInput Component**
+ *
+ * An input designed specifically for passwords with restricted characters.
+ * - Enforces **LTR** direction always.
+ * - Automatically finds invalid characters and strips them out.
+ * - Allows only: digits, English letters, and the `@` symbol.
+ *
+ * @usage
+ * Use this when you want to enforce strict password character sets.
+ */
+export const SmartPasswordInput: React.FC<SmartSpecializedInputProps> = ({
+  value,
+  onChange,
+  className,
+  type = 'password',
+  ...props
+}) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    // Allow: a-z, A-Z, 0-9, @
+    const validVal = val.replace(/[^a-zA-Z0-9@]/g, '');
+    onChange(validVal);
+  };
+
+  return (
+    <input
+      {...props}
+      type={type}
+      dir='ltr'
+      value={value}
+      onChange={handleChange}
+      className={`${INPUT_BASE} ${className || ''}`}
     />
   );
 };
