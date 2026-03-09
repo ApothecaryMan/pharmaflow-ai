@@ -1,9 +1,14 @@
 import React, { useCallback, useState } from 'react';
+import { storage } from './utils/storage';
+import { StorageKeys } from './config/storageKeys';
+import { branchService } from './services/branchService';
 import { Login } from './components/auth/Login';
 import { Modal } from './components/common/Modal';
 import { MainLayout } from './components/layout/MainLayout';
 import { PageRouter } from './components/layout/PageRouter';
 import { useStatusBar } from './components/layout/StatusBar';
+import { BranchSetupScreen } from './components/onboarding/BranchSetupScreen';
+import { EmployeeSetupScreen } from './components/onboarding/EmployeeSetupScreen';
 import { PageSkeletonRegistry } from './components/skeletons/PageSkeletonRegistry';
 import { PAGE_REGISTRY } from './config/pageRegistry';
 import { canPerformAction, UserRole } from './config/permissions';
@@ -397,6 +402,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   );
 };
 
+
 const App: React.FC = () => {
   // 1. Initialize App State (View, Toast, etc.)
   const appState = useAppState();
@@ -410,11 +416,40 @@ const App: React.FC = () => {
   // 3. Settings Hook (for Language)
   const { theme, darkMode, language } = useSettings();
 
-  // 4. Dynamic Theme Hook - Handles PWA Title Bar & Global Dark Mode
+  // 4. Onboarding State (Step detection)
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
+  const [hasRealEmployees, setHasRealEmployees] = useState(false);
+  const [forceStep2, setForceStep2] = useState(false);
+
+  // Synchronous branches check is fine (localStorage)
+  const hasBranches = branchService.getAll().length > 0;
+
+  React.useEffect(() => {
+    const checkEmployees = async () => {
+      try {
+        const { employeeCacheService } = await import('./services/hr/employeeCacheService');
+        const all = await employeeCacheService.loadAll();
+        const hasReal = all.some(e => e.id !== 'SUPER-ADMIN' && e.employeeCode !== 'EMP-000');
+        setHasRealEmployees(hasReal);
+      } catch (error) {
+        console.error('Failed to check employees for onboarding:', error);
+      } finally {
+        setIsCheckingOnboarding(false);
+      }
+    };
+    
+    if (hasBranches) {
+      checkEmployees();
+    } else {
+      setIsCheckingOnboarding(false);
+    }
+  }, [hasBranches]);
+
+  // 5. Dynamic Theme Hook - Handles PWA Title Bar & Global Dark Mode
   // When not authenticated, we force isLoginView=true for the black theme color override
   useTheme(theme.primary, darkMode, !authState.isAuthenticated);
 
-  // 5. Stable Login Callbacks
+  // 6. Stable Login Callbacks
   const handleLoginSuccess = useCallback(() => {
     authState.setIsAuthenticated(true);
     appState.setActiveModule(ROUTES.DASHBOARD);
@@ -431,8 +466,8 @@ const App: React.FC = () => {
     [authState, appState]
   );
 
-  // 6. Loading State for Auth Check (Only if we don't have an optimistic session)
-  if (authState.isAuthChecking && !authState.isAuthenticated) {
+  // 7. Loading State for Auth/Onboarding Check
+  if ((authState.isAuthChecking && !authState.isAuthenticated) || isCheckingOnboarding) {
     return (
       <div
         className='min-h-screen flex items-center justify-center'
@@ -456,14 +491,16 @@ const App: React.FC = () => {
             />
           </svg>
           <p className='mt-2 text-sm text-zinc-400'>
-            {TRANSLATIONS[language].global?.checkingAuth || 'Checking authentication...'}
+            {isCheckingOnboarding 
+              ? (TRANSLATIONS[language].global?.loading || 'Loading...') 
+              : (TRANSLATIONS[language].global?.checkingAuth || 'Checking authentication...')}
           </p>
         </div>
       </div>
     );
   }
 
-  // 7. Not Authenticated -> Show Login
+  // 8. Not Authenticated -> Show Login
   if (!authState.isAuthenticated) {
     return (
       <Login
@@ -474,7 +511,18 @@ const App: React.FC = () => {
     );
   }
 
-  // 6. Authenticated -> Show Secure Content wrapped in Providers
+  // 9. ONBOARDING GATE (STANDALONE)
+  // If we lack branches, show Step 1
+  if (!hasBranches && !forceStep2) {
+    return <BranchSetupScreen language={language} color={theme.primary} onComplete={() => setForceStep2(true)} />;
+  }
+
+  // If we have branches but no employees (or forced from Step 1)
+  if (!hasRealEmployees || forceStep2) {
+    return <EmployeeSetupScreen language={language} color={theme.primary} onBack={() => setForceStep2(false)} />;
+  }
+
+  // 10. Authenticated & Setup Done -> Show Secure Content wrapped in Providers
   return (
     <ShiftProvider>
       <DataProvider initialInventory={CSV_INVENTORY} initialSuppliers={INITIAL_SUPPLIERS}>
