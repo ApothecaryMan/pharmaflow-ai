@@ -262,10 +262,10 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
       return (
         <div className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm h-6 overflow-hidden transition-all bg-white dark:bg-gray-900">
           <button
-            onClick={(e) => { e.stopPropagation(); if (qty > 0) updateQuantity(item.id, isUnit, -1); }}
+            onClick={(e) => { e.stopPropagation(); if (qty > 0 && (qty > 1 || otherQty > 0)) updateQuantity(item.id, isUnit, -1); }}
             onPointerDown={(e) => e.stopPropagation()}
-            className="w-6 h-full flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 text-gray-400 dark:text-gray-600 active:scale-90 transition-all disabled:opacity-30"
-            disabled={qty === 0}
+            className="w-5 h-full flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 text-gray-400 dark:text-gray-600 active:scale-90 transition-all disabled:opacity-30"
+            disabled={qty === 0 || (qty === 1 && otherQty === 0)}
           >
             <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>remove</span>
           </button>
@@ -279,13 +279,13 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
             readOnly // On mobile, maybe only +/- are better or keyboard triggered separately
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
-            className={`w-8 h-full text-[10px] font-black text-center bg-transparent border-none focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 dark:placeholder-gray-700 text-primary-600 dark:text-primary-400`}
+            className={`w-6 h-full text-[10px] font-black text-center bg-transparent border-none focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 dark:placeholder-gray-700 text-primary-600 dark:text-primary-400`}
           />
 
           <button
             onClick={(e) => { e.stopPropagation(); if (qty < maxForThisMode) { if (qty > 0) updateQuantity(item.id, isUnit, 1); else addToCart(item, isUnit, 1); } }}
             onPointerDown={(e) => e.stopPropagation()}
-            className={`w-6 h-full flex items-center justify-center transition-all ${isAtMax ? 'text-gray-300 dark:text-gray-800 cursor-not-allowed' : 'hover:bg-black/5 dark:hover:bg-white/5 text-primary-600 dark:text-primary-400 active:scale-90'}`}
+            className={`w-5 h-full flex items-center justify-center transition-all ${isAtMax ? 'text-gray-300 dark:text-gray-800 cursor-not-allowed' : 'hover:bg-black/5 dark:hover:bg-white/5 text-primary-600 dark:text-primary-400 active:scale-90'}`}
             disabled={isAtMax}
           >
             <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>add</span>
@@ -295,7 +295,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
     };
 
     return (
-      <div className="flex items-center gap-2 shrink-0" dir="ltr">
+      <div className="flex items-center gap-0.5 shrink-0" dir="ltr">
         {renderMobileStepper(false)}
         {hasDualMode && (
           <>

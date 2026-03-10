@@ -247,7 +247,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
       style={style}
       {...attributes}
       {...listeners}
-      className={`flex flex-col p-1.5 rounded-2xl transition-all touch-manipulation relative group outline-hidden
+      className={`flex flex-col p-1 rounded-2xl transition-all touch-manipulation relative group outline-hidden
         ${isDragging ? `z-50 opacity-100` : ''}
         ${
           isHighlighted
@@ -268,7 +268,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
         <div className={`w-1 h-3/5 rounded-full bg-primary-100 dark:bg-primary-800`}></div>
       </div>
 
-      <div className='flex flex-wrap items-center justify-between gap-x-2 gap-y-2 relative pl-3'>
+      <div className='flex flex-wrap items-center justify-between gap-x-1 gap-y-1 relative pl-2'>
         {/* Name Section */}
         <div className='flex-1 min-w-[120px]'>
           <h4
@@ -280,7 +280,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
         </div>
 
         {/* Unified 'Rest' Section: Date, Controls, Price */}
-        <div className='flex items-center gap-2 shrink-0 ml-auto'>
+        <div className='flex items-center gap-1 shrink-0 ml-auto'>
           {/* Expiry Date Badge with Batch Details */}
           {/* Expiry Date Badge */}
           <CartItemExpiryBadge
@@ -317,7 +317,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
           />
 
             {/* Total Price (Sum of both) */}
-            <div className='text-sm font-bold text-gray-900 dark:text-white w-16 shrink-0 text-end tabular-nums'>
+            <div className='text-xs font-bold text-gray-900 dark:text-white w-12 shrink-0 text-end tabular-nums'>
               $
               {(
                 (packItem ? calculateItemTotal(packItem) : 0) +

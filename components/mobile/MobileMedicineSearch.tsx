@@ -377,8 +377,15 @@ const DrugActionPill: React.FC<{
 
   return (
     <div className="shrink-0 relative">
-      <div className={`absolute -top-2.5 right-1 z-20 px-1.5 py-0.5 rounded-full text-[9px] font-black shadow-lg border-2 border-white dark:border-(--bg-secondary) animate-in zoom-in duration-300 ${drug.stock > 0 ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
-        {drug.stock <= 0 ? '0' : (drug.stock / (drug.unitsPerPack || 1)).toLocaleString('en-US', { maximumFractionDigits: 1 })}
+      <div className={`absolute -top-2.5 right-1 z-20 px-1.5 py-0.5 rounded-full text-[9px] font-black shadow-lg border-2 border-white dark:border-(--bg-secondary) animate-in zoom-in duration-300 ${
+        currentQtyInCart > 0 
+          ? 'bg-amber-500 text-white' 
+          : (drug.stock > 0 ? 'bg-green-500 text-white' : 'bg-red-500 text-white')
+      }`}>
+        {currentQtyInCart > 0 
+          ? currentQtyInCart.toLocaleString('en-US', { maximumFractionDigits: 1 })
+          : (drug.stock <= 0 ? '0' : (drug.stock / (drug.unitsPerPack || 1)).toLocaleString('en-US', { maximumFractionDigits: 1 }))
+        }
       </div>
 
       <div className={`flex items-center h-8 rounded-full border bg-transparent transition-all duration-300 ${isExpanded ? 'border-primary-500/50 ring-1 ring-primary-500/10' : 'border-gray-200 dark:border-white/20'}`}>
@@ -436,7 +443,6 @@ const MedicineSearchItem: React.FC<{
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
         className={`!px-0 !h-auto !min-h-[72px] border border-gray-100/30 dark:border-gray-800/20 transition-all bg-white dark:!bg-(--bg-secondary) ${isExpanded ? 'pt-1 border-(--border-divider) z-10 shadow-sm' : ''}`}
-        onClick={onToggleExpand}
       >
         <div className="flex flex-col w-full px-4 text-left">
           <div className="h-[60px] flex items-center justify-between w-full gap-2">
