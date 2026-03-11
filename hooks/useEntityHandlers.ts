@@ -404,13 +404,17 @@ export function useEntityHandlers({
   // --- Supplier Management ---
   const handleAddSupplier = useCallback(
     (supplier: Supplier) => {
-      if (
-        !canPerformAction(employees?.find((e) => e.id === currentEmployeeId)?.role, 'supplier.add')
-      ) {
+      if (!currentEmployeeId) {
+        error('Authentication required: Please log in to add suppliers');
+        return;
+      }
+      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
+      if (!canPerformAction(currentUser?.role, 'supplier.add')) {
         error('Permission denied: Cannot add suppliers');
         return;
       }
       setSuppliers((prev) => [...prev, supplier]);
+      success('Supplier added successfully');
       auditService.log('supplier.add', {
         userId: currentEmployeeId,
         details: `Added supplier: ${supplier.name}`,
@@ -422,16 +426,17 @@ export function useEntityHandlers({
 
   const handleUpdateSupplier = useCallback(
     (supplier: Supplier) => {
-      if (
-        !canPerformAction(
-          employees?.find((e) => e.id === currentEmployeeId)?.role,
-          'supplier.update'
-        )
-      ) {
+      if (!currentEmployeeId) {
+        error('Authentication required: Please log in to update suppliers');
+        return;
+      }
+      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
+      if (!canPerformAction(currentUser?.role, 'supplier.update')) {
         error('Permission denied: Cannot update suppliers');
         return;
       }
       setSuppliers((prev) => prev.map((s) => (s.id === supplier.id ? supplier : s)));
+      success('Supplier updated successfully');
       auditService.log('supplier.update', {
         userId: currentEmployeeId,
         details: `Updated supplier: ${supplier.name}`,
@@ -443,12 +448,12 @@ export function useEntityHandlers({
 
   const handleDeleteSupplier = useCallback(
     (id: string) => {
-      if (
-        !canPerformAction(
-          employees?.find((e) => e.id === currentEmployeeId)?.role,
-          'supplier.delete'
-        )
-      ) {
+      if (!currentEmployeeId) {
+        error('Authentication required: Please log in to delete suppliers');
+        return;
+      }
+      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
+      if (!canPerformAction(currentUser?.role, 'supplier.delete')) {
         error('Permission denied: Cannot delete suppliers');
         return;
       }
@@ -474,9 +479,12 @@ export function useEntityHandlers({
   // --- Customer Management ---
   const handleAddCustomer = useCallback(
     (customer: Customer) => {
-      if (
-        !canPerformAction(employees?.find((e) => e.id === currentEmployeeId)?.role, 'customer.add')
-      ) {
+      if (!currentEmployeeId) {
+        error('Authentication required: Please log in to add customers');
+        return;
+      }
+      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
+      if (!canPerformAction(currentUser?.role, 'customer.add')) {
         error('Permission denied: Cannot add customers');
         return;
       }
@@ -501,12 +509,12 @@ export function useEntityHandlers({
 
   const handleUpdateCustomer = useCallback(
     (customer: Customer) => {
-      if (
-        !canPerformAction(
-          employees?.find((e) => e.id === currentEmployeeId)?.role,
-          'customer.update'
-        )
-      ) {
+      if (!currentEmployeeId) {
+        error('Authentication required: Please log in to update customers');
+        return;
+      }
+      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
+      if (!canPerformAction(currentUser?.role, 'customer.update')) {
         error('Permission denied: Cannot update customers');
         return;
       }
@@ -523,12 +531,12 @@ export function useEntityHandlers({
 
   const handleDeleteCustomer = useCallback(
     (id: string) => {
-      if (
-        !canPerformAction(
-          employees?.find((e) => e.id === currentEmployeeId)?.role,
-          'customer.delete'
-        )
-      ) {
+      if (!currentEmployeeId) {
+        error('Authentication required: Please log in to delete customers');
+        return;
+      }
+      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
+      if (!canPerformAction(currentUser?.role, 'customer.delete')) {
         error('Permission denied: Cannot delete customers');
         return;
       }

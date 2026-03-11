@@ -237,7 +237,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
     }
 
     const totalRefund = returnItems.reduce((sum, item) => sum + item.refundAmount, 0);
-    const nextId = (purchaseReturns.length + 1).toString().padStart(3, '0');
+    const nextId = idGenerator.generate('returns');
 
     const newReturn: PurchaseReturn = {
       id: nextId,

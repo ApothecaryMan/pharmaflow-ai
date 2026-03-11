@@ -199,11 +199,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
       setSearch('');
       setShowSuggestions(false);
     }
-    if (match) {
-      handleAddItem(match);
-      setSearch('');
-      setShowSuggestions(false);
-    }
   }, [search, inventory]);
 
   // Close suggestions on click outside
@@ -250,7 +245,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
   );
   const drugSearchDir = useSmartDirection(search, t.searchDrug);
 
-  // Invoice ID State
   // Invoice ID State
   const [invoiceId, setInvoiceId] = useState(() => {
     if (!purchases || purchases.length === 0) return 'INV-000001';
@@ -776,6 +770,11 @@ export const Purchases: React.FC<PurchasesProps> = ({
   };
 
   const handleConfirm = () => {
+    if (!canPerformAction(userRole, 'purchase.create')) {
+      showToastError('Permission Denied: Cannot complete purchase');
+      return;
+    }
+
     if (!selectedSupplierId || cart.length === 0) return;
 
     // 1. Validate Invoice ID
@@ -832,11 +831,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
       externalInvoiceId,
       paymentType: paymentMethod,
     };
-
-    if (!canPerformAction(userRole, 'purchase.create')) {
-      showToastError('Permission Denied: Cannot complete purchase');
-      return;
-    }
 
     onPurchaseComplete(purchase);
     setCart([]);

@@ -3,6 +3,7 @@ import type React from 'react';
 import { useMemo, useState } from 'react';
 import type { Supplier } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
+import { idGenerator } from '../../utils/idGenerator';
 import { useContextMenu } from '../common/ContextMenu';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
@@ -129,8 +130,8 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
 
   const handleAddNew = () => {
     setMode('add');
-    // Generate sequential ID starting from 001
-    const nextId = (suppliers.length + 1).toString().padStart(3, '0');
+    // Generate unique ID
+    const nextId = idGenerator.generate('suppliers');
     setEditForm({
       id: nextId,
       name: '',
