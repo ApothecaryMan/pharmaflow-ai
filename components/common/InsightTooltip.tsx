@@ -128,7 +128,7 @@ export const InsightTooltip: React.FC<InsightTooltipProps> = ({
   language,
 }) => {
   return (
-    <div className='space-y-4 py-2 min-w-[240px] max-w-[320px] animate-in fade-in zoom-in duration-200'>
+    <div className='space-y-4 py-2 min-w-[240px] max-w-[320px]'>
       {/* TIER 1: PRIMARY RESULT (EXECUTIVE SUMMARY) */}
       <div className='px-1.5 border-b border-black/10 dark:border-white/10 pb-3'>
         <p className='text-[11px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5'>

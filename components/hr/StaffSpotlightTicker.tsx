@@ -84,7 +84,7 @@ export const StaffSpotlightTicker: React.FC<StaffSpotlightTickerProps> = ({
                 content={<InsightTooltip {...item.tooltip} language={language} />}
                 position='top'
                 triggerClassName='w-full text-left'
-                tooltipClassName='p-0 border-none bg-transparent shadow-none'
+                tooltipClassName='p-0 border-none'
               >
                 <h4 className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate hover:text-blue-500 transition-colors cursor-help'>
                   {item.hero?.name || (language === 'AR' ? '—' : '—')}

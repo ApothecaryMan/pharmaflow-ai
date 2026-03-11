@@ -673,7 +673,7 @@ export function TanStackTable<TData, TValue>({
         <div className='font-sans'>
           {/* All Columns Visibility */}
           <div className='space-y-1'>
-            <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-gray-100 dark:border-gray-800 mb-1'>
+            <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-gray-100 dark:border-(--border-divider) mb-1'>
               {t?.global?.table?.columns || 'Columns'}
             </div>
             {table
@@ -721,7 +721,7 @@ export function TanStackTable<TData, TValue>({
                   {t?.global?.table?.alignment || 'Alignment'}
                 </div>
                 {/* Unified Alignment */}
-                <div className='bg-gray-50 dark:bg-gray-800/80 p-1.5 rounded-xl border border-gray-100 dark:border-gray-800/50 flex items-center justify-between gap-1'>
+                <div className='bg-gray-50 dark:bg-gray-800/80 p-1.5 rounded-xl border border-gray-100 dark:border-(--border-divider) flex items-center justify-between gap-1'>
                   <AlignButton
                     align='start'
                     isActive={currentAlign === 'start'}
@@ -933,7 +933,7 @@ export function TanStackTable<TData, TValue>({
                       return (
                         <th
                           key={header.id}
-                          className={`p-0 text-xs font-semibold text-gray-500 dark:text-white uppercase tracking-wider select-none relative group border-b ${lite ? 'border-gray-200 dark:border-gray-700' : 'border-(--border-divider)'}
+                          className={`p-0 text-xs font-semibold text-gray-500 dark:text-white uppercase tracking-wider select-none relative group border-b ${lite ? 'border-gray-200 dark:border-(--border-divider)' : 'border-(--border-divider)'}
                         ${textAlignClass}
                         ${isFlex ? '' : 'w-[1%] whitespace-nowrap'}`}
                           style={{

@@ -440,7 +440,7 @@ export const useStaffAnalytics = ({
             },
             {
               label: language === 'AR' ? 'الإيجابية' : 'Positivity',
-              math: '98%',
+              math: `${(hero.csat * 20).toFixed(0)}%`,
               isCurrency: false,
             },
           ],
