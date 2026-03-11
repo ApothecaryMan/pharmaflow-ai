@@ -624,17 +624,18 @@ export function useEntityHandlers({
       setBatches(batchService.getAllBatches());
       setInventory(currentInventory);
     },
-    [inventory, setInventory, setBatches, currentEmployeeId, employees]
+    [inventory, setInventory, setBatches, currentEmployeeId, employees, activeBranchId]
   );
 
   const handlePurchaseComplete = useCallback(
     (purchase: Purchase) => {
-      if (
-        !canPerformAction(
-          employees?.find((e) => e.id === currentEmployeeId)?.role,
-          'purchase.create'
-        )
-      ) {
+      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
+      if (!currentUser) {
+        error('Authentication required: Please log in to complete purchases');
+        return;
+      }
+
+      if (!canPerformAction(currentUser.role, 'purchase.create')) {
         error('Permission denied: Cannot create purchase orders');
         return;
       }
@@ -642,17 +643,8 @@ export function useEntityHandlers({
 
       // Only update inventory if purchase is completed immediately
       if (purchase.status === 'completed') {
-        if (
-          !canPerformAction(
-            employees?.find((e) => e.id === currentEmployeeId)?.role,
-            'purchase.approve'
-          )
-        ) {
+        if (!canPerformAction(currentUser.role, 'purchase.approve')) {
           error('Permission denied: Cannot complete/approve purchase (Created as pending instead)');
-          // Force pending if not authorized to complete directly?
-          // Logic: if status passed is completed but user can't approve, we should probably throw error or force status='pending'.
-          // Let's force pending if they don't have approval rights, OR error out.
-          // Safer behavior: Error out if they tried to complete it.
           return;
         }
 
@@ -672,17 +664,18 @@ export function useEntityHandlers({
         });
       }
     },
-    [setPurchases, setInventory, applyPurchaseToInventory, info, currentEmployeeId, employees, error, setBatches, inventory]
+    [setPurchases, applyPurchaseToInventory, info, currentEmployeeId, employees, error]
   );
 
   const handleApprovePurchase = useCallback(
     (purchaseId: string, approverName: string) => {
-      if (
-        !canPerformAction(
-          employees?.find((e) => e.id === currentEmployeeId)?.role,
-          'purchase.approve'
-        )
-      ) {
+      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
+      if (!currentUser) {
+        error('Authentication required: Please log in to approve purchases');
+        return;
+      }
+
+      if (!canPerformAction(currentUser.role, 'purchase.approve')) {
         error('Permission denied: Cannot approve purchases');
         return;
       }
@@ -706,9 +699,15 @@ export function useEntityHandlers({
       // 2. Apply inventory logic (deduped)
       applyPurchaseToInventory({ ...purchase, status: 'completed' });
 
+      auditService.log('purchase.approve', {
+        userId: currentEmployeeId,
+        details: `Approved PO #${purchase.invoiceId}`,
+        entityId: purchase.id,
+      });
+
       success(`PO #${purchase.invoiceId} Approved Successfully`);
     },
-    [purchases, setPurchases, setInventory, applyPurchaseToInventory, setBatches, inventory, success, currentEmployeeId, employees, error]
+    [purchases, setPurchases, applyPurchaseToInventory, success, currentEmployeeId, employees, error]
   );
 
   const handleRejectPurchase = useCallback(
@@ -749,16 +748,18 @@ export function useEntityHandlers({
 
       setPurchaseReturns((prev) => [returnData, ...prev]);
 
+      const performer = employees?.find((e) => e.id === currentEmployeeId);
+
       // Reduce inventory
       setInventory((prev) =>
         prev.map((drug) => {
           const returnedItem = returnData.items.find((i) => i.drugId === drug.id);
           if (returnedItem) {
-            const performer = employees?.find((e) => e.id === currentEmployeeId);
+            const isUnit = !!returnedItem.isUnit;
             const mutation = stockOps.deductStockSimple(
               drug,
               returnedItem.quantityReturned,
-              !!returnedItem.isUnit,
+              isUnit,
               'return_supplier',
               `Purchase Return #${returnData.id}`,
               {
@@ -770,7 +771,10 @@ export function useEntityHandlers({
             );
 
             // --- PERSISTENCE: Immediate deduction from IndexedDB ---
-            inventoryService.updateStock(drug.id, -returnedItem.quantityReturned).catch(console.error);
+            const unitsToDeduct = isUnit
+              ? returnedItem.quantityReturned
+              : returnedItem.quantityReturned * (drug.unitsPerPack || 1);
+            inventoryService.updateStock(drug.id, -unitsToDeduct).catch(console.error);
 
             return {
               ...drug,
@@ -789,7 +793,7 @@ export function useEntityHandlers({
 
       success('Purchase return created and inventory updated.');
     },
-    [currentEmployeeId, employees, error, setPurchaseReturns, setInventory, success]
+    [currentEmployeeId, employees, error, setPurchaseReturns, setInventory, success, activeBranchId]
   );
 
   // --- Employee Management ---
