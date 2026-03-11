@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
 import type { Customer, Sale } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { SmallCard } from '../common/SmallCard';
@@ -71,41 +72,11 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 10)
       .map((sale) => {
-        // Calculate points for this sale
-        let totalRate = 0;
-        if (sale.total > 20000) totalRate = 0.05;
-        else if (sale.total > 10000) totalRate = 0.04;
-        else if (sale.total > 5000) totalRate = 0.03;
-        else if (sale.total > 1000) totalRate = 0.02;
-        else if (sale.total > 100) totalRate = 0.01;
-
-        const totalPoints = sale.total * totalRate;
-
-        let itemPoints = 0;
-        sale.items.forEach((item) => {
-          let itemRate = 0;
-          let price = item.price;
-          if (item.isUnit && item.unitsPerPack) {
-            price = item.price / item.unitsPerPack;
-          }
-
-          if (price > 20000) itemRate = 0.15;
-          else if (price > 10000) itemRate = 0.12;
-          else if (price > 5000) itemRate = 0.1;
-          else if (price > 1000) itemRate = 0.05;
-          else if (price > 500) itemRate = 0.03;
-          else if (price > 100) itemRate = 0.02;
-
-          if (itemRate > 0) {
-            itemPoints += price * item.quantity * itemRate;
-          }
-        });
-
-        const pointsEarned = parseFloat((totalPoints + itemPoints).toFixed(1));
+        const points = calculateSalePoints(sale);
 
         return {
           ...sale,
-          pointsEarned,
+          pointsEarned: points.totalEarned,
         };
       });
   }, [sales]);
@@ -134,37 +105,8 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
       const dayData = last30Days.find((d) => d.date === saleDate);
 
       if (dayData && sale.customerName !== 'Guest Customer') {
-        // Calculate points
-        let totalRate = 0;
-        if (sale.total > 20000) totalRate = 0.05;
-        else if (sale.total > 10000) totalRate = 0.04;
-        else if (sale.total > 5000) totalRate = 0.03;
-        else if (sale.total > 1000) totalRate = 0.02;
-        else if (sale.total > 100) totalRate = 0.01;
-
-        const totalPoints = sale.total * totalRate;
-
-        let itemPoints = 0;
-        sale.items.forEach((item) => {
-          let itemRate = 0;
-          let price = item.price;
-          if (item.isUnit && item.unitsPerPack) {
-            price = item.price / item.unitsPerPack;
-          }
-
-          if (price > 20000) itemRate = 0.15;
-          else if (price > 10000) itemRate = 0.12;
-          else if (price > 5000) itemRate = 0.1;
-          else if (price > 1000) itemRate = 0.05;
-          else if (price > 500) itemRate = 0.03;
-          else if (price > 100) itemRate = 0.02;
-
-          if (itemRate > 0) {
-            itemPoints += price * item.quantity * itemRate;
-          }
-        });
-
-        dayData.points += parseFloat((totalPoints + itemPoints).toFixed(1));
+        const points = calculateSalePoints(sale);
+        dayData.points += points.totalEarned;
       }
     });
 

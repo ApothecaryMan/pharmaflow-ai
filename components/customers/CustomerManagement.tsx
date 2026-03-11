@@ -6,6 +6,7 @@ import { canPerformAction, type UserRole } from '../../config/permissions';
 import { COUNTRY_CODES } from '../../data/countryCodes';
 import { AREAS, CITIES, GOVERNORATES, getLocationName } from '../../data/locations';
 import type { Customer } from '../../types';
+import { idGenerator } from '../../utils/idGenerator';
 import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { Modal } from '../common/Modal';
@@ -128,9 +129,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
    * and returns the next value in the sequence.
    */
   const getNextSerialId = () => {
-    if (customers.length === 0) return 1;
-    const maxId = Math.max(...customers.map((c) => c.serialId || 0));
-    return maxId + 1;
+    return idGenerator.generate('customers-serial');
   };
 
   /**
@@ -435,7 +434,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         },
       },
     ],
-    [language, t, color]
+    [language, t, color, userRole, onDeleteCustomer, handleOpenEdit]
   );
 
   // Address Form Section Component
@@ -785,7 +784,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
       {mode === 'list' ? (
         <>
-          {/* Table Card */}
           {/* Table Card */}
           <TanStackTable
             data={customers}

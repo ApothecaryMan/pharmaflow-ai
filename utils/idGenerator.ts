@@ -31,6 +31,7 @@ export type EntityType =
   | 'movement'
   | 'returnItem'
   | 'branches'
+  | 'customers-serial'
   | 'generic';
 
 // Sequence Map Interface
@@ -93,6 +94,7 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
         data = storage.get(StorageKeys.INVENTORY, []);
         break;
       case 'customers':
+      case 'customers-serial':
         data = storage.get(StorageKeys.CUSTOMERS, []);
         break;
       case 'suppliers':

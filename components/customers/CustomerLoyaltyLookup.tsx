@@ -3,6 +3,7 @@ import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Customer, Sale } from '../../types';
 import { CARD_BASE, CONTAINER_BASE } from '../../utils/themeStyles';
+import { calculateSalePoints } from '../../services/customers/loyaltyUtils';
 import { SearchDropdown, type SearchDropdownColumn, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
 import { SmallCard } from '../common/SmallCard';
@@ -75,44 +76,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
     setSelectedCustomer(null);
   };
 
-  // Get customer's sales history with points breakdown
-  // Helper to calculate points for a single sale based on business rules
-  const calculateSalePoints = (sale: Sale) => {
-    let totalRate = 0;
-    if (sale.total > 20000) totalRate = 0.05;
-    else if (sale.total > 10000) totalRate = 0.04;
-    else if (sale.total > 5000) totalRate = 0.03;
-    else if (sale.total > 1000) totalRate = 0.02;
-    else if (sale.total > 100) totalRate = 0.01;
 
-    const orderPoints = sale.total * totalRate;
-
-    let itemPoints = 0;
-    sale.items.forEach((item) => {
-      let itemRate = 0;
-      let price = item.price;
-      if (item.isUnit && item.unitsPerPack) {
-        price = item.price / item.unitsPerPack;
-      }
-
-      if (price > 20000) itemRate = 0.15;
-      else if (price > 10000) itemRate = 0.12;
-      else if (price > 5000) itemRate = 0.1;
-      else if (price > 1000) itemRate = 0.05;
-      else if (price > 500) itemRate = 0.03;
-      else if (price > 100) itemRate = 0.02;
-
-      if (itemRate > 0) {
-        itemPoints += price * item.quantity * itemRate;
-      }
-    });
-
-    return {
-      orderPoints: parseFloat(orderPoints.toFixed(1)),
-      itemPoints: parseFloat(itemPoints.toFixed(1)),
-      totalEarned: parseFloat((orderPoints + itemPoints).toFixed(1)),
-    };
-  };
 
   const customerSales = useMemo(() => {
     if (!selectedCustomer) return [];

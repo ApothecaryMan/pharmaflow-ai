@@ -134,8 +134,8 @@ export interface Supplier {
 export interface Customer {
   id: string;
   branchId?: string;
-  /** System-generated primary key (internal, auto-incremented) */
-  serialId: number;
+  /** System-generated primary key (internal, e.g. "B1-0001") */
+  serialId: string;
   /** Customer-facing code printed on loyalty cards - given to customer */
   code: string;
   name: string;
