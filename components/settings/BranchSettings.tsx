@@ -22,17 +22,39 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Partial<Branch> | null>(null);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  
+  // Password Protection State
+  const [isUnlocked, setIsUnlocked] = useState(() => 
+    sessionStorage.getItem('branch_settings_unlocked') === 'true'
+  );
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
 
   const loadData = useCallback(async () => {
+    if (!isUnlocked) return;
     const allBranches = branchService.getAll();
     const allEmployees = await employeeService.getAll('ALL');
     setBranches(allBranches);
     setEmployees(allEmployees);
-  }, []);
+  }, [isUnlocked]);
+
+  const handleUnlock = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const correctPass = import.meta.env.VITE_BRANCH_SETTINGS_PASS;
+    if (passwordInput === correctPass) {
+      setIsUnlocked(true);
+      sessionStorage.setItem('branch_settings_unlocked', 'true');
+      setPasswordError(false);
+    } else {
+      setPasswordError(true);
+    }
+  };
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (isUnlocked) {
+      loadData();
+    }
+  }, [loadData, isUnlocked]);
   const handleOpenModal = (branch?: Branch) => {
     if (branch) {
       setEditingBranch(branch);
@@ -55,6 +77,14 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
     try {
       let savedBranch: Branch;
       if (editingBranch.id) {
+        // Prevent deactivating the active branch via the edit modal status dropdown
+        if (editingBranch.id === activeBranchId && editingBranch.status === 'inactive') {
+          alert(language === 'AR' 
+            ? 'لا يمكن الغاء تفعيل الفرع الحالي النشط' 
+            : 'Cannot deactivate the currently active branch');
+          setIsSubmitting(false);
+          return;
+        }
         savedBranch = branchService.update(editingBranch.id, editingBranch);
       } else {
         savedBranch = branchService.create(editingBranch as Omit<Branch, 'id' | 'createdAt' | 'updatedAt'>);
@@ -115,6 +145,64 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
     }
   };
 
+  if (!isUnlocked) {
+    return (
+      <div className="flex inset-0 mt-20 items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 p-8">
+          <div className="text-center mb-8">
+            <div 
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ backgroundColor: `${color}15`, color }}
+            >
+              <span className="material-symbols-rounded text-3xl">lock</span>
+            </div>
+            <h2 className={`text-2xl font-bold mb-2 ${language === 'AR' ? 'font-arabic' : ''}`}>
+              {language === 'AR' ? 'منطقة محمية' : 'Protected Area'}
+            </h2>
+            <p className="text-zinc-500 text-sm">
+              {language === 'AR' 
+                ? 'يرجى إدخال كلمة مرور الفروع للمتابعة' 
+                : 'Please enter the branch settings password to continue'}
+            </p>
+          </div>
+
+          <form onSubmit={handleUnlock} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => {
+                  setPasswordInput(e.target.value);
+                  setPasswordError(false);
+                }}
+                placeholder={language === 'AR' ? 'كلمة المرور' : 'Password'}
+                autoFocus
+                className={`w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 border transition-all outline-none focus:ring-2 ${
+                  passwordError 
+                    ? 'border-red-500 ring-red-500/20' 
+                    : 'border-zinc-200 dark:border-zinc-700 focus:border-opacity-50'
+                }`}
+                style={{ '--tw-ring-color': color } as any}
+              />
+              {passwordError && (
+                <p className="text-red-500 text-xs mt-2 px-1">
+                  {language === 'AR' ? 'كلمة المرور غير صحيحة' : 'Incorrect password'}
+                </p>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl text-white font-bold shadow-lg transition-transform active:scale-95"
+              style={{ backgroundColor: color }}
+            >
+              {language === 'AR' ? 'دخول' : 'Unlock'}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -122,7 +210,11 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
           <h2 className={`text-2xl font-bold ${language === 'AR' ? 'font-arabic' : ''}`} style={{ color }}>
             {t.settings.branchManagement}
           </h2>
-          <p className="text-zinc-500">Manage pharmacy locations and staff assignments</p>
+          <p className="text-zinc-500">
+            {language === 'AR' 
+              ? 'إدارة مواقع الصيدلية وتعيينات الموظفين' 
+              : 'Manage pharmacy locations and staff assignments'}
+          </p>
         </div>
         <button
           onClick={() => handleOpenModal()}
@@ -171,7 +263,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
                 className="flex-1 py-2 text-sm font-medium rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
                 style={{ color }}
               >
-                Edit
+                {language === 'AR' ? 'تعديل' : 'Edit'}
               </button>
               <button
                 disabled={isSubmitting}
@@ -219,15 +311,15 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
                 onChange={(e) => setEditingBranch({ ...editingBranch, status: e.target.value as 'active' | 'inactive' })}
                 className="w-full px-4 py-3 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+                <option value="active">{language === 'AR' ? 'نشط' : 'Active'}</option>
+                <option value="inactive">{language === 'AR' ? 'غير نشط' : 'Inactive'}</option>
               </select>
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-zinc-500 mb-1">{t.settings?.branchAddress || 'Address'}</label>
               <input
                 type="text"
-                placeholder="Full address"
+                placeholder={language === 'AR' ? 'العنوان بالتفصيل' : 'Full address'}
                 value={editingBranch?.address || ''}
                 onChange={(e) => setEditingBranch({ ...editingBranch, address: e.target.value })}
                 className="w-full px-4 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
@@ -282,7 +374,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
               onClick={() => setIsModalOpen(false)}
               className="flex-1 py-2.5 rounded-lg font-medium text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
             >
-              Cancel
+              {language === 'AR' ? 'إلغاء' : 'Cancel'}
             </button>
             <button
               disabled={isSubmitting}

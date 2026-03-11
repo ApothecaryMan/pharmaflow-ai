@@ -183,6 +183,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'reports.view_intelligence',
     'reports.export',
     'settings.view',
+    'settings.update',
     'users.view',
     'users.manage', // Can manage staff
     'shift.view_expected_balance',
