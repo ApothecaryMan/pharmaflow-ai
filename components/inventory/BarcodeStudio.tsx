@@ -250,20 +250,71 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
   // Autosave current workspace
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts and Nudging
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 1. Undo / Redo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.shiftKey ? handleRedo() : handleUndo();
         e.preventDefault();
+        return;
       } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
         handleRedo();
         e.preventDefault();
+        return;
+      }
+
+      // 2. Element Nudging via Arrow Keys
+      if (selectedElementId) {
+        // Ignore if focus is inside an input, textarea, or select
+        const activeTag = document.activeElement?.tagName;
+        if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
+          return;
+        }
+
+        const step = e.shiftKey ? 0.1 : 0.5; // Fine nudge with Shift
+        let dx = 0;
+        let dy = 0;
+
+        switch (e.key) {
+          case 'ArrowUp':
+            dy = -step;
+            break;
+          case 'ArrowDown':
+            dy = step;
+            break;
+          case 'ArrowLeft':
+            dx = -step;
+            break;
+          case 'ArrowRight':
+            dx = step;
+            break;
+          default:
+            return; // Not an arrow key
+        }
+
+        if (dx !== 0 || dy !== 0) {
+          e.preventDefault(); // Prevent page scrolling
+          
+          setElements((prev) =>
+            prev.map((el) => {
+              if (el.id === selectedElementId) {
+                return {
+                  ...el,
+                  x: Number(Math.max(0, el.x + dx).toFixed(1)),
+                  y: Number(Math.max(0, el.y + dy).toFixed(1)),
+                };
+              }
+              return el;
+            })
+          );
+        }
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [history, redoStack, elements]);
+  }, [history, redoStack, elements, selectedElementId]);
 
   const getDesignState = () => ({
     selectedPreset,
