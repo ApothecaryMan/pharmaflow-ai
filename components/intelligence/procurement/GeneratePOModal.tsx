@@ -6,12 +6,14 @@ interface GeneratePOModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedProductIds: string[];
+  t?: any;
 }
 
 export const GeneratePOModal: React.FC<GeneratePOModalProps> = ({
   isOpen,
   onClose,
   selectedProductIds,
+  t,
 }) => {
   if (!isOpen) return null;
 

@@ -15,6 +15,7 @@ import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { formatExpiryDate } from '../../utils/expiryUtils';
 import { usePosSounds } from '../common/hooks/usePosSounds';
+import { useData } from '../../services/DataContext';
 import { Modal } from '../common/Modal';
 import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDropdown';
 import { SearchInput } from '../common/SearchInput';
@@ -59,9 +60,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   t,
 }) => {
   const { branchCode, language, textTransform } = useSettings();
+  const { activeBranchId } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [adjustments, setAdjustments] = useState<AdjustmentItem[]>([]);
-  const { success, error, info, warning } = useAlert();
+  const { success, error: alertError, info, warning } = useAlert();
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [history, setHistory] = useState<StockMovement[]>([]);
   const [lastTransaction, setLastTransaction] = useState<StockMovement[]>([]);
@@ -77,12 +79,14 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   const { playSuccess, playError, playBeep } = usePosSounds();
 
   // Batch Selection State
+  // View State
+  // Batch Selection State
   const [batchSelectionDrug, setBatchSelectionDrug] = useState<Drug | null>(null);
   const [availableBatches, setAvailableBatches] = useState<StockBatch[]>([]);
 
   // View State
   const [activeView, setActiveView] = useState<'adjust' | 'history'>('adjust');
-  const [historyTab, setHistoryTab] = useState<'all' | 'pending'>('all');
+  const [historyTab, setHistoryTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [pharmacyName, setPharmacyName] = useState('ZINC');
 
@@ -104,11 +108,15 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   }, []);
 
   // Load history on mount or tab change
-  const loadHistory = async () => {
+  const loadHistory = React.useCallback(async () => {
     try {
-      const filters: any = { type: 'adjustment' };
+      const filters: any = { type: 'adjustment', branchId: activeBranchId };
       if (historyTab === 'pending') {
         filters.status = 'pending';
+      } else if (historyTab === 'approved') {
+        filters.status = 'approved';
+      } else if (historyTab === 'rejected') {
+        filters.status = 'rejected';
       }
       if (dateRange.from) filters.startDate = dateRange.from;
       if (dateRange.to) filters.endDate = dateRange.to;
@@ -116,15 +124,15 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       const data = await stockMovementService.getHistory(filters);
       const historyItems = Array.isArray(data) ? data : (data as any).items || [];
       setHistory(historyItems.slice(0, 50));
-    } catch (e) {
-      console.error('Failed to load history', e);
-      error(t.common?.error || 'Failed to load history');
+    } catch (err) {
+      console.error('Failed to load history', err);
+      alertError(t.common?.error || 'Failed to load history');
     }
-  };
+  }, [historyTab, dateRange, activeBranchId, t.common?.error, alertError]);
 
   React.useEffect(() => {
     loadHistory();
-  }, [historyTab, dateRange]);
+  }, [loadHistory]);
 
   const handleApprove = async (movement: StockMovement) => {
     try {
@@ -134,28 +142,37 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       await stockMovementService.approveMovement(movement.id, currentEmployeeId);
 
       // 2. Commit to Inventory (Batch or Total)
-      // Note: We need to know if it was a batch adjustment or generic.
-      // The movement has batchId.
       if (movement.batchId) {
         await batchService.updateBatchQuantity(movement.batchId, movement.quantity);
       }
 
-      // 3. Sync Drug.stock with parent
+      // 3. Persist stock change to inventoryService (durable)
+      try {
+        const { inventoryService } = await import('../../services/inventory/inventoryService');
+        await inventoryService.updateStockBulk([{
+          id: movement.drugId,
+          quantity: movement.quantity, // The difference
+        }]);
+      } catch (persistErr) {
+        console.error('Failed to persist stock to service:', persistErr);
+      }
+
+      // 4. Sync Drug.stock with React state
       const drug = inventory.find(d => d.id === movement.drugId);
       if (drug) {
         const updatedDrug = { ...drug, stock: movement.newStock };
-        onUpdateInventory([
-          ...inventory.map(d => d.id === drug.id ? updatedDrug : d)
-        ]);
+        onUpdateInventory(
+          inventory.map(d => d.id === drug.id ? updatedDrug : d)
+        );
       }
 
-      // 4. Refresh
+      // 5. Refresh
       loadHistory();
-      success('Adjustment approved successfully');
+      success(language === 'AR' ? 'تم الموافقة على التعديل بنجاح' : 'Adjustment approved successfully');
       playSuccess();
-    } catch (e) {
-      console.error('Approve failed', e);
-      error('Failed to approve adjustment');
+    } catch (err) {
+      console.error('Approve failed', err);
+      alertError(language === 'AR' ? 'فشل في الموافقة على التعديل' : 'Failed to approve adjustment');
       playError();
     }
   };
@@ -165,11 +182,48 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       const currentEmployeeId = storage.get<string>(StorageKeys.CURRENT_EMPLOYEE_ID, 'user');
       await stockMovementService.rejectMovement(movement.id, currentEmployeeId);
       loadHistory();
-      info('Adjustment rejected');
-    } catch (e) {
-      console.error('Reject failed', e);
-      error('Failed to reject adjustment');
+      info(language === 'AR' ? 'تم رفض التعديل' : 'Adjustment rejected');
+    } catch (err) {
+      console.error('Reject failed', err);
+      alertError(language === 'AR' ? 'فشل في رفض التعديل' : 'Failed to reject adjustment');
       playError();
+    }
+  };
+
+  const handleApproveAll = async () => {
+    const pendingItems = history.filter(item => item.status === 'pending');
+    if (pendingItems.length === 0) {
+      info(language === 'AR' ? 'لا توجد تعديلات معلقة للموافقة عليها' : 'No pending adjustments to approve');
+      return;
+    }
+
+    try {
+      // Best effort parallel execution
+      const promises = pendingItems.map(item => handleApprove(item));
+      await Promise.all(promises);
+      success(language === 'AR' ? `تمت الموافقة على ${pendingItems.length} تعديلات بنجاح` : `Successfully approved ${pendingItems.length} adjustments`);
+    } catch (err) {
+      console.error('Failed to approve all:', err);
+      alertError(language === 'AR' ? 'حدث خطأ أثناء موافقة الكل. يرجى المحاولة مرة أخرى.' : 'An error occurred while approving all. Please try again.');
+    }
+  };
+
+  const handleRejectAll = async () => {
+    const pendingItems = history.filter(item => item.status === 'pending');
+    if (pendingItems.length === 0) {
+      info(language === 'AR' ? 'لا توجد تعديلات معلقة لرفضها' : 'No pending adjustments to reject');
+      return;
+    }
+
+    try {
+      const currentEmployeeId = storage.get<string>(StorageKeys.CURRENT_EMPLOYEE_ID, 'user');
+      const promises = pendingItems.map(item => stockMovementService.rejectMovement(item.id, currentEmployeeId));
+      await Promise.all(promises);
+      loadHistory();
+      info(language === 'AR' ? `تم رفض ${pendingItems.length} تعديلات` : `Rejected ${pendingItems.length} adjustments`);
+    } catch (err) {
+      console.error('Failed to reject all:', err);
+      alertError(language === 'AR' ? 'حدث خطأ أثناء رفض الكل. يرجى المحاولة مرة أخرى.' : 'An error occurred while rejecting all. Please try again.');
     }
   };
 
@@ -216,7 +270,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
     const drug = inventory.find((d) => d.barcode === barcode || d.internalCode === barcode);
 
     if (!drug) {
-      error(t.inventory?.notFound || 'Item not found');
+      alertError(t.inventory?.notFound || 'Item not found');
       playError();
       return;
     }
@@ -292,10 +346,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
       if (addedCount > 0) {
         setAdjustments(newAdjustments);
-        success(`Successfully imported ${addedCount} items`);
+        success(language === 'AR' ? `تم استيراد ${addedCount} عنصر بنجاح` : `Successfully imported ${addedCount} items`);
         playSuccess();
       } else {
-        warning('No valid items found in file');
+        warning(language === 'AR' ? 'لم يتم العثور على عناصر صحيحة في الملف' : 'No valid items found in file');
         playError();
       }
     };
@@ -429,12 +483,13 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
     // Log movements for each adjustment
     try {
       const currentEmployeeId = storage.get<string>(StorageKeys.CURRENT_EMPLOYEE_ID, 'user');
-      // Simple mock for employee name
       const currentEmployeeObject = storage
         .get<any>(StorageKeys.EMPLOYEES, [])
         ?.find((e: any) => e.id === currentEmployeeId);
       const currentEmployeeName =
-        currentEmployeeId === 'user' ? 'System User' : currentEmployeeObject?.name || 'Unknown';
+        currentEmployeeId === 'user'
+          ? (import.meta.env.VITE_SUPER_USER || 'System User')
+          : (currentEmployeeObject?.name || currentEmployeeObject?.username || (language === 'AR' ? 'مستخدم' : 'User'));
 
       // RBAC Check for Approval
       const { canPerformAction } = await import('../../config/permissions');
@@ -448,7 +503,8 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
       const status = isManager ? 'approved' : 'pending';
 
-      const transactionId = idGenerator.generate('generic');
+      const transactionId = idGenerator.generate('movement');
+      const stockMutations: { id: string; quantity: number }[] = [];
 
       for (const item of adjustments) {
         // Only log actual changes
@@ -461,7 +517,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             item.newStock,
             item.reason,
             {
-              branchId: branchCode, // Pulled from useSettings
+              branchId: activeBranchId, // Fixed: use activeBranchId instead of branchCode
               performedBy: currentEmployeeId,
               performedByName: currentEmployeeName,
             },
@@ -473,7 +529,22 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               expiryDate: item.expiryDate,
             }
           );
+
+          // Track mutations for bulk persistence
+          if (status === 'approved') {
+            stockMutations.push({
+              id: drug.id,
+              quantity: item.difference, // The exact difference to add/subtract
+            });
+          }
         }
+      }
+
+      // PERSISTENCE: Apply immediately to local indexedDB if approved (in bulk)
+      if (stockMutations.length > 0) {
+        import('../../services/inventory/inventoryService').then(({ inventoryService }) => {
+          inventoryService.updateStockBulk(stockMutations).catch(console.error);
+        });
       }
 
       const newTransactionMovements = adjustments
@@ -482,7 +553,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           id: idGenerator.generate('generic'),
           drugId: item.drugId,
           drugName: item.drugName,
-          branchId: branchCode,
+          branchId: activeBranchId, // Fixed: use activeBranchId instead of branchCode
           type: 'adjustment' as const,
           quantity: item.difference,
           previousStock: item.currentStock,
@@ -501,55 +572,34 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       setLastTransaction(newTransactionMovements);
 
       if (isManager) {
-        success('Inventory updated successfully');
+        success(language === 'AR' ? 'تم تحديث المخزون بنجاح' : 'Inventory updated successfully');
       } else {
-        success('Adjustments submitted for approval');
+        success(language === 'AR' ? 'تم إرسال التعديلات للموافقة' : 'Adjustments submitted for approval');
       }
       playSuccess();
-    } catch (error) {
-      console.error('Failed to log movements:', error);
-      error('Failed to save adjustments');
+
+      // Update inventory state (Client Side) - ONLY IF APPROVED
+      if (isManager) {
+        // Create map of changes
+        const updates = new Map(adjustments.map((a) => [a.drugId, a.newStock]));
+
+        const updatedInventory = inventory.map((drug) => {
+          if (updates.has(drug.id)) {
+            return { ...drug, stock: updates.get(drug.id)! };
+          }
+          return drug;
+        });
+
+        onUpdateInventory(updatedInventory);
+      }
+
+      setAdjustments([]);
+      loadHistory();
+    } catch (err) {
+      console.error('Failed to log movements:', err);
+      alertError(language === 'AR' ? 'فشل في حفظ التعديلات' : 'Failed to save adjustments');
       playError();
     }
-
-    // Update inventory state (Client Side) - ONLY IF APPROVED
-    // If pending, we should probably NOT update the local list yet, or show it as pending?
-    // For simplicity, we only update local state if approved.
-
-    // We need to know if we are in manager mode to apply changes.
-    // We need to know if we are in manager mode to apply changes.
-    const currentEmployeeId = storage.get<string>(StorageKeys.CURRENT_EMPLOYEE_ID, 'user');
-
-    // RBAC Check (Duplicate logic, ideally reusable but inside async flow)
-    const { canPerformAction } = await import('../../config/permissions');
-    const currentEmployeeObject = storage
-      .get<any>(StorageKeys.EMPLOYEES, [])
-      ?.find((e: any) => e.id === currentEmployeeId);
-
-    // If we are 'user', we treat as admin/dev. Otherwise check role.
-    const isManager =
-      currentEmployeeId === 'user'
-        ? true
-        : canPerformAction(currentEmployeeObject?.role, 'inventory.approve');
-
-    if (isManager) {
-      // Create map of changes
-      const updates = new Map(adjustments.map((a) => [a.drugId, a.newStock]));
-
-      const updatedInventory = inventory.map((drug) => {
-        if (updates.has(drug.id)) {
-          return { ...drug, stock: updates.get(drug.id)! };
-        }
-        return drug;
-      });
-
-      onUpdateInventory(updatedInventory);
-    }
-
-    setAdjustments([]);
-
-    // Refresh history list
-    loadHistory();
   };
 
   const reasons = ['damaged', 'expired', 'theft', 'inventory_count', 'correction', 'other'];
@@ -711,6 +761,19 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   const historyColumns = useMemo<ColumnDef<StockMovement>[]>(
     () => [
       {
+        accessorKey: 'transactionId',
+        header: t.common?.id || 'ID',
+        cell: (info) => {
+          const val = info.getValue() as string;
+          return val ? (
+            <span className='text-sm text-gray-500 dark:text-gray-400'>{val}</span>
+          ) : (
+            <span className='text-gray-400 text-xs italic'>-</span>
+          );
+        },
+        meta: { width: 140 },
+      },
+      {
         accessorKey: 'timestamp',
         header: t.common?.date || 'Date',
         meta: { width: 120, align: 'center' },
@@ -737,21 +800,20 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         meta: { width: 200 },
       },
       {
-        accessorKey: 'batchId',
+        accessorKey: 'expiryDate',
         header: t.barcodePrinter.tableHeaders.expiry,
         cell: (info) => {
           const item = info.row.original;
-          if (!item.batchId) return <span className='text-gray-400 text-xs italic'>-</span>;
+          const hasExpiry = !!item.expiryDate;
+
+          if (!hasExpiry && !item.batchId) {
+            return <span className='text-gray-400 text-xs italic'>-</span>;
+          }
 
           return (
-            <div className='flex flex-col gap-0.5'>
-              {/* Expiry Date (Top) */}
-              <div className='text-sm text-(--text-primary)'>
-                {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'Generic'}
-              </div>
-              {/* Batch ID (Underneath) */}
-              <span className='text-sm text-gray-500'>{item.batchId?.substring(0, 8) || '-'}</span>
-            </div>
+            <span className='text-sm text-(--text-primary)'>
+              {hasExpiry ? formatExpiryDate(item.expiryDate) : (language === 'AR' ? 'عام' : 'Generic')}
+            </span>
           );
         },
         meta: { width: 120 },
@@ -870,9 +932,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         className: 'justify-center text-center text-gray-900 dark:text-gray-400',
         render: (drug: Drug) => {
           if (!drug.expiryDate) return '---';
-          const date = new Date(drug.expiryDate);
-          if (isNaN(date.getTime())) return drug.expiryDate;
-          return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getFullYear()).slice(-2)}`;
+          return formatExpiryDate(drug.expiryDate);
         },
       },
       {
@@ -1068,20 +1128,44 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                 locale={language === 'AR' ? 'ar-EG' : 'en-US'}
               />
 
-              {/* Filter Pending/All (Right Aligned in mobile, auto in desktop) */}
-              <div className='ml-auto xl:ml-0 flex gap-1 bg-(--bg-card) border border-(--border-divider) p-1 rounded-lg h-8 items-center'>
-                <button
-                  onClick={setHistoryTab.bind(null, 'pending')}
-                  className={`px-3 py-0.5 text-xs font-bold rounded-md transition h-full flex items-center ${historyTab === 'pending' ? 'bg-(--bg-surface-neutral) shadow-xs text-amber-600' : 'text-gray-500 hover:text-amber-600 hover:bg-(--bg-hover)'}`}
-                >
-                  {t.purchases.status.pending}
-                </button>
-                <button
-                  onClick={setHistoryTab.bind(null, 'all')}
-                  className={`px-3 py-0.5 text-xs font-bold rounded-md transition h-full flex items-center ${historyTab === 'all' ? 'bg-(--bg-surface-neutral) shadow-xs text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-(--text-primary) hover:bg-(--bg-hover)'}`}
-                >
-                  {t.global.actions.all}
-                </button>
+              {/* Bulk Actions (Visible if pending tab) */}
+              {historyTab === 'pending' && history.some(i => i.status === 'pending') && (
+                <div className="flex gap-1.5 items-center">
+                  <button
+                    onClick={handleApproveAll}
+                    title={language === 'AR' ? 'موافقة الكل' : 'Approve All'}
+                    className='h-8 px-3 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors shadow-sm dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:text-emerald-400 font-bold text-xs'
+                  >
+                    <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>done_all</span>
+                    <span>{language === 'AR' ? 'موافقة الكل' : 'Approve All'}</span>
+                  </button>
+                  <button
+                    onClick={handleRejectAll}
+                    title={language === 'AR' ? 'رفض الكل' : 'Reject All'}
+                    className='h-8 px-3 inline-flex items-center justify-center gap-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors shadow-sm dark:bg-red-500/10 dark:hover:bg-red-500/20 dark:text-red-400 font-bold text-xs'
+                  >
+                    <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>close</span>
+                    <span>{language === 'AR' ? 'رفض الكل' : 'Reject All'}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Filter Tabs */}
+              <div className='ml-auto xl:ml-0 overflow-x-auto min-w-0 max-w-[full] flex'>
+                <SegmentedControl<'all' | 'pending' | 'approved' | 'rejected'>
+                  value={historyTab}
+                  onChange={(v) => setHistoryTab(v)}
+                  options={[
+                    { label: t.purchases.status.pending, value: 'pending' as const, icon: 'pending_actions', activeColor: 'amber' },
+                    { label: language === 'AR' ? 'موافق عليه' : 'Approved', value: 'approved' as const, icon: 'check_circle', activeColor: 'emerald' },
+                    { label: language === 'AR' ? 'مرفوض' : 'Rejected', value: 'rejected' as const, icon: 'cancel', activeColor: 'red' },
+                    { label: t.global.actions.all, value: 'all' as const },
+                  ]}
+                  size='xs'
+                  iconSize='--icon-md'
+                  color={color}
+                  fullWidth={false}
+                />
               </div>
             </div>
           </div>
@@ -1093,6 +1177,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               emptyMessage={t.stockAdjustment.noHistory}
               color={color}
               lite={true}
+              dense={true}
               enablePagination={true}
               enableVirtualization={false}
               pageSize='auto'

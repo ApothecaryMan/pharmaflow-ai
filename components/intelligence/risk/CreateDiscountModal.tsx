@@ -7,6 +7,7 @@ interface CreateDiscountModalProps {
   onClose: () => void;
   selectedBatchIds: string[];
   productName?: string;
+  t?: any;
 }
 
 export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
@@ -14,8 +15,9 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
   onClose,
   selectedBatchIds,
   productName,
+  t,
 }) => {
-  const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
+  const [discountType, setDiscountType] = useState<'PERCENTAGE' | 'FIXED'>('PERCENTAGE');
   const [discountValue, setDiscountValue] = useState<number>(15);
   const [validDays, setValidDays] = useState<number>(14);
 
@@ -42,9 +44,9 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
           </label>
           <div className='flex gap-3'>
             <button
-              onClick={() => setType('PERCENTAGE')}
+              onClick={() => setDiscountType('PERCENTAGE')}
               className={`flex-1 p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
-                type === 'PERCENTAGE'
+                discountType === 'PERCENTAGE'
                   ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
                   : 'border-[--border-divider] text-gray-500 hover:border-gray-300'
               }`}
@@ -53,9 +55,9 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
               <span className='text-sm font-bold'>{t?.intelligence?.risk?.discount?.percentage || 'Percentage'}</span>
             </button>
             <button
-              onClick={() => setType('FIXED')}
+              onClick={() => setDiscountType('FIXED')}
               className={`flex-1 p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
-                type === 'FIXED'
+                discountType === 'FIXED'
                   ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
                   : 'border-[--border-divider] text-gray-500 hover:border-gray-300'
               }`}
@@ -69,17 +71,17 @@ export const CreateDiscountModal: React.FC<CreateDiscountModalProps> = ({
         {/* Discount Value */}
         <div>
           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-            {type === 'PERCENTAGE' ? 'نسبة التخفيض (%)' : 'مبلغ التخفيض (ج.م)'}
+            {discountType === 'PERCENTAGE' ? 'نسبة التخفيض (%)' : 'مبلغ التخفيض (ج.م)'}
           </label>
           <input
             type='number'
             value={discountValue}
             onChange={(e) => setDiscountValue(Number(e.target.value))}
             min={1}
-            max={type === 'PERCENTAGE' ? 100 : undefined}
+            max={discountType === 'PERCENTAGE' ? 100 : undefined}
             className='w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-hidden transition-all text-lg font-bold text-center'
           />
-          {type === 'PERCENTAGE' && (
+          {discountType === 'PERCENTAGE' && (
             <div className='flex gap-2 mt-2'>
               {[10, 15, 20, 25, 30].map((val) => (
                 <button

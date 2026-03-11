@@ -174,7 +174,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         className={`
             relative flex items-center flex-wrap gap-2
             bg-(--bg-input)
-            border border-(--border-search)
+            border-2 dark:border border-(--border-search)
             transition-colors duration-0
             ${isFocused ? 'border-gray-400 dark:border-gray-500 shadow-sm' : ''}
             ${rounded === 'full' ? 'rounded-4xl px-1' : 'rounded-xl px-1'} 

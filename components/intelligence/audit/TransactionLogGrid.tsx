@@ -1,4 +1,4 @@
-import { createColumnHelper, type RowData } from '@tanstack/react-table';
+import { createColumnHelper, type RowData, type ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo } from 'react';
 import type { AuditTransaction } from '../../../types/intelligence';
@@ -25,7 +25,7 @@ export const TransactionLogGrid: React.FC<TransactionLogGridProps> = ({ data, on
 
   const columnHelper = createColumnHelper<AuditTransaction>();
 
-  const columns = useMemo(
+  const columns = useMemo<ColumnDef<AuditTransaction, any>[]>(
     () => [
       columnHelper.accessor('timestamp', {
         header: 'التوقيت',

@@ -808,8 +808,8 @@ export function TanStackTable<TData, TValue>({
       const isNameColumn = colId.includes('name');
       const isIdColumn = col.columnDef.meta?.isId ?? (colId.includes('id') || colId.includes('code'));
       const isActionColumn = colId.includes('action');
-      const isDateColumn = ['date', 'time', 'timestamp', 'visit'].some((key) => colId.includes(key)) ||
-            (colId.includes('at') && !colId.includes('csat') && !colId.includes('cat'));
+      const isDateColumn = (['date', 'time', 'timestamp', 'visit'].some((key) => colId.includes(key)) ||
+            (colId.includes('at') && !colId.includes('csat') && !colId.includes('cat'))) && !colId.includes('expiry');
       const isFlex = col.columnDef.meta?.flex ?? isNameColumn;
 
       map.set(col.id, {
@@ -890,7 +890,7 @@ export function TanStackTable<TData, TValue>({
         className={`flex flex-col flex-1 min-h-0 ${
           lite
             ? 'bg-transparent'
-            : 'rounded-2xl border border-(--border-divider) shadow-sm bg-(--bg-card) overflow-hidden'
+            : 'rounded-2xl border-2 dark:border border-(--border-divider) bg-(--bg-card) overflow-hidden'
         }`}
       >
         {/* Table Scroll Area */}
@@ -1075,8 +1075,10 @@ export function TanStackTable<TData, TValue>({
                             const targetTs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
                             
                             let dateLabel = date.toLocaleDateString();
+                            let isToday = false;
                             if (targetTs === todayTs) {
                               dateLabel = isRtl ? 'اليوم' : 'Today';
+                              isToday = true;
                             } else if (targetTs === yesterdayTs) {
                               dateLabel = isRtl ? 'أمس' : 'Yesterday';
                             }
@@ -1084,16 +1086,26 @@ export function TanStackTable<TData, TValue>({
                             const timeLabel = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                             const formattedTime = isRtl ? timeLabel.replace('AM', 'ص').replace('PM', 'م') : timeLabel;
 
-                            content = (
-                              <div className={`flex flex-col ${meta.itemsAlignClass}`}>
-                                <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
-                                  {formattedTime}
-                                </span>
-                                <span className='text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5'>
-                                  {dateLabel}
-                                </span>
-                              </div>
-                            );
+                            if (isToday) {
+                              content = (
+                                <div className={`flex flex-col ${meta.itemsAlignClass}`}>
+                                  <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
+                                    {formattedTime}
+                                  </span>
+                                </div>
+                              );
+                            } else {
+                              content = (
+                                <div className={`flex flex-col ${meta.itemsAlignClass}`}>
+                                  <span className='font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight'>
+                                    {dateLabel}
+                                  </span>
+                                  <span className='text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap -mt-0.5 tracking-tight'>
+                                    {formattedTime}
+                                  </span>
+                                </div>
+                              );
+                            }
                           }
                         }
                         
