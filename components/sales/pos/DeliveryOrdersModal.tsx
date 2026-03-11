@@ -683,30 +683,38 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
           {/* Tabs */}
           <div className='min-w-[300px]'>
-            <SegmentedControl
-              options={[
-                {
-                  label: `${t.all || 'All'} (${sales.filter((s) => s.saleType === 'delivery' && s.status !== 'completed' && s.status !== 'cancelled').length})`,
-                  value: 'all',
-                  icon: 'list',
-                },
-                {
-                  label: `${t.pending || 'Pending'} (${sales.filter((s) => s.status === 'pending' && s.saleType === 'delivery').length})`,
-                  value: 'pending',
-                  icon: 'pending',
-                },
-                {
-                  label: `${t.active || 'Active'} (${sales.filter((s) => (s.status === 'with_delivery' || s.status === 'on_way') && s.saleType === 'delivery').length})`,
-                  value: 'active',
-                  icon: 'local_shipping',
-                },
-                { label: t.history || 'History', value: 'completed', icon: 'history' },
-              ]}
-              value={activeTab}
-              onChange={(val) => setActiveTab(val as DeliveryTab)}
-              size='sm'
-              variant='onCard'
-            />
+            {(() => {
+              const allCount = sales.filter((s) => s.saleType === 'delivery' && s.status !== 'completed' && s.status !== 'cancelled').length;
+              const pendingCount = sales.filter((s) => s.status === 'pending' && s.saleType === 'delivery').length;
+              const activeCount = sales.filter((s) => (s.status === 'with_delivery' || s.status === 'on_way') && s.saleType === 'delivery').length;
+
+              return (
+                <SegmentedControl
+                  options={[
+                    {
+                      label: `${t.all || 'All'} (${allCount})`,
+                      value: 'all',
+                      icon: 'list',
+                    },
+                    {
+                      label: `${t.pending || 'Pending'} (${pendingCount})`,
+                      value: 'pending',
+                      icon: 'pending',
+                    },
+                    {
+                      label: `${t.active || 'Active'} (${activeCount})`,
+                      value: 'active',
+                      icon: 'local_shipping',
+                    },
+                    { label: t.history || 'History', value: 'completed', icon: 'history' },
+                  ]}
+                  value={activeTab}
+                  onChange={(val) => setActiveTab(val as DeliveryTab)}
+                  size='sm'
+                  variant='onCard'
+                />
+              );
+            })()}
           </div>
         </div>
       }

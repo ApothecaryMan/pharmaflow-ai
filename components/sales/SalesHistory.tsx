@@ -337,7 +337,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
               {t.totalRevenue}
             </span>
             <span className={`text-xl font-bold text-primary-900 dark:text-primary-100`}>
-              ${sales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
+              ${totalRevenue.toFixed(2)}
             </span>
           </div>
         )}

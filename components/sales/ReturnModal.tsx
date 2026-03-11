@@ -21,6 +21,11 @@ interface ReturnModalProps {
   currentEmployeeId?: string;
 }
 
+// --- Constants ---
+const PHARMACIST_REFUND_LIMIT_PER_INVOICE = 1000;
+const PHARMACIST_DAILY_REFUND_LIMIT = 2000;
+const CASHIER_REFUND_LIMIT_PER_INVOICE = 500;
+
 export const ReturnModal: React.FC<ReturnModalProps> = ({
   isOpen,
   sale,
@@ -161,25 +166,23 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
 
       // --- Pharmacist Threshold Validation ---
       if (userRole === 'pharmacist') {
-        // Limit 1: Per Invoice (1000 EGP)
-        const REFUND_LIMIT_PER_INVOICE = 1000;
-        if (calculateRefund > REFUND_LIMIT_PER_INVOICE) {
+        // Limit 1: Per Invoice
+        if (calculateRefund > PHARMACIST_REFUND_LIMIT_PER_INVOICE) {
           const errorMsg =
             language === 'AR'
-              ? `خطأ: لا يمكن استرجاع مبلغ أكبر من ${REFUND_LIMIT_PER_INVOICE} جنيه في العملية الواحدة للصيدلي. يرجى طلب موافقة المدير.`
-              : `Error: Pharmacists cannot refund more than ${REFUND_LIMIT_PER_INVOICE} EGP per invoice. Please request manager approval.`;
+              ? `خطأ: لا يمكن استرجاع مبلغ أكبر من ${PHARMACIST_REFUND_LIMIT_PER_INVOICE} جنيه في العملية الواحدة للصيدلي. يرجى طلب موافقة المدير.`
+              : `Error: Pharmacists cannot refund more than ${PHARMACIST_REFUND_LIMIT_PER_INVOICE} EGP per invoice. Please request manager approval.`;
           setValidationError(errorMsg);
           return;
         }
 
-        // Limit 2: Daily Total (2000 EGP)
-        const DAILY_REFUND_LIMIT = 2000;
+        // Limit 2: Daily Total
         const projectedDailyTotal = (currentDailyRefunds || 0) + calculateRefund;
-        if (projectedDailyTotal > DAILY_REFUND_LIMIT) {
+        if (projectedDailyTotal > PHARMACIST_DAILY_REFUND_LIMIT) {
           const errorMsg =
             language === 'AR'
-              ? `خطأ: تم تجاوز الحد اليومي للمرتجعات (${DAILY_REFUND_LIMIT} جنيه). الإجمالي الحالي: ${currentDailyRefunds?.toFixed(2)}, المبلغ المطلوب: ${calculateRefund.toFixed(2)}. يرجى طلب موافقة المدير.`
-              : `Error: Daily refund limit exceeded (${DAILY_REFUND_LIMIT} EGP). Current: ${currentDailyRefunds?.toFixed(2)}, Requested: ${calculateRefund.toFixed(2)}. Please request manager approval.`;
+              ? `خطأ: تم تجاوز الحد اليومي للمرتجعات (${PHARMACIST_DAILY_REFUND_LIMIT} جنيه). الإجمالي الحالي: ${currentDailyRefunds?.toFixed(2)}, المبلغ المطلوب: ${calculateRefund.toFixed(2)}. يرجى طلب موافقة المدير.`
+              : `Error: Daily refund limit exceeded (${PHARMACIST_DAILY_REFUND_LIMIT} EGP). Current: ${currentDailyRefunds?.toFixed(2)}, Requested: ${calculateRefund.toFixed(2)}. Please request manager approval.`;
           setValidationError(errorMsg);
           return;
         }
@@ -199,13 +202,12 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           return;
         }
 
-        // Limit 2: Per Invoice (500 EGP)
-        const CASHIER_REFUND_LIMIT = 500;
-        if (calculateRefund > CASHIER_REFUND_LIMIT) {
+        // Limit 2: Per Invoice
+        if (calculateRefund > CASHIER_REFUND_LIMIT_PER_INVOICE) {
           const errorMsg =
             language === 'AR'
-              ? `خطأ: لا يمكن للكاشير استرجاع مبلغ أكبر من ${CASHIER_REFUND_LIMIT} جنيه في العملية الواحدة.`
-              : `Error: Cashiers cannot refund more than ${CASHIER_REFUND_LIMIT} EGP per invoice.`;
+              ? `خطأ: لا يمكن للكاشير استرجاع مبلغ أكبر من ${CASHIER_REFUND_LIMIT_PER_INVOICE} جنيه في العملية الواحدة.`
+              : `Error: Cashiers cannot refund more than ${CASHIER_REFUND_LIMIT_PER_INVOICE} EGP per invoice.`;
           setValidationError(errorMsg);
           return;
         }

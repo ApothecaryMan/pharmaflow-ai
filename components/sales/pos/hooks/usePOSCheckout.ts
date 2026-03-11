@@ -83,7 +83,7 @@ export const usePOSCheckout = ({
       const startTime = activeTab?.firstItemAt || activeTab?.createdAt;
       let processingTimeMinutes: number | undefined;
       if (startTime) {
-        const rawMinutes = Math.round((Date.now() - startTime) / 6000) / 10;
+        const rawMinutes = Math.round(((Date.now() - startTime) / 60000) * 10) / 10;
         processingTimeMinutes = Math.max(0.1, Math.min(rawMinutes, 60));
       }
 
