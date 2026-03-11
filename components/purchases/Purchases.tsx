@@ -819,7 +819,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     const uniqueOrderId = getUniqueOrderId();
 
     const purchase: Purchase = {
-      id: getVerifiedDate().getTime().toString(),
+      id: idGenerator.generate('purchases'),
       date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',
@@ -887,7 +887,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     const uniqueOrderId = getUniqueOrderId();
 
     const purchase: Purchase = {
-      id: getVerifiedDate().getTime().toString(),
+      id: idGenerator.generate('purchases'),
       date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',

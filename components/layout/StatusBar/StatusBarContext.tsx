@@ -1,6 +1,8 @@
 import React, { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
 import { timeService } from '../../../services/timeService';
 import { storage } from '../../../utils/storage';
+import { idGenerator } from '../../../utils/idGenerator';
+import { StorageKeys } from '../../../config/storageKeys';
 
 // Types
 export interface Notification {
@@ -44,13 +46,14 @@ export interface StatusBarContextType {
   syncTime: () => Promise<boolean>;
 }
 
-const LAST_TRANSACTION_KEY = 'pharmaflow_last_transaction';
-const NOTIFICATIONS_KEY = 'pharmaflow_notifications';
+const LAST_TRANSACTION_KEY = StorageKeys.LAST_TRANSACTION;
+const NOTIFICATIONS_KEY = StorageKeys.NOTIFICATIONS;
 
 const loadLastTransaction = (): number => {
   try {
-    const stored = localStorage.getItem(LAST_TRANSACTION_KEY);
-    return stored ? parseInt(stored, 10) : 0;
+    const stored = storage.get<string | number | null>(LAST_TRANSACTION_KEY, null);
+    if (!stored) return 0;
+    return typeof stored === 'number' ? stored : parseInt(stored, 10);
   } catch {
     return 0;
   }
@@ -58,11 +61,9 @@ const loadLastTransaction = (): number => {
 
 const loadNotifications = (): Notification[] => {
   try {
-    const stored = localStorage.getItem(NOTIFICATIONS_KEY);
-    if (!stored) return [];
-    const parsed = JSON.parse(stored);
+    const stored = storage.get<Notification[]>(NOTIFICATIONS_KEY, []);
     // Convert timestamp strings back to Date objects
-    return parsed.map((n: any) => ({
+    return stored.map((n: any) => ({
       ...n,
       timestamp: new Date(n.timestamp),
     }));
@@ -114,7 +115,7 @@ export const StatusBarProvider: React.FC<{ children: ReactNode }> = ({ children 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const newNotification: Notification = {
       ...notification,
-      id: timeService.getVerifiedDate().getTime().toString(),
+      id: idGenerator.generate('notification'),
       timestamp: timeService.getVerifiedDate(),
     };
     setState((prev) => ({

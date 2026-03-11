@@ -6,6 +6,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
 import { useSmartDirection } from '../common/SmartInputs';
+import { idGenerator } from '../../utils/idGenerator';
 
 interface ReturnModalProps {
   isOpen: boolean;
@@ -255,7 +256,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
     });
 
     const returnData: Return = {
-      id: `ret_${getVerifiedDate().getTime()}`,
+      id: idGenerator.generate('returns'),
       saleId: sale.id,
       date: getVerifiedDate().toISOString(),
       returnType: isAllSelected ? 'full' : 'partial',

@@ -57,6 +57,8 @@ export const StorageKeys = {
   // Time Service
   TIME_OFFSET: 'pharmaflow_time_offset',
   LAST_SYNC: 'pharmaflow_last_sync',
+  LAST_TRANSACTION: 'pharmaflow_last_transaction',
+  NOTIFICATIONS: 'pharmaflow_notifications',
 } as const;
 
 export type StorageKeys = (typeof StorageKeys)[keyof typeof StorageKeys];

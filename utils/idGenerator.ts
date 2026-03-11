@@ -32,6 +32,9 @@ export type EntityType =
   | 'returnItem'
   | 'branches'
   | 'customers-serial'
+  | 'notification'
+  | 'barcodes'
+  | 'receipts'
   | 'generic';
 
 // Sequence Map Interface
@@ -127,6 +130,15 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
         break;
       case 'batch':
         data = storage.get(StorageKeys.STOCK_BATCHES, []);
+        break;
+      case 'notification':
+        data = storage.get(StorageKeys.NOTIFICATIONS, []);
+        break;
+      case 'barcodes':
+        data = storage.get(StorageKeys.LABEL_TEMPLATES, []);
+        break;
+      case 'receipts':
+        data = storage.get(StorageKeys.RECEIPT_TEMPLATES, []);
         break;
       // Transactions are nested in shifts, harder to heal efficiently,
       // but usually shift IDs are unique enough or we can scan all shifts.

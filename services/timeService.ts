@@ -42,11 +42,13 @@ class TimeService {
       const storedSync = storage.get<string | number | null>(StorageKeys.LAST_SYNC, null);
 
       if (storedOffset !== null) {
-        this.offset = typeof storedOffset === 'number' ? storedOffset : parseInt(storedOffset, 10);
+        const parsedOffset = typeof storedOffset === 'number' ? storedOffset : parseInt(storedOffset, 10);
+        this.offset = isNaN(parsedOffset) ? 0 : parsedOffset;
       }
 
       if (storedSync !== null) {
-        this.lastSyncTime = typeof storedSync === 'number' ? storedSync : parseInt(storedSync, 10);
+        const parsedSync = typeof storedSync === 'number' ? storedSync : parseInt(storedSync, 10);
+        this.lastSyncTime = isNaN(parsedSync) ? 0 : parsedSync;
       }
     } catch (error) {
       console.warn('Failed to load time offset from storage:', error);
@@ -120,6 +122,7 @@ class TimeService {
         storage.set(StorageKeys.LAST_SYNC, this.lastSyncTime.toString());
 
         console.log(`Time synced via ${provider}. Offset: ${this.offset}ms`);
+        this.isSyncing = false;
         return true;
       } catch (error) {
         console.warn(`Time sync failed for ${provider}:`, error);
@@ -129,9 +132,7 @@ class TimeService {
 
     // All providers failed - use local time as fallback
     console.warn(
-      '[TimeService] All external time sources failed. Using local system time as fallback.\n' +
-        'This is normal in development mode without Netlify Functions.\n' +
-        'In production, ensure at least one time API is accessible.'
+      '[TimeService] All external time sources failed. Using local system time as fallback.'
     );
 
     // Reset offset to 0 (trust local time) and mark as synced to prevent retry spam
@@ -141,8 +142,8 @@ class TimeService {
     storage.set(StorageKeys.LAST_SYNC, this.lastSyncTime.toString());
 
     this.isSyncing = false;
-    // Return true to signal "sync complete" and stop retry loop
-    return true;
+    // Return false to signal that sync was NOT successful (using fallback)
+    return false;
   }
 
   /**

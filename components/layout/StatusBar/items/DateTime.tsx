@@ -94,14 +94,14 @@ export const DateTime: React.FC<DateTimeProps> = ({
   };
 
   const getTooltip = () => {
-    if (state.isOnline && state.timeSynced) return '✅ Exact time from server';
+    if (state.isOnline && state.timeSynced) return 'Exact time from server';
     if (!state.isOnline && state.timeSynced) {
       const lastSync = state.lastSyncTime
         ? new Date(state.lastSyncTime).toLocaleTimeString()
         : 'Unknown';
-      return `⚠️ Offline Mode (Time Verified) • Last synced: ${lastSync}`;
+      return `Offline Mode (Time Verified) • Last synced: ${lastSync}`;
     }
-    return '❌ Unverified Device Time';
+    return 'Unverified Device Time';
   };
 
   return (

@@ -9,6 +9,7 @@ import { SearchDropdown, useSearchKeyboardNavigation } from '../common/SearchDro
 import { SearchInput } from '../common/SearchInput';
 import { useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
+import { idGenerator } from '../../utils/idGenerator';
 import { type PrintLabelItem, printLabels } from './LabelPrinter';
 
 interface BarcodePrinterProps {
@@ -192,7 +193,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
       }
 
       // Add new item
-      const newId = getVerifiedDate().getTime().toString();
+      const newId = idGenerator.generate('barcodes');
       const newItem: QueueItem = {
         id: newId,
         drug,

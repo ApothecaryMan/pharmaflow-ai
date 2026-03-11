@@ -14,6 +14,7 @@ import { Modal } from '../common/Modal';
 import { ScreenCalibration } from '../common/ScreenCalibration';
 import { useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
+import { idGenerator } from '../../utils/idGenerator';
 import { BarcodePreview } from './BarcodePreview';
 import {
   DEFAULT_LABEL_DESIGN,
@@ -379,7 +380,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
   const saveNewTemplate = () => {
     if (!newTemplateName.trim()) return;
-    const newId = getVerifiedDate().getTime().toString();
+    const newId = idGenerator.generate('barcodes');
     const design = getDesignState();
     design.activeTemplateId = newId;
 
@@ -443,7 +444,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       return;
     }
 
-    const id = `custom-${getVerifiedDate().getTime()}`;
+    const id = `custom-${idGenerator.generate('generic')}`;
     const newEl: LabelElement = {
       id,
       type,
@@ -468,7 +469,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       const reader = new FileReader();
       reader.onload = (event) => {
         const result = event.target?.result as string;
-        const id = `img-${getVerifiedDate().getTime()}`;
+        const id = `img-${idGenerator.generate('generic')}`;
         const newEl: LabelElement = {
           id,
           type: 'image',
@@ -681,7 +682,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
         saveToHistory();
         const newEl = {
           ...el,
-          id: getVerifiedDate().getTime().toString(),
+          id: idGenerator.generate('generic'),
           x: el.x + 2,
           y: el.y + 2,
         };

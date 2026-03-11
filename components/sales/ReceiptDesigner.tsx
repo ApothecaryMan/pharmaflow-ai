@@ -10,6 +10,7 @@ import { useStatusBar } from '../layout/StatusBar';
 import { generateInvoiceHTML, type InvoiceTemplateOptions } from '../sales/InvoiceTemplate';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
 import { useShift } from '../../hooks/useShift';
+import { idGenerator } from '../../utils/idGenerator';
 
 interface ReceiptDesignerProps {
   color: string;
@@ -120,7 +121,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   const handleCreateTemplate = () => {
     if (!newTemplateName.trim()) return;
     const newTemplate: SavedTemplate = {
-      id: getVerifiedDate().getTime().toString(),
+      id: idGenerator.generate('receipts'),
       name: newTemplateName,
       isDefault: false,
       options: { ...options },
