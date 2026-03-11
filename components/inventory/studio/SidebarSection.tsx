@@ -5,7 +5,8 @@ interface SidebarSectionProps {
   title: string;
   icon: string;
   children: React.ReactNode;
-  defaultOpen?: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
   color?: string;
 }
 
@@ -13,16 +14,16 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   title,
   icon,
   children,
-  defaultOpen = true,
+  isOpen,
+  onToggle,
   color = 'emerald',
 }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className='bg-white/50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-xs transition-all duration-300 group overflow-hidden'>
+    <div className='bg-white/50 dark:bg-muted/40 rounded-2xl border border-gray-100 dark:border-border/50 shadow-xs transition-all duration-300 group overflow-hidden'>
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between p-3.5 bg-gray-50/30 dark:bg-gray-800/20 hover:bg-gray-100/50 dark:hover:bg-gray-800/40 transition-all relative ${isOpen ? 'border-b border-gray-100 dark:border-gray-800/50' : ''}`}
+        onClick={onToggle}
+        className={`w-full flex items-center justify-between p-3.5 bg-gray-50/30 dark:bg-muted/20 hover:bg-gray-100/50 dark:hover:bg-accent transition-all relative ${isOpen ? 'border-b border-gray-100 dark:border-border/50' : ''}`}
       >
         {/* Left Accent */}
         <div
@@ -31,10 +32,10 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
 
         <div className='flex items-center gap-3'>
           <div
-            className={`w-7 h-7 rounded-lg bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center border border-primary-100/50 dark:border-primary-800/20`}
+            className={`w-7 h-7 rounded-lg bg-primary-50 dark:bg-muted flex items-center justify-center border border-primary-100/50 dark:border-border`}
           >
             <span
-              className={`material-symbols-rounded text-base text-primary-600 dark:text-primary-400`}
+              className={`material-symbols-rounded text-base text-primary-600 dark:text-muted-foreground`}
             >
               {icon}
             </span>
@@ -45,7 +46,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
         </div>
         <div className='flex items-center gap-2'>
           <span
-            className={`material-symbols-rounded text-gray-400 text-sm transform transition-all duration-300 ${isOpen ? 'rotate-180 text-blue-500' : 'group-hover:text-blue-400'}`}
+            className={`material-symbols-rounded text-gray-400 text-sm transform transition-all duration-300 ${isOpen ? 'rotate-180 text-primary-500 dark:text-foreground' : 'group-hover:text-primary-400 dark:group-hover:text-muted-foreground'}`}
           >
             expand_more
           </span>

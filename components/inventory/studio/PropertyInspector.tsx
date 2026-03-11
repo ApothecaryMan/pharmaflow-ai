@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useState } from 'react';
 import type { Drug } from '../../../types';
 import { CARD_BASE } from '../../../utils/themeStyles';
 import { SearchInput } from '../../common/SearchInput';
@@ -75,13 +76,15 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
   showHitboxCalibration,
   setShowHitboxCalibration,
 }) => {
+  const [openSection, setOpenSection] = useState<'general' | 'calibration'>('general');
+
   return (
     <div className={`w-full lg:w-80 ${CARD_BASE} rounded-3xl flex flex-col overflow-hidden`}>
       <div
-        className={`px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30`}
+        className={`px-4 py-3 border-b border-gray-100 dark:border-border bg-gray-50/50 dark:bg-muted/30`}
       >
         <div className='flex items-center gap-2'>
-          <span className={`material-symbols-rounded text-sm text-primary-500`}>
+          <span className={`material-symbols-rounded text-sm text-primary-500 dark:text-muted-foreground`}>
             {selectedElementId ? 'edit_note' : 'dashboard_customize'}
           </span>
           <h3
@@ -95,7 +98,13 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
       <div className='flex-1 overflow-y-auto overscroll-contain p-4 space-y-6'>
         {!selectedElementId ? (
           <>
-            <SidebarSection title='General Settings' icon='settings' color={color}>
+            <SidebarSection
+              title='General Settings'
+              icon='settings'
+              color={color}
+              isOpen={openSection === 'general'}
+              onToggle={() => setOpenSection(openSection === 'general' ? 'calibration' : 'general')}
+            >
               {inventory.length > 1 && (
                 <div>
                   <label className='text-xs font-bold text-gray-500 uppercase block mb-2'>
@@ -106,7 +115,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       value={searchTerm}
                       onSearchChange={onSearchChange}
                       placeholder={t.searchPlaceholder}
-                      className='p-2.5 rounded-xl border-gray-200 dark:border-gray-800 ps-10'
+                      className='p-2.5 rounded-xl border-gray-200 dark:border-border ps-10'
                       style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
                     />
                     {searchTerm && (
@@ -124,11 +133,11 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     )}
                   </div>
                   {selectedDrug && (
-                    <div className='mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex justify-between items-center'>
-                      <span className='text-sm font-bold text-blue-700 dark:text-blue-300'>
+                    <div className='mt-2 p-3 bg-primary-50 dark:bg-muted rounded-xl flex justify-between items-center border border-primary-100/50 dark:border-border'>
+                      <span className='text-sm font-bold text-primary-700 dark:text-foreground'>
                         {selectedDrug.name}
                       </span>
-                      <span className='material-symbols-rounded text-sm text-blue-500'>
+                      <span className='material-symbols-rounded text-sm text-primary-500 dark:text-muted-foreground'>
                         check_circle
                       </span>
                     </div>
@@ -138,14 +147,14 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
 
               <div className='pt-2 space-y-3'>
                 <div>
-                  <label className='flex items-center gap-2 cursor-pointer p-3 bg-gray-50 dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors'>
+                  <label className='flex items-center gap-2 cursor-pointer p-3 bg-gray-50 dark:bg-muted rounded-xl border border-gray-100 dark:border-border hover:bg-gray-100 dark:hover:bg-accent transition-colors'>
                     <input
                       type='checkbox'
                       checked={showPairedPreview}
                       onChange={(e) => setShowPairedPreview(e.target.checked)}
                       className={`w-4 h-4 rounded-sm text-primary-600 focus:ring-primary-500`}
                     />
-                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <span className='text-sm font-medium text-gray-700 dark:text-muted-foreground'>
                       {t.printSettings.pairedPreview}
                     </span>
                   </label>
@@ -155,14 +164,14 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                 </div>
 
                 <div>
-                  <label className='flex items-center gap-2 cursor-pointer p-3 bg-gray-50 dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors'>
+                  <label className='flex items-center gap-2 cursor-pointer p-3 bg-gray-50 dark:bg-muted rounded-xl border border-gray-100 dark:border-border hover:bg-gray-100 dark:hover:bg-accent transition-colors'>
                     <input
                       type='checkbox'
                       checked={showPrintBorders}
                       onChange={(e) => setShowPrintBorders(e.target.checked)}
                       className={`w-4 h-4 rounded-sm text-primary-600 focus:ring-primary-500`}
                     />
-                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <span className='text-sm font-medium text-gray-700 dark:text-muted-foreground'>
                       {t.printSettings.showBorders}
                     </span>
                   </label>
@@ -173,7 +182,15 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
               </div>
             </SidebarSection>
 
-            <SidebarSection title={t.printSettings.printCalibration} icon='tune' color={color}>
+            <SidebarSection
+              title={t.printSettings.printCalibration}
+              icon='tune'
+              color={color}
+              isOpen={openSection === 'calibration'}
+              onToggle={() =>
+                setOpenSection(openSection === 'calibration' ? 'general' : 'calibration')
+              }
+            >
               <div className='space-y-4'>
                 {/* Horizontal Offset */}
                 <div className='space-y-2'>
@@ -187,7 +204,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       </span>
                     </div>
                     <span
-                      className={`text-xs font-bold px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300`}
+                      className={`text-xs font-bold px-2 py-0.5 rounded-full bg-primary-100 text-primary-700 dark:bg-muted dark:text-muted-foreground border dark:border-border`}
                     >
                       {printOffsetX > 0 ? '+' : ''}
                       {printOffsetX}mm
@@ -200,7 +217,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     step='0.5'
                     value={printOffsetX}
                     onChange={(e) => setPrintOffsetX(parseFloat(e.target.value))}
-                    className={`w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-primary-500`}
+                    className={`w-full h-1.5 bg-gray-200 dark:bg-muted rounded-full appearance-none cursor-pointer accent-primary-500 dark:accent-foreground`}
                   />
                 </div>
 
@@ -216,7 +233,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       </span>
                     </div>
                     <span
-                      className={`text-xs font-bold px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300`}
+                      className={`text-xs font-bold px-2 py-0.5 rounded-full bg-primary-100 text-primary-700 dark:bg-muted dark:text-muted-foreground border dark:border-border`}
                     >
                       {printOffsetY > 0 ? '+' : ''}
                       {printOffsetY}mm
@@ -229,7 +246,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     step='0.5'
                     value={printOffsetY}
                     onChange={(e) => setPrintOffsetY(parseFloat(e.target.value))}
-                    className={`w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-primary-500`}
+                    className={`w-full h-1.5 bg-gray-200 dark:bg-muted rounded-full appearance-none cursor-pointer accent-primary-500 dark:accent-foreground`}
                   />
                 </div>
               </div>
@@ -243,7 +260,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                 disabled={printOffsetX === 0 && printOffsetY === 0}
                 className={`w-full py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
                   printOffsetX === 0 && printOffsetY === 0
-                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                    ? 'bg-gray-100 dark:bg-muted text-gray-400 cursor-not-allowed'
                     : `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-800/40`
                 }`}
               >
@@ -316,7 +333,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       inputMode='decimal'
                       value={selectedElement.x}
                       onChange={(e) => handlePropertyChange('x', parseFloat(e.target.value))}
-                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
+                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-muted border border-gray-200 dark:border-border text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
                     />
                   </div>
                 </div>
@@ -331,7 +348,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       inputMode='decimal'
                       value={selectedElement.y}
                       onChange={(e) => handlePropertyChange('y', parseFloat(e.target.value))}
-                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
+                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-muted border border-gray-200 dark:border-border text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
                     />
                   </div>
                 </div>
@@ -346,7 +363,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     inputMode='numeric'
                     value={selectedElement.fontSize}
                     onChange={(e) => handlePropertyChange('fontSize', parseInt(e.target.value))}
-                    className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
+                    className='w-full p-2 rounded-xl bg-gray-50 dark:bg-muted border border-gray-200 dark:border-border text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
                   />
                 </div>
               )}
@@ -355,14 +372,10 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                   <label className='text-[10px] font-bold text-gray-400 uppercase block mb-1'>
                     Barcode Style
                   </label>
-                  <select
-                    value={selectedElement.barcodeFormat || 'code128'}
-                    onChange={(e) => handlePropertyChange('barcodeFormat', e.target.value)}
-                    className='w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm'
-                  >
-                    <option value='code128'>Code 128</option>
-                    <option value='code39'>Code 39</option>
-                  </select>
+                  <div className='p-2.5 rounded-xl bg-gray-50/50 dark:bg-muted/30 border border-gray-100 dark:border-border flex items-center gap-2'>
+                    <span className='material-symbols-rounded text-base text-primary-500 dark:text-muted-foreground'>barcode</span>
+                    <span className='text-xs font-bold text-gray-700 dark:text-gray-300'>Code 128</span>
+                  </div>
                 </div>
               )}
               {selectedElement.type === 'text' && (
@@ -392,7 +405,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                     value={selectedElement.content || ''}
                     onChange={(e) => handlePropertyChange('content', e.target.value)}
                     dir={selectedContentDir}
-                    className='w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm'
+                    className='w-full p-2 rounded-lg bg-gray-50 dark:bg-muted border border-gray-200 dark:border-border text-sm'
                   />
                 </div>
               )}
@@ -407,7 +420,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       inputMode='decimal'
                       value={selectedElement.width}
                       onChange={(e) => handlePropertyChange('width', parseFloat(e.target.value))}
-                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
+                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-muted border border-gray-200 dark:border-border text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
                     />
                   </div>
                   <div className='space-y-1.5'>
@@ -419,7 +432,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                       inputMode='decimal'
                       value={selectedElement.height}
                       onChange={(e) => handlePropertyChange('height', parseFloat(e.target.value))}
-                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
+                      className='w-full p-2 rounded-xl bg-gray-50 dark:bg-muted border border-gray-200 dark:border-border text-xs focus:ring-1 focus:ring-blue-500 outline-hidden transition-all'
                     />
                   </div>
                 </div>
@@ -477,7 +490,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                   </div>
                 )}
                 {selectedElement.type === 'qrcode' && (
-                  <div className='p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-[10px] text-blue-700 dark:text-blue-300'>
+                  <div className='p-3 bg-primary-50 dark:bg-muted rounded-xl text-[10px] text-primary-700 dark:text-muted-foreground border border-primary-100/50 dark:border-border'>
                     {t.qrSourceHint ||
                       'QR Code content is automatically generated from the selected barcode source.'}
                   </div>
@@ -485,8 +498,8 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
               </div>
               {/* Hitbox Calibration */}
               {/* Hitbox Calibration */}
-              <div className='bg-gray-50/50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-700/50 overflow-hidden'>
-                <div className='flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700/50'>
+              <div className='bg-gray-50/50 dark:bg-muted/30 rounded-xl border border-gray-100 dark:border-border overflow-hidden'>
+                <div className='flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-muted/50 border-b border-gray-100 dark:border-border'>
                   <div className='flex items-center gap-2'>
                     <span className='material-symbols-rounded text-sm text-gray-500'>tune</span>
                     <span className='text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
@@ -501,14 +514,14 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                         handlePropertyChange('hitboxWidth' as any, undefined);
                         handlePropertyChange('hitboxHeight' as any, undefined);
                       }}
-                      className='p-1 text-gray-400 hover:text-blue-500 transition-colors'
+                      className='p-1 text-gray-400 hover:text-primary-500 transition-colors'
                       title='Reset Calibration'
                     >
                       <span className='material-symbols-rounded text-xs'>restart_alt</span>
                     </button>
                     <button
                       onClick={() => setShowHitboxCalibration(!showHitboxCalibration)}
-                      className='p-1 text-gray-400 hover:text-blue-500 transition-colors'
+                      className='p-1 text-gray-400 hover:text-primary-500 transition-colors'
                     >
                       <span
                         className={`material-symbols-rounded text-sm transform transition-transform ${showHitboxCalibration ? 'rotate-180' : ''}`}
@@ -537,7 +550,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                         onChange={(e) =>
                           handlePropertyChange('hitboxOffsetX' as any, parseFloat(e.target.value))
                         }
-                        className='w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500'
+                        className='w-full h-1 bg-gray-200 dark:bg-border rounded-lg appearance-none cursor-pointer accent-blue-500 dark:accent-foreground'
                       />
                     </div>
                     <div>
@@ -557,7 +570,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                         onChange={(e) =>
                           handlePropertyChange('hitboxOffsetY' as any, parseFloat(e.target.value))
                         }
-                        className='w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500'
+                        className='w-full h-1 bg-gray-200 dark:bg-border rounded-lg appearance-none cursor-pointer accent-blue-500 dark:accent-foreground'
                       />
                     </div>
                     <div>
@@ -582,7 +595,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                         onChange={(e) =>
                           handlePropertyChange('hitboxWidth' as any, parseFloat(e.target.value))
                         }
-                        className='w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500'
+                        className='w-full h-1 bg-gray-200 dark:bg-border rounded-lg appearance-none cursor-pointer accent-blue-500 dark:accent-foreground'
                       />
                     </div>
                     <div>
@@ -607,7 +620,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                         onChange={(e) =>
                           handlePropertyChange('hitboxHeight' as any, parseFloat(e.target.value))
                         }
-                        className='w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500'
+                        className='w-full h-1 bg-gray-200 dark:bg-border rounded-lg appearance-none cursor-pointer accent-blue-500 dark:accent-foreground'
                       />
                     </div>
                   </div>
@@ -616,7 +629,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
 
               <button
                 onClick={() => toggleVisibility(selectedElement.id)}
-                className='w-full py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100'
+                className='w-full py-2.5 bg-red-500/10 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white dark:hover:bg-red-500 dark:hover:text-white transition-all duration-300 border border-red-200 dark:border-red-500/30 shadow-sm active:scale-95'
               >
                 {t.inspector.remove}
               </button>
