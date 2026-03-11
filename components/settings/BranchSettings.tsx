@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { branchService } from '../../services/branchService';
 import { employeeService } from '../../services/hr/employeeService';
 import type { Branch, Employee } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { Modal } from '../common/Modal';
 import { useData } from '../../services/DataContext';
+import { useSettings } from '../../context';
 
 interface BranchSettingsProps {
   language: 'EN' | 'AR';
@@ -14,22 +15,24 @@ interface BranchSettingsProps {
 export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color }) => {
   const t = TRANSLATIONS[language];
   const { refreshAll } = useData();
+  const { activeBranchId } = useSettings();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Partial<Branch> | null>(null);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const allBranches = branchService.getAll();
     const allEmployees = await employeeService.getAll('ALL');
     setBranches(allBranches);
     setEmployees(allEmployees);
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
   const handleOpenModal = (branch?: Branch) => {
     if (branch) {
       setEditingBranch(branch);
@@ -46,49 +49,69 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
   };
 
   const handleSave = async () => {
-    if (!editingBranch?.name || !editingBranch?.code) return;
+    if (!editingBranch?.name || !editingBranch?.code || isSubmitting) return;
 
-    let savedBranch: Branch;
-    if (editingBranch.id) {
-      savedBranch = branchService.update(editingBranch.id, editingBranch);
-    } else {
-      savedBranch = branchService.create(editingBranch as Omit<Branch, 'id' | 'createdAt' | 'updatedAt'>);
-    }
-
-    // Update employee branch assignments efficiently
-    const allEmployees = await employeeService.getAll('ALL');
-    const updatedEmployees = allEmployees.map(emp => {
-      if (selectedEmployees.includes(emp.id)) {
-        return { ...emp, branchId: savedBranch.id };
-      } else if (emp.branchId === savedBranch.id) {
-        // If they were in this branch but now deselected, clear it
-        return { ...emp, branchId: '' };
+    setIsSubmitting(true);
+    try {
+      let savedBranch: Branch;
+      if (editingBranch.id) {
+        savedBranch = branchService.update(editingBranch.id, editingBranch);
+      } else {
+        savedBranch = branchService.create(editingBranch as Omit<Branch, 'id' | 'createdAt' | 'updatedAt'>);
       }
-      return emp;
-    }).filter(emp => {
-      // Small optimization: only include those that actually changed
-      const original = allEmployees.find(e => e.id === emp.id);
-      return original?.branchId !== emp.branchId;
-    });
 
-    if (updatedEmployees.length > 0) {
-      // Use EmployeeService.save to update matching branch employees
-      // and keep others as is.
-      await employeeService.save(updatedEmployees, 'ALL');
+      // Update employee branch assignments efficiently
+      const allEmployees = await employeeService.getAll('ALL');
+      const updatedEmployees = allEmployees.map(emp => {
+        if (selectedEmployees.includes(emp.id)) {
+          return { ...emp, branchId: savedBranch.id };
+        } else if (emp.branchId === savedBranch.id) {
+          // If they were in this branch but now deselected, clear it
+          return { ...emp, branchId: '' };
+        }
+        return emp;
+      }).filter(emp => {
+        // Small optimization: only include those that actually changed
+        const original = allEmployees.find(e => e.id === emp.id);
+        return original?.branchId !== emp.branchId;
+      });
+
+      if (updatedEmployees.length > 0) {
+        // Use EmployeeService.save to update matching branch employees
+        // and keep others as is.
+        await employeeService.save(updatedEmployees, 'ALL');
+      }
+      
+      setIsModalOpen(false);
+      await loadData();
+      await refreshAll(); // Keep global state in sync
+    } catch (err) {
+      console.error("Failed to save branch:", err);
+      alert("Failed to save branch changes. Please check console.");
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    setIsModalOpen(false);
-    await loadData();
-    await refreshAll(); // Keep global state in sync
   };
 
   const handleDelete = async (id: string, name: string) => {
+    if (id === activeBranchId) {
+      alert(language === 'AR' 
+        ? 'لا يمكن الغاء تفعيل الفرع الحالي النشط' 
+        : 'Cannot deactivate the currently active branch');
+      return;
+    }
+
     if (window.confirm(`${t.settings.deleteBranchConfirm || 'Are you sure you want to deactivate this branch?'} (${name})`)) {
-      // Hardening: Instead of hard deletion, we deactivate (Soft Delete/Archive)
-      // because historical records (sales/inventory) might depend on this ID.
-      await branchService.update(id, { status: 'inactive' });
-      await loadData();
-      await refreshAll(); // Keep global state in sync
+      setIsSubmitting(true);
+      try {
+        // Hardening: Instead of hard deletion, we deactivate (Soft Delete/Archive)
+        // because historical records (sales/inventory) might depend on this ID.
+        await branchService.update(id, { status: 'inactive' });
+        await loadData();
+        await refreshAll(); // Keep global state in sync
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -151,8 +174,9 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
                 Edit
               </button>
               <button
+                disabled={isSubmitting}
                 onClick={() => handleDelete(branch.id, branch.name)}
-                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
+                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors disabled:opacity-50"
               >
                 <span className="material-symbols-rounded">block</span>
               </button>
@@ -261,10 +285,14 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
               Cancel
             </button>
             <button
+              disabled={isSubmitting}
               onClick={handleSave}
-              className="flex-1 py-2.5 rounded-lg font-medium text-white shadow-lg transition-transform active:scale-95"
+              className="flex-1 py-2.5 rounded-lg font-medium text-white shadow-lg transition-transform active:scale-95 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center"
               style={{ backgroundColor: color }}
             >
+              {isSubmitting ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+              ) : null}
               {t.settings.saveBranch}
             </button>
           </div>

@@ -39,7 +39,8 @@ export const createEmployeeService = (): EmployeeService => ({
   getAll: async (branchId?: string | 'ALL'): Promise<Employee[]> => {
     const all = await getRawAll();
     if (branchId === 'ALL') return all;
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     return all.filter((e) => e.branchId === effectiveBranchId);
   },
 
@@ -50,7 +51,8 @@ export const createEmployeeService = (): EmployeeService => ({
   create: async (employee: Employee, branchId?: string): Promise<Employee> => {
     const all = await getRawAll();
     // Priority: explicit param > entity's own branchId > settingsService fallback
-    const effectiveBranchId = branchId || employee.branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || employee.branchId || settings.activeBranchId || settings.branchCode;
     
     // Assign ID if missing
     if (!employee.id) {
@@ -83,8 +85,9 @@ export const createEmployeeService = (): EmployeeService => ({
   },
 
   save: async (employees: Employee[], branchId?: string): Promise<void> => {
-    const all = await employeeCacheService.loadAll();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const all = await employeeService.getAll('ALL');
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings?.activeBranchId || settings?.branchCode;
     const otherBranchItems = all.filter((e) => e.branchId && e.branchId !== effectiveBranchId);
     
     // Merge and deduplicate by ID

@@ -36,4 +36,3 @@ export const TrendIndicator: React.FC<TrendIndicatorProps> = ({
     </span>
   );
 };
-```

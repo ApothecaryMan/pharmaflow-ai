@@ -37,7 +37,8 @@ const getRawAll = async (): Promise<Drug[]> => {
 export const createInventoryService = (): InventoryService => ({
   getAll: async (branchId?: string): Promise<Drug[]> => {
     const all = await getRawAll();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     return all.filter((d) => d.branchId === effectiveBranchId);
   },
 
@@ -95,7 +96,8 @@ export const createInventoryService = (): InventoryService => ({
 
   create: async (drug: Omit<Drug, 'id'>, branchId?: string): Promise<Drug> => {
     // Priority: explicit param > entity's own branchId > settingsService fallback
-    const effectiveBranchId = branchId || (drug as any).branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || (drug as any).branchId || settings.activeBranchId || settings.branchCode;
     const newDrug: Drug = {
       ...drug,
       id: idGenerator.generate('inventory', effectiveBranchId),
@@ -175,7 +177,8 @@ export const createInventoryService = (): InventoryService => ({
     // to benefit from differential writes, but we keep this for compatibility 
     // with parts of the app that still use bulk replacement.
     const all = await drugCacheService.loadAll();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     const otherBranchItems = all.filter((d) => d.branchId && d.branchId !== effectiveBranchId);
 
     // Merge and deduplicate by ID

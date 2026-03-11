@@ -15,7 +15,8 @@ export interface AppSettings {
   profileImage: string | null;
   activeModule: string;
   purchaseTaxRate: number; // Tax rate percentage for purchases (e.g., 14 for 14%)
-  branchCode: string; // Branch identifier for ID generation (e.g., 'B1')
+  activeBranchId: string; // Active branch UUID — used by all services for data filtering
+  branchCode: string; // User-defined short code for ID generation prefix (e.g., 'HOPE01')
 }
 
 export interface SettingsService {

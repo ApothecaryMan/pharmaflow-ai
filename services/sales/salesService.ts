@@ -30,9 +30,9 @@ const loadActiveShards = (): Sale[] => {
 
 export const createSalesService = (): SalesService => ({
   getAll: async (branchId?: string): Promise<Sale[]> => {
-    // Only load active shards (Current + Last Month) to prevent memory crash
     const all = loadActiveShards();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     return all.filter((s) => s.branchId === effectiveBranchId);
   },
 
@@ -77,7 +77,8 @@ export const createSalesService = (): SalesService => ({
 
   create: async (sale: Omit<Sale, 'id'>, branchId?: string): Promise<Sale> => {
     // Priority: explicit param > entity's own branchId > settingsService fallback
-    const effectiveBranchId = branchId || (sale as any).branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || (sale as any).branchId || settings.activeBranchId || settings.branchCode;
     const newSale: Sale = {
       ...sale,
       id: idGenerator.generate('sales', effectiveBranchId),

@@ -21,6 +21,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   profileImage: null,
   activeModule: 'dashboard',
   purchaseTaxRate: 14, // Default 14% tax rate
+  activeBranchId: '', // Empty by default, forces onboarding
   branchCode: '', // Empty by default, forces onboarding
 };
 

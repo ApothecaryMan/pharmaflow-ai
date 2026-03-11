@@ -22,7 +22,8 @@ export const createReturnService = (): ReturnService => ({
   // Sales Returns
   getAllSalesReturns: async (branchId?: string): Promise<Return[]> => {
     const all = getRawSalesReturns();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     return all.filter((r) => r.branchId === effectiveBranchId);
   },
 
@@ -34,7 +35,8 @@ export const createReturnService = (): ReturnService => ({
   createSalesReturn: async (ret: Omit<Return, 'id'>, branchId?: string): Promise<Return> => {
     const all = getRawSalesReturns();
     // Priority: explicit param > entity's own branchId > settingsService fallback
-    const effectiveBranchId = branchId || (ret as any).branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || (ret as any).branchId || settings.activeBranchId || settings.branchCode;
     const newReturn: Return = {
       ...ret,
       id: idGenerator.generate('returns', effectiveBranchId),
@@ -48,7 +50,8 @@ export const createReturnService = (): ReturnService => ({
   // Purchase Returns
   getAllPurchaseReturns: async (branchId?: string): Promise<PurchaseReturn[]> => {
     const all = getRawPurchaseReturns();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     return all.filter((r) => r.branchId === effectiveBranchId);
   },
 
@@ -60,7 +63,8 @@ export const createReturnService = (): ReturnService => ({
   createPurchaseReturn: async (ret: Omit<PurchaseReturn, 'id'>, branchId?: string): Promise<PurchaseReturn> => {
     const all = getRawPurchaseReturns();
     // Priority: explicit param > entity's own branchId > settingsService fallback
-    const effectiveBranchId = branchId || (ret as any).branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || (ret as any).branchId || settings.activeBranchId || settings.branchCode;
     const newReturn: PurchaseReturn = {
       ...ret,
       id: idGenerator.generate('returns', effectiveBranchId),
@@ -74,7 +78,8 @@ export const createReturnService = (): ReturnService => ({
   // Save
   saveSalesReturns: async (returns: Return[], branchId?: string): Promise<void> => {
     const all = getRawSalesReturns();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     const otherBranchItems = all.filter((r) => r.branchId && r.branchId !== effectiveBranchId);
     
     // Merge and deduplicate by ID
@@ -86,7 +91,8 @@ export const createReturnService = (): ReturnService => ({
 
   savePurchaseReturns: async (returns: PurchaseReturn[], branchId?: string): Promise<void> => {
     const all = getRawPurchaseReturns();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     const otherBranchItems = all.filter((r) => r.branchId && r.branchId !== effectiveBranchId);
     
     // Merge and deduplicate by ID

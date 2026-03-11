@@ -19,7 +19,8 @@ export const createStockMovementService = (): StockMovementService => ({
   getAll: async (): Promise<StockMovement[]> => {
     const all = getRawMovements();
     const settings = await settingsService.getAll();
-    return all.filter((m) => !m.branchId || m.branchId === settings.branchCode);
+    const effectiveBranchId = settings.activeBranchId || settings.branchCode;
+    return all.filter((m) => !m.branchId || m.branchId === effectiveBranchId);
   },
 
   getByDrugId: async (drugId: string): Promise<StockMovement[]> => {
@@ -34,12 +35,13 @@ export const createStockMovementService = (): StockMovementService => ({
   ): Promise<StockMovement> => {
     const all = getRawMovements();
     const settings = await settingsService.getAll();
+    const activeBranchId = settings.activeBranchId || settings.branchCode;
 
     // Ensure accurate timestamp and ID
     const newMovement: StockMovement = {
       ...movement,
       id: idGenerator.generate('movement', movement.branchId || settings.branchCode),
-      branchId: movement.branchId || settings.branchCode,
+      branchId: movement.branchId || activeBranchId,
       timestamp: new Date().toISOString(),
     };
 
@@ -194,12 +196,13 @@ export const createStockMovementService = (): StockMovementService => ({
     const all = getRawMovements();
     const settings = await settingsService.getAll();
     const timestamp = new Date().toISOString();
+    const activeBranchId = settings.activeBranchId || settings.branchCode;
 
     for (const movement of movements) {
-      const effectiveBranchId = movement.branchId || settings.branchCode;
+      const effectiveBranchId = movement.branchId || activeBranchId;
       all.push({
         ...movement,
-        id: idGenerator.generate('movement', effectiveBranchId),
+        id: idGenerator.generate('movement', movement.branchId || settings.branchCode),
         branchId: effectiveBranchId,
         timestamp,
       });

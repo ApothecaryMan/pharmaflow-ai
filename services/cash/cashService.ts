@@ -50,10 +50,10 @@ export const createCashService = (): CashServiceInterface => ({
   getAllShifts: async (): Promise<Shift[]> => {
     const rawShifts = getRawAll();
     const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
+    const activeBranchId = settings.activeBranchId || settings.branchCode;
 
     // Filter and transform
-    const shifts = rawShifts.filter((s) => !s.branchId || s.branchId === branchCode);
+    const shifts = rawShifts.filter((s) => !s.branchId || s.branchId === activeBranchId);
 
     // Parse and ensure all fields have defaults
     return shifts.map((s: any) => ({
@@ -84,7 +84,7 @@ export const createCashService = (): CashServiceInterface => ({
       cardSales: 0,
       returns: 0,
       transactions: [],
-      branchId: settings.branchCode,
+      branchId: settings.activeBranchId || settings.branchCode,
     };
 
     // Add to beginning (newest first)
@@ -97,10 +97,10 @@ export const createCashService = (): CashServiceInterface => ({
     const all = getRawAll();
     // Re-filter to find open shift for current branch
     const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
+    const activeBranchId = settings.activeBranchId || settings.branchCode;
 
     const index = all.findIndex(
-      (s) => s.status === 'open' && (!s.branchId || s.branchId === branchCode)
+      (s) => s.status === 'open' && (!s.branchId || s.branchId === activeBranchId)
     );
     if (index === -1) throw new Error('No open shift found');
 
@@ -176,8 +176,8 @@ export const createCashService = (): CashServiceInterface => ({
   saveShifts: async (shifts: Shift[]): Promise<void> => {
     const all = getRawAll();
     const settings = await settingsService.getAll();
-    const branchCode = settings.branchCode;
-    const otherBranchItems = all.filter((s) => s.branchId && s.branchId !== branchCode);
+    const activeBranchId = settings.activeBranchId || settings.branchCode;
+    const otherBranchItems = all.filter((s) => s.branchId && s.branchId !== activeBranchId);
     const merged = [...otherBranchItems, ...shifts];
     storage.set(StorageKeys.SHIFTS, merged);
   },

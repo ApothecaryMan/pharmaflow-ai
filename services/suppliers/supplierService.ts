@@ -17,7 +17,8 @@ const getRawAll = (): Supplier[] => {
 export const createSupplierService = (): SupplierService => ({
   getAll: async (branchId?: string): Promise<Supplier[]> => {
     const all = getRawAll();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     return all.filter((s) => s.branchId === effectiveBranchId);
   },
 
@@ -41,7 +42,8 @@ export const createSupplierService = (): SupplierService => ({
   create: async (supplier: Omit<Supplier, 'id'>, branchId?: string): Promise<Supplier> => {
     const all = getRawAll();
     // Priority: explicit param > entity's own branchId > settingsService fallback
-    const effectiveBranchId = branchId || (supplier as any).branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || (supplier as any).branchId || settings.activeBranchId || settings.branchCode;
     const newSupplier: Supplier = {
       ...supplier,
       id: idGenerator.generate('suppliers', effectiveBranchId),
@@ -70,7 +72,8 @@ export const createSupplierService = (): SupplierService => ({
 
   save: async (suppliers: Supplier[], branchId?: string): Promise<void> => {
     const all = getRawAll();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     const otherBranchItems = all.filter((s) => s.branchId && s.branchId !== effectiveBranchId);
     
     // Merge and deduplicate by ID

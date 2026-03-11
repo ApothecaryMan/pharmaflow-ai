@@ -17,7 +17,8 @@ const getRawAll = (): Customer[] => {
 export const createCustomerService = (): CustomerService => ({
   getAll: async (branchId?: string): Promise<Customer[]> => {
     const all = getRawAll();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     return all.filter((c) => c.branchId === effectiveBranchId);
   },
 
@@ -60,7 +61,8 @@ export const createCustomerService = (): CustomerService => ({
   create: async (customer: Omit<Customer, 'id'>, branchId?: string): Promise<Customer> => {
     const all = getRawAll();
     // Priority: explicit param > entity's own branchId > settingsService fallback
-    const effectiveBranchId = branchId || (customer as any).branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || (customer as any).branchId || settings.activeBranchId || settings.branchCode;
     const newCustomer: Customer = {
       ...customer,
       id: idGenerator.generate('customers', effectiveBranchId),
@@ -127,7 +129,8 @@ export const createCustomerService = (): CustomerService => ({
 
   save: async (customers: Customer[], branchId?: string): Promise<void> => {
     const all = getRawAll();
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     const otherBranchItems = all.filter((c) => c.branchId && c.branchId !== effectiveBranchId);
     
     // Merge and deduplicate by ID

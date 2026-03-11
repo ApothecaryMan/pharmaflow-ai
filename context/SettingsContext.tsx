@@ -75,9 +75,9 @@ export interface SettingsState {
   showTickerTopSeller: boolean;
   graphicStyle: boolean;
   // Metadata
+  activeBranchId: string;
   branchCode: string;
 }
-
 // Context Type
 export interface SettingsContextType extends SettingsState {
   // Theme Actions
@@ -134,9 +134,9 @@ const defaultSettings: SettingsState = {
   showTickerCustomers: false,
   showTickerTopSeller: false,
   graphicStyle: false,
-  branchCode: 'branch_main',
+  activeBranchId: 'branch_main',
+  branchCode: 'B1',
 };
-
 // Load settings from storage
 const loadSettings = (): SettingsState => {
   if (typeof window === 'undefined') return defaultSettings;
@@ -188,6 +188,7 @@ const loadSettings = (): SettingsState => {
       hideInactiveModules: hideInactiveModules ?? defaultSettings.hideInactiveModules,
       developerMode: developerMode ?? defaultSettings.developerMode,
       graphicStyle: storage.get('pharma_graphicStyle', defaultSettings.graphicStyle),
+      activeBranchId: storage.get('pharma_activeBranchId', defaultSettings.activeBranchId),
       branchCode: storage.get('pharma_branchCode', defaultSettings.branchCode),
     };
   } catch (e) {
