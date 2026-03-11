@@ -673,13 +673,18 @@ export const printLabels = async (
     for (let i = 0; i < labelFragments.length; i += labelsPerPage) {
       const pageLabels = labelFragments.slice(i, i + labelsPerPage);
       const isLastPage = i + labelsPerPage >= labelFragments.length;
+      const isPartialPage = pageLabels.length < labelsPerPage;
 
       // Join labels with the internal gap (1mm)
       const labelsContent = pageLabels.join(innerGapDivider);
 
-      // The container height includes ONLY the labels and the inner gap.
-      // The outer gap is handled by the pageHeight (Pitch) and transform logic.
-      const pageHTML = `<div class="page-container" style="height: ${pageHeight - outerGap}mm; page-break-after: ${isLastPage ? 'auto' : 'always'};">
+      // For partial pages (e.g. odd label count on double-roll), shrink height
+      // to only fit the actual labels, preventing the printer from feeding blank stock
+      const actualContentHeight = isPartialPage
+        ? pageLabels.length * labelHeight + Math.max(0, pageLabels.length - 1) * innerGap
+        : pageHeight - outerGap;
+
+      const pageHTML = `<div class="page-container" style="height: ${actualContentHeight}mm; page-break-after: ${isLastPage ? 'auto' : 'always'};">
                 ${labelsContent}
             </div>`;
       pages.push(pageHTML);
