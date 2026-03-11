@@ -43,46 +43,78 @@ const mapValueToChar = (value: number): string => {
 export const encodeCode128 = (text: string): string => {
   if (!text) return '';
 
-  // 1. Determine optimized set
-  // Use Set C if the text is numeric, even length, and long enough to benefit (>= 4 digits)
-  const isNumeric = /^\d+$/.test(text);
-  const useSetC = isNumeric && text.length >= 4 && text.length % 2 === 0;
+  // Sanitize: Only allow ASCII 32-126
+  const validText = text.replace(/[^\x20-\x7E]/g, '');
+  if (!validText) return '';
 
   let checksum = 0;
   let encoded = '';
-  let position = 1; // Checksum weighting starts at 1 for data characters
+  let position = 1;
 
-  if (useSetC) {
-    // --- Set C Encoding (Numeric Pairs) ---
+  const isDigit = (c: string) => c >= '0' && c <= '9';
+  const countDigits = (pos: number) => {
+    let c = 0;
+    while (pos + c < validText.length && isDigit(validText[pos + c])) c++;
+    return c;
+  };
+
+  let i = 0;
+  let currentSet = '';
+
+  const initialDigits = countDigits(0);
+  // Start with Subset C if we have >= 4 digits, or exactly 2 digits for the whole string
+  if (initialDigits >= 4 || (initialDigits >= 2 && initialDigits === validText.length && validText.length % 2 === 0)) {
+    currentSet = 'C';
     const startValue = START_CODE_C;
     encoded += mapValueToChar(startValue);
     checksum = startValue;
-
-    for (let i = 0; i < text.length; i += 2) {
-      const pair = text.substring(i, i + 2);
-      const value = parseInt(pair, 10);
-
-      encoded += mapValueToChar(value);
-      checksum += value * position;
-      position++;
-    }
   } else {
-    // --- Set B Encoding (Standard ASCII) ---
-    // Sanitize: Only allow ASCII 32-126
-    const validText = text.replace(/[^\x20-\x7E]/g, '');
-    if (!validText) return '';
-
+    currentSet = 'B';
     const startValue = START_CODE_B;
     encoded += mapValueToChar(startValue);
     checksum = startValue;
+  }
 
-    for (let i = 0; i < validText.length; i++) {
-      const charCode = validText.charCodeAt(i);
-      const value = charCode - 32;
-
-      encoded += mapValueToChar(value);
-      checksum += value * position;
-      position++;
+  while (i < validText.length) {
+    if (currentSet === 'C') {
+      const digitsRemaining = countDigits(i);
+      if (digitsRemaining >= 2) {
+        const pair = validText.substring(i, i + 2);
+        const value = parseInt(pair, 10);
+        encoded += mapValueToChar(value);
+        checksum += value * position++;
+        i += 2;
+      } else {
+        // Switch to Subset B
+        currentSet = 'B';
+        const value = 100; // CODE B
+        encoded += mapValueToChar(value);
+        checksum += value * position++;
+      }
+    } else {
+      // currentSet === 'B'
+      const digitsRemaining = countDigits(i);
+      // Switch to Subset C if we have 4+ consecutive digits
+      if (digitsRemaining >= 4) {
+        // If odd number of digits, encode the first one in Subset B to leave an even pair
+        if (digitsRemaining % 2 !== 0) {
+          const charCode = validText.charCodeAt(i);
+          const value = charCode - 32;
+          encoded += mapValueToChar(value);
+          checksum += value * position++;
+          i++;
+        }
+        currentSet = 'C';
+        const value = 99; // CODE C
+        encoded += mapValueToChar(value);
+        checksum += value * position++;
+      } else {
+        const charCode = validText.charCodeAt(i);
+        const value = charCode - 32;
+        encoded += mapValueToChar(value);
+        checksum += value * position++;
+        i++;
+      }
     }
   }
 
