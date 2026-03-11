@@ -192,13 +192,17 @@ export function useEntityHandlers({
   // --- Drug Management ---
   const handleAddDrug = useCallback(
     async (drug: Drug) => {
-      // Permission Check
+      // 1. Authentication Guard
+      if (!currentEmployeeId) {
+        error('Permission denied: Login required to add items');
+        return;
+      }
+
+      // 2. Permission Guard
       const employee = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(employee?.role || 'admin', 'inventory.add')) {
-        if (currentEmployeeId && !canPerformAction(employee?.role, 'inventory.add')) {
-          error('Permission denied: Role cannot add items');
-          return;
-        }
+      if (!canPerformAction(employee?.role, 'inventory.add')) {
+        error(`Permission denied: ${employee?.role || 'User'} cannot add items`);
+        return;
       }
 
       const validation = validateDrug(drug);
@@ -215,8 +219,8 @@ export function useEntityHandlers({
         if (result.stock > 0) {
           stockOps.logInitialStock(result, {
             branchId: activeBranchId,
-            performedBy: currentEmployeeId || 'System',
-            performedByName: employees?.find((e) => e.id === currentEmployeeId)?.name,
+            performedBy: currentEmployeeId,
+            performedByName: employee?.name,
           });
         }
 
@@ -224,7 +228,7 @@ export function useEntityHandlers({
         setBatches(batchService.getAllBatches());
 
         auditService.log('inventory.add', {
-          userId: currentEmployeeId || 'System',
+          userId: currentEmployeeId,
           details: `Added drug: ${result.name}`,
           entityId: result.id,
         });
@@ -234,7 +238,7 @@ export function useEntityHandlers({
         error(`Failed to add product: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [setInventory, setBatches, currentEmployeeId, employees, error]
+    [setInventory, setBatches, currentEmployeeId, employees, activeBranchId, error, success]
   );
 
   const handleUpdateDrug = useCallback(
@@ -245,7 +249,7 @@ export function useEntityHandlers({
       }
       const employee = employees?.find((e) => e.id === currentEmployeeId);
       if (!canPerformAction(employee?.role, 'inventory.update')) {
-        error(`Permission denied: ${employee?.role} cannot update items`);
+        error(`Permission denied: ${employee?.role || 'User'} cannot update items`);
         return;
       }
 
@@ -269,7 +273,7 @@ export function useEntityHandlers({
             {
               branchId: activeBranchId,
               performedBy: currentEmployeeId,
-              performedByName: employees?.find((e) => e.id === currentEmployeeId)?.name,
+              performedByName: employee?.name,
             },
             {
               notes: 'Pharmacist manual stock correction',
@@ -283,11 +287,13 @@ export function useEntityHandlers({
           details: `Updated drug: ${drug.name}`,
           entityId: drug.id,
         });
+
+        success(`${drug.name} updated successfully!`);
       } catch (err) {
         error(`Failed to update product: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [setInventory, currentEmployeeId, employees, error]
+    [setInventory, inventory, currentEmployeeId, employees, activeBranchId, error, success]
   );
 
   const handleDeleteDrug = useCallback(
@@ -298,7 +304,7 @@ export function useEntityHandlers({
       }
       const employee = employees?.find((e) => e.id === currentEmployeeId);
       if (!canPerformAction(employee?.role, 'inventory.delete')) {
-        error(`Permission denied: ${employee?.role} cannot delete items`);
+        error(`Permission denied: ${employee?.role || 'User'} cannot delete items`);
         return;
       }
 
@@ -306,7 +312,6 @@ export function useEntityHandlers({
         // Log deletion movement for remaining stock
         const drug = inventory.find(d => d.id === id);
         if (drug && drug.stock > 0) {
-          const performer = employees?.find(e => e.id === currentEmployeeId);
           stockMovementService.logMovement({
             drugId: drug.id,
             drugName: drug.name,
@@ -316,8 +321,8 @@ export function useEntityHandlers({
             previousStock: drug.stock,
             newStock: 0,
             reason: 'Product Deleted',
-            performedBy: currentEmployeeId!,
-            performedByName: performer?.name,
+            performedBy: currentEmployeeId,
+            performedByName: employee?.name,
             status: 'approved',
           });
         }
@@ -334,11 +339,13 @@ export function useEntityHandlers({
           details: `Deleted drug ID: ${id}`,
           entityId: id,
         });
+
+        success('Product deleted successfully!');
       } catch (err) {
         error(`Failed to delete product: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [setInventory, setBatches, inventory, currentEmployeeId, employees, activeBranchId, error]
+    [setInventory, setBatches, inventory, currentEmployeeId, employees, activeBranchId, error, success]
   );
 
   const handleRestock = useCallback(
@@ -355,7 +362,6 @@ export function useEntityHandlers({
       setInventory((prev) =>
         prev.map((d) => {
           if (d.id === id) {
-            const performer = employees?.find((e) => e.id === currentEmployeeId);
             const mutation = stockOps.addStock(
               d,
               qty,
@@ -366,8 +372,8 @@ export function useEntityHandlers({
               'Manual Restock / Adjustment',
               {
                 branchId: activeBranchId,
-                performedBy: currentEmployeeId!,
-                performedByName: performer?.name,
+                performedBy: currentEmployeeId,
+                performedByName: employee?.name,
               },
               'RESTOCK', // referenceId
               'MANUAL_RESTOCK' // batchNumber
@@ -380,13 +386,16 @@ export function useEntityHandlers({
           return d;
         })
       );
+
       auditService.log('inventory.update', {
         userId: currentEmployeeId,
         details: `Restocked drug ID: ${id} with qty: ${qty}`,
         entityId: id,
       });
+
+      success('Restock completed successfully!');
     },
-    [setInventory, setBatches, currentEmployeeId, employees, error]
+    [setInventory, setBatches, currentEmployeeId, employees, activeBranchId, error, success]
   );
 
   // --- Supplier Management ---
