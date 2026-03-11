@@ -14,6 +14,7 @@ import { Modal } from '../common/Modal';
 import { ScreenCalibration } from '../common/ScreenCalibration';
 import { useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
+import { usePosSounds } from '../common/hooks/usePosSounds';
 import { idGenerator } from '../../utils/idGenerator';
 import { BarcodePreview } from './BarcodePreview';
 import {
@@ -41,6 +42,7 @@ import type { LabelDesign, LabelElement, SavedTemplate } from './studio/types';
 export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, t }) => {
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
+  const { playError } = usePosSounds();
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -68,6 +70,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
   // Template Dropdown
   const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false);
+  const printButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const savedRatio = storage.get<string | null>(StorageKeys.SCREEN_CALIBRATION_RATIO, null);
@@ -253,6 +256,17 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
   // Keyboard shortcuts and Nudging
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 0. Print Shortcut (Highest Priority)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P' || e.key === 'ح')) {
+        e.preventDefault();
+        if (printButtonRef.current?.disabled) {
+          playError();
+        } else {
+          printButtonRef.current?.click();
+        }
+        return;
+      }
+
       // 1. Undo / Redo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.shiftKey ? handleRedo() : handleUndo();
@@ -312,8 +326,8 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
   }, [history, redoStack, elements, selectedElementId]);
 
   const getDesignState = () => ({
@@ -1103,6 +1117,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
 
           {/* Print Action */}
           <button
+            ref={printButtonRef}
             onClick={handlePrint}
             disabled={!selectedDrug}
             className={`h-9 w-9 flex items-center justify-center rounded-xl bg-primary-600 text-white font-black hover:opacity-90 disabled:grayscale disabled:opacity-50 transition-all ml-1`}

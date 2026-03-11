@@ -37,11 +37,12 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
-  const { playBeep } = usePosSounds();
+  const { playBeep, playError } = usePosSounds();
   const [search, setSearch] = useState('');
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [isPrinting, setIsPrinting] = useState(false);
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
+  const printButtonRef = useRef<HTMLButtonElement>(null);
   const [printConfig, setPrintConfig] = useState({
     store: true,
     name: true,
@@ -97,7 +98,22 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
   // Global Keydown (Simple Alphanumeric for Search Focus + Shortcuts)
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // 1. Ignore if already in an input
+      // 1. Shortcuts (Highest Priority)
+      // Alt+P or Ctrl+P: Print
+      if (
+        (e.altKey && (e.key === 'p' || e.key === 'P' || e.key === 'ح')) ||
+        (e.ctrlKey && (e.key === 'p' || e.key === 'P' || e.key === 'ح'))
+      ) {
+        e.preventDefault();
+        if (printButtonRef.current?.disabled) {
+          playError();
+        } else {
+          printButtonRef.current?.click();
+        }
+        return;
+      }
+
+      // 2. Ignore other alphanumeric logic if already in an input
       if (
         document.activeElement?.tagName === 'INPUT' ||
         document.activeElement?.tagName === 'TEXTAREA'
@@ -109,7 +125,8 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
         }
         return;
       }
-      // 2. Capture Alphanumeric for search focus
+
+      // 3. Capture Alphanumeric for search focus
       if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
         e.preventDefault();
         searchInputRef.current?.focus();
@@ -117,13 +134,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
         setShowSuggestions(true);
         return;
       }
-      // 3. Shortcuts
-      // Alt+P: Print
-      if (e.altKey && (e.key === 'p' || e.key === 'P' || e.key === 'ح')) {
-        e.preventDefault();
-        if (queue.length > 0) handlePrint();
-        return;
-      }
+
       // Alt+C: Clear
       if (e.altKey && (e.key === 'c' || e.key === 'C' || e.key === 'ؤ')) {
         e.preventDefault();
@@ -297,6 +308,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
             </button>
           )}
           <button
+            ref={printButtonRef}
             onClick={handlePrint}
             disabled={queue.length === 0}
             className='w-12 h-12 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all active:scale-95 disabled:opacity-30 disabled:grayscale font-semibold'

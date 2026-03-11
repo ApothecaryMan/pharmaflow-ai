@@ -68,6 +68,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
   // State
   const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const printButtonRef = React.useRef<HTMLButtonElement>(null);
 
   // RTL Detection
   const isRTL =
@@ -185,6 +186,17 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         return;
       }
 
+      // 0. Print Shortcut
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P' || e.key === 'ح')) {
+        e.preventDefault();
+        if (printButtonRef.current?.disabled) {
+          playError();
+        } else {
+          printButtonRef.current?.click();
+        }
+        return;
+      }
+
       // Capture simple alphanumeric for search focus
       if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
         // Only focus if we are in adjustment view
@@ -193,8 +205,8 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         setSearchTerm((prev) => prev + e.key);
       }
     };
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    window.addEventListener('keydown', handleGlobalKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown, { capture: true });
   }, [activeView, batchSelectionDrug]);
 
   const handleScan = (barcode: string) => {
@@ -607,7 +619,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                 ${
                   info.row.original.newStock !== info.row.original.currentStock
                     ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/10 text-amber-700'
-                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+                    : 'border-(--border-divider) bg-(--bg-input) text-(--text-primary)'
                 }`}
             value={info.getValue() as number}
             onChange={(e) => updateAdjustment(info.row.index, 'newStock', e.target.value)}
@@ -673,7 +685,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             value={info.getValue() as string}
             onChange={(e) => updateAdjustment(info.row.index, 'notes', e.target.value)}
             placeholder={t.stockAdjustment.notes}
-            className='w-full text-xs px-2 py-1.5 bg-transparent border-0 border-b border-gray-200 dark:border-gray-700 focus:border-blue-500 rounded-none focus:ring-0'
+            className='w-full text-xs px-2 py-1.5 bg-transparent border-0 border-b border-(--border-divider) focus:border-blue-500 rounded-none focus:ring-0 text-(--text-primary)'
           />
         ),
       },
@@ -713,7 +725,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
           return (
             <div>
-              <div className='font-bold text-sm text-gray-900 dark:text-gray-100'>
+              <div className='font-bold text-sm text-(--text-primary)'>
                 {displayName}
               </div>
               <div className='text-sm text-gray-400 mt-0.5 uppercase tracking-tight'>
@@ -734,7 +746,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           return (
             <div className='flex flex-col gap-0.5'>
               {/* Expiry Date (Top) */}
-              <div className='text-sm text-gray-900 dark:text-gray-100'>
+              <div className='text-sm text-(--text-primary)'>
                 {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'Generic'}
               </div>
               {/* Batch ID (Underneath) */}
@@ -765,7 +777,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         accessorKey: 'reason',
         header: t.stockAdjustment.table.reason,
         cell: (info) => (
-          <span className='px-1.5 py-0.5 rounded-lg bg-transparent text-xs text-gray-600 dark:text-gray-400 capitalize border border-gray-200 dark:border-gray-700'>
+          <span className='px-1.5 py-0.5 rounded-lg bg-transparent text-xs text-(--text-secondary) capitalize border border-(--border-divider)'>
             {t.stockAdjustment.reasons[info.getValue() as keyof typeof t.stockAdjustment.reasons] ||
               info.getValue()}
           </span>
@@ -868,7 +880,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         width: 'w-[60px] shrink-0',
         className: 'justify-center text-center text-gray-900 dark:text-gray-400',
         render: (drug: Drug) => (
-          <div className='tabular-nums border border-gray-200 dark:border-gray-700 bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center'>
+          <div className='tabular-nums border border-(--border-divider) text-(--text-secondary) bg-transparent px-2 py-0.5 rounded-lg shrink-0 min-w-[36px] text-center'>
             {drug.stock}
           </div>
         ),
@@ -884,10 +896,10 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       <div>
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div>
-            <h1 className='text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 page-title'>
+            <h1 className='text-2xl font-bold tracking-tight text-(--text-primary) page-title'>
               {t.stockAdjustment.title}
             </h1>
-            <p className='text-sm text-gray-500 dark:text-gray-400'>{t.stockAdjustment.subtitle}</p>
+            <p className='text-sm text-(--text-secondary)'>{t.stockAdjustment.subtitle}</p>
           </div>
 
           <div className='self-start md:self-center'>
@@ -950,17 +962,14 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         <div className='flex flex-col gap-6 flex-1 min-h-0'>
           {/* Bottom Row: Adjustment Table (Full Width) */}
           <div
-            className={`flex-1 ${CARD_BASE} rounded-3xl flex flex-col overflow-hidden shadow-lg border-0 ring-1 ring-gray-200 dark:ring-gray-800`}
+            className={`flex-1 ${CARD_BASE} rounded-3xl flex flex-col overflow-hidden shadow-lg border-0 ring-1 ring-(--border-divider)`}
           >
             <div className='p-4 flex justify-between items-center'>
               <div className='flex items-center gap-2'>
-                <span className='material-symbols-rounded text-blue-600 dark:text-blue-400'>
-                  edit_note
-                </span>
                 <h3 className='font-bold text-gray-800 dark:text-gray-200'>
                   {t.stockAdjustment.title}
                 </h3>
-                <span className='px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-700 bg-transparent text-xs font-bold text-gray-500'>
+                <span className='px-2 py-0.5 rounded-full border border-(--border-divider) bg-transparent text-xs font-bold text-(--text-tertiary)'>
                   {adjustments.length}
                 </span>
               </div>
@@ -974,14 +983,16 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                   <span className='material-symbols-rounded text-base'>upload_file</span>
                 </button>
                 <button
+                  ref={printButtonRef}
                   onClick={handlePrint}
-                  className='flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:enabled:scale-95'
+                  disabled={adjustments.length === 0}
+                  className='flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-(--border-divider) bg-(--bg-card) text-(--text-secondary) hover:bg-(--bg-hover) transition-all active:enabled:scale-95 disabled:opacity-50 disabled:grayscale'
                 >
                   {t.global.actions.print}
                   <span className='material-symbols-rounded text-base'>print</span>
                 </button>
 
-                <div className='w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1'></div>
+                <div className='w-px h-6 bg-(--border-divider) mx-1'></div>
 
                 <button
                   onClick={setAdjustments.bind(null, [])}
@@ -1000,7 +1011,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               </div>
             </div>
 
-            <div className='flex-1 relative bg-white dark:bg-gray-900 overflow-y-auto'>
+            <div className='flex-1 relative bg-(--bg-card) overflow-y-auto'>
               <TanStackTable
                 data={adjustments}
                 columns={columns}
@@ -1018,14 +1029,11 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       ) : (
         /* History / Audit View */
         <div
-          className={`flex-1 min-h-0 flex flex-col ${CARD_BASE} rounded-3xl shadow-lg border-0 ring-1 ring-gray-200 dark:ring-gray-800 overflow-hidden`}
+          className={`flex-1 min-h-0 flex flex-col ${CARD_BASE} rounded-3xl shadow-lg border-0 ring-1 ring-(--border-divider) overflow-hidden`}
         >
-          <div className='p-4 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 border-b border-gray-100 dark:border-gray-800'>
+          <div className='p-4 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 border-b border-(--border-divider)'>
             <div className='flex items-center gap-2'>
-              <span className='material-symbols-rounded text-blue-600 dark:text-blue-400'>
-                history
-              </span>
-              <h3 className='font-bold text-gray-800 dark:text-gray-200'>
+              <h3 className='font-bold text-(--text-primary)'>
                 {t.stockAdjustment.history || 'Adjustment History'}
               </h3>
             </div>
@@ -1034,15 +1042,17 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               {/* Refresh */}
               <button
                 onClick={loadHistory}
-                className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+                className='w-8 h-8 flex items-center justify-center rounded-lg text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-hover) transition-colors'
               >
                 <span className='material-symbols-rounded text-lg'>refresh</span>
               </button>
 
               {/* Print */}
               <button
+                ref={printButtonRef}
                 onClick={handlePrint}
-                className='flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 h-8'
+                disabled={history.length === 0}
+                className='flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-(--border-divider) bg-(--bg-card) text-(--text-secondary) hover:bg-(--bg-hover) transition-all active:scale-95 h-8 disabled:opacity-50 disabled:grayscale'
               >
                 {t.global.actions.print}
                 <span className='material-symbols-rounded text-base'>print</span>
@@ -1059,16 +1069,16 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               />
 
               {/* Filter Pending/All (Right Aligned in mobile, auto in desktop) */}
-              <div className='ml-auto xl:ml-0 flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg h-8 items-center'>
+              <div className='ml-auto xl:ml-0 flex gap-1 bg-(--bg-card) border border-(--border-divider) p-1 rounded-lg h-8 items-center'>
                 <button
                   onClick={setHistoryTab.bind(null, 'pending')}
-                  className={`px-3 py-0.5 text-xs font-bold rounded-md transition h-full flex items-center ${historyTab === 'pending' ? 'bg-white dark:bg-gray-700 shadow-xs text-amber-600' : 'text-gray-500 hover:text-amber-600 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'}`}
+                  className={`px-3 py-0.5 text-xs font-bold rounded-md transition h-full flex items-center ${historyTab === 'pending' ? 'bg-(--bg-surface-neutral) shadow-xs text-amber-600' : 'text-gray-500 hover:text-amber-600 hover:bg-(--bg-hover)'}`}
                 >
                   {t.purchases.status.pending}
                 </button>
                 <button
                   onClick={setHistoryTab.bind(null, 'all')}
-                  className={`px-3 py-0.5 text-xs font-bold rounded-md transition h-full flex items-center ${historyTab === 'all' ? 'bg-white dark:bg-gray-700 shadow-xs text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'}`}
+                  className={`px-3 py-0.5 text-xs font-bold rounded-md transition h-full flex items-center ${historyTab === 'all' ? 'bg-(--bg-surface-neutral) shadow-xs text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-(--text-primary) hover:bg-(--bg-hover)'}`}
                 >
                   {t.global.actions.all}
                 </button>
@@ -1076,7 +1086,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             </div>
           </div>
 
-          <div className='flex-1 relative bg-white dark:bg-gray-900 overflow-y-auto'>
+          <div className='flex-1 relative bg-transparent overflow-y-auto'>
             <TanStackTable
               data={history}
               columns={historyColumns}

@@ -890,7 +890,7 @@ export function TanStackTable<TData, TValue>({
         className={`flex flex-col flex-1 min-h-0 ${
           lite
             ? 'bg-transparent'
-            : 'rounded-xl border-2 dark:border border-(--border-primary) dark:border-(--border-divider) shadow-xs bg-(--bg-card) overflow-hidden'
+            : 'rounded-2xl border border-(--border-divider) shadow-sm bg-(--bg-card) overflow-hidden'
         }`}
       >
         {/* Table Scroll Area */}
@@ -933,7 +933,7 @@ export function TanStackTable<TData, TValue>({
                       return (
                         <th
                           key={header.id}
-                          className={`p-0 text-xs font-semibold text-gray-500 dark:text-white uppercase tracking-wider select-none relative group border-b ${lite ? 'border-gray-200 dark:border-(--border-divider)' : 'border-(--border-divider)'}
+                          className={`p-0 text-xs font-bold text-(--text-tertiary) uppercase tracking-wider select-none relative group border-b border-(--border-divider)
                         ${textAlignClass}
                         ${isFlex ? '' : 'w-[1%] whitespace-nowrap'}`}
                           style={{
@@ -1043,7 +1043,7 @@ export function TanStackTable<TData, TValue>({
                           onRowContextMenu(e, row.original);
                         }
                       }}
-                      className={`transition-colors overflow-visible ${onRowClick ? 'cursor-pointer' : ''} ${
+                      className={`transition-colors overflow-visible group/row ${onRowClick ? 'cursor-pointer' : ''} ${
                         activeIndex !== undefined && rowIndex === activeIndex
                           ? `bg-primary-50 dark:bg-primary-900/20`
                           : 'hover:bg-(--bg-hover)'
@@ -1105,7 +1105,7 @@ export function TanStackTable<TData, TValue>({
                         return (
                           <td
                             key={cell.id}
-                            className={`${dense ? 'py-1' : 'py-2'} px-4 text-sm text-gray-700 dark:text-white align-middle border-b border-(--border-divider)
+                            className={`${dense ? 'py-1.5' : 'py-3'} px-4 text-sm font-medium text-(--text-primary) align-middle border-b border-(--border-divider) group-last/row:border-b-0
                             ${meta.isFlex ? '' : 'whitespace-nowrap'} ${meta.isActionColumn ? 'action-col' : ''}`}
                             style={{
                               width: meta.isFlex ? 'auto' : (cell.column.columnDef.meta?.width || cell.column.getSize()),
@@ -1165,9 +1165,7 @@ export function TanStackTable<TData, TValue>({
         {enablePagination && (table.getPageCount() > 1 || isShowAll) && (
           <div
             dir='ltr'
-            className={`flex items-center justify-between h-6 border-t shrink-0 select-none shadow-xs bg-(--bg-card) ${
-              lite ? 'border-gray-200 dark:border-gray-700' : 'border-(--border-divider)'
-            }`}
+            className={`flex items-center justify-between h-10 border-t shrink-0 select-none bg-(--bg-card) border-(--border-divider)`}
           >
             {/* Left Zone: Data Summary (Fixed width to prevent jitter) */}
             <div className='w-56 flex items-center h-full'>
