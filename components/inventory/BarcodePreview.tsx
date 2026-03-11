@@ -64,13 +64,12 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
     };
 
     const currentDims = dims || { w: 38, h: 25 };
-    const isDouble = currentDims.w === 38 && currentDims.h === 25; // Matching 38x25 logic
+    const isDouble = currentDims.w === 38 && currentDims.h === 25; 
     const labelHeight = isDouble ? 12 : currentDims.h;
     
-    // VISUAL PREVIEW: We force gaps to 0mm in the Studio so the user sees a clean, contiguous workspace
-    // The actual print gaps (1mm inner, 3mm outer) are maintained in LabelPrinter.ts
-    const innerGap = 0;
-    const outerGap = 0;
+    // Use the same gaps as LabelPrinter.ts to ensure what you see is what you get
+    const innerGap = isDouble ? 1 : 0;
+    const outerGap = 0; // Outer gap (pitch) is handled by the printer, not shown in preview
 
     const renderDims = { w: currentDims.w, h: labelHeight };
 
@@ -115,7 +114,8 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
     const currentDims = dims || { w: 38, h: 25 };
     const isDouble = currentDims.w === 38 && currentDims.h === 25;
     const labelHeight = isDouble ? 12 : currentDims.h;
-    const innerGap = 0; // Visual preview forces gap to 0mm
+    // Same gap logic as above
+    const innerGap = isDouble ? 1 : 0;
 
     // The vertical offset for the second label in a pair includes the gap
     const yOffset = offsetIndex * (labelHeight + innerGap);
@@ -179,7 +179,7 @@ export const BarcodePreview: React.FC<BarcodePreviewProps> = ({
         scrolling='no'
         style={{
           width: `${dims.w}mm`,
-          height: `${showPairedPreview ? (dims.h === 25 ? 24 : dims.h * 2) : (dims.h === 25 ? 12 : dims.h)}mm`, // Explicitly remove gap from height calculation
+          height: `${showPairedPreview ? (dims.h === 25 ? 25 : dims.h * 2) : (dims.h === 25 ? 12 : dims.h)}mm`, 
           border: 'none',
           display: 'block',
           overflow: 'hidden',
