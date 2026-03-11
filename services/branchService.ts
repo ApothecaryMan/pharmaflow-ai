@@ -52,7 +52,7 @@ export const branchService = {
     
     const newBranch: Branch = {
       ...data,
-      id: idGenerator.generate('generic'),
+      id: idGenerator.generate('branches'),
       createdAt: now,
       updatedAt: now,
     };

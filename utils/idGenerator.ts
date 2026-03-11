@@ -30,6 +30,7 @@ export type EntityType =
   | 'batch'
   | 'movement'
   | 'returnItem'
+  | 'branches'
   | 'generic';
 
 // Sequence Map Interface
@@ -39,6 +40,7 @@ export interface SequenceMap {
 
 const DEFAULT_BRANCH_CODE = 'B1';
 const ID_PADDING = 4; // B1-0001
+const GLOBAL_PREFIX = 'PF'; // Systems/Branches use PF instead of BranchCode
 
 /**
  * Parses an ID to extract its sequence number
@@ -75,6 +77,9 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
 
   try {
     switch (type) {
+      case 'branches':
+        data = storage.get(StorageKeys.BRANCHES, []);
+        break;
       case 'sales': {
         // Sharded: Scan ALL shards to find max ID over all time
         const keys = getAllShardKeys(StorageKeys.SALES);
@@ -147,7 +152,10 @@ export const idGenerator = {
     // 1. Get Branch Code: parameter > storage > default
     let effectiveBranchCode = branchCode;
     
-    if (!effectiveBranchCode) {
+    // Global entities (like system-wide branches) use PF prefix
+    if (type === 'branches' || type === 'generic') {
+      effectiveBranchCode = GLOBAL_PREFIX;
+    } else if (!effectiveBranchCode) {
       const settings = storage.get<Partial<AppSettings>>(StorageKeys.SETTINGS, {});
       effectiveBranchCode = settings.branchCode || DEFAULT_BRANCH_CODE;
     }

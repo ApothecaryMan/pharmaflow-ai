@@ -4,6 +4,7 @@ import { employeeService } from '../../services/hr/employeeService';
 import type { Branch, Employee } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { Modal } from '../common/Modal';
+import { useData } from '../../services/DataContext';
 
 interface BranchSettingsProps {
   language: 'EN' | 'AR';
@@ -12,6 +13,7 @@ interface BranchSettingsProps {
 
 export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color }) => {
   const t = TRANSLATIONS[language];
+  const { refreshAll } = useData();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,11 +26,10 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
 
   const loadData = async () => {
     const allBranches = branchService.getAll();
-    const allEmployees = await employeeService.getAll();
+    const allEmployees = await employeeService.getAll('ALL');
     setBranches(allBranches);
     setEmployees(allEmployees);
   };
-
   const handleOpenModal = (branch?: Branch) => {
     if (branch) {
       setEditingBranch(branch);
@@ -54,25 +55,31 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       savedBranch = branchService.create(editingBranch as Omit<Branch, 'id' | 'createdAt' | 'updatedAt'>);
     }
 
-    // Update employee branch assignments
-    // This is a simple implementation: 
-    // 1. Clear branchId for employees previously in this branch but not in selected
-    // 2. Set branchId for newly selected employees
-    const allEmployees = await employeeService.getAll();
-    const updates = allEmployees.map(emp => {
+    // Update employee branch assignments efficiently
+    const allEmployees = await employeeService.getAll('ALL');
+    const updatedEmployees = allEmployees.map(emp => {
       if (selectedEmployees.includes(emp.id)) {
-        return employeeService.update(emp.id, { branchId: savedBranch.id });
+        return { ...emp, branchId: savedBranch.id };
       } else if (emp.branchId === savedBranch.id) {
         // If they were in this branch but now deselected, clear it
-        return employeeService.update(emp.id, { branchId: '' });
+        return { ...emp, branchId: '' };
       }
-      return Promise.resolve();
+      return emp;
+    }).filter(emp => {
+      // Small optimization: only include those that actually changed
+      const original = allEmployees.find(e => e.id === emp.id);
+      return original?.branchId !== emp.branchId;
     });
 
-    await Promise.all(updates);
+    if (updatedEmployees.length > 0) {
+      // Use EmployeeService.save to update matching branch employees
+      // and keep others as is.
+      await employeeService.save(updatedEmployees, 'ALL');
+    }
     
     setIsModalOpen(false);
-    loadData();
+    await loadData();
+    await refreshAll(); // Keep global state in sync
   };
 
   const handleDelete = async (id: string, name: string) => {
@@ -80,7 +87,8 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       // Hardening: Instead of hard deletion, we deactivate (Soft Delete/Archive)
       // because historical records (sales/inventory) might depend on this ID.
       await branchService.update(id, { status: 'inactive' });
-      loadData();
+      await loadData();
+      await refreshAll(); // Keep global state in sync
     }
   };
 

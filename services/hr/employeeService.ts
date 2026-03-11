@@ -9,7 +9,7 @@ const MIGRATED_KEY = 'pharma_employees_indexeddb_migrated';
 
 // Export interface so it can be used if needed
 export interface EmployeeService {
-  getAll(branchId?: string): Promise<Employee[]>;
+  getAll(branchId?: string | 'ALL'): Promise<Employee[]>;
   getById(id: string): Promise<Employee | null>;
   create(employee: Employee, branchId?: string): Promise<Employee>;
   update(id: string, employee: Partial<Employee>): Promise<Employee>;
@@ -36,8 +36,9 @@ const getRawAll = async (): Promise<Employee[]> => {
 };
 
 export const createEmployeeService = (): EmployeeService => ({
-  getAll: async (branchId?: string): Promise<Employee[]> => {
+  getAll: async (branchId?: string | 'ALL'): Promise<Employee[]> => {
     const all = await getRawAll();
+    if (branchId === 'ALL') return all;
     const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
     return all.filter((e) => e.branchId === effectiveBranchId);
   },
