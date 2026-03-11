@@ -58,6 +58,15 @@ export const createEmployeeService = (): EmployeeService => ({
     if (!employee.id) {
       employee.id = idGenerator.generate('employees', effectiveBranchId);
     }
+
+    // Assign employeeCode if missing
+    if (!employee.employeeCode) {
+      const maxSerial = all.reduce((max, emp) => {
+        const num = parseInt((emp.employeeCode || '').replace('EMP-', '') || '0');
+        return Math.max(max, isNaN(num) ? 0 : num);
+      }, 0);
+      employee.employeeCode = `EMP-${String(maxSerial + 1).padStart(3, '0')}`;
+    }
     
     // Inject branchId
     employee.branchId = effectiveBranchId;

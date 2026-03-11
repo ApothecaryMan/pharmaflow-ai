@@ -4,7 +4,6 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { useSettings } from '../../context';
 import { employeeService } from '../../services/hr/employeeService';
 import { branchService } from '../../services/branchService';
-import { idGenerator } from '../../utils/idGenerator';
 
 const ROLES = [
   { id: 'pharmacist_owner', labelEN: 'Pharmacy Owner', labelAR: 'مالك الصيدلية', icon: 'license' },
@@ -61,18 +60,10 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
       const { hashPassword } = await import('../../services/auth/hashUtils');
       const passwordHash = await hashPassword(password);
       
-      const generateUUID = () =>
-        'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-          const r = (Math.random() * 16) | 0;
-          return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-        });
-
-      const employeeCode = idGenerator.generate('employees', 'EMP').replace('-', '');
-
       const newEmployee: any = {
-        id: generateUUID(),
+        id: '', // Service will handle ID generation
         branchId: activeBranchId || 'branch_main',
-        employeeCode: employeeCode,
+        employeeCode: '', // Service will handle code generation
         name: name.trim(),
         username: username.trim(),
         password: passwordHash,

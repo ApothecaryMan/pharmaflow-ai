@@ -807,20 +807,34 @@ export function useEntityHandlers({
   // --- Employee Management ---
   const handleAddEmployee = useCallback(
     async (employee: Employee) => {
-      if (
-        !canPerformAction(employees?.find((e) => e.id === currentEmployeeId)?.role, 'users.manage')
-      ) {
+      // 1. Auth Guard
+      if (!currentEmployeeId) {
+        error('Login required: Cannot add employees');
+        return;
+      }
+
+      // 2. Permission Check
+      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
+      if (!canPerformAction(currentUser?.role, 'users.manage')) {
         error('Permission denied: Cannot add employees');
         return;
       }
-      // Persist to IndexedDB first
-      await employeeService.create({ ...employee, branchId: activeBranchId });
-      setEmployees((prev) => [...prev, employee]);
+
+      // 3. Persist to IndexedDB
+      // The service will assign ID/Code if missing and inject branchId
+      const newEmployee = await employeeService.create({
+        ...employee,
+        branchId: activeBranchId,
+      });
+
+      // 4. Update State with the result from service (to ensure IDs/Codes are present)
+      setEmployees((prev) => [...prev, newEmployee]);
       success('Employee added successfully');
+
       auditService.log('user.create', {
-        userId: currentEmployeeId || 'System',
-        details: `Added Employee: ${employee.name}`,
-        entityId: employee.id,
+        userId: currentEmployeeId,
+        details: `Added Employee: ${newEmployee.name} (${newEmployee.employeeCode})`,
+        entityId: newEmployee.id,
       });
     },
     [setEmployees, success, currentEmployeeId, employees, error, activeBranchId]
@@ -856,34 +870,44 @@ export function useEntityHandlers({
 
   const handleDeleteEmployee = useCallback(
     async (id: string) => {
-      if (
-        !canPerformAction(employees?.find((e) => e.id === currentEmployeeId)?.role, 'users.manage')
-      ) {
+      // 1. Auth Guard
+      if (!currentEmployeeId) {
+        error('Login required: Cannot delete employees');
+        return;
+      }
+
+      // 2. Permission Check
+      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
+      if (!canPerformAction(currentUser?.role, 'users.manage')) {
         error('Permission denied: Cannot delete employees');
         return;
       }
+
       if (id === currentEmployeeId) {
         error('Cannot delete your own account');
         return;
       }
 
-      // 🔴 Delete Guard: Check for orphaned foreign keys
+      // 3. Delete Guard: Check for orphaned foreign keys
       // Since an employee might have cashier shifts, sales, etc., we prevent hard deletion
       const hasSales = sales.some((s) => s.soldByEmployeeId === id);
       const hasPurchases = purchases.some((p) => p.approvedBy === id);
       const hasCustomers = customers.some((c) => c.registeredByEmployeeId === id);
 
       if (hasSales || hasPurchases || hasCustomers) {
-        error('Cannot delete employee with existing transaction records. Disable their account instead (not yet implemented).');
+        error(
+          'Cannot delete employee with existing transaction records. Disable their account instead (not yet implemented).'
+        );
         return;
       }
 
-      // Persist to IndexedDB
+      // 4. Persist to IndexedDB
       await employeeService.delete(id);
       setEmployees((prev) => prev.filter((e) => e.id !== id));
       success('Employee deleted successfully');
+
       auditService.log('user.delete', {
-        userId: currentEmployeeId || 'System',
+        userId: currentEmployeeId,
         details: `Deleted Employee ID: ${id}`,
         entityId: id,
       });
