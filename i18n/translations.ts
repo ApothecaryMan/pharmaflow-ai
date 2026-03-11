@@ -1184,7 +1184,7 @@ export const TRANSLATIONS = {
       saveAsNew: 'Save as New Template',
       deleteTemplate: 'Delete',
       templatePlaceholder: 'My Custom Template',
-      createNew: 'Create New Design',
+      createNew: 'Create Design',
       undo: 'Undo',
       redo: 'Redo',
       searchPlaceholder: 'Search product to label...',

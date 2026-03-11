@@ -1014,7 +1014,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                 className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
                   elements.some((el) => el.type === 'text' && el.id.startsWith('custom-'))
                     ? `bg-primary-500 dark:bg-accent text-white shadow-xs`
-                    : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-blue-500 dark:hover:text-foreground'
+                    : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground'
                 }`}
               title={t.toolbar.addText}
             >
@@ -1033,14 +1033,25 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                   document.getElementById('img-upload-hidden')?.click();
                 }
               }}
-                className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
-                  elements.some((el) => el.type === 'image' && el.id.startsWith('img-'))
-                    ? `bg-primary-500 dark:bg-accent text-white shadow-xs`
-                    : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-blue-500 dark:hover:text-foreground'
-                }`}
+              className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
+                elements.some((el) => el.type === 'image' && el.id.startsWith('img-') || el.id === 'logo')
+                  ? `bg-primary-500 dark:bg-accent text-white shadow-xs`
+                  : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground'
+              }`}
               title={t.toolbar.addImage}
             >
               <span className='material-symbols-rounded text-[18px] leading-none'>image</span>
+            </button>
+            <button
+              onClick={() => addElement('qrcode')}
+              className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${
+                elements.some((el) => el.type === 'qrcode')
+                  ? `bg-primary-500 dark:bg-accent text-white shadow-xs`
+                  : 'hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground'
+              }`}
+              title='Add QR Code'
+            >
+              <span className='material-symbols-rounded text-[18px] leading-none'>qr_code_2</span>
             </button>
             <input
               type='file'
