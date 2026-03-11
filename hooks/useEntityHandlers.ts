@@ -35,6 +35,9 @@ import { storage } from '../utils/storage';
 import { validateDrug, validateSaleData, validateStockAvailability } from '../utils/validation';
 import { useShift } from './useShift';
 
+// --- Constants ---
+const SENIOR_CASHIER_CANCEL_LIMIT = 500;
+
 // Helper to get current branchCode synchronously from storage (DEPRECATED: Use activeBranchId from props)
 // Removed getBranchCode as everything now uses activeBranchId
 
@@ -1132,10 +1135,13 @@ export function useEntityHandlers({
       sales,
       inventory,
       currentEmployeeId,
+      employees,
+      activeBranchId,
       getVerifiedDate,
       validateTransactionTime,
       updateLastTransactionTime,
       setInventory,
+      setBatches,
       setCustomers,
       setSales,
       success,
@@ -1158,27 +1164,28 @@ export function useEntityHandlers({
       const sale = sales.find((s) => s.id === saleId);
       if (!sale) return;
 
+      if (!currentEmployeeId) {
+        error('Permission denied: Login required to update/cancel orders');
+        return;
+      }
+      const employee = employees?.find((e) => e.id === currentEmployeeId);
+
       // Handle order cancellation - return all items to batches
       if (updates.status === 'cancelled' && sale.status !== 'cancelled') {
-        if (!currentEmployeeId) {
-          error('Permission denied: Login required to cancel orders');
-          return;
-        }
-        const employee = employees?.find((e) => e.id === currentEmployeeId);
         if (!canPerformAction(employee?.role, 'sale.cancel')) {
           error('Permission denied: Cannot cancel orders');
           return;
         }
 
         // Limit for senior_cashier
-        if (employee?.role === 'senior_cashier' && sale.total > 500) {
+        if (employee?.role === 'senior_cashier' && sale.total > SENIOR_CASHIER_CANCEL_LIMIT) {
           error(
-            `Permission denied: Senior Cashiers cannot cancel sales exceeding 500 EGP (Sale Total: ${sale.total.toFixed(2)}). Manager approval required.`
+            `Permission denied: Senior Cashiers cannot cancel sales exceeding ${SENIOR_CASHIER_CANCEL_LIMIT} EGP (Sale Total: ${sale.total.toFixed(2)}). Manager approval required.`
           );
           return;
         }
 
-        const performer = employees?.find((e) => e.id === currentEmployeeId);
+        const performer = employee;
         sale.items.forEach((item) => {
           const drug = inventory.find((d) => d.id === item.id);
           if (drug) {
@@ -1199,7 +1206,7 @@ export function useEntityHandlers({
           }
         });
         
-        // Update inventory state using the existing helper for now, but the logging is now via stockOps
+        // Update inventory state
         const updatedInventory = restoreStockForCancelledSale(sale, inventory);
         setInventory(updatedInventory);
         setBatches(batchService.getAllBatches());
@@ -1217,19 +1224,12 @@ export function useEntityHandlers({
         } catch (e) {
           console.error('[handleUpdateSale] Cancellation Persistence Error:', e);
         }
+
+        success(`Order #${saleId} cancelled and stock returned.`);
       }
 
       // Handle item modifications (for delivery orders)
       if (updates.items && sale.saleType === 'delivery' && sale.status !== 'completed') {
-        // Security Check: Must be logged in to modify delivery orders
-        if (!currentEmployeeId) {
-          console.error(
-            '[handleUpdateSale] Security Alert: Attempted modification without logged-in user'
-          );
-          error('Security Alert: You must be logged in to modify orders');
-          return;
-        }
-        const employee = employees?.find((e) => e.id === currentEmployeeId);
         if (!canPerformAction(employee?.role, 'sale.modify')) {
           error('Permission denied: Cannot modify orders');
           return;
@@ -1237,6 +1237,7 @@ export function useEntityHandlers({
 
         const modifications: OrderModification[] = [];
         const timestamp = new Date().toISOString();
+        const performer = employee;
 
         // Compare old items with new items (MUST compare by id AND isUnit)
         for (const oldItem of sale.items) {
@@ -1246,7 +1247,6 @@ export function useEntityHandlers({
 
           if (!newItem) {
             // Item was deleted - return all stock
-            const performer = employees?.find((e) => e.id === currentEmployeeId);
             stockOps.returnStock(
               inventory.find(d => d.id === oldItem.id)!,
               oldItem.quantity,
@@ -1301,7 +1301,6 @@ export function useEntityHandlers({
 
               if (diff > 0) {
                 // Quantity reduced - return partial stock
-                const performer = employees?.find((e) => e.id === currentEmployeeId);
                 stockOps.returnStock(
                   drug,
                   diff,
@@ -1341,7 +1340,6 @@ export function useEntityHandlers({
                 });
               } else if (diff < 0) {
                 // Quantity increased - allocate more
-                const performer = employees?.find((e) => e.id === currentEmployeeId);
                 const mutation = stockOps.deductStock(
                   drug,
                   Math.abs(diff),
@@ -1411,7 +1409,6 @@ export function useEntityHandlers({
             // This is a NEW item - allocate stock
             const drug = inventory.find((d) => d.id === newItem.id);
             if (drug) {
-              const performer = employees?.find((e) => e.id === currentEmployeeId);
               const mutation = stockOps.deductStock(
                 drug,
                 newItem.quantity,
@@ -1457,14 +1454,8 @@ export function useEntityHandlers({
 
         // Add modification history
         if (modifications.length > 0) {
-          console.log('[useEntityHandlers] Modifications detected:', modifications);
-
           // Resolve modifier name
-          let modifierName = 'System';
-          if (currentEmployeeId && employees) {
-            const emp = employees.find((e) => e.id === currentEmployeeId);
-            if (emp) modifierName = emp.name;
-          }
+          const modifierName = employee?.name || 'System';
 
           const historyRecord: OrderModificationRecord = {
             id: idGenerator.generate('generic'),
@@ -1474,10 +1465,8 @@ export function useEntityHandlers({
           };
 
           updates.modificationHistory = [...(sale.modificationHistory || []), historyRecord];
-          console.log('[useEntityHandlers] Updated history:', updates.modificationHistory);
-        } else {
-          console.log('[useEntityHandlers] No modifications detected');
         }
+        success(`Order #${saleId} modified and history updated.`);
       }
 
       // Handle Delivery Completion (Status changed to completed)
@@ -1491,10 +1480,10 @@ export function useEntityHandlers({
           type: isCash ? 'sale' : 'card_sale',
           amount: sale.total, // Ensure we use the full total
           reason: `Delivery Finalized #${saleId}`,
-          userId: employees?.find((e) => e.id === currentEmployeeId)?.name || 'System',
+          userId: employee?.name || 'System',
           relatedSaleId: saleId.toString(),
         });
-        console.log(`[Shift] Delivery #${sale.id} completed. Added to shift ${currentShift.id}`);
+        success(`Delivery #${saleId} completed and payment recorded.`);
       }
 
       const finalUpdates: Partial<Sale> = {
@@ -1504,19 +1493,38 @@ export function useEntityHandlers({
 
       setSales((prev) => prev.map((s) => (s.id === saleId ? { ...s, ...finalUpdates } : s)));
     },
-    [sales, inventory, currentEmployeeId, setInventory, setSales, currentShift, addTransaction, employees, error]
+    [
+      sales,
+      inventory,
+      currentEmployeeId,
+      employees,
+      activeBranchId,
+      setInventory,
+      setBatches,
+      setSales,
+      currentShift,
+      addTransaction,
+      error,
+      success,
+    ]
   );
 
   const handleProcessReturn = useCallback(
     async (returnData: Return) => {
-      if (
-        !canPerformAction(employees?.find((e) => e.id === currentEmployeeId)?.role, 'sale.refund')
-      ) {
+      // 1. Authentication Guard
+      if (!currentEmployeeId) {
+        error('Permission denied: Login required to process returns');
+        return;
+      }
+
+      // 2. Permission Guard
+      const employee = employees?.find((e) => e.id === currentEmployeeId);
+      if (!canPerformAction(employee?.role, 'sale.refund')) {
         error('Permission denied: Cannot process returns');
         return;
       }
 
-      // Validate return time
+      // 3. Validate return time
       const returnDate = new Date(returnData.date);
       const validation = validateTransactionTime(returnDate);
       if (!validation.valid) {
@@ -1568,7 +1576,6 @@ export function useEntityHandlers({
         prev.map((drug) => {
           const returnedItem = returnData.items.find((i) => i.drugId === drug.id);
           if (returnedItem) {
-            const performer = employees?.find((e) => e.id === currentEmployeeId);
             const mutation = stockOps.returnStock(
               drug,
               returnedItem.quantityReturned,
@@ -1578,13 +1585,15 @@ export function useEntityHandlers({
               `Return for Sale #${returnData.saleId}`,
               {
                 branchId: activeBranchId,
-                performedBy: currentEmployeeId!,
-                performedByName: performer?.name,
+                performedBy: currentEmployeeId,
+                performedByName: employee?.name,
               },
               returnData.id
             );
 
-            setBatches(batchService.getAllBatches());
+            // Functional update not strictly needed for setBatches as batchService is external,
+            // but we trigger state refresh
+            setTimeout(() => setBatches(batchService.getAllBatches()), 0);
 
             // --- PERSISTENCE: Restore stock to IndexedDB ---
             inventoryService.updateStock(drug.id, returnedItem.quantityReturned).catch(console.error);
@@ -1607,13 +1616,13 @@ export function useEntityHandlers({
           type: 'return',
           amount: returnData.totalRefund,
           reason: `Return for Sale #${returnData.saleId}`,
-          userId: employees?.find((e) => e.id === currentEmployeeId)?.name || 'System',
+          userId: employee?.name || 'System',
           relatedSaleId: returnData.saleId.toString(),
         });
       }
 
       auditService.log('sale.return', {
-        userId: currentEmployeeId || 'System',
+        userId: currentEmployeeId,
         details: `Processed Return for Sale #${returnData.saleId}`,
         entityId: returnData.id,
       });
@@ -1621,17 +1630,19 @@ export function useEntityHandlers({
       success(`Return processed successfully. Refund: ${returnData.totalRefund.toFixed(2)} L.E`);
     },
     [
+      currentEmployeeId,
+      employees,
+      activeBranchId,
+      sales,
       returns,
       validateTransactionTime,
       updateLastTransactionTime,
       setReturns,
       setSales,
       setInventory,
+      setBatches,
       success,
       error,
-      getVerifiedDate,
-      employees,
-      currentEmployeeId,
       currentShift,
       addTransaction,
     ]
