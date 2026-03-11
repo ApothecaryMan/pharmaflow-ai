@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Drug, StockBatch } from '../../types';
+import { StorageKeys } from '../../config/storageKeys';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
 import { formatExpiryDate, checkExpiryStatus, getExpiryStatusConfig, parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { useContextMenu } from '../common/ContextMenu';
@@ -10,6 +11,7 @@ import { SearchInput } from '../common/SearchInput';
 import { useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
 import { idGenerator } from '../../utils/idGenerator';
+import { storage } from '../../utils/storage';
 import { type PrintLabelItem, printLabels } from './LabelPrinter';
 
 interface BarcodePrinterProps {
@@ -253,14 +255,8 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
       expiryDateOverride,
     }));
 
-    // Try to load current design from localStorage
-    let currentDesign: any = null;
-    try {
-      const saved = localStorage.getItem('pharma_label_design');
-      if (saved) currentDesign = JSON.parse(saved);
-    } catch (e) {
-      console.error('Failed to load current design', e);
-    }
+    // Load current design from storage (matches BarcodeStudio's autosave key)
+    const currentDesign = storage.get<any>(StorageKeys.LABEL_DESIGN, null);
 
     printLabels(itemsToPrint, {
       design: currentDesign,
