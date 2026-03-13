@@ -206,7 +206,9 @@ layer(base);
   /* Define structural variables for Recharts/SVG usage */
   :root {
     --border-color: #e5e7eb; /* gray-200 */
-    --text-secondary: #6b7280; /* gray-500 */
+    --text-primary: #111827; /* gray-900 */
+    --text-secondary: #4b5563; /* gray-600 */
+    --text-tertiary: #9ca3af; /* gray-400 */
     --font-en: "IBM Plex Sans";
     --font-ar: "IBM Plex Sans Arabic";
 
@@ -228,7 +230,9 @@ layer(base);
 
   .dark {
     --border-color: #374151; /* gray-700 */
-    --text-secondary: #9ca3af; /* gray-400 */
+    --text-primary: oklch(0.985 0 0);
+    --text-secondary: #d1d5db; /* gray-300 */
+    --text-tertiary: #9ca3af; /* gray-400 */
     --bg-internal-card: #202020;
   }
 

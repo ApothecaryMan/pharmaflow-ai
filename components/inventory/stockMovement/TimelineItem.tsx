@@ -69,42 +69,44 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
       indigo: 'bg-indigo-500 text-indigo-600',
       violet: 'bg-violet-500 text-violet-600',
       teal: 'bg-teal-500 text-teal-600',
-      slate: 'bg-slate-500 text-slate-600',
+      gray: 'bg-gray-500 text-gray-600',
     };
-    return map[color] || map.slate;
+    return map[color] || map.gray;
   };
 
-  const colorClass = getColorClasses(config.color);
+  const colorClass = getColorClasses(config.color === 'slate' ? 'gray' : config.color);
 
   return (
     <div className='flex gap-6 group'>
       {/* Date Column */}
-      <div className='w-20 pt-7 flex flex-col shrink-0 items-end pe-2'>
-        <span className='text-sm font-bold text-slate-700 dark:text-slate-300'>{dateStr}</span>
-        <span className='text-[11px] text-slate-400 font-medium font-mono'>{timeStr}</span>
+      <div className='w-20 pt-[19px] flex flex-col shrink-0 items-end pe-2'>
+        <span className='text-sm font-bold text-gray-700 dark:text-gray-300 leading-tight'>{dateStr}</span>
+        <span className='text-[11px] text-gray-400 font-medium font-mono leading-tight'>{timeStr}</span>
       </div>
 
       {/* Axis Column */}
       <div className='relative flex flex-col items-center w-4 shrink-0'>
-        {/* Vertical Line */}
-        <div className='absolute top-0 bottom-0 w-px bg-slate-200 dark:bg-slate-800 group-last:hidden' />
+        {/* Vertical Line - Top segment (from top of div to dot center) */}
+        <div className='absolute top-0 h-[37px] w-px bg-gray-100 dark:bg-(--border) group-first:hidden' />
+        {/* Vertical Line - Bottom segment (from dot center to bottom of div) */}
+        <div className='absolute top-[37px] bottom-0 w-px bg-gray-100 dark:bg-(--border) group-last:hidden' />
         {/* Dot */}
         <div
-          className={`w-3 h-3 rounded-full ring-4 ring-white dark:ring-slate-900 z-10 mt-[31px] ${colorClass.split(' ')[0]}`}
+          className={`w-3 h-3 rounded-full ring-4 ring-white dark:ring-gray-950 z-10 mt-[31px] ${colorClass.split(' ')[0]}`}
         />
       </div>
 
       {/* Content Column */}
-      <div className='flex-1 pt-7 pb-7 group-last:pb-7 border-b border-slate-100 dark:border-slate-800 group-last:border-0 min-w-0'>
+      <div className='flex-1 pt-[30px] pb-7 group-last:pb-7 border-b border-gray-100 dark:border-(--border) group-last:border-0 min-w-0'>
         <div className='flex flex-col gap-3'>
           {/* Header */}
           <div className='flex items-center gap-2 text-sm leading-none'>
             <span className={`font-bold text-sm tracking-tight ${colorClass.split(' ')[1]}`}>
               {isRTL ? config.arLabel : config.label}
             </span>
-            <span className='text-slate-300 dark:text-slate-700 text-[10px]'>•</span>
-            <span className='text-[11px] text-slate-500 font-bold flex items-center gap-1 uppercase tracking-wider'>
-              <span className='material-symbols-rounded text-[16px] opacity-70'>person</span>
+            <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
+            <span className='text-[11px] text-(--text-secondary) font-bold flex items-center gap-1 uppercase tracking-wider'>
+              <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>person</span>
               {performedBy}
             </span>
           </div>
@@ -119,18 +121,18 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                 {quantity > 0 ? '+' : ''}
                 {quantity}
               </span>
-              <span className='text-[10px] uppercase font-black text-slate-400 tracking-widest'>
+              <span className='text-[10px] uppercase font-black text-gray-400 tracking-widest'>
                 {isRTL ? 'وحدة' : 'UNITS'}
               </span>
             </div>
 
             {/* Vertical Divider */}
-            <div className='w-px h-6 bg-slate-100 dark:bg-slate-800/50' />
+            <div className='w-px h-6 bg-gray-100 dark:bg-white/5' />
 
             {/* Value (If exists) */}
             {value && value !== 0 && (
               <div className='flex flex-col gap-1'>
-                <span className='text-[8px] text-slate-400 font-black uppercase tracking-[0.2em] leading-none'>
+                <span className='text-[8px] text-gray-400 font-black uppercase tracking-[0.2em] leading-none'>
                   {isRTL ? 'القيمة' : 'VALUE'}
                 </span>
                 <span
@@ -143,46 +145,54 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
 
             {/* Change Context */}
             <div className='flex flex-col gap-1'>
-              <span className='text-[8px] text-slate-400 font-black uppercase tracking-[0.2em] leading-none'>
+              <span className='text-[8px] text-gray-400 font-black uppercase tracking-[0.2em] leading-none'>
                 {isRTL ? 'الرصيد' : 'BALANCE'}
               </span>
-              <div className='flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 leading-none'>
+              <div className='flex items-center gap-2 text-xs font-bold text-(--text-secondary) leading-none'>
                 <span className='tabular-nums opacity-60'>{previousStock}</span>
-                <span className='material-symbols-rounded text-[14px] text-slate-300 dark:text-slate-700 rtl:rotate-180'>
-                  arrow_right_alt
+                <span className='material-symbols-rounded text-(--text-tertiary)' style={{ fontSize: 'var(--icon-sm)' }}>
+                  {isRTL ? 'arrow_back' : 'arrow_forward'}
                 </span>
-                <span className='text-slate-900 dark:text-slate-100 font-black tabular-nums'>
+                <span className='text-(--text-primary) font-black tabular-nums'>
                   {newStock}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Metadata Chips */}
+          {/* Metadata */}
           {(batchId || expiryDate || reason) && (
-            <div className='flex flex-wrap items-center gap-2 mt-1'>
+            <div className='flex flex-wrap items-center gap-x-2 gap-y-1 mt-1'>
               {batchId && (
-                <span className='inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold font-mono text-slate-500 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800'>
-                  <span className='material-symbols-rounded text-[14px] opacity-70'>tag</span>
-                  {batchId}
-                </span>
+                <div className='flex items-center gap-1 text-[11px] font-medium text-(--text-tertiary) uppercase tracking-wider'>
+                  <span className='material-symbols-rounded opacity-70' style={{ fontSize: 'var(--icon-sm)' }}>tag</span>
+                  <span>{batchId}</span>
+                </div>
+              )}
+
+              {batchId && (expiryDate || reason) && (
+                <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
               )}
 
               {expiryDate && (() => {
                 const status = checkExpiryStatus(expiryDate);
                 const config = getExpiryStatusConfig(status);
                 return (
-                  <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-black border border-${config.color}-100 dark:border-${config.color}-900/30 text-${config.color}-700 bg-${config.color}-50 dark:bg-${config.color}-900/20`}>
-                    <span className='material-symbols-rounded text-[14px]'>
+                  <div className={`flex items-center gap-1 text-[11px] font-bold text-${config.color}-600 dark:text-${config.color}-400/80`}>
+                    <span className='material-symbols-rounded opacity-80' style={{ fontSize: 'var(--icon-sm)' }}>
                       {status === 'invalid' ? 'event_busy' : 'event_available'}
                     </span>
-                    {formatExpiryDate(expiryDate)}
-                  </span>
+                    <span>{formatExpiryDate(expiryDate)}</span>
+                  </div>
                 );
               })()}
 
+              {expiryDate && reason && (
+                <span className='text-gray-300 dark:text-gray-700 text-[10px]'>•</span>
+              )}
+
               {reason && (
-                <span className='text-xs text-slate-400 dark:text-slate-500 italic font-medium px-1 flex items-center gap-1'>
+                <span className='text-xs text-(--text-secondary) italic font-medium px-1 flex items-center gap-1'>
                    {reason}
                 </span>
               )}
@@ -193,3 +203,5 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
     </div>
   );
 };
+
+export default TimelineItem;

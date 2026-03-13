@@ -13,7 +13,8 @@ import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatCurrency } from '../../utils/currency';
 import { formatExpiryDate, checkExpiryStatus, getExpiryStatusConfig } from '../../utils/expiryUtils';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { SmartInput } from '../common/SmartInputs';
+import { SearchInput } from '../common/SearchInput';
+import { type FilterConfig } from '../common/FilterPill';
 
 
 interface StockMovementReportProps {
@@ -45,6 +46,28 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
   const [isLoading, setIsLoading] = useState(false);
   const [viewType, setViewType] = useState<'summary' | 'timeline'>('summary');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
+
+  // --- Column Configuration ---
+  const columns = useMemo(() => [
+    { id: 'date', label: isRTL ? 'التاريخ' : 'DATE', width: '12%' },
+    { id: 'type', label: isRTL ? 'النوع' : 'TYPE', width: '11%' },
+    { id: 'quantity', label: isRTL ? 'الكمية' : 'QUANTITY', width: '14%' },
+    { id: 'batch', label: isRTL ? 'التشغيلة / الصلاحية' : 'BATCH / EXPIRY', width: '21%' },
+    { id: 'value', label: isRTL ? 'القيمة' : 'VALUE', width: '10%' },
+    { id: 'stock', label: isRTL ? 'المخزون' : 'STOCK', width: '10%' },
+    { id: 'user', label: isRTL ? 'بواسطة' : 'USER', width: '17%' },
+    { id: 'actions', label: '', width: '5%' }
+  ], [isRTL]);
+
+  // --- Data Filtering & Processing ---
+  const filteredHistory = useMemo(() => {
+    return history.filter(m => {
+      if (!m.timestamp || typeof m.timestamp !== 'string' || m.timestamp === 'DATE') return false;
+      const date = new Date(m.timestamp);
+      return !isNaN(date.getTime()) && (m.type as string) !== 'TYPE';
+    });
+  }, [history]);
 
   // --- Search Logic ---
   const searchResults = useMemo(() => {
@@ -60,6 +83,38 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
       return nameMatch || arabicMatch || idMatch || barcodeMatch;
     }).slice(0, 8);
   }, [searchQuery, inventory, textTransform]);
+
+  const suggestions = useMemo(() => {
+    return inventory.map(d => getDisplayName(d, textTransform));
+  }, [inventory, textTransform]);
+
+  const filterConfigs = useMemo<FilterConfig[]>(() => [
+    {
+      id: 'type',
+      label: isRTL ? 'النوع' : 'Movement Type',
+      icon: 'category',
+      mode: 'single',
+      options: [
+        { label: isRTL ? 'بيع' : 'Sale', value: 'sale', icon: 'north_east' },
+        { label: isRTL ? 'شراء' : 'Purchase', value: 'purchase', icon: 'south_west' },
+        { label: isRTL ? 'تعديل' : 'Adjustment', value: 'adjustment', icon: 'settings' },
+        { label: isRTL ? 'تلف' : 'Damage', value: 'damage', icon: 'warning' },
+        { label: isRTL ? 'مرتجع عميل' : 'Customer Return', value: 'return_customer', icon: 'rotate_left' },
+        { label: isRTL ? 'مرتجع مورد' : 'Supplier Return', value: 'return_supplier', icon: 'rotate_left' },
+      ]
+    },
+    {
+      id: 'status',
+      label: isRTL ? 'الحالة' : 'Status',
+      icon: 'check_circle',
+      mode: 'single',
+      options: [
+        { label: isRTL ? 'مقبول' : 'Approved', value: 'approved', icon: 'check_circle' },
+        { label: isRTL ? 'معلق' : 'Pending', value: 'pending', icon: 'schedule' },
+        { label: isRTL ? 'مرفوض' : 'Rejected', value: 'rejected', icon: 'cancel' },
+      ]
+    }
+  ], [isRTL]);
 
   const handleSelectDrug = (drug: Drug) => {
     setSelectedDrug(drug);
@@ -81,7 +136,9 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
       const filters = {
         drugId: selectedDrug.id,
         startDate: dateRange.start,
-        endDate: dateRange.end
+        endDate: dateRange.end,
+        type: activeFilters.type?.[0],
+        status: activeFilters.status?.[0],
       };
       
       const moveHistory = await stockMovementService.getHistory(filters) as StockMovement[];
@@ -94,7 +151,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
     } finally {
       setIsLoading(false);
     }
-  }, [selectedDrug, dateRange]);
+  }, [selectedDrug, dateRange, activeFilters]);
 
   useEffect(() => {
     fetchData();
@@ -136,13 +193,13 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
   // --- Render Sections ---
   const renderEmptyState = () => (
     <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-      <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
-        <span className="material-symbols-rounded text-[40px] text-slate-400">package_2</span>
+      <div className="w-20 h-20 bg-gray-100 dark:bg-(--bg-surface-neutral) rounded-full flex items-center justify-center mb-6">
+        <span className="material-symbols-rounded text-gray-400 dark:text-gray-500" style={{ fontSize: 'var(--icon-2xl)' }}>package_2</span>
       </div>
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 page-title">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2 page-title">
         {isRTL ? 'اختر صنفاً للمتابعة' : 'Select a drug to begin monitoring'}
       </h1>
-      <p className="text-slate-500 dark:text-slate-400 max-w-md">
+      <p className="text-gray-500 dark:text-gray-400 max-w-md">
         {isRTL ? 'ابحث عن أي صنف في الصيدلية لعرض تاريخ حركته، ملخص المخزون والتحليلات.' : 'Search for any drug in your inventory to view its chronological movement history, stock summaries, and analytics.'}
       </p>
     </div>
@@ -156,19 +213,26 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Search Input */}
           <div className="flex-1 relative max-w-lg">
-            <div className="relative group">
-              <span className="absolute left-4 rtl:left-auto rtl:right-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 material-symbols-rounded">search</span>
-              <SmartInput
-                type="text"
+              <SearchInput
                 placeholder={isRTL ? 'البحث عن صنف...' : 'Search for drug...'}
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
+                onSearchChange={(val) => {
+                  setSearchQuery(val);
                   setShowSearch(true);
                 }}
                 onFocus={() => setShowSearch(true)}
                 onKeyDown={onKeyDown}
-                className="w-full pl-12 rtl:pl-4 rtl:pr-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-none ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-blue-500 transition-all outline-hidden text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                onClear={() => {
+                  setSearchQuery('');
+                  setSelectedDrug(null);
+                }}
+                enableAutocomplete
+                suggestions={suggestions}
+                filterConfigs={filterConfigs}
+                activeFilters={activeFilters}
+                onUpdateFilter={(id, vals) => setActiveFilters(prev => ({ ...prev, [id]: vals }))}
+                className="border-none ring-0 focus:ring-0 shadow-none bg-transparent"
+                wrapperClassName="w-full bg-gray-50 dark:bg-(--bg-input) rounded-2xl border-none ring-1 ring-gray-200 dark:ring-(--border-divider) focus-within:ring-2 focus-within:ring-blue-500 transition-all"
               />
               <SearchDropdown
                 isVisible={showSearch && searchResults.length > 0}
@@ -193,12 +257,9 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                     header: t.inventory.headers.stock, 
                     width: 'w-24 shrink-0',
                     render: (d: Drug) => (
-                      <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider bg-transparent ${
-                        d.stock < (d.minStock || 5) ? 'border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400' : 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'
+                      <span className={`text-sm font-bold tabular-nums ${
+                        d.stock < (d.minStock || 5) ? 'text-rose-600 dark:text-rose-400' : 'text-gray-700 dark:text-gray-300'
                       }`}>
-                        <span className="material-symbols-rounded text-sm">
-                          {d.stock < (d.minStock || 5) ? 'warning' : 'check_circle'}
-                        </span>
                         {d.stock}
                       </span>
                     )
@@ -206,11 +267,10 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                   { 
                     header: t.inventory.headers.price, 
                     width: 'w-28 shrink-0',
-                    render: (d: Drug) => <span className="font-medium text-slate-700 dark:text-slate-300">{formatCurrency(d.price)}</span> 
+                    render: (d: Drug) => <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(d.price)}</span> 
                   }
                 ]}
               />
-            </div>
           </div>
 
           {/* Date Range & Actions */}
@@ -227,9 +287,9 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
             <button
               onClick={exportCSV}
               disabled={history.length === 0}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-(--bg-surface-neutral) hover:bg-gray-200 dark:hover:bg-(--bg-input) text-gray-700 dark:text-gray-200 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span className="material-symbols-rounded">download</span>
+              <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-md)' }}>download</span>
               <span className="hidden sm:inline font-semibold">{isRTL ? 'تصدير' : 'Export'}</span>
             </button>
           </div>
@@ -269,15 +329,15 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
           {/* Main Content Area - Scrollable Table */}
           <div className="flex-1 w-full min-w-0 h-full flex flex-col overflow-hidden">
             <div className={`overflow-hidden rounded-3xl ${CARD_LG} flex flex-col h-full`}>
-              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0" dir="ltr">
+              <div className="p-6 flex items-center justify-between shrink-0" dir="ltr">
                 <div className="flex items-center gap-4">
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                       {getDisplayName(selectedDrug, textTransform)}
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="material-symbols-rounded text-slate-400 text-sm">qr_code_2</span>
-                      <span className="text-sm font-mono text-slate-500 font-medium">
+                      <span className="material-symbols-rounded text-gray-400" style={{ fontSize: 'var(--icon-sm)' }}>qr_code_2</span>
+                      <span className="text-sm font-mono text-gray-500 font-medium">
                         {selectedDrug?.barcode || (isRTL ? 'لا يوجد باركود' : 'No Barcode')}
                       </span>
                     </div>
@@ -291,26 +351,48 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                     { label: isRTL ? 'ملخص' : 'Summary', value: 'summary', icon: 'list' },
                     { label: isRTL ? 'الخط الزمني' : 'Timeline', value: 'timeline', icon: 'schedule' }
                   ]}
-                  size="sm"
+                  size="xs"
+                  iconSize="var(--icon-md)"
                   variant="onCard"
                   color="blue"
                   className="min-w-[240px]"
                 />
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 min-h-0 main-content-scroll">
-                {isLoading ? (
+              {/* Fixed Table Header (Sync with body) */}
+              {!isLoading && filteredHistory.length > 0 && viewType === 'summary' && (
+                <div className="px-6 pb-2 border-b border-gray-100 dark:border-(--border-divider) shrink-0">
+                  <table className="w-full text-left rtl:text-right border-separate border-spacing-y-0 table-fixed">
+                    <thead>
+                      <tr className="text-[11px] font-black tracking-widest text-(--text-tertiary) uppercase">
+                        {columns.map((col, idx) => (
+                          <th 
+                            key={col.id} 
+                            style={{ width: col.width }}
+                            className={`pb-2 ${idx === 0 ? 'pl-4 rtl:pl-0 rtl:pr-4' : ''} ${col.id === 'actions' ? 'text-center' : ''}`}
+                          >
+                            {col.label}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                  </table>
+                </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto p-6 pt-0 min-h-0 main-content-scroll">
+                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-4">
                     <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-                    <span className="text-slate-500 font-medium">{isRTL ? 'جاري التحميل...' : 'Syncing data...'}</span>
+                    <span className="text-gray-500 font-medium">{isRTL ? 'جاري التحميل...' : 'Syncing data...'}</span>
                   </div>
-                ) : history.length === 0 ? (
-                  <div className="text-center py-20 text-slate-400">
+                ) : filteredHistory.length === 0 ? (
+                  <div className="text-center py-20 text-gray-400">
                     {isRTL ? 'لا توجد حركات في هذه الفترة' : 'No movements recorded in this period'}
                   </div>
                 ) : viewType === 'timeline' ? (
                   <div className="max-w-3xl mx-auto py-4">
-                    {history.map((m, idx) => (
+                    {filteredHistory.map((m, idx) => (
                       <TimelineItem
                         key={m.id}
                         type={m.type}
@@ -329,33 +411,21 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                     ))}
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left rtl:text-right border-separate border-spacing-y-2">
-                      <thead>
-                        <tr className="text-[11px] font-black tracking-widest text-slate-400 dark:text-slate-500 uppercase px-4">
-                          <th className="pb-4 pl-4 rtl:pl-0 rtl:pr-4">{isRTL ? 'التاريخ' : 'DATE'}</th>
-                          <th className="pb-4">{isRTL ? 'النوع' : 'TYPE'}</th>
-                          <th className="pb-4">{isRTL ? 'الكمية' : 'QUANTITY'}</th>
-                          <th className="pb-4">{isRTL ? 'التشغيلة / الصلاحية' : 'BATCH / EXPIRY'}</th>
-                          <th className="pb-4">{isRTL ? 'القيمة' : 'VALUE'}</th>
-                          <th className="pb-4">{isRTL ? 'المخزون' : 'STOCK'}</th>
-                          <th className="pb-4">{isRTL ? 'بواسطة' : 'USER'}</th>
-                          <th className="pb-4"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {history.map((m) => (
+                  <div className="overflow-x-auto h-full">
+                    <table className="w-full text-left rtl:text-right border-separate border-spacing-y-2 table-fixed">
+                      <tbody className="align-top">
+                        {filteredHistory.map((m) => (
                           <React.Fragment key={m.id}>
-                            <tr className="bg-slate-50/50 dark:bg-slate-800/10 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group cursor-pointer" onClick={() => toggleRow(m.id)}>
-                              <td className="py-2 pl-4 rtl:pl-0 rtl:pr-4 rounded-l-2xl rtl:rounded-l-none rtl:rounded-r-2xl">
-                                <span className="text-sm font-normal text-slate-900 dark:text-white">
+                            <tr className="bg-gray-50/50 dark:bg-(--bg-surface-neutral) hover:bg-gray-50 dark:hover:bg-(--bg-input) transition-colors group cursor-pointer" onClick={() => toggleRow(m.id)}>
+                              <td style={{ width: columns[0].width }} className="py-2 pl-4 rtl:pl-0 rtl:pr-4 rounded-l-2xl rtl:rounded-l-none rtl:rounded-r-2xl">
+                                <span className="text-sm font-normal text-gray-900 dark:text-gray-100">
                                   {new Date(m.timestamp).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' })}
                                 </span>
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
+                                <span className="text-[10px] text-(--text-tertiary) block">
                                   {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                               </td>
-                              <td className="py-2">
+                              <td style={{ width: columns[1].width }} className="py-2">
                                 <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-[10px] font-normal uppercase tracking-wider bg-transparent ${
                                   m.type === 'sale' ? 'border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400' :
                                   m.type === 'purchase' ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400' :
@@ -363,9 +433,9 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                   m.type === 'return_supplier' ? 'border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400' :
                                   m.type === 'adjustment' ? 'border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400' :
                                   m.type === 'damage' ? 'border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400' :
-                                  'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                                  'border-gray-200 dark:border-(--border-divider) text-gray-600 dark:text-gray-400'
                                 }`}>
-                                  <span className="material-symbols-rounded text-sm">
+                                  <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>
                                     {m.type === 'sale' ? 'north_east' :
                                      m.type === 'purchase' ? 'south_west' :
                                      m.type === 'return_customer' || m.type === 'return_supplier' ? 'rotate_left' :
@@ -387,22 +457,27 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                   }
                                 </span>
                               </td>
-                              <td className="py-2">
+                              <td style={{ width: columns[2].width }} className="py-2">
+                                <span className={`text-sm font-bold tabular-nums ${m.quantity > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                                  {m.quantity > 0 ? '+' : ''}{m.quantity}
+                                </span>
+                              </td>
+                              <td style={{ width: columns[3].width }} className="py-2">
                                 <div className="flex flex-col gap-1 items-start">
                                   {m.batchId ? (
-                                    <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider bg-transparent">
-                                      <span className="material-symbols-rounded text-sm">tag</span>
+                                    <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-gray-100 dark:border-(--border-divider) text-gray-600 dark:text-gray-400 text-[10px] font-bold uppercase tracking-wider bg-transparent">
+                                      <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>tag</span>
                                       {m.batchId.substring(0, 6)}
                                     </span>
                                   ) : (
-                                    <span className="text-[10px] text-slate-400">-</span>
+                                    <span className="text-[10px] text-gray-400">-</span>
                                   )}
                                   {m.expiryDate && (() => {
                                     const status = checkExpiryStatus(m.expiryDate);
                                     const config = getExpiryStatusConfig(status);
                                     return (
                                       <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider bg-transparent border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400`}>
-                                        <span className="material-symbols-rounded text-sm">
+                                        <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>
                                           {status === 'invalid' ? 'event_busy' : 'event_available'}
                                         </span>
                                         {formatExpiryDate(m.expiryDate)}
@@ -411,46 +486,41 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                   })()}
                                 </div>
                               </td>
-                              <td className="py-2">
+                              <td style={{ width: columns[4].width }} className="py-2">
                                 {(() => {
                                   const val = getMovementValue(m, selectedDrug);
                                   return (
-                                    <span className={`text-sm font-bold tabular-nums ${val > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                                    <span className={`text-sm font-medium tabular-nums text-(--text-secondary)`}>
                                       {formatCurrency(Math.abs(val))}
                                     </span>
                                   );
                                 })()}
                               </td>
-                              <td className="py-2">
-                                <span className={`text-sm font-medium ${m.quantity > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                  {m.quantity > 0 ? '+' : ''}{m.quantity}
-                                </span>
-                              </td>
-                              <td className="py-2">
-                                <div className="text-xs text-slate-500 flex items-center gap-1">
-                                  <span className="font-normal text-slate-400">{m.previousStock}</span>
-                                  <span className="material-symbols-rounded text-[14px]">{isRTL ? 'arrow_back' : 'arrow_forward'}</span>
-                                  <span className="font-medium text-slate-900 dark:text-white">{m.newStock}</span>
+                              <td style={{ width: columns[5].width }} className="py-2">
+                                <div className="text-xs text-gray-500 flex items-center gap-1">
+                                  <span className="font-normal text-gray-400">{m.previousStock}</span>
+                                  <span className="material-symbols-rounded text-(--text-tertiary)" style={{ fontSize: 'var(--icon-sm)' }}>{isRTL ? 'arrow_back' : 'arrow_forward'}</span>
+                                  <span className="font-medium text-gray-900 dark:text-gray-100">{m.newStock}</span>
                                 </div>
                               </td>
-                              <td className="py-2">
-                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 bg-transparent">
-                                  <span className="material-symbols-rounded text-sm">person</span>
-                                  {m.performedByName || m.performedBy}
+                              <td style={{ width: columns[6].width }} className="py-2">
+                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xl border border-gray-100 dark:border-(--border-divider) text-[10px] font-bold uppercase tracking-widest text-(--text-secondary) bg-transparent">
+                                  <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>person</span>
+                                  <span className="truncate max-w-[80px]">{m.performedByName || m.performedBy}</span>
                                 </span>
                               </td>
-                              <td className="py-2 pr-4 rtl:pr-0 rtl:pl-4 rounded-r-2xl rtl:rounded-r-none rtl:rounded-l-2xl text-right rtl:text-left">
-                                  <span className="material-symbols-rounded text-[20px]">
-                                    {expandedRows.has(m.id) ? 'expand_more' : (isRTL ? 'chevron_left' : 'chevron_right')}
+                              <td style={{ width: columns[7].width }} className="py-2 pr-4 rtl:pr-0 rtl:pl-4 rounded-r-2xl rtl:rounded-r-none rtl:rounded-l-2xl text-right rtl:text-left">
+                                  <span className="material-symbols-rounded transition-transform duration-200 text-gray-400" style={{ fontSize: 'var(--icon-md)', transform: expandedRows.has(m.id) ? 'rotate(180deg)' : 'none' }}>
+                                    expand_more
                                   </span>
                               </td>
                             </tr>
                             {expandedRows.has(m.id) && (
-                              <tr className="bg-slate-50/20 dark:bg-slate-800/5">
+                              <tr className="bg-gray-50/20 dark:bg-(--bg-input)">
                                 <td colSpan={8} className="px-6 py-4 rounded-2xl">
                                   <div className="flex flex-wrap gap-x-8 gap-y-2 text-xs">
                                     <div>
-                                      <span className="text-slate-400 block mb-1 uppercase tracking-widest text-[9px] font-bold">{isRTL ? 'رقم المرجع' : 'REFERENCE ID'}</span>
+                                      <span className="text-gray-400 block mb-1 uppercase tracking-widest text-[9px] font-bold">{isRTL ? 'رقم المرجع' : 'REFERENCE ID'}</span>
                                       {m.referenceId && m.referenceId !== 'N/A' ? (
                                         <button 
                                           onClick={() => {
@@ -467,25 +537,25 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                           className={`font-mono font-bold text-left rtl:text-right ${
                                             ['sale', 'purchase', 'return_customer'].includes(m.type) 
                                               ? 'text-blue-600 dark:text-blue-400 hover:underline cursor-pointer' 
-                                              : 'text-slate-700 dark:text-slate-200 cursor-default'
+                                              : 'text-gray-700 dark:text-gray-200 cursor-default'
                                           }`}
                                         >
                                           {m.referenceId}
                                           {['sale', 'purchase', 'return_customer'].includes(m.type) && (
-                                            <span className="material-symbols-rounded text-[10px] align-middle ms-1">open_in_new</span>
+                                            <span className="material-symbols-rounded align-middle ms-1" style={{ fontSize: 'var(--icon-xs)' }}>open_in_new</span>
                                           )}
                                         </button>
                                       ) : (
-                                        <span className="font-mono text-slate-700 dark:text-slate-200">N/A</span>
+                                        <span className="font-mono text-gray-700 dark:text-gray-200">N/A</span>
                                       )}
                                     </div>
                                     <div className="flex-1">
-                                      <span className="text-slate-400 block mb-1 uppercase tracking-widest text-[9px] font-bold">{isRTL ? 'السبب / الملاحظات' : 'REASON / NOTES'}</span>
-                                      <span className="text-slate-700 dark:text-slate-200">{m.reason || (isRTL ? 'لا يوجد سبب محدد' : 'No reason specified')}</span>
+                                      <span className="text-(--text-tertiary) block mb-1 uppercase tracking-widest text-[9px] font-bold">{isRTL ? 'السبب / الملاحظات' : 'REASON / NOTES'}</span>
+                                      <span className="text-(--text-primary) font-medium">{m.reason || (isRTL ? 'لا يوجد سبب محدد' : 'No reason specified')}</span>
                                     </div>
                                     <div>
-                                      <span className="text-slate-400 block mb-1 uppercase tracking-widest text-[9px] font-bold">{isRTL ? 'التاريخ الكامل' : 'FULL TIMESTAMP'}</span>
-                                      <span className="text-slate-700 dark:text-slate-200">{new Date(m.timestamp).toLocaleString()}</span>
+                                      <span className="text-(--text-tertiary) block mb-1 uppercase tracking-widest text-[9px] font-bold">{isRTL ? 'التاريخ الكامل' : 'FULL TIMESTAMP'}</span>
+                                      <span className="text-(--text-primary) font-medium">{new Date(m.timestamp).toLocaleString()}</span>
                                     </div>
                                   </div>
                                 </td>
