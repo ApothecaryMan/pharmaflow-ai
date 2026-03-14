@@ -613,8 +613,8 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                       {allBranches.map((branch) => (
                         <button
                           key={branch.id}
-                          onClick={() => {
-                            switchBranch(branch.id);
+                          onClick={async () => {
+                            await switchBranch(branch.id);
                             if (setCurrentEmployeeId) {
                               setCurrentEmployeeId(null);
                             }

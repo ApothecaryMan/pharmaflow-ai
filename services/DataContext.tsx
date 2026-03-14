@@ -455,25 +455,33 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     setEmployeesState((prev) => prev.filter((e) => e.id !== id));
   }, []);
 
-  const refreshAll = useCallback(async () => {
-    const [inv, sal, sup, pur, pRet, ret, cust, emp] = await Promise.all([
-      inventoryService.getAll(activeBranchId),
-      salesService.getAll(activeBranchId),
-      supplierService.getAll(activeBranchId),
-      purchaseService.getAll(activeBranchId),
-      returnService.getAllPurchaseReturns(activeBranchId),
-      returnService.getAllSalesReturns(activeBranchId),
-      customerService.getAll(activeBranchId),
-      employeeService.getAll(activeBranchId),
-    ]);
-    setInventoryState(inv);
-    setSalesState(sal);
-    setSuppliersState(sup);
-    setPurchasesState(pur);
-    setPurchaseReturnsState(pRet);
-    setReturnsState(ret);
-    setCustomersState(cust);
-    setEmployeesState(emp);
+  const refreshAll = useCallback(async (branchId?: string) => {
+    setIsLoading(true);
+    try {
+      const targetBranchId = branchId || activeBranchId;
+      const [inv, sal, sup, pur, pRet, ret, cust, emp] = await Promise.all([
+        inventoryService.getAll(targetBranchId),
+        salesService.getAll(targetBranchId),
+        supplierService.getAll(targetBranchId),
+        purchaseService.getAll(targetBranchId),
+        returnService.getAllPurchaseReturns(targetBranchId),
+        returnService.getAllSalesReturns(targetBranchId),
+        customerService.getAll(targetBranchId),
+        employeeService.getAll(targetBranchId),
+      ]);
+      setInventoryState(inv);
+      setSalesState(sal);
+      setSuppliersState(sup);
+      setPurchasesState(pur);
+      setPurchaseReturnsState(pRet);
+      setReturnsState(ret);
+      setCustomersState(cust);
+      setEmployeesState(emp);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [activeBranchId]);
 
   // Switch to a different branch and reload all data
@@ -490,14 +498,14 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         await settingsService.setMultiple({ branchCode: branchId });
 
         // Reload all data (services will now filter by new branchId)
-        // refreshAll uses activeBranchId from state which might not be updated yet
-        // so we pass branchId directly or wait for state
+        // refreshAll uses targetBranchId internally if passed
+        await refreshAll(branchId);
       } catch (error) {
         console.error('Error switching branch:', error);
         throw error;
       }
     },
-    []
+    [refreshAll]
   );
 
 
