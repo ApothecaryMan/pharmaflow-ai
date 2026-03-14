@@ -12,6 +12,7 @@ import { StorageKeys } from '../config/storageKeys';
 import type { CashTransaction, Shift } from '../types';
 import { getPreviousShardKeys, getShardKey } from '../utils/sharding';
 import { storage } from '../utils/storage';
+import { useData } from '../services/DataContext';
 
 /**
  * ShiftContext
@@ -107,9 +108,10 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [shifts, isLoading]);
 
   // --- Derived: Current Open Shift ---
+  const { activeBranchId } = useData();
   const currentShift = useMemo(() => {
-    return shifts.find((s) => s.status === 'open') || null;
-  }, [shifts]);
+    return shifts.find((s) => s.status === 'open' && s.branchId === activeBranchId) || null;
+  }, [shifts, activeBranchId]);
 
   // --- Actions ---
 

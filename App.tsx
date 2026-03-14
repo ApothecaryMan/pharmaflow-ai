@@ -524,11 +524,11 @@ const App: React.FC = () => {
 
   // 10. Authenticated & Setup Done -> Show Secure Content wrapped in Providers
   return (
-    <ShiftProvider>
-      <DataProvider initialInventory={CSV_INVENTORY} initialSuppliers={INITIAL_SUPPLIERS}>
+    <DataProvider initialInventory={CSV_INVENTORY} initialSuppliers={INITIAL_SUPPLIERS}>
+      <ShiftProvider>
         <AuthenticatedContent {...appState} {...authState} />
-      </DataProvider>
-    </ShiftProvider>
+      </ShiftProvider>
+    </DataProvider>
   );
 };
 

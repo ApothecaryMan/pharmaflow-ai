@@ -278,8 +278,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
 
     const newShiftId = idGenerator.generate('shifts');
 
+    const { activeBranchId } = useData();
+
     const newShift: Shift = {
       id: newShiftId,
+      branchId: activeBranchId,
       status: 'open',
       openTime: getVerifiedDate().toISOString(),
       openedBy: userName,
