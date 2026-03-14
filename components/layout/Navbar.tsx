@@ -615,6 +615,9 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                           key={branch.id}
                           onClick={() => {
                             switchBranch(branch.id);
+                            if (setCurrentEmployeeId) {
+                              setCurrentEmployeeId(null);
+                            }
                             setShowProfileMenu(false);
                           }}
                           className={`w-full p-2 text-sm font-medium rounded-lg transition-colors flex items-center justify-between

@@ -18,7 +18,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ language, darkMode, co
 
         {/* Text Section */}
         <h1 className='text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 mb-3'>
-          {language === 'AR' ? 'مرحباً بك في ZINC' : 'Welcome to Zinc'}
+          {language === 'AR' ? 'مرحباً بك في ZINC' : 'Welcome to ZINC'}
         </h1>
         
         <p className='text-base text-zinc-500 dark:text-zinc-400 mb-10 leading-relaxed font-medium'>
