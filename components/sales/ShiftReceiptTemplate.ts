@@ -13,7 +13,7 @@ export const generateShiftReceiptHTML = (shift: Shift, language: Language = 'EN'
   };
 
   const title = isAr ? 'إيصال تسليم الدرج' : 'Shift Close Receipt';
-  const branchName = 'Zinc'; // Hardcoded for now per requirements
+  const branchName = shift.branchName || 'Zinc';
 
   const formatTime = (dateStr: string) => {
     const d = new Date(dateStr);

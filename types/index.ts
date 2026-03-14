@@ -703,6 +703,8 @@ export interface Shift {
   id: string;
   /** Branch this shift belongs to */
   branchId?: string;
+  /** Branch name for display/receipts */
+  branchName?: string;
   /** Current shift status */
   status: 'open' | 'closed';
   /** Shift open time (ISO string) */

@@ -19,6 +19,7 @@ import { StorageKeys } from '../../config/storageKeys';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
 import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
 import { idGenerator } from '../../utils/idGenerator';
+import { branchService } from '../../services/branchService';
 
 interface CashRegisterProps {
   color: string;
@@ -280,9 +281,12 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
 
 
 
+    const activeBranch = branchService.getById(activeBranchId);
+
     const newShift: Shift = {
       id: newShiftId,
       branchId: activeBranchId,
+      branchName: activeBranch?.name,
       status: 'open',
       openTime: getVerifiedDate().toISOString(),
       openedBy: userName,
@@ -358,9 +362,10 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
 
     const shiftDurationMinutes = Math.round((shiftEnd - shiftStart) / 60000);
 
-    const prevCounter = storage.get<number>(StorageKeys.SHIFT_RECEIPT_COUNTER, 0);
+    const counterKey = `${StorageKeys.SHIFT_RECEIPT_COUNTER}_${currentShift.branchId || 'default'}`;
+    const prevCounter = storage.get<number>(counterKey, 0);
     const handoverReceiptNumber = prevCounter + 1;
-    storage.set(StorageKeys.SHIFT_RECEIPT_COUNTER, handoverReceiptNumber);
+    storage.set(counterKey, handoverReceiptNumber);
 
     const closedShift: Shift = {
       ...currentShift,
