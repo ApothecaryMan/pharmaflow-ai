@@ -44,7 +44,7 @@ export const deductStock = (
   referenceId?: string
 ): StockMutation | null => {
   const unitsToDeduct = resolveUnits(quantity, isUnit, drug.unitsPerPack);
-  const allocations = batchService.allocateStock(drug.id, unitsToDeduct, true);
+  const allocations = batchService.allocateStock(drug.id, unitsToDeduct, ctx.branchId, true);
 
   if (!allocations) return null;
 
@@ -106,6 +106,7 @@ export const addStock = (
     purchaseId: referenceId || 'ADJUSTMENT',
     dateReceived: new Date().toISOString(),
     batchNumber: batchNumber || 'MANUAL',
+    branchId: ctx.branchId,
   });
 
   // 2. Log Movement

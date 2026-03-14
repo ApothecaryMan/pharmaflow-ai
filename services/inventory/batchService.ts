@@ -116,7 +116,8 @@ export const updateBatch = (batchId: string, updates: Partial<StockBatch>): Stoc
  * Returns the allocations for all items. Throws error if any item fails.
  */
 export const allocateStockBulk = (
-  requests: { drugId: string; quantity: number; name?: string }[]
+  requests: { drugId: string; quantity: number; name?: string }[],
+  branchId: string
 ): { drugId: string; allocations: BatchAllocation[] }[] => {
   const allBatches = getAllBatchesRaw();
   const result: { drugId: string; allocations: BatchAllocation[] }[] = [];
@@ -125,7 +126,7 @@ export const allocateStockBulk = (
     if (req.quantity <= 0 || !Number.isInteger(req.quantity)) continue;
 
     const drugBatches = allBatches
-      .filter((b) => b.drugId === req.drugId)
+      .filter((b) => b.drugId === req.drugId && b.branchId === branchId)
       .filter((b) => {
         const exp = parseExpiryEndOfMonth(b.expiryDate);
         return !isNaN(exp.getTime()) && exp > new Date();
@@ -173,6 +174,7 @@ export const allocateStockBulk = (
 export const allocateStock = (
   drugId: string,
   quantityNeeded: number,
+  branchId: string,
   commitChanges: boolean = true
 ): BatchAllocation[] | null => {
   if (quantityNeeded <= 0 || !Number.isInteger(quantityNeeded)) {
@@ -180,7 +182,7 @@ export const allocateStock = (
     return null;
   }
 
-  const batches = getAllBatches(drugId)
+  const batches = getAllBatches(branchId, drugId)
     // Filter out expired batches (robust date check)
     .filter((b) => {
       const exp = parseExpiryEndOfMonth(b.expiryDate);
@@ -280,15 +282,15 @@ export const returnStock = (allocations: BatchAllocation[], drugId?: string): vo
 /**
  * Get total stock for a drug (sum of all batches)
  */
-export const getTotalStock = (drugId: string): number => {
-  return getAllBatches(drugId).reduce((sum, b) => sum + b.quantity, 0);
+export const getTotalStock = (drugId: string, branchId?: string): number => {
+  return getAllBatches(branchId, drugId).reduce((sum, b) => sum + b.quantity, 0);
 };
 
 /**
  * Get earliest expiry date for a drug
  */
-export const getEarliestExpiry = (drugId: string): string | null => {
-  const batches = getAllBatches(drugId)
+export const getEarliestExpiry = (drugId: string, branchId?: string): string | null => {
+  const batches = getAllBatches(branchId, drugId)
     .filter((b) => b.quantity > 0)
     .sort((a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime());
 
@@ -335,8 +337,8 @@ export const getEarliestExpiriesBulk = (drugIds: string[]): Record<string, strin
 /**
  * Check if sufficient stock is available
  */
-export const hasStock = (drugId: string, quantityNeeded: number): boolean => {
-  const total = getTotalStock(drugId);
+export const hasStock = (drugId: string, quantityNeeded: number, branchId: string): boolean => {
+  const total = getTotalStock(drugId, branchId);
   return total >= quantityNeeded;
 };
 
@@ -380,19 +382,20 @@ export const migrateInventoryToBatches = (inventory: Drug[]): number => {
  * Get stock summary for a drug (for display)
  */
 export const getStockSummary = (
-  drugId: string
+  drugId: string,
+  branchId?: string
 ): {
   totalStock: number;
   batchCount: number;
   earliestExpiry: string | null;
   batches: StockBatch[];
 } => {
-  const batches = getAllBatches(drugId).filter((b) => b.quantity > 0);
+  const batches = getAllBatches(branchId, drugId).filter((b) => b.quantity > 0);
 
   return {
     totalStock: batches.reduce((sum, b) => sum + b.quantity, 0),
     batchCount: batches.length,
-    earliestExpiry: getEarliestExpiry(drugId),
+    earliestExpiry: getEarliestExpiry(drugId, branchId),
     batches: batches.sort(
       (a, b) => parseExpiryEndOfMonth(a.expiryDate).getTime() - parseExpiryEndOfMonth(b.expiryDate).getTime()
     ),

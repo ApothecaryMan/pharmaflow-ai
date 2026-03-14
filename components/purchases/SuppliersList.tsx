@@ -47,6 +47,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
     phone: '',
     email: '',
     address: '',
+    status: 'active',
   });
 
   const nameDir = useSmartDirection(
@@ -139,6 +140,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
       phone: '',
       email: '',
       address: '',
+      status: 'active',
     });
   };
 

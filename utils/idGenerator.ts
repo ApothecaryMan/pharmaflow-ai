@@ -71,13 +71,19 @@ const findMaxSequence = <T extends { id: string }>(data: T[]): number => {
 };
 
 /**
- * Initializes or heals the sequence for a specific entity type
+ * Initializes or heals the sequence for a specific entity type within a branch
  * @param type The entity type to heal
- * @param currentSequence The currently known sequence (from storage)
+ * @param branchCode The branch code to filter by (e.g., "B1")
+ * @param currentSequence The currently known sequence
  */
-const healSequence = (type: EntityType, currentSequence: number): number => {
+const healSequence = (type: EntityType, branchCode: string, currentSequence: number): number => {
   let maxExisting = 0;
   let data: any[] = [];
+
+  const filterByBranch = (items: any[]) => items.filter(val => {
+    if (!val.id) return false;
+    return val.id.startsWith(`${branchCode}-`);
+  });
 
   try {
     switch (type) {
@@ -85,73 +91,65 @@ const healSequence = (type: EntityType, currentSequence: number): number => {
         data = storage.get(StorageKeys.BRANCHES, []);
         break;
       case 'sales': {
-        // Sharded: Scan ALL shards to find max ID over all time
         const keys = getAllShardKeys(StorageKeys.SALES);
         for (const key of keys) {
           const shardData = storage.get<any[]>(key, []);
-          maxExisting = Math.max(maxExisting, findMaxSequence(shardData));
+          maxExisting = Math.max(maxExisting, findMaxSequence(filterByBranch(shardData)));
         }
         return Math.max(currentSequence, maxExisting);
       }
       case 'inventory':
-        data = storage.get(StorageKeys.INVENTORY, []);
+        data = filterByBranch(storage.get(StorageKeys.INVENTORY, []));
         break;
       case 'customers':
       case 'customers-serial':
-        data = storage.get(StorageKeys.CUSTOMERS, []);
+        data = filterByBranch(storage.get(StorageKeys.CUSTOMERS, []));
         break;
       case 'suppliers':
-        data = storage.get(StorageKeys.SUPPLIERS, []);
+        data = filterByBranch(storage.get(StorageKeys.SUPPLIERS, []));
         break;
       case 'employees':
-        data = storage.get(StorageKeys.EMPLOYEES, []);
+        data = filterByBranch(storage.get(StorageKeys.EMPLOYEES, []));
         break;
       case 'purchases':
-        data = storage.get(StorageKeys.PURCHASES, []);
+        data = filterByBranch(storage.get(StorageKeys.PURCHASES, []));
         break;
       case 'returns': {
-        // Check both return types
-        const salesReturns = storage.get(StorageKeys.RETURNS, []);
-        const purchaseReturns = storage.get(StorageKeys.PURCHASE_RETURNS, []);
+        const salesReturns = filterByBranch(storage.get(StorageKeys.RETURNS, []));
+        const purchaseReturns = filterByBranch(storage.get(StorageKeys.PURCHASE_RETURNS, []));
         data = [...salesReturns, ...purchaseReturns];
         break;
       }
       case 'shifts': {
-        // Sharded: Scan ALL shards
         const keys = getAllShardKeys(StorageKeys.SHIFTS);
         for (const key of keys) {
           const shardData = storage.get<any[]>(key, []);
-          maxExisting = Math.max(maxExisting, findMaxSequence(shardData));
+          maxExisting = Math.max(maxExisting, findMaxSequence(filterByBranch(shardData)));
         }
         return Math.max(currentSequence, maxExisting);
       }
       case 'movement':
-        data = storage.get(StorageKeys.STOCK_MOVEMENTS, []);
+        data = filterByBranch(storage.get(StorageKeys.STOCK_MOVEMENTS, []));
         break;
       case 'batch':
-        data = storage.get(StorageKeys.STOCK_BATCHES, []);
+        data = filterByBranch(storage.get(StorageKeys.STOCK_BATCHES, []));
         break;
       case 'notification':
-        data = storage.get(StorageKeys.NOTIFICATIONS, []);
+        data = filterByBranch(storage.get(StorageKeys.NOTIFICATIONS, []));
         break;
       case 'barcodes':
-        data = storage.get(StorageKeys.LABEL_TEMPLATES, []);
+        data = filterByBranch(storage.get(StorageKeys.LABEL_TEMPLATES, []));
         break;
       case 'receipts':
-        data = storage.get(StorageKeys.RECEIPT_TEMPLATES, []);
+        data = filterByBranch(storage.get(StorageKeys.RECEIPT_TEMPLATES, []));
         break;
-      // Transactions are nested in shifts, harder to heal efficiently,
-      // but usually shift IDs are unique enough or we can scan all shifts.
-      // For now, we trust the sequence or start from 0 if totally lost.
-      // Tabs and Generic might not need strict healing.
     }
 
     maxExisting = Math.max(maxExisting, findMaxSequence(data));
   } catch (e) {
-    console.warn(`Failed to heal sequence for ${type}`, e);
+    console.warn(`Failed to heal sequence for ${type} in branch ${branchCode}`, e);
   }
 
-  // If found max is greater than what we have in storage, update storage
   return Math.max(currentSequence, maxExisting);
 };
 
@@ -174,23 +172,24 @@ export const idGenerator = {
       effectiveBranchCode = settings.branchCode || DEFAULT_BRANCH_CODE;
     }
 
-    // 2. Get current sequences
-    const sequences = storage.get<SequenceMap>(StorageKeys.SEQUENCES, {});
+    // 2. Get current sequences for this specific branch
+    const seqKey = `${StorageKeys.SEQUENCES}_${effectiveBranchCode}`;
+    const sequences = storage.get<SequenceMap>(seqKey, {});
 
     // 3. Determine current sequence value
     let currentSeq = sequences[type] || 0;
 
     // 4. Critical: Self-Healing Check
-    // If sequence is 0 (fresh start or cleared cache), try to heal
+    // If sequence is 0 (fresh start or cleared cache), try to heal for this branch
     if (currentSeq === 0) {
-      currentSeq = healSequence(type, 0);
+      currentSeq = healSequence(type, effectiveBranchCode!, 0);
     }
 
     // 5. Increment
     const nextSeq = currentSeq + 1;
 
-    // 6. Save immediately
-    storage.set(StorageKeys.SEQUENCES, {
+    // 6. Save immediately to the branch-specific key
+    storage.set(seqKey, {
       ...sequences,
       [type]: nextSeq,
     });

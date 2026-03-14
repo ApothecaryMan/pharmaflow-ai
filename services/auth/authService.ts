@@ -75,6 +75,62 @@ const DEV_CREDENTIALS = {
   department: 'it' as const,
 };
 
+/**
+ * Ensures the Super Admin account exists in IndexedDB.
+ * Called before every login attempt to solve the chicken-and-egg problem
+ * where Super Admin was previously only seeded AFTER successful login.
+ */
+let _superAdminSeeded = false;
+const ensureSuperAdmin = async (): Promise<void> => {
+  if (_superAdminSeeded) return; // Only run once per session
+
+  const superUser = import.meta.env.VITE_SUPER_USER;
+  const superPass = import.meta.env.VITE_SUPER_PASS;
+  if (!superUser || !superPass) {
+    _superAdminSeeded = true;
+    return;
+  }
+
+  try {
+    const { employeeCacheService } = await import('../hr/employeeCacheService');
+    const allEmployees = await employeeCacheService.loadAll();
+    const exists = allEmployees.some((e) => e.username === superUser);
+
+    if (!exists) {
+      const { hashPassword } = await import('./hashUtils');
+      const passwordHash = await hashPassword(superPass);
+
+      // Use branchService to get the active branch, fallback to 'branch_main'
+      let activeBranchId = 'branch_main';
+      try {
+        const { branchService } = await import('../branchService');
+        const activeBranch = branchService.getActive();
+        if (activeBranch) activeBranchId = activeBranch.id;
+      } catch { /* ignore - use fallback */ }
+
+      await employeeCacheService.upsert({
+        id: 'SUPER-ADMIN',
+        employeeCode: 'EMP-000',
+        name: 'SUPER',
+        username: superUser,
+        password: passwordHash,
+        role: 'admin' as any,
+        position: 'Super Admin',
+        department: 'it',
+        phone: '00000000000',
+        startDate: new Date().toISOString().split('T')[0],
+        status: 'active',
+        branchId: activeBranchId,
+      });
+      console.log('✨ Super Admin seeded in IndexedDB (pre-login)');
+    }
+  } catch (err) {
+    console.warn('Failed to seed Super Admin:', err);
+  }
+
+  _superAdminSeeded = true;
+};
+
 export const authService = {
   /**
    * Get the current user session from storage
@@ -102,6 +158,9 @@ export const authService = {
    * Login function (Checks Dev credentials then real Employees)
    */
   login: async (username: string, password: string): Promise<UserSession | null> => {
+    // Ensure Super Admin exists before any login attempt
+    await ensureSuperAdmin();
+
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -220,11 +279,15 @@ export const authService = {
   /**
    * Get login audit history
    */
-  getLoginHistory: (): LoginAuditEntry[] => {
+  getLoginHistory: (branchId?: string): LoginAuditEntry[] => {
     try {
       const stored = localStorage.getItem(AUDIT_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const all: LoginAuditEntry[] = JSON.parse(stored);
+        if (branchId) {
+          return all.filter((entry) => entry.branchId === branchId);
+        }
+        return all;
       }
       return [];
     } catch (error) {

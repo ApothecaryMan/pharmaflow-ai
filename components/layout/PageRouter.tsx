@@ -145,7 +145,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   if (requiredProps.includes('onUpdateDrug')) props.onUpdateDrug = handlers.handleUpdateDrug;
   if (requiredProps.includes('onDeleteDrug')) props.onDeleteDrug = handlers.handleDeleteDrug;
   if (requiredProps.includes('onUpdateInventory')) props.onUpdateInventory = handlers.setInventory;
-  if (requiredProps.includes('onBatchesChanged')) props.onBatchesChanged = () => handlers.setBatches(batchService.getAllBatches());
+  if (requiredProps.includes('onBatchesChanged')) props.onBatchesChanged = () => handlers.setBatches(batchService.getAllBatches(data.activeBranchId));
   if (requiredProps.includes('onCompleteSale')) props.onCompleteSale = handlers.handleCompleteSale;
   if (requiredProps.includes('onUpdateSale')) props.onUpdateSale = handlers.handleUpdateSale;
   if (requiredProps.includes('onProcessReturn'))

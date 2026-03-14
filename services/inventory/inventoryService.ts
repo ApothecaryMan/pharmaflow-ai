@@ -114,6 +114,7 @@ export const createInventoryService = (): InventoryService => ({
       costPrice: newDrug.costPrice,
       batchNumber: 'INITIAL',
       dateReceived: new Date().toISOString(),
+      branchId: effectiveBranchId,
     });
 
     return newDrug;

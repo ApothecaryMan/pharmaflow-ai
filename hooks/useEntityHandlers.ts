@@ -234,6 +234,7 @@ export function useEntityHandlers({
           userId: currentEmployeeId,
           details: `Added drug: ${result.name}`,
           entityId: result.id,
+          branchId: activeBranchId,
         });
 
         success(`${result.name} added to inventory successfully!`);
@@ -289,6 +290,7 @@ export function useEntityHandlers({
           userId: currentEmployeeId,
           details: `Updated drug: ${drug.name}`,
           entityId: drug.id,
+          branchId: activeBranchId,
         });
 
         success(`${drug.name} updated successfully!`);
@@ -341,6 +343,7 @@ export function useEntityHandlers({
           userId: currentEmployeeId,
           details: `Deleted drug ID: ${id}`,
           entityId: id,
+          branchId: activeBranchId,
         });
 
         success('Product deleted successfully!');
@@ -394,6 +397,7 @@ export function useEntityHandlers({
         userId: currentEmployeeId,
         details: `Restocked drug ID: ${id} with qty: ${qty}`,
         entityId: id,
+        branchId: activeBranchId,
       });
 
       success('Restock completed successfully!');
@@ -413,12 +417,13 @@ export function useEntityHandlers({
         error('Permission denied: Cannot add suppliers');
         return;
       }
-      setSuppliers((prev) => [...prev, { ...supplier, branchId: activeBranchId }]);
+      setSuppliers((prev) => [...prev, { ...supplier, branchId: activeBranchId, status: 'active' }]);
       success('Supplier added successfully');
       auditService.log('supplier.add', {
         userId: currentEmployeeId,
         details: `Added supplier: ${supplier.name}`,
         entityId: supplier.id,
+        branchId: activeBranchId,
       });
     },
     [setSuppliers, currentEmployeeId, employees, error]
@@ -441,6 +446,7 @@ export function useEntityHandlers({
         userId: currentEmployeeId,
         details: `Updated supplier: ${supplier.name}`,
         entityId: supplier.id,
+        branchId: activeBranchId,
       });
     },
     [setSuppliers, currentEmployeeId, employees, error]
@@ -461,7 +467,7 @@ export function useEntityHandlers({
       //Delete Guard: Check for orphaned foreign keys
       const hasPurchases = purchases.some((p) => p.supplierId === id);
       if (hasPurchases) {
-        error('Cannot delete supplier with existing purchase orders');
+        error('Cannot delete supplier with existing purchase orders. Set status to inactive instead.');
         return;
       }
 
@@ -471,9 +477,10 @@ export function useEntityHandlers({
         userId: currentEmployeeId || 'System',
         details: `Deleted supplier ID: ${id}`,
         entityId: id,
+        branchId: activeBranchId,
       });
     },
-    [setSuppliers, purchases, success, currentEmployeeId, employees, error]
+    [setSuppliers, purchases, success, currentEmployeeId, employees, error, activeBranchId]
   );
 
   // --- Customer Management ---
@@ -503,6 +510,7 @@ export function useEntityHandlers({
         userId: currentEmployeeId || 'System',
         details: `Added customer: ${customer.name}`,
         entityId: customer.id,
+        branchId: activeBranchId,
       });
     },
     [setCustomers, success, currentEmployeeId, employees, error, getVerifiedDate]
@@ -525,6 +533,7 @@ export function useEntityHandlers({
         userId: currentEmployeeId,
         details: `Updated customer: ${customer.name}`,
         entityId: customer.id,
+        branchId: activeBranchId,
       });
     },
     [setCustomers, success, currentEmployeeId, employees, error]
@@ -555,6 +564,7 @@ export function useEntityHandlers({
         userId: currentEmployeeId || 'System',
         details: `Deleted customer ID: ${id}`,
         entityId: id,
+        branchId: activeBranchId,
       });
     },
     [setCustomers, sales, success, currentEmployeeId, employees, error]
@@ -663,6 +673,7 @@ export function useEntityHandlers({
           userId: currentEmployeeId,
           details: `Completed PO #${purchase.invoiceId}`,
           entityId: purchase.id,
+          branchId: activeBranchId,
         });
       } else {
         info('Purchase Order Saved as Pending');
@@ -670,6 +681,7 @@ export function useEntityHandlers({
           userId: currentEmployeeId,
           details: `Created PO #${purchase.invoiceId} (Pending)`,
           entityId: purchase.id,
+          branchId: activeBranchId,
         });
       }
     },
@@ -712,6 +724,7 @@ export function useEntityHandlers({
         userId: currentEmployeeId,
         details: `Approved PO #${purchase.invoiceId}`,
         entityId: purchase.id,
+        branchId: activeBranchId,
       });
 
       success(`PO #${purchase.invoiceId} Approved Successfully`);
@@ -738,6 +751,7 @@ export function useEntityHandlers({
         userId: currentEmployeeId,
         details: `Rejected PO ID: ${purchaseId}`,
         entityId: purchaseId,
+        branchId: activeBranchId,
       });
     },
     [setPurchases, info, currentEmployeeId, employees, error]
@@ -798,6 +812,7 @@ export function useEntityHandlers({
         userId: currentEmployeeId || 'System',
         details: `Created Purchase Return #${returnData.id}`,
         entityId: returnData.id,
+        branchId: activeBranchId,
       });
 
       success('Purchase return created and inventory updated.');
@@ -836,6 +851,7 @@ export function useEntityHandlers({
         userId: currentEmployeeId,
         details: `Added Employee: ${newEmployee.name} (${newEmployee.employeeCode})`,
         entityId: newEmployee.id,
+        branchId: activeBranchId,
       });
     },
     [setEmployees, success, currentEmployeeId, employees, error, activeBranchId]
@@ -864,6 +880,7 @@ export function useEntityHandlers({
         userId: currentEmployeeId || 'System',
         details: `Updated Employee ID: ${id}`,
         entityId: id,
+        branchId: activeBranchId,
       });
     },
     [setEmployees, success, currentEmployeeId, employees, error]
@@ -891,13 +908,15 @@ export function useEntityHandlers({
 
       // 3. Delete Guard: Check for orphaned foreign keys
       // Since an employee might have cashier shifts, sales, etc., we prevent hard deletion
+      // These checks are already branch-scoped because 'sales', 'purchases', 'customers' state 
+      // is already filtered by activeBranchId in DataContext.
       const hasSales = sales.some((s) => s.soldByEmployeeId === id);
       const hasPurchases = purchases.some((p) => p.approvedBy === id);
       const hasCustomers = customers.some((c) => c.registeredByEmployeeId === id);
 
       if (hasSales || hasPurchases || hasCustomers) {
         error(
-          'Cannot delete employee with existing transaction records. Disable their account instead (not yet implemented).'
+          'Cannot delete employee with existing transaction records. Please set their status to "Inactive" in edit mode instead.'
         );
         return;
       }
@@ -911,6 +930,7 @@ export function useEntityHandlers({
         userId: currentEmployeeId,
         details: `Deleted Employee ID: ${id}`,
         entityId: id,
+        branchId: activeBranchId,
       });
     },
     [setEmployees, sales, purchases, customers, success, currentEmployeeId, employees, error]
@@ -976,7 +996,7 @@ export function useEntityHandlers({
             };
           });
 
-          const bulkAllocations = batchService.allocateStockBulk(allocationRequests);
+          const bulkAllocations = batchService.allocateStockBulk(allocationRequests, activeBranchId);
 
           // Map allocations back to processed items
           saleData.items.forEach((item) => {
@@ -1231,7 +1251,7 @@ export function useEntityHandlers({
 
         const performer = employee;
         sale.items.forEach((item) => {
-          const drug = inventory.find((d) => d.id === item.id);
+          const drug = inventory.find((d) => d.id === item.id && d.branchId === activeBranchId);
           if (drug) {
             stockOps.returnStock(
               drug,
@@ -1259,7 +1279,7 @@ export function useEntityHandlers({
         try {
           await Promise.all(
             sale.items.map((item) => {
-              const drug = inventory.find((d) => d.id === item.id);
+              const drug = inventory.find((d) => d.id === item.id && d.branchId === activeBranchId);
               if (!drug) return Promise.resolve();
               const unitsToRestore = stockOps.resolveUnits(item.quantity, !!item.isUnit, drug.unitsPerPack);
               return inventoryService.updateStock(item.id, unitsToRestore);

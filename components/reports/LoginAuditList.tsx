@@ -12,8 +12,11 @@ import { TanStackTable } from '../common/TanStackTable';
  */
 export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }) => {
   const t = TRANSLATIONS[language];
-  const { employees } = useData();
-  const history: LoginAuditEntry[] = useMemo(() => authService.getLoginHistory(), []);
+  const { employees, activeBranchId } = useData();
+  const history: LoginAuditEntry[] = useMemo(
+    () => authService.getLoginHistory(activeBranchId),
+    [activeBranchId]
+  );
 
   const getActionInfo = (action: string) => {
     switch (action) {

@@ -615,7 +615,16 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                           key={branch.id}
                           onClick={async () => {
                             await switchBranch(branch.id);
-                            if (setCurrentEmployeeId) {
+                            // Super Admin stays logged in across branches
+                            if (currentEmployeeId === 'SUPER-ADMIN') {
+                              // Update session branchId to the new branch
+                              const stored = localStorage.getItem('branch_pilot_session');
+                              if (stored) {
+                                const session = JSON.parse(stored);
+                                session.branchId = branch.id;
+                                localStorage.setItem('branch_pilot_session', JSON.stringify(session));
+                              }
+                            } else if (setCurrentEmployeeId) {
                               setCurrentEmployeeId(null);
                             }
                             setShowProfileMenu(false);

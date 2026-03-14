@@ -31,7 +31,7 @@ import { authService } from './services/auth/authService';
 import { type Supplier, ViewState } from './types';
 
 const INITIAL_SUPPLIERS: Supplier[] = [
-  { id: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '' },
+  { id: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '', status: 'active' },
 ];
 
 // --- ARCHITECTURAL NOTE: THE ORCHESTRATOR PATTERN ---
@@ -309,8 +309,9 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       returns,
       employees,
       batches,
+      activeBranchId,
     }),
-    [sales, inventory, enrichedCustomers, suppliers, purchases, purchaseReturns, returns, employees, batches]
+    [sales, inventory, enrichedCustomers, suppliers, purchases, purchaseReturns, returns, employees, batches, activeBranchId]
   );
 
   // --- TRANSITION SKELETON STATE ---

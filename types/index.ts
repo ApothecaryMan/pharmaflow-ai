@@ -124,6 +124,8 @@ export interface Supplier {
   createdAt?: string;
   /** ISO date of last update */
   updatedAt?: string;
+  /** Active status */
+  status: 'active' | 'inactive';
 }
 
 /**

@@ -224,12 +224,15 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         setPurchaseReturnsState(pRet);
         setReturnsState(ret);
         setCustomersState(cust);
-        // Seed SUPER User logic (Synchronous seeding to prevent race conditions)
+        // Seed SUPER User logic (Secondary guard — primary seed is in authService.ensureSuperAdmin)
         const superUser = import.meta.env.VITE_SUPER_USER;
         const superPass = import.meta.env.VITE_SUPER_PASS;
 
         if (superUser && superPass) {
-          const superUserExists = emp.some((e) => e.username === superUser);
+          // Check ALL employees (not branch-filtered) to avoid false re-seeding on branch switch
+          const { employeeCacheService } = await import('../services/hr/employeeCacheService');
+          const allGlobalEmployees = await employeeCacheService.loadAll();
+          const superUserExists = allGlobalEmployees.some((e) => e.username === superUser);
           if (!superUserExists) {
             const { hashPassword } = await import('../services/auth/hashUtils');
             const passwordHash = await hashPassword(superPass);
@@ -248,8 +251,15 @@ export const DataProvider: React.FC<DataProviderProps> = ({
               branchId: finalBranchId,
             };
             await employeeService.create(superUserObj);
-            emp.push(superUserObj); // Update the local array before state set
-            console.log('✨ Super Admin seeded successfully from ENV');
+            emp.push(superUserObj);
+            console.log('✨ Super Admin seeded successfully from ENV (DataContext guard)');
+          } else {
+            // Ensure the Super Admin is in the local state even if not in this branch's filtered list
+            const superAdminInList = emp.some((e) => e.username === superUser);
+            if (!superAdminInList) {
+              const superAdmin = allGlobalEmployees.find((e) => e.username === superUser);
+              if (superAdmin) emp.push(superAdmin);
+            }
           }
         }
 
@@ -476,6 +486,18 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       setPurchaseReturnsState(pRet);
       setReturnsState(ret);
       setCustomersState(cust);
+
+      // Ensure Super Admin is always in the employees list regardless of branch
+      const superUser = import.meta.env.VITE_SUPER_USER;
+      if (superUser && !emp.some((e) => e.username === superUser)) {
+        try {
+          const { employeeCacheService } = await import('../services/hr/employeeCacheService');
+          const allGlobal = await employeeCacheService.loadAll();
+          const superAdmin = allGlobal.find((e) => e.username === superUser);
+          if (superAdmin) emp.push(superAdmin);
+        } catch { /* ignore */ }
+      }
+
       setEmployeesState(emp);
     } catch (error) {
       console.error('Error refreshing data:', error);

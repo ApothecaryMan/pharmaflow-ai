@@ -27,7 +27,7 @@ export const restoreStockForCancelledSale = (sale: Sale, inventory: Drug[]): Dru
       return {
         ...drug,
         stock: validateStock(drug.stock + totalUnitsToRestore),
-        expiryDate: batchService.getEarliestExpiry(drug.id) || drug.expiryDate,
+        expiryDate: batchService.getEarliestExpiry(drug.id, drug.branchId) || drug.expiryDate,
       };
     }
     return drug;

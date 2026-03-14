@@ -9,6 +9,7 @@ export interface AuditEntry {
   action: string;
   details?: string;
   entityId?: string;
+  branchId?: string;
   ipAddress?: string; // If applicable later
 }
 
@@ -17,7 +18,7 @@ const STORAGE_KEY_AUDIT = 'audit_logs';
 export const auditService = {
   log: (
     action: string,
-    data: { userId?: string; userName?: string; details?: string; entityId?: string }
+    data: { userId?: string; userName?: string; details?: string; entityId?: string; branchId?: string }
   ) => {
     try {
       // Fallback for crypto.randomUUID for non-secure contexts/older browsers
@@ -51,8 +52,11 @@ export const auditService = {
     }
   },
 
-  getLogs: (limit = 100) => {
-    const logs = storage.get<AuditEntry[]>(STORAGE_KEY_AUDIT, []);
+  getLogs: (branchId?: string, limit = 100) => {
+    let logs = storage.get<AuditEntry[]>(STORAGE_KEY_AUDIT, []);
+    if (branchId) {
+      logs = logs.filter(log => !log.branchId || log.branchId === branchId);
+    }
     return logs.slice(0, limit);
   },
 };
