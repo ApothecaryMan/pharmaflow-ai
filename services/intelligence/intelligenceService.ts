@@ -147,8 +147,8 @@ export const intelligenceService = {
   /**
    * Get Procurement Summary from real inventory data
    */
-  getProcurementSummary: async (): Promise<ProcurementSummary> => {
-    const items = await intelligenceService.getProcurementItems();
+  getProcurementSummary: async (branchId?: string): Promise<ProcurementSummary> => {
+    const items = await intelligenceService.getProcurementItems(branchId);
 
     const needingOrder = items.filter((i) => i.suggested_order_qty > 0);
     const outOfStock = items.filter((i) => i.stock_status === 'OUT_OF_STOCK');
@@ -168,9 +168,9 @@ export const intelligenceService = {
   /**
    * Get Procurement Items from real inventory and sales data
    */
-  getProcurementItems: async (): Promise<ProcurementItem[]> => {
-    const drugs = await inventoryService.getAll();
-    const allSales = await salesService.getAll();
+  getProcurementItems: async (branchId?: string): Promise<ProcurementItem[]> => {
+    const drugs = await inventoryService.getAll(branchId);
+    const allSales = await salesService.getAll(branchId);
 
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -300,8 +300,8 @@ export const intelligenceService = {
   /**
    * Get Risk Summary computed from real batch expiry data
    */
-  getRiskSummary: async (): Promise<RiskSummary> => {
-    const riskItems = await intelligenceService.getExpiryRiskItems();
+  getRiskSummary: async (branchId?: string): Promise<RiskSummary> => {
+    const riskItems = await intelligenceService.getExpiryRiskItems(branchId);
 
     const summary: RiskSummary = {
       total_value_at_risk: 0,
@@ -336,9 +336,9 @@ export const intelligenceService = {
   /**
    * Get Expiry Risk Items computed from real batch data
    */
-  getExpiryRiskItems: async (): Promise<ExpiryRiskItem[]> => {
-    const allBatches = batchService.getAllBatches();
-    const drugs = await inventoryService.getAll();
+  getExpiryRiskItems: async (branchId?: string): Promise<ExpiryRiskItem[]> => {
+    const allBatches = batchService.getAllBatches(branchId);
+    const drugs = await inventoryService.getAll(branchId);
     const drugMap = new Map(drugs.map((d) => [d.id, d]));
 
     const now = new Date();
@@ -444,9 +444,12 @@ export const intelligenceService = {
   /**
    * Get Financial KPIs computed from real sales data
    */
-  getFinancialKPIs: async (period: FinancialPeriod = 'this_month'): Promise<FinancialKPIs> => {
-    const allSales = await salesService.getAll();
-    const drugs = await inventoryService.getAll();
+  getFinancialKPIs: async (
+    period: FinancialPeriod = 'this_month',
+    branchId?: string
+  ): Promise<FinancialKPIs> => {
+    const allSales = await salesService.getAll(branchId);
+    const drugs = await inventoryService.getAll(branchId);
     const drugMap = new Map(drugs.map((d) => [d.id, d]));
 
     // Current period
@@ -498,10 +501,11 @@ export const intelligenceService = {
    * Get Product-level financial breakdown from real sales data
    */
   getProductFinancials: async (
-    period: FinancialPeriod = 'this_month'
+    period: FinancialPeriod = 'this_month',
+    branchId?: string
   ): Promise<ProductFinancialItem[]> => {
-    const allSales = await salesService.getAll();
-    const drugs = await inventoryService.getAll();
+    const allSales = await salesService.getAll(branchId);
+    const drugs = await inventoryService.getAll(branchId);
     const drugMap = new Map(drugs.map((d) => [d.id, d]));
 
     const range = getDateRangeForPeriod(period);
@@ -566,11 +570,14 @@ export const intelligenceService = {
   /**
    * Get Audit Transactions from real sales and returns data
    */
-  getAuditTransactions: async (limit: number = 100): Promise<AuditTransaction[]> => {
+  getAuditTransactions: async (
+    limit: number = 100,
+    branchId?: string
+  ): Promise<AuditTransaction[]> => {
     const [sales, returns, employees] = await Promise.all([
-      salesService.getAll(),
-      returnService.getAllSalesReturns(),
-      employeeService.getAll(),
+      salesService.getAll(branchId),
+      returnService.getAllSalesReturns(branchId),
+      employeeService.getAll(branchId),
     ]);
 
     const employeeMap = new Map(employees.map((e) => [e.id, e.name]));

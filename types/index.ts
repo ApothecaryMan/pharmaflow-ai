@@ -377,6 +377,8 @@ export interface PurchaseItem {
  */
 export interface Sale {
   id: string;
+  /** Sequential, branch-specific human-readable ID (e.g., 100001) */
+  serialId?: string;
   branchId?: string;
   date: string;
   /** ISO date of last update (essential for statistics timing) */

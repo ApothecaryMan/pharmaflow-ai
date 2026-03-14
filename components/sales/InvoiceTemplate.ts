@@ -219,7 +219,7 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
       </div>
       
       <div class="info-row">
-        <span>ORDR ${sale.id}</span>
+        <span>ORDR ${sale.serialId || sale.id}</span>
         <span>${new Date(sale.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${new Date(sale.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
       </div>
       

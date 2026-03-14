@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { intelligenceService } from '../services/intelligence/intelligenceService';
+import { useData } from '../services/DataContext';
 import type { ExpiryRiskItem, RiskSummary } from '../types/intelligence';
 
 interface UseRiskResult {
@@ -17,6 +18,7 @@ interface UseRiskResult {
 }
 
 export function useRisk(): UseRiskResult {
+  const { activeBranchId } = useData();
   const [summary, setSummary] = useState<RiskSummary | null>(null);
   const [items, setItems] = useState<ExpiryRiskItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,8 +30,8 @@ export function useRisk(): UseRiskResult {
 
     try {
       const [summaryData, itemsData] = await Promise.all([
-        intelligenceService.getRiskSummary(),
-        intelligenceService.getExpiryRiskItems(),
+        intelligenceService.getRiskSummary(activeBranchId),
+        intelligenceService.getExpiryRiskItems(activeBranchId),
       ]);
 
       setSummary(summaryData);

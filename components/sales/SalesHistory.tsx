@@ -92,8 +92,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const tableColumns = React.useMemo<ColumnDef<Sale>[]>(
     () => [
       {
-        accessorKey: 'id',
+        accessorKey: 'serialId',
         header: t.modal.id,
+        cell: ({ row }) => row.original.serialId || row.original.id,
         meta: { align: 'start' },
       },
       {

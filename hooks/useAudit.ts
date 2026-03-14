@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { intelligenceService } from '../services/intelligence/intelligenceService';
+import { useData } from '../services/DataContext';
 import type { AuditTransaction } from '../types/intelligence';
 
 interface UseAuditResult {
@@ -16,6 +17,7 @@ interface UseAuditResult {
 }
 
 export function useAudit(limit: number = 100): UseAuditResult {
+  const { activeBranchId } = useData();
   const [transactions, setTransactions] = useState<AuditTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export function useAudit(limit: number = 100): UseAuditResult {
     setError(null);
 
     try {
-      const data = await intelligenceService.getAuditTransactions(limit);
+      const data = await intelligenceService.getAuditTransactions(limit, activeBranchId);
       setTransactions(data);
     } catch (err) {
       console.error('[useAudit] Error fetching data:', err);

@@ -93,7 +93,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
               }}
               className='text-primary-600 dark:text-primary-400 hover:underline font-bold text-xs'
             >
-              #{sid}
+              #{sales.find(s => s.id === sid)?.serialId || sid}
             </button>
           );
         },
@@ -273,7 +273,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
               <div className='space-y-0.5'>
                 <p className='text-gray-500 text-xs'>{t.headers?.saleId || 'Sale ID'}</p>
                 <p className='font-medium text-gray-900 dark:text-gray-100 uppercase'>
-                  {selectedReturn.saleId}
+                  {sales.find(s => s.id === selectedReturn.saleId)?.serialId || selectedReturn.saleId}
                 </p>
               </div>
               <div className='space-y-0.5 text-end'>

@@ -348,9 +348,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   );
 
   const syncBatches = useCallback(async () => {
-    const bat = batchService.getAllBatches();
+    const bat = batchService.getAllBatches(activeBranchId);
     setBatchesState(bat);
-  }, []);
+  }, [activeBranchId]);
 
   const addProduct = useCallback(async (product: Omit<Drug, 'id'>) => {
     const newProduct = await inventoryService.create({ ...product, branchId: activeBranchId });

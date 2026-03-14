@@ -90,7 +90,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
             <div className='text-end'>
               <p className='text-gray-500 text-xs'>{t.modal.id}</p>
               <span className='text-sm text-gray-600 dark:text-gray-400 font-medium mt-0.5'>
-                {sale.id}
+                {sale.serialId || sale.id}
               </span>
             </div>
             <div>

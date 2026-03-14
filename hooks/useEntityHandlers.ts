@@ -228,7 +228,7 @@ export function useEntityHandlers({
         }
 
         // Update batches state
-        setBatches(batchService.getAllBatches());
+        setBatches(batchService.getAllBatches(activeBranchId));
 
         auditService.log('inventory.add', {
           userId: currentEmployeeId,
@@ -335,7 +335,7 @@ export function useEntityHandlers({
 
         await inventoryService.delete(id);
         setInventory((prev) => prev.filter((d) => d.id !== id));
-        setBatches(batchService.getAllBatches());
+        setBatches(batchService.getAllBatches(activeBranchId));
         
         auditService.log('inventory.delete', {
           userId: currentEmployeeId,
@@ -382,7 +382,7 @@ export function useEntityHandlers({
               'MANUAL_RESTOCK' // batchNumber
             );
 
-            setTimeout(() => setBatches(batchService.getAllBatches()), 0);
+            setTimeout(() => setBatches(batchService.getAllBatches(activeBranchId)), 0);
 
             return { ...d, stock: mutation.newStock };
           }
@@ -413,7 +413,7 @@ export function useEntityHandlers({
         error('Permission denied: Cannot add suppliers');
         return;
       }
-      setSuppliers((prev) => [...prev, supplier]);
+      setSuppliers((prev) => [...prev, { ...supplier, branchId: activeBranchId }]);
       success('Supplier added successfully');
       auditService.log('supplier.add', {
         userId: currentEmployeeId,
@@ -492,6 +492,7 @@ export function useEntityHandlers({
       // Ensure critical tracking fields are present
       const enhancedCustomer: Customer = {
         ...customer,
+        branchId: activeBranchId,
         createdAt: customer.createdAt || getVerifiedDate().toISOString(),
         registeredByEmployeeId: customer.registeredByEmployeeId || currentEmployeeId || undefined,
       };
@@ -629,7 +630,7 @@ export function useEntityHandlers({
         }
       });
 
-      setBatches(batchService.getAllBatches());
+      setBatches(batchService.getAllBatches(activeBranchId));
       setInventory(currentInventory);
     },
     [inventory, setInventory, setBatches, currentEmployeeId, employees, activeBranchId]
@@ -647,7 +648,7 @@ export function useEntityHandlers({
         error('Permission denied: Cannot create purchase orders');
         return;
       }
-      setPurchases((prev) => [purchase, ...prev]);
+      setPurchases((prev) => [{ ...purchase, branchId: activeBranchId }, ...prev]);
 
       // Only update inventory if purchase is completed immediately
       if (purchase.status === 'completed') {
@@ -754,7 +755,7 @@ export function useEntityHandlers({
         return;
       }
 
-      setPurchaseReturns((prev) => [returnData, ...prev]);
+      setPurchaseReturns((prev) => [{ ...returnData, branchId: activeBranchId }, ...prev]);
 
       const performer = employees?.find((e) => e.id === currentEmployeeId);
 
@@ -987,7 +988,7 @@ export function useEntityHandlers({
           });
 
           // Update batches state
-          setBatches(batchService.getAllBatches());
+          setBatches(batchService.getAllBatches(activeBranchId));
         } catch (allocError: any) {
           // --- ROLLBACK INITIATED ---
           console.error('Transaction failed during bulk allocation:', allocError);
@@ -1004,13 +1005,20 @@ export function useEntityHandlers({
         }
 
         // 5. Preparation Phase (Prepare new state objects)
-        const serialId = (100001 + sales.length).toString();
+        const counterKey = `${StorageKeys.SALE_RECEIPT_COUNTER}_${activeBranchId}`;
+        const prevCounter = storage.get<number>(counterKey, 0);
+        const saleCounter = prevCounter + 1;
+        storage.set(counterKey, saleCounter);
+
+        const serialId = (100000 + saleCounter).toString();
+        const internalId = idGenerator.generate('sales', activeBranchId);
         const today = saleDate.toDateString();
         const dailyOrderNumber =
           sales.filter((s) => new Date(s.date).toDateString() === today).length + 1;
 
         const newSale: Sale = {
-          id: serialId,
+          id: internalId,
+          serialId,
           branchId: activeBranchId,
           date: saleDate.toISOString(),
           soldByEmployeeId: currentEmployeeId || undefined,
@@ -1245,7 +1253,7 @@ export function useEntityHandlers({
         // Update inventory state
         const updatedInventory = restoreStockForCancelledSale(sale, inventory);
         setInventory(updatedInventory);
-        setBatches(batchService.getAllBatches());
+        setBatches(batchService.getAllBatches(activeBranchId));
 
         // --- PERSISTENCE: Return items to IndexedDB ---
         try {
@@ -1352,7 +1360,7 @@ export function useEntityHandlers({
                   sale.id
                 );
                 
-                setBatches(batchService.getAllBatches());
+                setBatches(batchService.getAllBatches(activeBranchId));
 
                 setInventory((prev) =>
                   prev.map((d) => {
@@ -1396,7 +1404,7 @@ export function useEntityHandlers({
                     ...(oldItem.batchAllocations || []),
                     ...(mutation.allocations || []),
                   ];
-                  setBatches(batchService.getAllBatches());
+                  setBatches(batchService.getAllBatches(activeBranchId));
 
                   setInventory((prev) =>
                     prev.map((d) => {
@@ -1461,7 +1469,7 @@ export function useEntityHandlers({
 
               if (mutation) {
                 newItem.batchAllocations = mutation.allocations;
-                setBatches(batchService.getAllBatches());
+                setBatches(batchService.getAllBatches(activeBranchId));
 
                 setInventory((prev) =>
                   prev.map((d) => {
@@ -1629,7 +1637,7 @@ export function useEntityHandlers({
 
             // Functional update not strictly needed for setBatches as batchService is external,
             // but we trigger state refresh
-            setTimeout(() => setBatches(batchService.getAllBatches()), 0);
+            setTimeout(() => setBatches(batchService.getAllBatches(activeBranchId)), 0);
 
             // --- PERSISTENCE: Restore stock to IndexedDB ---
             inventoryService.updateStock(drug.id, returnedItem.quantityReturned).catch(console.error);

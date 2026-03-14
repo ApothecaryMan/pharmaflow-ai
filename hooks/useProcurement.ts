@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { intelligenceService } from '../services/intelligence/intelligenceService';
+import { useData } from '../services/DataContext';
 import type { ProcurementItem, ProcurementSummary } from '../types/intelligence';
 
 interface UseProcurementFilters {
@@ -26,6 +27,8 @@ interface UseProcurementResult {
 }
 
 export function useProcurement(filters: UseProcurementFilters = {}): UseProcurementResult {
+  const { activeBranchId } = useData();
+  
   const [summary, setSummary] = useState<ProcurementSummary | null>(null);
   const [items, setItems] = useState<ProcurementItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,8 +40,8 @@ export function useProcurement(filters: UseProcurementFilters = {}): UseProcurem
 
     try {
       const [summaryData, itemsData] = await Promise.all([
-        intelligenceService.getProcurementSummary(),
-        intelligenceService.getProcurementItems(),
+        intelligenceService.getProcurementSummary(activeBranchId),
+        intelligenceService.getProcurementItems(activeBranchId),
       ]);
 
       setSummary(summaryData);

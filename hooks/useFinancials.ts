@@ -9,6 +9,7 @@ import {
   type FinancialPeriod,
   intelligenceService,
 } from '../services/intelligence/intelligenceService';
+import { useData } from '../services/DataContext';
 import type { FinancialKPIs, ProductFinancialItem } from '../types/intelligence';
 
 interface UseFinancialsResult {
@@ -20,6 +21,7 @@ interface UseFinancialsResult {
 }
 
 export function useFinancials(period: FinancialPeriod = 'this_month'): UseFinancialsResult {
+  const { activeBranchId } = useData();
   const [kpis, setKpis] = useState<FinancialKPIs | null>(null);
   const [products, setProducts] = useState<ProductFinancialItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,8 +33,8 @@ export function useFinancials(period: FinancialPeriod = 'this_month'): UseFinanc
 
     try {
       const [kpisData, productsData] = await Promise.all([
-        intelligenceService.getFinancialKPIs(period),
-        intelligenceService.getProductFinancials(period),
+        intelligenceService.getFinancialKPIs(period, activeBranchId),
+        intelligenceService.getProductFinancials(period, activeBranchId),
       ]);
 
       setKpis(kpisData);
