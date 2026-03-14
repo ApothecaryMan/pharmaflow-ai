@@ -41,7 +41,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
 
   // Use the shared shift hook
   const { currentShift, shifts, isLoading, startShift, endShift, addTransaction } = useShift();
-  const { purchases, purchaseReturns, sales } = useData();
+  const { purchases, purchaseReturns, sales, activeBranchId } = useData();
 
   // Local UI State
   const [modalMode, setModalMode] = useState<'open' | 'close' | 'in' | 'out' | null>(null);
@@ -278,7 +278,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
 
     const newShiftId = idGenerator.generate('shifts');
 
-    const { activeBranchId } = useData();
+
 
     const newShift: Shift = {
       id: newShiftId,
