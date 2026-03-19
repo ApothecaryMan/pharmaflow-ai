@@ -8,13 +8,19 @@ import type { Drug, StockBatch } from '../types';
  */
 export const useComputedInventory = (
   rawInventory: Drug[],
-  batches: StockBatch[]
+  batches: StockBatch[],
+  activeBranchId?: string
 ): Drug[] => {
   return useMemo(() => {
+    // 0. Filter batches by branchId if provided (Double Guard)
+    const filteredBatches = activeBranchId 
+      ? batches.filter(b => b.branchId === activeBranchId)
+      : batches;
+
     // 1. Group batches by Drug ID for efficient lookup
     const batchSums = new Map<string, { total: number; earliestExpiry: string }>();
 
-    batches.forEach((batch) => {
+    filteredBatches.forEach((batch) => {
       const existing = batchSums.get(batch.drugId);
       if (existing) {
         batchSums.set(batch.drugId, {

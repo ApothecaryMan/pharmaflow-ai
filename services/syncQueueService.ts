@@ -24,6 +24,7 @@ export interface SyncAction {
   id?: number;
   type: SyncActionType;
   payload: any;
+  branchId?: string;
   timestamp: string;
   status: 'pending' | 'syncing' | 'failed';
   retryCount: number;

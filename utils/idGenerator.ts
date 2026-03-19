@@ -169,7 +169,7 @@ export const idGenerator = {
       effectiveBranchCode = GLOBAL_PREFIX;
     } else if (!effectiveBranchCode) {
       const settings = storage.get<Partial<AppSettings>>(StorageKeys.SETTINGS, {});
-      effectiveBranchCode = settings.branchCode || DEFAULT_BRANCH_CODE;
+      effectiveBranchCode = settings.branchCode || settings.activeBranchId?.slice(0, 4) || 'XX';
     }
 
     // 2. Get current sequences for this specific branch

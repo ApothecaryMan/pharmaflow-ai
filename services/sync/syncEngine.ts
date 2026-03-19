@@ -7,9 +7,10 @@ import { apiClient, isApiConfigured } from '../api/client';
 import { syncQueueService } from '../syncQueueService';
 import { drugCacheService } from '../inventory/drugCacheService';
 import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
 
 const SYNC_INTERVAL = 30000; // 30 seconds
-const LAST_SYNC_KEY = 'pharma_last_sync_timestamp';
+const LAST_SYNC_KEY_PREFIX = 'pharma_last_sync_';
 
 export type SyncStatus = 'idle' | 'syncing' | 'error' | 'offline';
 
@@ -17,11 +18,13 @@ class SyncEngine {
   private timer: NodeJS.Timeout | null = null;
   private isProcessing = false;
   private onStatusChange: ((status: SyncStatus) => void) | null = null;
+  private activeBranchId: string | null = null;
 
   /**
    * Start the sync loop if API is configured
    */
-  public start(callback?: (status: SyncStatus) => void) {
+  public start(branchId: string, callback?: (status: SyncStatus) => void) {
+    this.activeBranchId = branchId;
     if (callback) this.onStatusChange = callback;
 
     if (!isApiConfigured()) {
@@ -30,26 +33,44 @@ class SyncEngine {
       return;
     }
 
-    console.log('📡 Sync Engine: Starting...');
+    console.log(`📡 Sync Engine: Starting for branch ${branchId}...`);
     
     // Initial sync
     this.sync();
 
     // Setup periodic sync
+    if (this.timer) clearInterval(this.timer);
     this.timer = setInterval(() => this.sync(), SYNC_INTERVAL);
 
     // Listen for online/offline events
-    window.addEventListener('online', () => {
-      console.log('📡 Sync Engine: Back online, triggering sync');
-      this.sync();
-    });
+    window.removeEventListener('online', this.handleOnline);
+    window.addEventListener('online', this.handleOnline);
     
-    window.addEventListener('offline', () => {
-      this.updateStatus('offline');
-    });
+    window.removeEventListener('offline', this.handleOffline);
+    window.addEventListener('offline', this.handleOffline);
 
     if (!navigator.onLine) {
       this.updateStatus('offline');
+    }
+  }
+
+  private handleOnline = () => {
+    console.log('📡 Sync Engine: Back online, triggering sync');
+    this.sync();
+  };
+
+  private handleOffline = () => {
+    this.updateStatus('offline');
+  };
+
+  /**
+   * Update the active branch without restarting the loop (if needed)
+   */
+  public updateBranch(branchId: string) {
+    if (this.activeBranchId !== branchId) {
+      console.log(`📡 Sync Engine: Switching context to branch ${branchId}`);
+      this.activeBranchId = branchId;
+      this.sync(); // Trigger immediate sync for new branch
     }
   }
 
@@ -61,13 +82,15 @@ class SyncEngine {
       clearInterval(this.timer);
       this.timer = null;
     }
+    window.removeEventListener('online', this.handleOnline);
+    window.removeEventListener('offline', this.handleOffline);
   }
 
   /**
    * Main sync orchidestrator
    */
   private async sync() {
-    if (this.isProcessing || !navigator.onLine || !isApiConfigured()) return;
+    if (this.isProcessing || !navigator.onLine || !isApiConfigured() || !this.activeBranchId) return;
 
     this.isProcessing = true;
     this.updateStatus('syncing');
@@ -92,22 +115,28 @@ class SyncEngine {
    * Push pending actions to the server
    */
   private async processQueue() {
+    if (!this.activeBranchId) return;
     const pendingActions = await syncQueueService.dequeueAll();
-    if (pendingActions.length === 0) return;
+    // In multi-branch, we only push actions belonging to CURRENT branch 
+    // OR actions without a branch (global items like DRUG cache updates)
+    const branchActions = pendingActions.filter(a => !a.branchId || a.branchId === this.activeBranchId);
+    
+    if (branchActions.length === 0) return;
 
-    console.log(`📡 Sync Engine: Pushing ${pendingActions.length} actions...`);
+    console.log(`📡 Sync Engine: Pushing ${branchActions.length} actions for branch ${this.activeBranchId}...`);
 
-    for (const action of pendingActions) {
+    for (const action of branchActions) {
       try {
         if (!action.id) continue;
 
         // Mark as syncing in local DB
         await syncQueueService.updateStatus(action.id, 'syncing');
 
-        // Call the API
-        // Endpoint structure depends on backend implementation, 
-        // using a generic /sync/push here.
-        await apiClient.post('/sync/push', action);
+        // Call the API with branch context
+        await apiClient.post('/sync/push', {
+          ...action,
+          branchId: this.activeBranchId
+        });
 
         // Success: Clear from queue
         await syncQueueService.clear(action.id);
@@ -117,16 +146,10 @@ class SyncEngine {
           const errorMessage = err?.message || 'Unknown network error';
           await syncQueueService.updateStatus(action.id, 'failed', errorMessage);
           
-          // Determine if error is permanent (4xx) or transient (5xx, network)
           const isPermanentError = err?.status >= 400 && err?.status < 500;
-          
           if (isPermanentError) {
-            console.log(`📡 Sync Engine: Permanent error detected for action ${action.id}. Skipping to next action.`);
-            // Continue processing the rest of the queue
             continue;
           } else {
-            console.log(`📡 Sync Engine: Transient error detected for action ${action.id}. Stopping queue to maintain order.`);
-            // Stop processing on transient/network failure
             throw err;
           }
         }
@@ -146,58 +169,65 @@ class SyncEngine {
    * Pull changes from the server
    */
   private async pullUpdates() {
-    const lastSync = storage.get<string>(LAST_SYNC_KEY, '1970-01-01T00:00:00.000Z');
+    if (!this.activeBranchId) return;
+    const syncKey = `${LAST_SYNC_KEY_PREFIX}${this.activeBranchId}`;
+    const lastSync = storage.get<string>(syncKey, '1970-01-01T00:00:00.000Z');
     
-    console.log(`📡 Sync Engine: Pulling updates since ${lastSync}...`);
+    console.log(`📡 Sync Engine: Pulling updates for branch ${this.activeBranchId} since ${lastSync}...`);
 
     try {
-      // Using generic /sync/pull endpoint
       const response = await apiClient.get<{ 
         updates: any[], 
         timestamp: string 
-      }>('/sync/pull', { since: lastSync });
+      }>('/sync/pull', { 
+        since: lastSync,
+        branchId: this.activeBranchId 
+      });
 
       if (response.status === 200 && response.data.updates.length > 0) {
         const { updates, timestamp } = response.data;
         
-        console.log(`📡 Sync Engine: Received ${updates.length} updates`);
+        console.log(`📡 Sync Engine: Received ${updates.length} updates for branch ${this.activeBranchId}`);
 
         // Apply updates locally
         for (const update of updates) {
+          // Double Guard: Only apply if it belongs to this branch OR is global
+          if (update.data?.branchId && update.data.branchId !== this.activeBranchId) {
+            console.warn(`📡 Sync Engine: Skipped cross-branch update for ${update.type}`);
+            continue;
+          }
+
           switch (update.type) {
             case 'DRUG':
               await drugCacheService.upsert(update.data);
               break;
             case 'STOCK_BATCH':
-              // Update local batches from server
-              const allBatches = storage.get<any[]>('pharma_stock_batches', []);
+              const allBatches = storage.get<any[]>(StorageKeys.STOCK_BATCHES, []);
               const updatedBatch = update.data;
-              const index = allBatches.findIndex(b => b.id === updatedBatch.id);
-              if (index !== -1) {
-                allBatches[index] = updatedBatch;
+              const bIndex = allBatches.findIndex(b => b.id === updatedBatch.id);
+              if (bIndex !== -1) {
+                allBatches[bIndex] = updatedBatch;
               } else {
                 allBatches.push(updatedBatch);
               }
-              storage.set('pharma_stock_batches', allBatches);
+              storage.set(StorageKeys.STOCK_BATCHES, allBatches);
               break;
             case 'STOCK_MOVEMENT':
-              // Update local movements from server
-              const allMovements = storage.get<any[]>('pharma_stock_movements', []);
+              const allMovements = storage.get<any[]>(StorageKeys.STOCK_MOVEMENTS, []);
               const newMovement = update.data;
               if (!allMovements.find(m => m.id === newMovement.id)) {
                 allMovements.push(newMovement);
-                storage.set('pharma_stock_movements', allMovements);
+                storage.set(StorageKeys.STOCK_MOVEMENTS, allMovements);
               }
               break;
           }
         }
 
-        // Update last sync timestamp
-        storage.set(LAST_SYNC_KEY, timestamp);
+        // Update branch-specific last sync timestamp
+        storage.set(syncKey, timestamp);
       }
     } catch (err) {
       console.error('📡 Sync Engine: Failed to pull updates', err);
-      // Don't throw here as push might have succeeded
     }
   }
 

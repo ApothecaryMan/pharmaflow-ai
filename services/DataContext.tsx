@@ -147,7 +147,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
 
   // Compute inventory from raw data and batches
-  const inventory = useComputedInventory(rawInventory, batches);
+  const inventory = useComputedInventory(rawInventory, batches, activeBranchId);
 
   // Load initial data
   // Load initial data
@@ -278,6 +278,11 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
         setEmployeesState(emp);
         setBatchesState(bat);
+
+        // --- Initialize Sync Engine ---
+        if (finalBranchId) {
+          syncEngine.start(finalBranchId, (status) => setSyncStatus(status));
+        }
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -285,9 +290,6 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       }
     };
     loadData();
-
-    // --- Initialize Sync Engine ---
-    syncEngine.start((status) => setSyncStatus(status));
     
     return () => {
       syncEngine.stop();
@@ -324,12 +326,21 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     if (!isLoading) {
       import('../utils/storage').then(({ storage }) => {
         import('../config/storageKeys').then(({ StorageKeys }) => {
-          storage.set(StorageKeys.STOCK_BATCHES, batches);
+          const allBatches = storage.get<StockBatch[]>(StorageKeys.STOCK_BATCHES, []);
+          // Keep items from OTHER branches
+          const otherBranchBatches = allBatches.filter(
+            (b) => b.branchId && b.branchId !== activeBranchId
+          );
+          // Combine and deduplicate by ID
+          const merged = [...otherBranchBatches, ...batches];
+          const unique = Array.from(new Map(merged.map((b) => [b.id, b])).values());
+          
+          storage.set(StorageKeys.STOCK_BATCHES, unique);
         });
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batches]);
+  }, [batches, activeBranchId]);
 
   // Actions
   const setInventory = useCallback(
@@ -545,6 +556,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   useEffect(() => {
     if (activeBranchId && !isLoading) {
       refreshAll();
+      syncEngine.updateBranch(activeBranchId);
     }
     // isLoading intentionally excluded: we only want to fire on branch switch, not when loading finishes
     // eslint-disable-next-line react-hooks/exhaustive-deps
