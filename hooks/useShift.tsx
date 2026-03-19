@@ -177,8 +177,12 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, []);
 
+  const branchShifts = useMemo(() => {
+    return shifts.filter((s) => s.branchId === activeBranchId);
+  }, [shifts, activeBranchId]);
+
   const value: ShiftContextType = {
-    shifts,
+    shifts: branchShifts,
     currentShift,
     isLoading,
     startShift,

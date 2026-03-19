@@ -22,7 +22,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
   // Read active branch synchronously — this screen renders outside DataProvider
   // Read active branch synchronously — this screen renders outside DataProvider
   const activeBranch = branchService.getActive() || branchService.getAll()[0];
-  const activeBranchId = activeBranch?.id || 'B1';
+  const activeBranchId = activeBranch?.id || branchService.getAll()[0]?.id || '';
   
   const activeColor = theme.hex || color;
 

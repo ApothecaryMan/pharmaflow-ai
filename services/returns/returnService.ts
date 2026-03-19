@@ -87,7 +87,7 @@ export const createReturnService = (): ReturnService => ({
       const currentStock = await batchService.getTotalStock(item.drugId);
       
       // Allocate from batches
-      const allocations = await batchService.allocateStock(item.drugId, item.quantityReturned, undefined, true);
+      const allocations = await batchService.allocateStock(item.drugId, item.quantityReturned, effectiveBranchId, true);
       
       for (const allocation of allocations) {
         const movement = await stockMovementService.logMovement({

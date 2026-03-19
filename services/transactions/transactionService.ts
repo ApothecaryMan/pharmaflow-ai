@@ -222,6 +222,7 @@ export const transactionService = {
         userId: currentEmployeeId,
         details: `Processed Return for Sale #${sale.serialId} - Refund: ${returnData.totalRefund}`,
         entityId: returnData.id,
+        branchId: activeBranchId,
       });
 
       // ENQUEUE ATOMIC SYNC ACTION

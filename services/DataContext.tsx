@@ -195,7 +195,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         // Sync settingsService with the active branch so idGenerator (which reads storage directly) is in sync
         await settingsService.setMultiple({ 
           activeBranchId: finalBranchId,
-          branchCode: activeBranch?.code || 'B1'
+          branchCode: activeBranch?.code || allBranches[0]?.code || 'B1',
         });
 
         const [results, _] = await Promise.all([

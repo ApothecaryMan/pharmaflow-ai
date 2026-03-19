@@ -217,7 +217,7 @@ export const authService = {
       const session: UserSession = {
         username: employee.username || employee.name,
         employeeId: employee.id,
-        branchId: employee.branchId || activeBranch?.id || firstBranch?.id || 'B1',
+        branchId: employee.branchId || activeBranch?.id || firstBranch?.id || branchService.getAll()[0]?.id || 'B1',
         role: employee.role,
         department: employee.department,
       };
@@ -341,7 +341,7 @@ export const authService = {
 
     const session: UserSession = {
       username: employee.username || employee.name,
-      branchId: employee.branchId || activeBranch?.id || firstBranch?.id || 'B1',
+      branchId: employee.branchId || activeBranch?.id || firstBranch?.id || branchService.getAll()[0]?.id,
       role: employee.role,
       department: employee.department,
     };
