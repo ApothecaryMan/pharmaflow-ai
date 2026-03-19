@@ -21,37 +21,58 @@ const createNewTab = (index: number): SaleTab => ({
   createdAt: Date.now(),
 });
 
-export const usePOSTabs = () => {
+export const usePOSTabs = (activeBranchId: string) => {
+  // Generate branch-specific keys
+  const tabsKey = `${StorageKeys.POS_TABS}_${activeBranchId}`;
+  const activeTabKey = `${StorageKeys.POS_ACTIVE_TAB_ID}_${activeBranchId}`;
+  const closedTabsKey = `${StorageKeys.POS_CLOSED_TABS}_${activeBranchId}`;
+
   const [tabs, setTabs] = useState<SaleTab[]>(() => {
     // Load from storage
-    const saved = storage.get<SaleTab[]>(StorageKeys.POS_TABS, []);
+    const saved = storage.get<SaleTab[]>(tabsKey, []);
     return saved.length > 0 ? saved : [createNewTab(1)];
   });
 
   const [activeTabId, setActiveTabId] = useState<string>(() => {
-    const savedId = storage.get<string>(StorageKeys.POS_ACTIVE_TAB_ID, '');
+    const savedId = storage.get<string>(activeTabKey, '');
     if (savedId && tabs.some((t) => t.id === savedId)) return savedId;
     return tabs[0]?.id || '';
   });
 
   const [closedTabs, setClosedTabs] = useState<SaleTab[]>(() => {
-    return storage.get<SaleTab[]>(StorageKeys.POS_CLOSED_TABS, []);
+    return storage.get<SaleTab[]>(closedTabsKey, []);
   });
+
+  // Reload data when activeBranchId changes
+  useEffect(() => {
+    const savedTabs = storage.get<SaleTab[]>(tabsKey, []);
+    const newTabs = savedTabs.length > 0 ? savedTabs : [createNewTab(1)];
+    setTabs(newTabs);
+
+    const savedId = storage.get<string>(activeTabKey, '');
+    if (savedId && newTabs.some((t) => t.id === savedId)) {
+      setActiveTabId(savedId);
+    } else {
+      setActiveTabId(newTabs[0]?.id || '');
+    }
+
+    setClosedTabs(storage.get<SaleTab[]>(closedTabsKey, []));
+  }, [tabsKey, activeTabKey, closedTabsKey]);
 
   // Save to storage whenever tabs change
   useEffect(() => {
-    storage.set(StorageKeys.POS_TABS, tabs);
-  }, [tabs]);
+    storage.set(tabsKey, tabs);
+  }, [tabs, tabsKey]);
 
   // Save active tab ID whenever it changes
   useEffect(() => {
-    storage.set(StorageKeys.POS_ACTIVE_TAB_ID, activeTabId);
-  }, [activeTabId]);
+    storage.set(activeTabKey, activeTabId);
+  }, [activeTabId, activeTabKey]);
 
   // Save closed tabs
   useEffect(() => {
-    storage.set(StorageKeys.POS_CLOSED_TABS, closedTabs);
-  }, [closedTabs]);
+    storage.set(closedTabsKey, closedTabs);
+  }, [closedTabs, closedTabsKey]);
 
   // Add new tab
   const addTab = useCallback(() => {

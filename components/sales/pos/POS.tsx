@@ -10,6 +10,7 @@ import { getLocationName } from '../../../data/locations';
 import { useFilterDropdown } from '../../../hooks/useFilterDropdown';
 import { usePOSTabs } from '../../../hooks/usePOSTabs';
 import { useShift } from '../../../hooks/useShift'; // Import useShift
+import { useData } from '../../../services/DataContext';
 import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../../types';
 import { getArabicDisplayName, getDisplayName } from '../../../utils/drugDisplayName';
@@ -102,11 +103,13 @@ export const POS: React.FC<POSProps> = ({
   const isRTL = (t as any).direction === 'rtl' || language === 'AR' || (language as any) === 'ar';
   const currentLang = isRTL ? 'ar' : 'en';
 
+  const { activeBranchId } = useData();
+
   const {
     tabs, activeTab, activeTabId, addTab, removeTab,
     switchTab, updateTab, renameTab, togglePin, reorderTabs, maxTabs,
     closedTabs, restoreTab,
-  } = usePOSTabs();
+  } = usePOSTabs(activeBranchId);
 
   const { currentShift } = useShift();
   const hasOpenShift = !!currentShift;
