@@ -99,6 +99,7 @@ interface UseNavigationParams {
   developerMode: boolean;
   role: UserRole; // Added role
   setNavigationParams: React.Dispatch<React.SetStateAction<Record<string, any> | null>>;
+  onProtectedNavigation?: (viewId: string, params?: Record<string, any>) => void;
 }
 
 /**
@@ -118,12 +119,24 @@ export function useNavigation({
   developerMode,
   role,
   setNavigationParams,
+  onProtectedNavigation,
 }: UseNavigationParams): NavigationHandlers {
   const { error } = useAlert();
 
   // Handle view change with dashboard sub-view logic
   const handleViewChange = useCallback(
     (viewId: string, params?: Record<string, any>) => {
+      const pageConfig = PAGE_REGISTRY[viewId];
+      
+      // Check for Protection
+      if (pageConfig?.isProtected && onProtectedNavigation) {
+        const isAlreadyUnlocked = sessionStorage.getItem(pageConfig.storageKey || 'area_unlocked') === 'true';
+        if (!isAlreadyUnlocked) {
+          onProtectedNavigation(viewId, params);
+          return;
+        }
+      }
+
       const targetView = viewId as ViewState;
       const resolvedView = resolveView(targetView);
 
@@ -150,12 +163,23 @@ export function useNavigation({
       }
       setMobileMenuOpen(false);
     },
-    [activeModule, resolveView, setView, setDashboardSubView, setMobileMenuOpen, error]
+    [activeModule, resolveView, setView, setDashboardSubView, setMobileMenuOpen, error, onProtectedNavigation]
   );
 
   // Handle direct navigation
   const handleNavigate = useCallback(
     (viewId: string, params?: Record<string, any>) => {
+      const pageConfig = PAGE_REGISTRY[viewId];
+      
+      // Check for Protection
+      if (pageConfig?.isProtected && onProtectedNavigation) {
+        const isAlreadyUnlocked = sessionStorage.getItem(pageConfig.storageKey || 'area_unlocked') === 'true';
+        if (!isAlreadyUnlocked) {
+          onProtectedNavigation(viewId, params);
+          return;
+        }
+      }
+
       const targetView = viewId as ViewState;
       const resolvedView = resolveView(targetView);
 
@@ -168,7 +192,7 @@ export function useNavigation({
       }
       setMobileMenuOpen(false);
     },
-    [resolveView, setView, setMobileMenuOpen, error]
+    [resolveView, setView, setMobileMenuOpen, error, onProtectedNavigation]
   );
 
   // Handle module change

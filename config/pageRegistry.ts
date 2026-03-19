@@ -54,6 +54,8 @@ export interface PageConfig {
   skeleton?: ComponentType<any>;
   layout?: 'standard' | 'full-bleed' | 'dashboard' | 'split' | 'auth' | 'full-screen';
   skeletonProps?: Record<string, any>;
+  isProtected?: boolean;
+  storageKey?: string;
 }
 
 export const PAGE_REGISTRY: Record<string, PageConfig> = {
@@ -533,6 +535,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     category: 'pharmacy-configuration',
     requiredProps: ['language', 'color'],
     permission: 'settings.update',
+    isProtected: true,
+    storageKey: 'branch_settings_unlocked',
   },
   'medicine-search': {
     id: 'medicine-search',

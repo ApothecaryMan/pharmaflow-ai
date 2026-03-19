@@ -12,6 +12,7 @@ import { EmployeeSetupScreen } from './components/onboarding/EmployeeSetupScreen
 import { PageSkeletonRegistry } from './components/skeletons/PageSkeletonRegistry';
 import { PAGE_REGISTRY } from './config/pageRegistry';
 import { canPerformAction, UserRole } from './config/permissions';
+import { SecureGate } from './components/common/SecureGate';
 import { ROUTES } from './config/routes';
 import { LANGUAGES, THEMES, useSettings } from './context';
 import { CSV_INVENTORY } from './data/sample-inventory';
@@ -85,6 +86,9 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
 }) => {
   // --- Shifts ---
   const { currentShift } = useShift();
+  
+  // --- Global Secure Gate State ---
+  const [pendingNavigation, setPendingNavigation] = useState<{ viewId: string; params?: any } | null>(null);
 
   // --- Settings from Context ---
   const {
@@ -155,7 +159,8 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       hideInactiveModules,
       developerMode,
       role: userRole, // Pass the extracted role
-      setNavigationParams,
+      setNavigationParams: (params: any) => setNavigationParams(params), // Wrap it to match React.Dispatch
+      onProtectedNavigation: (viewId: string, params?: any) => setPendingNavigation({ viewId, params }),
     }
   );
 
@@ -399,6 +404,21 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
           )}
         </div>
       </Modal>
+
+      {/* Global Secure Gate */}
+      <SecureGate
+        standalone={true}
+        isOpen={!!pendingNavigation}
+        language={language}
+        storageKey={pendingNavigation ? PAGE_REGISTRY[pendingNavigation.viewId]?.storageKey : 'area_unlocked'}
+        onUnlock={() => {
+          if (pendingNavigation) {
+            handleViewChange(pendingNavigation.viewId, pendingNavigation.params);
+            setPendingNavigation(null);
+          }
+        }}
+        onClose={() => setPendingNavigation(null)}
+      />
     </MainLayout>
   );
 };
