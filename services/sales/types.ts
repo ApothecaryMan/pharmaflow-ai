@@ -26,13 +26,13 @@ export interface SalesStats {
 export interface SalesService {
   getAll(branchId?: string): Promise<Sale[]>;
   getById(id: string): Promise<Sale | null>;
-  getByCustomer(customerId: string): Promise<Sale[]>;
-  getByDateRange(from: string, to: string): Promise<Sale[]>;
-  getToday(): Promise<Sale[]>;
-  create(sale: Omit<Sale, 'id'>): Promise<Sale>;
+  getByCustomer(customerId: string, branchId?: string): Promise<Sale[]>;
+  getByDateRange(from: string, to: string, branchId?: string): Promise<Sale[]>;
+  getToday(branchId?: string): Promise<Sale[]>;
+  create(sale: Omit<Sale, 'id'>, branchId?: string): Promise<Sale>;
   update(id: string, sale: Partial<Sale>): Promise<Sale>;
   delete(id: string): Promise<boolean>;
-  getStats(): Promise<SalesStats>;
-  filter(filters: SalesFilters): Promise<Sale[]>;
+  getStats(branchId?: string): Promise<SalesStats>;
+  filter(filters: SalesFilters, branchId?: string): Promise<Sale[]>;
   save(sales: Sale[], branchId?: string): Promise<void>;
 }

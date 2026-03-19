@@ -99,16 +99,23 @@ export const drugCacheService = {
         let completed = 0;
         const total = mutations.length;
 
+        const checkDone = () => {
+          completed++;
+          if (completed === total) resolve();
+        };
+
         for (const mutation of mutations) {
           const getReq = store.get(mutation.id);
           getReq.onsuccess = () => {
             const drug = getReq.result as Drug | undefined;
             if (drug) {
               drug.stock = (drug.stock || 0) + mutation.quantity;
-              store.put(drug);
+              const putReq = store.put(drug);
+              putReq.onsuccess = checkDone;
+              putReq.onerror = () => reject(putReq.error);
+            } else {
+              checkDone();
             }
-            completed++;
-            if (completed === total) resolve();
           };
           getReq.onerror = () => reject(getReq.error);
         }

@@ -7,6 +7,7 @@ import { batchService } from '../services/inventory/batchService';
 import { inventoryService } from '../services/inventory/inventoryService';
 import { employeeService } from '../services/hr/employeeService';
 import { stockMovementService } from '../services/inventory/stockMovement/stockMovementService';
+import { transactionService } from '../services/transactions/transactionService';
 import { migrationService } from '../services/migration';
 import { restoreStockForCancelledSale } from '../services/salesHelpers';
 import * as stockOps from '../utils/stockOperations';
@@ -940,37 +941,32 @@ export function useEntityHandlers({
   const handleCompleteSale = useCallback(
     async (saleData: SaleData) => {
       try {
-        // Permission Check
+        // 1. Permissions & Guards
         if (!currentEmployeeId) {
-          // Allow guest/system sales? Usually sales require logged in user for tracking.
-          // If system supports anonymous sales (maybe kiosk mode), fine.
-          // But strict mode suggests enforcing login.
-          // Let's enforce login for consistency with strict mode.
           error('Login required to complete sale');
           return false;
         }
-        if (
-          !canPerformAction(employees?.find((e) => e.id === currentEmployeeId)?.role, 'sale.create')
-        ) {
+        const currentUser = employees?.find((e) => e.id === currentEmployeeId);
+        if (!canPerformAction(currentUser?.role, 'sale.create')) {
           error('Permission denied: Cannot process sales');
           return false;
         }
 
-        // 1. Validate Sale Data
+        // 2. Validate Sale Data
         const dataValidation = validateSaleData(saleData);
         if (!dataValidation.success) {
           error(dataValidation.message || 'Invalid sale data');
           return false;
         }
 
-        // 2. Validate Stock Availability (Pre-check)
+        // 3. Validate Stock Availability (Pre-check)
         const stockValidation = validateStockAvailability(saleData.items, inventory);
         if (!stockValidation.success) {
           error(stockValidation.message || 'Insufficient stock');
           return false;
         }
 
-        // 3. Validate Transaction Time
+        // 4. Validate Transaction Time
         const saleDate = getVerifiedDate();
         const timeValidation = validateTransactionTime(saleDate);
         if (!timeValidation.valid) {
@@ -978,87 +974,31 @@ export function useEntityHandlers({
           return false;
         }
 
-        // --- START TRANSACTION ---
-        const processedItems: CartItem[] = [];
+        // 5. PROCESS TRANSACTION (ATOMIC)
+        const result = await transactionService.processCheckout(
+          saleData,
+          inventory,
+          activeBranchId,
+          currentEmployeeId,
+          saleDate
+        );
 
-        try {
-          // 4. Bulk Allocation Phase (One single storage write)
-          const allocationRequests = saleData.items.map((item) => {
-            const drug = inventory.find((d) => d.id === item.id);
-            const quantityToDeduct = item.isUnit
-              ? item.quantity
-              : item.quantity * (drug?.unitsPerPack || 1);
-            return {
-              drugId: item.id,
-              quantity: quantityToDeduct,
-              name: item.name,
-              preferredBatchId: item.preferredBatchId,
-            };
-          });
-
-          const bulkAllocations = batchService.allocateStockBulk(allocationRequests, activeBranchId);
-
-          // Map allocations back to processed items
-          saleData.items.forEach((item) => {
-            const alloc = bulkAllocations.find((a) => a.drugId === item.id);
-            processedItems.push({
-              ...item,
-              batchAllocations: alloc?.allocations || [],
-            });
-          });
-
-          // Update batches state
-          setBatches(batchService.getAllBatches(activeBranchId));
-        } catch (allocError: any) {
-          // --- ROLLBACK INITIATED ---
-          console.error('Transaction failed during bulk allocation:', allocError);
-
-          // Return stock for any items that might have been partially allocated if we had a manual loop,
-          // but allocateStockBulk is atomic in result (though not in storage if one fails midway without internal rollback).
-          // However, allocateStockBulk returns null if ANY item fails, but it ALREADY modified the batches reference.
-          // Wait, allocateStockBulk implementation I wrote:
-          // It modifies `allBatches` in place. If it returns `null` because an item fails, it does NOT save.
-          // Since saveBatches is only called at the end, returning null effectively rolls back the storage.
-
-          error(allocError.message || 'Transaction failed. Stock has been rolled back.');
-          return false; // Stop execution
+        if (!result.success || !result.sale) {
+          error(result.error || 'Transaction failed');
+          return false;
         }
 
-        // 5. Preparation Phase (Prepare new state objects)
-        const counterKey = `${StorageKeys.SALE_RECEIPT_COUNTER}_${activeBranchId}`;
-        const prevCounter = storage.get<number>(counterKey, 0);
-        const saleCounter = prevCounter + 1;
-        storage.set(counterKey, saleCounter);
+        const newSale = result.sale;
 
-        const serialId = (100000 + saleCounter).toString();
-        const internalId = idGenerator.generate('sales', activeBranchId);
-        const today = saleDate.toDateString();
-        const dailyOrderNumber =
-          sales.filter((s) => new Date(s.date).toDateString() === today).length + 1;
-
-        const newSale: Sale = {
-          id: internalId,
-          serialId,
-          branchId: activeBranchId,
-          date: saleDate.toISOString(),
-          soldByEmployeeId: currentEmployeeId || undefined,
-          dailyOrderNumber,
-          status: saleData.saleType === 'delivery' ? 'pending' : 'completed',
-          updatedAt: saleDate.toISOString(),
-          ...saleData,
-          items: processedItems,
-        };
-
-        // 6. Commit Phase (Update all States)
-
-        // Pre-map sold items for O(1) lookup
-        const soldItemsMap = new Map(saleData.items.map((item) => [item.id, item]));
-        const soldDrugIds = saleData.items.map((item) => item.id);
-
-        // Bulk fetch earliest expiries (single localStorage read)
+        // 6. UPDATE STATES
+        
+        // Update Inventory State (Optimistic mirror)
+        const soldItemsMap = new Map<string, CartItem>(
+          newSale.items.map((item) => [item.id, item])
+        );
+        const soldDrugIds = newSale.items.map((item) => item.id);
         const earliestExpiries = batchService.getEarliestExpiriesBulk(soldDrugIds);
 
-        // Update Inventory State
         setInventory((prev) =>
           prev.map((drug) => {
             const soldItem = soldItemsMap.get(drug.id);
@@ -1067,11 +1007,9 @@ export function useEntityHandlers({
                 ? soldItem.quantity
                 : soldItem.quantity * (drug.unitsPerPack || 1);
 
-              const newStock = drug.stock - quantityToDeduct;
-
               return {
                 ...drug,
-                stock: validateStock(newStock),
+                stock: validateStock(drug.stock - quantityToDeduct),
                 expiryDate: earliestExpiries[drug.id] || drug.expiryDate,
               };
             }
@@ -1081,6 +1019,9 @@ export function useEntityHandlers({
 
         // Update Sales State
         setSales((prev) => [...prev, newSale]);
+
+        // Update Batches State
+        setBatches(batchService.getAllBatches(activeBranchId));
 
         // Update Customer Points
         if (saleData.customerCode || saleData.customerName !== 'Guest Customer') {
@@ -1102,116 +1043,47 @@ export function useEntityHandlers({
           }
         }
 
-        // Update Shift/Cash Register (Context-Based)
-        // SaleData doesn't have status, so we infer from saleType.
-        // Walk-in = Completed immediately. Delivery = Pending/With Delivery.
+        // Update Shift
         const isImmediateComplete = !saleData.saleType || saleData.saleType === 'walk-in';
-
         if (isImmediateComplete && currentShift) {
-          const isCash = saleData.paymentMethod === 'cash';
           addTransaction(currentShift.id, {
             id: Date.now().toString(),
             shiftId: currentShift.id,
             time: new Date().toISOString(),
-            type: isCash ? 'sale' : 'card_sale',
-            amount: saleData.total, // Ensure we single this out cleanly
-            reason: `Sale #${serialId}`,
-            userId: employees?.find((e) => e.id === currentEmployeeId)?.name || 'System',
-            relatedSaleId: serialId.toString(),
+            type: saleData.paymentMethod === 'cash' ? 'sale' : 'card_sale',
+            amount: saleData.total,
+            reason: `Sale #${newSale.serialId}`,
+            userId: currentUser?.name || 'System',
+            relatedSaleId: newSale.serialId.toString(),
           });
-        } else {
-          console.log(
-            `[Shift] Sale #${serialId} is ${saleData.saleType || 'walk-in'} (Pending), skipping immediate shift transaction.`
-          );
         }
 
         updateLastTransactionTime(saleDate.getTime());
-
-        auditService.log('sale.complete', {
-          userId: currentEmployeeId || 'System',
-          details: `Completed Sale #${serialId} - Total: ${saleData.total}`,
-          entityId: serialId,
-        });
-
-        // 7. Log Stock Movements (bulk — single localStorage write)
-        const performer = employees?.find((e) => e.id === currentEmployeeId);
-        const movementEntries: Omit<import('../services/inventory/stockMovement/types').StockMovement, 'id' | 'timestamp'>[] = [];
-
-        newSale.items.forEach((item) => {
-          const drug = inventory.find((d) => d.id === item.id);
-          if (!drug) return;
-          const unitsToDeduct = item.isUnit
-            ? item.quantity
-            : item.quantity * (drug.unitsPerPack || 1);
-          const previousStock = drug.stock;
-          const newStock = validateStock(previousStock - unitsToDeduct);
-
-          movementEntries.push({
-            drugId: drug.id,
-            drugName: drug.name,
-            branchId: activeBranchId,
-            type: 'sale',
-            quantity: -unitsToDeduct,
-            previousStock,
-            newStock,
-            reason: `Sale Transaction #${serialId}`,
-            referenceId: serialId,
-            performedBy: currentEmployeeId!,
-            performedByName: performer?.name,
-            status: 'approved',
-          });
-        });
-
-        // Fire bulk movement log (single read-modify-write)
-        stockMovementService.logMovementsBulk(movementEntries);
-
-        // 8. Persist Inventory Changes to IndexedDB (single transaction)
-        try {
-          const stockMutations = newSale.items.map((item) => {
-            const drug = inventory.find((d) => d.id === item.id);
-            const unitsToDeduct = item.isUnit
-              ? item.quantity
-              : item.quantity * (drug?.unitsPerPack || 1);
-            return { id: item.id, quantity: -unitsToDeduct };
-          });
-          await inventoryService.updateStockBulk(stockMutations);
-        } catch (persistenceError) {
-          console.error('[handleCompleteSale] Persistence Error:', persistenceError);
-        }
-
-        success(`Order #${serialId} completed!`);
+        success(`Order #${newSale.serialId} completed!`);
         return true;
+
       } catch (err: any) {
         console.error('[handleCompleteSale] Fatal error:', err);
-        console.error('Critical Error in handleCompleteSale:', err);
-
-        // Attempt generic rollback if possible (difficult here as we might have partial state updates if logic wasn't clean)
-        // Since we separated Allocation (with explicit rollback) from State Commit,
-        // the only risk is if setInventory succeeds but setSales fails.
-        // React 18 batches these updates, but custom context logic might not.
-        // For now, the Allocation Rollback covers the most critical "Inventory Drift" issue.
-
-        error('An unexpected error occurred. Please refresh and try again.');
+        error('An unexpected error occurred during checkout.');
         return false;
       }
     },
     [
-      sales,
-      inventory,
       currentEmployeeId,
       employees,
       activeBranchId,
+      inventory,
       getVerifiedDate,
       validateTransactionTime,
-      updateLastTransactionTime,
       setInventory,
+      setSales,
       setBatches,
       setCustomers,
-      setSales,
-      success,
-      error,
       currentShift,
       addTransaction,
+      updateLastTransactionTime,
+      success,
+      error,
     ]
   );
 
@@ -1575,140 +1447,143 @@ export function useEntityHandlers({
 
   const handleProcessReturn = useCallback(
     async (returnData: Return) => {
-      // 1. Authentication Guard
-      if (!currentEmployeeId) {
-        error('Permission denied: Login required to process returns');
-        return;
+      try {
+        // 1. Authentication & Permission Guard
+        if (!currentEmployeeId) {
+          error('Permission denied: Login required to process returns');
+          return false;
+        }
+        const employee = employees?.find((e) => e.id === currentEmployeeId);
+        if (!canPerformAction(employee?.role, 'sale.refund')) {
+          error('Permission denied: Cannot process returns');
+          return false;
+        }
+
+        // 2. Validate Return Data
+        const returnDate = new Date(returnData.date);
+        const validation = validateTransactionTime(returnDate);
+        if (!validation.valid) {
+          error(`⚠️ ${validation.message || 'Invalid return time'}`);
+          return false;
+        }
+
+        const sale = sales.find((s) => s.id === returnData.saleId);
+        if (!sale) {
+          error('Original sale not found');
+          return false;
+        }
+
+        // 3. PROCESS TRANSACTION (ATOMIC)
+        const result = await transactionService.processReturn(
+          returnData,
+          inventory,
+          sale,
+          activeBranchId,
+          currentEmployeeId
+        );
+
+        if (!result.success) {
+          error(result.error || 'Return processing failed');
+          return false;
+        }
+
+        // 4. UPDATE STATES
+        
+        // Update Returns State
+        const returnWithBranch: Return = {
+          ...returnData,
+          branchId: activeBranchId,
+        };
+        setReturns((prev) => [returnWithBranch, ...prev]);
+
+        // Update Sales State
+        setSales((prev) =>
+          prev.map((s) => {
+            if (s.id === returnData.saleId) {
+              const existingReturns = s.returnIds || [];
+              const totalReturned = (s.netTotal !== undefined ? s.total - s.netTotal : 0) + returnData.totalRefund;
+              
+              const itemReturnedQuantities = { ...(s.itemReturnedQuantities || {}) };
+              returnData.items.forEach((item) => {
+                itemReturnedQuantities[item.drugId] =
+                  (itemReturnedQuantities[item.drugId] || 0) + item.quantityReturned;
+              });
+
+              return {
+                ...s,
+                hasReturns: true,
+                returnIds: [...existingReturns, returnData.id],
+                netTotal: s.total - totalReturned,
+                itemReturnedQuantities,
+              };
+            }
+            return s;
+          })
+        );
+
+        // Update Inventory State (Optimistic mirror)
+        const returnedItemsMap = new Map(returnData.items.map(i => [i.drugId, i]));
+        setInventory((prev) =>
+          prev.map((drug) => {
+            const returnedItem = returnedItemsMap.get(drug.id);
+            if (returnedItem) {
+              const drugInSale = sale.items.find(i => i.id === drug.id);
+              const unitsToRestore = returnedItem.isUnit
+                ? returnedItem.quantityReturned
+                : returnedItem.quantityReturned * (drug.unitsPerPack || 1);
+                
+              return {
+                ...drug,
+                stock: validateStock(drug.stock + unitsToRestore),
+              };
+            }
+            return drug;
+          })
+        );
+
+        // Update Batches State
+        setBatches(batchService.getAllBatches(activeBranchId));
+
+        // Update Shift
+        if (currentShift) {
+          addTransaction(currentShift.id, {
+            id: Date.now().toString(),
+            shiftId: currentShift.id,
+            time: new Date().toISOString(),
+            type: 'return',
+            amount: returnData.totalRefund,
+            reason: `Return for Sale #${sale.serialId}`,
+            userId: employee?.name || 'System',
+            relatedSaleId: sale.serialId?.toString() || sale.id,
+          });
+        }
+
+        updateLastTransactionTime(returnDate.getTime());
+        success(`Return processed successfully. Refund: ${returnData.totalRefund.toFixed(2)} L.E`);
+        return true;
+
+      } catch (err: any) {
+        console.error('[handleProcessReturn] Fatal error:', err);
+        error('An unexpected error occurred during return processing.');
+        return false;
       }
-
-      // 2. Permission Guard
-      const employee = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(employee?.role, 'sale.refund')) {
-        error('Permission denied: Cannot process returns');
-        return;
-      }
-
-      // 3. Validate return time
-      const returnDate = new Date(returnData.date);
-      const validation = validateTransactionTime(returnDate);
-      if (!validation.valid) {
-        error(`⚠️ ${validation.message || 'Invalid return time'}`);
-        return;
-      }
-
-      // Add return record with branchId injected
-      const returnWithBranch: Return = {
-        ...returnData,
-        branchId: activeBranchId, // Inject current branch
-      };
-      setReturns((prev) => [returnWithBranch, ...prev]);
-
-      // Update last transaction time
-      updateLastTransactionTime(returnDate.getTime());
-
-      // Update sale record
-      setSales((prev) =>
-        prev.map((sale) => {
-          if (sale.id === returnData.saleId) {
-            const existingReturns = sale.returnIds || [];
-            const totalReturned =
-              returns
-                .filter((r) => r.saleId === sale.id)
-                .reduce((sum, r) => sum + r.totalRefund, 0) + returnData.totalRefund;
-
-            const itemReturnedQuantities = { ...(sale.itemReturnedQuantities || {}) };
-            returnData.items.forEach((item) => {
-              itemReturnedQuantities[item.drugId] =
-                (itemReturnedQuantities[item.drugId] || 0) + item.quantityReturned;
-            });
-
-
-            return {
-              ...sale,
-              hasReturns: true,
-              returnIds: [...existingReturns, returnData.id],
-              netTotal: sale.total - totalReturned,
-              itemReturnedQuantities,
-            };
-          }
-          return sale;
-        })
-      );
-
-      // Restore inventory
-      setInventory((prev) =>
-        prev.map((drug) => {
-          const returnedItem = returnData.items.find((i) => i.drugId === drug.id);
-          if (returnedItem) {
-            const mutation = stockOps.returnStock(
-              drug,
-              returnedItem.quantityReturned,
-              !!returnedItem.isUnit,
-              sales.find((s) => s.id === returnData.saleId)?.items.find((i) => i.id === drug.id)?.batchAllocations,
-              'return_customer',
-              `Return for Sale #${returnData.saleId}`,
-              {
-                branchId: activeBranchId,
-                performedBy: currentEmployeeId,
-                performedByName: employee?.name,
-              },
-              returnData.id
-            );
-
-            // Functional update not strictly needed for setBatches as batchService is external,
-            // but we trigger state refresh
-            setTimeout(() => setBatches(batchService.getAllBatches(activeBranchId)), 0);
-
-            // --- PERSISTENCE: Restore stock to IndexedDB ---
-            inventoryService.updateStock(drug.id, returnedItem.quantityReturned).catch(console.error);
-
-            return {
-              ...drug,
-              stock: mutation.newStock,
-            };
-          }
-          return drug;
-        })
-      );
-
-      // Update Cash Register (Shift) with return record
-      if (currentShift) {
-        addTransaction(currentShift.id, {
-          id: Date.now().toString(),
-          shiftId: currentShift.id,
-          time: new Date().toISOString(),
-          type: 'return',
-          amount: returnData.totalRefund,
-          reason: `Return for Sale #${returnData.saleId}`,
-          userId: employee?.name || 'System',
-          relatedSaleId: returnData.saleId.toString(),
-        });
-      }
-
-      auditService.log('sale.return', {
-        userId: currentEmployeeId,
-        details: `Processed Return for Sale #${returnData.saleId}`,
-        entityId: returnData.id,
-      });
-
-      success(`Return processed successfully. Refund: ${returnData.totalRefund.toFixed(2)} L.E`);
     },
     [
       currentEmployeeId,
       employees,
       activeBranchId,
       sales,
-      returns,
+      inventory,
+      currentShift,
       validateTransactionTime,
-      updateLastTransactionTime,
       setReturns,
       setSales,
       setInventory,
       setBatches,
+      addTransaction,
+      updateLastTransactionTime,
       success,
       error,
-      currentShift,
-      addTransaction,
     ]
   );
 

@@ -39,6 +39,7 @@ import { settingsService } from './settings/settingsService';
 import { supplierService } from './suppliers';
 import { syncQueueService } from './syncQueueService';
 import { syncEngine, type SyncStatus } from './sync/syncEngine';
+import { useComputedInventory } from '../hooks/useComputedInventory';
 
 export interface DataState {
   inventory: Drug[];
@@ -134,7 +135,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeBranchId, setActiveBranchId] = useState<string>('');
-  const [inventory, setInventoryState] = useState<Drug[]>([]);
+  const [rawInventory, setRawInventory] = useState<Drug[]>([]);
   const [sales, setSalesState] = useState<Sale[]>([]);
   const [suppliers, setSuppliersState] = useState<Supplier[]>([]);
   const [purchases, setPurchasesState] = useState<Purchase[]>([]);
@@ -144,6 +145,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   const [employees, setEmployeesState] = useState<Employee[]>([]);
   const [batches, setBatchesState] = useState<StockBatch[]>([]);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+
+  // Compute inventory from raw data and batches
+  const inventory = useComputedInventory(rawInventory, batches);
 
   // Load initial data
   // Load initial data
@@ -215,7 +219,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
           inv.push(...seededInventory);
         }
 
-        setInventoryState(inv);
+        setRawInventory(inv);
         setSalesState(sal);
         setSuppliersState(
           sup.length > 0 ? sup : initialSuppliers.length > 0 ? initialSuppliers : []
@@ -320,7 +324,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
   // Actions
   const setInventory = useCallback(
-    (data: Drug[] | ((prev: Drug[]) => Drug[])) => setInventoryState(data),
+    (data: Drug[] | ((prev: Drug[]) => Drug[])) => setRawInventory(data),
     []
   );
   const setSales = useCallback(
@@ -365,21 +369,21 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   const addProduct = useCallback(async (product: Omit<Drug, 'id'>) => {
     const newProduct = await inventoryService.create({ ...product, branchId: activeBranchId });
     await syncQueueService.enqueue('SALE', { action: 'CREATE_DRUG', drug: newProduct });
-    setInventoryState((prev) => [...prev, newProduct]);
+    setRawInventory((prev) => [...prev, newProduct]);
     return newProduct;
   }, [activeBranchId]);
 
   const updateProduct = useCallback(async (id: string, updates: Partial<Drug>) => {
     const updated = await inventoryService.update(id, updates);
     await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'UPDATE_DRUG', id, updates });
-    setInventoryState((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    setRawInventory((prev) => prev.map((p) => (p.id === id ? updated : p)));
     return updated;
   }, []);
 
   const updateStock = useCallback(async (id: string, quantity: number) => {
     await inventoryService.updateStock(id, quantity);
     await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'UPDATE_STOCK', id, quantity });
-    setInventoryState((prev) =>
+    setRawInventory((prev) =>
       prev.map((p) => (p.id === id ? { ...p, stock: p.stock + quantity } : p))
     );
   }, []);
@@ -479,7 +483,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         customerService.getAll(targetBranchId),
         employeeService.getAll(targetBranchId),
       ]);
-      setInventoryState(inv);
+      setRawInventory(inv);
       setSalesState(sal);
       setSuppliersState(sup);
       setPurchasesState(pur);
