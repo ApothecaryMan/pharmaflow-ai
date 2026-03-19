@@ -4,11 +4,12 @@
  */
 
 const DB_NAME = 'pharmaflow_db';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 export const STORES = {
   DRUGS: 'drugs',
   SYNC_QUEUE: 'sync_queue',
+  SYNC_DLQ: 'sync_dlq',
   EMPLOYEES: 'employees',
 } as const;
 
@@ -53,6 +54,14 @@ export const openDB = (): Promise<IDBDatabase> => {
         database.createObjectStore(STORES.SYNC_QUEUE, { 
           keyPath: 'id', 
           autoIncrement: true 
+        });
+      }
+
+      // Sync DLQ (Dead Letter Queue) store
+      if (!database.objectStoreNames.contains(STORES.SYNC_DLQ)) {
+        database.createObjectStore(STORES.SYNC_DLQ, { 
+          keyPath: 'id', 
+          autoIncrement: false // Preserve original Queue ID structure
         });
       }
 

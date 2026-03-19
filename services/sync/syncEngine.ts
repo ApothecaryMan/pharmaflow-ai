@@ -111,15 +111,35 @@ class SyncEngine {
 
         // Success: Clear from queue
         await syncQueueService.clear(action.id);
-      } catch (err) {
+      } catch (err: any) {
         console.error(`📡 Sync Engine: Failed to push action ${action.id}`, err);
         if (action.id) {
-          await syncQueueService.updateStatus(action.id, 'failed');
+          const errorMessage = err?.message || 'Unknown network error';
+          await syncQueueService.updateStatus(action.id, 'failed', errorMessage);
+          
+          // Determine if error is permanent (4xx) or transient (5xx, network)
+          const isPermanentError = err?.status >= 400 && err?.status < 500;
+          
+          if (isPermanentError) {
+            console.log(`📡 Sync Engine: Permanent error detected for action ${action.id}. Skipping to next action.`);
+            // Continue processing the rest of the queue
+            continue;
+          } else {
+            console.log(`📡 Sync Engine: Transient error detected for action ${action.id}. Stopping queue to maintain order.`);
+            // Stop processing on transient/network failure
+            throw err;
+          }
         }
-        // Stop processing the queue on first failure to maintain order
-        throw err;
       }
     }
+  }
+
+  /**
+   * Get the current count of items in the Dead Letter Queue
+   */
+  public async getDLQCount(): Promise<number> {
+    const dlqActions = await syncQueueService.getDLQActions();
+    return dlqActions.length;
   }
 
   /**

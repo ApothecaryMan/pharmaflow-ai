@@ -11,6 +11,7 @@ import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 import { syncQueueService } from '../syncQueueService';
+import { StockVersionConflictError } from '../../utils/errors';
 
 // --- Storage Access ---
 const getAllBatchesRaw = (): StockBatch[] => {
@@ -62,6 +63,7 @@ export const createBatch = async (
     ...batch,
     id: idGenerator.generate('batch', effectiveBranchId),
     branchId: effectiveBranchId,
+    version: 1, // Start optimistic lock version at 1
   };
   all.push(newBatch);
   saveBatches(all);
@@ -89,6 +91,7 @@ export const updateBatchQuantity = async (
   if (index === -1) return null;
 
   all[index].quantity = Math.max(0, all[index].quantity + delta);
+  all[index].version = (all[index].version || 0) + 1; // Increment version
 
   saveBatches(all);
 
@@ -165,9 +168,15 @@ export const allocateStockBulk = async (
           expiryDate: batch.expiryDate,
         });
 
-        // Update the batch in allBatches reference
+        // Update the batch in allBatches reference with version check
         const rawBatch = allBatches.find((b) => b.id === batch.id);
-        if (rawBatch) rawBatch.quantity -= allocateFromThis;
+        if (rawBatch) {
+          if (rawBatch.version !== batch.version) {
+            throw new StockVersionConflictError(batch.id, req.drugId);
+          }
+          rawBatch.quantity -= allocateFromThis;
+          rawBatch.version = (rawBatch.version || 0) + 1;
+        }
 
         remaining -= allocateFromThis;
       }
@@ -231,14 +240,20 @@ export const allocateStock = async (
   }
 
   // Commit changes if requested
-  if (commitChanges && allocations.length > 0) {
-    const all = getAllBatchesRaw();
-    for (const alloc of allocations) {
-      const batch = all.find((b) => b.id === alloc.batchId);
-      if (batch) {
-        batch.quantity -= alloc.quantity;
+    if (commitChanges && allocations.length > 0) {
+      const all = getAllBatchesRaw();
+      for (const alloc of allocations) {
+        const batch = all.find((b) => b.id === alloc.batchId);
+        if (batch) {
+          // Verify version inside the commit phase to catch race conditions
+          const originalBatch = batches.find((b) => b.id === alloc.batchId);
+          if (originalBatch && batch.version !== originalBatch.version) {
+             throw new StockVersionConflictError(batch.id, drugId);
+          }
+          batch.quantity -= alloc.quantity;
+          batch.version = (batch.version || 0) + 1;
+        }
       }
-    }
     // Note: We preserve empty batches to allow returns to find their original batches.
     saveBatches(all);
 
@@ -296,6 +311,7 @@ export const returnStock = async (
         costPrice: 0, // Unknown at this point, but better than losing stock
         dateReceived: new Date().toISOString(),
         batchNumber: 'RECREATED',
+        version: 1,
       };
       all.push(newBatch);
       console.log(`[BatchService] Recreated missing batch for drug ${drugId} during return.`);
@@ -394,6 +410,7 @@ export const migrateInventoryToBatches = (inventory: Drug[]): number => {
       purchaseId: 'MIGRATION',
       dateReceived: new Date().toISOString(),
       batchNumber: 'MIGRATED',
+      version: 1,
     });
 
     migratedCount++;

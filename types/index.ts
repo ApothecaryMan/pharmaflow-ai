@@ -188,6 +188,8 @@ export interface StockBatch {
   dateReceived: string;
   /** Manufacturer's batch number for tracking */
   batchNumber?: string;
+  /** Optimistic lock version to catch concurrent modifications */
+  version?: number;
 }
 
 /**

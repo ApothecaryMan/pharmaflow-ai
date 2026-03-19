@@ -27,7 +27,10 @@ export interface SyncAction {
   timestamp: string;
   status: 'pending' | 'syncing' | 'failed';
   retryCount: number;
+  lastError?: string;
 }
+
+export const DLQ_MAX_RETRIES = 3;
 
 export const syncQueueService = {
   /**
@@ -102,6 +105,16 @@ export const syncQueueService = {
           action.status = status;
           if (status === 'failed') {
             action.retryCount += 1;
+            if (error) {
+              action.lastError = error;
+            }
+          }
+
+          // Important: Don't put it back in queue if we're moving it to DLQ
+          if (status === 'failed' && action.retryCount >= DLQ_MAX_RETRIES) {
+            resolve(); // Resolve this update, the DLQ move will happen asynchronously next
+            syncQueueService.moveToDLQ(id).catch(console.error);
+            return;
           }
 
           const updateRequest = store.put(action);
@@ -109,6 +122,101 @@ export const syncQueueService = {
           updateRequest.onerror = () => reject(updateRequest.error);
         };
         getRequest.onerror = () => reject(getRequest.error);
+      });
+    });
+  },
+
+  /**
+   * Move a failed action to the Dead Letter Queue (DLQ)
+   */
+  async moveToDLQ(id: number): Promise<void> {
+    return runTransaction([STORES.SYNC_QUEUE, STORES.SYNC_DLQ], 'readwrite', (transaction) => {
+      const queueStore = transaction.objectStore(STORES.SYNC_QUEUE);
+      const dlqStore = transaction.objectStore(STORES.SYNC_DLQ);
+      
+      const getRequest = queueStore.get(id);
+
+      return new Promise<void>((resolve, reject) => {
+        getRequest.onsuccess = () => {
+          const action = getRequest.result as SyncAction;
+          if (!action) {
+            reject(new Error('Action not found in queue to move to DLQ'));
+            return;
+          }
+
+          const addRequest = dlqStore.add(action);
+          addRequest.onsuccess = () => {
+            const deleteRequest = queueStore.delete(id);
+            deleteRequest.onsuccess = () => resolve();
+            deleteRequest.onerror = () => reject(deleteRequest.error);
+          };
+          addRequest.onerror = () => reject(addRequest.error);
+        };
+        getRequest.onerror = () => reject(getRequest.error);
+      });
+    });
+  },
+
+  /**
+   * Load all actions from the DLQ
+   */
+  async getDLQActions(): Promise<SyncAction[]> {
+    return runTransaction(STORES.SYNC_DLQ, 'readonly', (transaction) => {
+      const store = transaction.objectStore(STORES.SYNC_DLQ);
+      const request = store.getAll();
+
+      return new Promise<SyncAction[]>((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    });
+  },
+
+  /**
+   * Move an action from DLQ back to the active queue to retry
+   */
+  async retryDLQAction(id: number): Promise<void> {
+    return runTransaction([STORES.SYNC_QUEUE, STORES.SYNC_DLQ], 'readwrite', (transaction) => {
+      const queueStore = transaction.objectStore(STORES.SYNC_QUEUE);
+      const dlqStore = transaction.objectStore(STORES.SYNC_DLQ);
+      
+      const getRequest = dlqStore.get(id);
+
+      return new Promise<void>((resolve, reject) => {
+        getRequest.onsuccess = () => {
+          const action = getRequest.result as SyncAction;
+          if (!action) {
+            reject(new Error('Action not found in DLQ'));
+            return;
+          }
+
+          action.status = 'pending';
+          action.retryCount = 0; // Reset retries
+
+          const addRequest = queueStore.add(action);
+          addRequest.onsuccess = () => {
+            const deleteRequest = dlqStore.delete(id);
+            deleteRequest.onsuccess = () => resolve();
+            deleteRequest.onerror = () => reject(deleteRequest.error);
+          };
+          addRequest.onerror = () => reject(addRequest.error);
+        };
+        getRequest.onerror = () => reject(getRequest.error);
+      });
+    });
+  },
+
+  /**
+   * Permanently delete an action from the DLQ
+   */
+  async clearDLQAction(id: number): Promise<void> {
+    return runTransaction(STORES.SYNC_DLQ, 'readwrite', (transaction) => {
+      const store = transaction.objectStore(STORES.SYNC_DLQ);
+      const request = store.delete(id);
+
+      return new Promise<void>((resolve, reject) => {
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
       });
     });
   }
