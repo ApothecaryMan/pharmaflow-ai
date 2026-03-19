@@ -179,8 +179,17 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         const activeBranch = branchService.getActive();
         const session = await authService.getCurrentUser();
         
-        // Priority: session.branchId > saved active branch > default branch
-        const finalBranchId = session?.branchId || activeBranch?.id || 'branch_main';
+        // Dynamic Resolution: Priority: session.branchId > saved active branch > first branch
+        let finalBranchId = session?.branchId || activeBranch?.id || (allBranches.length > 0 ? allBranches[0].id : 'B1');
+
+        // Self-Healing: If finalBranchId points to a non-existent branch (bug/legacy), snap to the first actual branch
+        if (allBranches.length > 0 && !allBranches.some(b => b.id === finalBranchId)) {
+          console.warn(`Invalid branch ID ${finalBranchId} in session. Snapping to first available branch: ${allBranches[0].id}`);
+          finalBranchId = allBranches[0].id;
+          // Sync back to storage if possible
+          branchService.setActive(finalBranchId);
+        }
+
         setActiveBranchId(finalBranchId);
 
         // Sync settingsService with the active branch so idGenerator (which reads storage directly) is in sync

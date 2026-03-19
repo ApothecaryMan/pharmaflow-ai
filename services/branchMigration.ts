@@ -9,7 +9,13 @@ import { StorageKeys } from '../config/storageKeys';
 import { storage } from '../utils/storage';
 import { getAllShardKeys } from '../utils/sharding';
 
-const DEFAULT_BRANCH_ID = 'branch_main';
+const getLegacyDefaultBranchId = (): string => {
+  const { branchService } =  require('./branchService'); 
+  const branches = branchService.getAll();
+  return branches.length > 0 ? branches[0].id : 'branch_main';
+};
+
+const DEFAULT_BRANCH_ID = 'branch_main'; // Keep as key, but logic will use first available branch
 
 export const branchMigration = {
   /**
@@ -18,38 +24,41 @@ export const branchMigration = {
   async runAll(): Promise<void> {
     console.log('Starting branch migration...');
     
-    this.migrateInventory();
-    this.migrateSales();
-    this.migrateCustomers();
-    this.migrateEmployees();
-    this.migrateSuppliers();
-    this.migratePurchases();
-    this.migrateReturns();
-    this.migrateBatches();
+    const branches = storage.get<any[]>(StorageKeys.BRANCHES, []);
+    const targetBranchId = branches.length > 0 ? branches[0].id : DEFAULT_BRANCH_ID;
+
+    this.migrateInventory(targetBranchId);
+    this.migrateSales(targetBranchId);
+    this.migrateCustomers(targetBranchId);
+    this.migrateEmployees(targetBranchId);
+    this.migrateSuppliers(targetBranchId);
+    this.migratePurchases(targetBranchId);
+    this.migrateReturns(targetBranchId);
+    this.migrateBatches(targetBranchId);
     
-    console.log('Branch migration completed.');
+    console.log(`Branch migration completed using target ID: ${targetBranchId}`);
   },
 
-  migrateInventory(): void {
+  migrateInventory(targetId: string): void {
     const items = storage.get<any[]>(StorageKeys.INVENTORY, []);
     let modified = false;
     items.forEach(item => {
-      if (!item.branchId) {
-        item.branchId = DEFAULT_BRANCH_ID;
+      if (!item.branchId || item.branchId === 'branch_main') {
+        item.branchId = targetId;
         modified = true;
       }
     });
     if (modified) storage.set(StorageKeys.INVENTORY, items);
   },
 
-  migrateSales(): void {
+  migrateSales(targetId: string): void {
     const keys = getAllShardKeys(StorageKeys.SALES);
     keys.forEach(key => {
       const sales = storage.get<any[]>(key, []);
       let modified = false;
       sales.forEach(sale => {
-        if (!sale.branchId) {
-          sale.branchId = DEFAULT_BRANCH_ID;
+        if (!sale.branchId || sale.branchId === 'branch_main') {
+          sale.branchId = targetId;
           modified = true;
         }
       });
@@ -57,61 +66,61 @@ export const branchMigration = {
     });
   },
 
-  migrateCustomers(): void {
+  migrateCustomers(targetId: string): void {
     const items = storage.get<any[]>(StorageKeys.CUSTOMERS, []);
     let modified = false;
     items.forEach(item => {
-      if (!item.branchId) {
-        item.branchId = DEFAULT_BRANCH_ID;
+      if (!item.branchId || item.branchId === 'branch_main') {
+        item.branchId = targetId;
         modified = true;
       }
     });
     if (modified) storage.set(StorageKeys.CUSTOMERS, items);
   },
 
-  migrateEmployees(): void {
+  migrateEmployees(targetId: string): void {
     const items = storage.get<any[]>(StorageKeys.EMPLOYEES, []);
     let modified = false;
     items.forEach(item => {
-      if (!item.branchId) {
-        item.branchId = DEFAULT_BRANCH_ID;
+      if (!item.branchId || item.branchId === 'branch_main') {
+        item.branchId = targetId;
         modified = true;
       }
     });
     if (modified) storage.set(StorageKeys.EMPLOYEES, items);
   },
 
-  migrateSuppliers(): void {
+  migrateSuppliers(targetId: string): void {
     const items = storage.get<any[]>(StorageKeys.SUPPLIERS, []);
     let modified = false;
     items.forEach(item => {
-      if (!item.branchId) {
-        item.branchId = DEFAULT_BRANCH_ID;
+      if (!item.branchId || item.branchId === 'branch_main') {
+        item.branchId = targetId;
         modified = true;
       }
     });
     if (modified) storage.set(StorageKeys.SUPPLIERS, items);
   },
 
-  migratePurchases(): void {
+  migratePurchases(targetId: string): void {
     const items = storage.get<any[]>(StorageKeys.PURCHASES, []);
     let modified = false;
     items.forEach(item => {
-      if (!item.branchId) {
-        item.branchId = DEFAULT_BRANCH_ID;
+      if (!item.branchId || item.branchId === 'branch_main') {
+        item.branchId = targetId;
         modified = true;
       }
     });
     if (modified) storage.set(StorageKeys.PURCHASES, items);
   },
 
-  migrateReturns(): void {
+  migrateReturns(targetId: string): void {
     // Sales Returns
     const sRet = storage.get<any[]>(StorageKeys.RETURNS, []);
     let sModified = false;
     sRet.forEach(r => {
-      if (!r.branchId) {
-        r.branchId = DEFAULT_BRANCH_ID;
+      if (!r.branchId || r.branchId === 'branch_main') {
+        r.branchId = targetId;
         sModified = true;
       }
     });
@@ -121,20 +130,20 @@ export const branchMigration = {
     const pRet = storage.get<any[]>(StorageKeys.PURCHASE_RETURNS, []);
     let pModified = false;
     pRet.forEach(r => {
-      if (!r.branchId) {
-        r.branchId = DEFAULT_BRANCH_ID;
+      if (!r.branchId || r.branchId === 'branch_main') {
+        r.branchId = targetId;
         pModified = true;
       }
     });
     if (pModified) storage.set(StorageKeys.PURCHASE_RETURNS, pRet);
   },
 
-  migrateBatches(): void {
+  migrateBatches(targetId: string): void {
     const items = storage.get<any[]>(StorageKeys.STOCK_BATCHES, []);
     let modified = false;
     items.forEach(item => {
-      if (!item.branchId) {
-        item.branchId = DEFAULT_BRANCH_ID;
+      if (!item.branchId || item.branchId === 'branch_main') {
+        item.branchId = targetId;
         modified = true;
       }
     });

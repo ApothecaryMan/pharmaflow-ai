@@ -20,7 +20,9 @@ interface EmployeeSetupScreenProps {
 export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ language, color, onBack }) => {
   const { theme } = useSettings();
   // Read active branch synchronously — this screen renders outside DataProvider
-  const activeBranchId = branchService.getActive()?.id || 'branch_main';
+  // Read active branch synchronously — this screen renders outside DataProvider
+  const activeBranch = branchService.getActive() || branchService.getAll()[0];
+  const activeBranchId = activeBranch?.id || 'B1';
   
   const activeColor = theme.hex || color;
 
@@ -62,7 +64,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
       
       const newEmployee: any = {
         id: '', // Service will handle ID generation
-        branchId: activeBranchId || 'branch_main',
+        branchId: activeBranchId,
         employeeCode: '', // Service will handle code generation
         name: name.trim(),
         username: username.trim(),

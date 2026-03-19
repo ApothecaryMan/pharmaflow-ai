@@ -100,12 +100,17 @@ const ensureSuperAdmin = async (): Promise<void> => {
       const { hashPassword } = await import('./hashUtils');
       const passwordHash = await hashPassword(superPass);
 
-      // Use branchService to get the active branch, fallback to 'branch_main'
-      let activeBranchId = 'branch_main';
+      // Use branchService to get the active branch dynamic fallback
+      let activeBranchId = 'B1'; // Minimum fallback
       try {
         const { branchService } = await import('../branchService');
         const activeBranch = branchService.getActive();
-        if (activeBranch) activeBranchId = activeBranch.id;
+        if (activeBranch) {
+          activeBranchId = activeBranch.id;
+        } else {
+          const firstBranch = branchService.getAll()[0];
+          if (firstBranch) activeBranchId = firstBranch.id;
+        }
       } catch { /* ignore - use fallback */ }
 
       await employeeCacheService.upsert({
@@ -205,10 +210,14 @@ export const authService = {
     }
 
     if (employee) {
+      const { branchService } = await import('../branchService');
+      const activeBranch = branchService.getActive();
+      const firstBranch = branchService.getAll()[0];
+
       const session: UserSession = {
         username: employee.username || employee.name,
         employeeId: employee.id,
-        branchId: employee.branchId || 'branch_main',
+        branchId: employee.branchId || activeBranch?.id || firstBranch?.id || 'B1',
         role: employee.role,
         department: employee.department,
       };
@@ -326,9 +335,13 @@ export const authService = {
     const employee = employees.find((emp) => emp.biometricCredentialId === credentialId);
     if (!employee) return null;
 
+    const { branchService } = await import('../branchService');
+    const activeBranch = branchService.getActive();
+    const firstBranch = branchService.getAll()[0];
+
     const session: UserSession = {
       username: employee.username || employee.name,
-      branchId: employee.branchId || 'B1',
+      branchId: employee.branchId || activeBranch?.id || firstBranch?.id || 'B1',
       role: employee.role,
       department: employee.department,
     };

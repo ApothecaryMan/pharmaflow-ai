@@ -27,13 +27,13 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
       setLoading(true);
       try {
         const appSettings = await settingsService.getAll();
-        const branchCode = appSettings.branchCode || 'B1';
+        const activeBranchId = appSettings.activeBranchId || 'B1';
         
         const allItems = await inventoryService.getAllBranches();
         // Filter for same drug (by barcode) in other branches
         const matches = allItems.filter(d => 
           d.barcode === viewingDrug.barcode && 
-          d.branchId !== branchCode &&
+          d.branchId !== activeBranchId &&
           d.branchId !== undefined
         );
         setOtherBranches(matches);

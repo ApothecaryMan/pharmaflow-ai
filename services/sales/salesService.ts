@@ -203,7 +203,8 @@ export const createSalesService = (): SalesService => ({
       shards[key].push(sale);
     });
 
-    const effectiveBranchId = branchId || (await settingsService.getAll()).branchCode;
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
 
     // 2. Process each relevant shard
     Object.entries(shards).forEach(([key, branchSales]) => {

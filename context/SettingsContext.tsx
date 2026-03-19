@@ -134,7 +134,7 @@ const defaultSettings: SettingsState = {
   showTickerCustomers: false,
   showTickerTopSeller: false,
   graphicStyle: false,
-  activeBranchId: 'branch_main',
+  activeBranchId: 'B1',
   branchCode: 'B1',
 };
 // Load settings from storage

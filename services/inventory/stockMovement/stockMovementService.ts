@@ -42,7 +42,7 @@ export const createStockMovementService = (): StockMovementService => ({
     // Ensure accurate timestamp and ID
     const newMovement: StockMovement = {
       ...movement,
-      id: idGenerator.generate('movement', movement.branchId || settings.branchCode),
+      id: idGenerator.generate('movement', movement.branchId || activeBranchId),
       branchId: movement.branchId || activeBranchId,
       timestamp: new Date().toISOString(),
     };

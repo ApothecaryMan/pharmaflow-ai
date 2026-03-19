@@ -72,8 +72,9 @@ export const createCashService = (): CashServiceInterface => ({
     const all = getRawAll();
     const settings = await settingsService.getAll();
 
+    const activeBranchId = settings.activeBranchId || settings.branchCode;
     const newShift: Shift = {
-      id: idGenerator.generate('shifts', settings.branchCode),
+      id: idGenerator.generate('shifts', activeBranchId),
       status: 'open',
       openTime: new Date().toISOString(),
       openedBy,
