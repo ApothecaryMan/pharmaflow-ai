@@ -6,6 +6,7 @@ import { inventoryService } from '../inventory/inventoryService';
 import { salesService } from '../sales/salesService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { auditService } from '../auditService';
+import { syncQueueService } from '../syncQueueService';
 import type { Sale, CartItem, Drug, StockMovement } from '../../types';
 
 export interface CheckoutResult {
@@ -53,7 +54,7 @@ export const transactionService = {
         };
       });
 
-      const bulkAllocations = batchService.allocateStockBulk(allocationRequests, activeBranchId);
+      const bulkAllocations = await batchService.allocateStockBulk(allocationRequests, activeBranchId, true);
       allocations.push(...bulkAllocations);
 
       // 2. Prepare Inventory Mutations & Movement Logs
@@ -112,10 +113,10 @@ export const transactionService = {
       // 4. Persistence Phase
       try {
         // A. Update Stock in IndexedDB
-        await inventoryService.updateStockBulk(stockMutations);
+        await inventoryService.updateStockBulk(stockMutations, true);
 
         // B. Log Movements in LocalStorage
-        stockMovementService.logMovementsBulk(movementEntries);
+        await stockMovementService.logMovementsBulk(movementEntries, true);
 
         // C. Create Sale in LocalStorage
         const createdSale = await salesService.create(newSale, activeBranchId);
@@ -127,15 +128,22 @@ export const transactionService = {
           branchId: activeBranchId,
         });
 
+        // ENQUEUE ATOMIC SYNC ACTION
+        await syncQueueService.enqueue('SALE_TRANSACTION', {
+          sale: createdSale,
+          movements: movementEntries,
+          batchAllocations: allocations,
+        });
+
         return { success: true, sale: createdSale };
       } catch (persistenceError) {
         // --- CRITICAL ROLLBACK ---
         console.error('[TransactionService] Persistence failed, rolling back batch allocations...', persistenceError);
         
         // 1. Return Batches (LocalStorage)
-        bulkAllocations.forEach(alloc => {
-          batchService.returnStock(alloc.allocations, alloc.drugId);
-        });
+        for (const alloc of bulkAllocations) {
+          await batchService.returnStock(alloc.allocations, alloc.drugId, true);
+        }
 
         // 2. We don't need to "rollback" IndexedDB if updateStockBulk failed halfway,
         // because we can't easily tell which succeeded. 
@@ -200,20 +208,27 @@ export const transactionService = {
 
         // 2. Return to Batches (LocalStorage - Immediate)
         if (saleItem?.batchAllocations) {
-          batchService.returnStock(saleItem.batchAllocations, returnedItem.drugId);
+          await batchService.returnStock(saleItem.batchAllocations, returnedItem.drugId, true);
         }
       }
 
       // 3. Update Inventory in IndexedDB
-      await inventoryService.updateStockBulk(stockMutations);
+      await inventoryService.updateStockBulk(stockMutations, true);
 
       // 4. Log Movements in LocalStorage
-      stockMovementService.logMovementsBulk(movementEntries);
+      await stockMovementService.logMovementsBulk(movementEntries, true);
 
       auditService.log('sale.return', {
         userId: currentEmployeeId,
         details: `Processed Return for Sale #${sale.serialId} - Refund: ${returnData.totalRefund}`,
         entityId: returnData.id,
+      });
+
+      // ENQUEUE ATOMIC SYNC ACTION
+      await syncQueueService.enqueue('RETURN_TRANSACTION', {
+        return: returnData,
+        movements: movementEntries,
+        saleId: sale.id,
       });
 
       return { success: true };

@@ -8,7 +8,12 @@ import { idGenerator } from '../../utils/idGenerator';
 
 import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
+import { inventoryService } from '../inventory/inventoryService';
+import { batchService } from '../inventory/batchService';
+import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
+import { syncQueueService } from '../syncQueueService';
 import type { PurchaseFilters, PurchaseService, PurchaseStats } from './types';
+import type { StockMovement, StockBatch } from '../../types';
 
 const getRawAll = (): Purchase[] => {
   return storage.get<Purchase[]>(StorageKeys.PURCHASES, []);
@@ -62,9 +67,8 @@ export const createPurchaseService = (): PurchaseService => ({
     return results;
   },
 
-  create: async (purchase: Omit<Purchase, 'id'>, branchId?: string): Promise<Purchase> => {
+  create: async (purchase: Omit<Purchase, 'id'>, branchId?: string, skipSync = false): Promise<Purchase> => {
     const all = getRawAll();
-    // Priority: explicit param > entity's own branchId > settingsService fallback
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || (purchase as any).branchId || settings.activeBranchId || settings.branchCode;
     const newPurchase: Purchase = {
@@ -73,65 +77,135 @@ export const createPurchaseService = (): PurchaseService => ({
       status: 'pending',
       branchId: effectiveBranchId,
     } as Purchase;
+
     all.push(newPurchase);
     storage.set(StorageKeys.PURCHASES, all);
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('PURCHASE', { action: 'CREATE_PURCHASE', purchase: newPurchase });
+    }
+
     return newPurchase;
   },
 
-  update: async (id: string, updates: Partial<Purchase>): Promise<Purchase> => {
+  update: async (id: string, updates: Partial<Purchase>, skipSync = false): Promise<Purchase> => {
     const all = getRawAll();
     const index = all.findIndex((p) => p.id === id);
     if (index === -1) throw new Error('Purchase not found');
     all[index] = { ...all[index], ...updates };
     storage.set(StorageKeys.PURCHASES, all);
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('PURCHASE', { action: 'UPDATE_PURCHASE', id, updates });
+    }
+
     return all[index];
   },
 
-  approve: async (id: string, approverName: string): Promise<Purchase> => {
+  approve: async (id: string, approverName: string, skipSync = false): Promise<Purchase> => {
     const all = getRawAll();
     const index = all.findIndex((p) => p.id === id);
     if (index === -1) throw new Error('Purchase not found');
+    
+    const purchase = all[index];
+    if (purchase.status === 'completed') return purchase;
+
+    // 1. Update Inventory and Create Batches
+    const movements: StockMovement[] = [];
+    const newBatches: StockBatch[] = [];
+
+    for (const item of purchase.items) {
+      const currentStock = await batchService.getTotalStock(item.drugId);
+
+      const batch = await batchService.createBatch({
+        drugId: item.drugId,
+        quantity: item.quantity,
+        expiryDate: item.expiryDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        costPrice: item.costPrice,
+        purchaseId: purchase.id,
+        dateReceived: new Date().toISOString(),
+      }, undefined, true);
+      newBatches.push(batch);
+
+      const movement = await stockMovementService.logMovement({
+        drugId: item.drugId,
+        drugName: item.name,
+        branchId: purchase.branchId || '',
+        type: 'purchase',
+        quantity: item.quantity,
+        previousStock: currentStock,
+        newStock: currentStock + item.quantity,
+        referenceId: purchase.id,
+        batchId: batch.id,
+        performedBy: approverName,
+        status: 'approved',
+      }, true);
+      movements.push(movement);
+    }
+
+    await inventoryService.updateStockBulk(
+      purchase.items.map(i => ({ id: i.drugId, quantity: i.quantity })),
+      true
+    );
+
+    // 2. Update Purchase Status
     all[index] = {
-      ...all[index],
+      ...purchase,
       status: 'completed',
       approvedBy: approverName,
       approvalDate: new Date().toISOString(),
     };
     storage.set(StorageKeys.PURCHASES, all);
+
+    // 3. Sync Atomic Transaction
+    if (!skipSync) {
+      await syncQueueService.enqueue('PURCHASE_TRANSACTION', {
+        action: 'APPROVE_PURCHASE',
+        purchase: all[index],
+        movements,
+        batches: newBatches,
+      });
+    }
+
     return all[index];
   },
 
-  reject: async (id: string, reason: string): Promise<Purchase> => {
+  reject: async (id: string, reason: string, skipSync = false): Promise<Purchase> => {
     const all = getRawAll();
     const index = all.findIndex((p) => p.id === id);
     if (index === -1) throw new Error('Purchase not found');
     all[index] = {
       ...all[index],
       status: 'rejected',
-      // Note: reason stored in service layer only, not in Purchase type
     };
     storage.set(StorageKeys.PURCHASES, all);
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('PURCHASE', { action: 'UPDATE_PURCHASE', id, updates: { status: 'rejected' } });
+    }
+
     return all[index];
   },
 
-  receive: async (id: string): Promise<Purchase> => {
-    const all = getRawAll();
-    const index = all.findIndex((p) => p.id === id);
-    if (index === -1) throw new Error('Purchase not found');
-    all[index] = {
-      ...all[index],
-      status: 'completed',
-      // Note: receivedAt stored in service layer only, not in Purchase type
-    };
-    storage.set(StorageKeys.PURCHASES, all);
-    return all[index];
+  receive: async (id: string, skipSync = false): Promise<Purchase> => {
+    // Attempt to get current user/employee for the approval log
+    const currentEmployeeId = storage.get(StorageKeys.CURRENT_EMPLOYEE_ID, 'System');
+    return purchaseService.approve(id, currentEmployeeId, skipSync);
   },
 
-  delete: async (id: string): Promise<boolean> => {
+  delete: async (id: string, skipSync = false): Promise<boolean> => {
     const all = getRawAll();
+    const initialLength = all.length;
     const filtered = all.filter((p) => p.id !== id);
-    storage.set(StorageKeys.PURCHASES, filtered);
-    return true;
+    
+    if (filtered.length !== initialLength) {
+      storage.set(StorageKeys.PURCHASES, filtered);
+      if (!skipSync) {
+        await syncQueueService.enqueue('PURCHASE', { action: 'DELETE_PURCHASE', id });
+      }
+      return true;
+    }
+    return false;
   },
 
   getStats: async (branchId?: string): Promise<PurchaseStats> => {

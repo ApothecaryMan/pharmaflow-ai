@@ -142,12 +142,34 @@ class SyncEngine {
         
         console.log(`📡 Sync Engine: Received ${updates.length} updates`);
 
-        // Apply updates locally (Example: Inventory updates)
+        // Apply updates locally
         for (const update of updates) {
-          if (update.type === 'DRUG') {
-            await drugCacheService.upsert(update.data);
+          switch (update.type) {
+            case 'DRUG':
+              await drugCacheService.upsert(update.data);
+              break;
+            case 'STOCK_BATCH':
+              // Update local batches from server
+              const allBatches = storage.get<any[]>('pharma_stock_batches', []);
+              const updatedBatch = update.data;
+              const index = allBatches.findIndex(b => b.id === updatedBatch.id);
+              if (index !== -1) {
+                allBatches[index] = updatedBatch;
+              } else {
+                allBatches.push(updatedBatch);
+              }
+              storage.set('pharma_stock_batches', allBatches);
+              break;
+            case 'STOCK_MOVEMENT':
+              // Update local movements from server
+              const allMovements = storage.get<any[]>('pharma_stock_movements', []);
+              const newMovement = update.data;
+              if (!allMovements.find(m => m.id === newMovement.id)) {
+                allMovements.push(newMovement);
+                storage.set('pharma_stock_movements', allMovements);
+              }
+              break;
           }
-          // Add more handlers for other entities here
         }
 
         // Update last sync timestamp

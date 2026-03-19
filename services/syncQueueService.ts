@@ -5,7 +5,20 @@
 
 import { STORES, runTransaction } from './db';
 
-export type SyncActionType = 'SALE' | 'RETURN' | 'PURCHASE' | 'STOCK_ADJUSTMENT';
+export type SyncActionType = 
+  | 'SALE' 
+  | 'RETURN' 
+  | 'PURCHASE' 
+  | 'STOCK_ADJUSTMENT'
+  | 'SALE_TRANSACTION'
+  | 'RETURN_TRANSACTION'
+  | 'PURCHASE_TRANSACTION'
+  | 'PURCHASE_RETURN_TRANSACTION'
+  | 'DRUG'
+  | 'CUSTOMER'
+  | 'SUPPLIER'
+  | 'STOCK_BATCH_UPDATE'
+  | 'STOCK_MOVEMENT_LOG';
 
 export interface SyncAction {
   id?: number;

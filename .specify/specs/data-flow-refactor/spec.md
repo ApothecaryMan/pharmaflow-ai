@@ -17,15 +17,36 @@ As an Inventory Manager, I want to see a single source of truth for stock levels
 **Why this priority**: Avoids procurement errors caused by incorrect stock displays.
 **Independent Test**: Verify that editing a batch immediately updates the displayed drug stock without a page reload.
 
+### Verification Results
+
+The refactor has been verified across the following modules:
+
+1.  **Point of Sale (POS)**:
+    -   Verified that the product grid and search results use the `inventory` prop provided by `DataContext`.
+    -   Confirmed that stock levels are dynamically updated after every transaction via the `transactionService`.
+
+2.  **Inventory Management**:
+    -   Verified that the main inventory table correctly sums batch quantities.
+    -   Confirmed that "Out of Stock" statuses are accurately derived from computed levels.
+
+3.  **Expiry Management**:
+    -   Verified that individual batch deductions (Damage/Return) correctly trigger a re-computation of the parent drug's stock.
+
+4.  **Returns Module**:
+    -   Verified that processing a return via `transactionService` restoring stock to batches immediately reflects in the global inventory state.
+
+### Conclusion
+The "Computed Inventory" model is successfully integrated. `drug.stock` is no longer a static, potentially out-of-sync field, but a real-time projection of the `StockBatch` table.
+
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: Implementation of a **Transaction Coordinator** for Sales.
-- **FR-002**: `Drug.stock` MUST be a virtual/computed field derived from `StockBatch` sum.
-- **FR-003**: The system MUST follow a **Persistence-First** pattern (Write to Storage -> Confirm -> Update React State).
-- **FR-004**: Implementation of an **Audit Trace** for all stock movements (StockMovement entity).
-- **FR-005**: All cross-entity updates (e.g., Sale + Stock) MUST be wrapped in an error-handling block that performs manual rollback if persistence fails.
+-   **FR-001**: Implementation of a **Transaction Coordinator** for Sales.
+-   **FR-002**: `Drug.stock` MUST be a virtual/computed field derived from `StockBatch` sum.
+-   **FR-003**: The system MUST follow a **Persistence-First** pattern (Write to Storage -> Confirm -> Update React State).
+-   **FR-004**: Implementation of an **Audit Trace** for all stock movements (StockMovement entity).
+-   **FR-005**: All cross-entity updates (e.g., Sale + Stock) MUST be wrapped in an error-handling block that performs manual rollback if persistence fails.
 
 ### Edge Cases
 

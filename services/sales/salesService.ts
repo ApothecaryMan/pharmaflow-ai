@@ -8,6 +8,7 @@ import { idGenerator } from '../../utils/idGenerator';
 import { getAllShardKeys, getPreviousShardKeys, getShardKey } from '../../utils/sharding';
 import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
+import { syncQueueService } from '../syncQueueService';
 import type { SalesFilters, SalesService, SalesStats } from './types';
 
 const getShardForDate = (date: string | Date): Sale[] => {
@@ -75,7 +76,7 @@ export const createSalesService = (): SalesService => ({
     return all.filter((s) => s.date.startsWith(today));
   },
 
-  create: async (sale: Omit<Sale, 'id'>, branchId?: string): Promise<Sale> => {
+  create: async (sale: Omit<Sale, 'id'>, branchId?: string, skipSync = false): Promise<Sale> => {
     // Priority: explicit param > entity's own branchId > settingsService fallback
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || (sale as any).branchId || settings.activeBranchId || settings.branchCode;
@@ -92,23 +93,20 @@ export const createSalesService = (): SalesService => ({
     shard.push(newSale);
     storage.set(shardKey, shard);
 
+    if (!skipSync) {
+      await syncQueueService.enqueue('SALE', { action: 'CREATE_SALE', sale: newSale });
+    }
+
     return newSale;
   },
 
-  update: async (id: string, updates: Partial<Sale>): Promise<Sale> => {
+  update: async (id: string, updates: Partial<Sale>, skipSync = false): Promise<Sale> => {
     // We need to find the sale first to know its date (and thus its shard)
-    // NOTE: This assumes the sale is in the "Active Window" (Recent).
-    // If updating a very old sale, we might miss it if we only search active shards.
-    // Enhanced search: Try active first, if fail, we might need to scan index (future improvement)
-
     const all = loadActiveShards();
     const foundIndex = all.findIndex((s) => s.id === id);
     let shardKey = '';
 
     if (foundIndex === -1) {
-      // Fallback: If we have the date in updates, use it.
-      // If not, we can't efficiently find it without an index.
-      // For now, assume active window updates only (Standard POS usage).
       throw new Error('Sale not found in recent history');
     }
 
@@ -122,13 +120,18 @@ export const createSalesService = (): SalesService => ({
     if (shardIndex !== -1) {
       shard[shardIndex] = { ...shard[shardIndex], ...updates };
       storage.set(shardKey, shard);
+
+      if (!skipSync) {
+        await syncQueueService.enqueue('SALE', { action: 'UPDATE_SALE', id, updates });
+      }
+
       return shard[shardIndex];
     }
 
     throw new Error('Concurrency Error: Sale not found in shard');
   },
 
-  delete: async (id: string): Promise<boolean> => {
+  delete: async (id: string, skipSync = false): Promise<boolean> => {
     const all = loadActiveShards();
     const sale = all.find((s) => s.id === id);
     if (!sale) return false;
@@ -139,6 +142,11 @@ export const createSalesService = (): SalesService => ({
 
     if (filtered.length !== shard.length) {
       storage.set(shardKey, filtered);
+
+      if (!skipSync) {
+        await syncQueueService.enqueue('SALE', { action: 'DELETE_SALE', id });
+      }
+
       return true;
     }
     return false;

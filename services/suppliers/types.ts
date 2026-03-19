@@ -15,8 +15,8 @@ export interface SupplierService {
   getAll(branchId?: string): Promise<Supplier[]>;
   getById(id: string): Promise<Supplier | null>;
   search(query: string): Promise<Supplier[]>;
-  create(supplier: Omit<Supplier, 'id'>): Promise<Supplier>;
-  update(id: string, supplier: Partial<Supplier>): Promise<Supplier>;
-  delete(id: string): Promise<boolean>;
+  create(supplier: Omit<Supplier, 'id'>, branchId?: string, skipSync?: boolean): Promise<Supplier>;
+  update(id: string, supplier: Partial<Supplier>, skipSync?: boolean): Promise<Supplier>;
+  delete(id: string, skipSync?: boolean): Promise<boolean>;
   save(suppliers: Supplier[], branchId?: string): Promise<void>;
 }

@@ -10,12 +10,12 @@ export interface ReturnService {
   // Sales Returns
   getAllSalesReturns(branchId?: string): Promise<Return[]>;
   getSalesReturnById(id: string): Promise<Return | null>;
-  createSalesReturn(ret: Omit<Return, 'id'>): Promise<Return>;
+  createSalesReturn(ret: Omit<Return, 'id'>, branchId?: string, skipSync?: boolean): Promise<Return>;
 
   // Purchase Returns
   getAllPurchaseReturns(branchId?: string): Promise<PurchaseReturn[]>;
-  getPurchaseReturnById(id: string): Promise<PurchaseReturn | null>;
-  createPurchaseReturn(ret: Omit<PurchaseReturn, 'id'>): Promise<PurchaseReturn>;
+  getPurchaseReturnById(id: string, branchId?: string): Promise<PurchaseReturn | null>;
+  createPurchaseReturn(ret: Omit<PurchaseReturn, 'id'>, branchId?: string, skipSync?: boolean): Promise<PurchaseReturn>;
 
   // Save
   saveSalesReturns(returns: Return[], branchId?: string): Promise<void>;

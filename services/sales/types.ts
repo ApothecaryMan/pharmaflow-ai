@@ -29,9 +29,9 @@ export interface SalesService {
   getByCustomer(customerId: string, branchId?: string): Promise<Sale[]>;
   getByDateRange(from: string, to: string, branchId?: string): Promise<Sale[]>;
   getToday(branchId?: string): Promise<Sale[]>;
-  create(sale: Omit<Sale, 'id'>, branchId?: string): Promise<Sale>;
-  update(id: string, sale: Partial<Sale>): Promise<Sale>;
-  delete(id: string): Promise<boolean>;
+  create(sale: Omit<Sale, 'id'>, branchId?: string, skipSync?: boolean): Promise<Sale>;
+  update(id: string, sale: Partial<Sale>, skipSync?: boolean): Promise<Sale>;
+  delete(id: string, skipSync?: boolean): Promise<boolean>;
   getStats(branchId?: string): Promise<SalesStats>;
   filter(filters: SalesFilters, branchId?: string): Promise<Sale[]>;
   save(sales: Sale[], branchId?: string): Promise<void>;

@@ -10,6 +10,7 @@ import type { BatchAllocation, Drug, StockBatch } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
 import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
+import { syncQueueService } from '../syncQueueService';
 
 // --- Storage Access ---
 const getAllBatchesRaw = (): StockBatch[] => {
@@ -50,7 +51,11 @@ export const getBatchById = (batchId: string): StockBatch | null => {
 /**
  * Create a new batch (usually from a purchase)
  */
-export const createBatch = (batch: Omit<StockBatch, 'id'>, branchId?: string): StockBatch => {
+export const createBatch = async (
+  batch: Omit<StockBatch, 'id'>, 
+  branchId?: string,
+  skipSync = false
+): Promise<StockBatch> => {
   const all = getAllBatchesRaw();
   const effectiveBranchId = branchId || batch.branchId;
   const newBatch: StockBatch = {
@@ -60,6 +65,11 @@ export const createBatch = (batch: Omit<StockBatch, 'id'>, branchId?: string): S
   };
   all.push(newBatch);
   saveBatches(all);
+
+  if (!skipSync) {
+    await syncQueueService.enqueue('STOCK_BATCH_UPDATE', { action: 'CREATE', batch: newBatch });
+  }
+
   return newBatch;
 };
 
@@ -67,9 +77,12 @@ export const createBatch = (batch: Omit<StockBatch, 'id'>, branchId?: string): S
  * Update batch quantity (add or subtract)
  * Returns the updated batch or null if not found
  */
-export const updateBatchQuantity = (batchId: string, delta: number): StockBatch | null => {
+export const updateBatchQuantity = async (
+  batchId: string, 
+  delta: number,
+  skipSync = false
+): Promise<StockBatch | null> => {
   // Input validation - technically delta can be negative, but resulting stock cannot be < 0
-  // Handled by Math.max(0, ...) below, so delta check isn't strictly needed for safety here
   const all = getAllBatchesRaw();
   const index = all.findIndex((b) => b.id === batchId);
 
@@ -77,15 +90,12 @@ export const updateBatchQuantity = (batchId: string, delta: number): StockBatch 
 
   all[index].quantity = Math.max(0, all[index].quantity + delta);
 
-  // Note: We intentionally do NOT remove the batch when quantity is 0.
-  // This preserves the record for returns/audits and accurate FEFO tracking.
-  // if (all[index].quantity === 0) {
-  //   const removed = all.splice(index, 1)[0];
-  //   saveBatches(all);
-  //   return removed;
-  // }
-
   saveBatches(all);
+
+  if (!skipSync) {
+    await syncQueueService.enqueue('STOCK_BATCH_UPDATE', { action: 'UPDATE_QTY', id: batchId, delta });
+  }
+
   return all[index];
 };
 
@@ -115,10 +125,11 @@ export const updateBatch = (batchId: string, updates: Partial<StockBatch>): Stoc
  * Allocate stock for multiple items in a single storage transaction
  * Returns the allocations for all items. Throws error if any item fails.
  */
-export const allocateStockBulk = (
+export const allocateStockBulk = async (
   requests: { drugId: string; quantity: number; name?: string }[],
-  branchId: string
-): { drugId: string; allocations: BatchAllocation[] }[] => {
+  branchId: string,
+  skipSync = true // Default to true because bulk is usually via transactions
+): Promise<{ drugId: string; allocations: BatchAllocation[] }[]> => {
   const allBatches = getAllBatchesRaw();
   const result: { drugId: string; allocations: BatchAllocation[] }[] = [];
 
@@ -168,15 +179,19 @@ export const allocateStockBulk = (
   // to find their original batches.
   saveBatches(allBatches);
 
+  // Note: allocateStockBulk is used in transactions, sync is handled by transactionService.
+  // result includes drugId and allocations, which are needed for sync enqueuing in transactionService.
+
   return result;
 };
 
-export const allocateStock = (
+export const allocateStock = async (
   drugId: string,
   quantityNeeded: number,
   branchId: string,
-  commitChanges: boolean = true
-): BatchAllocation[] | null => {
+  commitChanges: boolean = true,
+  skipSync = false
+): Promise<BatchAllocation[] | null> => {
   if (quantityNeeded <= 0 || !Number.isInteger(quantityNeeded)) {
     console.error('[BatchService] Invalid quantity needed:', quantityNeeded);
     return null;
@@ -226,6 +241,15 @@ export const allocateStock = (
     }
     // Note: We preserve empty batches to allow returns to find their original batches.
     saveBatches(all);
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('STOCK_BATCH_UPDATE', { 
+        action: 'ALLOCATE', 
+        drugId, 
+        quantity: quantityNeeded,
+        allocations 
+      });
+    }
   }
 
   return allocations;
@@ -241,7 +265,11 @@ export const allocateStock = (
  * @param allocations - The batch allocations to return
  * @param drugId - Optional drugId for fallback recreation
  */
-export const returnStock = (allocations: BatchAllocation[], drugId?: string): void => {
+export const returnStock = async (
+  allocations: BatchAllocation[], 
+  drugId?: string,
+  skipSync = false
+): Promise<void> => {
   if (!allocations || allocations.length === 0) return;
 
   const all = getAllBatchesRaw();
@@ -403,14 +431,37 @@ export const getStockSummary = (
 };
 
 /**
+ * Delete a specific batch by ID
+ */
+export const deleteBatchById = async (batchId: string, skipSync = false): Promise<boolean> => {
+  const all = getAllBatchesRaw();
+  const filtered = all.filter((b) => b.id !== batchId);
+  const removed = all.length > filtered.length;
+  if (removed) {
+    saveBatches(filtered);
+    if (!skipSync) {
+      await syncQueueService.enqueue('STOCK_BATCH_UPDATE', { action: 'DELETE', id: batchId });
+    }
+  }
+  return removed;
+};
+
+/**
  * Delete all batches associated with a specific drug ID
  */
-export const deleteBatchesByDrugId = (drugId: string): number => {
+export const deleteBatchesByDrugId = async (drugId: string, skipSync = false): Promise<number> => {
   const all = getAllBatchesRaw();
   const filtered = all.filter((b) => b.drugId !== drugId);
   const removedCount = all.length - filtered.length;
   if (removedCount > 0) {
     saveBatches(filtered);
+    if (!skipSync) {
+      await syncQueueService.enqueue('STOCK_BATCH_UPDATE', { 
+        action: 'DELETE_BULK', 
+        drugId,
+        count: removedCount 
+      });
+    }
   }
   return removedCount;
 };
@@ -431,5 +482,6 @@ export const batchService = {
   hasStock,
   migrateInventoryToBatches,
   getStockSummary,
+  deleteBatchById,
   deleteBatchesByDrugId,
 };

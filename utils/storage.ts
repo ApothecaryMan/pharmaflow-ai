@@ -10,27 +10,16 @@ export const storage = {
    * @param defaultValue Default value if key doesn't exist or is invalid
    */
   get: <T>(key: StorageKeys | string, defaultValue: T): T => {
-    // Check if localStorage is available (Browser or Node with mock)
     if (typeof localStorage === 'undefined') return defaultValue;
 
-    try {
-      const item = localStorage.getItem(key);
-      if (item === null) return defaultValue;
+    const item = localStorage.getItem(key);
+    if (item === null) return defaultValue;
 
+    try {
       return JSON.parse(item) as T;
     } catch (error) {
-      // Robustness check: if it's a raw string that's not JSON, return it as-is
-      // this avoids SyntaxErrors for legacy unquoted strings
-      const rawItem = localStorage.getItem(key);
-      if (typeof rawItem === 'string' && rawItem.length > 0) {
-        // If it starts with a quote, it should have been parsed. If not, it's a raw string.
-        if (!rawItem.startsWith('"') && !rawItem.startsWith('{') && !rawItem.startsWith('[')) {
-          return rawItem as unknown as T;
-        }
-      }
-
-      console.warn(`Error reading storage key "${key}":`, error);
-      return defaultValue;
+      // Robustness check: if it's not valid JSON, return it as a raw string if possible
+      return item as unknown as T;
     }
   },
 

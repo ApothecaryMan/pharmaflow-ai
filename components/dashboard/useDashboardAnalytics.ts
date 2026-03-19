@@ -1,12 +1,14 @@
 import React, { useMemo } from 'react';
 import type { Drug, Sale } from '../../types';
 import { CalculationBlock, CurrencyValue, DetailMetric } from '../common/InsightTooltip';
+import { batchService } from '../../services/inventory/batchService';
 
 interface AnalyticsProps {
   sales: Sale[];
   inventory: Drug[];
   totalExpenses: number;
   language?: string;
+  branchId?: string; // Add branchId for precise filtering
 }
 
 export const useDashboardAnalytics = ({
@@ -14,14 +16,15 @@ export const useDashboardAnalytics = ({
   inventory,
   totalExpenses,
   language,
+  branchId,
 }: AnalyticsProps) => {
   // 1. Core Revenue Calculation
+  // ... (unchanged)
   const { totalRevenue, totalReturns } = useMemo(() => {
     let rev = 0;
     let ret = 0;
     sales.forEach((sale) => {
       rev += sale.netTotal ?? sale.total;
-      // Calculate returns amount
       if (sale.hasReturns && sale.netTotal !== undefined) {
         ret += sale.total - sale.netTotal;
       }
@@ -32,7 +35,6 @@ export const useDashboardAnalytics = ({
   // 2. COGS & Inventory Valuation
   const { totalCogs, inventoryValuation } = useMemo(() => {
     let cogs = 0;
-    let valuation = 0;
 
     // COGS Calculation (Weighted by actual sales and unit pricing)
     sales.forEach((sale) => {
@@ -55,13 +57,12 @@ export const useDashboardAnalytics = ({
       });
     });
 
-    // Inventory Valuation Calculation (Current asset value)
-    inventory.forEach((drug) => {
-      valuation += drug.stock * drug.costPrice;
-    });
+    // IMPROVED Inventory Valuation: Sum of all batch values
+    const allBatchesForValuation = batchService.getAllBatches(branchId);
+    const valuation = allBatchesForValuation.reduce((sum, b) => sum + (b.quantity * b.costPrice), 0);
 
     return { totalCogs: cogs, inventoryValuation: valuation };
-  }, [sales, inventory]);
+  }, [sales, inventory, branchId]);
 
   // 3. Efficiency Metrics
   const { inventoryTurnoverRatio, daysOfInventory } = useMemo(() => {
@@ -104,7 +105,10 @@ export const useDashboardAnalytics = ({
       });
     });
 
-    const critical = inventory.filter((d) => d.stock <= 3);
+    // Helper to get stock precisely
+    const getStock = (drugId: string) => batchService.getTotalStock(drugId, branchId);
+
+    const critical = inventory.filter((d) => getStock(d.id) <= 3);
 
     // Revenue at Risk Forecast (1-week approximation)
     critical.forEach((d) => {
@@ -119,7 +123,7 @@ export const useDashboardAnalytics = ({
       ),
       revenueAtRisk: totalPotentialLoss,
     };
-  }, [sales, inventory]);
+  }, [sales, inventory, branchId]);
 
   // 7. Health Grades
   const profitGrade = useMemo(() => {
@@ -295,7 +299,7 @@ export const useDashboardAnalytics = ({
         {
           icon: 'trending_down',
           label: 'Total Low Stock',
-          value: inventory.filter((d) => d.stock <= 10).length,
+          value: inventory.filter((d) => batchService.getTotalStock(d.id, branchId) <= 10).length,
           isCurrency: false,
         },
       ],

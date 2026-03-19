@@ -80,11 +80,11 @@ export interface PaginatedStockMovements {
 export interface StockMovementService {
   getAll: () => Promise<StockMovement[]>;
   getByDrugId: (drugId: string) => Promise<StockMovement[]>;
-  logMovement: (movement: Omit<StockMovement, 'id' | 'timestamp'>) => Promise<StockMovement>;
-  logMovementsBulk: (movements: Omit<StockMovement, 'id' | 'timestamp'>[]) => Promise<void>;
+  logMovement: (movement: Omit<StockMovement, 'id' | 'timestamp'>, skipSync?: boolean) => Promise<StockMovement>;
+  logMovementsBulk: (movements: Omit<StockMovement, 'id' | 'timestamp'>[], skipSync?: boolean) => Promise<void>;
   getHistory: (filters: StockMovementFilters) => Promise<StockMovement[] | PaginatedStockMovements>;
   getSummaryByDrug: (drugId: string, filters: StockMovementFilters) => Promise<StockMovementSummary>;
   getKPISummary: (filters: StockMovementFilters) => Promise<StockMovementKPISummary>;
-  approveMovement: (id: string, userId: string) => Promise<void>;
-  rejectMovement: (id: string, userId: string) => Promise<void>;
+  approveMovement: (id: string, userId: string, skipSync?: boolean) => Promise<void>;
+  rejectMovement: (id: string, userId: string, skipSync?: boolean) => Promise<void>;
 }

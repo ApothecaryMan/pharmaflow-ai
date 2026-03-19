@@ -26,12 +26,12 @@ export interface PurchaseService {
   getByStatus(status: 'pending' | 'completed' | 'rejected'): Promise<Purchase[]>;
   getPending(): Promise<Purchase[]>;
   filter(filters: PurchaseFilters): Promise<Purchase[]>;
-  create(purchase: Omit<Purchase, 'id'>): Promise<Purchase>;
-  update(id: string, purchase: Partial<Purchase>): Promise<Purchase>;
-  approve(id: string, approverName: string): Promise<Purchase>;
-  reject(id: string, reason: string): Promise<Purchase>;
-  receive(id: string): Promise<Purchase>;
-  delete(id: string): Promise<boolean>;
+  create(purchase: Omit<Purchase, 'id'>, branchId?: string, skipSync?: boolean): Promise<Purchase>;
+  update(id: string, purchase: Partial<Purchase>, skipSync?: boolean): Promise<Purchase>;
+  approve(id: string, approverName: string, skipSync?: boolean): Promise<Purchase>;
+  reject(id: string, reason: string, skipSync?: boolean): Promise<Purchase>;
+  receive(id: string, skipSync?: boolean): Promise<Purchase>;
+  delete(id: string, skipSync?: boolean): Promise<boolean>;
   getStats(): Promise<PurchaseStats>;
   save(purchases: Purchase[], branchId?: string): Promise<void>;
 }

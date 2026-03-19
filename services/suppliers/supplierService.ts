@@ -8,6 +8,7 @@ import { idGenerator } from '../../utils/idGenerator';
 
 import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
+import { syncQueueService } from '../syncQueueService';
 import type { SupplierService } from './types';
 
 const getRawAll = (): Supplier[] => {
@@ -39,9 +40,8 @@ export const createSupplierService = (): SupplierService => ({
     );
   },
 
-  create: async (supplier: Omit<Supplier, 'id'>, branchId?: string): Promise<Supplier> => {
+  create: async (supplier: Omit<Supplier, 'id'>, branchId?: string, skipSync = false): Promise<Supplier> => {
     const all = getRawAll();
-    // Priority: explicit param > entity's own branchId > settingsService fallback
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || (supplier as any).branchId || settings.activeBranchId || settings.branchCode;
     const newSupplier: Supplier = {
@@ -49,25 +49,44 @@ export const createSupplierService = (): SupplierService => ({
       id: idGenerator.generate('suppliers', effectiveBranchId),
       branchId: effectiveBranchId,
     } as Supplier;
+
     all.push(newSupplier);
     storage.set(StorageKeys.SUPPLIERS, all);
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('SUPPLIER', { action: 'CREATE_SUPPLIER', supplier: newSupplier });
+    }
+
     return newSupplier;
   },
 
-  update: async (id: string, updates: Partial<Supplier>): Promise<Supplier> => {
+  update: async (id: string, updates: Partial<Supplier>, skipSync = false): Promise<Supplier> => {
     const all = getRawAll();
     const index = all.findIndex((s) => s.id === id);
     if (index === -1) throw new Error('Supplier not found');
     all[index] = { ...all[index], ...updates };
     storage.set(StorageKeys.SUPPLIERS, all);
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('SUPPLIER', { action: 'UPDATE_SUPPLIER', id, updates });
+    }
+
     return all[index];
   },
 
-  delete: async (id: string): Promise<boolean> => {
+  delete: async (id: string, skipSync = false): Promise<boolean> => {
     const all = getRawAll();
+    const initialLength = all.length;
     const filtered = all.filter((s) => s.id !== id);
-    storage.set(StorageKeys.SUPPLIERS, filtered);
-    return true;
+    
+    if (filtered.length !== initialLength) {
+      storage.set(StorageKeys.SUPPLIERS, filtered);
+      if (!skipSync) {
+        await syncQueueService.enqueue('SUPPLIER', { action: 'DELETE_SUPPLIER', id });
+      }
+      return true;
+    }
+    return false;
   },
 
   save: async (suppliers: Supplier[], branchId?: string): Promise<void> => {

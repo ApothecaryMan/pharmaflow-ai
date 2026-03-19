@@ -11,6 +11,7 @@ import { parseExpiryEndOfMonth } from '../../utils/expiryUtils';
 
 import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
+import { syncQueueService } from '../syncQueueService';
 import type { InventoryFilters, InventoryService, InventoryStats } from './types';
 import { drugCacheService } from './drugCacheService';
 
@@ -94,7 +95,7 @@ export const createInventoryService = (): InventoryService => ({
     return results;
   },
 
-  create: async (drug: Omit<Drug, 'id'>, branchId?: string): Promise<Drug> => {
+  create: async (drug: Omit<Drug, 'id'>, branchId?: string, skipSync = false): Promise<Drug> => {
     // Priority: explicit param > entity's own branchId > settingsService fallback
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || (drug as any).branchId || settings.activeBranchId || settings.branchCode;
@@ -107,7 +108,7 @@ export const createInventoryService = (): InventoryService => ({
     await drugCacheService.upsert(newDrug);
 
     // Create initial stock batch for the new drug
-    batchService.createBatch({
+    await batchService.createBatch({
       drugId: newDrug.id,
       quantity: newDrug.stock,
       expiryDate: newDrug.expiryDate,
@@ -115,35 +116,61 @@ export const createInventoryService = (): InventoryService => ({
       batchNumber: 'INITIAL',
       dateReceived: new Date().toISOString(),
       branchId: effectiveBranchId,
-    });
+    }, undefined, true); // skipSync=true because drug create sync covers initial state
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'CREATE_DRUG', drug: newDrug });
+    }
 
     return newDrug;
   },
 
-  update: async (id: string, updates: Partial<Drug>): Promise<Drug> => {
+  update: async (id: string, updates: Partial<Drug>, skipSync = false): Promise<Drug> => {
     const drug = await drugCacheService.getById(id);
     if (!drug) throw new Error('Drug not found');
     
     const updated = { ...drug, ...updates };
     await drugCacheService.upsert(updated);
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'UPDATE_DRUG', id, updates });
+    }
+
     return updated;
   },
 
-  updateStock: async (id: string, quantity: number): Promise<Drug> => {
+  updateStock: async (id: string, quantity: number, skipSync = false): Promise<Drug> => {
     const drug = await drugCacheService.getById(id);
     if (!drug) throw new Error('Drug not found');
     
     const updated = { ...drug, stock: (drug.stock || 0) + quantity };
     await drugCacheService.upsert(updated);
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'UPDATE_STOCK', id, quantity });
+    }
+
     return updated;
   },
 
-  updateStockBulk: async (mutations: { id: string; quantity: number }[]): Promise<void> => {
-    return drugCacheService.updateStockBulk(mutations);
+  updateStockBulk: async (
+    mutations: { id: string; quantity: number }[],
+    skipSync = false
+  ): Promise<void> => {
+    await drugCacheService.updateStockBulk(mutations);
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'UPDATE_STOCK_BULK', mutations });
+    }
   },
 
-  delete: async (id: string): Promise<boolean> => {
+  delete: async (id: string, skipSync = false): Promise<boolean> => {
     await drugCacheService.remove(id);
+    
+    if (!skipSync) {
+      await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'DELETE_DRUG', id });
+    }
+
     return true;
   },
 

@@ -209,12 +209,15 @@ export const intelligenceService = {
       const velocity = velocityMap.get(drug.id) || { last7: 0, last14: 0, last30: 0 };
       const avgDailySales = velocity.last30 / 30;
 
+      // GET REAL STOCK FROM BATCHES
+      const currentStock = batchService.getTotalStock(drug.id, branchId);
+
       // Stock days (how many days of stock left)
-      const stockDays = avgDailySales > 0 ? drug.stock / avgDailySales : null;
+      const stockDays = avgDailySales > 0 ? currentStock / avgDailySales : null;
 
       // Stock status
       let stockStatus: 'OUT_OF_STOCK' | 'CRITICAL' | 'LOW' | 'NORMAL' | 'OVERSTOCK';
-      if (drug.stock === 0) {
+      if (currentStock === 0) {
         stockStatus = 'OUT_OF_STOCK';
       } else if (stockDays !== null && stockDays < 7) {
         stockStatus = 'CRITICAL';
@@ -235,7 +238,7 @@ export const intelligenceService = {
 
       // Suggested order quantity
       const targetStock = REORDER_POINT_DAYS * avgDailySales * 1.5; // 1.5x buffer
-      const suggestedQty = Math.max(0, Math.ceil(targetStock - drug.stock));
+      const suggestedQty = Math.max(0, Math.ceil(targetStock - currentStock));
 
       // Confidence score based on data quality
       const hasRecentSales = velocity.last7 > 0;
@@ -251,7 +254,7 @@ export const intelligenceService = {
         supplier_name: 'المورد الافتراضي', // Would need supplier lookup
         category_id: drug.category || 'GENERAL',
         category_name: drug.category || 'عام',
-        current_stock: drug.stock,
+        current_stock: currentStock,
         stock_days: stockDays ? Math.round(stockDays) : null,
         stock_status: stockStatus,
         reorder_point_days: REORDER_POINT_DAYS,

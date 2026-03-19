@@ -8,6 +8,7 @@ import { idGenerator } from '../../utils/idGenerator';
 
 import { storage } from '../../utils/storage';
 import { settingsService } from '../settings/settingsService';
+import { syncQueueService } from '../syncQueueService';
 import type { CustomerFilters, CustomerService, CustomerStats } from './types';
 
 const getRawAll = (): Customer[] => {
@@ -58,9 +59,8 @@ export const createCustomerService = (): CustomerService => ({
     return results;
   },
 
-  create: async (customer: Omit<Customer, 'id'>, branchId?: string): Promise<Customer> => {
+  create: async (customer: Omit<Customer, 'id'>, branchId?: string, skipSync = false): Promise<Customer> => {
     const all = getRawAll();
-    // Priority: explicit param > entity's own branchId > settingsService fallback
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || (customer as any).branchId || settings.activeBranchId || settings.branchCode;
     const newCustomer: Customer = {
@@ -73,23 +73,41 @@ export const createCustomerService = (): CustomerService => ({
     } as Customer;
     all.push(newCustomer);
     storage.set(StorageKeys.CUSTOMERS, all);
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('CUSTOMER', { action: 'CREATE_CUSTOMER', customer: newCustomer });
+    }
+
     return newCustomer;
   },
 
-  update: async (id: string, updates: Partial<Customer>): Promise<Customer> => {
+  update: async (id: string, updates: Partial<Customer>, skipSync = false): Promise<Customer> => {
     const all = getRawAll();
     const index = all.findIndex((c) => c.id === id);
     if (index === -1) throw new Error('Customer not found');
     all[index] = { ...all[index], ...updates };
     storage.set(StorageKeys.CUSTOMERS, all);
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('CUSTOMER', { action: 'UPDATE_CUSTOMER', id, updates });
+    }
+
     return all[index];
   },
 
-  delete: async (id: string): Promise<boolean> => {
+  delete: async (id: string, skipSync = false): Promise<boolean> => {
     const all = getRawAll();
+    const initialLength = all.length;
     const filtered = all.filter((c) => c.id !== id);
-    storage.set(StorageKeys.CUSTOMERS, filtered);
-    return true;
+    
+    if (filtered.length !== initialLength) {
+      storage.set(StorageKeys.CUSTOMERS, filtered);
+      if (!skipSync) {
+        await syncQueueService.enqueue('CUSTOMER', { action: 'DELETE_CUSTOMER', id });
+      }
+      return true;
+    }
+    return false;
   },
 
   addLoyaltyPoints: async (id: string, points: number): Promise<Customer> => {

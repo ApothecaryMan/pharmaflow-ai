@@ -2,6 +2,7 @@ import { StorageKeys } from '../../../config/storageKeys';
 import { idGenerator } from '../../../utils/idGenerator';
 import { storage } from '../../../utils/storage';
 import { settingsService } from '../../settings/settingsService';
+import { syncQueueService } from '../../syncQueueService';
 import type {
   StockMovement,
   StockMovementFilters,
@@ -31,7 +32,8 @@ export const createStockMovementService = (): StockMovementService => ({
   },
 
   logMovement: async (
-    movement: Omit<StockMovement, 'id' | 'timestamp'>
+    movement: Omit<StockMovement, 'id' | 'timestamp'>,
+    skipSync = false
   ): Promise<StockMovement> => {
     const all = getRawMovements();
     const settings = await settingsService.getAll();
@@ -50,6 +52,10 @@ export const createStockMovementService = (): StockMovementService => ({
 
     // Prune old history if needed? For now keep all.
     storage.set(StorageKeys.STOCK_MOVEMENTS, all);
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('STOCK_MOVEMENT_LOG', { action: 'LOG', movement: newMovement });
+    }
 
     return newMovement;
   },
@@ -166,7 +172,7 @@ export const createStockMovementService = (): StockMovementService => ({
     return summary;
   },
 
-  approveMovement: async (id: string, userId: string): Promise<void> => {
+  approveMovement: async (id: string, userId: string, skipSync = false): Promise<void> => {
     const all = getRawMovements();
     const index = all.findIndex((m) => m.id === id);
     if (index !== -1) {
@@ -174,10 +180,19 @@ export const createStockMovementService = (): StockMovementService => ({
       all[index].reviewedBy = userId;
       all[index].reviewedAt = new Date().toISOString();
       storage.set(StorageKeys.STOCK_MOVEMENTS, all);
+      
+      if (!skipSync) {
+        await syncQueueService.enqueue('STOCK_MOVEMENT_LOG', { 
+          action: 'APPROVE', 
+          id, 
+          userId, 
+          timestamp: all[index].reviewedAt 
+        });
+      }
     }
   },
 
-  rejectMovement: async (id: string, userId: string): Promise<void> => {
+  rejectMovement: async (id: string, userId: string, skipSync = false): Promise<void> => {
     const all = getRawMovements();
     const index = all.findIndex((m) => m.id === id);
     if (index !== -1) {
@@ -185,11 +200,21 @@ export const createStockMovementService = (): StockMovementService => ({
       all[index].reviewedBy = userId;
       all[index].reviewedAt = new Date().toISOString();
       storage.set(StorageKeys.STOCK_MOVEMENTS, all);
+
+      if (!skipSync) {
+        await syncQueueService.enqueue('STOCK_MOVEMENT_LOG', { 
+          action: 'REJECT', 
+          id, 
+          userId, 
+          timestamp: all[index].reviewedAt 
+        });
+      }
     }
   },
 
   logMovementsBulk: async (
-    movements: Omit<StockMovement, 'id' | 'timestamp'>[]
+    movements: Omit<StockMovement, 'id' | 'timestamp'>[],
+    skipSync = false
   ): Promise<void> => {
     if (movements.length === 0) return;
 
@@ -209,6 +234,13 @@ export const createStockMovementService = (): StockMovementService => ({
     }
 
     storage.set(StorageKeys.STOCK_MOVEMENTS, all);
+
+    if (!skipSync) {
+      await syncQueueService.enqueue('STOCK_MOVEMENT_LOG', { 
+        action: 'LOG_BULK', 
+        count: movements.length 
+      });
+    }
   },
 });
 

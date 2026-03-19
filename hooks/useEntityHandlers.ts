@@ -659,29 +659,33 @@ export function useEntityHandlers({
         error('Permission denied: Cannot create purchase orders');
         return;
       }
-      setPurchases((prev) => [{ ...purchase, branchId: activeBranchId }, ...prev]);
+      let finalPurchase = { ...purchase, branchId: activeBranchId };
 
-      // Only update inventory if purchase is completed immediately
-      if (purchase.status === 'completed') {
+      if (finalPurchase.status === 'completed') {
         if (!canPerformAction(currentUser.role, 'purchase.approve')) {
           error('Permission denied: Cannot complete/approve purchase (Created as pending instead)');
-          return;
+          finalPurchase.status = 'pending';
         }
+      }
 
-        applyPurchaseToInventory(purchase);
+      setPurchases((prev) => [finalPurchase, ...prev]);
+
+      // Only update inventory if purchase is actually completed
+      if (finalPurchase.status === 'completed') {
+        applyPurchaseToInventory(finalPurchase);
         
         auditService.log('purchase.complete', {
           userId: currentEmployeeId,
-          details: `Completed PO #${purchase.invoiceId}`,
-          entityId: purchase.id,
+          details: `Completed PO #${finalPurchase.invoiceId}`,
+          entityId: finalPurchase.id,
           branchId: activeBranchId,
         });
       } else {
         info('Purchase Order Saved as Pending');
         auditService.log('purchase.create', {
           userId: currentEmployeeId,
-          details: `Created PO #${purchase.invoiceId} (Pending)`,
-          entityId: purchase.id,
+          details: `Created PO #${finalPurchase.invoiceId} (Pending)`,
+          entityId: finalPurchase.id,
           branchId: activeBranchId,
         });
       }

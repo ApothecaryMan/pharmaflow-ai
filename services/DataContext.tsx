@@ -368,21 +368,18 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
   const addProduct = useCallback(async (product: Omit<Drug, 'id'>) => {
     const newProduct = await inventoryService.create({ ...product, branchId: activeBranchId });
-    await syncQueueService.enqueue('SALE', { action: 'CREATE_DRUG', drug: newProduct });
     setRawInventory((prev) => [...prev, newProduct]);
     return newProduct;
   }, [activeBranchId]);
 
   const updateProduct = useCallback(async (id: string, updates: Partial<Drug>) => {
     const updated = await inventoryService.update(id, updates);
-    await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'UPDATE_DRUG', id, updates });
     setRawInventory((prev) => prev.map((p) => (p.id === id ? updated : p)));
     return updated;
   }, []);
 
   const updateStock = useCallback(async (id: string, quantity: number) => {
     await inventoryService.updateStock(id, quantity);
-    await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'UPDATE_STOCK', id, quantity });
     setRawInventory((prev) =>
       prev.map((p) => (p.id === id ? { ...p, stock: p.stock + quantity } : p))
     );
@@ -390,7 +387,6 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
   const addSale = useCallback(async (sale: Omit<Sale, 'id'>) => {
     const newSale = await salesService.create({ ...sale, branchId: activeBranchId });
-    await syncQueueService.enqueue('SALE', { action: 'CREATE_SALE', sale: newSale });
     setSalesState((prev) => [...prev, newSale]);
     return newSale;
   }, [activeBranchId]);
