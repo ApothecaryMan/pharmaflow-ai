@@ -97,7 +97,7 @@ export const ExpiryManagement: React.FC<ExpiryManagementProps> = ({
         },
         {
           notes: actionNotes || defaultNote,
-          referenceId: idGenerator.generate(entityType),
+          referenceId: idGenerator.generate(entityType, branchCode),
           expiryDate: selectedActionBatch.expiryDate,
         }
       );

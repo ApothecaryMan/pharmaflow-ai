@@ -84,7 +84,7 @@ export const createReturnService = (): ReturnService => ({
     // 1. Process Inventory Deductions (FEFO)
     const movements: StockMovement[] = [];
     for (const item of newReturn.items) {
-      const currentStock = await batchService.getTotalStock(item.drugId);
+      const currentStock = await batchService.getTotalStock(item.drugId, effectiveBranchId);
       
       // Allocate from batches
       const allocations = await batchService.allocateStock(item.drugId, item.quantityReturned, effectiveBranchId, true);

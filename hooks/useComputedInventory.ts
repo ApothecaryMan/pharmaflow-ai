@@ -17,6 +17,11 @@ export const useComputedInventory = (
       ? batches.filter(b => b.branchId === activeBranchId)
       : batches;
 
+    // 0b. Double Guard: Filter rawInventory to only show this branch's products
+    const filteredInventory = activeBranchId
+      ? rawInventory.filter(d => d.branchId === activeBranchId)
+      : rawInventory;
+
     // 1. Group batches by Drug ID for efficient lookup
     const batchSums = new Map<string, { total: number; earliestExpiry: string }>();
 
@@ -36,7 +41,7 @@ export const useComputedInventory = (
     });
 
     // 2. Map inventory items with computed values
-    return rawInventory.map((drug) => {
+    return filteredInventory.map((drug) => {
       const computed = batchSums.get(drug.id);
       
       // If we have batches, use them. If not (e.g. new product with no batches yet), 
@@ -59,5 +64,5 @@ export const useComputedInventory = (
         expiryDate: drug.expiryDate, // Keep original if no batches
       };
     });
-  }, [rawInventory, batches]);
+  }, [rawInventory, batches, activeBranchId]);
 };

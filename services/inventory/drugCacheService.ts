@@ -23,20 +23,58 @@ export const drugCacheService = {
   },
 
   /**
-   * Bulk save drugs (used for migration or heavy updates)
+   * Load drugs filtered by branchId using the IndexedDB index (V4+)
    */
-  async saveAll(drugs: Drug[]): Promise<void> {
+  async loadByBranch(branchId: string): Promise<Drug[]> {
+    return runTransaction(STORES.DRUGS, 'readonly', (transaction) => {
+      const store = transaction.objectStore(STORES.DRUGS);
+      const index = store.index('branchId');
+      const request = index.getAll(branchId);
+
+      return new Promise<Drug[]>((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    });
+  },
+
+  /**
+   * Bulk save drugs for a specific branch.
+   * SAFE: Only deletes existing records for THIS branch before inserting new data.
+   * Other branches' data is preserved.
+   */
+  async saveAll(drugs: Drug[], branchId?: string): Promise<void> {
     return runTransaction(STORES.DRUGS, 'readwrite', (transaction) => {
       const store = transaction.objectStore(STORES.DRUGS);
-      
-      // Clear existing records first to ensure consistency during bulk save
-      store.clear();
 
-      for (const drug of drugs) {
-        store.add(drug);
+      if (branchId) {
+        // Branch-aware: Delete only this branch's drugs, then insert new ones
+        const index = store.index('branchId');
+        const cursorRequest = index.openKeyCursor(branchId);
+
+        return new Promise<void>((resolve, reject) => {
+          cursorRequest.onsuccess = () => {
+            const cursor = cursorRequest.result;
+            if (cursor) {
+              store.delete(cursor.primaryKey);
+              cursor.continue();
+            } else {
+              // All branch-specific records deleted; now insert the new batch
+              for (const drug of drugs) {
+                store.put(drug);
+              }
+              resolve();
+            }
+          };
+          cursorRequest.onerror = () => reject(cursorRequest.error);
+        });
+      } else {
+        // Legacy fallback: upsert all (no clear!)
+        for (const drug of drugs) {
+          store.put(drug);
+        }
+        return Promise.resolve();
       }
-
-      return Promise.resolve();
     });
   },
 

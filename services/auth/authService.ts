@@ -70,7 +70,6 @@ const AUDIT_KEY = 'pharmaflow_login_audit';
 const DEV_CREDENTIALS = {
   username: import.meta.env.VITE_TEST_USER || 'test',
   password: import.meta.env.VITE_TEST_PASS || 'test',
-  branchId: 'B1',
   role: 'admin' as const,
   department: 'it' as const,
 };
@@ -171,9 +170,14 @@ export const authService = {
 
     // 1. Check Dev credentials
     if (username === DEV_CREDENTIALS.username && password === (DEV_CREDENTIALS.password ?? '')) {
+      const { branchService } = await import('../branchService');
+      const activeBranch = branchService.getActive();
+      const firstBranch = branchService.getAll()[0];
+      const effectiveBranchId = activeBranch?.id || firstBranch?.id || 'B1';
+
       const session: UserSession = {
         username: DEV_CREDENTIALS.username,
-        branchId: DEV_CREDENTIALS.branchId,
+        branchId: effectiveBranchId,
         role: DEV_CREDENTIALS.role,
         department: DEV_CREDENTIALS.department,
       };

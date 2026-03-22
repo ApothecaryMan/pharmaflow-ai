@@ -24,7 +24,7 @@ export interface SyncAction {
   id?: number;
   type: SyncActionType;
   payload: any;
-  branchId?: string;
+  branchId: string;
   timestamp: string;
   status: 'pending' | 'syncing' | 'failed';
   retryCount: number;
@@ -33,14 +33,39 @@ export interface SyncAction {
 
 export const DLQ_MAX_RETRIES = 3;
 
+/**
+ * Reads the active branchId from session storage.
+ * Used as a fallback when callers don't provide branchId explicitly.
+ */
+const getActiveBranchId = (): string => {
+  try {
+    const raw = localStorage.getItem('branch_pilot_session');
+    if (raw) {
+      const session = JSON.parse(raw);
+      if (session?.branchId) return session.branchId;
+    }
+  } catch { /* ignore */ }
+  // Secondary fallback: active branch setting
+  try {
+    const raw = localStorage.getItem('pharma_active_branch_id');
+    if (raw) return raw;
+  } catch { /* ignore */ }
+  return 'UNKNOWN_BRANCH';
+};
+
 export const syncQueueService = {
   /**
-   * Enqueue a new action for synchronization
+   * Enqueue a new action for synchronization.
+   * @param type - The type of sync action
+   * @param payload - The action payload
+   * @param branchId - Optional explicit branchId. If not provided, reads from active session.
    */
-  async enqueue(type: SyncActionType, payload: any): Promise<number> {
+  async enqueue(type: SyncActionType, payload: any, branchId?: string): Promise<number> {
+    const effectiveBranchId = branchId || getActiveBranchId();
     const action: SyncAction = {
       type,
       payload,
+      branchId: effectiveBranchId,
       timestamp: new Date().toISOString(),
       status: 'pending',
       retryCount: 0,

@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'pharmaflow_db';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 export const STORES = {
   DRUGS: 'drugs',
@@ -39,6 +39,7 @@ export const openDB = (): Promise<IDBDatabase> => {
 
     request.onupgradeneeded = (event) => {
       const database = (event.target as IDBOpenDBRequest).result;
+      const transaction = (event.target as IDBOpenDBRequest).transaction!;
 
       // Drugs store
       if (!database.objectStoreNames.contains(STORES.DRUGS)) {
@@ -47,22 +48,43 @@ export const openDB = (): Promise<IDBDatabase> => {
         drugStore.createIndex('name', 'name', { unique: false });
         drugStore.createIndex('genericName', 'genericName', { unique: false });
         drugStore.createIndex('category', 'category', { unique: false });
+        drugStore.createIndex('branchId', 'branchId', { unique: false });
+      } else {
+        // V4 Upgrade: Add branchId index to existing DRUGS store
+        const drugStore = transaction.objectStore(STORES.DRUGS);
+        if (!drugStore.indexNames.contains('branchId')) {
+          drugStore.createIndex('branchId', 'branchId', { unique: false });
+        }
       }
 
       // Sync Queue store
       if (!database.objectStoreNames.contains(STORES.SYNC_QUEUE)) {
-        database.createObjectStore(STORES.SYNC_QUEUE, { 
+        const syncStore = database.createObjectStore(STORES.SYNC_QUEUE, { 
           keyPath: 'id', 
           autoIncrement: true 
         });
+        syncStore.createIndex('branchId', 'branchId', { unique: false });
+      } else {
+        // V4 Upgrade: Add branchId index to existing SYNC_QUEUE store
+        const syncStore = transaction.objectStore(STORES.SYNC_QUEUE);
+        if (!syncStore.indexNames.contains('branchId')) {
+          syncStore.createIndex('branchId', 'branchId', { unique: false });
+        }
       }
 
       // Sync DLQ (Dead Letter Queue) store
       if (!database.objectStoreNames.contains(STORES.SYNC_DLQ)) {
-        database.createObjectStore(STORES.SYNC_DLQ, { 
+        const dlqStore = database.createObjectStore(STORES.SYNC_DLQ, { 
           keyPath: 'id', 
-          autoIncrement: false // Preserve original Queue ID structure
+          autoIncrement: false
         });
+        dlqStore.createIndex('branchId', 'branchId', { unique: false });
+      } else {
+        // V4 Upgrade: Add branchId index to existing SYNC_DLQ store
+        const dlqStore = transaction.objectStore(STORES.SYNC_DLQ);
+        if (!dlqStore.indexNames.contains('branchId')) {
+          dlqStore.createIndex('branchId', 'branchId', { unique: false });
+        }
       }
 
       // Employees store

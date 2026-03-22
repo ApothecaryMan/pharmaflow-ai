@@ -7,6 +7,7 @@ import { COUNTRY_CODES } from '../../data/countryCodes';
 import { AREAS, CITIES, GOVERNORATES, getLocationName } from '../../data/locations';
 import type { Customer } from '../../types';
 import { idGenerator } from '../../utils/idGenerator';
+import { useData } from '../../services/DataContext';
 import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { Modal } from '../common/Modal';
@@ -42,6 +43,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   currentEmployeeId,
 }) => {
   const { getVerifiedDate } = useStatusBar();
+  const { activeBranchId } = useData();
   const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -129,7 +131,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
    * and returns the next value in the sequence.
    */
   const getNextSerialId = () => {
-    return idGenerator.generate('customers-serial');
+    return idGenerator.generate('customers-serial', activeBranchId);
   };
 
   /**

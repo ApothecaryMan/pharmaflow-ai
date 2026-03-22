@@ -188,6 +188,18 @@ export const DataProvider: React.FC<DataProviderProps> = ({
           finalBranchId = allBranches[0].id;
           // Sync back to storage if possible
           branchService.setActive(finalBranchId);
+          
+          // PHASE 7 FIX: Sync session so audit events use the correct branchId
+          const rawSession = localStorage.getItem('branch_pilot_session');
+          if (rawSession) {
+            try {
+              const s = JSON.parse(rawSession);
+              s.branchId = finalBranchId;
+              localStorage.setItem('branch_pilot_session', JSON.stringify(s));
+            } catch (e) {
+              console.error('Failed to sync session during self-heal:', e);
+            }
+          }
         }
 
         setActiveBranchId(finalBranchId);
@@ -224,7 +236,12 @@ export const DataProvider: React.FC<DataProviderProps> = ({
             branchId: finalBranchId
           }));
           await inventoryService.save(seededInventory, finalBranchId);
-          batchService.migrateInventoryToBatches(seededInventory);
+          const updatedBatches = batchService.migrateInventoryToBatches(seededInventory);
+          // Update local 'bat' reference to reflect migrated stock
+          const branchSpecific = updatedBatches.filter(b => b.branchId === finalBranchId);
+          bat.length = 0;
+          bat.push(...branchSpecific);
+          
           inv.push(...seededInventory);
         }
 

@@ -283,7 +283,8 @@ export const allocateStock = async (
 export const returnStock = async (
   allocations: BatchAllocation[], 
   drugId?: string,
-  skipSync = false
+  skipSync = false,
+  branchId?: string
 ): Promise<void> => {
   if (!allocations || allocations.length === 0) return;
 
@@ -304,17 +305,18 @@ export const returnStock = async (
       // Batch missing and no match by expiry -> Recreate the batch
       // This ensures stock is not "lost" to the system
       const newBatch: StockBatch = {
-        id: idGenerator.generate('batch', drugId), // Regenerate or use old ID? Better regenerate
+        id: idGenerator.generate('batch', branchId || drugId),
         drugId,
         quantity: alloc.quantity,
         expiryDate: alloc.expiryDate,
         costPrice: 0, // Unknown at this point, but better than losing stock
         dateReceived: new Date().toISOString(),
         batchNumber: 'RECREATED',
+        branchId: branchId,
         version: 1,
       };
       all.push(newBatch);
-      console.log(`[BatchService] Recreated missing batch for drug ${drugId} during return.`);
+      console.log(`[BatchService] Recreated missing batch for drug ${drugId} during return (branch: ${branchId || 'unknown'}).`);
     } else {
       console.warn(`Batch ${alloc.batchId} not found for return and no drugId provided for fallback. Stock may be lost.`);
     }
@@ -390,7 +392,7 @@ export const hasStock = (drugId: string, quantityNeeded: number, branchId: strin
  * Migrate existing Drug stock to batch system
  * Creates a single batch per drug with existing stock/expiry
  */
-export const migrateInventoryToBatches = (inventory: Drug[]): number => {
+export const migrateInventoryToBatches = (inventory: Drug[]): StockBatch[] => {
   const existingBatches = getAllBatchesRaw();
   const existingDrugIds = new Set(existingBatches.map((b) => b.drugId));
 
@@ -420,7 +422,7 @@ export const migrateInventoryToBatches = (inventory: Drug[]): number => {
     saveBatches(newBatches);
   }
 
-  return migratedCount;
+  return newBatches;
 };
 
 /**

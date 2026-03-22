@@ -228,7 +228,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
 
   // --- Modal View Components ---
 
-  const GeneralView = () => (
+  const renderGeneralView = () => (
     <div className="grid grid-cols-2 gap-4">
       <FormField label={t.settings.branchName} className="col-span-2">
         <SmartInput
@@ -295,7 +295,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
     </div>
   );
 
-  const EmployeesView = () => {
+  const renderEmployeesView = () => {
     const filteredList = employees
       .filter(emp => emp.id !== 'SUPER-ADMIN' && emp.employeeCode !== 'EMP-000')
       .filter(emp => employeeView === 'all' || selectedEmployees.includes(emp.id))
@@ -439,7 +439,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
           }
         >
           <div className="space-y-6 min-h-[400px]">
-            {modalView === 'general' ? <GeneralView /> : <EmployeesView />}
+            {modalView === 'general' ? renderGeneralView() : renderEmployeesView()}
           </div>
 
           <div className="flex gap-3 pt-4">

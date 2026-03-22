@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import type { Supplier } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
+import { useData } from '../../services/DataContext';
 import { useContextMenu } from '../common/ContextMenu';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
@@ -33,6 +34,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
   language,
 }) => {
   const { showMenu } = useContextMenu();
+  const { activeBranchId } = useData();
   const [search, setSearch] = useState('');
 
   // Mode and state
@@ -132,7 +134,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
   const handleAddNew = () => {
     setMode('add');
     // Generate unique ID
-    const nextId = idGenerator.generate('suppliers');
+    const nextId = idGenerator.generate('suppliers', activeBranchId);
     setEditForm({
       id: nextId,
       name: '',

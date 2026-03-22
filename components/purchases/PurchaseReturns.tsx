@@ -6,6 +6,7 @@ import { useSettings } from '../../context';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
+import { useData } from '../../services/DataContext';
 import { useContextMenu } from '../common/ContextMenu';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
@@ -37,6 +38,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
   onCreatePurchaseReturn,
 }) => {
   const { textTransform } = useSettings();
+  const { activeBranchId } = useData();
   const { showMenu } = useContextMenu();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
@@ -205,7 +207,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       const refundAmount = quantity * purchaseItem.costPrice;
 
       const newItem: PurchaseReturnItem = {
-        id: idGenerator.generate('returnItem'),
+        id: idGenerator.generate('returnItem', activeBranchId),
         drugId,
         name: purchaseItem.name,
         quantityReturned: quantity,
@@ -237,7 +239,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
     }
 
     const totalRefund = returnItems.reduce((sum, item) => sum + item.refundAmount, 0);
-    const nextId = idGenerator.generate('returns');
+    const nextId = idGenerator.generate('returns', activeBranchId);
 
     const newReturn: PurchaseReturn = {
       id: nextId,
@@ -285,7 +287,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
         const returned = getReturnedQuantity(selectedPurchase.id, item.drugId);
         const availableQty = item.quantity - returned;
         return {
-          id: idGenerator.generate('returnItem'),
+          id: idGenerator.generate('returnItem', activeBranchId),
           drugId: item.drugId,
           name: item.name,
           quantityReturned: availableQty,

@@ -594,7 +594,7 @@ export function useEntityHandlers({
         );
 
         const isNewEntry = !sameExpiryEntry;
-        const targetId = isNewEntry ? idGenerator.generate('inventory') : sameExpiryEntry.id;
+        const targetId = isNewEntry ? idGenerator.generate('inventory', branchCode) : sameExpiryEntry.id;
         const targetDrug = isNewEntry ? sourceDrug : sameExpiryEntry;
 
         const mutation = stockOps.addStock(
@@ -1398,7 +1398,7 @@ export function useEntityHandlers({
           const modifierName = employee?.name || 'System';
 
           const historyRecord: OrderModificationRecord = {
-            id: idGenerator.generate('generic'),
+            id: idGenerator.generate('generic', activeBranchId),
             timestamp,
             modifiedBy: modifierName,
             modifications,

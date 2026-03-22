@@ -7,6 +7,7 @@ import { MaterialTabs } from '../common/MaterialTabs';
 import { Modal } from '../common/Modal';
 import { useSmartDirection } from '../common/SmartInputs';
 import { idGenerator } from '../../utils/idGenerator';
+import { useData } from '../../services/DataContext';
 
 interface ReturnModalProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   currentEmployeeId,
 }) => {
   const { getVerifiedDate } = useStatusBar();
+  const { activeBranchId } = useData();
   const [step, setStep] = useState(1);
   const [selectedItems, setSelectedItems] = useState<Map<string, number>>(new Map());
   const [returnReason, setReturnReason] = useState<ReturnReason>('customer_request');
@@ -256,7 +258,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
     });
 
     const returnData: Return = {
-      id: idGenerator.generate('returns'),
+      id: idGenerator.generate('returns', activeBranchId),
       saleId: sale.id,
       date: getVerifiedDate().toISOString(),
       returnType: isAllSelected ? 'full' : 'partial',

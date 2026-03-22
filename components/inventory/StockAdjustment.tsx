@@ -503,7 +503,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
       const status = isManager ? 'approved' : 'pending';
 
-      const transactionId = idGenerator.generate('movement');
+      const transactionId = idGenerator.generate('movement', activeBranchId);
       const stockMutations: { id: string; quantity: number }[] = [];
 
       for (const item of adjustments) {
@@ -550,7 +550,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
       const newTransactionMovements = adjustments
         .filter((item) => item.difference !== 0)
         .map((item) => ({
-          id: idGenerator.generate('generic'),
+          id: idGenerator.generate('generic', activeBranchId),
           drugId: item.drugId,
           drugName: item.drugName,
           branchId: activeBranchId, // Fixed: use activeBranchId instead of branchCode

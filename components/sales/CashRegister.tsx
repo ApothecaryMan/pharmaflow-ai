@@ -277,7 +277,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     const startUser = employees?.find((e) => e.id === currentEmployeeId);
     const userName = startUser ? startUser.name : 'Pharmacist';
 
-    const newShiftId = idGenerator.generate('shifts');
+    const newShiftId = idGenerator.generate('shifts', activeBranchId);
 
 
 
@@ -298,7 +298,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
       returns: 0, // Initialize returns counter
       transactions: [
         {
-          id: idGenerator.generate('transactions'),
+          id: idGenerator.generate('transactions', activeBranchId),
           shiftId: newShiftId,
           time: getVerifiedDate().toISOString(),
           type: 'opening',

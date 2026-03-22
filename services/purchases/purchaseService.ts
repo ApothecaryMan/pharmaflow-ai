@@ -124,7 +124,8 @@ export const createPurchaseService = (): PurchaseService => ({
         costPrice: item.costPrice,
         purchaseId: purchase.id,
         dateReceived: new Date().toISOString(),
-      }, undefined, true);
+        branchId: purchase.branchId,
+      }, purchase.branchId, true);
       newBatches.push(batch);
 
       const movement = await stockMovementService.logMovement({

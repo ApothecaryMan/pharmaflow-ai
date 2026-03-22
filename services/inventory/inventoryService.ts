@@ -213,7 +213,7 @@ export const createInventoryService = (): InventoryService => ({
     const merged = [...otherBranchItems, ...inventory];
     const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
     
-    await drugCacheService.saveAll(uniqueMerged);
+    await drugCacheService.saveAll(uniqueMerged, effectiveBranchId);
   },
 });
 

@@ -6,6 +6,7 @@ import { canPerformAction, type UserRole } from '../../config/permissions';
 import { useAlert, useSettings } from '../../context';
 import { useLongPress } from '../../hooks/useLongPress';
 import { settingsService } from '../../services';
+import { useData } from '../../services/DataContext';
 import type { Drug, Purchase, PurchaseItem, PurchaseReturn, Supplier } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import {
@@ -66,6 +67,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   const { error: showToastError } = useAlert();
   const { showMenu } = useContextMenu();
   const { textTransform } = useSettings();
+  const { activeBranchId } = useData();
   const [mode, setMode] = useState<'create' | 'history'>('create');
   const [search, setSearch] = useState('');
   const [supplierSearch, setSupplierSearch] = useState('');
@@ -682,7 +684,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       return [
         ...prev,
         {
-          id: idGenerator.generate('generic'), // Unique ID for this row
+          id: idGenerator.generate('generic', activeBranchId), // Unique ID for this row
           drugId: drug.id,
           name: getDisplayName(drug, textTransform),
           quantity: 1,
@@ -819,7 +821,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     const uniqueOrderId = getUniqueOrderId();
 
     const purchase: Purchase = {
-      id: idGenerator.generate('purchases'),
+      id: idGenerator.generate('purchases', activeBranchId),
       date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',
@@ -887,7 +889,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
     const uniqueOrderId = getUniqueOrderId();
 
     const purchase: Purchase = {
-      id: idGenerator.generate('purchases'),
+      id: idGenerator.generate('purchases', activeBranchId),
       date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',

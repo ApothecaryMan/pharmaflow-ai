@@ -119,7 +119,7 @@ class SyncEngine {
     const pendingActions = await syncQueueService.dequeueAll();
     // In multi-branch, we only push actions belonging to CURRENT branch 
     // OR actions without a branch (global items like DRUG cache updates)
-    const branchActions = pendingActions.filter(a => !a.branchId || a.branchId === this.activeBranchId);
+    const branchActions = pendingActions.filter(a => a.branchId === this.activeBranchId);
     
     if (branchActions.length === 0) return;
 
