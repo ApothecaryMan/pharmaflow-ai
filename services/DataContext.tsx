@@ -40,7 +40,8 @@ import { supplierService } from './suppliers';
 import { syncQueueService } from './syncQueueService';
 import { syncEngine, type SyncStatus } from './sync/syncEngine';
 import { useComputedInventory } from '../hooks/useComputedInventory';
-
+import { StorageKeys } from '../config/storageKeys';
+import { storage } from '../utils/storage';
 export interface DataState {
   inventory: Drug[];
   sales: Sale[];
@@ -149,7 +150,6 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   // Compute inventory from raw data and batches
   const inventory = useComputedInventory(rawInventory, batches, activeBranchId);
 
-  // Load initial data
   // Load initial data
   useEffect(() => {
     const loadData = async () => {
@@ -293,7 +293,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({
           }
         }
 
-        setEmployeesState(emp);
+        // Strip sensitive auth fields before putting into React State
+        setEmployeesState(emp.map(({ password, biometricCredentialId, biometricPublicKey, ...safe }) => safe as Employee));
+        
         setBatchesState(bat);
 
         // --- Initialize Sync Engine ---
@@ -341,20 +343,16 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   useEffect(() => { if (!isLoading) customerService.save(customers, activeBranchId); }, [customers, activeBranchId]);
   useEffect(() => {
     if (!isLoading) {
-      import('../utils/storage').then(({ storage }) => {
-        import('../config/storageKeys').then(({ StorageKeys }) => {
-          const allBatches = storage.get<StockBatch[]>(StorageKeys.STOCK_BATCHES, []);
-          // Keep items from OTHER branches
-          const otherBranchBatches = allBatches.filter(
-            (b) => b.branchId && b.branchId !== activeBranchId
-          );
-          // Combine and deduplicate by ID
-          const merged = [...otherBranchBatches, ...batches];
-          const unique = Array.from(new Map(merged.map((b) => [b.id, b])).values());
-          
-          storage.set(StorageKeys.STOCK_BATCHES, unique);
-        });
-      });
+      const allBatches = storage.get<StockBatch[]>(StorageKeys.STOCK_BATCHES, []);
+      // Keep items from OTHER branches
+      const otherBranchBatches = allBatches.filter(
+        (b) => b.branchId && b.branchId !== activeBranchId
+      );
+      // Combine and deduplicate by ID
+      const merged = [...otherBranchBatches, ...batches];
+      const unique = Array.from(new Map(merged.map((b) => [b.id, b])).values());
+      
+      storage.set(StorageKeys.STOCK_BATCHES, unique);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batches, activeBranchId]);

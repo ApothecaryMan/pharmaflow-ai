@@ -44,8 +44,8 @@ export interface Branch {
 export interface Drug {
   /** Unique identifier (UUID) */
   id: string;
-  /** Branch this drug belongs to (for multi-branch support) */
-  branchId?: string;
+  /** Branch this drug belongs to — required for RLS isolation */
+  branchId: string;
   /** External database ID (from CSV imports) */
   dbId?: string;
   /** Product name in English */
@@ -108,8 +108,8 @@ export interface Drug {
 export interface Supplier {
   /** Unique identifier (UUID) */
   id: string;
-  /** Branch this supplier is associated with */
-  branchId?: string;
+  /** Branch this supplier is associated with — required for RLS isolation */
+  branchId: string;
   /** Company/supplier name */
   name: string;
   /** Primary contact person name */
@@ -135,7 +135,8 @@ export interface Supplier {
  */
 export interface Customer {
   id: string;
-  branchId?: string;
+  /** Branch this customer belongs to — required for RLS isolation */
+  branchId: string;
   /** System-generated primary key (internal, e.g. "B1-0001") */
   serialId: string;
   /** Customer-facing code printed on loyalty cards - given to customer */
@@ -172,8 +173,8 @@ export interface Customer {
 export interface StockBatch {
   /** Unique batch identifier */
   id: string;
-  /** Branch this batch belongs to */
-  branchId?: string;
+  /** Branch this batch belongs to — required for RLS isolation */
+  branchId: string;
   /** Drug this batch belongs to */
   drugId: string;
   /** Available quantity in this batch (in units) */
@@ -188,8 +189,8 @@ export interface StockBatch {
   dateReceived: string;
   /** Manufacturer's batch number for tracking */
   batchNumber?: string;
-  /** Optimistic lock version to catch concurrent modifications */
-  version?: number;
+  /** Optimistic lock version to catch concurrent modifications (default: 1) */
+  version: number;
 }
 
 /**
@@ -314,6 +315,47 @@ export interface CartItem extends Drug {
 }
 
 /**
+ * SaleItem — lean representation matching the `sale_items` DB table.
+ * Used when persisting to Supabase. CartItem → SaleItem mapping happens at checkout.
+ */
+export interface SaleItem {
+  /** Unique identifier */
+  id: string;
+  /** Parent sale ID */
+  saleId: string;
+  /** Drug reference */
+  drugId: string;
+  /** Drug name snapshot (frozen at sale time for historical accuracy) */
+  drugNameSnapshot: string;
+  /** Quantity sold */
+  quantity: number;
+  /** Selling price at time of sale */
+  price: number;
+  /** Cost price at time of sale */
+  costPrice?: number;
+  /** Item-level discount percentage */
+  discount?: number;
+  /** Whether quantity is in units */
+  isUnit?: boolean;
+}
+
+/**
+ * SaleItemBatch — normalized batch allocation for sale items.
+ * Replaces the old `batch_allocations` JSONB field.
+ * Maps to the `sale_item_batches` DB table.
+ */
+export interface SaleItemBatch {
+  /** Unique identifier */
+  id: string;
+  /** Reference to the sale_item */
+  saleItemId: string;
+  /** Reference to the stock_batch consumed */
+  batchId: string;
+  /** Quantity taken from this batch */
+  quantity: number;
+}
+
+/**
  * SaleTab - represents an open POS tab/transaction.
  * Allows multiple concurrent sales to be managed.
  */
@@ -383,7 +425,8 @@ export interface Sale {
   id: string;
   /** Sequential, branch-specific human-readable ID (e.g., 100001) */
   serialId?: string;
-  branchId?: string;
+  /** Branch this sale belongs to — required for RLS isolation */
+  branchId: string;
   date: string;
   /** ISO date of last update (essential for statistics timing) */
   updatedAt?: string;
@@ -391,6 +434,10 @@ export interface Sale {
   soldByEmployeeId?: string;
   /** Sequential order number for the day (1, 2, 3...) */
   dailyOrderNumber?: number;
+  /**
+   * Cart items in this sale. Uses CartItem (extends Drug) for frontend display.
+   * When persisting to Supabase, map to SaleItem[] via the service layer.
+   */
   items: CartItem[];
   total: number;
   subtotal?: number;
@@ -401,7 +448,7 @@ export interface Sale {
   customerAddress?: string;
   /** Hand-written detailed street address */
   customerStreetAddress?: string;
-  paymentMethod: 'cash' | 'visa';
+  paymentMethod: 'cash' | 'visa' | 'credit';
   saleType?: 'walk-in' | 'delivery';
   deliveryFee?: number;
   /**
@@ -409,14 +456,14 @@ export interface Sale {
    * Formula: sum(item.price * item.quantity * (item.discount/100)) for all items
    */
   globalDiscount?: number;
-  // Return tracking — use Return entity as source of truth
-  /** Quick lookup: has this sale been returned? (computed from Returns list) */
+  // ── @computed Return tracking ── (derived from `returns` table, NOT stored in DB)
+  /** @computed Quick lookup: has this sale been returned? */
   hasReturns?: boolean;
-  /** IDs of associated Return records */
+  /** @computed IDs of associated Return records */
   returnIds?: string[];
-  /** Total after deducting returns (computed) */
+  /** @computed Total after deducting returns */
   netTotal?: number;
-  /** Maps drugId to total quantity returned (computed) */
+  /** @computed Maps drugId to total quantity returned */
   itemReturnedQuantities?: Record<string, number>;
   status: 'completed' | 'cancelled' | 'pending' | 'with_delivery' | 'on_way';
   /** Delivery driver assigned to this order */
@@ -478,8 +525,8 @@ export interface ReturnItem {
 export interface Return {
   /** Unique return ID */
   id: string;
-  /** Branch where return was processed */
-  branchId?: string;
+  /** Branch where return was processed — required for RLS isolation */
+  branchId: string;
   /** Original sale ID */
   saleId: string;
   /** Date of return (ISO string) */
@@ -508,8 +555,8 @@ export type PurchaseStatus = 'completed' | 'pending' | 'rejected';
 export interface Purchase {
   /** Unique purchase ID */
   id: string;
-  /** Branch receiving the purchase */
-  branchId?: string;
+  /** Branch receiving the purchase — required for RLS isolation */
+  branchId: string;
   /** Purchase date (ISO string) */
   date: string;
   /** Supplier ID */
@@ -530,7 +577,7 @@ export interface Purchase {
   invoiceId?: string;
   /** Supplier's invoice number */
   externalInvoiceId?: string;
-  /** Track returned quantities per drugId */
+  /** @computed Track returned quantities per drugId — derived from purchase_return_items, not stored in DB */
   returnedQuantities?: Record<string, number>;
   /** Date purchase was approved */
   approvalDate?: string;
@@ -576,8 +623,8 @@ export interface PurchaseReturnItem {
 export interface PurchaseReturn {
   /** Unique return ID */
   id: string;
-  /** Branch making the return */
-  branchId?: string;
+  /** Branch making the return — required for RLS isolation */
+  branchId: string;
   /** Original purchase ID */
   purchaseId: string;
   /** Supplier ID */
@@ -707,8 +754,8 @@ export interface CashTransaction {
 export interface Shift {
   /** Unique shift ID */
   id: string;
-  /** Branch this shift belongs to */
-  branchId?: string;
+  /** Branch this shift belongs to — required for RLS isolation */
+  branchId: string;
   /** Branch name for display/receipts */
   branchName?: string;
   /** Current shift status */
@@ -762,7 +809,8 @@ export interface Shift {
 export interface Employee {
   // --- Identification ---
   id: string; // Unique UUID
-  branchId?: string;
+  /** Branch this employee belongs to — required for RLS isolation */
+  branchId: string;
   employeeCode: string; // Auto-generated: EMP-001, EMP-002, etc.
 
   // --- Personal Info ---
@@ -809,6 +857,29 @@ export interface Employee {
   // --- Documents ---
   nationalIdCard?: string; // Base64 encoded National ID Card (البطاقة الشخصية)
   nationalIdCardBack?: string; // Base64 encoded National ID Card Back Side
-  mainSyndicateCard?: string; // Base64 encoded Main Syndicate Card (كارنية النقابة الرئيسية)
-  subSyndicateCard?: string; // Base64 encoded Sub Syndicate Card (كارنية النقابة الفرعية)
+  mainSyndicateCard?: string; // Base64 encoded Main Syndicate Card (كارنيه النقابة الرئيسية)
+  subSyndicateCard?: string; // Base64 encoded Sub Syndicate Card (كارنيه النقابة الفرعية)
+}
+
+/**
+ * AuditLog — tracks system actions for compliance and debugging.
+ * Maps to the `audit_logs` DB table.
+ */
+export interface AuditLog {
+  /** Unique identifier */
+  id: string;
+  /** Branch where action occurred */
+  branchId: string;
+  /** Employee who performed the action */
+  actorId?: string;
+  /** Action identifier (e.g., 'sale.complete', 'inventory.add') */
+  action: string;
+  /** Entity type (e.g., 'drug', 'sale', 'employee') */
+  entityType?: string;
+  /** Entity ID affected */
+  entityId?: string;
+  /** Human-readable details */
+  details?: string;
+  /** ISO timestamp */
+  timestamp: string;
 }

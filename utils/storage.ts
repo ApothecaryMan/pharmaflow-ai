@@ -39,7 +39,14 @@ export const storage = {
       // if (typeof window !== 'undefined') window.dispatchEvent(new Event('local-storage'));
     } catch (error) {
       console.error(`Error writing storage key "${key}":`, error);
-      // Optional: Handle quota exceeded
+      const isQuotaError = error instanceof Error && 
+        (error.name === 'QuotaExceededError' || error.message.toLowerCase().includes('quota'));
+      if (isQuotaError) {
+        console.error('CRITICAL: LocalStorage Quota Exceeded. Data loss may occur.');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('storage-quota-exceeded'));
+        }
+      }
     }
   },
 
