@@ -325,17 +325,12 @@ To ensure reliability in a multi-branch, high-load environment:
 - `i18n/menuTranslations.ts`: Sidebar & Menu items.
 - `i18n/helpInstructions.ts`: Help content & tooltips.
 
-#### Forbidden ❌
+#### Dynamic Texts & Error Codes
 
-- Hardcoded English string: `<div>Total</div>`
-- String concatenation: `"Hello " + name`
-
-#### Required ✅
-
-- **Strict Typing**: NEVER use `any`. Use `t: typeof TRANSLATIONS.EN.moduleName`.
-- **Friendly Tone**: Use human-centric, polite, and clear language.
-- **Completeness**: Add keys to `i18n/translations.ts` immediately. MUST have both EN and AR values.
-- **Usage**: Use `props.t.key`. No hardcoded strings.
+- ❌ **Forbidden**: Hardcoded English or Arabic strings (`<div>Total</div>` or `"Hello " + name`).
+- ✅ **Required**: Use structural translation keys (`t: typeof TRANSLATIONS.EN.moduleName`).
+- **Backend Errors**: The backend MUST return unified `errorCode` (e.g., `ERR_INSUFFICIENT_STOCK`). The frontend is responsible for translating these codes via `i18n`. Never pass translated messages directly from the server.
+- **Namespaces**: For large modules, clearly namespace keys (e.g., `POS.CART_EMPTY`, `INVENTORY.ADD_ITEM_SUCCESS`) to maintain readability.
 
 ---
 
@@ -377,20 +372,16 @@ All UI elements must look professional. Avoid basic browser defaults.
 
 **Forbidden:** Never use HTML `<select>`, raw `<input>`, or `<table>` directly.
 
-#### Badge & Status Indicator Design ("The Perfect Way")
+#### Interaction & Animation
 
-To maintain a consistent, premium look for statuses and tags, follow these specs:
+- Use `framer-motion` for meaningful micro-interactions (e.g., button presses, modal popups). Avoid heavy animations that might drop frames on point-of-sale machines.
+- **POS Design Philosophy**: For Point-of-Sale interfaces, prioritize large touch targets, keyboard shortcuts over mouse navigation, and eliminate unnecessary scrolling.
+
+#### Badge & Status Indicator Design
 
 - **Container**: `inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border bg-transparent`
 - **Typography**: `text-xs font-bold uppercase tracking-wider`
 - **Icons**: Always include a `material-symbols-rounded` icon (size `text-sm`).
-- **Example**:
-  ```tsx
-  <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider bg-transparent">
-    <span className="material-symbols-rounded text-sm">check_circle</span>
-    APPROVED
-  </span>
-  ```
 
 #### iOS Safari Compatibility
 
@@ -400,42 +391,19 @@ When using buttons with explicit dimensions, add appearance reset:
 style={{ WebkitAppearance: 'none', appearance: 'none' }}
 ```
 
-#### SegmentedControl Variants
-
-Use the `variant` prop based on parent background:
-
-- `variant="onCard"` (default): For gray-800 card backgrounds
-- `variant="onPage"`: For gray-900 page backgrounds
-
-#### Styling Rules
-
-- **Close Buttons**: `w-8 h-8 (or w-10 h-10) flex items-center justify-center rounded-full`
-- **Icon Boxes**: Use consistent padding/rounded corners.
-- **Colors**: Use semantic colors from Tailwind config or `index.css`.
-
-#### Branding & Transitions Standard
-
-To maintain a premium "first impression," the login and splash screens follow a minimalist aesthetic:
-
-- **Minimalist Loading**: Avoid bulky cards or containers during transitions. Use slim progress bars and focused text on a dark background.
-- **Official Assets**: Always use official wordmarks (`logo_word_white.svg`) and icons (`logo_icon_white.svg`) instead of text-based titles or generic icons.
-- **Realistic Progress**: Transition bars MUST simulate realistic multi-stage loading (use `Math.random()` increments and staged messages).
-- **White Accents**: Use white text (`text-white` or `text-white/40`) for loading states to ensure a high-contrast, clean look.
-
 ---
 
 ### 3. Storage & Persistence
 
 **RULE:** NEVER access `localStorage` directly.
-Use the type-safe `StorageService` for all local storage operations.
+Use the type-safe `StorageService` or Local/IndexedDB engines via `db.ts`.
 
-**Why?**
+#### Persistence Strategy
 
-- Prevents key collisions (via central `StorageKeys` enum).
-- Ensures safe JSON parsing & stringifying.
-- Provides consistent error handling (try-catch).
+1. **`localStorage` via `storage.ts`**: Reserved strictly for lightweight UI state (theme, language, selected branch, auth tokens).
+2. **IndexedDB via `db.ts`**: Used for heavy datasets requiring fast offline querying (e.g., local inventory cache, offline transaction queues).
 
-#### Usage
+#### Usage Examples
 
 ```typescript
 import { storage } from "../../utils/storage";
@@ -444,19 +412,21 @@ import { StorageKeys } from "../../config/storageKeys";
 // ✅ Correct: Type-safe and failsafe
 const items = storage.get<Item[]>(StorageKeys.INVENTORY, []);
 storage.set(StorageKeys.INVENTORY, newItems);
-
-// ❌ Forbidden
-localStorage.getItem("inventory");
-localStorage.setItem("data", JSON.stringify(data));
 ```
 
 ---
 
 ### 4. Tailwind CSS Configuration
 
-Tailwind is configured locally (not CDN). See `tailwind.config.js`.
+Tailwind is configured locally. See `tailwind.config.js`.
 
-**Dynamic Classes**: Use the `safelist` in `tailwind.config.js` for dynamic color classes:
+**Semantic Theming**:
+
+- ❌ **Forbidden**: Using hardcoded utility colors for structural UI (`bg-red-500`, `text-blue-600`).
+- ✅ **Required**: Use semantic variables (`bg-primary`, `text-destructive`, `bg-card`) which seamlessly support Light/Dark transitions.
+
+**Dynamic Classes**:
+Use the `safelist` in `tailwind.config.js` for dynamic color classes:
 
 ```javascript
 // Classes like bg-${theme}-600 are preserved via safelist
@@ -466,30 +436,24 @@ Tailwind is configured locally (not CDN). See `tailwind.config.js`.
 
 ### 5. ID Generation (Prefix Strategy)
 
-**RULE:** Do NOT use `Date.now()` or `UUID` for entity IDs.
+**RULE:** Do NOT use `Date.now()` or `UUID` directly for entity IDs.
 Use the `idGenerator` utility to ensure unique, readable, and scalable IDs (e.g., `B1-1001`).
 
 #### Why?
 
-- **Multi-Branch Support:** Prevents collisions between branches.
-- **Readability:** Easier to reference `B1-0042` than a long timestamp.
+- **Multi-Branch Support:** Prevents collisions across branches entirely.
+- **Readability:** Easier to reference `B1-0042` than a long, opaque UUID.
 - **Self-Healing:** Automatically recovers sequence if storage is cleared.
 
-#### Usage
+#### ID Format Strategy
 
-```typescript
-import { idGenerator } from "../../utils/idGenerator";
-
-// ✅ Correct
-const newId = idGenerator.generate("sales"); // Returns "B1-0001"
-
-// ❌ Forbidden
-const newId = Date.now().toString();
-```
+All critical transactions and entities generate IDs conforming to the local branch shard:
+`[BranchCode]-[Sequence]-[RandomSuffix]`
+This guarantees global uniqueness when data eventually syncs to the central database.
 
 ---
 
-### 6. Role-Based Access Control (RBAC)
+### 6. Role-Based Access Control (RBAC) & ABAC
 
 **RULE:** All sensitive actions, pages, and menu items MUST be gated by permissions.
 
@@ -498,106 +462,129 @@ const newId = Date.now().toString();
 - **Roles**: Defined in `config/permissions.ts` (e.g., `admin`, `manager`, `pharmacist`).
 - **Permissions**: Granular actions (e.g., `inventory.update`, `reports.view_financial`).
 - **Helper**: `canPerformAction(role, permission)` checks access.
+- **Attribute-Based Rules (ABAC)**: For context-sensitive checks (e.g., "Cashier can only void a transaction if it belongs to their active shift"), supplement RBAC with explicit state-checks.
 
 #### Implementation Steps
 
 1. **Page Protection**: Add `permission` to `PAGE_REGISTRY` in `config/pageRegistry.ts`.
-
-   ```typescript
-   'employee-list': {
-     // ...
-     permission: 'users.view' // Redirects to Access Restricted if user lacks permission
-   }
-   ```
-
 2. **Menu Visibility**: Add `permission` to `MenuItem` in `config/menuData.ts`.
-
-   ```typescript
-   {
-     label: "Financial Reports",
-     permission: "reports.view_financial" // Hides menu item if user lacks permission
-   }
-   ```
-
-3. **Component-Level Gating**: Use `canPerformAction` to hide specific buttons/UI.
-
-   ```typescript
-   import { canPerformAction } from '../../config/permissions';
-
-   // ... inside component
-   {canPerformAction(userRole, 'inventory.delete') && (
-     <button onClick={handleDelete}>Delete</button>
-   )}
-   ```
-
-4. **New Permissions**: Only add new permissions to `config/permissions.ts` if a suitable one doesn't exist. Update `ALL_PERMISSIONS` and `ROLE_PERMISSIONS` accordingly.
+3. **Component-Level Gating**: Use `canPerformAction` to conditionally render buttons.
 
 ---
 
 ### 7. Audit Logging & Localization
 
-**RULE:** System activities (Login, Switch User, Logout) MUST be logged with localized details.
+**RULE:** System activities (Login, Switch User, Logout, Financial Changes) MUST be logged securely and symmetrically.
+
+#### Event Payload Structure
+
+Every audit event should strive to capture context deterministically:
+
+- `actor_id` (Who?)
+- `action` (What?)
+- `entity_type` & `entity_id` (On what?)
+- `branch_id` (Where?)
+- `timestamp` (When?)
 
 #### The `translateDetails` Pattern
 
-When logging dynamic events (e.g., "Switched from Employee A"), do not log translated strings. Log the **English pattern** and translate it in the view layer.
-
-- **Service**: `authService.logAuditEvent({ ..., details: "Switched from name" })`
-- **Component**: Use `translateDetails(row.details)` in the table cell.
-- **Translation**: Define regex patterns in `translations.ts` under `loginAudit.detailPatterns`.
+When logging dynamic events (e.g., "Switched from Employee A"), **do not log translated strings**. Log the **English pattern/metadata** and translate it in the view layer via `translateDetails(row.details)`.
 
 #### Avatar & Photos
 
-- **System Actions**: Use the application logo icon for system/admin actions.
-- **Employee Actions**: Always include `employeeId` in audit entries. The `LoginAuditList` component automatically resolves this ID to a photo or initial using the `useData()` hook.
+- **System Actions**: Use the application logo icon.
+- **Employee Actions**: Always include `employeeId` to resolve photos dynamically in the log table.
+
+---
+
+### 8. Synchronization & Offline-First Protocol
+
+**RULE:** The system must function gracefully without an active internet connection.
+
+- **Offline Queues**: All mutating API actions (Sales, Inventory Adjustments) must be dispatched through the queue, not awaited directly over the network.
+- **Dead Letter Queue (DLQ)**: Failed syncs must route to a DLQ state rather than perpetually blocking the main queue. The user interface must flag these for manual review or automated retries.
+- **Conflict Resolution**: The client dictates local state, and conflicts on sync (e.g., negative stock on server) should leverage Optimistic Locking techniques.
+
+---
+
+### 9. State Management & Hooks
+
+**RULE:** Preserve the Separation of Concerns (SoC) between UI logic and Data logic.
+
+- ❌ **Forbidden**: Calling `api.get()` or `api.post()` directly within a React Component `useEffect` or button handler.
+- ✅ **Required**: Use domain hooks (e.g., `useEntityHandlers`, `useProcurement`) which internally manage caching, syncing, and dispatching.
+- **Internal Component State**: Limit the use of `useState` strictly to UI-only state (e.g., modal open/close).
+
+---
+
+### 10. AI Integration & LLM Guidelines
+
+**RULE:** AI functionality (`geminiService.ts`, `AIAssistant`) should act as an accelerator, not a hard business constraint.
+
+- **Prompt Engineering**: Prompts must be context-rich and strictly formatted (e.g., demanding valid JSON outputs to prevent parsing crashes).
+- **Graceful Degradation**: If the AI endpoint rate-limits or fails, the core system workflow MUST have a non-AI fallback.
+- **Security Check**: Never pass un-sanitized PII or credentials in LLM prompts.
+
+---
+
+### 11. Error Handling & Validation
+
+**RULE:** Fail predictably. Catch early.
+
+- **Boundary Protection**: Use React `<ErrorBoundary>` wrappers around critical modules (e.g., the POS grid) so a single bug doesn't crash the entire app shell.
+- **Zod Validations**: Input data MUST be schema-validated using Zod at the boundary (before calling services or syncing) to guarantee type safety at runtime.
+- **User-Friendly Errors**: Raw exception text (e.g., `TypeError: Failed to fetch`) should never reach the UI. Catch at the service boundary and convert to a `TRANSLATIONS` warning toast via `AlertContext`.
 
 ---
 
 ## 🛠️ Workflow: Adding a New Page
 
 1.  **Create Component**: Build your page in `components/[module]/MyPage.tsx`.
-    - Ensure it accepts `color`, `t`, `language`, and data props.
-2.  **Register Page**: Add it to `config/pageRegistry.ts`.
+    - Ensure it uses `useData()` from `DataContext` for global state and `useEntityHandlers()` for domain logic.
+    - Wrap the page export in an `<ErrorBoundary>` if it controls critical workflows.
+2.  **Add Skeleton**: Create a loading state in `components/skeletons/` and map it in `PageSkeletonRegistry.tsx`.
+3.  **Define Permissions**: If the page is restricted, define the new permission in `config/permissions.ts`.
+4.  **Register Page**: Add it to `config/pageRegistry.ts`.
     ```typescript
     export const PAGE_REGISTRY = {
       "my-new-page": {
         id: "my-new-page",
         component: MyPage,
-        requiredProps: ["inventory", "onAddDrug"],
+        permission: "module.view", // RBAC protection
       },
     };
     ```
-3.  **Update Menu**: Add entry to `config/menuData.ts`.
-4.  **Add Translations**: Update `i18n/menuTranslations.ts` and `i18n/translations.ts`.
+5.  **Update Menu**: Add an entry to `config/menuData.ts`.
+6.  **Add Translations**: Update `i18n/menuTranslations.ts` and `i18n/translations.ts` (Both EN & AR).
 
 ---
 
 ## 📝 Code Review Checklist
 
-Before submitting:
+Before submitting code, ensure:
 
-- [ ] **Inputs**: Using `SmartInputs`? (No raw `<input>`)
-- [ ] **Dropdowns**: Using `FilterDropdown`?
-- [ ] **Segmented Controls**: Using `SegmentedControl` with correct `variant`?
-- [ ] **Switches**: Using `Switch` component?
-- [ ] **Storage**: Using `StorageService`? (No `localStorage`)
-- [ ] **Tables**: Using `TanStackTable`?
-- [ ] **Translations**: 100% covered (EN + AR)?
-- [ ] **RTL Support**: Tested in Arabic mode?
-- [ ] **iOS Safari**: Buttons have `WebkitAppearance: none` if needed?
-- [ ] **Props**: Component receives data via props (not importing globals)?
-- [ ] **Type Safety**: No `any` types?
+- [ ] **Data Safety**: Using `db.ts` or `storage.ts`? (No raw `localStorage`)
+- [ ] **Offline-First**: Mutating actions are dispatched to an offline queue mechanism?
+- [ ] **Data Validation**: API boundaries and form inputs use `zod` schema validation?
+- [ ] **State Management**: Using `useData` for shared state, limiting `useState` to pure UI toggles?
+- [ ] **UI Components**:
+  - Using `SmartInputs`? (No raw `<input>`)
+  - Using `FilterDropdown` and `TanStackTable`?
+- [ ] **Translations**: 100% coverage (EN + AR)? No dynamic string concatenation for text?
+- [ ] **RBAC**: Sensitive UI buttons explicitly use `canPerformAction`?
+- [ ] **Error Handling**: Wrapped in `<ErrorBoundary>`? Errors logged and translated via `AlertContext` instead of crashing the view?
 
 ---
 
 ## 📚 Reference
 
-- **SmartInputs**: See `components/common/SmartInputs.tsx` for docs.
+- **Storage & IndexedDB**: See `utils/storage.ts` and `services/db.ts`.
+- **Sync Engine**: See `services/sync/syncEngine.ts` and `syncQueueService.ts`.
+- **Entity Handlers & Hooks**: See `hooks/useEntityHandlers.ts`.
+- **SmartInputs**: See `components/common/SmartInputs.tsx` for robust form docs.
 - **SegmentedControl**: See `components/common/SegmentedControl.tsx` for variant usage.
-- **StorageService**: See `utils/storage.ts` for persistence.
-- **Services**: See `services/` for business logic.
-- **Page Registry**: See `config/pageRegistry.ts` for props injection.
-- **Tailwind Config**: See `tailwind.config.js` for safelist and theme.
+- **Page Registry**: See `config/pageRegistry.ts` for route injection.
+- **Tailwind Config**: See `tailwind.config.js` for safelists and semantic variables.
 
 ---
 
