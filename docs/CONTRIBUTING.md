@@ -11,9 +11,9 @@ zinc/
 │
 ├── components/
 │   ├── features/
-│   │   ├── alerts/
-│   │   │   ├── AlertContext.tsx        # Centralized notifications
-│   │   │   └── AlertsAndAds.tsx        # Status bar UI
+│   │   └── alerts/
+│   │       ├── AlertContext.tsx        # Centralized notifications
+│   │       └── AlertsAndAds.tsx        # Status bar UI
 │   │
 │   ├── common/         # Shared UI Components
 │   │   ├── SmartInputs.tsx
@@ -58,14 +58,12 @@ zinc/
 │   │   │
 │   │   ├── ScreenCalibration.tsx       # Screen sizing helper
 │   │   ├── TableAlignment.tsx          # Table content alignment
-
 │   │   ├── HelpModal.tsx               # Help modal
 │   │   ├── AnimatedCounter.tsx         # Numbers with roll animation
 │   │   ├── ChartWidget.tsx             # Standard Area/Bar chart
 │   │   ├── SmallCard.tsx               # Simple stat card
 │   │   ├── ProgressCard.tsx            # Multi-goal progress bar
-│   │   ├── CompactProgressCard.tsx     # Half-height stacking card
-│   │   └── hooks/
+│   │   └── CompactProgressCard.tsx     # Half-height stacking card
 │   │
 │   ├── skeletons/
 │   │   ├── PageSkeletonRegistry.tsx     # Skeleton lookup by view
@@ -85,34 +83,6 @@ zinc/
 │   │   │
 │   │   └── DashboardIcon.tsx            # Custom icon component
 │   │
-│   ├── services/
-│   │   ├── api/                         # API Clean Clients
-│   │   ├── auth/                        # Authentication & Session
-│   │   │   ├── authService.ts           # Login/Logout/Session
-│   │   │   │   ├── logAuditEvent()      # Audit logger
-│   │   │   │   ├── getLoginHistory()    # History retriever
-│   │   │   │   └── login/logout()       # Auth actions
-│   │   │   ├── hashUtils.ts             # SHA-256 hashing
-│   │   │   └── index.ts                 # Barrel export
-│   │   ├── sales/                       # Sales & POS Logic
-│   │   ├── inventory/                   # Stock & Product Logic
-│   │   │   └── batchService.ts          # FEFO batch stock management
-│   │   ├── hr/                          # Employee Management
-│   │   ├── finance/                     # Financial Transactions
-│   │   ├── customers/                   # Customer CRM
-│   │   ├── suppliers/                   # Supplier Relations
-│   │   ├── purchases/                   # Procurement Logic
-│   │   ├── returns/                     # Return Handling
-│   │   ├── settings/                    # App Configuration
-│   │   ├── migration/                   # Data Migration & Upgrades
-│   │   │   ├── migrationService.ts      # Migration logic
-│   │   │   └── index.ts                 # Barrel export
-│   │   ├── DataContext.tsx              # Unifying Data Provider
-│   │   ├── timeService.ts               # NTP Time Sync
-│   │   ├── geminiService.ts             # AI Integration
-│   │   ├── auditService.ts              # System audit logging
-│   │   ├── salesHelpers.ts              # Cartesian product & cart utils
-│   │   │
 │   ├── dashboard/
 │   │   ├── Dashboard.tsx                # Main dashboard
 │   │   ├── DashboardSkeletons.tsx       # Loading skeletons
@@ -177,92 +147,111 @@ zinc/
 │   │   ├── DashboardExperiments.tsx
 │   │   └── ExpandedChartModal.tsx
 │   │
-│   ├── providers/
-│   │   └── MuiThemeProvider.tsx         # MUI Theme Context
-│   │
 │   ├── ai/
 │   │   └── AIAssistant.tsx              # Chat interface
 │   │
 │   └── test/
 │       ├── POSTest.tsx                  # POS variant
 │       └── LoginTest.tsx                # Testing authentication
-│   ├── hooks/
-│   │   ├── useAppState.ts
-│   │   │   └── useAppState()                # View & UI state management
-│   │   │
-│   │   ├── useAuth.ts
-│   │   │   └── useAuth()                    # Authentication & route guards
-│   │   │
-│   │   ├── useNavigation.ts
-│   │   │   └── useNavigation()              # Navigation handlers & menu filtering
-│   │   │
-│   │   ├── useEntityHandlers.ts
-│   │   │   └── useEntityHandlers()          # CRUD handlers for all entities
-│   │   │
-│   │   ├── useFilterDropdown.ts
-│   │   │   └── useFilterDropdown()       # Keyboard nav for dropdowns
-│   │   │
-│   │   ├── useLongPress.ts
-│   │   │   └── useLongPress()               # Touch long-press detection
-│   │   │
-│   │   ├── usePOSTabs.ts
-│   │   │   └── usePOSTabs()                 # Multi-tab POS state
-│   │   │
-│   │   ├── useColumnReorder.ts
-│   │   │   └── useColumnReorder()           # Table column DnD
-│   │   │
-│   │   ├── useDebounce.ts
-│   │   │   └── useDebounce()                # Debounce values
-│   │   │
-│   │   ├── useTheme.ts
-│   │   │   └── useTheme()                   # Apply theme CSS vars
-│   │   │
-│   │   ├── useShift.tsx
-│   │   │   └── useShift()                   # Shift management
-│   │   │
-│   │   ├── usePersistedState.ts
-│   │   │   └── usePersistedState()          # Trusted storage hook
-│   │   │
-│   │   ├── useSmartPosition.ts              # Popover positioning
-│   │   ├── usePrinter.ts                    # Printer hook
-│   │   └── useDynamicTickerData.ts          # Ticker data hook
-│   │
-│   ├── utils/
-│   │   ├── searchUtils.ts                   # Search helpers
-│   │   ├── expiryUtils.ts                   # Expiry calculations
-│   │   ├── themeStyles.ts                   # Style constants
-│   │   ├── barcodeEncoders.ts               # Barcode encoding
-│   │   ├── storage.ts                       # TYPE-SAFE STORAGE SERVICE
-│   │   ├── qzPrinter.ts                     # QZ Tray printer utilities
-│   │   ├── inventory.ts                     # Inventory formatters & validators
-│   │   │   └── validateStock()              # Stock validation
-│   │   ├── shiftHelpers.ts                  # Shift transaction utilities
-│   │   │   └── addTransactionToOpenShift()  # Update shift with transaction
-│   │   ├── loyaltyPoints.ts                 # Loyalty points calculator
-│   │   │   └── calculateLoyaltyPoints()     # Tiered points calculation
-│   │   ├── drugDisplayName.ts               # Drug name formatting utility
-│   │   │   ├── getDisplayName()             # Format drug name + dosage form
-│   │   │   └── getFullDisplayName()         # Include strength in display
-│   │   └── printing/                        # Print utilities
-│   │
-│   ├── data/
-│   │   ├── locations.ts                     # Egypt governorates
-│   │   ├── areas.ts                         # Area codes
-│   │   ├── countryCodes.ts                  # Phone codes
-│   │   ├── productCategories.ts             # Categories + types
-│   │   └── sample-inventory.ts            # Initial seed data
-│   │
-│   ├── config/
-│   │   ├── permissions.ts                   # RBAC Role Definitions
-│   │   │   ├── canPerformAction()           # Permission check hook
-│   │   │   └── ROLE_PERMISSIONS             # Role-to-action mapping
-│   │   ├── menuData.ts                      # Menu structure
-│   │   ├── pageRegistry.ts                  # Page → Props map
-│   │   ├── storageKeys.ts                   # STORAGE KEY CONSTANTS
-│   │   ├── themeColors.ts                   # Theme palettes
-│   │   ├── fonts.ts                         # Font definitions
-│   │   └── routes.ts                        # Route constants & test routes
-│   │
+│
+├── services/
+│   ├── api/                         # API Clean Clients
+│   ├── auth/                        # Authentication & Session
+│   │   ├── authService.ts           # Login/Logout/Session
+│   │   │   ├── logAuditEvent()      # Audit logger
+│   │   │   ├── getLoginHistory()    # History retriever
+│   │   │   └── login/logout()       # Auth actions
+│   │   ├── hashUtils.ts             # SHA-256 hashing
+│   │   └── index.ts                 # Barrel export
+│   ├── sales/                       # Sales & POS Logic
+│   ├── inventory/                   # Stock & Product Logic
+│   │   ├── inventoryService.ts      # Main inventory service
+│   │   └── batchService.ts          # FEFO batch stock management
+│   ├── hr/                          # Employee Management
+│   ├── finance/                     # Financial Transactions
+│   ├── customers/                   # Customer CRM
+│   ├── suppliers/                   # Supplier Relations
+│   ├── purchases/                   # Procurement Logic
+│   ├── returns/                     # Return Handling
+│   │   └── returnService.ts         # Return operations logic
+│   ├── sync/                        # Synchronization
+│   │   └── syncEngine.ts            # Local/Remote sync engine
+│   ├── settings/                    # App Configuration
+│   ├── migration/                   # Data Migration & Upgrades
+│   │   ├── migrationService.ts      # Migration logic
+│   │   └── index.ts                 # Barrel export
+│   ├── DataContext.tsx              # Unifying Data Provider
+│   ├── timeService.ts               # NTP Time Sync
+│   ├── geminiService.ts             # AI Integration
+│   ├── auditService.ts              # System audit logging
+│   └── salesHelpers.ts              # Cartesian product & cart utils
+│
+├── hooks/
+│   ├── useAppState.ts
+│   │   └── useAppState()                # View & UI state management
+│   ├── useAuth.ts
+│   │   └── useAuth()                    # Authentication & route guards
+│   ├── useNavigation.ts
+│   │   └── useNavigation()              # Navigation handlers & menu filtering
+│   ├── useEntityHandlers.ts
+│   │   └── useEntityHandlers()          # CRUD handlers for all entities
+│   ├── useFilterDropdown.ts
+│   │   └── useFilterDropdown()          # Keyboard nav for dropdowns
+│   ├── useLongPress.ts
+│   │   └── useLongPress()               # Touch long-press detection
+│   ├── usePOSTabs.ts
+│   │   └── usePOSTabs()                 # Multi-tab POS state
+│   ├── useColumnReorder.ts
+│   │   └── useColumnReorder()           # Table column DnD
+│   ├── useDebounce.ts
+│   │   └── useDebounce()                # Debounce values
+│   ├── useTheme.ts
+│   │   └── useTheme()                   # Apply theme CSS vars
+│   ├── useShift.tsx
+│   │   └── useShift()                   # Shift management
+│   ├── usePersistedState.ts
+│   │   └── usePersistedState()          # Trusted storage hook
+│   ├── useSmartPosition.ts              # Popover positioning
+│   ├── usePrinter.ts                    # Printer hook
+│   ├── useDynamicTickerData.ts          # Ticker data hook
+│   └── useProcurement.ts                # Procurement operations
+│
+├── utils/
+│   ├── searchUtils.ts                   # Search helpers
+│   ├── expiryUtils.ts                   # Expiry calculations
+│   ├── themeStyles.ts                   # Style constants
+│   ├── barcodeEncoders.ts               # Barcode encoding
+│   ├── storage.ts                       # TYPE-SAFE STORAGE SERVICE
+│   ├── qzPrinter.ts                     # QZ Tray printer utilities
+│   ├── inventory.ts                     # Inventory formatters & validators
+│   │   └── validateStock()              # Stock validation
+│   ├── shiftHelpers.ts                  # Shift transaction utilities
+│   │   └── addTransactionToOpenShift()  # Update shift with transaction
+│   ├── loyaltyPoints.ts                 # Loyalty points calculator
+│   │   └── calculateLoyaltyPoints()     # Tiered points calculation
+│   ├── drugDisplayName.ts               # Drug name formatting utility
+│   │   ├── getDisplayName()             # Format drug name + dosage form
+│   │   └── getFullDisplayName()         # Include strength in display
+│   └── printing/                        # Print utilities
+│
+├── data/
+│   ├── locations.ts                     # Egypt governorates
+│   ├── areas.ts                         # Area codes
+│   ├── countryCodes.ts                  # Phone codes
+│   ├── productCategories.ts             # Categories + types
+│   └── sample-inventory.ts              # Initial seed data
+│
+├── config/
+│   ├── permissions.ts                   # RBAC Role Definitions
+│   │   ├── canPerformAction()           # Permission check hook
+│   │   └── ROLE_PERMISSIONS             # Role-to-action mapping
+│   ├── menuData.ts                      # Menu structure
+│   ├── pageRegistry.ts                  # Page → Props map
+│   ├── storageKeys.ts                   # STORAGE KEY CONSTANTS
+│   ├── themeColors.ts                   # Theme palettes
+│   ├── fonts.ts                         # Font definitions
+│   └── routes.ts                        # Route constants & test routes
+│
 ├── i18n/
 │   ├── translations.ts                  # UI text (EN + AR)
 │   ├── menuTranslations.ts              # Menu text
@@ -286,33 +275,40 @@ zinc/
 
 ## 🏗️ Architecture & Data Flow
 
-### 1. State Management
+### 1. State Management & Data Flow
 
-The application uses a **Hybrid State Management** approach:
+The application uses an **Offline-First, Hybrid State Management** approach:
 
 1.  **Global UI State** (`App.tsx` & `SettingsContext`):
     - Managed via `usePersistedState` hook (auto-syncs to `localStorage`).
-    - Includes: `view`, `activeModule`, `theme`, `language`.
+    - Includes view state, active module, theme, and language preferences.
 
-2.  **Domain Data** (`DataContext.tsx` & Services):
-    - Complex entities (`inventory`, `sales`, `customers`) are transitioning to `DataContext`.
-    - Data flows: `Service` (Fetch) → `Context` (Store) → `Component` (View).
+2.  **Domain Data & Caching** (`DataContext.tsx` & Services):
+    - Entities are managed by specialized services (e.g., `inventoryService`, `salesService`) and injected via `DataContext.tsx`.
+    - **Caching**: Heavy entities (e.g., Drugs, Employees) use dedicated cache services (`drugCacheService.ts`, `employeeCacheService.ts`) for instant access.
+    - Data flows: `Service` (Fetch/Cache) → `Context` (Store) → `Component` (View/Hook).
+    - Access data via centralized hooks like `useData()`, `useAuth()`, or domain-specific hooks (e.g., `useProcurement()`).
 
-- **Access**: Data is provided via `useData()` hook or passed as props.
-- **Updates**: Use service methods (e.g., `inventoryService.update()`) which sync to storage.
+### 2. Service Layer & Persistence
 
-### 2. Service Layer
+**Services (`services/*`) are the designated boundaries for:**
 
-**Services (`services/*`) are the designated place for:**
-
-- Business Logic & Calculations.
-- Data Persistence (CRUD).
-- API / Storage interactions.
+- **Business Logic**: Calculations, validations, and domain rules.
+- **Data Persistence**: Local storage engines (IndexedDB via `db.ts`, `localStorage`).
+- **API / Storage Interactions**: Network requests.
 
 **Rules:**
 
 - ❌ **Do not** write complex calculations inside components.
-- ❌ **Do not** access `localStorage` directly (Use `StorageService`).
+- ❌ **Do not** access `localStorage` directly (Use `storage.ts`).
+
+### 3. Synchronization & Concurrency
+
+To ensure reliability in a multi-branch, high-load environment:
+
+- **Sync Engine**: `syncEngine.ts` and `syncQueueService.ts` handle background data synchronization between local state and remote servers.
+- **Dead Letter Queue (DLQ)**: Failed sync actions are routed to a DLQ for retry/inspection, ensuring the main queue is not blocked.
+- **Optimistic Locking**: Critical operations like batched stock updates (FEFO) employ optimistic locking to prevent race conditions during concurrent sales.
 
 ---
 
