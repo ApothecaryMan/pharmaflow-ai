@@ -1,10 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { useData } from '../../services';
+import { useSettings } from '../../context';
 import { authService, type LoginAuditEntry } from '../../services/auth/authService';
+import { branchService } from '../../services/branchService';
 import { TanStackTable } from '../common/TanStackTable';
+import { Switch } from '../common/Switch';
 
 /**
  * LoginAuditList Component
@@ -13,9 +16,17 @@ import { TanStackTable } from '../common/TanStackTable';
 export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }) => {
   const t = TRANSLATIONS[language];
   const { employees, activeBranchId } = useData();
+  const { theme: currentTheme } = useSettings();
+  const [showAllBranches, setShowAllBranches] = useState(false);
+
+  // Check if current user is Super Admin to show the toggle
+  const currentUser = authService.getCurrentUserSync();
+  const isSuperAdmin =
+    currentUser?.username === import.meta.env.VITE_SUPER_USER || currentUser?.role === 'admin';
+
   const history: LoginAuditEntry[] = useMemo(
-    () => authService.getLoginHistory(activeBranchId),
-    [activeBranchId]
+    () => authService.getLoginHistory(showAllBranches ? undefined : activeBranchId),
+    [activeBranchId, showAllBranches]
   );
 
   const getActionInfo = (action: string) => {
@@ -259,12 +270,16 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
       {
         accessorKey: 'branchId',
         header: t.loginAudit.headers.branch,
-        cell: (info) => (
-          <span className='font-semibold text-gray-800 dark:text-gray-200'>
-            {String(info.getValue())}
-          </span>
-        ),
-        meta: { width: 80, align: 'center' },
+        cell: (info) => {
+          const id = String(info.getValue());
+          const branch = branchService.getById(id);
+          return (
+            <span className='font-semibold text-gray-800 dark:text-gray-200'>
+              {branch?.name || id}
+            </span>
+          );
+        },
+        meta: { width: 120, align: 'center' },
       },
       {
         accessorKey: 'details',
@@ -288,6 +303,20 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
           <h1 className='text-2xl font-bold text-gray-900 dark:text-white page-title'>
             {t.loginAudit.title}
           </h1>
+
+          {isSuperAdmin && (
+            <label className='flex items-center gap-3 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-white/10 transition-colors'>
+              <span className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider select-none'>
+                {t.loginAudit.globalView}
+              </span>
+              <Switch
+                checked={showAllBranches}
+                onChange={setShowAllBranches}
+                theme={currentTheme.name.toLowerCase()}
+                activeColor={currentTheme.hex}
+              />
+            </label>
+          )}
         </div>
         <p className='text-gray-500 dark:text-gray-400 text-sm'>{t.loginAudit.subtitle}</p>
       </div>
