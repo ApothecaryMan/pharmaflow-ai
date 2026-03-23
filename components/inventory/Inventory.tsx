@@ -26,6 +26,8 @@ import { AddProduct } from './AddProduct';
 import { useStatusBar } from '../layout/StatusBar';
 import { useSettings } from '../../context';
 
+import * as stockOps from '../../utils/stockOperations';
+
 interface InventoryProps {
   inventory: Drug[];
   onAddDrug: (drug: Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'>) => void;
@@ -142,7 +144,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   const handleOpenEdit = (drug: Drug) => {
     setEditingDrug(drug);
     // Load stock as PACKS for editing
-    const stockInPacks = drug.stock / (drug.unitsPerPack || 1);
+    const stockInPacks = stockOps.convertToPacks(drug.stock, drug.unitsPerPack);
     setFormData({
       ...drug,
       stock: stockInPacks,
@@ -180,7 +182,7 @@ export const Inventory: React.FC<InventoryProps> = ({
       const val = parseFloat(newStock);
       if (!isNaN(val)) {
         // Save as Total Units
-        onUpdateDrug({ ...drug, stock: validateStock(val * (drug.unitsPerPack || 1)) });
+        onUpdateDrug({ ...drug, stock: validateStock(stockOps.resolveUnits(val, false, drug.unitsPerPack)) });
       }
     }
     setActiveMenuId(null);
@@ -197,7 +199,7 @@ export const Inventory: React.FC<InventoryProps> = ({
     // Prepare data: Convert stock (Packs) to Total Units
     const submissionData = {
       ...formData,
-      stock: validateStock((formData.stock || 0) * (formData.unitsPerPack || 1)),
+      stock: validateStock(stockOps.resolveUnits(formData.stock || 0, false, formData.unitsPerPack)),
     };
 
     if (editingDrug) {

@@ -1,5 +1,6 @@
 import { batchService } from '../services/inventory/batchService';
 import { type CartItem, type Drug, Sale } from '../types';
+import * as stockOps from './stockOperations';
 
 export interface ValidationResult {
   success: boolean;
@@ -17,7 +18,7 @@ export const validateStockAvailability = (
       return { success: false, message: `Item not found in inventory: ${item.name}` };
     }
 
-    const requestedQty = item.isUnit ? item.quantity : item.quantity * (drug.unitsPerPack || 1);
+    const requestedQty = stockOps.resolveUnits(item.quantity, !!item.isUnit, drug.unitsPerPack);
 
     // 1. Check total stock
     if (drug.stock < requestedQty) {

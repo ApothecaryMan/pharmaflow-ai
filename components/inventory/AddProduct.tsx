@@ -13,6 +13,7 @@ import { FilterDropdown } from '../common/FilterDropdown';
 import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
 import { Tooltip } from '../common/Tooltip';
 import { CARD_LG, INPUT_BASE } from '../../utils/themeStyles';
+import * as stockOps from '../../utils/stockOperations';
 
 interface AddProductProps {
   inventory: Drug[];
@@ -183,7 +184,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
       price: formData.price || 0,
       costPrice: formData.costPrice || 0,
       tax: formData.tax,
-      stock: validateStock((formData.stock || 0) * (formData.unitsPerPack || 1)),
+      stock: validateStock(stockOps.resolveUnits(formData.stock || 0, false, formData.unitsPerPack)),
       expiryDate: formData.expiryDate || '',
       description: formData.description,
       barcode: finalBarcode,

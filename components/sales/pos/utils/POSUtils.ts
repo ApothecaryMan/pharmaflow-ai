@@ -50,6 +50,7 @@ export interface SalePayloadParams {
   globalDiscount: number;
   subtotal: number;
   total: number;
+  branchId: string;
   language?: 'EN' | 'AR';
   deliveryEmployeeId?: string;
   status?: Sale['status'];
@@ -74,12 +75,14 @@ export const buildSalePayload = (params: SalePayloadParams): Sale => {
     status = 'completed',
     processingTimeMinutes,
     date = new Date(),
+    branchId,
   } = params;
 
   return {
     id: `TRX-${date.getTime().toString().slice(-6)}`,
     date: date.toISOString(),
     items,
+    branchId,
     customerName: customerName || customer?.name || 'Guest Customer',
     customerCode: customerCode || customer?.code,
     customerPhone: customer?.phone,
@@ -98,6 +101,8 @@ export const buildSalePayload = (params: SalePayloadParams): Sale => {
   };
 };
 
+import * as stockOps from '../../../../utils/stockOperations';
+
 /**
  * Validates if adding a specific quantity of a drug (in packs or units) 
  * would exceed the current total stock.
@@ -114,12 +119,11 @@ export const isStockConstraintMet = (
   const existingUnits = currentCart
     .filter((item) => item.id === drugId)
     .reduce((sum, item) => {
-      const perPack = item.unitsPerPack || 1;
-      return sum + (item.isUnit ? item.quantity : item.quantity * perPack);
+      return sum + stockOps.resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack || unitsPerPack);
     }, 0);
 
   // Calculate new units to be added
-  const newUnits = isUnit ? delta : delta * (unitsPerPack || 1);
+  const newUnits = stockOps.resolveUnits(delta, isUnit, unitsPerPack);
 
   return existingUnits + newUnits <= stock;
 };

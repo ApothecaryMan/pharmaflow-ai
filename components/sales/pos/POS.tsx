@@ -184,13 +184,7 @@ export const POS: React.FC<POSProps> = ({
   }, [setSearch]);
 
   const { grossSubtotal, cartTotal, subtotal } = useMemo(() => {
-    const gross = cart.reduce((sum, item) => {
-      let unitPrice = item.price;
-      if (item.isUnit && item.unitsPerPack) {
-        unitPrice = item.price / item.unitsPerPack;
-      }
-      return sum + unitPrice * item.quantity;
-    }, 0);
+    const gross = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const net = cart.reduce((sum, item) => sum + calculateItemTotal(item), 0);
     const total = net * (1 - (globalDiscount || 0) / 100);
     return { grossSubtotal: gross, cartTotal: total, subtotal: gross };
@@ -204,6 +198,7 @@ export const POS: React.FC<POSProps> = ({
     cart, mergedCartItems, userRole, showToastError, addNotification, getVerifiedDate,
     activeTab, activeTabId, removeTab, onCompleteSale, customerName, customerCode,
     selectedCustomer, language, t, cartTotal, subtotal, globalDiscount, playSuccess,
+    activeBranchId,
   });
 
   const { totalDiscountAmount, orderDiscountPercent, totalItems } = useMemo(() => ({
