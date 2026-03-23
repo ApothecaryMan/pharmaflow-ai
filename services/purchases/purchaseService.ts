@@ -12,6 +12,7 @@ import { inventoryService } from '../inventory/inventoryService';
 import { batchService } from '../inventory/batchService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { syncQueueService } from '../syncQueueService';
+import * as stockOps from '../../utils/stockOperations';
 import type { PurchaseFilters, PurchaseService, PurchaseStats } from './types';
 import type { StockMovement, StockBatch } from '../../types';
 
@@ -116,15 +117,17 @@ export const createPurchaseService = (): PurchaseService => ({
 
     for (const item of purchase.items) {
       const currentStock = await batchService.getTotalStock(item.drugId);
+      const unitsToAdd = stockOps.resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack);
 
       const batch = await batchService.createBatch({
         drugId: item.drugId,
-        quantity: item.quantity,
+        quantity: unitsToAdd,
         expiryDate: item.expiryDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
         costPrice: item.costPrice,
         purchaseId: purchase.id,
         dateReceived: new Date().toISOString(),
         branchId: purchase.branchId,
+        version: 1,
       }, purchase.branchId, true);
       newBatches.push(batch);
 
@@ -133,9 +136,9 @@ export const createPurchaseService = (): PurchaseService => ({
         drugName: item.name,
         branchId: purchase.branchId || '',
         type: 'purchase',
-        quantity: item.quantity,
+        quantity: unitsToAdd,
         previousStock: currentStock,
-        newStock: currentStock + item.quantity,
+        newStock: currentStock + unitsToAdd,
         referenceId: purchase.id,
         batchId: batch.id,
         performedBy: approverName,
@@ -145,7 +148,10 @@ export const createPurchaseService = (): PurchaseService => ({
     }
 
     await inventoryService.updateStockBulk(
-      purchase.items.map(i => ({ id: i.drugId, quantity: i.quantity })),
+      purchase.items.map(i => ({ 
+        id: i.drugId, 
+        quantity: stockOps.resolveUnits(i.quantity, !!i.isUnit, i.unitsPerPack) 
+      })),
       true
     );
 

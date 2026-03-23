@@ -7,6 +7,7 @@ import { salesService } from '../sales/salesService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { auditService } from '../auditService';
 import { syncQueueService } from '../syncQueueService';
+import * as stockOps from '../../utils/stockOperations';
 import type { Sale, CartItem, Drug, StockMovement } from '../../types';
 
 export interface CheckoutResult {
@@ -44,9 +45,7 @@ export const transactionService = {
       // 1. Allocate Batches (LocalStorage - Atomic in its own loop)
       const allocationRequests = saleData.items.map((item) => {
         const drug = inventory.find((d) => d.id === item.id);
-        const quantityToDeduct = item.isUnit
-          ? item.quantity
-          : item.quantity * (drug?.unitsPerPack || 1);
+        const quantityToDeduct = stockOps.resolveUnits(item.quantity, !!item.isUnit, item.unitsPerPack || drug?.unitsPerPack);
         return {
           drugId: item.id,
           quantity: quantityToDeduct,
@@ -59,11 +58,9 @@ export const transactionService = {
 
       // 2. Prepare Inventory Mutations & Movement Logs
       const processedItems: CartItem[] = saleData.items.map((item) => {
-        const alloc = bulkAllocations.find((a) => a.drugId === item.id);
         const drug = inventory.find((d) => d.id === item.id);
-        const unitsToDeduct = item.isUnit
-          ? item.quantity
-          : item.quantity * (drug?.unitsPerPack || 1);
+        const alloc = bulkAllocations.find((a) => a.drugId === item.id);
+        const unitsToDeduct = stockOps.resolveUnits(item.quantity, !!item.isUnit, drug?.unitsPerPack);
 
         stockMutations.push({ id: item.id, quantity: -unitsToDeduct });
         
@@ -186,9 +183,7 @@ export const transactionService = {
         const drug = inventory.find((d) => d.id === returnedItem.drugId);
         const saleItem = sale.items.find((i) => i.id === returnedItem.drugId);
         
-        const unitsToRestore = returnedItem.isUnit
-          ? returnedItem.quantityReturned
-          : returnedItem.quantityReturned * (drug?.unitsPerPack || 1);
+        const unitsToRestore = stockOps.resolveUnits(returnedItem.quantityReturned, !!returnedItem.isUnit, drug?.unitsPerPack);
 
         stockMutations.push({ id: returnedItem.drugId, quantity: unitsToRestore });
 
