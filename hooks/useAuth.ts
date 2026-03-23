@@ -101,7 +101,32 @@ export function useAuth({ view, setView }: UseAuthParams): AuthState {
     };
 
     checkAuth();
-  }, []); // Only on mount
+
+    // Supabase Auth Listener for external logouts (e.g., from another tab)
+    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+    let authListener: { unsubscribe: () => void } | null = null;
+
+    if (isSupabaseConfigured) {
+      import('../lib/supabase').then(({ supabase }) => {
+        const { data } = supabase.auth.onAuthStateChange((event) => {
+          if (event === 'SIGNED_OUT') {
+            setIsAuthenticated(false);
+            setUser(null);
+            if (view !== ROUTES.LOGIN) {
+              setView(ROUTES.LOGIN);
+            }
+          } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            checkAuth();
+          }
+        });
+        authListener = data.subscription;
+      });
+    }
+
+    return () => {
+      if (authListener) authListener.unsubscribe();
+    };
+  }, [view, setView]); // Rebind if view/setView changes, though typically stable
 
   // Watch for view changes and redirect if needed
   useEffect(() => {

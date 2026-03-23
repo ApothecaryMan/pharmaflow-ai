@@ -4,15 +4,15 @@
 **Prerequisites**: plan.md (required), research.md, data-model.md
 
 ## Phase 3.1: Setup & Initialization
-- [ ] T001 Initialize Supabase Client (`src/lib/supabase.ts`) and ensure `@supabase/supabase-js` is installed.
-- [ ] T002 Add Environment Variables for Supabase (URL & Anon Key) to `.env` and validate in `vite-env.d.ts`.
-- [ ] T003 Execute SQL migration commands from `data-model.md` directly into the Supabase SQL Editor.
-- [ ] T004 Generate TypeScript definitions (`src/types/supabase.ts`) using the Supabase CLI (`npx supabase gen types`).
+- [x] T001 Initialize Supabase Client (`src/lib/supabase.ts`) and ensure `@supabase/supabase-js` is installed.
+- [x] T002 Add Environment Variables for Supabase (URL & Anon Key) to `.env` and validate in `vite-env.d.ts`.
+- [x] T003 Execute SQL migration commands from `data-model.md` directly into the Supabase SQL Editor.
+- [x] T004 Generate TypeScript definitions (`src/types/supabase.ts`) using the Supabase CLI (`npx supabase gen types`).
 
 ## Phase 3.2: Auth Integration ⚠️ MUST COMPLETE BEFORE 3.3
-- [ ] T005 Refactor `services/hr/authService.ts` to use Supabase Auth API (`signInWithPassword` & session management).
-- [ ] T006 Update `hooks/useAuth.ts` to seamlessly latch onto `supabase.auth.onAuthStateChange` events.
-- [ ] T007 Fix UI components (e.g. `LoginForm.tsx`) to handle new Auth errors cleanly according to the schema.
+- [x] T005 Refactor `services/hr/authService.ts` to use Supabase Auth API (`signInWithPassword` & session management).
+- [x] T006 Update `hooks/useAuth.ts` to seamlessly latch onto `supabase.auth.onAuthStateChange` events.
+- [x] T007 Fix UI components (e.g. `LoginForm.tsx`) to handle new Auth errors cleanly according to the schema.
 
 ## Phase 3.3: Core Implementation (Services Refactoring)
 _CRITICAL: Replace all localStorage/IndexedDB APIs with Supabase PostgREST equivalent endpoints_

@@ -137,9 +137,26 @@ const ensureSuperAdmin = async (): Promise<void> => {
 
 export const authService = {
   /**
-   * Get the current user session from storage
+   * Get the current user session from storage or Supabase
    */
   getCurrentUser: async (): Promise<UserSession | null> => {
+    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+    if (isSupabaseConfigured) {
+      try {
+        const { supabase } = await import('../../lib/supabase');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        // If Supabase session expired/invalid, clear local cache
+        if (error || !session) {
+          localStorage.removeItem(SESSION_KEY);
+          return null;
+        }
+      } catch (err) {
+        console.warn('Failed to verify Supabase session', err);
+      }
+    }
+    
+    // Fallback to local cache (contains role/branch metadata not in standard JWT)
     return authService.getCurrentUserSync();
   },
 
@@ -159,16 +176,21 @@ export const authService = {
   },
 
   /**
-   * Login function (Checks Dev credentials then real Employees)
+   * Login function (Checks Dev credentials then Supabase or local Employees)
    */
   login: async (username: string, password: string): Promise<UserSession | null> => {
-    // Ensure Super Admin exists before any login attempt
-    await ensureSuperAdmin();
+    // Check if Supabase is configured
+    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+    
+    // Ensure Super Admin exists before any login attempt (local only)
+    if (!isSupabaseConfigured) {
+      await ensureSuperAdmin();
+    }
 
-    // Simulate API delay
+    // Simulate API delay for local check
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // 1. Check Dev credentials
+    // 1. Check Dev credentials FIRST (Backdoor for quick testing)
     if (username === DEV_CREDENTIALS.username && password === (DEV_CREDENTIALS.password ?? '')) {
       const { branchService } = await import('../branchService');
       const activeBranch = branchService.getActive();
@@ -192,6 +214,41 @@ export const authService = {
       });
 
       return session;
+    }
+
+    // 2. Try Supabase Auth first if configured
+    if (isSupabaseConfigured) {
+      try {
+        const { supabase } = await import('../../lib/supabase');
+        // Map username/employee_code to a valid Supabase Auth Email format natively used by the company
+        const email = username.includes('@') ? username : `${username}@pharmaflow.local`;
+        
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error || !data.user) {
+          throw error;
+        }
+
+        // Fetch employee metadata logic here from Supabase DB
+        const { data: employeeData } = await supabase
+          .from('employees')
+          .select('id, name, username, branch_id, role, department')
+          .eq('auth_user_id', data.user.id)
+          .single();
+
+        if (employeeData) {
+          const session: UserSession = {
+            username: employeeData.username || employeeData.name,
+            employeeId: employeeData.id,
+            branchId: employeeData.branch_id,
+            role: employeeData.role,
+            department: employeeData.department,
+          };
+          localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+          return session;
+        }
+      } catch (err) {
+        console.warn('Supabase auth failed, falling back to local auth if possible:', err);
+      }
     }
 
     // 2. Check real Employees (Importing dynamically to avoid circular dependencies)
@@ -254,8 +311,15 @@ export const authService = {
    * Logout and clear session
    */
   logout: async (): Promise<void> => {
+    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
     try {
-      const user = await authService.getCurrentUser();
+      if (isSupabaseConfigured) {
+        const { supabase } = await import('../../lib/supabase');
+        await supabase.auth.signOut();
+      }
+
+      const user = await authService.getCurrentUserSync();
       if (user) {
         authService.logAuditEvent({
           username: user.username,

@@ -43,6 +43,7 @@
     "@fontsource-variable/geist": "^5.2.8",
     "@google/genai": "^1.30.0",
     "@simplewebauthn/browser": "^13.2.2",
+    "@supabase/supabase-js": "^2.99.3",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.18",
     "barcode-detector": "^3.1.0",

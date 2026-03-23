@@ -127,7 +127,15 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
         }));
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : t.errorGeneric;
+      let errorMessage = err instanceof Error ? err.message : t.errorGeneric;
+      
+      // Map Supabase specific Auth errors to local translations
+      if (errorMessage.toLowerCase().includes('invalid login credentials')) {
+        errorMessage = t.errorInvalidCredentials || errorMessage;
+      } else if (errorMessage.toLowerCase().includes('email not confirmed')) {
+        errorMessage = language === 'AR' ? 'البريد الإلكتروني غير مؤكد' : 'Email not confirmed';
+      }
+
       setState((prev) => ({
         ...prev,
         isLoading: false,
