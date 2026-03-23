@@ -277,9 +277,32 @@ export const adjustStock = async (
 
   const status = options?.status || 'approved';
 
-  // 1. Update Batch ONLY if approved AND batchId provided
-  if (status === 'approved' && options?.batchId) {
-    await batchService.updateBatchQuantity(options.batchId, diff, true);
+  // 1. Update Batch logic
+  if (status === 'approved') {
+    if (options?.batchId) {
+      // Direct batch update
+      await batchService.updateBatchQuantity(options.batchId, diff, true);
+    } else {
+      // Generic adjustment: create or deduct
+      if (diff > 0) {
+        // Increase: Create a new manual adjustment batch
+        await batchService.createBatch({
+          drugId: drug.id,
+          quantity: diff,
+          expiryDate: options?.expiryDate || drug.expiryDate,
+          costPrice: drug.costPrice,
+          purchaseId: options?.transactionId || 'ADJUSTMENT',
+          dateReceived: new Date().toISOString(),
+          batchNumber: 'MANUAL-ADJUST',
+          branchId: ctx.branchId,
+          version: 1,
+        }, ctx.branchId, true);
+      } else {
+        // Decrease: Deduct from existing batches (FEFO)
+        const unitsToDeduct = Math.abs(diff);
+        await batchService.allocateStock(drug.id, unitsToDeduct, ctx.branchId, true);
+      }
+    }
   }
 
   // 2. Log Movement

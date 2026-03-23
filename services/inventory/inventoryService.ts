@@ -116,6 +116,7 @@ export const createInventoryService = (): InventoryService => ({
       batchNumber: 'INITIAL',
       dateReceived: new Date().toISOString(),
       branchId: effectiveBranchId,
+      version: 1,
     }, undefined, true); // skipSync=true because drug create sync covers initial state
 
     if (!skipSync) {
@@ -143,6 +144,26 @@ export const createInventoryService = (): InventoryService => ({
     const drug = await drugCacheService.getById(id);
     if (!drug) throw new Error('Drug not found');
     
+    // 1. Update Batch System
+    const settings = await settingsService.getAll();
+    const branchId = drug.branchId || settings.activeBranchId || settings.branchCode;
+    
+    if (quantity > 0) {
+      await batchService.createBatch({
+        drugId: id,
+        quantity: quantity,
+        expiryDate: drug.expiryDate,
+        costPrice: drug.costPrice,
+        batchNumber: 'STOCK-UPDATE',
+        dateReceived: new Date().toISOString(),
+        branchId: branchId,
+        version: 1,
+      }, branchId, true);
+    } else if (quantity < 0) {
+      await batchService.allocateStock(id, Math.abs(quantity), branchId, true);
+    }
+
+    // 2. Update Drug Record
     const updated = { ...drug, stock: (drug.stock || 0) + quantity };
     await drugCacheService.upsert(updated);
 
@@ -201,19 +222,12 @@ export const createInventoryService = (): InventoryService => ({
   },
 
   save: async (inventory: Drug[], branchId?: string): Promise<void> => {
-    // Note: We avoid doing full-array save in the new architecture 
-    // to benefit from differential writes, but we keep this for compatibility 
-    // with parts of the app that still use bulk replacement.
-    const all = await drugCacheService.loadAll();
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    const otherBranchItems = all.filter((d) => d.branchId && d.branchId !== effectiveBranchId);
-
-    // Merge and deduplicate by ID
-    const merged = [...otherBranchItems, ...inventory];
-    const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
     
-    await drugCacheService.saveAll(uniqueMerged, effectiveBranchId);
+    // Use the branch-aware saveAll from drugCacheService which 
+    // handles atomic deletion of old branch records.
+    await drugCacheService.saveAll(inventory, effectiveBranchId);
   },
 });
 

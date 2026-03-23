@@ -271,7 +271,7 @@ export function useEntityHandlers({
         
         // Detect and log stock changes (Manual Edit)
         if (oldDrug && oldDrug.stock !== result.stock) {
-          stockOps.adjustStock(
+          await stockOps.adjustStock(
             oldDrug,
             result.stock,
             'Manual Edit',
@@ -285,6 +285,7 @@ export function useEntityHandlers({
               status: 'approved',
             }
           );
+          setBatches(batchService.getAllBatches(activeBranchId));
         }
 
         auditService.log('inventory.update', {
@@ -381,18 +382,16 @@ export function useEntityHandlers({
           'Manual Restock / Adjustment',
           {
             branchId: activeBranchId,
-            performedBy: currentEmployeeId,
+            performedBy: currentEmployeeId!,
             performedByName: employee?.name,
           },
           'RESTOCK', // referenceId
           'MANUAL_RESTOCK' // batchNumber
         );
-
-        setInventory((prev) =>
-          prev.map((d) => (d.id === id ? { ...d, stock: mutation.newStock } : d))
-        );
-
-        setTimeout(() => setBatches(batchService.getAllBatches(activeBranchId)), 0);
+        if (mutation) {
+          setInventory((prev) => prev.map((d) => (d.id === id ? { ...d, stock: mutation.newStock } : d)));
+          setBatches(batchService.getAllBatches(activeBranchId));
+        }
 
         auditService.log('inventory.update', {
           userId: currentEmployeeId,
@@ -651,7 +650,7 @@ export function useEntityHandlers({
   );
 
   const handlePurchaseComplete = useCallback(
-    (purchase: Purchase) => {
+    async (purchase: Purchase) => {
       const currentUser = employees?.find((e) => e.id === currentEmployeeId);
       if (!currentUser) {
         error('Authentication required: Please log in to complete purchases');
@@ -662,42 +661,73 @@ export function useEntityHandlers({
         error('Permission denied: Cannot create purchase orders');
         return;
       }
-      let finalPurchase = { ...purchase, branchId: activeBranchId };
+      try {
+        let finalPurchase = { ...purchase, branchId: activeBranchId };
 
-      if (finalPurchase.status === 'completed') {
-        if (!canPerformAction(currentUser.role, 'purchase.approve')) {
-          error('Permission denied: Cannot complete/approve purchase (Created as pending instead)');
-          finalPurchase.status = 'pending';
+        if (finalPurchase.status === 'completed') {
+          if (!canPerformAction(currentUser.role, 'purchase.approve')) {
+            error('Permission denied: Cannot complete/approve purchase (Created as pending instead)');
+            finalPurchase.status = 'pending';
+          } else if (finalPurchase.paymentType === 'cash' && !currentShift) {
+            // Double Check Shift for Cash Purchases
+            error('Shift must be open to process cash purchase');
+            return;
+          }
         }
-      }
 
-      setPurchases((prev) => [finalPurchase, ...prev]);
+        setPurchases((prev) => [finalPurchase, ...prev]);
 
-      // Only update inventory if purchase is actually completed
-      if (finalPurchase.status === 'completed') {
-        applyPurchaseToInventory(finalPurchase);
-        
-        auditService.log('purchase.complete', {
-          userId: currentEmployeeId,
-          details: `Completed PO #${finalPurchase.invoiceId}`,
-          entityId: finalPurchase.id,
-          branchId: activeBranchId,
-        });
-      } else {
-        info('Purchase Order Saved as Pending');
-        auditService.log('purchase.create', {
-          userId: currentEmployeeId,
-          details: `Created PO #${finalPurchase.invoiceId} (Pending)`,
-          entityId: finalPurchase.id,
-          branchId: activeBranchId,
-        });
+        // Only update inventory if purchase is actually completed
+        if (finalPurchase.status === 'completed') {
+          await applyPurchaseToInventory(finalPurchase);
+
+          // Record Shift Transaction if Cash
+          if (finalPurchase.paymentType === 'cash' && currentShift) {
+            addTransaction(currentShift.id, {
+              id: Date.now().toString(),
+              shiftId: currentShift.id,
+              time: new Date().toISOString(),
+              type: 'purchase',
+              amount: finalPurchase.totalCost,
+              reason: `Direct Purchase PO #${finalPurchase.invoiceId} from ${finalPurchase.supplierName}`,
+              userId: currentEmployeeId || 'System',
+            });
+          }
+
+          auditService.log('purchase.complete', {
+            userId: currentEmployeeId,
+            details: `Completed PO #${finalPurchase.invoiceId}`,
+            entityId: finalPurchase.id,
+            branchId: activeBranchId,
+          });
+        } else {
+          info('Purchase Order Saved as Pending');
+          auditService.log('purchase.create', {
+            userId: currentEmployeeId,
+            details: `Created PO #${finalPurchase.invoiceId} (Pending)`,
+            entityId: finalPurchase.id,
+            branchId: activeBranchId,
+          });
+        }
+      } catch (err) {
+        error(`Failed to process purchase: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [setPurchases, applyPurchaseToInventory, info, currentEmployeeId, employees, error]
+    [
+      setPurchases,
+      applyPurchaseToInventory,
+      info,
+      currentEmployeeId,
+      employees,
+      error,
+      currentShift,
+      addTransaction,
+      activeBranchId,
+    ]
   );
 
   const handleApprovePurchase = useCallback(
-    (purchaseId: string, approverName: string) => {
+    async (purchaseId: string, approverName: string) => {
       const currentUser = employees?.find((e) => e.id === currentEmployeeId);
       if (!currentUser) {
         error('Authentication required: Please log in to approve purchases');
@@ -709,35 +739,73 @@ export function useEntityHandlers({
         return;
       }
       const purchase = purchases.find((p) => p.id === purchaseId);
-      if (!purchase) return;
+      if (!purchase) {
+        error('Purchase Order not found. It may have already been approved or deleted.');
+        return;
+      }
 
-      // 1. Update Purchase Status
-      setPurchases((prev) =>
-        prev.map((p) =>
-          p.id === purchaseId
-            ? {
-                ...p,
-                status: 'completed',
-                approvalDate: new Date().toISOString(),
-                approvedBy: approverName,
-              }
-            : p
-        )
-      );
+      // 0. Shift Check for Cash Purchases
+      if (purchase.paymentType === 'cash' && !currentShift) {
+        error('Shift must be open to process cash purchase');
+        return;
+      }
 
-      // 2. Apply inventory logic (deduped)
-      applyPurchaseToInventory({ ...purchase, status: 'completed' });
+      try {
+        // 1. Update Purchase Status
+        setPurchases((prev) =>
+          prev.map((p) =>
+            p.id === purchaseId
+              ? {
+                  ...p,
+                  status: 'completed',
+                  approvalDate: new Date().toISOString(),
+                  approvedBy: approverName,
+                }
+              : p
+          )
+        );
 
-      auditService.log('purchase.approve', {
-        userId: currentEmployeeId,
-        details: `Approved PO #${purchase.invoiceId}`,
-        entityId: purchase.id,
-        branchId: activeBranchId,
-      });
+        // 2. Apply inventory logic (deduped)
+        await applyPurchaseToInventory({ ...purchase, status: 'completed' });
 
-      success(`PO #${purchase.invoiceId} Approved Successfully`);
+        // 3. Record Shift Transaction
+        if (purchase.paymentType === 'cash' && currentShift) {
+          addTransaction(currentShift.id, {
+            id: Date.now().toString(),
+            shiftId: currentShift.id,
+            time: new Date().toISOString(),
+            type: 'purchase',
+            amount: purchase.totalCost,
+            reason: `Purchase PO #${purchase.invoiceId} from ${purchase.supplierName}`,
+            userId: currentUser?.name || 'System',
+            relatedSaleId: purchase.invoiceId, // Using invoice ID as reference
+          });
+        }
+
+        auditService.log('purchase.approve', {
+          userId: currentEmployeeId,
+          details: `Approved PO #${purchase.invoiceId}`,
+          entityId: purchase.id,
+          branchId: activeBranchId,
+        });
+
+        success(`PO #${purchase.invoiceId} Approved Successfully`);
+      } catch (err) {
+        error(`Failed to approve: ${err instanceof Error ? err.message : String(err)}`);
+      }
     },
-    [purchases, setPurchases, applyPurchaseToInventory, success, currentEmployeeId, employees, error]
+    [
+      purchases,
+      setPurchases,
+      applyPurchaseToInventory,
+      success,
+      currentEmployeeId,
+      employees,
+      error,
+      currentShift,
+      addTransaction,
+      activeBranchId,
+    ]
   );
 
   const handleRejectPurchase = useCallback(
@@ -815,17 +883,42 @@ export function useEntityHandlers({
           return drug;
         })
       );
+      // Record Shift Transaction if original purchase was cash
+      const originalPurchase = purchases.find((p) => p.id === returnData.purchaseId);
+      if (originalPurchase?.paymentType === 'cash' && currentShift) {
+        addTransaction(currentShift.id, {
+          id: Date.now().toString(),
+          shiftId: currentShift.id,
+          time: new Date().toISOString(),
+          type: 'purchase_return',
+          amount: returnData.totalRefund,
+          reason: `Purchase Return #${returnData.id} for PO #${originalPurchase.invoiceId}`,
+          userId: performer?.name || 'System',
+          relatedSaleId: originalPurchase.invoiceId,
+        });
+      }
 
       auditService.log('purchase.return', {
-        userId: currentEmployeeId || 'System',
-        details: `Created Purchase Return #${returnData.id}`,
+        userId: currentEmployeeId,
+        details: `Created purchase return #${returnData.id} for PO #${returnData.purchaseId}`,
         entityId: returnData.id,
         branchId: activeBranchId,
       });
 
-      success('Purchase return created and inventory updated.');
+      success('Purchase return created successfully');
     },
-    [currentEmployeeId, employees, error, setPurchaseReturns, setInventory, success, activeBranchId]
+    [
+      purchases,
+      setPurchaseReturns,
+      setInventory,
+      success,
+      currentEmployeeId,
+      employees,
+      error,
+      activeBranchId,
+      currentShift,
+      addTransaction,
+    ]
   );
 
   // --- Employee Management ---
@@ -1129,25 +1222,26 @@ export function useEntityHandlers({
         }
 
         const performer = employee;
-        sale.items.forEach((item) => {
+        for (const item of sale.items) {
           const drug = inventory.find((d) => d.id === item.id && d.branchId === activeBranchId);
           if (drug) {
-            stockOps.returnStock(
+            const returnedAllocations = item.batchAllocations || [];
+            await stockOps.returnStock(
               drug,
               item.quantity,
               !!item.isUnit,
-              item.batchAllocations,
+              returnedAllocations,
               'correction',
-              `Sale Cancellation #${saleId}`,
+              'Sale Cancellation',
               {
                 branchId: activeBranchId,
                 performedBy: currentEmployeeId!,
-                performedByName: performer?.name,
+                performedByName: employees.find((e) => e.id === currentEmployeeId)?.name,
               },
               saleId
             );
           }
-        });
+        }
         
         // Update inventory state
         const updatedInventory = restoreStockForCancelledSale(sale, inventory);
