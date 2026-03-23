@@ -36,6 +36,12 @@ const ShiftContext = createContext<ShiftContextType | undefined>(undefined);
 export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { activeBranchId } = useData();
+
+  // --- Derived: Current Open Shift ---
+  const currentShift = useMemo(() => {
+    return shifts.find((s) => s.status === 'open' && s.branchId === activeBranchId) || null;
+  }, [shifts, activeBranchId]);
 
   // --- Load from storage on mount ---
   useEffect(() => {
@@ -53,6 +59,7 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (loadedShifts.length > 0) {
         const parsed: Shift[] = loadedShifts.map((s: any) => ({
           ...s,
+          branchId: s.branchId || activeBranchId, // Runtime fallback for legacy data
           cardSales: s.cardSales ?? 0,
           returns: s.returns ?? 0,
         }));
@@ -61,7 +68,7 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setIsLoading(false);
     };
     loadShifts();
-  }, []);
+  }, [activeBranchId]);
 
   // --- Cross-tab sync via storage event ---
   useEffect(() => {
@@ -106,12 +113,6 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       });
     }
   }, [shifts, isLoading]);
-
-  // --- Derived: Current Open Shift ---
-  const { activeBranchId } = useData();
-  const currentShift = useMemo(() => {
-    return shifts.find((s) => s.status === 'open' && s.branchId === activeBranchId) || null;
-  }, [shifts, activeBranchId]);
 
   // --- Actions ---
 
@@ -170,6 +171,7 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if (loadedShifts.length > 0) {
       const parsed: Shift[] = loadedShifts.map((s: any) => ({
         ...s,
+        branchId: s.branchId || activeBranchId,
         cardSales: s.cardSales ?? 0,
         returns: s.returns ?? 0,
       }));

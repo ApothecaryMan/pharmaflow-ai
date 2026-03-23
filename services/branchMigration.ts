@@ -35,6 +35,7 @@ export const branchMigration = {
     this.migratePurchases(targetBranchId);
     this.migrateReturns(targetBranchId);
     this.migrateBatches(targetBranchId);
+    this.migrateShifts(targetBranchId);
     
     console.log(`Branch migration completed using target ID: ${targetBranchId}`);
   },
@@ -148,5 +149,20 @@ export const branchMigration = {
       }
     });
     if (modified) storage.set(StorageKeys.STOCK_BATCHES, items);
+  },
+
+  migrateShifts(targetId: string): void {
+    const keys = getAllShardKeys(StorageKeys.SHIFTS);
+    keys.forEach(key => {
+      const shifts = storage.get<any[]>(key, []);
+      let modified = false;
+      shifts.forEach(shift => {
+        if (!shift.branchId || shift.branchId === 'branch_main') {
+          shift.branchId = targetId;
+          modified = true;
+        }
+      });
+      if (modified) storage.set(key, shifts);
+    });
   }
 };
