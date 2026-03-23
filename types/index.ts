@@ -301,6 +301,8 @@ export interface CartItem extends Drug {
   discount?: number;
   /** True if quantity is in units, false/undefined if in packs */
   isUnit?: boolean;
+  /** Base price for a full pack (to ensure consistent price resolution when toggling) */
+  basePackPrice?: number;
   /**
    * Tracks which inventory batches were used for this sale.
    * Populated by batchService.allocateStock() during checkout.

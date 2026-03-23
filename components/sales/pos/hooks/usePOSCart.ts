@@ -11,6 +11,7 @@ import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { canPerformAction, type UserRole } from '../../../../config/permissions';
 import type { CartItem, Drug } from '../../../../types';
 import { isStockConstraintMet } from '../utils/POSUtils';
+import * as stockOps from '../../../../utils/stockOperations';
 
 interface UsePOSCartProps {
   activeTab: any;
@@ -138,9 +139,11 @@ export const usePOSCart = ({
         ...prev,
         {
           ...drug,
+          price: stockOps.resolvePrice(drug.price, isUnitMode, drug.unitsPerPack),
           quantity: initialQuantity,
           discount: prev.find((i) => i.id === drug.id && !!i.isUnit !== isUnitMode)?.discount || 0,
           isUnit: isUnitMode,
+          basePackPrice: drug.price, // Preserve base price for future toggles
         },
       ];
     });
@@ -291,8 +294,11 @@ export const usePOSCart = ({
       const unitsPerPack = item.unitsPerPack || 1;
       if (unitsPerPack <= 1) return prev; // Cannot toggle if no packs/units distinction
 
+      const drug = inventory.find((d) => d.id === id);
       const newIsUnit = !currentIsUnit;
-      const convertedQty = currentIsUnit ? item.quantity / unitsPerPack : item.quantity * unitsPerPack;
+      const convertedQty = currentIsUnit 
+        ? Math.floor(item.quantity / unitsPerPack) || 1
+        : item.quantity * unitsPerPack;
 
       const existingIndex = prev.findIndex((i) => i.id === id && !!i.isUnit === newIsUnit);
       
@@ -309,13 +315,18 @@ export const usePOSCart = ({
         // Just change the type of the current item
         updated = prev.map((i) => 
           (i.id === id && !!i.isUnit === currentIsUnit) 
-            ? { ...i, isUnit: newIsUnit, quantity: convertedQty } 
+            ? { 
+                ...i, 
+                isUnit: newIsUnit, 
+                quantity: convertedQty,
+                price: stockOps.resolvePrice(i.basePackPrice || drug?.price || i.price, newIsUnit, unitsPerPack)
+              } 
             : i
         );
       }
       return updated;
     });
-  }, [setCart]);
+  }, [inventory, setCart]);
 
   const updateItemDiscount = useCallback((id: string, isUnit: boolean, discount: number) => {
     if (!canPerformAction(userRole, 'sale.discount')) {

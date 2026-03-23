@@ -356,7 +356,7 @@ export function useEntityHandlers({
   );
 
   const handleRestock = useCallback(
-    (id: string, qty: number, isUnit: boolean = false) => {
+    async (id: string, qty: number, isUnit: boolean = false) => {
       if (!currentEmployeeId) {
         error('Permission denied: Login required to restock items');
         return;
@@ -366,44 +366,47 @@ export function useEntityHandlers({
         error('Permission denied: Role cannot restock items');
         return;
       }
-      setInventory((prev) =>
-        prev.map((d) => {
-          if (d.id === id) {
-            const mutation = stockOps.addStock(
-              d,
-              qty,
-              !!isUnit,
-              d.expiryDate,
-              d.costPrice,
-              'adjustment',
-              'Manual Restock / Adjustment',
-              {
-                branchId: activeBranchId,
-                performedBy: currentEmployeeId,
-                performedByName: employee?.name,
-              },
-              'RESTOCK', // referenceId
-              'MANUAL_RESTOCK' // batchNumber
-            );
 
-            setTimeout(() => setBatches(batchService.getAllBatches(activeBranchId)), 0);
+      const drug = inventory.find((d) => d.id === id);
+      if (!drug) return;
 
-            return { ...d, stock: mutation.newStock };
-          }
-          return d;
-        })
-      );
+      try {
+        const mutation = await stockOps.addStock(
+          drug,
+          qty,
+          !!isUnit,
+          drug.expiryDate,
+          drug.costPrice,
+          'adjustment',
+          'Manual Restock / Adjustment',
+          {
+            branchId: activeBranchId,
+            performedBy: currentEmployeeId,
+            performedByName: employee?.name,
+          },
+          'RESTOCK', // referenceId
+          'MANUAL_RESTOCK' // batchNumber
+        );
 
-      auditService.log('inventory.update', {
-        userId: currentEmployeeId,
-        details: `Restocked drug ID: ${id} with qty: ${qty}`,
-        entityId: id,
-        branchId: activeBranchId,
-      });
+        setInventory((prev) =>
+          prev.map((d) => (d.id === id ? { ...d, stock: mutation.newStock } : d))
+        );
 
-      success('Restock completed successfully!');
+        setTimeout(() => setBatches(batchService.getAllBatches(activeBranchId)), 0);
+
+        auditService.log('inventory.update', {
+          userId: currentEmployeeId,
+          details: `Restocked drug ID: ${id} with qty: ${qty}`,
+          entityId: id,
+          branchId: activeBranchId,
+        });
+
+        success('Restock completed successfully!');
+      } catch (err) {
+        error(`Failed to restock product: ${err instanceof Error ? err.message : String(err)}`);
+      }
     },
-    [setInventory, setBatches, currentEmployeeId, employees, activeBranchId, error, success]
+    [setInventory, setBatches, inventory, currentEmployeeId, employees, activeBranchId, error, success]
   );
 
   // --- Supplier Management ---
@@ -580,9 +583,9 @@ export function useEntityHandlers({
       let currentInventory = [...inventory];
       const newEntries: Drug[] = [];
 
-      purchase.items.forEach((purchasedItem) => {
+      for (const purchasedItem of purchase.items) {
         const sourceDrug = currentInventory.find((d) => d.id === purchasedItem.drugId);
-        if (!sourceDrug) return;
+        if (!sourceDrug) continue;
 
         const purchaseExpiry = purchasedItem.expiryDate || sourceDrug.expiryDate;
 
@@ -597,7 +600,7 @@ export function useEntityHandlers({
         const targetId = isNewEntry ? idGenerator.generate('inventory', branchCode) : sameExpiryEntry.id;
         const targetDrug = isNewEntry ? sourceDrug : sameExpiryEntry;
 
-        const mutation = stockOps.addStock(
+        const mutation = await stockOps.addStock(
           { ...targetDrug, id: targetId },
           purchasedItem.quantity,
           !!purchasedItem.isUnit,
@@ -639,7 +642,7 @@ export function useEntityHandlers({
             return d;
           });
         }
-      });
+      }
 
       setBatches(batchService.getAllBatches(activeBranchId));
       setInventory(currentInventory);
@@ -1187,7 +1190,7 @@ export function useEntityHandlers({
 
           if (!newItem) {
             // Item was deleted - return all stock
-            stockOps.returnStock(
+            await stockOps.returnStock(
               inventory.find(d => d.id === oldItem.id)!,
               oldItem.quantity,
               !!oldItem.isUnit,
@@ -1241,7 +1244,7 @@ export function useEntityHandlers({
 
               if (diff > 0) {
                 // Quantity reduced - return partial stock
-                stockOps.returnStock(
+                await stockOps.returnStock(
                   drug,
                   diff,
                   true, // units
@@ -1280,7 +1283,7 @@ export function useEntityHandlers({
                 });
               } else if (diff < 0) {
                 // Quantity increased - allocate more
-                const mutation = stockOps.deductStock(
+                const mutation = await stockOps.deductStock(
                   drug,
                   Math.abs(diff),
                   true, // units
@@ -1349,7 +1352,7 @@ export function useEntityHandlers({
             // This is a NEW item - allocate stock
             const drug = inventory.find((d) => d.id === newItem.id);
             if (drug) {
-              const mutation = stockOps.deductStock(
+              const mutation = await stockOps.deductStock(
                 drug,
                 newItem.quantity,
                 !!newItem.isUnit,
@@ -1532,9 +1535,7 @@ export function useEntityHandlers({
             const returnedItem = returnedItemsMap.get(drug.id);
             if (returnedItem) {
               const drugInSale = sale.items.find(i => i.id === drug.id);
-              const unitsToRestore = returnedItem.isUnit
-                ? returnedItem.quantityReturned
-                : returnedItem.quantityReturned * (drug.unitsPerPack || 1);
+              const unitsToRestore = stockOps.resolveUnits(returnedItem.quantityReturned, !!returnedItem.isUnit, drug.unitsPerPack);
                 
               return {
                 ...drug,

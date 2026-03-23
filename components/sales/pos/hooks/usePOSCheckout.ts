@@ -25,6 +25,7 @@ interface UsePOSCheckoutProps {
   cartTotal: number;
   subtotal: number;
   globalDiscount: number;
+  activeBranchId: string;
 }
 
 const DELIVERY_FEE = 5;
@@ -49,6 +50,7 @@ export const usePOSCheckout = ({
   cartTotal,
   subtotal,
   globalDiscount,
+  activeBranchId,
 }: UsePOSCheckoutProps) => {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'visa'>('cash');
   const [deliveryEmployeeId, setDeliveryEmployeeId] = useState<string>('');
@@ -103,6 +105,7 @@ export const usePOSCheckout = ({
         status: (isPending ? 'pending' : isDelivery ? (deliveryEmployeeId ? 'with_delivery' : 'pending') : 'completed') as Sale['status'],
         processingTimeMinutes,
         date: getVerifiedDate(),
+        branchId: activeBranchId,
       };
 
       const salePayload = buildSalePayload(saleParams);
