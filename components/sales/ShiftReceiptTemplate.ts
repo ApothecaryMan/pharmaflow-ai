@@ -36,7 +36,7 @@ export const generateShiftReceiptHTML = (shift: Shift, language: Language = 'EN'
 
   const cashSalesNum = shift.cashSales || 0;
   const cardSalesNum = shift.cardSales || 0;
-  const totalRevenues = shift.openingBalance + cashSalesNum + (shift.cashIn || 0) + cardSalesNum;
+  const totalRevenues = shift.openingBalance + cashSalesNum + (shift.cashIn || 0) + (shift.cashPurchaseReturns || 0) + cardSalesNum;
   
   const cashReturnsNum = shift.returns || 0;
   const totalExpenses = (shift.cashPurchases || 0) + cashReturnsNum + (shift.cashOut || 0);

@@ -59,9 +59,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     return (
       currentShift.openingBalance +
       currentShift.cashSales +
-      currentShift.cashIn -
+      currentShift.cashIn +
+      (currentShift.cashPurchaseReturns || 0) -
       currentShift.cashOut -
-      (currentShift.returns || 0)
+      (currentShift.returns || 0) -
+      (currentShift.cashPurchases || 0)
     );
   }, [currentShift]);
 
@@ -80,8 +82,8 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           return (
             <span
               className={`inline-flex items-center gap-1 px-1 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-tight bg-transparent
-                  ${type === 'in' || type === 'card_sale' ? 'border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400' : ''}
-                  ${type === 'out' || type === 'closing' ? 'border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400' : ''}
+                  ${type === 'in' || type === 'card_sale' || type === 'purchase_return' ? 'border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400' : ''}
+                  ${type === 'out' || type === 'closing' || type === 'purchase' ? 'border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400' : ''}
                   ${type === 'sale' ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400' : ''}
                   ${type === 'opening' ? 'border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400' : ''}
                   ${type === 'return' ? 'border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400' : ''}
@@ -102,7 +104,11 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                             ? 'credit_card'
                             : type === 'return'
                               ? 'assignment_return'
-                              : 'receipt'}
+                              : type === 'purchase'
+                                ? 'shopping_cart_checkout'
+                                : type === 'purchase_return'
+                                  ? 'keyboard_return'
+                                  : 'receipt'}
               </span>
               {t.cashRegister.types[type] || type}
             </span>
@@ -154,7 +160,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         cell: (info) => {
           const amountVal = info.getValue() as number;
           const row = info.row.original;
-          const isPositive = ['in', 'opening', 'sale', 'card_sale'].includes(row.type);
+          const isPositive = ['in', 'opening', 'sale', 'card_sale', 'purchase_return'].includes(row.type);
 
           return (
             <div
@@ -189,6 +195,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
       if (filterType === 'all') return true;
       if (filterType === 'sales') return tx.type === 'sale' || tx.type === 'card_sale';
       if (filterType === 'returns') return tx.type === 'return';
+      if (filterType === 'purchases') return tx.type === 'purchase' || tx.type === 'purchase_return';
       if (filterType === 'operations') return ['in', 'out', 'opening', 'closing'].includes(tx.type);
       return true;
     });
@@ -201,6 +208,9 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
       sales: currentShift.transactions.filter((tx) => tx.type === 'sale' || tx.type === 'card_sale')
         .length,
       returns: currentShift.transactions.filter((tx) => tx.type === 'return').length,
+      purchases: currentShift.transactions.filter(
+        (tx) => tx.type === 'purchase' || tx.type === 'purchase_return'
+      ).length,
       operations: currentShift.transactions.filter((tx) =>
         ['in', 'out', 'opening', 'closing'].includes(tx.type)
       ).length,
@@ -813,20 +823,57 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                 </div>
                 <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
-                    {t.cashRegister.summary.returns || 'Returns'}
+                    {t.cashRegister.summary.cashPurchases || 'Cash Purchases'}
                   </p>
                   <p className='text-base font-bold text-red-600 flex items-center gap-1.5'>
                     <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
                     {(() => {
-                      const returnTransactions = currentShift.transactions.filter(
-                        (tx) => tx.type === 'return'
-                      );
-                      const totalReturns = returnTransactions.reduce(
-                        (sum, tx) => sum + tx.amount,
+                      const { amount, symbol } = formatCurrencyParts(
+                        currentShift.cashPurchases || 0,
+                        'EGP',
+                        language === 'AR' ? 'ar-EG' : 'en-US',
                         0
                       );
+                      return (
+                        <>
+                          {amount}{' '}
+                          <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
+                        </>
+                      );
+                    })()}
+                  </p>
+                </div>
+                <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
+                  <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
+                    {t.cashRegister.summary.cashPurchaseReturns || 'Cash Purch. Returns'}
+                  </p>
+                  <p className='text-base font-bold text-blue-600 flex items-center gap-1.5'>
+                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
+                    {(() => {
                       const { amount, symbol } = formatCurrencyParts(
-                        totalReturns,
+                        currentShift.cashPurchaseReturns || 0,
+                        'EGP',
+                        language === 'AR' ? 'ar-EG' : 'en-US',
+                        0
+                      );
+                      return (
+                        <>
+                          {amount}{' '}
+                          <span className='text-[10px] opacity-60 font-normal'>{symbol}</span>
+                        </>
+                      );
+                    })()}
+                  </p>
+                </div>
+                <div className={`p-4 rounded-2xl ${CARD_BASE}`}>
+                  <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
+                    {t.cashRegister.summary.returns || 'Returns'}
+                  </p>
+                  <p className='text-base font-bold text-orange-600 flex items-center gap-1.5'>
+                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>remove</span>
+                    {(() => {
+                      const { amount, symbol } = formatCurrencyParts(
+                        currentShift.returns || 0,
                         'EGP',
                         language === 'AR' ? 'ar-EG' : 'en-US',
                         0
@@ -878,6 +925,12 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                     value: 'returns',
                     count: counts.returns,
                     activeColor: 'orange',
+                  },
+                  {
+                    label: t.cashRegister?.filters?.purchases || 'Purchases',
+                    value: 'purchases',
+                    count: counts.purchases,
+                    activeColor: 'red',
                   },
                   {
                     label: t.cashRegister?.filters?.operations || 'Ops',

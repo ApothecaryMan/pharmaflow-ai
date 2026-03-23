@@ -161,7 +161,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     props.onUpdateSupplier = handlers.handleUpdateSupplier;
   if (requiredProps.includes('onDeleteSupplier'))
     props.onDeleteSupplier = handlers.handleDeleteSupplier;
-  if (requiredProps.includes('onCompletePurchase'))
+  if (requiredProps.includes('onPurchaseComplete'))
     props.onPurchaseComplete = handlers.handlePurchaseComplete;
   if (requiredProps.includes('onApprovePurchase'))
     props.onApprovePurchase = handlers.handleApprovePurchase;

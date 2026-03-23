@@ -7,7 +7,7 @@ import { useAlert, useSettings } from '../../context';
 import { useLongPress } from '../../hooks/useLongPress';
 import { settingsService } from '../../services';
 import { useData } from '../../services/DataContext';
-import type { Drug, Purchase, PurchaseItem, PurchaseReturn, Supplier } from '../../types';
+import type { Drug, Purchase, PurchaseItem, PurchaseReturn, Shift, Supplier } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import {
   checkExpiryStatus,
@@ -46,6 +46,7 @@ interface PurchasesProps {
   onRejectPurchase?: (purchase: Purchase) => void;
   language: 'EN' | 'AR';
   navigationParams?: any;
+  currentShift: Shift | null;
 }
 
 export const Purchases: React.FC<PurchasesProps> = ({
@@ -62,6 +63,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   language,
   // @ts-ignore
   navigationParams,
+  currentShift,
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const { error: showToastError } = useAlert();
@@ -822,6 +824,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     const purchase: Purchase = {
       id: idGenerator.generate('purchases', activeBranchId),
+      branchId: activeBranchId,
       date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',
@@ -890,6 +893,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
     const purchase: Purchase = {
       id: idGenerator.generate('purchases', activeBranchId),
+      branchId: activeBranchId,
       date: getVerifiedDate().toISOString(),
       supplierId: selectedSupplierId,
       supplierName: supplier?.name || 'Unknown',
@@ -1696,13 +1700,20 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       <span className='material-symbols-rounded'>pending_actions</span>
                     </button>
 
-                    <button
-                      onClick={handleConfirm}
-                      disabled={cart.length === 0 || !selectedSupplierId}
-                      className={`h-12 w-80 justify-center rounded-xl flex items-center gap-2 shadow-lg shadow-gray-200 dark:shadow-none ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:shadow-none text-white font-bold transition-all active:scale-95`}
-                    >
-                      <span>{t.summary.confirm}</span>
-                    </button>
+                    {paymentMethod === 'cash' && !currentShift ? (
+                      <div className='h-12 w-80 flex items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-bold border border-amber-200 dark:border-amber-900/50 gap-2'>
+                        <span className='material-symbols-rounded text-xl'>lock</span>
+                        {t.summary?.openShiftFirst || 'Open Shift First'}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handleConfirm}
+                        disabled={cart.length === 0 || !selectedSupplierId}
+                        className={`h-12 w-80 justify-center rounded-xl flex items-center gap-2 shadow-lg shadow-gray-200 dark:shadow-none ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:shadow-none text-white font-bold transition-all active:scale-95`}
+                      >
+                        <span>{t.summary.confirm}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

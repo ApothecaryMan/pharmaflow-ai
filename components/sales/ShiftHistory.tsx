@@ -432,6 +432,14 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
               </div>
               <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
                 <p className='text-[10px] font-bold uppercase text-gray-500 mb-1'>
+                  {t.shiftHistory?.details?.cashPurchases || 'Cash Purchases'}
+                </p>
+                <p className='text-sm font-bold text-red-600'>
+                  <PriceDisplay value={selectedShift.cashPurchases || 0} />
+                </p>
+              </div>
+              <div className='p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50'>
+                <p className='text-[10px] font-bold uppercase text-gray-500 mb-1'>
                   {t.shiftHistory?.details?.cardSales || 'Card Sales'}
                 </p>
                 <p className='text-sm font-bold text-violet-600'>
@@ -507,8 +515,8 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                       <div className='flex items-center gap-3'>
                         <span
                           className={`px-2 py-0.5 rounded-lg font-bold uppercase text-[9px] tracking-wider border
-                                           ${tx.type === 'in' || tx.type === 'opening' ? 'border-blue-200 text-blue-700 bg-blue-50/50 dark:border-blue-900/30 dark:text-blue-400 dark:bg-blue-900/10' : ''}
-                                           ${tx.type === 'out' || tx.type === 'closing' ? 'border-red-200 text-red-700 bg-red-50/50 dark:border-red-900/30 dark:text-red-400 dark:bg-red-900/10' : ''}
+                                           ${tx.type === 'in' || tx.type === 'opening' || tx.type === 'purchase_return' ? 'border-blue-200 text-blue-700 bg-blue-50/50 dark:border-blue-900/30 dark:text-blue-400 dark:bg-blue-900/10' : ''}
+                                           ${tx.type === 'out' || tx.type === 'closing' || tx.type === 'purchase' ? 'border-red-200 text-red-700 bg-red-50/50 dark:border-red-900/30 dark:text-red-400 dark:bg-red-900/10' : ''}
                                            ${tx.type === 'sale' ? 'border-green-200 text-green-700 bg-green-50/50 dark:border-green-900/30 dark:text-green-400 dark:bg-green-900/10' : ''}
                                            ${tx.type === 'card_sale' ? 'border-violet-200 text-violet-700 bg-violet-50/50 dark:border-violet-900/30 dark:text-violet-400 dark:bg-violet-900/10' : ''}
                                            ${tx.type === 'return' ? 'border-orange-200 text-orange-700 bg-orange-50/50 dark:border-orange-900/30 dark:text-orange-400 dark:bg-orange-900/10' : ''}
@@ -538,9 +546,9 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                         </div>
                       </div>
                       <div
-                        className={`text-sm font-bold tabular-nums ${['in', 'opening', 'sale', 'card_sale'].includes(tx.type) ? 'text-green-600' : 'text-red-600'}`}
+                        className={`text-sm font-bold tabular-nums ${['in', 'opening', 'sale', 'card_sale', 'purchase_return'].includes(tx.type) ? 'text-green-600' : 'text-red-600'}`}
                       >
-                        {['in', 'opening', 'sale', 'card_sale'].includes(tx.type) ? '+' : '-'}
+                        {['in', 'opening', 'sale', 'card_sale', 'purchase_return'].includes(tx.type) ? '+' : '-'}
                         <PriceDisplay value={tx.amount} />
                       </div>
                     </div>

@@ -130,27 +130,47 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         prev.map((s) => {
           if (s.id !== shiftId) return s;
 
-          // Calculate new totals based on transaction type
-          let newCashSales = s.cashSales;
-          let newCardSales = s.cardSales || 0;
-          let newReturns = s.returns || 0;
+          const updatedShift = { ...s, ...updates };
+          updatedShift.transactions = [transaction, ...s.transactions]; // Add new transaction to the beginning
 
-          if (transaction.type === 'sale') {
-            newCashSales += transaction.amount;
-          } else if (transaction.type === 'card_sale') {
-            newCardSales += transaction.amount;
-          } else if (transaction.type === 'return') {
-            newReturns += transaction.amount;
+          // Initialize expectedBalance if it's undefined
+          if (updatedShift.expectedBalance === undefined) {
+            updatedShift.expectedBalance = updatedShift.openingBalance;
           }
 
-          return {
-            ...s,
-            ...updates,
-            cashSales: newCashSales,
-            cardSales: newCardSales,
-            returns: newReturns,
-            transactions: [transaction, ...s.transactions],
-          };
+          // Update counters based on transaction type
+          switch (transaction.type) {
+            case 'sale':
+              updatedShift.cashSales = (updatedShift.cashSales || 0) + transaction.amount;
+              updatedShift.expectedBalance += transaction.amount;
+              break;
+            case 'card_sale':
+              updatedShift.cardSales = (updatedShift.cardSales || 0) + transaction.amount;
+              // Card sales don't affect expected cash balance
+              break;
+            case 'return':
+              updatedShift.returns = (updatedShift.returns || 0) + transaction.amount;
+              updatedShift.expectedBalance -= transaction.amount;
+              break;
+            case 'purchase':
+              updatedShift.cashPurchases = (updatedShift.cashPurchases || 0) + transaction.amount;
+              updatedShift.expectedBalance -= transaction.amount;
+              break;
+            case 'purchase_return':
+              updatedShift.cashPurchaseReturns = (updatedShift.cashPurchaseReturns || 0) + transaction.amount;
+              updatedShift.expectedBalance += transaction.amount;
+              break;
+            case 'in':
+              updatedShift.cashIn = (updatedShift.cashIn || 0) + transaction.amount;
+              updatedShift.expectedBalance += transaction.amount;
+              break;
+            case 'out':
+              updatedShift.cashOut = (updatedShift.cashOut || 0) + transaction.amount;
+              updatedShift.expectedBalance -= transaction.amount;
+              break;
+          }
+
+          return updatedShift;
         })
       );
     },
