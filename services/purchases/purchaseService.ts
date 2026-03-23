@@ -228,10 +228,20 @@ export const createPurchaseService = (): PurchaseService => ({
     const all = getRawAll();
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    
+    // 1. Safety Guard: Only save if the data matches the branch (or is empty for a deliberate wipe)
+    // If the provided array is not empty, ensure its items match the branchId.
+    // If it is empty, we only proceed if we ARE sure we want to wipe this branch.
+    // (DataContext now handles this via isLoading and branch checks).
+
+    // 2. Keep items from OTHER branches
     const otherBranchItems = all.filter((p) => p.branchId && p.branchId !== effectiveBranchId);
     
-    // Merge and deduplicate by ID
-    const merged = [...otherBranchItems, ...purchases];
+    // 3. Prepare Branch Items: Ensure they all have the correct branchId
+    const branchItems = purchases.map(p => ({ ...p, branchId: effectiveBranchId }));
+    
+    // 4. Merge and deduplicate by ID
+    const merged = [...otherBranchItems, ...branchItems];
     const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
     
     storage.set(StorageKeys.PURCHASES, uniqueMerged);

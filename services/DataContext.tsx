@@ -330,17 +330,41 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   // Note: Employees are excluded — they use IndexedDB differential writes
   // and are persisted directly in the handler/service layer.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (!isLoading) salesService.save(sales, activeBranchId); }, [sales, activeBranchId]);
+  useEffect(() => { 
+    if (!isLoading && (sales.length === 0 || sales.every(s => s.branchId === activeBranchId))) {
+      salesService.save(sales, activeBranchId); 
+    }
+  }, [sales, activeBranchId, isLoading]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (!isLoading) supplierService.save(suppliers, activeBranchId); }, [suppliers, activeBranchId]);
+  useEffect(() => { 
+    if (!isLoading && (suppliers.length === 0 || suppliers.every(s => s.branchId === activeBranchId))) {
+      supplierService.save(suppliers, activeBranchId); 
+    }
+  }, [suppliers, activeBranchId, isLoading]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (!isLoading) purchaseService.save(purchases, activeBranchId); }, [purchases, activeBranchId]);
+  useEffect(() => { 
+    if (!isLoading && (purchases.length === 0 || purchases.every(p => p.branchId === activeBranchId))) {
+      purchaseService.save(purchases, activeBranchId); 
+    }
+  }, [purchases, activeBranchId, isLoading]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (!isLoading) returnService.savePurchaseReturns(purchaseReturns, activeBranchId); }, [purchaseReturns, activeBranchId]);
+  useEffect(() => { 
+    if (!isLoading && (purchaseReturns.length === 0 || purchaseReturns.every(r => r.branchId === activeBranchId))) {
+      returnService.savePurchaseReturns(purchaseReturns, activeBranchId); 
+    }
+  }, [purchaseReturns, activeBranchId, isLoading]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (!isLoading) returnService.saveSalesReturns(returns, activeBranchId); }, [returns, activeBranchId]);
+  useEffect(() => { 
+    if (!isLoading && (returns.length === 0 || returns.every(r => r.branchId === activeBranchId))) {
+      returnService.saveSalesReturns(returns, activeBranchId); 
+    }
+  }, [returns, activeBranchId, isLoading]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (!isLoading) customerService.save(customers, activeBranchId); }, [customers, activeBranchId]);
+  useEffect(() => { 
+    if (!isLoading && (customers.length === 0 || customers.every(c => c.branchId === activeBranchId))) {
+      customerService.save(customers, activeBranchId); 
+    }
+  }, [customers, activeBranchId, isLoading]);
   useEffect(() => {
     if (!isLoading) {
       const allBatches = storage.get<StockBatch[]>(StorageKeys.STOCK_BATCHES, []);
@@ -545,6 +569,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   const switchBranch = useCallback(
     async (branchId: string) => {
       try {
+        setIsLoading(true); // LOCK persistence immediately
         // Persist new branch selection
         branchService.setActive(branchId);
         

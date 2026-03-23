@@ -149,10 +149,15 @@ export const createCustomerService = (): CustomerService => ({
     const all = getRawAll();
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    
+    // 1. Keep items from OTHER branches
     const otherBranchItems = all.filter((c) => c.branchId && c.branchId !== effectiveBranchId);
     
-    // Merge and deduplicate by ID
-    const merged = [...otherBranchItems, ...customers];
+    // 2. Prepare Branch Items
+    const branchItems = customers.map(c => ({ ...c, branchId: effectiveBranchId }));
+    
+    // 3. Merge and deduplicate by ID
+    const merged = [...otherBranchItems, ...branchItems];
     const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
     
     storage.set(StorageKeys.CUSTOMERS, uniqueMerged);

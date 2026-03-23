@@ -130,10 +130,15 @@ export const createReturnService = (): ReturnService => ({
     const all = getRawSalesReturns();
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    
+    // 1. Keep items from OTHER branches
     const otherBranchItems = all.filter((r) => r.branchId && r.branchId !== effectiveBranchId);
     
-    // Merge and deduplicate by ID
-    const merged = [...otherBranchItems, ...returns];
+    // 2. Prepare Branch Items
+    const branchItems = returns.map(r => ({ ...r, branchId: effectiveBranchId }));
+    
+    // 3. Merge and deduplicate by ID
+    const merged = [...otherBranchItems, ...branchItems];
     const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
     
     storage.set(StorageKeys.RETURNS, uniqueMerged);
@@ -143,10 +148,15 @@ export const createReturnService = (): ReturnService => ({
     const all = getRawPurchaseReturns();
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    
+    // 1. Keep items from OTHER branches
     const otherBranchItems = all.filter((r) => r.branchId && r.branchId !== effectiveBranchId);
     
-    // Merge and deduplicate by ID
-    const merged = [...otherBranchItems, ...returns];
+    // 2. Prepare Branch Items
+    const branchItems = returns.map(r => ({ ...r, branchId: effectiveBranchId }));
+    
+    // 3. Merge and deduplicate by ID
+    const merged = [...otherBranchItems, ...branchItems];
     const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
     
     storage.set(StorageKeys.PURCHASE_RETURNS, uniqueMerged);
