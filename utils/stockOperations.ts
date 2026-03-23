@@ -27,14 +27,36 @@ export interface StockMutation {
  * Resolves total unit quantity based on input type (units or packs).
  */
 export const resolveUnits = (qty: number, isUnit: boolean, unitsPerPack: number = 1): number => {
-  return isUnit ? qty : qty * unitsPerPack;
+  const perPack = unitsPerPack || 1;
+  return isUnit ? qty : qty * perPack;
+};
+
+/**
+ * Resolves unit price based on input type.
+ * Usually drug.price is for a FULL PACK.
+ * If isUnit is true, it returns the price for a single unit.
+ */
+export const resolvePrice = (price: number, isUnit: boolean, unitsPerPack: number = 1): number => {
+  const perPack = unitsPerPack || 1;
+  if (perPack <= 1) return price;
+  const unitPrice = isUnit ? price / perPack : price;
+  return Math.round(unitPrice * 100) / 100; // Round to 2 decimal places for price
+};
+
+/**
+ * Converts total units back to pack quantity.
+ */
+export const convertToPacks = (totalUnits: number, unitsPerPack: number = 1): number => {
+  const perPack = unitsPerPack || 1;
+  const packs = totalUnits / perPack;
+  return Math.round(packs * 1000) / 1000; // Round to 3 decimal places for fractional packs
 };
 
 /**
  * Deducts stock from inventory, handles batch allocation and movement logging.
  * Returns the mutation details for state updates.
  */
-export const deductStock = (
+export const deductStock = async (
   drug: Drug,
   quantity: number,
   isUnit: boolean,
@@ -42,9 +64,9 @@ export const deductStock = (
   reason: string,
   ctx: StockOperationContext,
   referenceId?: string
-): StockMutation | null => {
+): Promise<StockMutation | null> => {
   const unitsToDeduct = resolveUnits(quantity, isUnit, drug.unitsPerPack);
-  const allocations = batchService.allocateStock(drug.id, unitsToDeduct, ctx.branchId, true);
+  const allocations = await batchService.allocateStock(drug.id, unitsToDeduct, ctx.branchId, true);
 
   if (!allocations) return null;
 
@@ -79,7 +101,7 @@ export const deductStock = (
  * Adds stock to inventory, handles batch creation and movement logging.
  * Returns the mutation details for state updates.
  */
-export const addStock = (
+export const addStock = async (
   drug: Drug,
   quantity: number,
   isUnit: boolean,
@@ -91,14 +113,14 @@ export const addStock = (
   referenceId?: string,
   batchNumber?: string,
   previousStockOverride?: number
-): StockMutation => {
+): Promise<StockMutation> => {
   const unitsToAdd = resolveUnits(quantity, isUnit, drug.unitsPerPack);
   
   const previousStock = previousStockOverride !== undefined ? previousStockOverride : drug.stock;
   const newStock = validateStock(previousStock + unitsToAdd);
 
   // 1. Create Batch
-  batchService.createBatch({
+  await batchService.createBatch({
     drugId: drug.id,
     quantity: unitsToAdd,
     expiryDate: expiryDate || drug.expiryDate,
@@ -107,7 +129,8 @@ export const addStock = (
     dateReceived: new Date().toISOString(),
     batchNumber: batchNumber || 'MANUAL',
     branchId: ctx.branchId,
-  });
+    version: 1,
+  }, ctx.branchId, true);
 
   // 2. Log Movement
   stockMovementService.logMovement({
@@ -134,58 +157,9 @@ export const addStock = (
 };
 
 /**
- * Bulk deducts stock from inventory atomically (batch-wise).
- * Returns mutations for all items.
- */
-export const bulkDeductStock = (
-  items: CartItem[],
-  inventory: Drug[],
-  type: StockMovementType,
-  reason: string,
-  ctx: StockOperationContext,
-  referenceId: string
-): StockMutation[] => {
-  const mutations: StockMutation[] = [];
-
-  items.forEach((item) => {
-    const drug = inventory.find((d) => d.id === item.id);
-    if (!drug) return;
-
-    const unitsToDeduct = resolveUnits(item.quantity, !!item.isUnit, drug.unitsPerPack);
-    const previousStock = drug.stock;
-    const newStock = validateStock(previousStock - unitsToDeduct);
-
-    stockMovementService.logMovement({
-      drugId: drug.id,
-      drugName: drug.name,
-      branchId: ctx.branchId,
-      type,
-      quantity: -unitsToDeduct,
-      previousStock,
-      newStock,
-      reason,
-      referenceId,
-      performedBy: ctx.performedBy,
-      performedByName: ctx.performedByName,
-      status: 'approved',
-    });
-
-    mutations.push({
-      drugId: drug.id,
-      previousStock,
-      newStock,
-      unitsChanged: unitsToDeduct,
-      allocations: item.batchAllocations,
-    });
-  });
-
-  return mutations;
-};
-
-/**
  * Restores stock to batches and logs movement (used for cancellations or returns).
  */
-export const returnStock = (
+export const returnStock = async (
   drug: Drug,
   quantity: number,
   isUnit: boolean,
@@ -194,7 +168,7 @@ export const returnStock = (
   reason: string,
   ctx: StockOperationContext,
   referenceId?: string
-): StockMutation => {
+): Promise<StockMutation> => {
   const unitsToRestore = resolveUnits(quantity, isUnit, drug.unitsPerPack);
   const previousStock = drug.stock;
   const newStock = validateStock(previousStock + unitsToRestore);
@@ -212,7 +186,7 @@ export const returnStock = (
     }
     
     if (returnsToMake.length > 0) {
-      batchService.returnStock(returnsToMake, drug.id);
+      await batchService.returnStock(returnsToMake, drug.id, true, ctx.branchId);
     }
   }
 
@@ -282,7 +256,7 @@ export const deductStockSimple = (
 /**
  * Adjusts stock for inventory counts or manual edits.
  */
-export const adjustStock = (
+export const adjustStock = async (
   drug: Drug,
   newStockUnits: number,
   reason: string,
@@ -294,7 +268,7 @@ export const adjustStock = (
     status?: 'approved' | 'pending';
     expiryDate?: string;
   }
-): StockMutation | null => {
+): Promise<StockMutation | null> => {
   const previousStock = drug.stock;
   const newStock = validateStock(newStockUnits);
   const diff = newStock - previousStock;
@@ -305,7 +279,7 @@ export const adjustStock = (
 
   // 1. Update Batch ONLY if approved AND batchId provided
   if (status === 'approved' && options?.batchId) {
-    batchService.updateBatchQuantity(options.batchId, diff);
+    await batchService.updateBatchQuantity(options.batchId, diff, true);
   }
 
   // 2. Log Movement
@@ -338,7 +312,7 @@ export const adjustStock = (
 /**
  * Deducts from a specific batch (used for damage/returns in Expiry Module).
  */
-export const deductFromBatch = (
+export const deductFromBatch = async (
   drug: Drug,
   batchId: string,
   quantityUnits: number,
@@ -346,12 +320,12 @@ export const deductFromBatch = (
   reason: string,
   ctx: StockOperationContext,
   options?: { notes?: string; expiryDate?: string; referenceId?: string }
-): StockMutation => {
+): Promise<StockMutation> => {
   const previousStock = drug.stock;
   const newStock = validateStock(previousStock - quantityUnits);
 
   // 1. Target specific batch
-  batchService.updateBatchQuantity(batchId, -quantityUnits);
+  await batchService.updateBatchQuantity(batchId, -quantityUnits);
 
   // 2. Log Movement
   stockMovementService.logMovement({
