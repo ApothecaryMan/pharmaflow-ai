@@ -37,7 +37,7 @@ export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
     <div className='flex items-center gap-1'>
       <button
         type="button"
-        className={`text-[10px] font-black text-white px-2 h-6 flex items-center justify-center rounded-lg shadow-sm cursor-pointer border border-black/5 dark:border-white/5 ${getBadgeColor()}`}
+        className={`text-[10px] font-black text-white px-2 h-6 flex items-center justify-center rounded-lg cursor-pointer transition-all active:scale-95 ${getBadgeColor()}`}
         onClick={(e) => {
           e.stopPropagation();
           const batchMenuItems = allBatches.map((batch) => ({
@@ -102,11 +102,10 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
   return (
     <div
       title={`Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`}
-      className={`flex items-center rounded-lg border shadow-sm h-6 overflow-hidden transition-colors w-14 shrink-0 ${
-        hasDiscount
-          ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-          : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
-      }`}
+      className={`flex items-center rounded-lg h-6 overflow-hidden transition-all w-14 shrink-0
+        ${hasDiscount 
+          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
+          : 'bg-black/[0.03] dark:bg-white/[0.05] text-gray-400'}`}
     >
       <button
         tabIndex={-1}
@@ -185,11 +184,10 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
   const renderDesktopUI = () => {
     return (
       <div
-        className={`flex items-center bg-white dark:bg-gray-900 rounded-lg border shadow-sm h-6 overflow-hidden w-14 shrink-0 transition-colors ${
-          hasDualMode && (!packItem || packItem.quantity === 0) && (!unitItem || unitItem.quantity === 0)
-            ? 'border-yellow-400 dark:border-yellow-500 ring-1 ring-yellow-400/20'
-            : 'border-gray-200 dark:border-gray-700'
-        }`}
+        className={`flex items-center rounded-lg h-6 overflow-hidden w-14 shrink-0 transition-all bg-black/[0.03] dark:bg-white/[0.05]
+          ${hasDualMode && (!packItem || packItem.quantity === 0) && (!unitItem || unitItem.quantity === 0)
+            ? 'ring-1 ring-inset ring-yellow-500/50'
+            : ''}`}
       >
         <input
           type='number'
@@ -260,7 +258,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
       const isAtMax = qty >= maxForThisMode;
 
       return (
-        <div className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm h-6 overflow-hidden transition-all bg-white dark:bg-gray-900">
+        <div className="flex items-center rounded-lg h-6 overflow-hidden transition-all bg-black/[0.03] dark:bg-white/[0.05]">
           <button
             onClick={(e) => { e.stopPropagation(); if (qty > 0 && (qty > 1 || otherQty > 0)) updateQuantity(item.id, isUnit, -1); }}
             onPointerDown={(e) => e.stopPropagation()}

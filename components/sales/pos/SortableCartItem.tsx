@@ -245,12 +245,12 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
       style={style}
       {...attributes}
       {...listeners}
-      className={`flex flex-col p-1 rounded-2xl transition-all touch-manipulation relative group outline-hidden
-        ${isDragging ? `z-50 opacity-100` : ''}
+      className={`flex flex-col p-1.5 transition-all touch-manipulation relative group outline-hidden select-none
+        ${isDragging ? `z-50 opacity-100 bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-sm shadow-2xl scale-[1.02] rounded-xl` : 'rounded-lg'}
         ${
           isHighlighted
-            ? `border-primary-400/30 dark:border-primary-500/30 bg-primary-50/50 dark:bg-primary-900/10 border`
-            : 'bg-[#f9fafb] dark:bg-[#282828] border border-black/5 dark:border-white/10'
+            ? `bg-primary-500/[0.04] dark:bg-primary-500/[0.08]`
+            : 'bg-transparent hover:bg-black/[0.02] dark:hover:bg-white/[0.04]'
         }`}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -261,10 +261,10 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
       onTouchEnd={onLongPressTouchEnd}
       onTouchMove={onLongPressTouchMove}
     >
-      {/* Drag Handle */}
-      <div className='absolute left-0 top-1/2 -translate-y-1/2 w-3 h-full flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity'>
-        <div className={`w-1 h-3/5 rounded-full bg-primary-100 dark:bg-primary-800`}></div>
-      </div>
+      {/* Subtle Drag Handle / Accent */}
+      <div className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full transition-all duration-300
+        ${isHighlighted ? 'bg-primary-500 opacity-100 scale-y-100' : 'bg-primary-500/40 opacity-0 group-hover:opacity-100 scale-y-50 group-hover:scale-y-100'}
+      `} />
 
       <div className='flex flex-wrap items-center justify-between gap-x-1 gap-y-1 relative pl-2'>
         {/* Name Section */}
@@ -323,7 +323,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
               ).toFixed(2)}
             </div>
 
-            {/* Delete button (if both, maybe show one delete for row?) */}
+            {/* Quick Remove button */}
             <button
               tabIndex={-1}
               onClick={(e) => {
@@ -332,9 +332,9 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
                 removeDrugFromCart(item.id);
               }}
               onPointerDown={(e) => e.stopPropagation()}
-              className='w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors focus:outline-hidden focus:bg-red-50 dark:focus:bg-red-900/30 focus:text-red-500'
+              className='w-7 h-7 flex items-center justify-center text-gray-400/50 hover:text-red-500 transition-all duration-200 active:scale-90 focus:outline-none'
             >
-              <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>close</span>
+              <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>delete</span>
             </button>
           </div>
         </div>
