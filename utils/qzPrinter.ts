@@ -248,16 +248,22 @@ export const printHTML = async (
     size: config.size ? { width: config.size.width, height: config.size.height } : undefined,
     margins: config.margins,
     copies: config.copies || 1,
-    colorType: config.colorType || 'grayscale',
+    colorType: config.colorType || 'blackwhite',
     orientation: config.orientation || 'portrait',
     scaleContent: true,
+    interpolation: 'nearest-neighbor',
+    rendering: 'pixelated',
   });
+
+  // Base64 encode the HTML to ensure no character encoding issues (UTF-8 safe)
+  const base64Html = btoa(unescape(encodeURIComponent(html)));
 
   const data = [
     {
       type: 'html',
-      format: 'plain',
-      data: html,
+      format: 'base64',
+      data: base64Html,
+      baseUrl: window.location.origin,
     },
   ];
 

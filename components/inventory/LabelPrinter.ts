@@ -527,9 +527,17 @@ export const generatePageHTML = (
             ${css}
             @page { size: ${dims.w}mm ${pageHeight}mm; margin: 0; }
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            html, body { margin: 0; padding: 0; background: white; }
+            html, body { 
+                margin: 0; 
+                padding: 0; 
+                background: white;
+                min-height: 100%;
+                height: auto !important;
+                overflow: visible !important;
+            }
             body { 
                 font-family: 'Roboto', sans-serif; 
+                -webkit-print-color-adjust: exact;
             }
             .print-container {
                 width: ${dims.w}mm;

@@ -257,11 +257,35 @@ export const usePrinter = (): UsePrinterResult => {
    */
   const handleTestPrintLabel = useCallback(async () => {
     const testHtml = `
-      <div style="width: 38mm; height: 12mm; font-family: sans-serif; padding: 2mm;">
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          @page { margin: 0; size: 38mm 12mm; }
+          html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            height: auto !important;
+            overflow: visible !important;
+            background: white;
+          }
+          body {
+            font-family: sans-serif;
+            padding: 2mm;
+            width: 38mm;
+            max-width: 38mm;
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+          }
+        </style>
+      </head>
+      <body>
         <div style="font-size: 8px; font-weight: bold;">ZINC Test</div>
         <div style="font-size: 6px;">Label Printer OK ✓</div>
         <div style="font-size: 5px; color: gray;">${new Date().toLocaleString()}</div>
-      </div>
+      </body>
+      </html>
     `;
 
     await printLabelSilently(testHtml, { width: 38, height: 12 });
@@ -272,19 +296,43 @@ export const usePrinter = (): UsePrinterResult => {
    */
   const handleTestPrintReceipt = useCallback(async () => {
     const testHtml = `
-      <div style="width: 72mm; font-family: monospace; padding: 4mm;">
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          @page { margin: 0; size: 80mm auto; }
+          html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            height: auto !important;
+            overflow: visible !important;
+            background: white;
+          }
+          body {
+            font-family: monospace;
+            padding: 4mm;
+            width: 80mm;
+            max-width: 80mm;
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+          }
+        </style>
+      </head>
+      <body>
         <div style="text-align: center; font-size: 14px; font-weight: bold;">ZINC</div>
         <div style="text-align: center; font-size: 10px; margin-bottom: 8px;">Receipt Printer Test</div>
-        <hr style="border: 1px dashed #000;" />
+        <hr style="border: 1px dashed #000; height: 0;" />
         <div style="font-size: 10px; margin: 4px 0;">
           <div>Status: Connected ✓</div>
           <div>Date: ${new Date().toLocaleString()}</div>
         </div>
-        <hr style="border: 1px dashed #000;" />
+        <hr style="border: 1px dashed #000; height: 0;" />
         <div style="text-align: center; font-size: 8px; color: gray; margin-top: 8px;">
           This is a test print
         </div>
-      </div>
+      </body>
+      </html>
     `;
 
     await printReceiptSilently(testHtml);

@@ -55,24 +55,33 @@ export const generateShiftReceiptHTML = (shift: Shift, language: Language = 'EN'
   <meta charset="UTF-8">
   <style>
     @page { margin: 0; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      height: auto !important;
+      background-color: #ffffff;
+      overflow: visible !important;
+    }
     body {
       font-family: 'Courier New', Courier, monospace;
       font-size: 13px;
       line-height: 1.4;
       color: #000;
       width: 80mm;
-      margin: 0 auto;
-      padding: 5px 15px;
+      max-width: 80mm;
+      padding: 5px 10px;
       box-sizing: border-box;
       direction: ${isAr ? 'rtl' : 'ltr'};
       text-align: ${isAr ? 'right' : 'left'};
+      -webkit-print-color-adjust: exact;
     }
     .text-center { text-align: center; }
     .text-right { text-align: right; }
     .text-left { text-align: left; }
     .bold { font-weight: bold; }
-    .divider { border-top: 1px dashed #000; margin: 5px 0; }
-    .strong-divider { border-top: 2px solid #000; margin: 6px 0; }
+    .divider { border-top: 1px dashed #000; margin: 5px 0; height: 0; }
+    .strong-divider { border-top: 2px solid #000; margin: 6px 0; height: 0; }
     
     .header-logo {
       font-size: 24px;

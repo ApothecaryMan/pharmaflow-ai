@@ -137,12 +137,20 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
           font-display: swap;
         }
         
-        /* 79mm Thermal Receipt - ~280px at 72dpi */
+        /* 80mm Thermal Receipt - ~300px at 72dpi */
         @page { 
-          size: 79mm auto; 
+          size: 80mm auto; 
           margin: 0; 
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+          margin: 0;
+          padding: 0;
+          min-height: 100%;
+          height: auto !important;
+          background-color: #ffffff;
+          overflow: visible !important;
+        }
         body { 
           font-family: ${opts.receiptFont === 'receipt-basic' ? "'Receiptional Receipt', 'Raqami', Arial, sans-serif" : "'Fake Receipt', 'Raqami', Arial, sans-serif"}; 
           font-size: ${opts.receiptFont === 'receipt-basic' ? '10px' : '11px'};
@@ -150,10 +158,11 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
           line-height: ${opts.receiptFont === 'receipt-basic' ? '1.5' : '1.3'};
           padding: 8px; 
           color: #000; 
-          width: 79mm;
-          max-width: 79mm;
+          width: 80mm;
+          max-width: 80mm;
           margin: 0 auto; 
           background: white; 
+          -webkit-print-color-adjust: exact;
         }
         
         /* Arabic text specific styling */
