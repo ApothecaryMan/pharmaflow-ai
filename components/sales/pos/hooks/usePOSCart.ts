@@ -134,6 +134,8 @@ export const usePOSCart = ({
         return updated;
       }
 
+      if (initialQuantity <= 0) return prev;
+
       initialQuantity > 0 && playBeep();
       return [
         ...prev,
@@ -280,9 +282,10 @@ export const usePOSCart = ({
       }
 
       playBeep();
-      return prev.map((item) =>
+      const updated = prev.map((item) =>
         item.id === id && !!item.isUnit === isUnit ? { ...item, quantity: newQty } : item
       );
+      return updated.filter((item) => item.quantity > 0);
     });
   }, [inventory, setCart, playBeep]);
 

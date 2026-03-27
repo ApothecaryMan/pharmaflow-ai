@@ -90,7 +90,7 @@ export const usePOSCheckout = ({
       }
 
       const saleParams = {
-        items: cart,
+        items: cart.filter((item) => item.quantity > 0),
         customer: selectedCustomer,
         customerName: customerName || undefined,
         customerCode,
