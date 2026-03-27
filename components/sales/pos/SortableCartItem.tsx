@@ -7,6 +7,7 @@ import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { CartItem, Drug } from '../../../types';
 import { getDisplayName } from '../../../utils/drugDisplayName';
 import { useSettings } from '../../../context';
+import { resolvePrice } from '../../../utils/stockOperations';
 
 import {
   CartItemExpiryBadge,
@@ -41,10 +42,7 @@ export interface SortableCartItemProps {
 }
 
 export const calculateItemTotal = (item: CartItem) => {
-  let unitPrice = item.price;
-  if (item.isUnit && item.unitsPerPack) {
-    unitPrice = item.price / item.unitsPerPack;
-  }
+  const unitPrice = resolvePrice(item.price, !!item.isUnit, item.unitsPerPack);
   const baseTotal = unitPrice * item.quantity;
   const discountAmount = baseTotal * ((item.discount || 0) / 100);
   return baseTotal - discountAmount;

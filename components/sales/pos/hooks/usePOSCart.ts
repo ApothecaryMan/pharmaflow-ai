@@ -139,7 +139,7 @@ export const usePOSCart = ({
         ...prev,
         {
           ...drug,
-          price: stockOps.resolvePrice(drug.price, isUnitMode, drug.unitsPerPack),
+          price: drug.price,
           quantity: initialQuantity,
           discount: prev.find((i) => i.id === drug.id && !!i.isUnit !== isUnitMode)?.discount || 0,
           isUnit: isUnitMode,
@@ -319,7 +319,7 @@ export const usePOSCart = ({
                 ...i, 
                 isUnit: newIsUnit, 
                 quantity: convertedQty,
-                price: stockOps.resolvePrice(i.basePackPrice || drug?.price || i.price, newIsUnit, unitsPerPack)
+                price: i.basePackPrice || drug?.price || i.price
               } 
             : i
         );

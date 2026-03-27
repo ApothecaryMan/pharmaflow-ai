@@ -8,6 +8,7 @@ import { BUTTON_INACTIVE, CARD_MD } from '../../../../utils/themeStyles';
 import { PriceDisplay } from '../../../common/TanStackTable';
 import { Tooltip } from '../../../common/Tooltip';
 import { SortableCartItem } from '../SortableCartItem';
+import { resolvePrice } from '../../../../utils/stockOperations';
 
 
 const cartScrollStyles = `
@@ -131,7 +132,8 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   // Calculate total profit margin (Accounts for item-level and global discounts)
   // Formula: Net Sale Total - Total Cost of Goods Sold
   const totalCost = cart.reduce((acc, item) => {
-    return acc + (item.costPrice || 0) * item.quantity;
+    const unitCost = resolvePrice(item.costPrice || 0, !!item.isUnit, item.unitsPerPack);
+    return acc + unitCost * item.quantity;
   }, 0);
   const totalProfit = cartTotal - totalCost;
 
@@ -248,7 +250,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                           <div className="flex justify-between gap-4 text-xs">
                             <span className="opacity-70">{currentLang === 'ar' ? 'هامش الربح المتوقع:' : 'Exp. Margin:'}</span>
                             <span className="font-black tabular-nums text-emerald-400">
-                              +<PriceDisplay value={totalProfit} />
+                              {totalProfit >= 0 ? '+' : ''}<PriceDisplay value={totalProfit} />
                             </span>
                           </div>
                           <p className="text-[9px] text-gray-400 font-medium leading-tight mt-1 border-t border-gray-100/10 pt-1">
@@ -259,7 +261,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                         </div>
                       }>
                         <span className="text-emerald-600 dark:text-emerald-400 font-black tabular-nums bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-800/30 whitespace-nowrap animate-in fade-in zoom-in duration-300">
-                          +<PriceDisplay value={totalProfit} />
+                          {totalProfit >= 0 ? '+' : ''}<PriceDisplay value={totalProfit} />
                         </span>
                       </Tooltip>
                     </>

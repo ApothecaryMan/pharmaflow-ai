@@ -15,6 +15,7 @@ import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { CartItem, Customer, Drug, Employee, Language, Sale, Shift } from '../../../types';
 import { getArabicDisplayName, getDisplayName } from '../../../utils/drugDisplayName';
 import { formatStock } from '../../../utils/inventory';
+import { resolvePrice } from '../../../utils/stockOperations';
 import { parseSearchTerm } from '../../../utils/searchUtils';
 import { formatExpiryDate, parseExpiryEndOfMonth } from '../../../utils/expiryUtils';
 
@@ -184,7 +185,10 @@ export const POS: React.FC<POSProps> = ({
   }, [setSearch]);
 
   const { grossSubtotal, cartTotal, subtotal } = useMemo(() => {
-    const gross = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const gross = cart.reduce((sum, item) => {
+      const unitPrice = resolvePrice(item.price, !!item.isUnit, item.unitsPerPack);
+      return sum + unitPrice * item.quantity;
+    }, 0);
     const net = cart.reduce((sum, item) => sum + calculateItemTotal(item), 0);
     const total = net * (1 - (globalDiscount || 0) / 100);
     return { grossSubtotal: gross, cartTotal: total, subtotal: gross };
