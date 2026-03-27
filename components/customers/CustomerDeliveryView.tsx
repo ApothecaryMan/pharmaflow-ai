@@ -35,7 +35,7 @@ function PointMarker({ longitude, latitude, label }: PointMarkerProps) {
           <span className="text-sm font-bold text-white mb-1 shadow-sm bg-black/40 px-2 py-0.5 rounded whitespace-nowrap border border-white/10">
             {label}
           </span>
-          <div className="size-4 bg-blue-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
+          <div className="size-4 bg-primary-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
              <div className="size-1.5 bg-white rounded-full" />
           </div>
         </div>
@@ -53,7 +53,7 @@ function DeliveryTruckMarker({ longitude, latitude }: DeliveryTruckMarkerProps) 
   return (
     <MapMarker longitude={longitude} latitude={latitude}>
       <MarkerContent>
-        <div className="size-8 bg-blue-500 rounded-full border-2 border-white shadow-xl flex items-center justify-center">
+        <div className="size-8 bg-primary-500 rounded-full border-2 border-white shadow-xl flex items-center justify-center">
            <span className="material-symbols-rounded text-white text-xl font-fill">local_shipping</span>
         </div>
       </MarkerContent>

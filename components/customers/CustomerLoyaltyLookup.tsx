@@ -146,7 +146,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
         accessorKey: 'orderPoints',
         header: t.loyalty?.orderPoints || 'Order',
         cell: (info) => (
-          <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900/30 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-transparent'>
+          <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900/30 text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-blue-400 bg-transparent'>
             <span className='material-symbols-rounded text-sm'>stars</span>
             {(info.getValue() as number).toFixed(1)}
           </span>

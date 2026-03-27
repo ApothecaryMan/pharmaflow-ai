@@ -127,7 +127,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           const isVisa = method === 'visa';
           return (
             <span
-              className={`flex items-center gap-1 ${isVisa ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}
+              className={`flex items-center gap-1 ${isVisa ? 'text-primary-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}
             >
               <span className='material-symbols-rounded text-[16px]'>
                 {isVisa ? 'credit_card' : 'payments'}

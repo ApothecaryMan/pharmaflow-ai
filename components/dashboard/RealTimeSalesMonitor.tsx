@@ -442,7 +442,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                           <span
                             className={`flex items-center gap-1 w-fit text-xs font-bold ${
                               sale.paymentMethod === 'visa'
-                                ? 'text-blue-600 dark:text-blue-400'
+                                ? 'text-primary-600 dark:text-blue-400'
                                 : 'text-green-600 dark:text-green-400'
                             }`}
                           >

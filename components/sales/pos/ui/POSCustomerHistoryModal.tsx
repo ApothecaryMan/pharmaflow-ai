@@ -127,7 +127,7 @@ export const POSCustomerHistoryModal: React.FC<POSCustomerHistoryModalProps> = (
                       <div className='flex items-center gap-4'>
                         <div className={`flex items-center justify-center ${
                           sale.paymentMethod === 'visa' 
-                            ? 'text-blue-600 dark:text-blue-400' 
+                            ? 'text-primary-600 dark:text-blue-400' 
                             : 'text-emerald-600 dark:text-emerald-400'
                         }`}>
                           <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>

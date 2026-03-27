@@ -38,7 +38,7 @@ export const AlertsAndAds: React.FC<AlertsAndAdsProps> = ({ rotationSpeed = 8000
         success: { color: 'text-green-600', icon: 'check_circle' },
         error: { color: 'text-red-500', icon: 'error' },
         warning: { color: 'text-amber-500', icon: 'warning' },
-        info: { color: 'text-blue-500', icon: 'info' },
+        info: { color: 'text-primary-500', icon: 'info' },
       };
 
       const variant = variants[currentAlert.type];

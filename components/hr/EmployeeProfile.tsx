@@ -282,7 +282,7 @@ const AIPerformanceSummary: React.FC<{
                   )
                   .replace(
                     /\*\*(تقييم حجم السلة|Basket Size Evaluation):\*\*/gi,
-                    '<strong class="text-blue-600 dark:text-blue-400 text-base">$1:</strong>'
+                    '<strong class="text-primary-600 dark:text-blue-400 text-base">$1:</strong>'
                   )
                   .replace(
                     /\*\*(تقييم مهارات البيع الإضافي|Upselling Skills Assessment):\*\*/gi,
@@ -303,7 +303,7 @@ const AIPerformanceSummary: React.FC<{
                   )
                   .replace(
                     /\*\*(التوصية|Recommendation):\*\*/gi,
-                    '<strong class="text-blue-600 dark:text-blue-400">$1:</strong>'
+                    '<strong class="text-primary-600 dark:text-blue-400">$1:</strong>'
                   )
                   // Generic bold fallback
                   .replace(

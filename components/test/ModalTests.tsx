@@ -236,7 +236,7 @@ export const ModalTests: React.FC<ModalTestsProps> = ({ color, t, language }) =>
             <div className='p-6 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl'>
               {activePage === 'page1' ? (
                 <div className='animate-fade-in'>
-                  <span className='material-symbols-rounded text-6xl text-blue-500 mb-4'>
+                  <span className='material-symbols-rounded text-6xl text-primary-500 mb-4'>
                     description
                   </span>
                   <h3 className='text-xl font-bold text-gray-800 dark:text-white mb-2'>

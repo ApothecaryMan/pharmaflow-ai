@@ -985,7 +985,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                   </label>
                   <div className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus-within:ring-2 focus-within:ring-blue-500 transition-all flex flex-wrap gap-2 items-center min-h-[42px]'>
                     {formData.barcode && (
-                      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium border border-blue-200 dark:border-blue-800'>
+                      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium border border-gray-200 dark:border-blue-800'>
                         <span className='material-symbols-rounded text-[14px]'>qr_code_2</span>
                         {formData.barcode}
                         <button
@@ -1052,7 +1052,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                     <button
                       type='button'
                       onClick={generateInternalCode}
-                      className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-blue-500 transition-colors'
+                      className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary-500 transition-colors'
                       title='Auto-Generate'
                     >
                       <span className='material-symbols-rounded text-[20px]'>autorenew</span>

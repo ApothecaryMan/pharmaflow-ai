@@ -90,7 +90,7 @@ const StaffOverviewContent: React.FC<StaffOverviewProps> = ({
         <div className={`${CARD_BASE} rounded-2xl overflow-hidden flex-1 min-h-0 flex flex-col`}>
           <div className='p-6 border-b border-gray-100 dark:border-(--border-divider) flex items-center justify-between shrink-0'>
             <h2 className='text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-blue-500'>leaderboard</span>
+              <span className='material-symbols-rounded text-primary-500'>leaderboard</span>
               {language === 'AR' ? 'لوحة المتصدرين' : 'Performance Leaderboard'}
             </h2>
           </div>

@@ -93,6 +93,19 @@ layer(base);
   --color-primary-900: var(--primary-900);
   --color-primary-950: var(--primary-950);
 
+  /* Neutral Gray Palette (Zinc-based) to remove blue tints */
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f4f4f5;
+  --color-gray-200: #e4e4e7;
+  --color-gray-300: #d4d4d8;
+  --color-gray-400: #a1a1aa;
+  --color-gray-500: #71717a;
+  --color-gray-600: #52525b;
+  --color-gray-700: #3f3f46;
+  --color-gray-800: #27272a;
+  --color-gray-900: #18181b;
+  --color-gray-950: #09090b;
+
   /* Layout Tokens */
   --spacing-page: var(--page-padding);
   --max-width-page: var(--page-max-width);
@@ -229,7 +242,7 @@ layer(base);
   }
 
   .dark {
-    --border-color: #374151; /* gray-700 */
+    --border-color: #3f3f46; /* zinc-700 (Neutral Gray) */
     --text-primary: oklch(0.985 0 0);
     --text-secondary: #d1d5db; /* gray-300 */
     --text-tertiary: #9ca3af; /* gray-400 */

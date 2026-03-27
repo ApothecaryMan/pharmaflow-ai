@@ -106,7 +106,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
       case 'error':
         return 'text-red-500';
       default:
-        return 'text-blue-500';
+        return 'text-primary-500';
     }
   };
 
@@ -145,7 +145,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
             {state.notifications.length > 0 && (
               <button
                 onClick={clearNotifications}
-                className='text-xs text-blue-500 hover:text-blue-600 transition-colors'
+                className='text-xs text-primary-500 hover:text-primary-600 transition-colors'
               >
                 {t.clearAll}
               </button>

@@ -735,7 +735,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             value={info.getValue() as string}
             onChange={(e) => updateAdjustment(info.row.index, 'notes', e.target.value)}
             placeholder={t.stockAdjustment.notes}
-            className='w-full text-xs px-2 py-1.5 bg-transparent border-0 border-b border-(--border-divider) focus:border-blue-500 rounded-none focus:ring-0 text-(--text-primary)'
+            className='w-full text-xs px-2 py-1.5 bg-transparent border-0 border-b border-(--border-divider) focus:border-primary-500 rounded-none focus:ring-0 text-(--text-primary)'
           />
         ),
       },
@@ -1037,7 +1037,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                 {/* Import/Print Actions */}
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className='flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/10 transition-all active:enabled:scale-95'
+                  className='flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 dark:border-primary-500/30 bg-gray-50 dark:bg-primary-500/5 text-primary-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-primary-500/10 transition-all active:enabled:scale-95'
                 >
                   {t.global.actions.import}
                   <span className='material-symbols-rounded text-base'>upload_file</span>
@@ -1230,7 +1230,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
               <button
                 onClick={() => addAdjustmentItem(batchSelectionDrug, null)}
-                className='w-full text-center p-3 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-colors text-sm font-medium'
+                className='w-full text-center p-3 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 hover:text-primary-600 hover:border-blue-300 transition-colors text-sm font-medium'
               >
                 {t.inventory.actionsMenu.adjustStock} ({t.global.actions.all})
               </button>

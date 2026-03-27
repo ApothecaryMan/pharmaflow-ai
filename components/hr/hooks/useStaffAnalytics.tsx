@@ -396,7 +396,7 @@ export const useStaffAnalytics = ({
           isCurrency: false,
           valueLabel: language === 'AR' ? 'لكل فاتورة' : 'per invoice',
           icon: 'avg_time',
-          iconColorClass: 'text-blue-500',
+          iconColorClass: 'text-primary-500',
           calculations: [
             {
               label: language === 'AR' ? 'عدد الفواتير' : 'Invoices',

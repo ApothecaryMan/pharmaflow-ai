@@ -277,7 +277,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({
               className='flex items-center justify-center h-full px-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors border-l border-gray-200 dark:border-gray-700'
               title={language === 'AR' ? 'تسجيل الدخول بمفتاح المرور' : 'Login with Passkey'}
             >
-              <span className='material-symbols-rounded text-blue-500' style={{ fontSize: 'calc(var(--status-icon-size, 16px) + 2px)' }}>
+              <span className='material-symbols-rounded text-primary-500' style={{ fontSize: 'calc(var(--status-icon-size, 16px) + 2px)' }}>
                 fingerprint
               </span>
             </button>
@@ -286,7 +286,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({
       ) : (
         <div className='flex items-center h-full px-2 gap-2 bg-white/50 dark:bg-gray-900/50 border-l border-r border-gray-300 dark:border-gray-700 min-w-[150px]'>
           <span
-            className={`material-symbols-rounded ${isError ? 'text-red-500' : 'text-blue-500 dark:text-blue-400'}`}
+            className={`material-symbols-rounded ${isError ? 'text-red-500' : 'text-primary-500 dark:text-blue-400'}`}
             style={{ fontSize: 'var(--status-icon-size, 16px)' }}
           >
             {step === 'username' ? 'badge' : 'lock'}

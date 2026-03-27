@@ -142,7 +142,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
           {pendingPurchases.map((purchase) => (
             <div
               key={purchase.id}
-              className='bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xs flex flex-col relative overflow-hidden group cursor-pointer hover:border-blue-200 dark:hover:border-blue-800 transition-colors'
+              className='bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xs flex flex-col relative overflow-hidden group cursor-pointer hover:border-gray-200 dark:hover:border-blue-800 transition-colors'
               onClick={() => setSelectedPurchase(purchase)}
             >
               {/* Status Badge */}

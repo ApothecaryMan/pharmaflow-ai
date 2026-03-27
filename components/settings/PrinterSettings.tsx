@@ -129,7 +129,7 @@ export const PrinterSettings: React.FC<PrinterSettingsProps> = ({
     >
       <div className='space-y-6'>
         {/* Connection Section */}
-        <div className='bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4'>
+        <div className='bg-gray-50 dark:bg-zinc-900/40 border border-transparent dark:border-(--border-divider) rounded-2xl p-4'>
           <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3 block'>
             {pt.connection || 'Connection'}
           </label>
@@ -164,7 +164,7 @@ export const PrinterSettings: React.FC<PrinterSettingsProps> = ({
                   href='https://qz.io/download/'
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='px-3 py-1.5 text-sm font-medium rounded-lg transition-colors bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-200 flex items-center gap-1'
+                  className='px-3 py-1.5 text-sm font-medium rounded-lg transition-colors bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-700 flex items-center gap-1 border border-transparent dark:border-(--border-divider)'
                 >
                   <span className='material-symbols-rounded text-[16px]'>download</span>
                   {pt.download || 'Download QZ Tray'}
@@ -222,7 +222,7 @@ export const PrinterSettings: React.FC<PrinterSettingsProps> = ({
                       <span className='material-symbols-rounded text-[16px] text-gray-400'>
                         print
                       </span>
-                      <span className={`text-sm ${isSelected ? 'font-bold text-blue-600' : ''}`}>
+                      <span className={`text-sm ${isSelected ? 'font-bold text-primary-600' : ''}`}>
                         {p}
                       </span>
                     </div>
@@ -279,7 +279,7 @@ export const PrinterSettings: React.FC<PrinterSettingsProps> = ({
                       <span className='material-symbols-rounded text-[16px] text-gray-400'>
                         print
                       </span>
-                      <span className={`text-sm ${isSelected ? 'font-bold text-blue-600' : ''}`}>
+                      <span className={`text-sm ${isSelected ? 'font-bold text-primary-600' : ''}`}>
                         {p}
                       </span>
                     </div>
@@ -309,7 +309,7 @@ export const PrinterSettings: React.FC<PrinterSettingsProps> = ({
 
         {/* Silent Mode Section */}
         {settings.enabled && (
-          <div className='space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700'>
+          <div className='space-y-3 pt-4 border-t border-(--border-divider)'>
             <label className='text-[11px] font-bold text-gray-400 uppercase tracking-wider block'>
               {pt.silentMode || 'Silent Mode'}
             </label>

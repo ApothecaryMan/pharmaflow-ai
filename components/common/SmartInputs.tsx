@@ -498,7 +498,7 @@ export const SmartAutocomplete: React.FC<SmartAutocompleteProps> = ({
   caseSensitive = false,
   onSuggestionAccept,
   inputRef: externalRef,
-  color = 'blue',
+  color = 'primary',
   ...restProps
 }) => {
   const [currentSuggestion, setCurrentSuggestion] = useState<string>('');

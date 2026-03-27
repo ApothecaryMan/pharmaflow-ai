@@ -922,7 +922,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                 renderSelected={(item) => (
                   <div className='flex items-center gap-1 px-1'>
                     <span
-                      className={`material-symbols-rounded text-sm ${!item?.id ? 'text-blue-500 dark:text-muted-foreground' : item.id === defaultTemplateId ? 'text-green-500/80 dark:text-muted-foreground' : 'text-gray-400 dark:text-muted-foreground/60'}`}
+                      className={`material-symbols-rounded text-sm ${!item?.id ? 'text-primary-500 dark:text-muted-foreground' : item.id === defaultTemplateId ? 'text-green-500/80 dark:text-muted-foreground' : 'text-gray-400 dark:text-muted-foreground/60'}`}
                     >
                       {!item?.id
                         ? 'add_circle'
@@ -938,7 +938,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                 renderItem={(item, isSelected) => (
                   <div className='flex items-center gap-2'>
                     <span
-                      className={`material-symbols-rounded text-lg ${!item.id ? 'text-blue-500 dark:text-muted-foreground' : item.id === defaultTemplateId ? 'text-green-500/80 dark:text-muted-foreground' : 'text-gray-400 dark:text-muted-foreground/60'}`}
+                      className={`material-symbols-rounded text-lg ${!item.id ? 'text-primary-500 dark:text-muted-foreground' : item.id === defaultTemplateId ? 'text-green-500/80 dark:text-muted-foreground' : 'text-gray-400 dark:text-muted-foreground/60'}`}
                     >
                       {!item.id
                         ? 'add_circle'
@@ -947,7 +947,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
                           : 'article'}
                     </span>
                     <span
-                      className={`text-xs ${!item.id ? 'text-blue-600 dark:text-foreground font-bold' : 'text-gray-700 dark:text-muted-foreground'}`}
+                      className={`text-xs ${!item.id ? 'text-primary-600 dark:text-foreground font-bold' : 'text-gray-700 dark:text-muted-foreground'}`}
                     >
                       {item.name}
                     </span>
@@ -966,7 +966,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
               <button
                 onClick={handleUndo}
                 disabled={history.length === 0}
-                className={`w-6 h-6 flex items-center justify-center rounded-md text-gray-400 transition-all ${history.length !== 0 ? 'hover:bg-white dark:hover:bg-accent hover:text-blue-500 dark:hover:text-foreground' : 'opacity-20 cursor-default'}`}
+                className={`w-6 h-6 flex items-center justify-center rounded-md text-gray-400 transition-all ${history.length !== 0 ? 'hover:bg-white dark:hover:bg-accent hover:text-primary-500 dark:hover:text-foreground' : 'opacity-20 cursor-default'}`}
                 title={t.undo}
               >
                 <span className='material-symbols-rounded text-sm'>undo</span>
@@ -974,7 +974,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
               <button
                 onClick={handleRedo}
                 disabled={redoStack.length === 0}
-                className={`w-6 h-6 flex items-center justify-center rounded-md text-gray-400 transition-all ${redoStack.length !== 0 ? 'hover:bg-white dark:hover:bg-accent hover:text-blue-500 dark:hover:text-foreground' : 'opacity-20 cursor-default'}`}
+                className={`w-6 h-6 flex items-center justify-center rounded-md text-gray-400 transition-all ${redoStack.length !== 0 ? 'hover:bg-white dark:hover:bg-accent hover:text-primary-500 dark:hover:text-foreground' : 'opacity-20 cursor-default'}`}
                 title={t.redo}
               >
                 <span className='material-symbols-rounded text-sm'>redo</span>
@@ -1076,7 +1076,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
             />
             <button
               onClick={() => setShowCalibrationModal(true)}
-              className='w-6 h-6 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-blue-500 dark:hover:text-foreground transition-all'
+              className='w-6 h-6 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground transition-all'
               title='Calibrate Orientation'
             >
               <span className='material-symbols-rounded text-[18px] leading-none'>
@@ -1100,7 +1100,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
           <div className='flex items-center bg-gray-50/50 dark:bg-muted/30 p-0.5 rounded-lg border border-gray-100 dark:border-border'>
             <button
               onClick={() => setZoom(Math.max(1, zoom - 0.5))}
-              className='w-6 h-6 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-blue-500 dark:hover:text-foreground transition-all'
+              className='w-6 h-6 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground transition-all'
             >
               <span className='material-symbols-rounded text-sm'>remove</span>
             </button>
@@ -1109,7 +1109,7 @@ export const BarcodeStudio: React.FC<BarcodeStudioProps> = ({ inventory, color, 
             </div>
             <button
               onClick={() => setZoom(Math.min(8, zoom + 0.5))}
-              className='w-6 h-6 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-blue-500 dark:hover:text-foreground transition-all'
+              className='w-6 h-6 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-accent text-gray-400 dark:text-muted-foreground hover:text-primary-500 dark:hover:text-foreground transition-all'
             >
               <span className='material-symbols-rounded text-sm'>add</span>
             </button>

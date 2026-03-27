@@ -284,7 +284,7 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
                   : currentSlide.variant === 'error'
                     ? 'text-red-500'
                     : currentSlide.variant === 'info'
-                      ? 'text-blue-500'
+                      ? 'text-primary-500'
                       : 'text-(--text-secondary)'
             }`}
             style={{ fontSize: 'calc(var(--status-icon-size, 16px) - 2px)' }}

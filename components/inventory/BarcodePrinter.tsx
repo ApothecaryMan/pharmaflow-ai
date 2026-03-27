@@ -311,7 +311,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
             ref={printButtonRef}
             onClick={handlePrint}
             disabled={queue.length === 0}
-            className='w-12 h-12 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all active:scale-95 disabled:opacity-30 disabled:grayscale font-semibold'
+            className='w-12 h-12 flex items-center justify-center bg-primary-600 hover:bg-blue-700 text-white rounded-xl transition-all active:scale-95 disabled:opacity-30 disabled:grayscale font-semibold'
             title={t.barcodePrinter?.printLabels || 'Print Labels'}
           >
             <span className='material-symbols-rounded text-2xl'>print</span>
@@ -565,7 +565,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                 >
                   <div className='flex items-center gap-3 pointer-events-none'>
                     <span className={`material-symbols-rounded text-lg transition-colors ${
-                      printConfig[setting.key as keyof typeof printConfig] ? 'text-blue-600 dark:text-white' : 'opacity-40'
+                      printConfig[setting.key as keyof typeof printConfig] ? 'text-primary-600 dark:text-white' : 'opacity-40'
                     }`}>{setting.icon}</span>
                     <span className='text-sm font-medium'>{setting.label}</span>
                   </div>

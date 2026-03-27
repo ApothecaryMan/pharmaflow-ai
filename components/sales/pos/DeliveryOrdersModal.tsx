@@ -731,7 +731,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   onClick={() => setSelectedSaleId(null)}
                   className='w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors group shrink-0'
                 >
-                  <span className='material-symbols-rounded text-gray-500 group-hover:text-blue-600 transition-colors text-lg'>
+                  <span className='material-symbols-rounded text-gray-500 group-hover:text-primary-600 transition-colors text-lg'>
                     arrow_back
                   </span>
                 </button>
@@ -746,7 +746,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                           ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-900/50'
                           : selectedSale.status === 'cancelled'
                             ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-900/50'
-                            : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-900/50'
+                            : 'bg-gray-50 text-blue-700 border-gray-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-gray-800/50'
                       }`}
                     >
                       <span className='material-symbols-rounded text-sm'>
@@ -970,7 +970,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                         if (targetItem)
                                           handleQuantityChange(targetItem, true, val - unitQty);
                                       }}
-                                      className='h-full w-1/2 text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-blue-200 font-bold text-[10px] text-blue-600 dark:text-blue-400 shrink-0 min-w-0'
+                                      className='h-full w-1/2 text-center bg-transparent focus:outline-hidden focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-blue-200 font-bold text-[10px] text-primary-600 dark:text-blue-400 shrink-0 min-w-0'
                                     />
                                   )}
                                 </div>
@@ -986,7 +986,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                       </span>
                                       <div className='w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0'></div>
                                       <span
-                                        className={`flex-1 text-center font-bold text-[10px] ${unitQty > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-blue-200 dark:text-blue-900/40'}`}
+                                        className={`flex-1 text-center font-bold text-[10px] ${unitQty > 0 ? 'text-primary-600 dark:text-blue-400' : 'text-blue-200 dark:text-blue-900/40'}`}
                                       >
                                         {unitQty === 0 && unitQty !== undefined ? 'U' : unitQty}
                                       </span>
@@ -1237,7 +1237,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                           </span>
                                         </div>
                                       )}
-                                      <span className='material-symbols-rounded text-gray-300 group-hover:text-blue-500 transition-transform duration-300 rotate-0'>
+                                      <span className='material-symbols-rounded text-gray-300 group-hover:text-primary-500 transition-transform duration-300 rotate-0'>
                                         expand_more
                                       </span>
                                     </div>
@@ -1253,7 +1253,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                   <div className='space-y-4 pt-1'>
                                     <div className='flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-800'>
                                       <div className='flex flex-col'>
-                                        <span className='text-xs font-bold text-blue-600 dark:text-blue-400'>
+                                        <span className='text-xs font-bold text-primary-600 dark:text-blue-400'>
                                           {timeStr}
                                         </span>
                                         <span className='text-[10px] text-gray-500 uppercase tracking-widest'>
@@ -1367,7 +1367,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                 <button
                   onClick={handleSaveChanges}
                   disabled={!hasChanges}
-                  className='px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors disabled:opacity-50'
+                  className='px-6 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-blue-700 rounded-xl transition-colors disabled:opacity-50'
                 >
                   {t.saveChanges || 'Save Changes'}
                 </button>
@@ -1409,7 +1409,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
             {canEdit && !isEditMode && selectedSaleId && selectedSale && (
               <button
                 onClick={() => setIsEditMode(true)}
-                className='px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors'
+                className='px-6 py-2 bg-primary-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors'
               >
                 {t.editOrder || 'Edit Order'}
               </button>

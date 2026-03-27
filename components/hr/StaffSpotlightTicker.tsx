@@ -41,7 +41,7 @@ export const StaffSpotlightTicker: React.FC<StaffSpotlightTickerProps> = ({
           <div
             className={`absolute -right-10 -top-10 w-32 h-32 blur-3xl opacity-15 dark:opacity-30 ${
               item.color === 'sky' ? 'bg-sky-500' : 
-              item.color === 'blue' ? 'bg-blue-500' : 
+              item.color === 'blue' ? 'bg-primary-500' : 
               `bg-${item.color}-500`
             } transition-opacity group-hover:opacity-40`}
           />
@@ -86,7 +86,7 @@ export const StaffSpotlightTicker: React.FC<StaffSpotlightTickerProps> = ({
                 triggerClassName='w-full text-left'
                 tooltipClassName='p-0 border-none'
               >
-                <h4 className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate hover:text-blue-500 transition-colors cursor-help'>
+                <h4 className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate hover:text-primary-500 transition-colors cursor-help'>
                   {item.hero?.name || (language === 'AR' ? '—' : '—')}
                 </h4>
               </Tooltip>

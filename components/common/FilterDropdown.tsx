@@ -54,7 +54,7 @@ export function FilterDropdown<T>({
   onEnter,
   className = '',
   transparentIfSingle = false,
-  color = 'blue',
+  color = 'primary',
   variant = 'minimal',
   minHeight,
   style,

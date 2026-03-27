@@ -82,7 +82,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           return (
             <span
               className={`inline-flex items-center gap-1 px-1 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-tight bg-transparent
-                  ${type === 'in' || type === 'card_sale' || type === 'purchase_return' ? 'border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400' : ''}
+                  ${type === 'in' || type === 'card_sale' || type === 'purchase_return' ? 'border-gray-200 dark:border-gray-800/50 text-gray-700 dark:text-gray-400' : ''}
                   ${type === 'out' || type === 'closing' || type === 'purchase' ? 'border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400' : ''}
                   ${type === 'sale' ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400' : ''}
                   ${type === 'opening' ? 'border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400' : ''}
@@ -545,7 +545,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
               {canAddCash && (
                 <button
                   onClick={() => setModalMode('in')}
-                  className={`px-4 py-2 rounded-xl bg-primary-100 text-primary-700 hover:bg-primary-200 font-bold transition-colors flex items-center gap-2`}
+                  className={`px-4 py-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold transition-colors flex items-center gap-2`}
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>add</span>
                   {t.cashRegister.actions.addCash}
@@ -574,7 +574,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             canOpenShift && (
               <button
                 onClick={() => setModalMode('open')}
-                className={`px-6 py-2.5 rounded-xl bg-primary-600 text-white hover:bg-primary-700 font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2`}
+                className={`px-6 py-2.5 rounded-xl bg-gray-900 dark:bg-zinc-800 text-white hover:bg-black dark:hover:bg-zinc-700 font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2`}
               >
                 <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>lock_open</span>
                 {t.cashRegister.actions.openShift}
@@ -617,7 +617,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <span className='text-sm text-gray-600 dark:text-gray-400'>
                     {t.cashRegister.messages.started}:
                   </span>
-                  <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+                  <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
                     <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>schedule</span>
                     {(() => {
                       const timeStr = new Date(currentShift.openTime).toLocaleTimeString('en-US', {
@@ -682,7 +682,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
             <div className='space-y-3'>
               {canViewExpectedBalance && (
                 <div
-                  className={`p-5 rounded-3xl ${CARD_BASE} border-2 !border-primary-200 dark:!border-primary-900/50 relative overflow-hidden group transition-all hover:shadow-md`}
+                  className={`p-5 rounded-3xl ${CARD_BASE} border-2 !border-gray-200 dark:!border-gray-800 relative overflow-hidden group transition-all hover:shadow-md`}
                 >
                   <div className='flex items-center gap-2 mb-1.5 relative z-10'>
                     <span className='material-symbols-rounded text-primary-600 dark:text-primary-400' style={{ fontSize: 'var(--icon-md)' }}>
@@ -847,7 +847,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <p className='text-xs font-bold uppercase text-gray-500 mb-1'>
                     {t.cashRegister.summary.cashPurchaseReturns || 'Cash Purch. Returns'}
                   </p>
-                  <p className='text-base font-bold text-blue-600 flex items-center gap-1.5'>
+                  <p className='text-base font-bold text-primary-600 flex items-center gap-1.5'>
                     <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-lg)' }}>add</span>
                     {(() => {
                       const { amount, symbol } = formatCurrencyParts(

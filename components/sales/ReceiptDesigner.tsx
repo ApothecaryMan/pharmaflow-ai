@@ -201,12 +201,14 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   // 2. Dummy Sale Data for Preview
   const DUMMY_SALE: Sale = {
     id: 'TRX-998877',
+    branchId: 'BR-001',
     date: getVerifiedDate().toISOString(),
     dailyOrderNumber: 42,
     status: 'completed',
     items: [
       {
         id: '1',
+        branchId: 'BR-001',
         name: 'Panadol Extra 500mg',
         genericName: ['Paracetamol'],
         quantity: 2,
@@ -221,6 +223,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       },
       {
         id: '2',
+        branchId: 'BR-001',
         name: 'Vitamin C 1000mg',
         genericName: ['Ascorbic Acid'],
         quantity: 3,
@@ -235,6 +238,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       },
       {
         id: '3',
+        branchId: 'BR-001',
         name: 'Face Mask (Premium)',
         genericName: ['Mask'],
         quantity: 5,
@@ -270,6 +274,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     const openTime = new Date(now.getTime() - 8 * 60 * 60 * 1000); // 8 hours ago
     return {
       id: 'SHIFT-889900',
+      branchId: 'BR-001',
       status: 'closed',
       openTime: openTime.toISOString(),
       closeTime: now.toISOString(),
@@ -412,7 +417,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}
                   placeholder={t.receiptDesigner.newTemplatePlaceholder}
-                  className='flex-1 bg-transparent border border-blue-500 rounded-xl px-3 h-10 text-sm focus:outline-hidden text-gray-800 dark:text-white'
+                  className='flex-1 bg-transparent border border-primary-500 rounded-xl px-3 h-10 text-sm focus:outline-hidden text-gray-800 dark:text-white'
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateTemplate()}
                 />
                 <button
@@ -466,7 +471,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                                 autoFocus
                                 value={editingNameValue}
                                 onChange={(e) => setEditingNameValue(e.target.value)}
-                                className='flex-1 bg-white dark:bg-gray-800 border border-blue-500 rounded-lg px-2 py-1 text-xs focus:outline-hidden text-gray-800 dark:text-white'
+                                className='flex-1 bg-white dark:bg-gray-800 border border-primary-500 rounded-lg px-2 py-1 text-xs focus:outline-hidden text-gray-800 dark:text-white'
                                 onKeyDown={(e) => e.key === 'Enter' && handleRenameTemplate(e)}
                               />
                               <button
@@ -479,7 +484,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                           ) : (
                             <>
                               <span
-                                className={`text-sm truncate ${isSelected ? 'font-bold text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}
+                                className={`text-sm truncate ${isSelected ? 'font-bold text-primary-600' : 'text-gray-700 dark:text-gray-300'}`}
                               >
                                 {item.name}
                               </span>
@@ -499,7 +504,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                                 setIsEditingName(item.id);
                                 setEditingNameValue(item.name);
                               }}
-                              className='w-6 h-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center text-gray-400 hover:text-blue-500 transition-colors'
+                              className='w-6 h-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center text-gray-400 hover:text-primary-500 transition-colors'
                               title={t.receiptDesigner.renameTemplate}
                             >
                               <span className='material-symbols-rounded text-[14px]'>edit</span>
@@ -547,7 +552,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 )}
                 <button
                   onClick={() => setIsAddingTemplate(true)}
-                  className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-blue-500 hover:text-white transition-all border border-gray-200 dark:border-gray-700'
+                  className='w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-primary-500 hover:text-white transition-all border border-gray-200 dark:border-gray-700'
                 >
                   <span className='material-symbols-rounded'>add</span>
                 </button>
@@ -896,8 +901,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         {/* Top-Left Unified Stats Badge */}
         <div className='absolute top-4 left-4 flex items-center px-2.5 h-7 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-xl border border-gray-200/50 dark:border-gray-700/50 shadow-xs text-[10px] font-bold gap-3 z-20 pointer-events-none'>
           <div className='flex items-center gap-1.2' title='Real Printing Memory Size (Actual)'>
-            <span className='material-symbols-rounded text-[16px] text-blue-500'>memory</span>
-            <span className='text-blue-600 dark:text-blue-400'>{actualPrintSize}</span>
+            <span className='material-symbols-rounded text-[16px] text-primary-500'>memory</span>
+            <span className='text-primary-600 dark:text-blue-400'>{actualPrintSize}</span>
           </div>
           <div className='w-px h-3 bg-gray-200 dark:bg-gray-700' />
           <div

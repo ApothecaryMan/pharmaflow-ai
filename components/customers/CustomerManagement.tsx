@@ -415,7 +415,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     e.stopPropagation();
                     handleOpenEdit(c);
                   }}
-                  className='p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-500 transition-colors'
+                  className='p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-primary-500 transition-colors'
                 >
                   <span className='material-symbols-rounded text-[20px]'>edit</span>
                 </button>
@@ -443,7 +443,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const renderAddressForm = () => (
     <div className='p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700 space-y-4'>
       <h4 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2'>
-        <span className='material-symbols-rounded text-blue-500'>location_on</span>
+        <span className='material-symbols-rounded text-primary-500'>location_on</span>
         {t.modal.address}
       </h4>
 
@@ -616,14 +616,14 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 </span>
               </div>
               <div
-                className='p-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 flex flex-col items-center justify-center text-center'
+                className='p-4 rounded-xl bg-gray-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 flex flex-col items-center justify-center text-center'
                 style={{
                   boxShadow: 'rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px',
                 }}
               >
-                <span className='material-symbols-rounded text-blue-500 mb-1'>shopping_bag</span>
+                <span className='material-symbols-rounded text-primary-500 mb-1'>shopping_bag</span>
                 <PriceDisplay value={c.totalPurchases || 0} size="lg" />
-                <span className='text-xs font-medium text-blue-600/70 dark:text-blue-500/70 uppercase tracking-wide'>
+                <span className='text-xs font-medium text-primary-600/70 dark:text-primary-500/70 uppercase tracking-wide'>
                   Total Purchases
                 </span>
               </div>
@@ -814,7 +814,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               {/* Basic Details Card */}
               <div className='bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-xs card-shadow'>
                 <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
-                  <span className='material-symbols-rounded text-blue-500'>person</span>
+                  <span className='material-symbols-rounded text-primary-500'>person</span>
                   {t.basicInfo || 'Basic Information'}
                 </h3>
 
@@ -835,7 +835,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       <button
                         type='button'
                         onClick={() => setFormData({ ...formData, code: generateUniqueCode() })}
-                        className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-blue-500 transition-colors'
+                        className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary-500 transition-colors'
                         title={t.modal.generateCode}
                       >
                         <span className='material-symbols-rounded text-[18px]'>autorenew</span>
@@ -900,7 +900,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               {/* Medical Info Card */}
               <div className='bg-white dark:bg-gray-900 rounded-3xl p-6 card-shadow'>
                 <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
-                  <span className='material-symbols-rounded text-blue-500'>medical_services</span>
+                  <span className='material-symbols-rounded text-primary-500'>medical_services</span>
                   {t.modal.conditions}
                 </h3>
 
@@ -950,7 +950,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             <div className='xl:col-span-1 space-y-6'>
               <div className='bg-white dark:bg-gray-900 rounded-3xl p-6 card-shadow h-full'>
                 <h3 className='text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4'>
-                  <span className='material-symbols-rounded text-blue-500'>settings</span>
+                  <span className='material-symbols-rounded text-primary-500'>settings</span>
                   {t.modal.preferences}
                 </h3>
 
@@ -1207,7 +1207,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
               {/* Insurance */}
               <div className='p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700'>
                 <h4 className='text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2'>
-                  <span className='material-symbols-rounded text-blue-500'>health_and_safety</span>
+                  <span className='material-symbols-rounded text-primary-500'>health_and_safety</span>
                   {t.modal.insuranceDetails}
                 </h4>
                 <div className='grid grid-cols-2 gap-4'>

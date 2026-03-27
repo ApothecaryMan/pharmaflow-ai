@@ -154,7 +154,7 @@ export const ActionCard = ({ title, icon, color, actionLabel }: any) => (
       <span className='material-symbols-rounded text-4xl'>{icon}</span>
     </div>
     <h4 className='font-semibold text-gray-900 dark:text-white mb-0.5'>{title}</h4>
-    <p className='text-xs text-blue-500 font-medium group-hover:underline'>{actionLabel}</p>
+    <p className='text-xs text-primary-500 font-medium group-hover:underline'>{actionLabel}</p>
   </div>
 );
 

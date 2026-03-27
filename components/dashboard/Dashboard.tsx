@@ -664,7 +664,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-auto max-h-[530px] flex flex-col group`}>
           <div className='flex justify-between items-center mb-4'>
             <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-blue-500' style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
+              <span className='material-symbols-rounded text-primary-500' style={{ fontSize: 'var(--icon-navbar-dropdown)' }}>
                 receipt_long
               </span>
               {t.recentSales}
@@ -713,7 +713,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <span className='text-xs'>#{sale.id}</span>
                         <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
                         <span
-                          className={`inline-flex items-center ${sale.paymentMethod === 'visa' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}
+                          className={`inline-flex items-center ${sale.paymentMethod === 'visa' ? 'text-primary-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}
                         >
                           <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-base)' }}>
                             {sale.paymentMethod === 'visa' ? 'credit_card' : 'payments'}
@@ -1388,7 +1388,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div className='flex items-center gap-3 shrink-0'>
                         {/* Payment Icon */}
                         <div
-                          className={`flex items-center justify-center w-6 h-6 rounded-full ${sale.paymentMethod === 'visa' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400'}`}
+                          className={`flex items-center justify-center w-6 h-6 rounded-full ${sale.paymentMethod === 'visa' ? 'bg-gray-50 text-primary-600 dark:bg-gray-800/20 dark:text-blue-400' : 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400'}`}
                           title={sale.paymentMethod === 'visa' ? t.visa : t.cash}
                         >
                           <span className='material-symbols-rounded text-[14px]'>

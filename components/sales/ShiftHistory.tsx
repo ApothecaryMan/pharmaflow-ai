@@ -450,7 +450,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                 <p className='text-[10px] font-bold uppercase text-gray-500 mb-1'>
                   {t.shiftHistory?.details?.transactions || 'Transactions'}
                 </p>
-                <p className='text-sm font-bold text-blue-600'>
+                <p className='text-sm font-bold text-gray-600 dark:text-gray-400'>
                   {selectedShift.transactions.length}
                 </p>
               </div>
@@ -515,7 +515,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                       <div className='flex items-center gap-3'>
                         <span
                           className={`px-2 py-0.5 rounded-lg font-bold uppercase text-[9px] tracking-wider border
-                                           ${tx.type === 'in' || tx.type === 'opening' || tx.type === 'purchase_return' ? 'border-blue-200 text-blue-700 bg-blue-50/50 dark:border-blue-900/30 dark:text-blue-400 dark:bg-blue-900/10' : ''}
+                                           ${tx.type === 'in' || tx.type === 'opening' || tx.type === 'purchase_return' ? 'border-gray-200 text-gray-700 bg-gray-50/50 dark:border-gray-800/30 dark:text-gray-400 dark:bg-gray-800/10' : ''}
                                            ${tx.type === 'out' || tx.type === 'closing' || tx.type === 'purchase' ? 'border-red-200 text-red-700 bg-red-50/50 dark:border-red-900/30 dark:text-red-400 dark:bg-red-900/10' : ''}
                                            ${tx.type === 'sale' ? 'border-green-200 text-green-700 bg-green-50/50 dark:border-green-900/30 dark:text-green-400 dark:bg-green-900/10' : ''}
                                            ${tx.type === 'card_sale' ? 'border-violet-200 text-violet-700 bg-violet-50/50 dark:border-violet-900/30 dark:text-violet-400 dark:bg-violet-900/10' : ''}

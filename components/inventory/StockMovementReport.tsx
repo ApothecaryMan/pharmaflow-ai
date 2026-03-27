@@ -383,7 +383,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
               <div className="flex-1 overflow-y-auto p-6 pt-0 min-h-0 main-content-scroll">
                  {isLoading ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-4">
-                    <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+                    <div className="w-12 h-12 border-4 border-primary-500/20 border-t-blue-500 rounded-full animate-spin" />
                     <span className="text-gray-500 font-medium">{isRTL ? 'جاري التحميل...' : 'Syncing data...'}</span>
                   </div>
                 ) : filteredHistory.length === 0 ? (
@@ -536,7 +536,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                           disabled={!['sale', 'purchase', 'return_customer'].includes(m.type)}
                                           className={`font-mono font-bold text-left rtl:text-right ${
                                             ['sale', 'purchase', 'return_customer'].includes(m.type) 
-                                              ? 'text-blue-600 dark:text-blue-400 hover:underline cursor-pointer' 
+                                              ? 'text-primary-600 dark:text-blue-400 hover:underline cursor-pointer' 
                                               : 'text-gray-700 dark:text-gray-200 cursor-default'
                                           }`}
                                         >

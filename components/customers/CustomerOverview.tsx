@@ -356,7 +356,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-80 relative group`}>
           <div className='flex justify-between items-center mb-3'>
             <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-              <span className='material-symbols-rounded text-blue-500 text-[20px]'>
+              <span className='material-symbols-rounded text-primary-500 text-[20px]'>
                 location_on
               </span>
               {t?.locationDistribution || 'Location Distribution'}
@@ -479,14 +479,14 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
           </div>
 
           <div className='grid grid-cols-2 gap-4 mb-4'>
-            <div className='p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-transparent dark:border-blue-500/20'>
-              <p className='text-xs font-bold text-blue-600 dark:text-blue-400 uppercase'>
+            <div className='p-3 rounded-xl bg-gray-50 dark:bg-primary-500/10 border border-transparent dark:border-primary-500/20'>
+              <p className='text-xs font-bold text-primary-600 dark:text-blue-400 uppercase'>
                 {t?.withInsurance || 'With Insurance'}
               </p>
               <p className='text-xl font-bold text-blue-900 dark:text-blue-100'>
                 {healthInsights.withInsurance}
               </p>
-              <p className='text-xs text-blue-600 dark:text-blue-400'>
+              <p className='text-xs text-primary-600 dark:text-blue-400'>
                 {healthInsights.insuranceRate.toFixed(1)}%
               </p>
             </div>
@@ -581,9 +581,9 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className='text-xs text-amber-600 dark:text-amber-400'>$1000+</p>
             </div>
 
-            <div className='p-4 rounded-2xl bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-500/5 border border-blue-200 dark:border-blue-500/20'>
+            <div className='p-4 rounded-2xl bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-500/5 border border-gray-200 dark:border-primary-500/20'>
               <div className='flex items-center gap-2 mb-2'>
-                <span className='material-symbols-rounded text-blue-500'>verified</span>
+                <span className='material-symbols-rounded text-primary-500'>verified</span>
                 <span className='text-xs font-bold text-blue-700 dark:text-blue-400 uppercase'>
                   {t?.regular || 'Regular'}
                 </span>
@@ -591,7 +591,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <p className='text-2xl font-bold text-blue-900 dark:text-blue-100'>
                 {segmentation.regular.length}
               </p>
-              <p className='text-xs text-blue-600 dark:text-blue-400'>$100-$1000</p>
+              <p className='text-xs text-primary-600 dark:text-blue-400'>$100-$1000</p>
             </div>
 
             <div className='p-4 rounded-2xl bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-800/30 border border-gray-200 dark:border-gray-700/50'>
@@ -744,7 +744,7 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
               <div
                 className={`w-16 h-16 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-2`}
               >
-                <p className='text-lg font-bold text-blue-600 dark:text-blue-400'>
+                <p className='text-lg font-bold text-primary-600 dark:text-blue-400'>
                   ${satisfactionMetrics.avgOrderValue.toFixed(0)}
                 </p>
               </div>
@@ -998,14 +998,14 @@ export const CustomerOverview: React.FC<CustomerOverviewProps> = ({
       >
         <div className='space-y-6'>
           <div className='grid grid-cols-2 gap-4'>
-            <div className='p-4 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-transparent dark:border-blue-500/20'>
-              <p className='text-sm font-bold text-blue-600 dark:text-blue-400 uppercase'>
+            <div className='p-4 rounded-xl bg-gray-50 dark:bg-primary-500/10 border border-transparent dark:border-primary-500/20'>
+              <p className='text-sm font-bold text-primary-600 dark:text-blue-400 uppercase'>
                 {t?.withInsurance || 'With Insurance'}
               </p>
               <p className='text-3xl font-bold text-blue-900 dark:text-blue-100'>
                 {healthInsights.withInsurance}
               </p>
-              <p className='text-sm text-blue-600'>
+              <p className='text-sm text-primary-600'>
                 {healthInsights.insuranceRate.toFixed(1)}% of customers
               </p>
             </div>

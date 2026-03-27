@@ -190,7 +190,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
         ) : (
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className={`flex items-center justify-center w-10 h-10 transition-colors ${isOpen ? 'text-blue-500' : 'text-gray-600 dark:text-gray-300'}`}
+            className={`flex items-center justify-center w-10 h-10 transition-colors ${isOpen ? 'text-primary-500' : 'text-gray-600 dark:text-gray-300'}`}
           >
             <span className={`material-symbols-rounded text-[${triggerSize}px]`}>
               settings

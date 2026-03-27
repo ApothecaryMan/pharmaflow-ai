@@ -47,7 +47,7 @@ const variantStyles: Record<string, string> = {
   success: 'text-emerald-500 hover:bg-emerald-500/10',
   warning: 'text-amber-500 hover:bg-amber-500/10',
   error: 'text-red-500 hover:bg-red-500/10',
-  info: 'text-blue-500 hover:bg-blue-500/10',
+  info: 'text-primary-500 hover:bg-primary-500/10',
 };
 
 export const StatusBarItem: React.FC<StatusBarItemProps> = ({

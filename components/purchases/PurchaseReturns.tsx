@@ -159,7 +159,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
               e.stopPropagation();
               showMenu(e.clientX, e.clientY, getRowActions(row.original));
             }}
-            className='p-1.5 text-gray-400 hover:text-blue-600 transition-colors outline-hidden'
+            className='p-1.5 text-gray-400 hover:text-primary-600 transition-colors outline-hidden'
             title='Actions'
           >
             <span className='material-symbols-rounded text-[20px]'>more_vert</span>

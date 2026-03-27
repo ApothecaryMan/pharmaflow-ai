@@ -1274,7 +1274,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     value={externalInvoiceId}
                     onChange={(e) => setExternalInvoiceId(e.target.value)}
                     dir={externalInvoiceIdDir}
-                    className='text-lg font-mono font-bold bg-transparent border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-blue-500 rounded-lg px-2 py-0.5 outline-hidden transition-all w-28 text-left text-gray-600 dark:text-gray-400 placeholder-gray-300'
+                    className='text-lg font-mono font-bold bg-transparent border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary-500 rounded-lg px-2 py-0.5 outline-hidden transition-all w-28 text-left text-gray-600 dark:text-gray-400 placeholder-gray-300'
                   />
                 </div>
 
@@ -1681,7 +1681,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       }, 0);
                       return (
                         <div
-                          className={`text-2xl font-black ${paymentMethod === 'cash' ? 'text-green-600' : 'text-blue-600'}`}
+                          className={`text-2xl font-black ${paymentMethod === 'cash' ? 'text-green-600' : 'text-primary-600'}`}
                         >
                           ${(subtotal + totalTax).toFixed(2)}
                         </div>
@@ -1709,7 +1709,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                       <button
                         onClick={handleConfirm}
                         disabled={cart.length === 0 || !selectedSupplierId}
-                        className={`h-12 w-80 justify-center rounded-xl flex items-center gap-2 shadow-lg shadow-gray-200 dark:shadow-none ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:shadow-none text-white font-bold transition-all active:scale-95`}
+                        className={`h-12 w-80 justify-center rounded-xl flex items-center gap-2 shadow-lg shadow-gray-200 dark:shadow-none ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-primary-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:shadow-none text-white font-bold transition-all active:scale-95`}
                       >
                         <span>{t.summary.confirm}</span>
                       </button>

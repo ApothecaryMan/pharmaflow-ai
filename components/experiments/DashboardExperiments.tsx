@@ -311,7 +311,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
         {/* Card 1: Line Chart - Sales Trend */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-72 flex flex-col`}>
           <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2'>
-            <span className='material-symbols-rounded text-blue-500 text-[20px]'>show_chart</span>
+            <span className='material-symbols-rounded text-primary-500 text-[20px]'>show_chart</span>
             {labels.card1}
           </h3>
           <div className='flex-1' dir='ltr'>
@@ -391,7 +391,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
         {/* Card 3: Pie Chart - Customer Segments */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-72 flex flex-col`}>
           <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2'>
-            <span className='material-symbols-rounded text-blue-500 text-[20px]'>pie_chart</span>
+            <span className='material-symbols-rounded text-primary-500 text-[20px]'>pie_chart</span>
             {labels.card3}
           </h3>
           <div className='flex-1 flex items-center'>
@@ -522,7 +522,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
         {/* Card 6: Radial Bar - Performance Goals */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-72 flex flex-col`}>
           <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2'>
-            <span className='material-symbols-rounded text-blue-500 text-[20px]'>speed</span>
+            <span className='material-symbols-rounded text-primary-500 text-[20px]'>speed</span>
             {labels.card6}
           </h3>
           <div className='flex-1 flex flex-col items-center justify-center'>
@@ -568,7 +568,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
         {/* Card 7: Progress Bars - Task Completion */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-72 flex flex-col`}>
           <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2'>
-            <span className='material-symbols-rounded text-blue-500 text-[20px]'>checklist</span>
+            <span className='material-symbols-rounded text-primary-500 text-[20px]'>checklist</span>
             {labels.card7}
           </h3>
           <div className='flex-1 flex flex-col justify-center space-y-4'>
@@ -675,7 +675,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
         {/* Card 9: Heatmap - Weekly Activity */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-72 flex flex-col`}>
           <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2'>
-            <span className='material-symbols-rounded text-blue-500 text-[20px]'>
+            <span className='material-symbols-rounded text-primary-500 text-[20px]'>
               calendar_view_week
             </span>
             {labels.card9}
@@ -788,7 +788,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
         {/* Card 11: Stacked Bar Chart - Monthly Sales */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-72 flex flex-col`}>
           <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2'>
-            <span className='material-symbols-rounded text-blue-500 text-[20px]'>
+            <span className='material-symbols-rounded text-primary-500 text-[20px]'>
               stacked_bar_chart
             </span>
             {labels.card11}
@@ -994,7 +994,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
         {/* Card 15: Composed Chart - Revenue vs Orders */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-72 flex flex-col`}>
           <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2'>
-            <span className='material-symbols-rounded text-blue-500 text-[20px]'>insights</span>
+            <span className='material-symbols-rounded text-primary-500 text-[20px]'>insights</span>
             {labels.card15}
           </h3>
           <div className='flex-1' dir='ltr'>
@@ -1031,7 +1031,7 @@ export const DashboardExperiments: React.FC<DashboardExperimentsProps> = ({
                           <p className='text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'>
                             {label}
                           </p>
-                          <p className='text-sm text-blue-600 dark:text-blue-400'>
+                          <p className='text-sm text-primary-600 dark:text-blue-400'>
                             Revenue:{' '}
                             <span className='font-bold'>
                               ${payload[0]?.value?.toLocaleString()}

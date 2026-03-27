@@ -31,6 +31,7 @@
     "check": "biome check --write .",
     "check-translations": "ts-node scripts/check-translations.ts",
     "type-check": "tsc --noEmit",
+    "supabase:generate": "supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > src/types/supabase.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage"

@@ -172,7 +172,7 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
                     key={customer.id}
                     className={`px-3 py-2 cursor-pointer border-b border-gray-50 dark:border-gray-700 last:border-0 flex flex-col ${
                       index === highlightedCustomerIndex
-                        ? 'bg-blue-50 dark:bg-blue-900/30'
+                        ? 'bg-gray-50 dark:bg-blue-900/30'
                         : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                     onMouseDown={(e) => {

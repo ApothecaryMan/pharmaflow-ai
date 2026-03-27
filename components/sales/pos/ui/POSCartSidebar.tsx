@@ -165,7 +165,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
         onMouseDown={startResizing}
         onTouchStart={startResizing}
       >
-        <div className='w-1 h-16 rounded-full bg-gray-200 dark:bg-gray-700 group-hover:bg-blue-500 transition-colors'></div>
+        <div className='w-1 h-16 rounded-full bg-gray-200 dark:bg-gray-700 group-hover:bg-primary-500 transition-colors'></div>
       </div>
 
       {/* Cart Sidebar - Hidden on Mobile if Products Tab is active */}
@@ -436,7 +436,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                     !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
                       ? BUTTON_INACTIVE
                       : paymentMethod === 'visa' 
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer' 
+                        ? 'bg-primary-600 hover:bg-blue-700 text-white cursor-pointer' 
                         : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
                   } font-bold text-sm transition-colors flex justify-center items-center gap-2 whitespace-nowrap`}>
                   {!isMobile && (

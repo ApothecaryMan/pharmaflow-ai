@@ -216,13 +216,13 @@ export const POSDrugBranches: React.FC<POSDrugBranchesProps> = ({ viewingDrug, t
       )}
 
       {/* Sync Notice (Always Visible) */}
-      <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/20 flex gap-3 items-start">
-        <span className="material-symbols-rounded text-blue-500 mt-0.5">info</span>
+      <div className="p-4 rounded-xl bg-gray-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/20 flex gap-3 items-start">
+        <span className="material-symbols-rounded text-primary-500 mt-0.5">info</span>
         <div className="space-y-1">
           <h5 className="text-[11px] font-black text-blue-800 dark:text-blue-400 uppercase tracking-widest">
             {currentLang === 'ar' ? 'تنبيه المزامنة' : 'Stock Synchronization'}
           </h5>
-          <p className="text-xs text-blue-700 dark:text-blue-500 font-medium leading-relaxed">
+          <p className="text-xs text-blue-700 dark:text-primary-500 font-medium leading-relaxed">
             {currentLang === 'ar' ? 'الكميات المعروضة هي آخر قراءة مسجلة في النظام. يُرجى التواصل هاتفياً مع الفرع للتأكد من توفر الصنف فعلياً قبل توجيه العميل.' 
             : 'Inventory levels are approximate based on the last sync. Please verify by phone with the branch manager before directing a customer.'}
           </p>

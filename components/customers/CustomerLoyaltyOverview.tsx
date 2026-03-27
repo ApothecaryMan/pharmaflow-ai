@@ -276,7 +276,7 @@ export const CustomerLoyaltyOverview: React.FC<CustomerLoyaltyOverviewProps> = (
         {/* Recent Points Activity */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} h-96 flex flex-col`}>
           <h3 className='text-base font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2'>
-            <span className='material-symbols-rounded text-blue-500 text-[20px]'>history</span>
+            <span className='material-symbols-rounded text-primary-500 text-[20px]'>history</span>
             {t.loyalty?.recentActivity || 'Recent Points Activity'}
           </h3>
           <div className='flex-1 overflow-y-auto space-y-2 pe-1'>

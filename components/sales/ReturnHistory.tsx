@@ -140,7 +140,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
                   : reason === 'wrong_item'
                     ? { textColor: 'text-teal-500', borderColor: 'border-teal-500', icon: 'error' }
                   : reason === 'customer_request'
-                    ? { textColor: 'text-blue-500', borderColor: 'border-blue-500', icon: 'person' }
+                    ? { textColor: 'text-primary-500', borderColor: 'border-primary-500', icon: 'person' }
                     : reason === 'overage'
                       ? { textColor: 'text-emerald-500', borderColor: 'border-emerald-500', icon: 'add_circle' }
                       : { textColor: 'text-gray-500', borderColor: 'border-gray-500', icon: 'help' };
@@ -298,7 +298,7 @@ export const ReturnHistory: React.FC<ReturnHistoryProps> = ({
                       : reason === 'wrong_item'
                         ? { textColor: 'text-teal-500', borderColor: 'border-teal-500', icon: 'error' }
                       : reason === 'customer_request'
-                        ? { textColor: 'text-blue-500', borderColor: 'border-blue-500', icon: 'person' }
+                        ? { textColor: 'text-primary-500', borderColor: 'border-primary-500', icon: 'person' }
                       : { textColor: 'text-gray-500', borderColor: 'border-gray-500', icon: 'help' };
                   return (
                     <span

@@ -395,7 +395,7 @@ const MobileDockLogin: React.FC<MobileDockLoginProps> = ({ employees, onSelectEm
 
           <button
             onClick={checkAuth}
-            className={`hidden group-focus-within:grid place-items-center ml-2 transition-colors ${isError ? 'text-red-500' : 'text-blue-500 dark:text-blue-400 hover:text-blue-700'}`}
+            className={`hidden group-focus-within:grid place-items-center ml-2 transition-colors ${isError ? 'text-red-500' : 'text-primary-500 dark:text-blue-400 hover:text-blue-700'}`}
           >
             <span className='material-symbols-rounded text-[20px]'>
               {step === 'username' ? 'arrow_forward' : 'login'}

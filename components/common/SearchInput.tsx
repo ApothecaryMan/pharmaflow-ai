@@ -41,7 +41,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       icon = 'search',
       badge,
       rounded = 'xl',
-      color = 'blue',
+      color = 'primary',
 
       filterConfigs = [],
       activeFilters = {},

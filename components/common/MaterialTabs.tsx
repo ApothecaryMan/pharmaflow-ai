@@ -14,7 +14,7 @@ export const MaterialTabs: React.FC<MaterialTabsProps> = ({
   children,
   index,
   total,
-  color = 'blue',
+  color = 'primary',
   onClick,
   className = '',
   isSelected = false,

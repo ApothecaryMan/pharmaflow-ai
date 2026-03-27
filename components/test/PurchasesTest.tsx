@@ -519,7 +519,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
       case 'payment':
         return (
           <span
-            className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide text-white shadow-xs ${p.paymentType === 'cash' ? 'bg-green-600' : 'bg-blue-600'}`}
+            className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide text-white shadow-xs ${p.paymentType === 'cash' ? 'bg-green-600' : 'bg-primary-600'}`}
           >
             {p.paymentType === 'cash' ? t.cash || 'Cash' : t.credit || 'Credit'}
           </span>
@@ -1143,8 +1143,8 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                         }}
                         className='px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer flex items-center gap-3 transition-colors border-b last:border-0 border-gray-50 dark:border-gray-700/50'
                       >
-                        <div className='w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0'>
-                          <span className='material-symbols-rounded text-blue-500 text-lg'>
+                        <div className='w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800/20 flex items-center justify-center shrink-0'>
+                          <span className='material-symbols-rounded text-primary-500 text-lg'>
                             medication
                           </span>
                         </div>
@@ -1505,7 +1505,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                     value={externalInvoiceId}
                     onChange={(e) => setExternalInvoiceId(e.target.value)}
                     dir={externalInvoiceIdDir}
-                    className='text-lg font-mono font-bold bg-transparent border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-blue-500 rounded-lg px-2 py-0.5 outline-hidden transition-all w-28 text-left text-gray-600 dark:text-gray-400 placeholder-gray-300'
+                    className='text-lg font-mono font-bold bg-transparent border border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary-500 rounded-lg px-2 py-0.5 outline-hidden transition-all w-28 text-left text-gray-600 dark:text-gray-400 placeholder-gray-300'
                   />
                 </div>
 
@@ -1907,7 +1907,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                       }, 0);
                       return (
                         <div
-                          className={`text-2xl font-black ${paymentMethod === 'cash' ? 'text-green-600' : 'text-blue-600'}`}
+                          className={`text-2xl font-black ${paymentMethod === 'cash' ? 'text-green-600' : 'text-primary-600'}`}
                         >
                           ${(subtotal + totalTax).toFixed(2)}
                         </div>
@@ -1929,7 +1929,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                     <button
                       onClick={handleConfirm}
                       disabled={cart.length === 0 || !selectedSupplierId}
-                      className={`h-12 w-80 justify-center rounded-xl flex items-center gap-2 shadow-lg shadow-gray-200 dark:shadow-none ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:shadow-none text-white font-bold transition-all active:scale-95`}
+                      className={`h-12 w-80 justify-center rounded-xl flex items-center gap-2 shadow-lg shadow-gray-200 dark:shadow-none ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-primary-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:shadow-none text-white font-bold transition-all active:scale-95`}
                     >
                       <span>{t.summary.confirm}</span>
                     </button>
@@ -2088,7 +2088,7 @@ export const PurchasesTest: React.FC<PurchasesProps> = ({
                 {t.detailsModal?.payment || 'Payment'}
               </p>
               <span
-                className={`inline-block px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase text-white ${selectedPurchase.paymentType === 'cash' ? 'bg-green-600' : 'bg-blue-600'}`}
+                className={`inline-block px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase text-white ${selectedPurchase.paymentType === 'cash' ? 'bg-green-600' : 'bg-primary-600'}`}
               >
                 {selectedPurchase.paymentType === 'cash' ? t.cash || 'Cash' : t.credit || 'Credit'}
               </span>

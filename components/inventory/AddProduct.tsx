@@ -284,7 +284,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
               <div className="space-y-1.5 flex-1">
                 <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1 flex justify-between">
                   <span>{t.fields?.brandName} *</span>
-                  <span className="text-blue-500 lowercase font-medium">{t.placeholders?.langDetect}</span>
+                  <span className="text-primary-500 lowercase font-medium">{t.placeholders?.langDetect}</span>
                 </label>
                 <SmartInput
                   required
@@ -328,7 +328,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 </label>
                 <div className={`${INPUT_BASE} flex flex-wrap gap-2 p-1.5 min-h-[44px] focus-within:ring-2 focus-within:ring-blue-500 transition-all`}>
                   {formData.barcode && (
-                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[11px] font-bold border border-blue-100 dark:border-blue-800">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[11px] font-bold border border-blue-100 dark:border-blue-800">
                       {formData.barcode}
                       <button type="button" onClick={() => setFormData({ ...formData, barcode: '' })} className="hover:text-red-500">
                         <span className="material-symbols-rounded text-sm">close</span>
@@ -380,7 +380,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   <button
                     type="button"
                     onClick={generateInternalCode}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-gray-400 hover:text-primary-500 hover:bg-gray-50 dark:hover:bg-blue-900/20 transition-all"
                   >
                     <span className="material-symbols-rounded text-lg">magic_button</span>
                   </button>
@@ -471,14 +471,14 @@ export const AddProduct: React.FC<AddProductProps> = ({
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, origin: 'local' })}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${formData.origin === 'local' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${formData.origin === 'local' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-600 dark:text-blue-400' : 'text-gray-400'}`}
                     >
                       {t.fields?.originLocal}
                     </button>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, origin: 'imported' })}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${formData.origin === 'imported' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${formData.origin === 'imported' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-600 dark:text-blue-400' : 'text-gray-400'}`}
                     >
                       {t.fields?.originImported}
                     </button>
@@ -685,7 +685,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
                 <button
                   type="button"
                   onClick={(e) => handleSubmit(e, true)}
-                  className="px-6 py-3 rounded-2xl text-blue-600/80 dark:text-blue-400/80 hover:bg-blue-50 dark:hover:bg-blue-900/40 font-bold text-sm transition-all flex items-center gap-2"
+                  className="px-6 py-3 rounded-2xl text-primary-600/80 dark:text-blue-400/80 hover:bg-gray-50 dark:hover:bg-blue-900/40 font-bold text-sm transition-all flex items-center gap-2"
                 >
                   <span className="material-symbols-rounded text-lg">add_circle</span>
                   {t.actions?.saveAndNew}
@@ -699,7 +699,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
               >
                 <button
                   type="submit"
-                  className="px-8 py-3 rounded-2xl bg-blue-600/90 hover:bg-blue-600 text-white font-bold text-sm transition-all active:scale-95 flex items-center gap-2"
+                  className="px-8 py-3 rounded-2xl bg-primary-600/90 hover:bg-primary-600 text-white font-bold text-sm transition-all active:scale-95 flex items-center gap-2"
                 >
                   <span className="material-symbols-rounded">check_circle</span>
                   {t.actions?.save}

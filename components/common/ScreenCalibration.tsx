@@ -49,7 +49,7 @@ export const ScreenCalibration: React.FC<ScreenCalibrationProps> = ({
       <div className='bg-white dark:bg-gray-900 overflow-hidden border border-gray-100 dark:border-gray-800'>
         <div className='p-6 border-b border-gray-100 dark:border-gray-800'>
           <h3 className='font-bold text-xl text-gray-900 dark:text-white flex items-center gap-2'>
-            <span className='material-symbols-rounded text-blue-600'>aspect_ratio</span>
+            <span className='material-symbols-rounded text-primary-600'>aspect_ratio</span>
             {t.calibration?.title || 'Screen Calibration'}
           </h3>
           <p className='text-sm text-gray-500 mt-1'>
@@ -114,7 +114,7 @@ export const ScreenCalibration: React.FC<ScreenCalibrationProps> = ({
           </button>
           <button
             onClick={handleSave}
-            className='px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30'
+            className='px-6 py-2 bg-primary-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30'
           >
             {t.save || 'Save Calibration'}
           </button>

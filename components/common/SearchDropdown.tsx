@@ -78,7 +78,7 @@ export function SearchDropdown<T extends { id: string | number }>({
             onClick={() => onSelect(item)}
             className={`w-full text-start border-b border-gray-50 dark:border-(--border-divider) last:border-0 transition-colors group ${
               highlightedIndex === index
-                ? 'bg-blue-50/50 dark:bg-primary-900/20'
+                ? 'bg-gray-50/50 dark:bg-primary-900/20'
                 : 'hover:bg-gray-50 dark:hover:bg-(--bg-hover)'
             }`}
           >

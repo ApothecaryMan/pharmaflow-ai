@@ -305,7 +305,7 @@ export function TanStackTable<TData, TValue>({
   onRowContextMenu,
   isLoading = false,
   emptyMessage = 'No results found.',
-  color = 'blue',
+  color = 'primary',
   defaultHiddenColumns = [],
   activeIndex,
   lite = false,

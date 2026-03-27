@@ -170,7 +170,7 @@ export const ExpandedProgressModal: React.FC<ExpandedProgressModalProps> = ({
               <h4 className='text-2xl font-bold text-gray-900 dark:text-white'>
                 {(maxValue - currentValue).toLocaleString()}
               </h4>
-              <p className='text-xs text-blue-500 font-medium mt-1'>Est. 12 days left</p>
+              <p className='text-xs text-primary-500 font-medium mt-1'>Est. 12 days left</p>
             </div>
 
             <div className='col-span-2 p-4 rounded-2xl bg-white dark:bg-gray-800 shadow-xs border border-gray-100 dark:border-gray-700 flex items-center justify-between'>
