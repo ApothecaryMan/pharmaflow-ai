@@ -236,7 +236,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
             branchId: finalBranchId
           }));
           await inventoryService.save(seededInventory, finalBranchId);
-          const updatedBatches = batchService.migrateInventoryToBatches(seededInventory);
+          const updatedBatches = await batchService.migrateInventoryToBatches(seededInventory);
           // Update local 'bat' reference to reflect migrated stock
           const branchSpecific = updatedBatches.filter(b => b.branchId === finalBranchId);
           bat.length = 0;

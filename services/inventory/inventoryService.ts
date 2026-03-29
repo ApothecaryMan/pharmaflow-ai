@@ -14,10 +14,92 @@ import { settingsService } from '../settings/settingsService';
 import { syncQueueService } from '../syncQueueService';
 import type { InventoryFilters, InventoryService, InventoryStats } from './types';
 import { drugCacheService } from './drugCacheService';
+import { supabase } from '../../lib/supabase';
 
 const MIGRATED_KEY = 'pharma_inventory_indexeddb_migrated';
 
+const mapDrugToDb = (d: Partial<Drug>): any => {
+  const db: any = {};
+  if (d.id !== undefined) db.id = d.id;
+  if (d.branchId !== undefined) db.branch_id = d.branchId;
+  if (d.name !== undefined) db.name = d.name;
+  if (d.nameArabic !== undefined) db.name_arabic = d.nameArabic;
+  if (d.genericName !== undefined) db.generic_name = d.genericName;
+  if (d.category !== undefined) db.category = d.category;
+  if (d.price !== undefined) db.price = d.price;
+  if (d.costPrice !== undefined) db.cost_price = d.costPrice;
+  if (d.stock !== undefined) db.stock = d.stock;
+  if (d.damagedStock !== undefined) db.damaged_stock = d.damagedStock;
+  if (d.expiryDate !== undefined) db.expiry_date = d.expiryDate;
+  if (d.description !== undefined) db.description = d.description;
+  if (d.barcode !== undefined) db.barcode = d.barcode;
+  if (d.internalCode !== undefined) db.internal_code = d.internalCode;
+  if (d.unitsPerPack !== undefined) db.units_per_pack = d.unitsPerPack;
+  if (d.supplierId !== undefined) db.supplier_id = d.supplierId;
+  if (d.maxDiscount !== undefined) db.max_discount = d.maxDiscount;
+  if (d.dosageForm !== undefined) db.dosage_form = d.dosageForm;
+  if (d.minStock !== undefined) db.min_stock = d.minStock;
+  if (d.origin !== undefined) db.origin = d.origin;
+  if (d.manufacturer !== undefined) db.manufacturer = d.manufacturer;
+  if (d.tax !== undefined) db.tax = d.tax;
+  return db;
+};
+
+const mapDbToDrug = (db: any): Drug => ({
+  id: db.id,
+  branchId: db.branch_id,
+  name: db.name,
+  nameArabic: db.name_arabic || undefined,
+  genericName: db.generic_name || [],
+  category: db.category,
+  price: db.price,
+  costPrice: db.cost_price,
+  stock: db.stock,
+  damagedStock: db.damaged_stock || 0,
+  expiryDate: db.expiry_date || '',
+  barcode: db.barcode || undefined,
+  internalCode: db.internal_code || undefined,
+  unitsPerPack: db.units_per_pack || 1,
+  supplierId: db.supplier_id || undefined,
+  maxDiscount: db.max_discount || undefined,
+  dosageForm: db.dosage_form || undefined,
+  minStock: db.min_stock || 0,
+  origin: db.origin || undefined,
+  manufacturer: db.manufacturer || undefined,
+  tax: db.tax || 0,
+  description: db.description || undefined,
+});
+
 const getRawAll = async (): Promise<Drug[]> => {
+  try {
+    const { data, error } = await supabase.from('drugs').select('*').limit(10000);
+    if (!error && data) {
+      const mapped = data.map(mapDbToDrug);
+      
+      const cached = await drugCacheService.loadAll();
+      const cachedMap = new Map(cached.map(d => [d.id, d]));
+      
+      const finalMapped = mapped.map(d => {
+        const c = (cachedMap.get(d.id) || {}) as Partial<Drug>;
+        return {
+          ...d,
+          dbId: c.dbId,
+          class: c.class,
+          itemRank: c.itemRank,
+        };
+      });
+      
+      if (finalMapped.length > 0) {
+        await drugCacheService.saveAll(finalMapped, finalMapped[0]?.branchId);
+      }
+      return finalMapped;
+    }
+  } catch (err) {
+    if (import.meta.env.DEV) {
+      console.warn('Failed to fetch from supabase, fallback to local', err);
+    }
+  }
+
   // Try to load from IndexedDB
   let drugs = await drugCacheService.loadAll();
 
@@ -52,10 +134,32 @@ export const createInventoryService = (): InventoryService => ({
   },
 
   getById: async (id: string): Promise<Drug | null> => {
+    try {
+      const { data, error } = await supabase.from('drugs').select('*').eq('id', id).single();
+      if (!error && data) {
+        const mapped = mapDbToDrug(data);
+        const cached = await drugCacheService.getById(id) || {};
+        const finalDrug = { ...cached, ...mapped } as Drug;
+        await drugCacheService.upsert(finalDrug);
+        return finalDrug;
+      }
+    } catch {}
+
     return drugCacheService.getById(id);
   },
 
   getByBarcode: async (barcode: string, branchId?: string): Promise<Drug | null> => {
+    try {
+      const { data, error } = await supabase.from('drugs').select('*').eq('barcode', barcode).single();
+      if (!error && data) {
+        const mapped = mapDbToDrug(data);
+        const cached = await drugCacheService.getById(mapped.id) || {};
+        const finalDrug = { ...cached, ...mapped } as Drug;
+        await drugCacheService.upsert(finalDrug);
+        return finalDrug;
+      }
+    } catch {}
+
     const all = await inventoryService.getAll(branchId);
     return all.find((d) => d.barcode === barcode) || null;
   },
@@ -96,7 +200,6 @@ export const createInventoryService = (): InventoryService => ({
   },
 
   create: async (drug: Omit<Drug, 'id'>, branchId?: string, skipSync = false): Promise<Drug> => {
-    // Priority: explicit param > entity's own branchId > settingsService fallback
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || (drug as any).branchId || settings.activeBranchId || settings.branchCode;
     const newDrug: Drug = {
@@ -105,9 +208,14 @@ export const createInventoryService = (): InventoryService => ({
       branchId: effectiveBranchId,
     } as Drug;
     
+    try {
+      const dbDrug = mapDrugToDb(newDrug);
+      const { error } = await supabase.from('drugs').insert(dbDrug);
+      if (error && import.meta.env.DEV) console.warn('Supabase insert failed', error);
+    } catch {}
+
     await drugCacheService.upsert(newDrug);
 
-    // Create initial stock batch for the new drug
     await batchService.createBatch({
       drugId: newDrug.id,
       quantity: newDrug.stock,
@@ -117,7 +225,7 @@ export const createInventoryService = (): InventoryService => ({
       dateReceived: new Date().toISOString(),
       branchId: effectiveBranchId,
       version: 1,
-    }, undefined, true); // skipSync=true because drug create sync covers initial state
+    }, undefined, true);
 
     if (!skipSync) {
       await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'CREATE_DRUG', drug: newDrug });
@@ -131,6 +239,13 @@ export const createInventoryService = (): InventoryService => ({
     if (!drug) throw new Error('Drug not found');
     
     const updated = { ...drug, ...updates };
+
+    try {
+      const dbUpdates = mapDrugToDb(updates);
+      const { error } = await supabase.from('drugs').update(dbUpdates).eq('id', id);
+      if (error && import.meta.env.DEV) console.warn('Supabase update failed', error);
+    } catch {}
+
     await drugCacheService.upsert(updated);
 
     if (!skipSync) {
@@ -144,7 +259,6 @@ export const createInventoryService = (): InventoryService => ({
     const drug = await drugCacheService.getById(id);
     if (!drug) throw new Error('Drug not found');
     
-    // 1. Update Batch System
     const settings = await settingsService.getAll();
     const branchId = drug.branchId || settings.activeBranchId || settings.branchCode;
     
@@ -163,8 +277,14 @@ export const createInventoryService = (): InventoryService => ({
       await batchService.allocateStock(id, Math.abs(quantity), branchId, true);
     }
 
-    // 2. Update Drug Record
     const updated = { ...drug, stock: (drug.stock || 0) + quantity };
+    
+    try {
+      const dbUpdates = mapDrugToDb({ stock: updated.stock });
+      const { error } = await supabase.from('drugs').update(dbUpdates).eq('id', id);
+      if (error && import.meta.env.DEV) console.warn('Supabase stock update failed', error);
+    } catch {}
+
     await drugCacheService.upsert(updated);
 
     if (!skipSync) {
@@ -180,12 +300,25 @@ export const createInventoryService = (): InventoryService => ({
   ): Promise<void> => {
     await drugCacheService.updateStockBulk(mutations);
 
+    try {
+      for (const m of mutations) {
+         const drug = await drugCacheService.getById(m.id);
+         if (drug) {
+           await supabase.from('drugs').update({ stock: drug.stock }).eq('id', m.id);
+         }
+      }
+    } catch {}
+
     if (!skipSync) {
       await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'UPDATE_STOCK_BULK', mutations });
     }
   },
 
   delete: async (id: string, skipSync = false): Promise<boolean> => {
+    try {
+      await supabase.from('drugs').delete().eq('id', id);
+    } catch {}
+
     await drugCacheService.remove(id);
     
     if (!skipSync) {
@@ -225,8 +358,13 @@ export const createInventoryService = (): InventoryService => ({
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
-    // Use the branch-aware saveAll from drugCacheService which 
-    // handles atomic deletion of old branch records.
+    try {
+      const dbDrugs = inventory.map(mapDrugToDb);
+      if (dbDrugs.length > 0) {
+        await supabase.from('drugs').upsert(dbDrugs, { onConflict: 'id' });
+      }
+    } catch {}
+
     await drugCacheService.saveAll(inventory, effectiveBranchId);
   },
 });
