@@ -3,7 +3,8 @@ import {
 } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { canPerformAction, type UserRole } from '../../config/permissions';
+import { type UserRole } from '../../config/permissions';
+import { permissionsService } from '../../services/auth/permissions';
 import { useData } from '../../services';
 import { authService, type UserSession } from '../../services/auth/authService';
 import type { Employee } from '../../types';
@@ -293,7 +294,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                 visibility
               </span>
             </button>
-            {canPerformAction(userRole, 'users.manage') && (
+            {permissionsService.can('users.manage') && (
               <>
                 <button
                   onClick={(e) => {
@@ -453,7 +454,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         </div>
 
         <div className='flex flex-col md:flex-row gap-3 w-full md:w-auto'>
-          {canPerformAction(userRole, 'users.manage') && (
+          {permissionsService.can('users.manage') && (
             <button
               onClick={() => {
                 setFormData({});

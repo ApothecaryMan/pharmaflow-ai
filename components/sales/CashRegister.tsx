@@ -2,7 +2,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
-import { canPerformAction } from '../../config/permissions';
+import { type UserRole } from '../../config/permissions';
+import { permissionsService } from '../../services/auth/permissions';
 import { useShift } from '../../hooks/useShift';
 import { CASH_REGISTER_HELP } from '../../i18n/helpInstructions';
 import type { CashTransaction, CashTransactionType, Employee, Language, Shift } from '../../types';
@@ -223,7 +224,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     const user = employees.find((e) => e.id === currentEmployeeId);
     if (!user) return false;
 
-    return canPerformAction(user.role, 'shift.view_expected_balance');
+    return permissionsService.can('shift.view_expected_balance');
   }, [currentEmployeeId, employees]);
 
   // Check if current user has permission to add/remove cash manually
@@ -232,7 +233,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     const user = employees.find((e) => e.id === currentEmployeeId);
     if (!user) return false;
 
-    return canPerformAction(user.role, 'shift.cash_in');
+    return permissionsService.can('shift.cash_in');
   }, [currentEmployeeId, employees]);
 
   const canRemoveCash = useMemo(() => {
@@ -240,7 +241,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     const user = employees.find((e) => e.id === currentEmployeeId);
     if (!user) return false;
 
-    return canPerformAction(user.role, 'shift.cash_out');
+    return permissionsService.can('shift.cash_out');
   }, [currentEmployeeId, employees]);
 
   // Check if current user has permission to open/close shift
@@ -249,7 +250,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     const user = employees.find((e) => e.id === currentEmployeeId);
     if (!user) return false;
 
-    return canPerformAction(user.role, 'shift.open');
+    return permissionsService.can('shift.open');
   }, [currentEmployeeId, employees]);
 
   const canCloseShift = useMemo(() => {
@@ -257,7 +258,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     const user = employees.find((e) => e.id === currentEmployeeId);
     if (!user) return false;
 
-    return canPerformAction(user.role, 'shift.close');
+    return permissionsService.can('shift.close');
   }, [currentEmployeeId, employees]);
 
   // Actions

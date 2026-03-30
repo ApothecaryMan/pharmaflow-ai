@@ -4,6 +4,7 @@ import { StorageKeys } from '../../config/storageKeys';
 import { useAlert, useSettings } from '../../context';
 import { type StockMovement, stockMovementService } from '../../services/inventory';
 import { batchService } from '../../services/inventory/batchService';
+import { permissionsService } from '../../services/auth/permissions';
 import type { Drug, StockBatch } from '../../types';
 import { getDisplayName, getFullDisplayName } from '../../utils/drugDisplayName';
 import * as stockOps from '../../utils/stockOperations';
@@ -492,14 +493,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           : (currentEmployeeObject?.name || currentEmployeeObject?.username || (language === 'AR' ? 'مستخدم' : 'User'));
 
       // RBAC Check for Approval
-      const { canPerformAction } = await import('../../config/permissions');
-      let isManager = false;
-      if (currentEmployeeId === 'user') {
-        // System admin override for development/fallback
-        isManager = true;
-      } else {
-        isManager = canPerformAction(currentEmployeeObject?.role, 'inventory.approve');
-      }
+      const isManager = permissionsService.can('inventory.approve');
 
       const status = isManager ? 'approved' : 'pending';
 
@@ -882,7 +876,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               </span>
 
               {/* Action Buttons (only if pending) */}
-              {isPending && (
+              {isPending && permissionsService.can('inventory.approve') && (
                 <div className='flex gap-1'>
                   <button
                     onClick={() => handleApprove(item)}
@@ -1129,7 +1123,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
               />
 
               {/* Bulk Actions (Visible if pending tab) */}
-              {historyTab === 'pending' && history.some(i => i.status === 'pending') && (
+              {historyTab === 'pending' && history.some(i => i.status === 'pending') && permissionsService.can('inventory.approve') && (
                 <div className="flex gap-1.5 items-center">
                   <button
                     onClick={handleApproveAll}

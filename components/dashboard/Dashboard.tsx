@@ -11,7 +11,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { canPerformAction, type UserRole } from '../../config/permissions';
+import { type UserRole } from '../../config/permissions';
+import { HasPermission } from '../common/HasPermission';
 import { DASHBOARD_HELP } from '../../i18n/helpInstructions';
 import type { Drug, ExpandedView, Purchase, Sale } from '../../types';
 import { formatCompactCurrency, formatCurrency, getCurrencySymbol } from '../../utils/currency';
@@ -39,7 +40,6 @@ interface DashboardProps {
   onRestock: (id: string, qty: number, isUnit?: boolean) => void;
   subView?: string;
   language: string;
-  userRole: UserRole;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -51,7 +51,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onRestock,
   subView,
   language,
-  userRole,
 }) => {
   const [restockDrug, setRestockDrug] = useState<Drug | null>(null);
   const [restockQty, setRestockQty] = useState(10);
@@ -425,7 +424,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Stats Cards Row */}
       <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3'>
         {/* Revenue Card: Primary financial intake indicator */}
-        {canPerformAction(userRole, 'reports.view_financial') && (
+        <HasPermission action='reports.view_financial'>
           <div
             onClick={() => setExpandedView('revenue')}
             className='cursor-pointer transition-transform active:scale-95 touch-manipulation'
@@ -441,10 +440,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
               iconTooltip={revenueTooltip} // Advanced analytics on hover
             />
           </div>
-        )}
+        </HasPermission>
 
         {/* Expenses Card: Direct spending on stock and operations */}
-        {canPerformAction(userRole, 'reports.view_financial') && (
+        <HasPermission action='reports.view_financial'>
           <div
             onClick={() => setExpandedView('expenses')}
             className='cursor-pointer transition-transform active:scale-95 touch-manipulation'
@@ -460,10 +459,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
               iconTooltip={expensesTooltip} // Advanced analytics on hover
             />
           </div>
-        )}
+        </HasPermission>
 
         {/* Net Profit Card: Bottom-line pharmacy health */}
-        {canPerformAction(userRole, 'reports.view_financial') && (
+        <HasPermission action='reports.view_financial'>
           <div
             onClick={() => setExpandedView('profit')}
             className='cursor-pointer transition-transform active:scale-95 touch-manipulation'
@@ -479,7 +478,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               iconTooltip={profitTooltip} // Advanced analytics on hover
             />
           </div>
-        )}
+        </HasPermission>
 
         {/* Low Stock Card: Operational critical alerts */}
         <div

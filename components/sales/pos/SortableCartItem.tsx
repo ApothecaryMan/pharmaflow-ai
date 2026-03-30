@@ -1,7 +1,8 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import React from 'react';
-import { canPerformAction, type UserRole } from '../../../config/permissions';
+import { type UserRole } from '../../../config/permissions';
+import { permissionsService } from '../../../services/auth/permissions';
 import { useLongPress } from '../../../hooks/useLongPress';
 import type { TRANSLATIONS } from '../../../i18n/translations';
 import type { CartItem, Drug } from '../../../types';
@@ -139,7 +140,7 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
     }
 
     actions.push({ separator: true });
-    if (canPerformAction(userRole, 'sale.discount')) {
+    if (permissionsService.can('sale.discount')) {
       actions.push({
         label: t.actions.discount,
         icon: 'percent',

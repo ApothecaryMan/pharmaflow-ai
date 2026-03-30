@@ -1,5 +1,6 @@
 import React from 'react';
-import { canPerformAction, type UserRole } from '../../../config/permissions';
+import { type UserRole } from '../../../config/permissions';
+import { permissionsService } from '../../../services/auth/permissions';
 import type { CartItem, Drug } from '../../../types';
 import { formatExpiryDate, parseExpiryEndOfMonth } from '../../../utils/expiryUtils';
 
@@ -92,7 +93,7 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
 
   const effectiveMax = item.maxDiscount && item.maxDiscount > 0 ? item.maxDiscount : calculatedMax;
 
-  if ((globalDiscount && globalDiscount > 0) || !canPerformAction(userRole, 'sale.discount')) {
+  if ((globalDiscount && globalDiscount > 0) || !permissionsService.can('sale.discount')) {
     return null;
   }
 

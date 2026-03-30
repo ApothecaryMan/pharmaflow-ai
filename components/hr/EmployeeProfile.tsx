@@ -15,7 +15,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { canPerformAction, type UserRole } from '../../config/permissions';
+import { type UserRole } from '../../config/permissions';
+import { permissionsService } from '../../services/auth/permissions';
 import { StorageKeys } from '../../config/storageKeys';
 import { COLOR_HEX_MAP } from '../../config/themeColors';
 import { useShift } from '../../hooks/useShift';
@@ -429,7 +430,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
 
   // Set default employee if not set
   React.useEffect(() => {
-    if (!canPerformAction(userRole, 'users.view')) {
+    if (!permissionsService.can('users.view')) {
       if (currentEmployeeId) {
         setSelectedEmployeeId(currentEmployeeId);
       }
@@ -964,7 +965,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
 
         <div className='flex items-center gap-3'>
           {/* Employee Selector */}
-          {canPerformAction(userRole, 'users.view') && (
+          {permissionsService.can('users.view') && (
             <div className='w-56 h-9 relative z-10'>
               <FilterDropdown
                 className='absolute top-0 left-0 w-full text-sm'

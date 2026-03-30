@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { canPerformAction, type UserRole } from '../../../../config/permissions';
+import { type UserRole } from '../../../../config/permissions';
+import { permissionsService } from '../../../../services/auth/permissions';
 import type { CartItem, Customer, Sale } from '../../../../types';
 import { generateInvoiceHTML, getActiveReceiptSettings } from '../../InvoiceTemplate';
 import { getPrinterSettings, printReceiptSilently } from '../../../../utils/qzPrinter';
@@ -65,7 +66,7 @@ export const usePOSCheckout = ({
 
   const handleCheckout = useCallback(
     async (saleType: 'walk-in' | 'delivery' = 'walk-in', isPending: boolean = false) => {
-      if (!canPerformAction(userRole, 'sale.create')) {
+      if (!permissionsService.can('sale.create')) {
         showToastError('Permission Denied: Cannot perform checkout');
         return;
       }
@@ -163,7 +164,6 @@ export const usePOSCheckout = ({
       removeTab(activeTabId);
     },
     [
-      userRole,
       showToastError,
       isValidOrder,
       deliveryEmployeeId,

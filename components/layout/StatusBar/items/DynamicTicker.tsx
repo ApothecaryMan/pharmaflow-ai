@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { canPerformAction, type UserRole } from '../../../../config/permissions';
+import { type UserRole } from '../../../../config/permissions';
+import { permissionsService } from '../../../../services/auth/permissions';
 import { Tooltip } from '../../../common/Tooltip';
 import { StatusBarItem } from '../StatusBarItem';
 
@@ -157,10 +158,10 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
     if (!userRole) return false; // Hide all if no role? Or maybe show public info?
     // Usually if no employee selected, we show nothing (officeboy fallback has minimal perms anyway)
 
-    if (slide.id === 'sales') return canPerformAction(userRole, 'sale.view_history');
-    if (slide.id === 'inventory') return canPerformAction(userRole, 'reports.view_inventory');
-    if (slide.id === 'customers') return canPerformAction(userRole, 'customer.view');
-    if (slide.id === 'topSeller') return canPerformAction(userRole, 'reports.view_financial');
+    if (slide.id === 'sales') return permissionsService.can('sale.view_history');
+    if (slide.id === 'inventory') return permissionsService.can('reports.view_inventory');
+    if (slide.id === 'customers') return permissionsService.can('customer.view');
+    if (slide.id === 'topSeller') return permissionsService.can('reports.view_financial');
 
     return true;
   });

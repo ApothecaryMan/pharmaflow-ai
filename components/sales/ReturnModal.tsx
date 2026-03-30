@@ -8,6 +8,7 @@ import { Modal } from '../common/Modal';
 import { useSmartDirection } from '../common/SmartInputs';
 import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../services/DataContext';
+import { permissionsService } from '../../services/auth/permissions';
 
 interface ReturnModalProps {
   isOpen: boolean;
@@ -17,7 +18,7 @@ interface ReturnModalProps {
   color: string;
   t: any;
   language?: string;
-  userRole?: string;
+  userRole?: string; // DEPRECATED: now resolved internally via permissionsService
   currentDailyRefunds?: number;
   currentShift: Shift | null;
   currentEmployeeId?: string;
@@ -36,13 +37,16 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   color,
   t,
   language = 'EN',
-  userRole,
+  userRole: userRoleProp,
   currentDailyRefunds = 0,
   currentShift,
   currentEmployeeId,
 }) => {
+  // Resolve role internally; fallback to prop for backward compat
+  const userRole = userRoleProp || permissionsService.getEffectiveRole();
   const { getVerifiedDate } = useStatusBar();
   const { activeBranchId } = useData();
+
   const [step, setStep] = useState(1);
   const [selectedItems, setSelectedItems] = useState<Map<string, number>>(new Map());
   const [returnReason, setReturnReason] = useState<ReturnReason>('customer_request');
@@ -259,6 +263,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
 
     const returnData: Return = {
       id: idGenerator.generate('returns', activeBranchId),
+      branchId: activeBranchId,
       saleId: sale.id,
       date: getVerifiedDate().toISOString(),
       returnType: isAllSelected ? 'full' : 'partial',

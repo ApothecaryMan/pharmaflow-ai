@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Sale, Return, Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
-import { canPerformAction, type UserRole } from '../../config/permissions';
+import { permissionsService } from '../../services/auth/permissions';
 import { Modal } from '../common/Modal';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { ReturnModal } from './ReturnModal';
@@ -16,7 +16,6 @@ interface SaleDetailModalProps {
   color: string;
   textTransform: any;
   // Optional permission/action props
-  userRole?: UserRole;
   currentShift?: Shift | null;
   currentEmployeeId?: string;
   currentDailyRefunds?: number;
@@ -31,7 +30,6 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
   language,
   color,
   textTransform,
-  userRole,
   currentShift,
   currentEmployeeId,
   currentDailyRefunds = 0,
@@ -158,7 +156,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                               {language === 'AR' ? 'وحدة' : 'UNIT'}
                             </span>
                           )}
-                          {(userRole !== 'delivery' || !userRole) && (
+                          {!permissionsService.can('sale.view_assigned_only') && (
                             <>
                               <span className='opacity-50 text-[10px] shrink-0'>x</span>
                               <span className='shrink-0 tabular-nums'>
@@ -223,11 +221,11 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
           </div>
 
           <div
-            className={`${sale.subtotal !== sale.total && userRole !== 'delivery' ? 'border-t border-gray-100 dark:border-gray-800 pt-3' : ''} space-y-2 text-sm`}
+            className={`${sale.subtotal !== sale.total && !permissionsService.can('sale.view_assigned_only') ? 'border-t border-gray-100 dark:border-gray-800 pt-3' : ''} space-y-2 text-sm`}
           >
             {sale.subtotal !== undefined &&
               sale.subtotal !== sale.total &&
-              (userRole !== 'delivery' || !userRole) && (
+              !permissionsService.can('sale.view_assigned_only') && (
                 <div className='flex justify-between text-gray-500'>
                   <span>{t.modal.subtotal}</span>
                   <span>${sale.subtotal.toFixed(2)}</span>
@@ -261,9 +259,10 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
               !!currentShift && new Date(sale.date) >= new Date(currentShift.openTime);
             
             // Check if return is allowed
-            const canRefund = userRole && onProcessReturn && 
-              canPerformAction(userRole, 'sale.refund') &&
-              (userRole !== 'cashier' || isSaleInCurrentShift);
+            const currentUserRole = permissionsService.getEffectiveRole();
+            const canRefund = onProcessReturn && 
+              permissionsService.can('sale.refund') &&
+              (currentUserRole !== 'cashier' || isSaleInCurrentShift);
 
             return (
               <>
@@ -307,7 +306,6 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
           color={color}
           t={t}
           language={language}
-          userRole={userRole}
           currentDailyRefunds={currentDailyRefunds}
           currentShift={currentShift}
           currentEmployeeId={currentEmployeeId}

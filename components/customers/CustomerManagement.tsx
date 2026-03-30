@@ -2,7 +2,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
-import { canPerformAction, type UserRole } from '../../config/permissions';
+import { type UserRole } from '../../config/permissions';
+import { permissionsService } from '../../services/auth/permissions';
 import { COUNTRY_CODES } from '../../data/countryCodes';
 import { AREAS, CITIES, GOVERNORATES, getLocationName } from '../../data/locations';
 import type { Customer } from '../../types';
@@ -246,14 +247,14 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       label: t.modal.edit,
       icon: 'edit',
       action: () => handleOpenEdit(customer),
-      disabled: !canPerformAction(userRole, 'customer.update'),
+      disabled: !permissionsService.can('customer.update'),
     },
     {
       label: t.modal.delete || 'Delete',
       icon: 'delete',
       action: () => onDeleteCustomer(customer.id),
       danger: true,
-      disabled: !canPerformAction(userRole, 'customer.delete'),
+      disabled: !permissionsService.can('customer.delete'),
     },
   ];
 
@@ -409,7 +410,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           const c = info.row.original;
           return (
             <div className='flex justify-end gap-2'>
-              {canPerformAction(userRole, 'customer.update') && (
+              {permissionsService.can('customer.update') && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -420,7 +421,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   <span className='material-symbols-rounded text-[20px]'>edit</span>
                 </button>
               )}
-              {canPerformAction(userRole, 'customer.delete') && (
+              {permissionsService.can('customer.delete') && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -740,7 +741,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         </div>
 
         <div className='flex gap-2 items-center'>
-          {canPerformAction(userRole, 'customer.add') && (
+          {permissionsService.can('customer.add') && (
             <button
               onClick={handleOpenKiosk}
               className='flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full transition-all text-xs font-bold'
@@ -762,7 +763,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             size='sm'
             options={[
               { label: t.allCustomers || 'All Customers', value: 'list' },
-              ...(canPerformAction(userRole, 'customer.add')
+              ...(permissionsService.can('customer.add')
                 ? [{ label: t.addCustomer || 'Add New Customer', value: 'add' }]
                 : []),
             ]}

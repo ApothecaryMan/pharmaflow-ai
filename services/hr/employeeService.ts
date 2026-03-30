@@ -35,6 +35,7 @@ const mapEmployeeToDb = (e: Partial<Employee>): any => {
   if (e.salary !== undefined) db.salary = e.salary;
   if (e.notes !== undefined) db.notes = e.notes;
   if (e.username !== undefined) db.username = e.username;
+  if (e.userId !== undefined) db.user_id = e.userId;
   return db;
 };
 
@@ -54,6 +55,7 @@ const mapDbToEmployee = (db: any): Employee => ({
   salary: db.salary || undefined,
   notes: db.notes || undefined,
   username: db.username || undefined,
+  userId: db.user_id || undefined,
 });
 
 const getRawAll = async (): Promise<Employee[]> => {

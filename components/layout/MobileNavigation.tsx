@@ -4,7 +4,8 @@
 
 import React, { useCallback, useMemo } from 'react';
 import { type MenuItem, PHARMACY_MENU } from '../../config/menuData';
-import { canPerformAction, type UserRole } from '../../config/permissions';
+import { type UserRole } from '../../config/permissions';
+import { permissionsService } from '../../services/auth/permissions';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
 import { MobileDrawer } from './MobileDrawer';
 import { MobileMedicineSearch } from '../mobile/MobileMedicineSearch';
@@ -624,7 +625,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
         ) : (
           <>
             {/* Separate Search Button (Glass Circle) */}
-            {canPerformAction(userRole, 'inventory.view') && (
+            {permissionsService.can('inventory.view') && (
               <div
                 className={`
                   relative flex items-center justify-center rounded-full w-14 h-14 shrink-0
@@ -679,7 +680,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
               `}
             >
               {/* Static Dock Items */}
-              {canPerformAction(userRole, 'reports.view_inventory') && (
+              {permissionsService.can('reports.view_inventory') && (
                 <DockButton
                   view='dashboard'
                   currentView={view}
@@ -690,7 +691,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 />
               )}
 
-              {canPerformAction(userRole, 'sale.create') && (
+              {permissionsService.can('sale.create') && (
                 <DockButton
                   view='pos'
                   currentView={view}
@@ -701,7 +702,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 />
               )}
 
-              {canPerformAction(userRole, 'purchase.view') && (
+              {permissionsService.can('purchase.view') && (
                 <DockButton
                   view='purchases'
                   currentView={view}
@@ -712,7 +713,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 />
               )}
 
-              {canPerformAction(userRole, 'inventory.view') && (
+              {permissionsService.can('inventory.view') && (
                 <DockButton
                   view='inventory'
                   currentView={view}

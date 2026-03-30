@@ -2,7 +2,8 @@ import { closestCenter, DndContext, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import React, { useCallback } from 'react';
-import { canPerformAction, type UserRole } from '../../../../config/permissions';
+import { type UserRole } from '../../../../config/permissions';
+import { permissionsService } from '../../../../services/auth/permissions';
 import type { CartItem, Drug, Employee, Language } from '../../../../types';
 import { BUTTON_INACTIVE, CARD_MD } from '../../../../utils/themeStyles';
 import { PriceDisplay } from '../../../common/TanStackTable';
@@ -432,10 +433,10 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                     setAmountPaid('');
                   }}
                   disabled={
-                    !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
+                    !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout')
                   }
                   className={`flex-1 py-2.5 rounded-xl ${
-                    !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
+                    !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout')
                       ? BUTTON_INACTIVE
                       : paymentMethod === 'visa' 
                         ? 'bg-primary-600 hover:bg-blue-700 text-white cursor-pointer' 
@@ -455,10 +456,10 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                       setIsCheckoutMode(false);
                     }}
                     disabled={
-                      !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
+                      !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout')
                     }
                     className={`w-12 py-2.5 rounded-xl ${
-                      !isValidOrder || !hasOpenShift || !canPerformAction(userRole, 'sale.checkout')
+                      !isValidOrder || !hasOpenShift || !permissionsService.can('sale.checkout')
                         ? BUTTON_INACTIVE
                         : 'bg-emerald-100 dark:bg-[#3c3c3c] border border-(--border-divider) text-emerald-700 dark:text-gray-300 cursor-pointer'
                     } transition-colors flex justify-center items-center shrink-0`}

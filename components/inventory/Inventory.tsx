@@ -1,7 +1,8 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { canPerformAction, type UserRole } from '../../config/permissions';
+import { type UserRole } from '../../config/permissions';
+import { permissionsService } from '../../services/auth/permissions';
 import {
   getCategories,
   getLocalizedCategory,
@@ -35,7 +36,6 @@ interface InventoryProps {
   onDeleteDrug: (id: string) => void;
   color: string;
   t: any;
-  userRole: UserRole;
 }
 
 export const Inventory: React.FC<InventoryProps> = ({
@@ -45,7 +45,6 @@ export const Inventory: React.FC<InventoryProps> = ({
   onDeleteDrug,
   color,
   t,
-  userRole,
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
@@ -339,8 +338,8 @@ export const Inventory: React.FC<InventoryProps> = ({
       const drug = groupData.group.find((d) => d.id === selectedId) || groupData;
 
       const actions = [];
-
-      if (canPerformAction(userRole, 'inventory.update')) {
+  
+      if (permissionsService.can('inventory.update')) {
         actions.push({
           label: t.actionsMenu.edit,
           icon: 'edit',
@@ -359,7 +358,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         icon: 'print',
         action: () => handlePrintBarcode(drug),
       });
-      if (canPerformAction(userRole, 'inventory.add')) {
+      if (permissionsService.can('inventory.add')) {
         actions.push({
           label: t.actionsMenu.duplicate,
           icon: 'content_copy',
@@ -367,7 +366,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         });
       }
 
-      if (canPerformAction(userRole, 'inventory.restock')) {
+      if (permissionsService.can('inventory.restock')) {
         actions.push({ separator: true });
         actions.push({
           label: t.actionsMenu.adjustStock,
@@ -376,7 +375,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         });
       }
 
-      if (canPerformAction(userRole, 'inventory.delete')) {
+      if (permissionsService.can('inventory.delete')) {
         actions.push({ separator: true });
         actions.push({
           label: t.actionsMenu.delete,
@@ -674,7 +673,7 @@ export const Inventory: React.FC<InventoryProps> = ({
           }}
           options={[
             { label: t.allProducts || 'All Products', value: 'list' as const },
-            ...(canPerformAction(userRole, 'inventory.add')
+            ...(permissionsService.can('inventory.add')
               ? [{ label: t.addNewProduct || 'Add New Product', value: 'add' as const }]
               : []),
           ]}
@@ -860,7 +859,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               <span className='material-symbols-rounded'>qr_code_2</span>
               {t.actionsMenu.printBarcode}
             </button>
-            {canPerformAction(userRole, 'inventory.update') && (
+            {permissionsService.can('inventory.update') && (
               <button
                 onClick={() => {
                   setViewingDrug(null);

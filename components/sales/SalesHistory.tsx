@@ -1,7 +1,8 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import React, { useRef, useState } from 'react';
 import { useSettings } from '../../context';
-import { canPerformAction, type UserRole } from '../../config/permissions';
+import { type UserRole } from '../../config/permissions';
+import { permissionsService } from '../../services/auth/permissions';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
 import type { Return, Sale, Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
@@ -29,7 +30,6 @@ interface SalesHistoryProps {
   t: any;
   language: string;
   datePickerTranslations: any;
-  userRole: UserRole;
   currentEmployeeId?: string;
   currentShift: Shift | null;
   navigationParams?: any;
@@ -43,7 +43,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   t,
   language,
   datePickerTranslations,
-  userRole,
   currentEmployeeId,
   currentShift,
   // @ts-ignore
@@ -60,6 +59,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
   // Calculate daily refunds for the current employee (used for pharmacist limits)
   const currentDailyRefunds = React.useMemo(() => {
+    const userRole = permissionsService.getEffectiveRole();
     if (!currentEmployeeId || userRole !== 'pharmacist') return 0;
 
     const today = new Date().toISOString().split('T')[0];
@@ -70,7 +70,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         return isToday && isSameEmployee;
       })
       .reduce((sum, r) => sum + r.totalRefund, 0);
-  }, [returns, currentEmployeeId, userRole]);
+  }, [returns, currentEmployeeId]);
   
   // Handle Navigation Params (Deep Linking)
   React.useEffect(() => {
@@ -251,16 +251,13 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       }
 
       // 2. Role Restrictions
-      const isPrivileged = ['admin', 'pharmacist_owner', 'pharmacist_manager', 'manager'].includes(
-        userRole
-      );
-      if (!isPrivileged && canPerformAction(userRole, 'sale.view_assigned_only')) {
+      if (!permissionsService.isOrgAdmin() && permissionsService.can('sale.view_assigned_only')) {
         return sale.deliveryEmployeeId === currentEmployeeId;
       }
 
       return true;
     });
-  }, [sales, startDate, endDate, userRole, currentEmployeeId]);
+  }, [sales, startDate, endDate, currentEmployeeId]);
 
   const totalRevenue = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
 
@@ -328,7 +325,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         </div>
 
         {/* Total Revenue Card - Hidden for Delivery Agents */}
-        {userRole !== 'delivery' && (
+        {!permissionsService.can('sale.view_assigned_only') && (
           <div
             className={`px-4 py-2 rounded-2xl bg-primary-50 dark:bg-primary-900/20 ${CARD_BASE} flex flex-col items-end min-w-[140px]`}
           >
@@ -400,7 +397,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         language={language}
         color={color}
         textTransform={textTransform}
-        userRole={userRole}
         currentShift={currentShift}
         currentEmployeeId={currentEmployeeId}
         currentDailyRefunds={currentDailyRefunds}

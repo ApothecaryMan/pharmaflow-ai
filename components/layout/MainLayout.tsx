@@ -1,6 +1,6 @@
 import type React from 'react';
 import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutConfig';
-import { canPerformAction, type UserRole } from '../../config/permissions';
+import { type UserRole } from '../../config/permissions';
 import { ROUTES } from '../../config/routes';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
 import { THEMES, useSettings } from '../../context';

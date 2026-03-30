@@ -8,7 +8,8 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { canPerformAction, type UserRole } from '../../../../config/permissions';
+import { type UserRole } from '../../../../config/permissions';
+import { permissionsService } from '../../../../services/auth/permissions';
 import type { CartItem, Drug } from '../../../../types';
 import { isStockConstraintMet } from '../utils/POSUtils';
 import * as stockOps from '../../../../utils/stockOperations';
@@ -55,13 +56,13 @@ export const usePOSCart = ({
   const globalDiscount = activeTab?.discount || 0;
   const setGlobalDiscount = useCallback(
     (discount: number) => {
-      if (!canPerformAction(userRole, 'sale.discount')) {
+      if (!permissionsService.can('sale.discount')) {
         showToastError('Permission Denied: Cannot apply global discount');
         return;
       }
       updateTab(activeTabId, { discount });
     },
-    [activeTabId, updateTab, userRole, showToastError]
+    [activeTabId, updateTab, showToastError]
   );
 
   // Derived state: Group cart items by Drug ID (Visual Merging)
@@ -332,7 +333,7 @@ export const usePOSCart = ({
   }, [inventory, setCart]);
 
   const updateItemDiscount = useCallback((id: string, isUnit: boolean, discount: number) => {
-    if (!canPerformAction(userRole, 'sale.discount')) {
+    if (!permissionsService.can('sale.discount')) {
       showToastError('Permission Denied: Cannot apply item discount');
       return;
     }
@@ -342,7 +343,7 @@ export const usePOSCart = ({
         item.id === id && !!item.isUnit === isUnit ? { ...item, discount: validDiscount } : item
       )
     );
-  }, [userRole, showToastError, setCart]);
+  }, [showToastError, setCart]);
 
 
   const cartSensors = useSensors(

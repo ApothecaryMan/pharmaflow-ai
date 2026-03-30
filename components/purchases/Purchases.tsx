@@ -2,7 +2,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
-import { canPerformAction, type UserRole } from '../../config/permissions';
+import { type UserRole } from '../../config/permissions';
+import { permissionsService } from '../../services/auth/permissions';
 import { useAlert, useSettings } from '../../context';
 import { useLongPress } from '../../hooks/useLongPress';
 import { settingsService } from '../../services';
@@ -774,7 +775,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
   };
 
   const handleConfirm = () => {
-    if (!canPerformAction(userRole, 'purchase.create')) {
+    if (!permissionsService.can('purchase.create')) {
       showToastError('Permission Denied: Cannot complete purchase');
       return;
     }
@@ -906,7 +907,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
       paymentType: paymentMethod,
     };
 
-    if (!canPerformAction(userRole, 'purchase.create')) {
+    if (!permissionsService.can('purchase.create')) {
       showToastError('Permission Denied: Cannot complete purchase');
       return;
     }
@@ -1693,7 +1694,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                   <div className='flex items-center gap-2'>
                     <button
                       onClick={handlePendingPO}
-                      disabled={cart.length === 0 || !selectedSupplierId}
+                      disabled={cart.length === 0 || !selectedSupplierId || !permissionsService.can('purchase.create')}
                       title={t.pending || 'Save as Pending'}
                       className='h-12 w-12 flex items-center justify-center rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-600 disabled:bg-gray-100 disabled:text-gray-400 dark:bg-orange-900/20 dark:hover:bg-orange-900/30 dark:disabled:bg-gray-800 transition-all active:scale-95'
                     >
@@ -1708,7 +1709,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
                     ) : (
                       <button
                         onClick={handleConfirm}
-                        disabled={cart.length === 0 || !selectedSupplierId}
+                        disabled={cart.length === 0 || !selectedSupplierId || !permissionsService.can('purchase.create')}
                         className={`h-12 w-80 justify-center rounded-xl flex items-center gap-2 shadow-lg shadow-gray-200 dark:shadow-none ${paymentMethod === 'cash' ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-primary-600 hover:bg-blue-700'} disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:shadow-none text-white font-bold transition-all active:scale-95`}
                       >
                         <span>{t.summary.confirm}</span>
