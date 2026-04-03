@@ -176,38 +176,44 @@ export const Modal: React.FC<ModalProps> = ({
       >
         {title ? (
           <div className='h-full flex flex-col overflow-hidden'>
-            {/* Header - with internal padding */}
-            <div className='p-6 pb-0 shrink-0'>
-              <div className='flex items-center justify-between mb-6 gap-4'>
-                <div>
-                  <h2 className='text-xl font-bold text-(--text-primary) flex items-center gap-2'>
-                    {icon ? (
+            {/* Header - Compact and Integrated */}
+            <div className='shrink-0 border-b border-(--border-divider) bg-(--bg-card) px-6 py-3.5'>
+              <div className='flex items-center justify-between gap-4'>
+                {/* Left Section: Icon + Title/Subtitle */}
+                <div className='flex items-center gap-3 min-w-0'>
+                  {icon ? (
+                    <div className='flex-shrink-0 w-10 h-10 rounded-xl bg-(--bg-surface-neutral) flex items-center justify-center text-(--text-primary)'>
                       <span 
-                        className='material-symbols-rounded text-(--text-primary)' 
+                        className='material-symbols-rounded' 
                         style={{ 
                           fontSize: 'var(--icon-lg)',
-                          fontVariationSettings: "'FILL' 0, 'wght' 700, 'GRAD' 0, 'opsz' 24"
+                          fontVariationSettings: "'FILL' 0, 'wght' 600"
                         }}
                       >
                         {icon}
                       </span>
-                    ) : null}
-                    {title}
-                  </h2>
-                  {subtitle ? (
-                    <p className='text-sm text-(--text-tertiary) mt-1'>{subtitle}</p>
+                    </div>
                   ) : null}
+                  <div className='min-w-0'>
+                    <h2 className='text-xl font-extrabold text-(--text-primary) tracking-tight truncate leading-tight'>
+                      {title}
+                    </h2>
+                    {subtitle ? (
+                      <p className='text-xs text-(--text-tertiary) truncate leading-tight'>{subtitle}</p>
+                    ) : null}
+                  </div>
                 </div>
 
-                {/* Tabs Section - Renders in the center of header when tabs are provided */}
+                {/* Tabs Section - Integrated into the header line */}
                 {tabs && activeTab && onTabChange ? (
-                  <div className='flex-1 flex justify-center max-w-md mx-4'>
+                  <div className='flex-1 flex justify-center px-4 max-w-md'>
                     <SegmentedControl
                       options={tabs}
                       value={activeTab}
                       onChange={onTabChange}
                       size='sm'
                       variant='onCard'
+                      fullWidth={false}
                     />
                   </div>
                 ) : null}
@@ -218,9 +224,10 @@ export const Modal: React.FC<ModalProps> = ({
                   {!hideCloseButton ? (
                     <button
                       onClick={onClose}
-                      className='w-10 h-10 flex items-center justify-center rounded-xl hover:bg-(--bg-surface-neutral) text-(--text-tertiary) hover:text-(--text-primary) transition-all active:scale-95'
+                      className='text-(--text-tertiary) hover:text-(--text-primary) transition-colors p-1'
+                      aria-label="Close modal"
                     >
-                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>close</span>
+                      <span className='material-symbols-rounded block' style={{ fontSize: 'var(--icon-lg)' }}>close</span>
                     </button>
                   ) : null}
                 </div>
@@ -229,7 +236,7 @@ export const Modal: React.FC<ModalProps> = ({
 
             {/* Content - with internal padding and independent scrolling */}
             <div
-              className='flex-1 overflow-y-auto modal-scroll p-6 pt-0'
+              className='flex-1 overflow-y-auto modal-scroll p-5 content-shift-layer'
               style={{
                 scrollbarWidth: 'thin',
                 scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
@@ -261,7 +268,7 @@ export const Modal: React.FC<ModalProps> = ({
 
             {/* Footer - with top border and balanced padding */}
             {footer ? (
-              <div className='p-6 pt-6 shrink-0 border-t border-(--border-divider) bg-(--bg-card)'>
+              <div className='p-5 shrink-0 border-t border-(--border-divider) bg-(--bg-card)'>
                 {footer}
               </div>
             ) : null}
