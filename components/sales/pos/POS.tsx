@@ -4,7 +4,8 @@ import React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { usePosShortcuts } from '../../common/hooks/usePosShortcuts';
 import { usePosSounds } from '../../common/hooks/usePosSounds';
-import { canPerformAction, type UserRole } from '../../../config/permissions';
+import { type UserRole } from '../../../config/permissions';
+import { permissionsService } from '../../../services/auth/permissions';
 import { useAlert, useSettings } from '../../../context';
 import { getLocationName } from '../../../data/locations';
 import { useFilterDropdown } from '../../../hooks/useFilterDropdown';
@@ -80,7 +81,6 @@ interface POSProps {
   sales?: Sale[];
   onUpdateSale?: (saleId: string, updates: Partial<Sale>) => void;
   currentEmployeeId?: string;
-  userRole: UserRole;
 }
 
 export const POS: React.FC<POSProps> = ({
@@ -95,7 +95,6 @@ export const POS: React.FC<POSProps> = ({
   sales = [],
   onUpdateSale,
   currentEmployeeId,
-  userRole,
 }) => {
   const { success, error: showToastError } = useAlert();
   const { showMenu } = useContextMenu();
@@ -139,7 +138,7 @@ export const POS: React.FC<POSProps> = ({
     openUnitDropdown, setOpenUnitDropdown, selectedBatches, setSelectedBatches,
     openBatchDropdown, setOpenBatchDropdown,
   } = usePOSCart({
-    activeTab, activeTabId, updateTab, inventory, userRole, showToastError, addNotification, 
+    activeTab, activeTabId, updateTab, inventory, showToastError, addNotification, 
     playBeep, playError,
   });
 
@@ -199,7 +198,7 @@ export const POS: React.FC<POSProps> = ({
     showDeliveryModal, setShowDeliveryModal, isCheckoutMode, setIsCheckoutMode,
     isDeliveryMode, setIsDeliveryMode, amountPaid, setAmountPaid, handleCheckout, isValidOrder,
   } = usePOSCheckout({
-    cart, mergedCartItems, userRole, showToastError, addNotification, getVerifiedDate,
+    cart, mergedCartItems, showToastError, addNotification, getVerifiedDate,
     activeTab, activeTabId, removeTab, onCompleteSale, customerName, customerCode,
     selectedCustomer, language, t, cartTotal, subtotal, globalDiscount, playSuccess,
     activeBranchId,
@@ -965,7 +964,6 @@ export const POS: React.FC<POSProps> = ({
           globalDiscount={globalDiscount}
           setSearch={setSearch}
           searchInputRef={searchInputRef}
-          userRole={userRole}
           grossSubtotal={grossSubtotal}
           orderDiscountPercent={orderDiscountPercent}
           hasOpenShift={hasOpenShift}
@@ -1025,7 +1023,6 @@ export const POS: React.FC<POSProps> = ({
                     substitutes={substitutes}
                     totalStock={totalStock}
                     t={t}
-                    userRole={userRole}
                     setViewingDrug={setViewingDrug}
                   />
                 )}

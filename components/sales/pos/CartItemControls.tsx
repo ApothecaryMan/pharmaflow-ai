@@ -66,7 +66,6 @@ export interface CartItemDiscountControlProps {
   packItem?: CartItem;
   unitItem?: CartItem;
   globalDiscount?: number;
-  userRole: UserRole;
   updateItemDiscount: (id: string, isUnit: boolean, discount: number) => void;
   setGlobalDiscount: (discount: number) => void;
 }
@@ -78,7 +77,6 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
   packItem,
   unitItem,
   globalDiscount,
-  userRole,
   updateItemDiscount,
   setGlobalDiscount,
 }) => {

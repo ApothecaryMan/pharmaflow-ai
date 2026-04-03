@@ -49,7 +49,6 @@ export interface POSCartSidebarProps {
   globalDiscount: number;
   setSearch: (term: string) => void;
   searchInputRef: React.RefObject<HTMLInputElement>;
-  userRole: UserRole;
   grossSubtotal: number;
   orderDiscountPercent: number;
   hasOpenShift: boolean;
@@ -99,7 +98,6 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   globalDiscount,
   setSearch,
   searchInputRef,
-  userRole,
   grossSubtotal,
   orderDiscountPercent,
   hasOpenShift,
@@ -238,7 +236,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                   </Tooltip>
 
                   {/* Estimated Profit Display (Managers Only) */}
-                  {(userRole === 'admin' || userRole === 'pharmacist_owner') && cart.length > 0 && (
+                  {permissionsService.can('reports.view_financial') && cart.length > 0 && (
                     <>
                       <svg className="size-1 shrink-0 mx-0.5" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="3" cy="3" r="2" className="fill-gray-300 dark:fill-gray-600" />
@@ -352,7 +350,6 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                         currentLang={currentLang as 'en' | 'ar'}
                         globalDiscount={globalDiscount}
                         onSearchInTable={handleSearchInTable}
-                        userRole={userRole}
                         isMobile={isMobile}
                       />
                     </div>

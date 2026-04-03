@@ -9,7 +9,6 @@ import { buildSalePayload } from '../utils/POSUtils';
 interface UsePOSCheckoutProps {
   cart: CartItem[];
   mergedCartItems: any[];
-  userRole: UserRole;
   showToastError: (msg: string) => void;
   addNotification: (notification: any) => void;
   playSuccess: () => void;
@@ -34,7 +33,6 @@ const DELIVERY_FEE = 5;
 export const usePOSCheckout = ({
   cart,
   mergedCartItems,
-  userRole,
   showToastError,
   addNotification,
   playSuccess,

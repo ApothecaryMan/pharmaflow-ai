@@ -38,7 +38,6 @@ export interface SortableCartItemProps {
   currentLang: 'en' | 'ar';
   globalDiscount?: number;
   onSearchInTable: (term: string) => void;
-  userRole: UserRole;
   isMobile?: boolean;
 }
 
@@ -70,7 +69,6 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
   currentLang,
   globalDiscount,
   onSearchInTable,
-  userRole,
   isMobile,
 }) => {
   const { textTransform } = useSettings();
@@ -298,7 +296,6 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
             packItem={packItem}
             unitItem={unitItem}
             globalDiscount={globalDiscount}
-            userRole={userRole}
             updateItemDiscount={updateItemDiscount}
             setGlobalDiscount={setGlobalDiscount}
           />

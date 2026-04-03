@@ -19,7 +19,6 @@ interface UsePOSCartProps {
   activeTabId: string;
   updateTab: (id: string, updates: any) => void;
   inventory: Drug[];
-  userRole: UserRole;
   showToastError: (msg: string) => void;
   addNotification: (notification: any) => void;
   playBeep: () => void;
@@ -31,7 +30,6 @@ export const usePOSCart = ({
   activeTabId,
   updateTab,
   inventory,
-  userRole,
   showToastError,
   addNotification,
   playBeep,

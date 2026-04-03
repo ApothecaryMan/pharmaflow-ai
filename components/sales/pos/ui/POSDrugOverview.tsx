@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSettings } from '../../../../context';
+import { permissionsService } from '../../../../services/auth/permissions';
 import type { Drug } from '../../../../types';
 import { getArabicDisplayName, getDisplayName } from '../../../../utils/drugDisplayName';
 import { PriceDisplay } from '../../../common/TanStackTable';
@@ -11,7 +12,6 @@ interface POSDrugOverviewProps {
   substitutes: Drug[];
   totalStock: number;
   t: any; // Type-safe but flexible for nested translation keys
-  userRole?: string;
   setViewingDrug: (drug: Drug | null) => void;
 }
 
@@ -21,7 +21,6 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
   substitutes,
   totalStock,
   t,
-  userRole,
   setViewingDrug
 }) => {
   const { language, textTransform } = useSettings();
@@ -156,7 +155,7 @@ export const POSDrugOverview: React.FC<POSDrugOverviewProps> = ({
               {currentLang === 'ar' ? 'بيانات إدارية' : 'Business Insights'}
             </h4>
             <div className="space-y-3">
-              {(userRole === 'admin' || userRole === 'pharmacist_owner') && (
+              {permissionsService.can('reports.view_financial') && (
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-gray-500 font-bold">{currentLang === 'ar' ? 'سعر التكلفة:' : 'Cost Price:'}</span>
                   <span className="font-black tabular-nums text-gray-900 dark:text-gray-100">
