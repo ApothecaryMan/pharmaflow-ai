@@ -7,6 +7,7 @@ import { Modal } from './components/common/Modal';
 import { MainLayout } from './components/layout/MainLayout';
 import { PageRouter } from './components/layout/PageRouter';
 import { useStatusBar } from './components/layout/StatusBar';
+import { OrgSetupScreen } from './components/onboarding/OrgSetupScreen';
 import { BranchSetupScreen } from './components/onboarding/BranchSetupScreen';
 import { EmployeeSetupScreen } from './components/onboarding/EmployeeSetupScreen';
 import { PageSkeletonRegistry } from './components/skeletons/PageSkeletonRegistry';
@@ -436,31 +437,40 @@ const App: React.FC = () => {
 
   // 4. Onboarding State (Step detection)
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
+  const [hasRealOrganizations, setHasRealOrganizations] = useState(false);
   const [hasRealEmployees, setHasRealEmployees] = useState(false);
   const [forceStep2, setForceStep2] = useState(false);
+  const [forceStep3, setForceStep3] = useState(false);
 
   // Synchronous branches check is fine (localStorage)
   const hasBranches = branchService.getAll().length > 0;
 
   React.useEffect(() => {
-    const checkEmployees = async () => {
+    const checkOnboarding = async () => {
       try {
-        const { employeeCacheService } = await import('./services/hr/employeeCacheService');
-        const all = await employeeCacheService.loadAll();
-        const hasReal = all.some(e => e.id !== 'SUPER-ADMIN' && e.employeeCode !== 'EMP-000');
-        setHasRealEmployees(hasReal);
+        // 1. Check Organizations
+        const { orgService } = await import('./services/org/orgService');
+        const user = authService.getCurrentUserSync();
+        // Fallback for dev if no user session yet
+        const ownerId = user?.userId || 'DEV-OWNER';
+        const orgs = await orgService.getUserOrgs(ownerId);
+        setHasRealOrganizations(orgs.length > 0);
+
+        // 2. Check Employees (if branches exist)
+        if (hasBranches) {
+          const { employeeCacheService } = await import('./services/hr/employeeCacheService');
+          const all = await employeeCacheService.loadAll();
+          const hasReal = all.some(e => e.id !== 'SUPER-ADMIN' && e.employeeCode !== 'EMP-000');
+          setHasRealEmployees(hasReal);
+        }
       } catch (error) {
-        console.error('Failed to check employees for onboarding:', error);
+        console.error('Failed to check onboarding status:', error);
       } finally {
         setIsCheckingOnboarding(false);
       }
     };
     
-    if (hasBranches) {
-      checkEmployees();
-    } else {
-      setIsCheckingOnboarding(false);
-    }
+    checkOnboarding();
   }, [hasBranches]);
 
   // 5. Dynamic Theme Hook - Handles PWA Title Bar & Global Dark Mode
@@ -530,14 +540,45 @@ const App: React.FC = () => {
   }
 
   // 9. ONBOARDING GATE (STANDALONE)
-  // If we lack branches, show Step 1
-  if (!hasBranches && !forceStep2) {
-    return <BranchSetupScreen language={language} color={theme.primary} onComplete={() => setForceStep2(true)} />;
+  // Step 1: Organization
+  if (!hasRealOrganizations && !forceStep2 && !forceStep3) {
+    return (
+      <OrgSetupScreen 
+        language={language} 
+        onComplete={() => {
+          setHasRealOrganizations(true);
+          setForceStep2(true);
+        }} 
+      />
+    );
   }
 
-  // If we have branches but no employees (or forced from Step 1)
-  if (!hasRealEmployees || forceStep2) {
-    return <EmployeeSetupScreen language={language} color={theme.primary} onBack={() => setForceStep2(false)} />;
+  // Step 2: Branch (If we lack branches OR explicitly requested after Org)
+  if ((!hasBranches || forceStep2) && !forceStep3) {
+    return (
+      <BranchSetupScreen 
+        language={language} 
+        color={theme.primary} 
+        onComplete={() => {
+          setForceStep2(false);
+          setForceStep3(true);
+        }} 
+      />
+    );
+  }
+
+  // Step 3: Admin Employee (If we have branches but no employees OR forced from Step 2)
+  if (!hasRealEmployees || forceStep3) {
+    return (
+      <EmployeeSetupScreen 
+        language={language} 
+        color={theme.primary} 
+        onBack={() => {
+          setForceStep3(false);
+          setForceStep2(true);
+        }} 
+      />
+    );
   }
 
   // 10. Authenticated & Setup Done -> Show Secure Content wrapped in Providers

@@ -1,5 +1,6 @@
 import { StorageKeys } from '../config/storageKeys';
 import { storage } from '../utils/storage';
+import { idGenerator } from '../utils/idGenerator';
 import { supabase } from '../lib/supabase';
 
 export interface AuditEntry {
@@ -64,7 +65,7 @@ export const auditService = {
       // Fallback for crypto.randomUUID for non-secure contexts/older browsers
       const generateId = () => {
         if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-          return crypto.randomUUID();
+          return idGenerator.uuid();
         }
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
           const r = (Math.random() * 16) | 0;
@@ -112,5 +113,36 @@ export const auditService = {
       logs = logs.filter(log => !log.branchId || log.branchId === branchId);
     }
     return logs.slice(0, limit);
+  },
+
+  getOrgLogs: async (orgId: string, limit = 50): Promise<AuditEntry[]> => {
+    try {
+      // 1. Get all branch IDs for this org
+      const { data: branches, error: bError } = await supabase
+        .from('branches')
+        .select('id')
+        .eq('org_id', orgId);
+      
+      if (!bError && branches) {
+        const branchIds = branches.map(b => b.id);
+        
+        // 2. Fetch logs for these branches
+        const { data, error } = await supabase
+          .from('audit_logs')
+          .select('*')
+          .in('branch_id', branchIds)
+          .order('created_at', { ascending: false })
+          .limit(limit);
+        
+        if (!error && data) {
+          return data.map(mapDbToAudit);
+        }
+      }
+    } catch (err) {
+      console.error('getOrgLogs failed:', err);
+    }
+
+    // Local fallback: return all logs (most likely for the same org in dev)
+    return storage.get<AuditEntry[]>(STORAGE_KEY_AUDIT, []).slice(0, limit);
   },
 };

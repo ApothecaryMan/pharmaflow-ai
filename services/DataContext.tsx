@@ -107,8 +107,12 @@ export interface DataActions {
   // Switch to a different branch and reload all data
   switchBranch: (branchId: string) => Promise<void>;
 
+  // Switch to a different organization
+  switchOrg: (orgId: string) => Promise<void>;
+
   // Get current active branch ID
   activeBranchId: string;
+  activeOrgId: string;
 }
 
 export type DataContextType = DataState & DataActions;
@@ -135,6 +139,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   initialSuppliers = [],
 }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [activeOrgId, setActiveOrgId] = useState<string>('');
   const [activeBranchId, setActiveBranchId] = useState<string>('');
   const [rawInventory, setRawInventory] = useState<Drug[]>([]);
   const [sales, setSalesState] = useState<Sale[]>([]);
@@ -169,8 +174,12 @@ export const DataProvider: React.FC<DataProviderProps> = ({
           console.error('Migration Failed:', err);
         }
 
-        // 1. Initialize Active Branch
-        const allBranches = branchService.getAll();
+        // 1. Initialize Active Org and Branch
+        const { orgService } = await import('./org/orgService');
+        const defaultOrgId = orgService.getActiveOrgId() || 'org_1';
+        setActiveOrgId(defaultOrgId);
+
+        const allBranches = branchService.getAll(defaultOrgId);
         if (allBranches.length === 0) {
           setIsLoading(false);
           return;
@@ -590,6 +599,30 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     [refreshAll]
   );
 
+  // Switch to a different org
+  const switchOrg = useCallback(
+    async (orgId: string) => {
+      try {
+        setIsLoading(true);
+        const { orgService } = await import('./org/orgService');
+        orgService.setActiveOrgId(orgId);
+        setActiveOrgId(orgId);
+        
+        // Pick first branch of new org
+        const branches = branchService.getAll(orgId);
+        if (branches.length > 0) {
+          await switchBranch(branches[0].id);
+        } else {
+          // No branches, just refresh the empty state
+          await refreshAll();
+        }
+      } catch (error) {
+        console.error('Error switching org:', error);
+      }
+    },
+    [switchBranch, refreshAll]
+  );
+
 
 
   // Trigger data reload when branch changes (not on initial load - that's handled in loadData)
@@ -649,7 +682,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
       refreshAll,
       switchBranch,
+      switchOrg,
       activeBranchId,
+      activeOrgId,
     }),
     [
       inventory,
@@ -688,9 +723,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       deleteEmployee,
       setBatches,
       syncBatches,
-      refreshAll,
       switchBranch,
+      switchOrg,
       syncStatus,
+      activeOrgId,
     ]
   );
 

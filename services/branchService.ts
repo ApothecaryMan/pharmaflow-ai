@@ -6,15 +6,27 @@ import { idGenerator } from '../utils/idGenerator';
 const ACTIVE_BRANCH_KEY = 'pharma_active_branch_id';
 
 /**
- * Branch Service - Handles CRUD operations for pharmacy branches
- * and manages the currently active branch in the UI.
+ * Branch Service - Handles CRUD operations for pharmacy branches.
+ * Org-aware: branches are scoped to organizations via orgId.
  */
 export const branchService = {
   /**
-   * Get all branches from storage
+   * Get all branches from storage.
+   * If orgId is provided, filters to only that org's branches.
    */
-  getAll(): Branch[] {
-    return storage.get<Branch[]>(StorageKeys.BRANCHES, []);
+  getAll(orgId?: string): Branch[] {
+    const branches = storage.get<Branch[]>(StorageKeys.BRANCHES, []);
+    if (orgId) {
+      return branches.filter((b) => b.orgId === orgId);
+    }
+    return branches;
+  },
+
+  /**
+   * Get all branches belonging to a specific organization
+   */
+  getAllByOrg(orgId: string): Branch[] {
+    return this.getAll(orgId);
   },
 
   /**
@@ -44,7 +56,7 @@ export const branchService = {
   },
 
   /**
-   * Create a new branch
+   * Create a new branch. Requires orgId for tenant association.
    */
   create(data: Omit<Branch, 'id' | 'createdAt' | 'updatedAt'>): Branch {
     const branches = this.getAll();
@@ -100,10 +112,11 @@ export const branchService = {
 
   /**
    * Migration helper: ensures an active branch is selected if any exist.
+   * Optionally scoped by orgId for multi-tenant context.
    * Returns null if no branches exist (triggers onboarding).
    */
-  ensureDefaultBranch(): Branch | null {
-    const branches = this.getAll();
+  ensureDefaultBranch(orgId?: string): Branch | null {
+    const branches = orgId ? this.getAllByOrg(orgId) : this.getAll();
     
     if (branches.length === 0) {
       return null;

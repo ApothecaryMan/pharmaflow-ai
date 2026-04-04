@@ -32,6 +32,9 @@
  */
 
 export interface UserSession {
+  userId?: string;
+  orgId?: string;
+  orgRole?: string; // added orgRole
   username: string;
   employeeId?: string; // Optional for dev admin
   branchId: string;
@@ -201,6 +204,7 @@ export const authService = {
         username: DEV_CREDENTIALS.username,
         branchId: effectiveBranchId,
         role: DEV_CREDENTIALS.role,
+        orgRole: 'owner', // DEV admin assumes owner locally
         department: DEV_CREDENTIALS.department,
       };
 
@@ -231,7 +235,7 @@ export const authService = {
         // Fetch employee metadata logic here from Supabase DB
         const { data: employeeData } = await supabase
           .from('employees')
-          .select('id, name, username, branch_id, role, department')
+          .select('id, name, username, branch_id, role, org_role, department')
           .eq('auth_user_id', data.user.id)
           .single();
 
@@ -241,6 +245,7 @@ export const authService = {
             employeeId: employeeData.id,
             branchId: employeeData.branch_id,
             role: employeeData.role,
+            orgRole: employeeData.org_role,
             department: employeeData.department,
           };
           localStorage.setItem(SESSION_KEY, JSON.stringify(session));
@@ -280,6 +285,7 @@ export const authService = {
         employeeId: employee.id,
         branchId: employee.branchId || activeBranch?.id || firstBranch?.id || branchService.getAll()[0]?.id || 'B1',
         role: employee.role,
+        orgRole: employee.orgRole,
         department: employee.department,
       };
 
@@ -411,6 +417,7 @@ export const authService = {
       username: employee.username || employee.name,
       branchId: employee.branchId || activeBranch?.id || firstBranch?.id || branchService.getAll()[0]?.id,
       role: employee.role,
+      orgRole: employee.orgRole,
       department: employee.department,
     };
 
