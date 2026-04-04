@@ -15,7 +15,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { type UserRole } from '../../config/permissions';
 import { permissionsService } from '../../services/auth/permissions';
 import { StorageKeys } from '../../config/storageKeys';
 import { COLOR_HEX_MAP } from '../../config/themeColors';
@@ -332,7 +331,6 @@ interface EmployeeProfileProps {
   color: ThemeColor;
   t: any;
   language: 'EN' | 'AR';
-  userRole: UserRole;
   currentEmployeeId: string | null;
 }
 
@@ -354,7 +352,6 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   color,
   t,
   language,
-  userRole,
   currentEmployeeId,
 }) => {
   // We need to manage the selected employee.
@@ -440,7 +437,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
     if (!selectedEmployeeId && allEmployees.length > 0) {
       setSelectedEmployeeId(allEmployees[0].id);
     }
-  }, [allEmployees, selectedEmployeeId, userRole, currentEmployeeId]);
+  }, [allEmployees, selectedEmployeeId, currentEmployeeId]);
 
   const selectedEmployee = allEmployees.find((e) => e.id === selectedEmployeeId);
   const chartColor = COLOR_HEX_MAP[color.name] || COLOR_HEX_MAP['blue'];

@@ -361,6 +361,49 @@ export const orgService = {
   clearActiveOrg(): void {
     localStorage.removeItem(ACTIVE_ORG_KEY);
   },
+
+  /**
+   * Claim an organization by updating its ownerId and membership.
+   * Used during onboarding to link the new Admin to the created Org.
+   */
+  async claimOrganization(orgId: string, userId: string): Promise<void> {
+    if (isSupabaseConfigured()) {
+      const { supabase } = await import('../../lib/supabase');
+      
+      // Update Org owner
+      await supabase.from('organizations').update({ owner_id: userId }).eq('id', orgId);
+      
+      // Update Membership (find the one created with DEV-OWNER and update it)
+      await supabase
+        .from('org_members')
+        .update({ user_id: userId, role: 'owner' })
+        .eq('org_id', orgId)
+        .eq('role', 'owner');
+      
+      return;
+    }
+
+    // Local
+    const orgs = storage.get<Organization[]>(ORGS_KEY, []);
+    const orgIndex = orgs.findIndex(o => o.id === orgId);
+    if (orgIndex !== -1) {
+      orgs[orgIndex].ownerId = userId;
+      storage.set(ORGS_KEY, orgs);
+    }
+
+    const members = storage.get<OrgMember[]>(ORG_MEMBERS_KEY, []);
+    let memberIndex = -1;
+    for (let i = members.length - 1; i >= 0; i--) {
+      if (members[i].orgId === orgId && members[i].role === 'owner') {
+        memberIndex = i;
+        break;
+      }
+    }
+    if (memberIndex !== -1) {
+      members[memberIndex].userId = userId;
+      storage.set(ORG_MEMBERS_KEY, members);
+    }
+  },
 };
 
 // ───────────────────────────────────────

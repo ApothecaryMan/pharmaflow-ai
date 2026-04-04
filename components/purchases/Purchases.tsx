@@ -2,7 +2,6 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
-import { type UserRole } from '../../config/permissions';
 import { permissionsService } from '../../services/auth/permissions';
 import { useAlert, useSettings } from '../../context';
 import { useLongPress } from '../../hooks/useLongPress';
@@ -42,7 +41,6 @@ interface PurchasesProps {
   onPurchaseComplete: (purchase: Purchase) => void;
   color: string;
   t: any;
-  userRole: UserRole;
   onApprovePurchase?: (purchase: Purchase) => void;
   onRejectPurchase?: (purchase: Purchase) => void;
   language: 'EN' | 'AR';
@@ -58,7 +56,6 @@ export const Purchases: React.FC<PurchasesProps> = ({
   onPurchaseComplete,
   color,
   t,
-  userRole,
   onApprovePurchase,
   onRejectPurchase,
   language,

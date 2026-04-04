@@ -31,14 +31,13 @@ const MODULE_VIEW_MAPPING: Record<string, ViewState> = {
  */
 function filterMenuItems(
   menu: MenuItem[],
-  role: UserRole,
   hideInactiveModules: boolean,
   developerMode: boolean
 ): MenuItem[] {
   return menu
     .filter((module) => {
       // 1. Permission Check
-      if (module.permission && !permissionsService.can(module.permission, { role })) {
+      if (module.permission && !permissionsService.can(module.permission)) {
         return false;
       }
 
@@ -58,7 +57,7 @@ function filterMenuItems(
       submenus: module.submenus
         ?.filter((submenu) => {
           // Filter submenus by permission
-          if (submenu.permission && !permissionsService.can(submenu.permission, { role })) {
+          if (submenu.permission && !permissionsService.can(submenu.permission)) {
             return false;
           }
           return true;
@@ -70,7 +69,7 @@ function filterMenuItems(
             if (
               typeof item === 'object' &&
               item.permission &&
-              !permissionsService.can(item.permission, { role })
+              !permissionsService.can(item.permission)
             ) {
               return false;
             }
@@ -98,9 +97,11 @@ interface UseNavigationParams {
   setMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   hideInactiveModules: boolean;
   developerMode: boolean;
-  role: UserRole; // Added role
   setNavigationParams: React.Dispatch<React.SetStateAction<Record<string, any> | null>>;
   onProtectedNavigation?: (viewId: string, params?: Record<string, any>) => void;
+  currentEmployeeId?: string | null;
+  activeBranchId?: string | null;
+  activeOrgId?: string | null;
 }
 
 /**
@@ -118,9 +119,11 @@ export function useNavigation({
   setMobileMenuOpen,
   hideInactiveModules,
   developerMode,
-  role,
   setNavigationParams,
   onProtectedNavigation,
+  currentEmployeeId,
+  activeBranchId,
+  activeOrgId,
 }: UseNavigationParams): NavigationHandlers {
   const { error } = useAlert();
 
@@ -208,8 +211,8 @@ export function useNavigation({
 
   // Filter menu items based on permissions and settings
   const filteredMenuItems = useMemo(
-    () => filterMenuItems(PHARMACY_MENU, role, hideInactiveModules, developerMode),
-    [role, hideInactiveModules, developerMode]
+    () => filterMenuItems(PHARMACY_MENU, hideInactiveModules, developerMode),
+    [hideInactiveModules, developerMode, currentEmployeeId, activeBranchId, activeOrgId]
   );
 
   return {

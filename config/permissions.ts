@@ -78,6 +78,7 @@ export type PermissionAction =
   | 'settings.update'
   | 'users.view'
   | 'users.manage' // Add/Edit/Delete employees
+  | 'users.view_it' // View IT department employees
   | 'backup.manage'
   | 'system.debug';
 
@@ -129,6 +130,7 @@ const ALL_PERMISSIONS: PermissionAction[] = [
   'settings.update',
   'users.view',
   'users.manage',
+  'users.view_it',
   'backup.manage',
   'system.debug',
   'inventory.restock',

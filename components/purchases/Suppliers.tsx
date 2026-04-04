@@ -1,5 +1,5 @@
-import type React from 'react';
 import { useState } from 'react';
+import { permissionsService } from '../../services/auth/permissions';
 import { useStatusBar } from '../../components/layout/StatusBar';
 import type { Supplier } from '../../types';
 import { Modal } from '../common/Modal';
@@ -34,12 +34,14 @@ export const Suppliers: React.FC<SuppliersProps> = ({
   const addressDir = useSmartDirection(formData.address);
 
   const handleOpenAdd = () => {
+    if (!permissionsService.can('supplier.add')) return;
     setEditingSupplier(null);
     setFormData({ name: '', contactPerson: '', phone: '', email: '', address: '' });
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (supplier: Supplier) => {
+    if (!permissionsService.can('supplier.update')) return;
     setEditingSupplier(supplier);
     setFormData({ ...supplier });
     setIsModalOpen(true);
@@ -70,13 +72,15 @@ export const Suppliers: React.FC<SuppliersProps> = ({
           <h2 className='text-2xl font-medium tracking-tight'>{t.title}</h2>
           <p className='text-sm text-gray-500 dark:text-gray-400'>{t.subtitle}</p>
         </div>
-        <button
-          onClick={handleOpenAdd}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-medium text-sm transition-all shadow-lg shadow-primary-200 dark:shadow-none active:scale-95`}
-        >
-          <span className='material-symbols-rounded text-lg'>add</span>
-          {t.addSupplier}
-        </button>
+        {permissionsService.can('supplier.add') && (
+          <button
+            onClick={handleOpenAdd}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-medium text-sm transition-all shadow-lg shadow-primary-200 dark:shadow-none active:scale-95`}
+          >
+            <span className='material-symbols-rounded text-lg'>add</span>
+            {t.addSupplier}
+          </button>
+        )}
       </div>
 
       <div className='relative'>
@@ -136,18 +140,22 @@ export const Suppliers: React.FC<SuppliersProps> = ({
                     </div>
                   </td>
                   <td className='p-4 text-end space-x-2 rtl:space-x-reverse'>
-                    <button
-                      onClick={() => handleOpenEdit(supplier)}
-                      className={`p-2 rounded-full hover:bg-primary-50 dark:hover:bg-primary-900/30 text-gray-400 hover:text-primary-600 transition-colors`}
-                    >
-                      <span className='material-symbols-rounded text-[18px]'>edit</span>
-                    </button>
-                    <button
-                      onClick={() => onDeleteSupplier(supplier.id)}
-                      className='p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors'
-                    >
-                      <span className='material-symbols-rounded text-[18px]'>delete</span>
-                    </button>
+                    {permissionsService.can('supplier.update') && (
+                      <button
+                        onClick={() => handleOpenEdit(supplier)}
+                        className={`p-2 rounded-full hover:bg-primary-50 dark:hover:bg-primary-900/30 text-gray-400 hover:text-primary-600 transition-colors`}
+                      >
+                        <span className='material-symbols-rounded text-[18px]'>edit</span>
+                      </button>
+                    )}
+                    {permissionsService.can('supplier.delete') && (
+                      <button
+                        onClick={() => onDeleteSupplier(supplier.id)}
+                        className='p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors'
+                      >
+                        <span className='material-symbols-rounded text-[18px]'>delete</span>
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

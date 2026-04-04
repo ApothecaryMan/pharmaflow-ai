@@ -3,7 +3,9 @@ import { SmartInput, SmartPasswordInput } from '../common/SmartInputs';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { useSettings } from '../../context';
 import { employeeService } from '../../services/hr/employeeService';
+import { authService } from '../../services/auth/authService';
 import { branchService } from '../../services/branchService';
+import { OnboardingStepper } from './OnboardingStepper';
 
 const ROLES = [
   { id: 'pharmacist_owner', labelEN: 'Pharmacy Owner', labelAR: 'مالك الصيدلية', icon: 'license' },
@@ -58,18 +60,21 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
     }
 
     setIsLoading(true);
+    setError('');
+
     try {
       const { hashPassword } = await import('../../services/auth/hashUtils');
       const passwordHash = await hashPassword(password);
       
       const newEmployee: any = {
-        id: '', // Service will handle ID generation
+        id: '', 
         branchId: activeBranchId,
-        employeeCode: '', // Service will handle code generation
+        employeeCode: '', 
         name: name.trim(),
         username: username.trim(),
         password: passwordHash,
         role: role,
+        orgRole: 'owner', 
         position: role === 'pharmacist_owner' ? 'Owner' : 'Admin',
         department: 'pharmacy',
         phone: '',
@@ -77,11 +82,34 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
         status: 'active',
       };
       
-      await employeeService.create(newEmployee);
+      // 1. Create the employee
+      const created = await employeeService.create(newEmployee);
+
+      // 2. Claim the organization (Architectural Polish: Atomic-like sequencing)
+      try {
+        const { orgService } = await import('../../services/org/orgService');
+        const activeOrgId = orgService.getActiveOrgId();
+        if (activeOrgId) {
+          await orgService.claimOrganization(activeOrgId, created.id);
+        }
+      } catch (claimErr) {
+        // Log but don't strictly block if org claiming fails locally, 
+        // though in production this should be a transaction.
+        console.warn('Organization claim failed, but employee created:', claimErr);
+      }
+
+      // 3. Auto-login (Professional touch: Login directly after registration)
+      try {
+        await authService.login(username.trim(), password);
+      } catch (loginErr) {
+        console.warn('Auto-login failed, user will need to log in manually:', loginErr);
+      }
+
+      // 4. Finalize and reload
       window.location.reload();
     } catch (err: any) {
       console.error('Failed to setup employee:', err);
-      setError(err.message || (language === 'AR' ? 'حدث خطأ أثناء إنشاء الحساب' : 'An error occurred during account creation'));
+      setError(err.message || (isRTL ? 'حدث خطأ أثناء إنشاء الحساب' : 'An error occurred during account creation'));
       setIsLoading(false);
     }
   };
@@ -95,7 +123,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
         <button
           type="button"
           onClick={onBack}
-          className={`absolute top-8 ${isRTL ? 'right-6' : 'left-6'} z-50 w-10 h-10 rounded-full bg-white text-zinc-900 flex items-center justify-center transition-opacity hover:opacity-80 active:opacity-100 shadow-md border border-zinc-200`}
+          className={`absolute top-8 ${isRTL ? 'right-6' : 'left-6'} z-50 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-all active:scale-95 shadow-lg backdrop-blur-md border border-white/20`}
           title={isRTL ? 'الرجوع' : 'Go Back'}
         >
           <span className="material-symbols-rounded text-2xl">
@@ -126,25 +154,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
             {isRTL ? 'إعداد حساب المدير' : 'Create Admin Account'}
           </h1>
           
-          <div className="flex items-center justify-center mt-8 mb-2 max-w-sm mx-auto relative z-10 px-6">
-            <div className="flex flex-col items-center relative z-20">
-              <div className="w-8 h-8 rounded-full bg-green-400 text-white flex items-center justify-center shadow-sm">
-                <span className="material-symbols-rounded text-base font-bold">check</span>
-              </div>
-              <span className="text-[10px] font-bold mt-2.5 text-white/70 uppercase tracking-widest">
-                {isRTL ? 'بيانات الفرع' : 'Branch'}
-              </span>
-            </div>
-            <div className="flex-1 h-[1px] mx-3 -mt-6.5 bg-white/40" />
-            <div className="flex flex-col items-center relative z-20">
-              <div className="w-8 h-8 rounded-full bg-white text-zinc-900 flex items-center justify-center font-bold text-xs shadow-sm">
-                2
-              </div>
-              <span className="text-[10px] font-bold mt-2.5 text-white uppercase tracking-widest">
-                {isRTL ? 'حساب المدير' : 'Admin'}
-              </span>
-            </div>
-          </div>
+          <OnboardingStepper currentStep={3} language={language} />
           
           <p className="text-white/80 relative z-10 text-sm">
             {isRTL 

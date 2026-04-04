@@ -1,6 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import type React from 'react';
 import { useMemo, useState } from 'react';
+import { permissionsService } from '../../services/auth/permissions';
 import type { Drug, Purchase, PurchaseReturn, PurchaseReturnItem } from '../../types';
 import { useSettings } from '../../context';
 import { getDisplayName } from '../../utils/drugDisplayName';
@@ -251,6 +251,7 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
       totalRefund,
       status: 'pending',
       notes,
+      branchId: activeBranchId || '',
     };
 
     if (onCreatePurchaseReturn) {
@@ -337,13 +338,15 @@ export const PurchaseReturns: React.FC<PurchaseReturnsProps> = ({
             {t.purchaseReturns?.historySubtitle || 'View all purchase returns'}
           </p>
         </div>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold shadow-lg shadow-primary-200 dark:shadow-none transition-all active:scale-95`}
-        >
-          <span className='material-symbols-rounded text-[20px]'>add_circle</span>
-          {t.purchaseReturns?.createReturn || 'Create Return'}
-        </button>
+        {permissionsService.can('purchase.return') && (
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold shadow-lg shadow-primary-200 dark:shadow-none transition-all active:scale-95`}
+          >
+            <span className='material-symbols-rounded text-[20px]'>add_circle</span>
+            {t.purchaseReturns?.createReturn || 'Create Return'}
+          </button>
+        )}
       </div>
 
       {/* RETURN HISTORY TABLE (Always visible now) */}

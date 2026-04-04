@@ -2,7 +2,6 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useStatusBar } from '../../components/layout/StatusBar';
-import { type UserRole } from '../../config/permissions';
 import { permissionsService } from '../../services/auth/permissions';
 import { COUNTRY_CODES } from '../../data/countryCodes';
 import { AREAS, CITIES, GOVERNORATES, getLocationName } from '../../data/locations';
@@ -25,7 +24,6 @@ interface CustomerManagementProps {
   t: any;
   language: 'EN' | 'AR';
   darkMode?: boolean;
-  userRole: UserRole;
   onViewChange?: (view: string, params?: Record<string, any>) => void;
   currentEmployeeId?: string;
 }
@@ -39,7 +37,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   t,
   language,
   darkMode,
-  userRole,
   onViewChange,
   currentEmployeeId,
 }) => {
@@ -437,7 +434,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         },
       },
     ],
-    [language, t, color, userRole, onDeleteCustomer, handleOpenEdit]
+    [language, t, color, onDeleteCustomer, handleOpenEdit]
   );
 
   // Address Form Section Component

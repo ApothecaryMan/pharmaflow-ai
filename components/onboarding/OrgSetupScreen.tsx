@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useSettings } from '../../context';
+import { OnboardingStepper } from './OnboardingStepper';
 import { SmartInput } from '../common/SmartInputs';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { orgService } from '../../services/org/orgService';
 import { authService } from '../../services/auth/authService';
+import { settingsService } from '../../services/settings/settingsService';
 
 interface OrgSetupScreenProps {
   language: 'EN' | 'AR';
@@ -36,6 +38,12 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
 
       // Set as active org
       orgService.setActiveOrgId(result.org.id);
+
+      // Persist UI preferences (Theme & Light/Dark)
+      await settingsService.setMultiple({
+        theme: selectedTheme,
+        darkMode
+      });
       
       onComplete(result.org.id);
     } catch (error) {
@@ -81,42 +89,7 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
             {isRTL ? 'إنشاء منظمة جديدة' : 'Create New Organization'}
           </h1>
           
-          {/* 3-Step Stepper */}
-          <div className="flex items-center justify-center mt-9 mb-2 max-w-sm mx-auto relative z-10 px-6">
-            {/* Step 1: Active */}
-            <div className="flex flex-col items-center relative z-20">
-              <div className="w-8 h-8 rounded-full bg-white text-zinc-900 flex items-center justify-center font-bold text-xs shadow-md transform scale-110">
-                1
-              </div>
-              <span className="text-[10px] font-bold mt-2.5 text-white uppercase tracking-widest opacity-100 whitespace-nowrap">
-                {isRTL ? 'المنظمة' : 'Organization'}
-              </span>
-            </div>
-
-            <div className="flex-1 h-[2px] mx-3 -mt-6.5 bg-white/20 rounded-full" />
-
-            {/* Step 2: Upcoming */}
-            <div className="flex flex-col items-center relative z-20">
-              <div className="w-8 h-8 rounded-full bg-black/20 text-white/70 flex items-center justify-center font-bold text-xs border border-white/20 backdrop-blur-md">
-                2
-              </div>
-              <span className="text-[10px] font-bold mt-2.5 text-white/50 uppercase tracking-widest whitespace-nowrap">
-                {isRTL ? 'الفرع' : 'Branch'}
-              </span>
-            </div>
-
-            <div className="flex-1 h-[2px] mx-3 -mt-6.5 bg-white/10 rounded-full" />
-
-            {/* Step 3: Upcoming */}
-            <div className="flex flex-col items-center relative z-20">
-              <div className="w-8 h-8 rounded-full bg-black/20 text-white/70 flex items-center justify-center font-bold text-xs border border-white/20 backdrop-blur-md">
-                3
-              </div>
-              <span className="text-[10px] font-bold mt-2.5 text-white/30 uppercase tracking-widest whitespace-nowrap">
-                {isRTL ? 'المدير' : 'Admin'}
-              </span>
-            </div>
-          </div>
+          <OnboardingStepper currentStep={1} language={language} />
           
           <p className="text-white/80 relative z-10 text-sm font-medium mt-4">
             {isRTL 

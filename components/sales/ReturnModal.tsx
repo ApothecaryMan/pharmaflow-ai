@@ -18,7 +18,6 @@ interface ReturnModalProps {
   color: string;
   t: any;
   language?: string;
-  userRole?: string; // DEPRECATED: now resolved internally via permissionsService
   currentDailyRefunds?: number;
   currentShift: Shift | null;
   currentEmployeeId?: string;
@@ -37,13 +36,12 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   color,
   t,
   language = 'EN',
-  userRole: userRoleProp,
   currentDailyRefunds = 0,
   currentShift,
   currentEmployeeId,
 }) => {
-  // Resolve role internally; fallback to prop for backward compat
-  const userRole = userRoleProp || permissionsService.getEffectiveRole();
+  // Resolve role internally
+  const userRole = permissionsService.getEffectiveRole();
   const { getVerifiedDate } = useStatusBar();
   const { activeBranchId } = useData();
 

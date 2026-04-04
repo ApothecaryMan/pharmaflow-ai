@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { canPerformAction } from '../config/permissions';
+import { permissionsService } from '../services/auth/permissions';
 import { StorageKeys } from '../config/storageKeys';
 import { useAlert } from '../context';
 import { auditService } from '../services/auditService';
@@ -204,7 +204,7 @@ export function useEntityHandlers({
 
       // 2. Permission Guard
       const employee = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(employee?.role, 'inventory.add')) {
+      if (!permissionsService.can('inventory.add')) {
         error(`Permission denied: ${employee?.role || 'User'} cannot add items`);
         return;
       }
@@ -253,7 +253,7 @@ export function useEntityHandlers({
         return;
       }
       const employee = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(employee?.role, 'inventory.update')) {
+      if (!permissionsService.can('inventory.update')) {
         error(`Permission denied: ${employee?.role || 'User'} cannot update items`);
         return;
       }
@@ -310,7 +310,7 @@ export function useEntityHandlers({
         return;
       }
       const employee = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(employee?.role, 'inventory.delete')) {
+      if (!permissionsService.can('inventory.delete')) {
         error(`Permission denied: ${employee?.role || 'User'} cannot delete items`);
         return;
       }
@@ -363,7 +363,7 @@ export function useEntityHandlers({
         return;
       }
       const employee = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(employee?.role, 'inventory.update')) {
+      if (!permissionsService.can('inventory.update')) {
         error('Permission denied: Role cannot restock items');
         return;
       }
@@ -415,8 +415,7 @@ export function useEntityHandlers({
         error('Authentication required: Please log in to add suppliers');
         return;
       }
-      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(currentUser?.role, 'supplier.add')) {
+      if (!permissionsService.can('supplier.add')) {
         error('Permission denied: Cannot add suppliers');
         return;
       }
@@ -438,8 +437,7 @@ export function useEntityHandlers({
         error('Authentication required: Please log in to update suppliers');
         return;
       }
-      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(currentUser?.role, 'supplier.update')) {
+      if (!permissionsService.can('supplier.update')) {
         error('Permission denied: Cannot update suppliers');
         return;
       }
@@ -461,8 +459,7 @@ export function useEntityHandlers({
         error('Authentication required: Please log in to delete suppliers');
         return;
       }
-      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(currentUser?.role, 'supplier.delete')) {
+      if (!permissionsService.can('supplier.delete')) {
         error('Permission denied: Cannot delete suppliers');
         return;
       }
@@ -493,8 +490,7 @@ export function useEntityHandlers({
         error('Authentication required: Please log in to add customers');
         return;
       }
-      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(currentUser?.role, 'customer.add')) {
+      if (!permissionsService.can('customer.add')) {
         error('Permission denied: Cannot add customers');
         return;
       }
@@ -525,8 +521,7 @@ export function useEntityHandlers({
         error('Authentication required: Please log in to update customers');
         return;
       }
-      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(currentUser?.role, 'customer.update')) {
+      if (!permissionsService.can('customer.update')) {
         error('Permission denied: Cannot update customers');
         return;
       }
@@ -548,8 +543,7 @@ export function useEntityHandlers({
         error('Authentication required: Please log in to delete customers');
         return;
       }
-      const currentUser = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(currentUser?.role, 'customer.delete')) {
+      if (!permissionsService.can('customer.delete')) {
         error('Permission denied: Cannot delete customers');
         return;
       }
@@ -657,7 +651,7 @@ export function useEntityHandlers({
         return;
       }
 
-      if (!canPerformAction(currentUser.role, 'purchase.create')) {
+      if (!permissionsService.can('purchase.create')) {
         error('Permission denied: Cannot create purchase orders');
         return;
       }
@@ -665,7 +659,7 @@ export function useEntityHandlers({
         let finalPurchase = { ...purchase, branchId: activeBranchId };
 
         if (finalPurchase.status === 'completed') {
-          if (!canPerformAction(currentUser.role, 'purchase.approve')) {
+          if (!permissionsService.can('purchase.approve')) {
             error('Permission denied: Cannot complete/approve purchase (Created as pending instead)');
             finalPurchase.status = 'pending';
           } else if (finalPurchase.paymentType === 'cash' && !currentShift) {
@@ -734,7 +728,7 @@ export function useEntityHandlers({
         return;
       }
 
-      if (!canPerformAction(currentUser.role, 'purchase.approve')) {
+      if (!permissionsService.can('purchase.approve')) {
         error('Permission denied: Cannot approve purchases');
         return;
       }
@@ -811,10 +805,7 @@ export function useEntityHandlers({
   const handleRejectPurchase = useCallback(
     (purchaseId: string, reason?: string) => {
       if (
-        !canPerformAction(
-          employees?.find((e) => e.id === currentEmployeeId)?.role,
-          'purchase.reject'
-        )
+        !permissionsService.can('purchase.reject')
       ) {
         error('Permission denied: Cannot reject purchases');
         return;
@@ -836,10 +827,7 @@ export function useEntityHandlers({
   const handleCreatePurchaseReturn = useCallback(
     async (returnData: PurchaseReturn) => {
       if (
-        !canPerformAction(
-          employees?.find((e) => e.id === currentEmployeeId)?.role,
-          'purchase.return'
-        )
+        !permissionsService.can('purchase.return')
       ) {
         error('Permission denied: Cannot create purchase returns');
         return;
@@ -932,7 +920,7 @@ export function useEntityHandlers({
 
       // 2. Permission Check
       const currentUser = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(currentUser?.role, 'users.manage')) {
+      if (!permissionsService.can('users.manage')) {
         error('Permission denied: Cannot add employees');
         return;
       }
@@ -968,7 +956,7 @@ export function useEntityHandlers({
       const currentUserRole = employees?.find((e) => e.id === currentEmployeeId)?.role;
       const isSelf = id === currentEmployeeId;
 
-      if (!isSelf && !canPerformAction(currentUserRole, 'users.manage')) {
+      if (!isSelf && !permissionsService.can('users.manage')) {
         error('Permission denied: Cannot update employees');
         return;
       }
@@ -997,7 +985,7 @@ export function useEntityHandlers({
 
       // 2. Permission Check
       const currentUser = employees?.find((e) => e.id === currentEmployeeId);
-      if (!canPerformAction(currentUser?.role, 'users.manage')) {
+      if (!permissionsService.can('users.manage')) {
         error('Permission denied: Cannot delete employees');
         return;
       }
@@ -1047,7 +1035,7 @@ export function useEntityHandlers({
           return false;
         }
         const currentUser = employees?.find((e) => e.id === currentEmployeeId);
-        if (!canPerformAction(currentUser?.role, 'sale.create')) {
+        if (!permissionsService.can('sale.create')) {
           error('Permission denied: Cannot process sales');
           return false;
         }
@@ -1208,7 +1196,7 @@ export function useEntityHandlers({
 
       // Handle order cancellation - return all items to batches
       if (updates.status === 'cancelled' && sale.status !== 'cancelled') {
-        if (!canPerformAction(employee?.role, 'sale.cancel')) {
+        if (!permissionsService.can('sale.cancel')) {
           error('Permission denied: Cannot cancel orders');
           return;
         }
@@ -1267,7 +1255,7 @@ export function useEntityHandlers({
 
       // Handle item modifications (for delivery orders)
       if (updates.items && sale.saleType === 'delivery' && sale.status !== 'completed') {
-        if (!canPerformAction(employee?.role, 'sale.modify')) {
+        if (!permissionsService.can('sale.modify')) {
           error('Permission denied: Cannot modify orders');
           return;
         }
@@ -1555,7 +1543,7 @@ export function useEntityHandlers({
           return false;
         }
         const employee = employees?.find((e) => e.id === currentEmployeeId);
-        if (!canPerformAction(employee?.role, 'sale.refund')) {
+        if (!permissionsService.can('sale.refund')) {
           error('Permission denied: Cannot process returns');
           return false;
         }

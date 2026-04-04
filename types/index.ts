@@ -943,6 +943,7 @@ export interface Employee {
   // --- Auth ---
   username?: string; // Login Username
   password?: string;
+  orgRole?: 'owner' | 'admin' | 'member'; // Added for multi-tenant ownership
   biometricCredentialId?: string; // WebAuthn Credential ID
   biometricPublicKey?: string; // WebAuthn Public Key (Base64)
 

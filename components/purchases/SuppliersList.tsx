@@ -5,6 +5,7 @@ import type { Supplier } from '../../types';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../services/DataContext';
+import { permissionsService } from '../../services/auth/permissions';
 import { useContextMenu } from '../common/ContextMenu';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
@@ -50,6 +51,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
     email: '',
     address: '',
     status: 'active',
+    branchId: activeBranchId || '',
   });
 
   const nameDir = useSmartDirection(
@@ -132,6 +134,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
   };
 
   const handleAddNew = () => {
+    if (!permissionsService.can('supplier.add')) return;
     setMode('add');
     // Generate unique ID
     const nextId = idGenerator.generate('suppliers', activeBranchId);
@@ -143,6 +146,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
       email: '',
       address: '',
       status: 'active',
+      branchId: activeBranchId || '',
     });
   };
 
@@ -173,12 +177,12 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
       icon: 'visibility',
       action: () => handleViewDetails(supplier),
     },
-    { label: t.contextMenu?.edit || 'Edit', icon: 'edit', action: () => handleEdit(supplier) },
-    {
+    ...(permissionsService.can('supplier.update') ? [{ label: t.contextMenu?.edit || 'Edit', icon: 'edit', action: () => handleEdit(supplier) }] : []),
+    ...(permissionsService.can('supplier.delete') ? [{
       label: t.contextMenu?.delete || 'Delete',
       icon: 'delete',
       action: () => handleDelete(supplier),
-    },
+    }] : []),
     { separator: true },
     {
       label: t.contextMenu?.copyName || 'Copy Name',
@@ -310,7 +314,7 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
           size='sm'
           options={[
             { label: t.allSuppliers || 'All Suppliers', value: 'list' },
-            { label: t.addNewSupplier || 'Add New Supplier', value: 'add' },
+            ...(permissionsService.can('supplier.add') ? [{ label: t.addNewSupplier || 'Add New Supplier', value: 'add' }] : []),
           ]}
         />
       </div>

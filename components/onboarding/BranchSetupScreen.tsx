@@ -3,16 +3,19 @@ import { useSettings } from '../../context';
 import { SmartInput } from '../common/SmartInputs';
 import { SegmentedControl } from '../common/SegmentedControl';
 
+import { OnboardingStepper } from './OnboardingStepper';
 import { branchService } from '../../services/branchService';
+import { orgService } from '../../services/org/orgService';
 import { settingsService } from '../../services/settings/settingsService';
 
 interface BranchSetupScreenProps {
   language: 'EN' | 'AR';
   color: string;
   onComplete: () => void;
+  onBack?: () => void;
 }
 
-export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, color, onComplete }) => {
+export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, color, onComplete, onBack }) => {
   const { availableThemes, darkMode, setDarkMode } = useSettings();
   const [branchName, setBranchName] = useState('');
   const [branchCode, setBranchCode] = useState('');
@@ -49,16 +52,17 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
 
     setIsLoading(true);
     try {
+      const activeOrgId = orgService.getActiveOrgId() || 'org_1';
       const newBranch = branchService.create({ 
         name: branchName.trim(), 
         code: branchCode.trim().toUpperCase(), 
-        status: 'active' 
+        status: 'active',
+        orgId: activeOrgId
       });
       branchService.setActive(newBranch.id);
       await settingsService.setMultiple({ 
         activeBranchId: newBranch.id, 
-        branchCode: newBranch.code,
-        theme: selectedTheme 
+        branchCode: newBranch.code
       });
       
       onComplete();
@@ -83,8 +87,21 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
         }
       `}} />
 
-      <div className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
+      <div className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 relative">
         
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className={`absolute top-8 ${isRTL ? 'right-6' : 'left-6'} z-50 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-all active:scale-95 shadow-lg backdrop-blur-md border border-white/20`}
+            title={isRTL ? 'الرجوع' : 'Go Back'}
+          >
+            <span className="material-symbols-rounded text-2xl">
+              {isRTL ? 'arrow_forward' : 'arrow_back'}
+            </span>
+          </button>
+        )}
+
         {/* Header styling */}
         <div 
           className="p-10 text-center relative overflow-hidden"
@@ -115,31 +132,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
             )}
           </h1>
           
-          {/* Clean Stepper */}
-          <div className="flex items-center justify-center mt-9 mb-2 max-w-sm mx-auto relative z-10 px-6">
-            {/* Step 1: Active */}
-            <div className="flex flex-col items-center relative z-20">
-              <div className="w-8 h-8 rounded-full bg-white text-zinc-900 flex items-center justify-center font-bold text-xs shadow-md transform scale-110">
-                1
-              </div>
-              <span className="text-[10px] font-bold mt-2.5 text-white uppercase tracking-widest opacity-100">
-                {isRTL ? 'بيانات الفرع' : 'Branch'}
-              </span>
-            </div>
-
-            {/* Connector */}
-            <div className="flex-1 h-[2px] mx-3 -mt-6.5 bg-linear-to-r from-white/60 to-white/20 rounded-full" />
-
-            {/* Step 2: Upcoming */}
-            <div className="flex flex-col items-center relative z-20">
-              <div className="w-8 h-8 rounded-full bg-black/20 text-white/70 flex items-center justify-center font-bold text-xs border border-white/20 backdrop-blur-md">
-                2
-              </div>
-              <span className="text-[10px] font-bold mt-2.5 text-white/70 uppercase tracking-widest">
-                {isRTL ? 'حساب المدير' : 'Admin'}
-              </span>
-            </div>
-          </div>
+          <OnboardingStepper currentStep={2} language={language} />
           
           <p className="text-white/80 relative z-10 text-sm font-medium mt-1">
             {isRTL 
@@ -188,46 +181,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
             </p>
           </div>
 
-          {/* Color & Dark Mode Section - Enhanced Glassmorphism */}
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
-              {isRTL ? 'لون البراند' : 'Brand Color'}
-            </label>
-            <div className="flex items-center justify-between gap-3 bg-zinc-50/50 dark:bg-zinc-800/40 p-3.5 rounded-2xl border border-zinc-200/50 dark:border-zinc-700/50 backdrop-blur-xl shadow-sm transition-all">
-              <div className="flex flex-wrap gap-2.5">
-                {availableThemes.map((t) => (
-                  <button
-                    key={t.name}
-                    type="button"
-                    onClick={() => setSelectedTheme(t)}
-                    className={`w-7 h-7 rounded-full border-2 transition-all duration-300 ${
-                      selectedTheme.name === t.name 
-                        ? 'border-zinc-800 dark:border-white scale-110 shadow-lg' 
-                        : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'
-                    }`}
-                    style={{ backgroundColor: t.hex }}
-                    title={t.name}
-                  />
-                ))}
-              </div>
 
-              <div className="flex items-center">
-                <SegmentedControl
-                  value={darkMode}
-                  onChange={(val) => setDarkMode(val as boolean)}
-                  color={selectedTheme.primary.toLowerCase()}
-                  size="xs"
-                  iconSize="--icon-lg"
-                  fullWidth={false}
-                  shape="pill"
-                  options={[
-                    { label: '', value: false, icon: 'light_mode' },
-                    { label: '', value: true, icon: 'dark_mode' },
-                  ]}
-                />
-              </div>
-            </div>
-          </div>
 
           <button
             type="submit"

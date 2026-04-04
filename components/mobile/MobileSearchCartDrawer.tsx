@@ -125,7 +125,6 @@ export const MobileSearchCartDrawer: React.FC<MobileSearchCartDrawerProps> = ({
     globalDiscount: 0,
     setSearch: () => {},
     searchInputRef: { current: null },
-    userRole: 'pharmacist',
     // grossSubtotal = الإجمالي قبل الخصم - يظهر السطر الفرعي فقط إذا اختلف عن cartTotal
     grossSubtotal: rawSubtotal,
     orderDiscountPercent: 0,

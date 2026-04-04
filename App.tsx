@@ -12,7 +12,7 @@ import { BranchSetupScreen } from './components/onboarding/BranchSetupScreen';
 import { EmployeeSetupScreen } from './components/onboarding/EmployeeSetupScreen';
 import { PageSkeletonRegistry } from './components/skeletons/PageSkeletonRegistry';
 import { PAGE_REGISTRY } from './config/pageRegistry';
-import { canPerformAction, UserRole } from './config/permissions';
+import { UserRole } from './config/permissions';
 import { SecureGate } from './components/common/SecureGate';
 import { ROUTES } from './config/routes';
 import { LANGUAGES, THEMES, useSettings } from './context';
@@ -31,6 +31,7 @@ import { TRANSLATIONS } from './i18n/translations';
 import { DataProvider, useData } from './services/DataContext';
 import { authService } from './services/auth/authService';
 import { type Supplier, ViewState } from './types';
+import { useOnboardingStatus } from './hooks/useOnboardingStatus';
 
 const INITIAL_SUPPLIERS: Supplier[] = [
   { id: '1', branchId: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '', status: 'active' },
@@ -133,6 +134,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setBatches,
     isLoading,
     activeBranchId,
+    activeOrgId,
   } = useData();
 
   // --- StatusBar Utilities ---
@@ -159,9 +161,11 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       setMobileMenuOpen,
       hideInactiveModules,
       developerMode,
-      role: userRole, // Pass the extracted role
       setNavigationParams: (params: any) => setNavigationParams(params), // Wrap it to match React.Dispatch
       onProtectedNavigation: (viewId: string, params?: any) => setPendingNavigation({ viewId, params }),
+      currentEmployeeId,
+      activeBranchId,
+      activeOrgId,
     }
   );
 
@@ -435,43 +439,8 @@ const App: React.FC = () => {
   // 3. Settings Hook (for Language)
   const { theme, darkMode, language } = useSettings();
 
-  // 4. Onboarding State (Step detection)
-  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
-  const [hasRealOrganizations, setHasRealOrganizations] = useState(false);
-  const [hasRealEmployees, setHasRealEmployees] = useState(false);
-  const [forceStep2, setForceStep2] = useState(false);
-  const [forceStep3, setForceStep3] = useState(false);
-
-  // Synchronous branches check is fine (localStorage)
-  const hasBranches = branchService.getAll().length > 0;
-
-  React.useEffect(() => {
-    const checkOnboarding = async () => {
-      try {
-        // 1. Check Organizations
-        const { orgService } = await import('./services/org/orgService');
-        const user = authService.getCurrentUserSync();
-        // Fallback for dev if no user session yet
-        const ownerId = user?.userId || 'DEV-OWNER';
-        const orgs = await orgService.getUserOrgs(ownerId);
-        setHasRealOrganizations(orgs.length > 0);
-
-        // 2. Check Employees (if branches exist)
-        if (hasBranches) {
-          const { employeeCacheService } = await import('./services/hr/employeeCacheService');
-          const all = await employeeCacheService.loadAll();
-          const hasReal = all.some(e => e.id !== 'SUPER-ADMIN' && e.employeeCode !== 'EMP-000');
-          setHasRealEmployees(hasReal);
-        }
-      } catch (error) {
-        console.error('Failed to check onboarding status:', error);
-      } finally {
-        setIsCheckingOnboarding(false);
-      }
-    };
-    
-    checkOnboarding();
-  }, [hasBranches]);
+  // 4. Onboarding Status Hook (Architectural Abstraction)
+  const { activeStep, setActiveStep, isChecking: isCheckingOnboarding, error: onboardingError } = useOnboardingStatus();
 
   // 5. Dynamic Theme Hook - Handles PWA Title Bar & Global Dark Mode
   // When not authenticated, we force isLoginView=true for the black theme color override
@@ -539,44 +508,33 @@ const App: React.FC = () => {
     );
   }
 
-  // 9. ONBOARDING GATE (STANDALONE)
-  // Step 1: Organization
-  if (!hasRealOrganizations && !forceStep2 && !forceStep3) {
+  // 9. ONBOARDING GATE (Explicit Step State)
+  if (activeStep === 1) {
     return (
       <OrgSetupScreen 
         language={language} 
-        onComplete={() => {
-          setHasRealOrganizations(true);
-          setForceStep2(true);
-        }} 
+        onComplete={() => setActiveStep(2)} 
       />
     );
   }
 
-  // Step 2: Branch (If we lack branches OR explicitly requested after Org)
-  if ((!hasBranches || forceStep2) && !forceStep3) {
+  if (activeStep === 2) {
     return (
       <BranchSetupScreen 
         language={language} 
         color={theme.primary} 
-        onComplete={() => {
-          setForceStep2(false);
-          setForceStep3(true);
-        }} 
+        onBack={() => setActiveStep(1)}
+        onComplete={() => setActiveStep(3)} 
       />
     );
   }
 
-  // Step 3: Admin Employee (If we have branches but no employees OR forced from Step 2)
-  if (!hasRealEmployees || forceStep3) {
+  if (activeStep === 3) {
     return (
       <EmployeeSetupScreen 
         language={language} 
         color={theme.primary} 
-        onBack={() => {
-          setForceStep3(false);
-          setForceStep2(true);
-        }} 
+        onBack={() => setActiveStep(2)}
       />
     );
   }

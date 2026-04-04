@@ -42,7 +42,6 @@ interface EmployeeListProps {
   t: any;
   language: string;
   onUpdateEmployees?: (employees: Employee[]) => void;
-  userRole: UserRole;
   employees: Employee[];
   onAddEmployee: (employee: Employee) => Promise<void>;
   onUpdateEmployee: (id: string, updates: Partial<Employee>) => Promise<void>;
@@ -54,7 +53,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   t,
   language,
   onUpdateEmployees,
-  userRole,
   employees,
   onAddEmployee,
   onUpdateEmployee,
@@ -98,21 +96,16 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
     if (!currentUser) return [];
 
     // Admin / Owner / HR -> See ALL
-    if (
-      currentUser.role === 'admin' ||
-      currentUser.role === 'pharmacist_owner' ||
-      currentUser.role === 'hr_manager'
-    ) {
-      // Owner/HR shouldn't usually see 'IT' unless specified, but for simplicity we show all except maybe sensitive ones?
-      // Plan says Owner sees all except IT.
-      if (currentUser.role === 'pharmacist_owner') {
+    if (permissionsService.can('users.manage')) {
+      // Logic for IT visibility: check specific permission
+      if (!permissionsService.can('users.view_it')) {
         return allDepts.filter((d) => d.key !== 'it');
       }
       return allDepts;
     }
 
     // Manager / Pharmacist Manager -> See Operations (Pharmacy, Sales, Logistics, Marketing)
-    if (currentUser.role === 'manager' || currentUser.role === 'pharmacist_manager') {
+    if (permissionsService.isManager()) {
       return allDepts.filter((d) =>
         ['pharmacy', 'sales', 'logistics', 'marketing'].includes(d.key)
       );
@@ -330,7 +323,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         ),
       },
     ],
-    [t, employees, userRole, handleView, handleEdit, handleDelete]
+    [t, employees, handleView, handleEdit, handleDelete]
   );
 
   // Removed local generateUUID and code generation in favor of centralized idGenerator

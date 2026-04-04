@@ -1,5 +1,5 @@
-import type React from 'react';
 import { useState } from 'react';
+import { permissionsService } from '../../services/auth/permissions';
 import { useSettings } from '../../context';
 import { PENDING_APPROVAL_HELP } from '../../i18n/helpInstructions';
 import { type Purchase, PurchaseItem, type Shift } from '../../types';
@@ -72,6 +72,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
 
   // Reject Logic
   const handleOpenReject = (id: string, e?: React.MouseEvent) => {
+    if (!permissionsService.can('purchase.reject')) return;
     if (e) e.stopPropagation();
     setPurchaseToReject(id);
     setIsRejectModalOpen(true);
@@ -88,6 +89,7 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
 
   // Approve Logic
   const handleOpenApprove = (id: string, e?: React.MouseEvent) => {
+    if (!permissionsService.can('purchase.approve')) return;
     if (e) e.stopPropagation();
     setPurchaseToApprove(id);
     setIsApproveModalOpen(true);
@@ -196,26 +198,30 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
 
               {/* Actions */}
               <div className='mt-auto grid grid-cols-2 gap-3' onClick={(e) => e.stopPropagation()}>
-                <button
-                  onClick={(e) => handleOpenReject(purchase.id, e)}
-                  className='py-2.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-bold text-sm transition-colors flex items-center justify-center gap-2'
-                >
-                  <span className='material-symbols-rounded text-lg'>close</span>
-                  {t.reject || 'Reject'}
-                </button>
+                {permissionsService.can('purchase.reject') && (
+                  <button
+                    onClick={(e) => handleOpenReject(purchase.id, e)}
+                    className='py-2.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-bold text-sm transition-colors flex items-center justify-center gap-2'
+                  >
+                    <span className='material-symbols-rounded text-lg'>close</span>
+                    {t.reject || 'Reject'}
+                  </button>
+                )}
                 {purchase.paymentType === 'cash' && !currentShift ? (
                   <div className='py-2.5 px-2 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 flex items-center justify-center gap-1.5 text-red-600 dark:text-red-400'>
                     <span className='material-symbols-rounded text-base'>warning</span>
                     <span className='text-[10px] font-bold leading-tight uppercase'>{t.noOpenShift || 'Open Shift First'}</span>
                   </div>
                 ) : (
-                  <button
-                    onClick={(e) => handleOpenApprove(purchase.id, e)}
-                    className='py-2.5 rounded-xl bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-xs'
-                  >
-                    <span className='material-symbols-rounded text-lg'>check</span>
-                    {t.approve || 'Approve'}
-                  </button>
+                  permissionsService.can('purchase.approve') && (
+                    <button
+                      onClick={(e) => handleOpenApprove(purchase.id, e)}
+                      className='py-2.5 rounded-xl bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-xs'
+                    >
+                      <span className='material-symbols-rounded text-lg'>check</span>
+                      {t.approve || 'Approve'}
+                    </button>
+                  )
                 )}
               </div>
             </div>
@@ -241,31 +247,35 @@ export const PendingApproval: React.FC<PendingApprovalProps> = ({
             {selectedPurchase?.paymentType === 'cash' && !currentShift ? (
               <div className='flex items-center gap-3 px-6 py-3 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300'>
                 <span className='material-symbols-rounded animate-pulse'>warning</span>
-                <span className='font-bold text-sm'>{t.noOpenShift || 'Open a shift before approving cash purchases'}</span>
+                <span className='font-bold text-sm'>
+                  {t.noOpenShift || 'Open a shift before approving cash purchases'}
+                </span>
               </div>
             ) : (
-              <button
-                onClick={() => {
-                  if (approverName.trim()) {
-                    if (selectedPurchase) {
-                      onApprovePurchase(selectedPurchase.id, approverName);
-                      setSelectedPurchase(null);
-                      setApproverName('');
+              permissionsService.can('purchase.approve') && (
+                <button
+                  onClick={() => {
+                    if (approverName.trim()) {
+                      if (selectedPurchase) {
+                        onApprovePurchase(selectedPurchase.id, approverName);
+                        setSelectedPurchase(null);
+                        setApproverName('');
+                      }
+                    } else {
+                      alert(t.enterApproverName || "Please enter the approver's name.");
                     }
-                  } else {
-                    alert(t.enterApproverName || "Please enter the approver's name.");
-                  }
-                }}
-                disabled={!approverName.trim()}
-                className={`px-8 py-3 rounded-2xl font-bold transition-all flex items-center gap-2 ${
-                  approverName.trim()
-                    ? `bg-primary-600 text-white hover:bg-primary-700 shadow-xl shadow-primary-200 dark:shadow-none active:scale-95`
-                    : `bg-gray-50 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600`
-                }`}
-              >
-                <span className='material-symbols-rounded'>check_circle</span>
-                {t.approveOrder || 'Approve Order'}
-              </button>
+                  }}
+                  disabled={!approverName.trim()}
+                  className={`px-8 py-3 rounded-2xl font-bold transition-all flex items-center gap-2 ${
+                    approverName.trim()
+                      ? `bg-primary-600 text-white hover:bg-primary-700 shadow-xl shadow-primary-200 dark:shadow-none active:scale-95`
+                      : `bg-gray-50 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600`
+                  }`}
+                >
+                  <span className='material-symbols-rounded'>check_circle</span>
+                  {t.approveOrder || 'Approve Order'}
+                </button>
+              )
             )}
           </div>
         }

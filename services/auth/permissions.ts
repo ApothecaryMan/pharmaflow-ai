@@ -73,6 +73,21 @@ export const permissionsService = {
   },
 
   /**
+   * Check if user has manager-level privileges
+   */
+  isManager(): boolean {
+    const session = authService.getCurrentUserSync();
+    const role = session?.role;
+    return (
+      session?.orgRole === 'owner' || 
+      session?.orgRole === 'admin' || 
+      role === 'manager' || 
+      role === 'pharmacist_manager' ||
+      role === 'admin'
+    );
+  },
+
+  /**
    * Get all permissions for the current user
    */
   getAllPermissions(): PermissionAction[] {

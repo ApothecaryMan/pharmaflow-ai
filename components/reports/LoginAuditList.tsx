@@ -8,6 +8,7 @@ import { authService, type LoginAuditEntry } from '../../services/auth/authServi
 import { branchService } from '../../services/branchService';
 import { TanStackTable } from '../common/TanStackTable';
 import { Switch } from '../common/Switch';
+import { permissionsService } from '../../services/auth/permissions';
 
 /**
  * LoginAuditList Component
@@ -22,7 +23,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
   // Check if current user is Super Admin to show the toggle
   const currentUser = authService.getCurrentUserSync();
   const isSuperAdmin =
-    currentUser?.username === import.meta.env.VITE_SUPER_USER || currentUser?.role === 'admin';
+    currentUser?.username === import.meta.env.VITE_SUPER_USER || permissionsService.isOrgAdmin();
 
   const history: LoginAuditEntry[] = useMemo(
     () => authService.getLoginHistory(showAllBranches ? undefined : activeBranchId),
