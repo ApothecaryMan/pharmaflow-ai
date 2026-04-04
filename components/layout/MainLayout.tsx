@@ -15,7 +15,6 @@ interface MainLayoutProps {
   view: string;
   activeModule: string;
   t: any;
-  userRole: UserRole;
   // Handlers
   onLogout: () => void;
   // UI State
@@ -87,7 +86,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   view,
   activeModule,
   t,
-  userRole,
   onLogout,
   mobileMenuOpen,
   setMobileMenuOpen,
@@ -167,7 +165,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               currentEmployeeId={currentEmployeeId}
               setCurrentEmployeeId={setCurrentEmployeeId}
               onLogout={onLogout}
-              userRole={userRole}
               onOpenInWindow={onOpenInWindow}
             />
           )}
@@ -213,7 +210,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               t={t}
               language={language}
               hideInactiveModules={hideInactiveModules}
-              userRole={userRole}
               isStandalone={isStandalone}
               profileImage={profileImage}
               currentEmployeeId={currentEmployeeId}
@@ -237,7 +233,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             <StatusBar
               t={t.statusBar}
               currentEmployeeId={currentEmployeeId}
-              userRole={userRole}
               onSelectEmployee={setCurrentEmployeeId}
             />
           )}

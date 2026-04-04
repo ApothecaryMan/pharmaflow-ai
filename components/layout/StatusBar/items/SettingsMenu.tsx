@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { AVAILABLE_FONTS_AR, AVAILABLE_FONTS_EN } from '../../../../config/fonts';
-import { canPerformAction, type UserRole } from '../../../../config/permissions';
+import { permissionsService } from '../../../../services/auth/permissions';
 import { useSettings } from '../../../../context';
 import { useSmartPosition } from '../../../../hooks/useSmartPosition';
 import { TRANSLATIONS } from '../../../../i18n/translations';
@@ -16,7 +16,6 @@ import { StatusBarItem } from '../StatusBarItem';
  * Never re-introduce passed-down setting props here; always use the central context.
  */
 export interface SettingsMenuProps {
-  userRole?: UserRole;
   dropDirection?: 'up' | 'down';
   showTrigger?: boolean;
   align?: 'start' | 'end';
@@ -25,7 +24,6 @@ export interface SettingsMenuProps {
 }
 
 export const SettingsMenu: React.FC<SettingsMenuProps> = ({
-  userRole,
   dropDirection = 'up',
   showTrigger = true,
   align = 'start',
@@ -763,7 +761,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             )}
 
             {/* Developer Mode Toggle */}
-            {setDeveloperMode && userRole === 'admin' && (
+            {setDeveloperMode && permissionsService.isOrgAdmin() && (
               <div className='flex items-center justify-between'>
                 <label
                   className='text-xs font-medium flex items-center gap-1.5'
@@ -875,7 +873,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       }
                     >
                       {/* Sales */}
-                      {setShowTickerSales && canPerformAction(userRole, 'sale.view_history') && (
+                      {setShowTickerSales && permissionsService.can('sale.view_history') && (
                         <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-(--bg-menu-hover)'>
                           <span
                             className='text-[11px] font-medium'
@@ -893,7 +891,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       )}
                       {/* Inventory */}
                       {setShowTickerInventory &&
-                        canPerformAction(userRole, 'reports.view_inventory') && (
+                        permissionsService.can('reports.view_inventory') && (
                           <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-(--bg-menu-hover)'>
                             <span
                               className='text-[11px] font-medium'
@@ -910,7 +908,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           </div>
                         )}
                       {/* Customers */}
-                      {setShowTickerCustomers && canPerformAction(userRole, 'customer.view') && (
+                      {setShowTickerCustomers && permissionsService.can('customer.view') && (
                         <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-(--bg-menu-hover)'>
                           <span
                             className='text-[11px] font-medium'
@@ -928,7 +926,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       )}
                       {/* Top Seller */}
                       {setShowTickerTopSeller &&
-                        canPerformAction(userRole, 'reports.view_financial') && (
+                        permissionsService.can('reports.view_financial') && (
                           <div className='flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-(--bg-menu-hover)'>
                             <span
                               className='text-[11px] font-medium'

@@ -62,7 +62,6 @@ export interface DynamicTickerProps {
   showInventory?: boolean;
   showCustomers?: boolean;
   showTopSeller?: boolean;
-  userRole?: UserRole;
 }
 
 const defaultTranslations = {
@@ -95,7 +94,6 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
   showInventory = true,
   showCustomers = true,
   showTopSeller = true,
-  userRole,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -155,7 +153,7 @@ export const DynamicTicker: React.FC<DynamicTickerProps> = ({
     if (!visibleBySettings) return false;
 
     // 2. Check RBAC Permissions
-    if (!userRole) return false; // Hide all if no role? Or maybe show public info?
+    if (!permissionsService.getEffectiveRole()) return false; // Hide all if no role? Or maybe show public info?
     // Usually if no employee selected, we show nothing (officeboy fallback has minimal perms anyway)
 
     if (slide.id === 'sales') return permissionsService.can('sale.view_history');

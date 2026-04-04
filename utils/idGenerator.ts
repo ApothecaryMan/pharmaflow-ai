@@ -155,6 +155,21 @@ const healSequence = (type: EntityType, branchCode: string, currentSequence: num
 
 export const idGenerator = {
   /**
+   * Generates a standard UUID with fallbacks for non-secure contexts
+   * @returns Formatted UUID string
+   */
+  uuid: (): string => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  },
+
+  /**
    * Generates the next ID for a given entity type
    * @param type The type of entity (e.g., 'sales', 'inventory')
    * @param branchCode Optional branch code to use. If not provided, reads from settings.

@@ -17,7 +17,7 @@ import { StatusBarItem } from '../StatusBarItem';
 
 interface UserInfoProps {
   userName?: string;
-  userRole?: string;
+  roleLabel?: string;
   avatarUrl?: string;
   employees?: Employee[];
   currentEmployeeId?: string | null;
@@ -27,7 +27,7 @@ interface UserInfoProps {
 
 export const UserInfo: React.FC<UserInfoProps> = ({
   userName,
-  userRole,
+  roleLabel,
   avatarUrl,
   employees = [],
   currentEmployeeId,
@@ -146,7 +146,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({
 
   const displayName = userName || (language === 'AR' ? 'تسجيل الدخول' : 'Login');
   const displayRole =
-    userRole ||
+    roleLabel ||
     (employees.length > 0 ? (language === 'AR' ? 'الموظف الحالي' : 'Current Employee') : '');
 
   // Render Logic
@@ -155,8 +155,8 @@ export const UserInfo: React.FC<UserInfoProps> = ({
     return (
       <StatusBarItem
         icon='person'
-        label={userRole ? `${userName} (${userRole})` : userName}
-        tooltip={userRole || userName}
+        label={roleLabel ? `${userName} (${roleLabel})` : userName}
+        tooltip={roleLabel || userName}
         variant='default'
       />
     );
@@ -187,7 +187,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({
   // Improved Tooltip Construction
   let tooltipText = '';
   if (currentEmployeeId) {
-    const roleText = userRole ? ` (${userRole})` : '';
+    const roleText = roleLabel ? ` (${roleLabel})` : '';
     tooltipText = `${userName}${roleText}`;
   } else {
     tooltipText = language === 'AR' ? 'تسجيل الدخول' : 'Login';

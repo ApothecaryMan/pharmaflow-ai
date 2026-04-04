@@ -51,7 +51,6 @@ import { Language, ThemeColor } from '../../../types';
 export interface StatusBarProps {
   t?: StatusBarTranslations;
   currentEmployeeId?: string | null;
-  userRole?: UserRole;
   onSelectEmployee?: (id: string) => void;
   iconSize?: number | string;
 }
@@ -75,7 +74,7 @@ const defaultTranslations: StatusBarTranslations = {
 };
 
 export const StatusBar: React.FC<StatusBarProps> = React.memo(
-  ({ t = defaultTranslations, currentEmployeeId, userRole, onSelectEmployee, iconSize = 'var(--icon-base)' }) => {
+  ({ t = defaultTranslations, currentEmployeeId, onSelectEmployee, iconSize = 'var(--icon-base)' }) => {
     /*
      * STATUS BAR ARCHITECTURE GUIDE
      * =============================
@@ -191,7 +190,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
           <VersionInfo version={t.version} />
 
           {/* Settings Menu */}
-          <SettingsMenu userRole={userRole} />
+          <SettingsMenu />
 
           {/* Connection Status */}
           <ConnectionStatus onlineText={t.online} offlineText={t.offline} />
@@ -219,7 +218,6 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
           {showTicker && (
             <DynamicTicker
               language={language}
-              userRole={userRole}
               data={tickerData}
               showSales={showTickerSales}
               showInventory={showTickerInventory}
@@ -250,7 +248,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
                 : employees.find((e) => e.id === currentEmployeeId)?.name ||
                   (language === 'AR' ? 'المستخدم' : 'User')
             }
-            userRole={employees.find((e) => e.id === currentEmployeeId)?.role}
+            roleLabel={employees.find((e) => e.id === currentEmployeeId)?.role}
             employees={employees}
             currentEmployeeId={currentEmployeeId}
             onSelectEmployee={onSelectEmployee}

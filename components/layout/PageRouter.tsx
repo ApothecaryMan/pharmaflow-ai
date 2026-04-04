@@ -1,7 +1,7 @@
 import React from 'react';
 import { PAGE_REGISTRY } from '../../config/pageRegistry';
-import { canPerformAction, type UserRole } from '../../config/permissions';
 import { ROUTES } from '../../config/routes';
+import { permissionsService } from '../../services/auth/permissions';
 import { useSettings } from '../../context';
 import { LandingPage } from '../layout/LandingPage';
 import { PageSkeletonRegistry } from '../skeletons/PageSkeletonRegistry';
@@ -10,7 +10,6 @@ import { batchService } from '../../services/inventory/batchService';
 interface PageRouterProps {
   view: string;
   currentEmployeeId: string | null;
-  userRole: UserRole;
   isLoading: boolean;
   t: any;
   // Navigation
@@ -35,7 +34,6 @@ interface PageRouterProps {
 const PageRouterComponent: React.FC<PageRouterProps> = ({
   view,
   currentEmployeeId,
-  userRole,
   isLoading,
   t,
   setView,
@@ -74,7 +72,7 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
   }
 
   // RBAC: Check Page Permissions
-  if (pageConfig.permission && !canPerformAction(userRole, pageConfig.permission)) {
+  if (pageConfig.permission && !permissionsService.can(pageConfig.permission)) {
     return (
       <div className='flex flex-col items-center justify-center h-full p-8 animate-fade-in select-none text-center'>
         <div className='mb-12'>
@@ -112,7 +110,6 @@ const PageRouterComponent: React.FC<PageRouterProps> = ({
     t: t,
     language: language,
     textTransform: textTransform,
-    userRole: userRole,
     currentEmployeeId: currentEmployeeId,
     darkMode: darkMode,
     employees: data.employees,

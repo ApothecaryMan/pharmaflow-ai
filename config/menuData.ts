@@ -1052,8 +1052,8 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: 'general-settings',
         label: 'General Settings',
         items: [
-          { label: 'Company Profile', icon: 'business' },
-          { label: 'Branch Management', icon: 'store' },
+          { label: 'Organization Settings', view: 'org-settings', icon: 'corporate_fare' },
+          { label: 'Branch Management', view: 'branch-management', icon: 'store' },
           { label: 'Business Hours', icon: 'schedule' },
           { label: 'Currency Settings', icon: 'attach_money' },
           { label: 'Date/Time Format', icon: 'calendar_today' },
@@ -1078,7 +1078,6 @@ export const PHARMACY_MENU: MenuItem[] = [
         label: 'Pharmacy Configuration',
         items: [
           { label: 'Store Information', icon: 'storefront' },
-          { label: 'Multiple Branches', icon: 'domain' },
           { label: 'Counter Setup', icon: 'point_of_sale' },
           { label: 'Department Setup', icon: 'category' },
           { label: 'License Information', icon: 'verified' },

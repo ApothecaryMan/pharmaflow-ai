@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { type MenuItem, PHARMACY_MENU } from '../config/menuData';
 import { PAGE_REGISTRY } from '../config/pageRegistry';
-import { canPerformAction, type UserRole } from '../config/permissions';
+import { type UserRole } from '../config/permissions';
+import { permissionsService } from '../services/auth/permissions';
 import { useAlert } from '../context';
 import type { ViewState } from '../types';
 
@@ -37,7 +38,7 @@ function filterMenuItems(
   return menu
     .filter((module) => {
       // 1. Permission Check
-      if (module.permission && !canPerformAction(role, module.permission)) {
+      if (module.permission && !permissionsService.can(module.permission, { role })) {
         return false;
       }
 
@@ -57,7 +58,7 @@ function filterMenuItems(
       submenus: module.submenus
         ?.filter((submenu) => {
           // Filter submenus by permission
-          if (submenu.permission && !canPerformAction(role, submenu.permission)) {
+          if (submenu.permission && !permissionsService.can(submenu.permission, { role })) {
             return false;
           }
           return true;
@@ -69,7 +70,7 @@ function filterMenuItems(
             if (
               typeof item === 'object' &&
               item.permission &&
-              !canPerformAction(role, item.permission)
+              !permissionsService.can(item.permission, { role })
             ) {
               return false;
             }

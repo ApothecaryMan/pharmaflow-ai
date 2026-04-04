@@ -13,6 +13,9 @@ import { Switch } from '../common/Switch';
 import { backupService } from '../../services/backup/backupService';
 import { useData } from '../../services/DataContext';
 import { branchService } from '../../services/branchService';
+import { orgService } from '../../services/org/orgService';
+import { permissionsService } from '../../services/auth/permissions';
+import type { Organization } from '../../types';
 
 import { PrinterSettings } from '../settings/PrinterSettings';
 import { SidebarDropdown } from './SidebarDropdown';
@@ -34,7 +37,6 @@ interface NavbarProps {
   currentEmployeeId?: string | null;
   setCurrentEmployeeId?: (id: string | null) => void;
   onLogout?: () => void;
-  userRole?: UserRole;
   onOpenInWindow?: (view: string) => void;
 }
 
@@ -60,7 +62,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
   currentEmployeeId,
   setCurrentEmployeeId,
   onLogout,
-  userRole,
   onOpenInWindow,
 }) => {
   const {
@@ -73,15 +74,39 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     developerMode,
   } = useSettings();
 
-  const { activeBranchId, switchBranch } = useData();
-  const allBranches = branchService.getAll();
-  const activeBranch = allBranches.find(b => b.id === activeBranchId) || allBranches[0];
-
-  const theme = currentTheme.primary;
-
+  const { activeBranchId, switchBranch, activeOrgId, switchOrg } = useData();
+  
+  const [userOrgs, setUserOrgs] = useState<Organization[]>([]);
+  const [activeOrg, setActiveOrg] = useState<Organization | null>(null);
+  const [allBranches, setAllBranches] = useState<any[]>(branchService.getAll(activeOrgId));
+  
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showPrinterSettings, setShowPrinterSettings] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isSwitchingOrg, setIsSwitchingOrg] = useState(false);
+
+  const theme = currentTheme.primary;
+
+  // Load organizations and branches on mount/org switch
+  useEffect(() => {
+    const loadOrgContext = async () => {
+      const currentUser = authService.getCurrentUserSync();
+      if (currentUser?.userId) {
+        const orgs = await orgService.getUserOrgs(currentUser.userId);
+        setUserOrgs(orgs);
+        const current = orgs.find(o => o.id === activeOrgId) || orgs[0];
+        setActiveOrg(current);
+        
+        // Filter branches by current org
+        if (activeOrgId) {
+          setAllBranches(branchService.getAll(activeOrgId));
+        }
+      }
+    };
+    loadOrgContext();
+  }, [activeOrgId]);
+
+  const activeBranch = allBranches.find(b => b.id === activeBranchId) || allBranches[0];
   const profileRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
@@ -287,7 +312,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
         onWheel={handleWheel}
       >
         {menuItems
-          .filter((m) => m.id !== 'settings' && (m.id !== 'test' || developerMode))
+          .filter((m) => (m.id !== 'test' || developerMode))
           .map((module) => {
             const isActive = activeModule === module.id;
             const isDropdownOpen = activeDropdown === module.id;
@@ -395,7 +420,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       {/* Mobile: Hamburger Menu & Settings */}
       <div className='md:hidden flex items-center gap-1'>
         <SettingsMenu
-          userRole={userRole}
           dropDirection='down'
           align='end'
           triggerVariant='navbar'
@@ -411,74 +435,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
       {/* Right Side Actions (Desktop) */}
       <div className='hidden md:flex items-center gap-2 ltr:ml-4 rtl:mr-4'>
-        {/* Settings Module (Relocated) */}
-        {menuItems.find((m) => m.id === 'settings') &&
-          (() => {
-            const settingsModule = menuItems.find((m) => m.id === 'settings')!;
-            const isActive = activeModule === settingsModule.id;
-            const isDropdownOpen = activeDropdown === settingsModule.id;
-            const hasPage = settingsModule.hasPage !== false;
-            const hasImplementedSubItems =
-              settingsModule.submenus?.some((submenu) =>
-                submenu.items.some((item) => typeof item === 'object' && !!item.view)
-              ) ?? false;
 
-            const isEffectivelyDisabled =
-              !developerMode && (navStyle === 2 ? !hasPage && !hasImplementedSubItems : !hasPage);
-
-            return (
-              <div className='relative group/settings' onMouseLeave={handleMouseLeave}>
-                <button
-                  onMouseEnter={(e) => handleMouseEnter(settingsModule.id, e)}
-                  onClick={(e) => handleModuleClick(settingsModule.id, hasPage, e)}
-                  disabled={isEffectivelyDisabled}
-                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors relative
-                              ${
-                                isActive
-                                  ? `bg-primary-100 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400`
-                                  : isDropdownOpen
-                                    ? `bg-(--bg-navbar-hover) text-gray-800 dark:text-gray-200`
-                                    : 'text-gray-600 dark:text-gray-400 hover:bg-(--bg-navbar-hover)'
-                              }
-                          `}
-                  title={getMenuTranslation(settingsModule.label, language)}
-                >
-                  <span
-                    className={`material-symbols-rounded ${isActive || isDropdownOpen ? 'icon-filled' : ''}`}
-                    style={{ fontSize: 'var(--icon-navbar-main)' }}
-                  >
-                    {settingsModule.icon}
-                  </span>
-                </button>
-
-                {/* Dropdown Menu for Settings */}
-                {isDropdownOpen && navStyle === 2 && (
-                  <SidebarDropdown
-                    module={settingsModule}
-                    currentView={activeModule === settingsModule.id ? currentView || '' : ''}
-                    onNavigate={(viewId) => {
-                      onModuleChange(settingsModule.id);
-                      if (onNavigate) onNavigate(viewId);
-                      setActiveDropdown(null);
-                      setActiveAnchor(null);
-                    }}
-                    onClose={() => {
-                      setActiveDropdown(null);
-                      setActiveAnchor(null);
-                    }}
-                    theme={theme}
-                    language={language}
-                    hideInactiveModules={hideInactiveModules && !developerMode}
-                    blur={sidebarBlur}
-                    anchorEl={activeAnchor}
-                    onMouseEnter={cancelClose}
-                    onMouseLeave={handleMouseLeave}
-                    onOpenInWindow={onOpenInWindow}
-                  />
-                )}
-              </div>
-            );
-          })()}
 
         {/* User Profile & Settings */}
         <div className='relative' ref={profileRef}>
@@ -566,6 +523,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     </h3>
                     <div className='flex items-center gap-2'>
                       <p className='text-xs text-gray-500 dark:text-gray-400'>
+                        {activeOrg?.name || (language === 'AR' ? 'المنظمة' : 'Organization')}
+                      </p>
+                      <span className='w-1 h-1 bg-gray-300 rounded-full' />
+                      <p className='text-xs text-gray-500 dark:text-gray-400'>
                         {activeBranch?.name || (language === 'AR' ? 'الفرع الرئيسي' : 'Main Branch')}
                       </p>
                       {profileImage && (
@@ -590,7 +551,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
               </div>
 
               {/* Branch Management & Switcher (Admin Only) */}
-              {(userRole === 'admin' || userRole === 'pharmacist_owner' || authService.getCurrentUserSync()?.username === import.meta.env.VITE_SUPER_USER) && (
+              {(permissionsService.isOrgAdmin()) && (
                 <div className='p-2 border-t border-(--border-divider)'>
                   <div className='flex items-center justify-between px-2 mb-2'>
                     <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>
@@ -652,6 +613,78 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                       <span className='material-symbols-rounded text-[16px] text-gray-400'>info</span>
                       {language === 'AR' ? 'يوجد فرع واحد فقط حالياً.' : 'Only one branch available.'}
                     </div>
+                  )}
+                </div>
+              )}
+
+              {/* Organization Switcher (If multiple) */}
+              {userOrgs.length > 1 && (
+                <div className='p-2 border-t border-(--border-divider)'>
+                  <p className='text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2 mb-2'>
+                    {language === 'AR' ? 'المنظمات' : 'Organizations'}
+                  </p>
+                  <div className='space-y-1'>
+                    {userOrgs.map((org) => (
+                      <button
+                        key={org.id}
+                        disabled={isSwitchingOrg}
+                        onClick={async () => {
+                          if (org.id === activeOrgId) return;
+                          setIsSwitchingOrg(true);
+                          try {
+                            await switchOrg(org.id);
+                            setShowProfileMenu(false);
+                          } finally {
+                            setIsSwitchingOrg(false);
+                          }
+                        }}
+                        className={`w-full p-2 text-sm font-medium rounded-lg transition-colors flex items-center justify-between
+                          ${
+                            activeOrgId === org.id
+                              ? 'bg-primary-50 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover)'
+                          }
+                        `}
+                      >
+                        <div className='flex items-center gap-2'>
+                          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>
+                            {activeOrgId === org.id ? 'domain_verification' : 'domain'}
+                          </span>
+                          {org.name}
+                        </div>
+                        {activeOrgId === org.id && <span className='material-symbols-rounded text-primary-500' style={{ fontSize: '14px' }}>check_circle</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Management & Settings (Combined) */}
+              {(permissionsService.isOrgAdmin() || permissionsService.can('settings.view')) && (
+                <div className='flex flex-col gap-1 p-2 border-t border-(--border-divider)'>
+                  {permissionsService.isOrgAdmin() && (
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        if (onNavigate) onNavigate('org-settings');
+                      }}
+                      className='flex items-center justify-center gap-2 p-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) transition-colors w-full'
+                    >
+                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>corporate_fare</span>
+                      {language === 'AR' ? 'إدارة المنظمة' : 'Manage Organization'}
+                    </button>
+                  )}
+                  {permissionsService.can('settings.view') && (
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        if (onNavigate) onNavigate('branch-management');
+                      }}
+                      className='flex items-center justify-center gap-2 p-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) transition-colors w-full'
+                    >
+                      <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>settings_applications</span>
+                      {language === 'AR' ? 'إعدادات الفرع' : 'Branch Settings'}
+                    </button>
                   )}
                 </div>
               )}

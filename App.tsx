@@ -32,7 +32,7 @@ import { authService } from './services/auth/authService';
 import { type Supplier, ViewState } from './types';
 
 const INITIAL_SUPPLIERS: Supplier[] = [
-  { id: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '', status: 'active' },
+  { id: '1', branchId: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '', status: 'active' },
 ];
 
 // --- ARCHITECTURAL NOTE: THE ORCHESTRATOR PATTERN ---
@@ -333,7 +333,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       view={view}
       activeModule={activeModule}
       t={t}
-      userRole={userRole}
       onLogout={onLogoutClick}
       mobileMenuOpen={mobileMenuOpen}
       setMobileMenuOpen={setMobileMenuOpen}
@@ -352,7 +351,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       <PageRouter
         view={view}
         currentEmployeeId={currentEmployeeId}
-        userRole={userRole}
         isLoading={isLoading}
         t={t}
         setView={setView}
@@ -384,7 +382,6 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
             <PageRouter
               view={windowedView}
               currentEmployeeId={currentEmployeeId}
-              userRole={userRole}
               isLoading={false} // No skeleton for windowed
               t={t}
               setView={(v) => {

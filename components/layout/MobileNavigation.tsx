@@ -76,7 +76,6 @@ interface MobileNavigationProps {
   t: Translations;
   language: 'EN' | 'AR';
   hideInactiveModules: boolean;
-  userRole: UserRole;
   isStandalone: boolean;
   profileImage: string | null;
   currentEmployeeId?: string | null;
@@ -426,7 +425,6 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   t,
   language,
   hideInactiveModules,
-  userRole,
   isStandalone,
   profileImage,
   currentEmployeeId,
