@@ -478,7 +478,7 @@ export function TanStackTable<TData, TValue>({
 
   const [pagination, setPagination] = React.useState({
     pageIndex: storedSettings?.pagination?.pageIndex ?? 0,
-    pageSize: storedSettings?.pagination?.pageSize ?? pageSize,
+    pageSize: storedSettings?.pagination?.pageSize === 'auto' ? 20 : (storedSettings?.pagination?.pageSize ?? (pageSize === 'auto' ? 20 : pageSize)),
   });
 
   const persistSettings = React.useCallback(
