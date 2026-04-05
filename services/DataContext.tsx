@@ -579,6 +579,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({
     async (branchId: string) => {
       try {
         setIsLoading(true); // LOCK persistence immediately
+        
+        const previousBranchId = activeBranchId;
+        
         // Persist new branch selection
         branchService.setActive(branchId);
         
@@ -588,6 +591,27 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         // Update settings (for backward compatibility if anything else uses it)
         await settingsService.setMultiple({ branchCode: branchId });
 
+        // Log Audit Event
+        if (previousBranchId && previousBranchId !== branchId) {
+          const user = authService.getCurrentUserSync();
+          if (user) {
+            const prevBranch = branchService.getById(previousBranchId);
+            const newBranch = branchService.getById(branchId);
+            authService.logAuditEvent({
+              username: user.username,
+              role: user.role,
+              branchId: branchId,
+              action: 'switch_branch',
+              details: `Switched from ${prevBranch?.name || previousBranchId} to ${newBranch?.name || branchId}`,
+              employeeId: user.employeeId,
+            });
+            
+            // Also update the session so it reflects the new branch
+            const updatedSession = { ...user, branchId };
+            localStorage.setItem('branch_pilot_session', JSON.stringify(updatedSession));
+          }
+        }
+
         // Reload all data (services will now filter by new branchId)
         // refreshAll uses targetBranchId internally if passed
         await refreshAll(branchId);
@@ -596,7 +620,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         throw error;
       }
     },
-    [refreshAll]
+    [refreshAll, activeBranchId]
   );
 
   // Switch to a different org

@@ -1,6 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import type React from 'react';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { useData } from '../../services';
 import { useSettings } from '../../context';
@@ -36,40 +35,43 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
         return {
           label: t.loginAudit.actions.login,
           icon: 'login',
-          colors:
-            'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400',
+          colors: 'text-emerald-700 dark:text-emerald-400',
         };
       case 'logout':
         return {
           label: t.loginAudit.actions.logout,
           icon: 'logout',
-          colors: 'border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400',
+          colors: 'text-rose-700 dark:text-rose-400',
         };
       case 'switch_user':
         return {
           label: t.loginAudit.actions.switch,
           icon: 'sync_alt',
-          colors: 'border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400',
+          colors: 'text-amber-700 dark:text-amber-400',
         };
       case 'system_login':
         return {
           label: t.loginAudit.actions.system_login,
           icon: 'admin_panel_settings',
-          colors:
-            'border-indigo-200 dark:border-indigo-900/50 text-indigo-700 dark:text-indigo-400',
+          colors: 'text-indigo-700 dark:text-indigo-400',
         };
       case 'system_logout':
         return {
           label: t.loginAudit.actions.system_logout,
           icon: 'no_accounts',
-          colors:
-            'border-indigo-200 dark:border-indigo-900/50 text-indigo-700 dark:text-indigo-400',
+          colors: 'text-indigo-700 dark:text-indigo-400',
+        };
+      case 'switch_branch':
+        return {
+          label: t.loginAudit.actions.switchBranch || 'SWITCH BRANCH',
+          icon: 'storefront',
+          colors: 'text-cyan-700 dark:text-cyan-400',
         };
       default:
         return {
           label: action,
           icon: 'info',
-          colors: 'border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-400',
+          colors: 'text-gray-700 dark:text-gray-400',
         };
     }
   };
@@ -80,7 +82,36 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
   const translateDetails = (details: string | undefined): React.ReactNode => {
     if (!details) return '-';
 
-    // Pattern 1: Switched from {name}
+    // Pattern 1a: Switched from {from} to {to}
+    const branchSwitchMatch = details.match(/^Switched from (.*) to (.*)$/);
+    if (branchSwitchMatch) {
+      const parts = t.loginAudit.detailPatterns.switchedBranch
+        .split(/({{(?:from|to)}})/)
+        .filter(Boolean);
+      return (
+        <span className='text-gray-500 dark:text-gray-400'>
+          {parts.map((part, i) => {
+            if (part === '{{from}}') {
+              return (
+                <span key={i} className='text-gray-900 dark:text-white font-semibold mx-1'>
+                  {branchSwitchMatch[1]}
+                </span>
+              );
+            }
+            if (part === '{{to}}') {
+              return (
+                <span key={i} className='text-gray-900 dark:text-white font-semibold mx-1'>
+                  {branchSwitchMatch[2]}
+                </span>
+              );
+            }
+            return <React.Fragment key={i}>{part}</React.Fragment>;
+          })}
+        </span>
+      );
+    }
+
+    // Pattern 1b: Switched from {name} (User switch)
     const switchMatch = details.match(/^Switched from (.*)$/);
     if (switchMatch) {
       const translated = t.loginAudit.detailPatterns.switchedFrom.split('{{name}}');
@@ -259,7 +290,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
           const { label, icon, colors } = getActionInfo(String(info.getValue()));
           return (
             <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border bg-transparent text-xs font-bold uppercase tracking-wider ${colors}`}
+              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current bg-transparent text-xs font-bold uppercase tracking-wider ${colors}`}
             >
               <span className='material-symbols-rounded text-sm'>{icon}</span>
               {label}

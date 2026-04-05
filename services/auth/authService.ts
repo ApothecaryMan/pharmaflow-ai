@@ -61,7 +61,7 @@ export interface LoginAuditEntry {
   username: string;
   role: string;
   branchId: string;
-  action: 'login' | 'logout' | 'switch_user' | 'system_login' | 'system_logout';
+  action: 'login' | 'logout' | 'switch_user' | 'system_login' | 'system_logout' | 'switch_branch';
   details?: string;
   employeeId?: string;
 }

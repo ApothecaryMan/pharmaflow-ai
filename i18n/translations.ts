@@ -194,6 +194,7 @@ export const TRANSLATIONS = {
         switch: 'Switch',
         system_login: 'System Access',
         system_logout: 'System Exit',
+        switchBranch: 'Switch Branch',
       },
       headers: {
         id: 'ID',
@@ -205,6 +206,7 @@ export const TRANSLATIONS = {
       },
       detailPatterns: {
         switchedFrom: 'Switched from {{name}}',
+        switchedBranch: 'Switched from {{from}} to {{to}}',
         account: 'Account: {{name}}',
         employeeSignedOut: 'Employee signed out',
         accountLogout: 'Account Logout',
@@ -2377,6 +2379,7 @@ export const TRANSLATIONS = {
         switch: 'تبديل',
         system_login: 'دخول النظام',
         system_logout: 'خروج النظام',
+        switchBranch: 'تبديل الفرع',
       },
       headers: {
         id: 'ID',
@@ -2388,6 +2391,7 @@ export const TRANSLATIONS = {
       },
       detailPatterns: {
         switchedFrom: 'تحول من {{name}}',
+        switchedBranch: 'تحول من {{from}} إلى {{to}}',
         account: 'حساب: {{name}}',
         employeeSignedOut: 'قام الموظف بتسجيل الخروج',
         accountLogout: 'تسجيل خروج الحساب',
