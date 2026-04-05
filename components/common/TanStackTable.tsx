@@ -758,7 +758,7 @@ export function TanStackTable<TData, TValue>({
   // --- Fix: Auto Page Size Calculation (Accurate) ---
   React.useEffect(() => {
     if (pageSize === 'auto' && tableContainerRef.current && !isShowAll) {
-      const observer = new ResizeObserver(() => {
+      const calculatePageSize = () => {
         if (!tableContainerRef.current) return;
         
         const containerHeight = tableContainerRef.current.clientHeight;
@@ -766,11 +766,19 @@ export function TanStackTable<TData, TValue>({
         const rowHeight = firstRowRef.current?.offsetHeight || (dense ? 36 : 48);
         
         const availableHeight = containerHeight - headHeight;
-        const calculated = Math.max(1, Math.floor(availableHeight / rowHeight));
+        // Use a more realistic minimum to avoid 1-row tables on glitchy initial renders
+        const calculated = Math.max(10, Math.floor(availableHeight / rowHeight));
         
-        if (calculated !== pagination.pageSize) {
+        if (calculated !== pagination.pageSize && calculated > 0) {
           table.setPageSize(calculated);
         }
+      };
+
+      // Initial calculation
+      calculatePageSize();
+
+      const observer = new ResizeObserver(() => {
+        calculatePageSize();
       });
       
       observer.observe(tableContainerRef.current);
@@ -996,7 +1004,7 @@ export function TanStackTable<TData, TValue>({
                 ))}
               </thead>
               {/* Enforce var(--icon-sm) on all material-symbols-rounded icons inside table cells using arbitrary variants, except action columns */}
-              <tbody className='[&_td:not(.action-col)_.material-symbols-rounded]:!text-[length:var(--icon-sm)] [&_td:not(.action-col)_.material-symbols-rounded]:!text-sm'>
+              <tbody className='[&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-[length:var(--icon-sm)] [&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-sm'>
                 {isLoading ? (
                   <tr>
                     <td colSpan={columns.length} className='h-32 text-center'>
@@ -1149,11 +1157,11 @@ export function TanStackTable<TData, TValue>({
                   </tr>
                 )}
               </>
-            ) : (
+                ) : (
                   <tr>
                     <td
                       colSpan={columns.length}
-                      className='py-12 text-center text-gray-500 dark:text-gray-400'
+                      className='py-12 text-center text-gray-500 dark:text-gray-400 empty-state'
                     >
                       {customEmptyState ? (
                         customEmptyState

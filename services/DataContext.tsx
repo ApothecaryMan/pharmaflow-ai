@@ -177,8 +177,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         // 1. Initialize Active Org and Branch
         const { orgService } = await import('./org/orgService');
         const defaultOrgId = orgService.getActiveOrgId() || 'org_1';
-        setActiveOrgId(defaultOrgId);
-
+        
         const allBranches = branchService.getAll(defaultOrgId);
         if (allBranches.length === 0) {
           setIsLoading(false);
@@ -212,6 +211,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         }
 
         setActiveBranchId(finalBranchId);
+        setActiveOrgId(defaultOrgId);
 
         // Sync settingsService with the active branch so idGenerator (which reads storage directly) is in sync
         await settingsService.setMultiple({ 
@@ -254,15 +254,6 @@ export const DataProvider: React.FC<DataProviderProps> = ({
           inv.push(...seededInventory);
         }
 
-        setRawInventory(inv);
-        setSalesState(sal);
-        setSuppliersState(
-          sup.length > 0 ? sup : initialSuppliers.length > 0 ? initialSuppliers : []
-        );
-        setPurchasesState(pur);
-        setPurchaseReturnsState(pRet);
-        setReturnsState(ret);
-        setCustomersState(cust);
         // Seed SUPER User logic (Secondary guard — primary seed is in authService.ensureSuperAdmin)
         const superUser = import.meta.env.VITE_SUPER_USER;
         const superPass = import.meta.env.VITE_SUPER_PASS;
@@ -302,15 +293,26 @@ export const DataProvider: React.FC<DataProviderProps> = ({
           }
         }
 
-        // Strip sensitive auth fields before putting into React State
+        // Commit all states
+        setRawInventory(inv);
+        setSalesState(sal);
+        setSuppliersState(
+          sup.length > 0 ? sup : initialSuppliers.length > 0 ? initialSuppliers : []
+        );
+        setPurchasesState(pur);
+        setPurchaseReturnsState(pRet);
+        setReturnsState(ret);
+        setCustomersState(cust);
         setEmployeesState(emp.map(({ password, biometricCredentialId, biometricPublicKey, ...safe }) => safe as Employee));
-        
         setBatchesState(bat);
 
         // --- Initialize Sync Engine ---
         if (finalBranchId) {
           syncEngine.start(finalBranchId, (status) => setSyncStatus(status));
         }
+
+        // Final safety delay to ensure React finishes batching state updates before skeleton disappears
+        await new Promise(resolve => setTimeout(resolve, 100));
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
