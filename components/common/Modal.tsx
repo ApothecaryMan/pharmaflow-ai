@@ -170,67 +170,59 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Content Wrapper */}
       <div
-        className={`relative w-full ${maxWidthClass} bg-(--bg-card) rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-in max-h-[95vh] border border-(--border-divider) select-none ${className}`}
+        className={`relative w-full ${maxWidthClass} bg-(--bg-card) rounded-lg shadow-2xl overflow-hidden flex flex-col animate-scale-in max-h-[95vh] border border-(--border-divider) select-none ${className}`}
         style={{ height: height || 'auto' }}
         onClick={(e) => e.stopPropagation()}
       >
         {title ? (
           <div className='h-full flex flex-col overflow-hidden'>
-            {/* Header - Compact and Integrated */}
-            <div className='shrink-0 border-b border-(--border-divider) bg-(--bg-card) px-6 py-3.5'>
-              <div className='flex items-center justify-between gap-4'>
-                {/* Left Section: Icon + Title/Subtitle */}
-                <div className='flex items-center gap-3 min-w-0'>
-                  {icon ? (
-                    <div className='flex-shrink-0 w-10 h-10 rounded-xl bg-(--bg-surface-neutral) flex items-center justify-center text-(--text-primary)'>
-                      <span 
-                        className='material-symbols-rounded' 
-                        style={{ 
-                          fontSize: 'var(--icon-lg)',
-                          fontVariationSettings: "'FILL' 0, 'wght' 600"
-                        }}
-                      >
-                        {icon}
-                      </span>
-                    </div>
-                  ) : null}
-                  <div className='min-w-0'>
-                    <h2 className='text-xl font-extrabold text-(--text-primary) tracking-tight truncate leading-tight'>
-                      {title}
-                    </h2>
-                    {subtitle ? (
-                      <p className='text-xs text-(--text-tertiary) truncate leading-tight'>{subtitle}</p>
-                    ) : null}
-                  </div>
-                </div>
-
-                {/* Tabs Section - Integrated into the header line */}
-                {tabs && activeTab && onTabChange ? (
-                  <div className='flex-1 flex justify-center px-4 max-w-md'>
-                    <SegmentedControl
-                      options={tabs}
-                      value={activeTab}
-                      onChange={onTabChange}
-                      size='sm'
-                      variant='onCard'
-                      fullWidth={false}
-                    />
-                  </div>
+            {/* Header - Windows 10 Style (Compact & Functional) */}
+            <div className='shrink-0 border-b border-(--border-divider)/50 bg-(--bg-card) px-4 h-10 flex items-center relative'>
+              {/* Title Section: Icon + Title */}
+              <div className='flex items-center gap-2 min-w-0 pe-12'>
+                {icon ? (
+                  <span 
+                    className='material-symbols-rounded text-(--text-tertiary)' 
+                    style={{ 
+                      fontSize: 'var(--icon-lg)',
+                      fontVariationSettings: "'FILL' 0, 'wght' 400"
+                    }}
+                  >
+                    {icon}
+                  </span>
                 ) : null}
+                <h2 className='text-sm font-semibold text-(--text-primary) tracking-tight truncate leading-none'>
+                  {title}
+                </h2>
+              </div>
 
-                {/* Right Section - Header Actions + Close Button */}
-                <div className='flex items-center gap-2'>
-                  {headerActions}
-                  {!hideCloseButton ? (
-                    <button
-                      onClick={onClose}
-                      className='text-(--text-tertiary) hover:text-(--text-primary) transition-colors p-1'
-                      aria-label="Close modal"
-                    >
-                      <span className='material-symbols-rounded block' style={{ fontSize: 'var(--icon-lg)' }}>close</span>
-                    </button>
-                  ) : null}
+              {/* Tabs Section - Strictly Centered */}
+              {tabs && activeTab && onTabChange ? (
+                <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0'>
+                  <SegmentedControl
+                    options={tabs}
+                    value={activeTab}
+                    onChange={onTabChange}
+                    size='xs'
+                    variant='onCard'
+                    fullWidth={false}
+                    iconSize='--icon-md'
+                  />
                 </div>
+              ) : null}
+
+              {/* End Section - Header Actions + Close Button */}
+              <div className='flex items-center absolute end-0 top-0 bottom-0'>
+                {headerActions}
+                {!hideCloseButton ? (
+                  <button
+                    onClick={onClose}
+                    className='h-full w-12 flex items-center justify-center text-(--text-tertiary) hover:text-white hover:bg-red-500 active:bg-red-600 transition-colors duration-150 group'
+                    aria-label="Close modal"
+                  >
+                    <span className='material-symbols-rounded block' style={{ fontSize: '18px' }}>close</span>
+                  </button>
+                ) : null}
               </div>
             </div>
 

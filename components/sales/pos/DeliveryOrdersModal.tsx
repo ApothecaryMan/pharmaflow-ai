@@ -668,53 +668,38 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       icon='local_shipping'
       size='6xl'
       width='max-w-7xl'
+      tabs={[
+        {
+          label: `${t.all || 'All'} (${sales.filter((s) => s.saleType === 'delivery' && s.status !== 'completed' && s.status !== 'cancelled').length})`,
+          value: 'all',
+          icon: 'list',
+        },
+        {
+          label: `${t.pending || 'Pending'} (${sales.filter((s) => s.status === 'pending' && s.saleType === 'delivery').length})`,
+          value: 'pending',
+          icon: 'pending',
+        },
+        {
+          label: `${t.active || 'Active'} (${sales.filter((s) => (s.status === 'with_delivery' || s.status === 'on_way') && s.saleType === 'delivery').length})`,
+          value: 'active',
+          icon: 'local_shipping',
+        },
+        { label: t.history || 'History', value: 'completed', icon: 'history' },
+      ]}
+      activeTab={activeTab}
+      onTabChange={(val) => setActiveTab(val as DeliveryTab)}
       headerActions={
-        <div className='flex items-center gap-3'>
-          {/* Search Input */}
-          <div className='w-64'>
+        <div className='flex items-center pe-2'>
+          <div className='w-[300px] flex items-center'>
             <SearchInput
               value={searchQuery}
               onSearchChange={setSearchQuery}
               onClear={() => setSearchQuery('')}
               placeholder={t.searchOrder || 'Search orders...'}
               autoFocus={true}
+              wrapperClassName='w-full h-8 !py-0'
+              className='!py-1 text-[13px]'
             />
-          </div>
-
-          {/* Tabs */}
-          <div className='min-w-[300px]'>
-            {(() => {
-              const allCount = sales.filter((s) => s.saleType === 'delivery' && s.status !== 'completed' && s.status !== 'cancelled').length;
-              const pendingCount = sales.filter((s) => s.status === 'pending' && s.saleType === 'delivery').length;
-              const activeCount = sales.filter((s) => (s.status === 'with_delivery' || s.status === 'on_way') && s.saleType === 'delivery').length;
-
-              return (
-                <SegmentedControl
-                  options={[
-                    {
-                      label: `${t.all || 'All'} (${allCount})`,
-                      value: 'all',
-                      icon: 'list',
-                    },
-                    {
-                      label: `${t.pending || 'Pending'} (${pendingCount})`,
-                      value: 'pending',
-                      icon: 'pending',
-                    },
-                    {
-                      label: `${t.active || 'Active'} (${activeCount})`,
-                      value: 'active',
-                      icon: 'local_shipping',
-                    },
-                    { label: t.history || 'History', value: 'completed', icon: 'history' },
-                  ]}
-                  value={activeTab}
-                  onChange={(val) => setActiveTab(val as DeliveryTab)}
-                  size='sm'
-                  variant='onCard'
-                />
-              );
-            })()}
           </div>
         </div>
       }
@@ -723,33 +708,34 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       <div className='flex flex-col h-[70vh]'>
         {selectedSaleId && selectedSale ? (
           <div className='flex-1 flex flex-col overflow-hidden'>
-            {/* Redesigned Header Layout - Single Row */}
-            <div className='flex items-center justify-between mb-4 pb-4 border-b border-gray-100 dark:border-gray-800'>
+            {/* Inner Header - Compact & Integrated */}
+            <div className='flex items-center justify-between mb-3 pb-3 border-b border-gray-100 dark:border-gray-800 shrink-0'>
               {/* Left: Order Info */}
-              <div className='flex items-center gap-3'>
+              <div className='flex items-center gap-3 min-w-0'>
                 <button
                   onClick={() => setSelectedSaleId(null)}
-                  className='w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors group shrink-0'
+                  className='w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors group shrink-0 border border-gray-200 dark:border-gray-700'
+                  title={t.back || 'Back'}
                 >
-                  <span className='material-symbols-rounded text-gray-500 group-hover:text-primary-600 transition-colors text-lg'>
+                  <span className='material-symbols-rounded text-gray-500 group-hover:text-primary-600 transition-colors text-[18px]'>
                     arrow_back
                   </span>
                 </button>
-                <div className='flex flex-col gap-1'>
+                <div className='flex flex-col min-w-0'>
                   <div className='flex items-center gap-2 flex-wrap'>
-                    <span className='text-2xl font-bold font-mono'>
+                    <span className='text-lg font-bold font-mono text-(--text-primary)'>
                       #{selectedSale.customerCode || '-'}
                     </span>
                     <div
-                      className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide border ${
+                      className={`flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider border ${
                         selectedSale.status === 'completed'
-                          ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-900/50'
+                          ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800/50'
                           : selectedSale.status === 'cancelled'
-                            ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-900/50'
-                            : 'bg-gray-50 text-blue-700 border-gray-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-gray-800/50'
+                            ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/50'
+                            : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800/50'
                       }`}
                     >
-                      <span className='material-symbols-rounded text-sm'>
+                      <span className='material-symbols-rounded text-xs'>
                         {selectedSale.status === 'completed'
                           ? 'task_alt'
                           : selectedSale.status === 'cancelled'
@@ -763,17 +749,12 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                       <span>{t[selectedSale.status] || selectedSale.status}</span>
                     </div>
                   </div>
-                  <div className='flex items-center gap-2 text-sm text-gray-500'>
-                    <span className='font-medium text-gray-900 dark:text-gray-100'>
+                  <div className='flex items-center gap-2 text-xs text-gray-500 truncate'>
+                    <span className='font-bold text-gray-900 dark:text-gray-100 truncate'>
                       {selectedSale.customerName}
                     </span>
-                    {selectedSale.customerCode && (
-                      <span className='bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0 rounded-sm text-[10px] font-mono border border-gray-200 dark:border-gray-700'>
-                        #{selectedSale.customerCode}
-                      </span>
-                    )}
                     {selectedSale.customerPhone && (
-                      <span className='text-xs text-gray-400' dir='ltr'>
+                      <span className='text-[10px] text-gray-400' dir='ltr'>
                         ({selectedSale.customerPhone})
                       </span>
                     )}
