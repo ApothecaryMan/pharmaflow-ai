@@ -26,7 +26,7 @@ interface FormFieldProps {
 
 const FormField: React.FC<FormFieldProps> = ({ label, children, className = '' }) => (
   <div className={className}>
-    <label className="block text-sm font-medium text-zinc-500 mb-1">{label}</label>
+    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">{label}</label>
     {children}
   </div>
 );
@@ -40,43 +40,39 @@ interface BranchCardProps {
 }
 
 const BranchCard: React.FC<BranchCardProps> = ({ branch, language, onEdit, onDelete, isSubmitting }) => (
-  <div className="group relative bg-zinc-50/50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 flex flex-col justify-between">
+  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 flex flex-col justify-between shadow-sm">
     <div>
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex flex-col">
-          <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex flex-col min-w-0">
+          <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
             {branch.name}
           </h3>
-          <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-1">
-            ID: {branch.code}
+          <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-0.5">
+            CODE: {branch.code}
           </span>
         </div>
-        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider ${
+        <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-tight shrink-0 ${
           branch.status === 'active' 
-            ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' 
-            : 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' 
+            : 'bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-500/10 dark:text-zinc-400 dark:border-zinc-500/20'
         }`}>
-          <span className="w-1.5 h-1.5 rounded-full bg-current" />
+          <span className={`w-1 h-1 rounded-full ${branch.status === 'active' ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
           {branch.status === 'active' ? (language === 'AR' ? 'نشط' : 'Active') : (language === 'AR' ? 'ملغي' : 'Inactive')}
         </div>
       </div>
 
-      <div className="space-y-3 py-4 border-y border-zinc-100 dark:border-zinc-800/50 my-4">
-        <div className="flex items-start gap-3">
-          <div className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 flex-shrink-0">
-            <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>location_on</span>
-          </div>
-          <span className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed pt-0.5">
+      <div className="space-y-1.5 py-3 border-t border-zinc-100 dark:border-zinc-800/50 mt-1">
+        <div className="flex items-start gap-2">
+          <span className="material-symbols-rounded text-zinc-400 shrink-0" style={{ fontSize: '16px' }}>location_on</span>
+          <span className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-normal pt-0.5 truncate">
             {branch.address || (language === 'AR' ? 'لم يتم تحديد عنوان' : 'No address set')}
           </span>
         </div>
         
         {branch.phone && (
-          <div className="flex items-start gap-3">
-            <div className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 flex-shrink-0">
-              <span className="material-symbols-rounded text-sm">call</span>
-            </div>
-            <span className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-mono pt-0.5">
+          <div className="flex items-start gap-2">
+            <span className="material-symbols-rounded text-zinc-400 shrink-0" style={{ fontSize: '16px' }}>call</span>
+            <span className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-normal font-mono pt-0.5">
               {branch.phone}
             </span>
           </div>
@@ -84,20 +80,21 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, language, onEdit, onDel
       </div>
     </div>
 
-    <div className="flex items-center gap-2 mt-2">
+    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-50 dark:border-zinc-800/30">
       <button
         onClick={() => onEdit(branch)}
-        className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-xl bg-zinc-900/5 dark:bg-zinc-100/5 text-zinc-700 dark:text-zinc-300 transition-colors hover:bg-zinc-900/10 dark:hover:bg-zinc-100/10 border border-transparent dark:border-zinc-800/50 cursor-pointer"
+        className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer transition-none"
       >
-        <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-lg)' }}>edit_square</span>
-        {language === 'AR' ? 'تعديل البيانات' : 'Edit Details'}
+        <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>edit</span>
+        {language === 'AR' ? 'تعديل' : 'Edit'}
       </button>
       <button
         disabled={isSubmitting}
         onClick={() => onDelete(branch.id, branch.name)}
-        className="p-3 text-rose-500 bg-rose-500/5 rounded-xl transition-colors hover:bg-rose-500/10 border border-rose-500/10 disabled:opacity-50 cursor-pointer"
+        className="p-1.5 text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 cursor-pointer flex items-center justify-center transition-none"
+        aria-label="Delete branch"
       >
-        <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-lg)' }}>block</span>
+        <span className="material-symbols-rounded" style={{ fontSize: '22px' }}>delete</span>
       </button>
     </div>
   </div>
@@ -175,9 +172,16 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       const allEmployees = await employeeService.getAll('ALL');
       const updatedEmployees = allEmployees.map(emp => {
         if (selectedEmployees.includes(emp.id)) {
+          // If the employee is selected for this branch, update branchId
           return { ...emp, branchId: savedBranch.id };
         } else if (emp.branchId === savedBranch.id) {
-          return { ...emp, branchId: '' };
+          // If they WERE in this branch but are NO LONGER selected, 
+          // we need to set them to some default or leave them unassigned.
+          // However, we shouldn't completely orphan them if they only have 1 branchId limit.
+          // Actually, unassigning them by removing their branchId IS correct for a 1-to-M relationship 
+          // if they are removed from the UI checkbox. But setting it to '' causes bugs. 
+          // Let's set it to 'UNASSIGNED' or keep logic as is but handle it gracefully elsewhere.
+          return { ...emp, branchId: 'UNASSIGNED' };
         }
         return emp;
       }).filter(emp => {
@@ -229,7 +233,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
   // --- Modal View Components ---
 
   const renderGeneralView = () => (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-5">
       <FormField label={t.settings.branchName} className="col-span-2">
         <SmartInput
           type="text"
@@ -259,16 +263,16 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
           keyExtractor={(s) => s}
           renderSelected={(s) => (
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${s === 'active' ? 'bg-green-500' : 'bg-zinc-400'}`} />
-              <span className="text-sm">
+              <div className={`w-2 h-2 rounded-full ${s === 'active' ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
+              <span className="text-sm font-medium">
                 {s === 'active' ? (language === 'AR' ? 'نشط' : 'Active') : (language === 'AR' ? 'غير نشط' : 'Inactive')}
               </span>
             </div>
           )}
           renderItem={(s) => (
             <div className="flex items-center gap-2 py-1">
-              <div className={`w-2 h-2 rounded-full ${s === 'active' ? 'bg-green-500' : 'bg-zinc-400'}`} />
-              <span className="text-sm">
+              <div className={`w-2 h-2 rounded-full ${s === 'active' ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
+              <span className="text-sm font-medium">
                 {s === 'active' ? (language === 'AR' ? 'نشط' : 'Active') : (language === 'AR' ? 'غير نشط' : 'Inactive')}
               </span>
             </div>
@@ -307,10 +311,9 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       });
 
     return (
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <label className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-            <span className="material-symbols-rounded text-zinc-400" style={{ fontSize: 'var(--icon-base)' }}>person_add</span>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
             {t.settings.assignEmployees}
           </label>
           <SegmentedControl
@@ -322,12 +325,12 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
               { label: language === 'AR' ? 'الكل' : 'All', value: 'all', count: employees.filter(e => e.id !== 'SUPER-ADMIN' && e.employeeCode !== 'EMP-000').length },
               { label: language === 'AR' ? 'المختارة' : 'Selected', value: 'selected', count: selectedEmployees.length }
             ]}
-            className="w-48"
+            className="w-44"
           />
         </div>
 
-        <div className="relative mb-4">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-rounded text-zinc-400" style={{ fontSize: 'var(--icon-lg)' }}>search</span>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-rounded text-zinc-400" style={{ fontSize: '20px' }}>search</span>
           <SmartInput
             type="text"
             value={employeeSearchTerm}
@@ -335,20 +338,15 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
             placeholder={language === 'AR' ? 'ابحث عن موظف...' : 'Search employee...'}
             className="pl-10"
           />
-          {employeeSearchTerm && (
-            <button onClick={() => setEmployeeSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 outline-none">
-              <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-base)' }}>cancel</span>
-            </button>
-          )}
         </div>
 
         <div className="max-h-[350px] overflow-y-auto pr-1 custom-scrollbar grid grid-cols-1 gap-1">
           {filteredList.length === 0 ? (
-            <div className="py-12 flex flex-col items-center justify-center text-center opacity-50">
-              <span className="material-symbols-rounded text-zinc-300 dark:text-zinc-700" style={{ fontSize: '40px' }}>
-                {employeeView === 'selected' ? 'bookmark_border' : 'person_search'}
+            <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
+              <span className="material-symbols-rounded text-zinc-400" style={{ fontSize: '40px' }}>
+                {employeeView === 'selected' ? 'bookmark_outline' : 'person_search'}
               </span>
-              <p className="text-xs text-zinc-500 mt-2">
+              <p className="text-xs text-zinc-500 mt-2 font-medium">
                 {employeeView === 'selected' 
                   ? (language === 'AR' ? 'لا يوجد موظفين مختارين' : 'No selected employees')
                   : (language === 'AR' ? 'لا توجد نتائج' : 'No results found')}
@@ -362,25 +360,25 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
                 <MaterialTabs 
                   key={emp.id} index={idx} total={filteredList.length} isSelected={isSelected}
                   onClick={() => isSelected ? setSelectedEmployees(selectedEmployees.filter(id => id !== emp.id)) : setSelectedEmployees([...selectedEmployees, emp.id])}
-                  className="!h-[54px] !px-3"
+                  className="!h-[54px] !px-3 border border-transparent"
                 >
                   <div className="flex items-center w-full gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black transition-all shrink-0 ${isSelected ? 'bg-zinc-100/30 dark:bg-zinc-900/40 text-current' : 'bg-zinc-200/80 dark:bg-zinc-800/90 text-zinc-500'}`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black transition-none shrink-0 ${isSelected ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-950' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}`}>
                       {isSelected ? <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>check</span> : getInitials(emp.name)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold truncate">{emp.name}</div>
+                      <div className="text-xs font-bold truncate text-zinc-900 dark:text-zinc-100">{emp.name}</div>
                       <div className="flex items-center gap-1.5 mt-0.5 opacity-60">
-                        <span className="text-[9px] font-bold uppercase tracking-tight">{emp.role.replace('_', ' ')}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-tight text-zinc-500 dark:text-zinc-400">{emp.role.replace('_', ' ')}</span>
                         {currentBranch && (
                           <>
                             <span className="w-0.5 h-0.5 rounded-full bg-current opacity-30" />
-                            <span className="text-[9px] font-bold opacity-70 truncate max-w-[100px]">{currentBranch.name}</span>
+                            <span className="text-[9px] font-bold opacity-70 truncate max-w-[100px] text-zinc-500 dark:text-zinc-400">{currentBranch.name}</span>
                           </>
                         )}
                       </div>
                     </div>
-                    <div className={`transition-all ${isSelected ? 'opacity-100 scale-100' : 'opacity-20 scale-90'}`}>
+                    <div className={isSelected ? 'opacity-100' : 'opacity-20'}>
                        <span className="material-symbols-rounded text-zinc-400" style={{ fontSize: '20px' }}>{isSelected ? 'task_alt' : 'circle'}</span>
                     </div>
                   </div>
@@ -394,68 +392,72 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
   };
 
   return (
-    <div className="p-6 flex flex-col h-full animate-fade-in gap-6">
-        <div className="flex justify-between items-center mb-2">
-          <div>
-            <h1 className={`text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 page-title ${language === 'AR' ? 'font-arabic' : ''}`}>
-              {t.settings.branchManagement}
-            </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              {language === 'AR' ? 'إدارة مواقع الصيدلية وتعيينات الموظفين' : 'Manage pharmacy locations and staff assignments'}
-            </p>
-          </div>
+    <div className="p-6 flex flex-col h-full gap-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className={`text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 ${language === 'AR' ? 'font-arabic' : ''}`}>
+            {t.settings.branchManagement}
+          </h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+            {language === 'AR' ? 'إدارة مواقع الصيدلية وتعيينات الموظفين' : 'Manage pharmacy locations and staff assignments'}
+          </p>
+        </div>
+        <button
+          onClick={() => handleOpenModal()}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition-none bg-zinc-900 text-zinc-50 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-200 cursor-pointer shadow-sm"
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>add</span>
+          {t.settings.addBranch}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 overflow-y-auto pr-2 custom-scrollbar">
+        {branches.map((branch) => (
+          <BranchCard
+            key={branch.id} branch={branch} language={language}
+            onEdit={handleOpenModal} onDelete={handleDelete}
+            isSubmitting={isSubmitting}
+          />
+        ))}
+      </div>
+
+      <Modal
+        isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
+        title={editingBranch?.id ? t.settings.branchManagement : t.settings.addBranch}
+        className="max-w-xl" hideCloseButton={true}
+        headerActions={
+          <SegmentedControl
+            size="sm" iconSize="18px" variant="onPage"
+            value={modalView} onChange={(val) => setModalView(val as 'general' | 'employees')}
+            options={[
+              { label: language === 'AR' ? 'البيانات العامة' : 'General', value: 'general', icon: 'settings' },
+              { label: language === 'AR' ? 'تعيين الموظفين' : 'Employees', value: 'employees', icon: 'group_add' }
+            ]}
+          />
+        }
+      >
+        <div className="space-y-6 min-h-[400px] py-2">
+          {modalView === 'general' ? renderGeneralView() : renderEmployeesView()}
+        </div>
+
+        <div className="flex gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800/50 mt-6">
+          <button onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-none">
+            {language === 'AR' ? 'إلغاء' : 'Cancel'}
+          </button>
           <button
-            onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-colors bg-zinc-900 text-zinc-50 hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-300 cursor-pointer"
+            disabled={isSubmitting} onClick={handleSave}
+            className="flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest text-white shadow-sm disabled:opacity-50 flex items-center justify-center transition-none"
+            style={{ backgroundColor: color }}
           >
-            <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-lg)' }}>add_circle</span>
-            {t.settings.addBranch}
+            {isSubmitting ? (
+              <span className="text-[10px] font-bold">{language === 'AR' ? 'جاري الحفظ...' : 'SAVING...'}</span>
+            ) : (
+              t.settings.saveBranch
+            )}
           </button>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 overflow-y-auto pr-2 custom-scrollbar">
-          {branches.map((branch) => (
-            <BranchCard
-              key={branch.id} branch={branch} language={language}
-              onEdit={handleOpenModal} onDelete={handleDelete}
-              isSubmitting={isSubmitting}
-            />
-          ))}
-        </div>
-
-        <Modal
-          isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
-          title={editingBranch?.id ? t.settings.branchManagement : t.settings.addBranch}
-          className="max-w-xl" hideCloseButton={true}
-          headerActions={
-            <SegmentedControl
-              size="sm" iconSize="var(--icon-md)" variant="onPage"
-              value={modalView} onChange={(val) => setModalView(val as 'general' | 'employees')}
-              options={[
-                { label: language === 'AR' ? 'البيانات العامة' : 'General', value: 'general', icon: 'settings' },
-                { label: language === 'AR' ? 'تعيين الموظفين' : 'Employees', value: 'employees', icon: 'group_add' }
-              ]}
-            />
-          }
-        >
-          <div className="space-y-6 min-h-[400px]">
-            {modalView === 'general' ? renderGeneralView() : renderEmployeesView()}
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <button onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-lg font-medium text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
-              {language === 'AR' ? 'إلغاء' : 'Cancel'}
-            </button>
-            <button
-              disabled={isSubmitting} onClick={handleSave}
-              className="flex-1 py-2.5 rounded-lg font-medium text-white shadow-lg transition-transform active:scale-95 disabled:opacity-50 flex items-center justify-center"
-              style={{ backgroundColor: color }}
-            >
-              {isSubmitting && <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />}
-              {t.settings.saveBranch}
-            </button>
-          </div>
-        </Modal>
-      </div>
+      </Modal>
+    </div>
   );
 };
+

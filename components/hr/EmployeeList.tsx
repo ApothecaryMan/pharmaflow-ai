@@ -7,7 +7,8 @@ import { type UserRole } from '../../config/permissions';
 import { permissionsService } from '../../services/auth/permissions';
 import { useData } from '../../services';
 import { authService, type UserSession } from '../../services/auth/authService';
-import type { Employee } from '../../types';
+import { branchService } from '../../services/branchService';
+import type { Branch, Employee } from '../../types';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { usePosSounds } from '../common/hooks/usePosSounds';
 import { Modal, BUTTON_CLOSE_BASE } from '../common/Modal';
@@ -77,13 +78,19 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
 
   // --- Smart Roles Logic ---
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [isBranchOpen, setIsBranchOpen] = useState(false);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserAndBranches = async () => {
       const user = await authService.getCurrentUser();
       setCurrentUser(user);
+      try {
+        const bData = await branchService.getAll();
+        setBranches(bData);
+      } catch (err) {}
     };
-    fetchUser();
+    fetchUserAndBranches();
   }, []);
 
   // 1. Access Matrix: Filter Departments based on User Role
@@ -264,6 +271,18 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                 {config.icon}
               </span>
               {t.employeeList.statusOptions[status] || status}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'branchId',
+        header: t.employeeList.table.branch,
+        cell: ({ row }) => {
+          const branch = branches.find(b => b.id === row.original.branchId);
+          return (
+            <span className='inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-purple-200 dark:border-purple-900/50 text-purple-700 dark:text-purple-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+              {branch?.name || t.employeeList.unassigned}
             </span>
           );
         },
@@ -666,8 +685,41 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                     />
                   </div>
 
-                  {/* Row 2: Dept (4) + Role (4) + Status (4) */}
-                  <div className='col-span-4 space-y-1.5'>
+                  {/* Row 2: Branch (3) + Dept (3) + Role (3) + Status (3) */}
+                  <div className='col-span-3 space-y-1.5'>
+                    <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
+                      {t.employeeList.branch}
+                    </label>
+                    <div className='relative h-[42px]'>
+                      <FilterDropdown
+                        className='absolute top-0 left-0 w-full z-30'
+                        minHeight='42px'
+                        items={branches.map(b => ({ key: b.id, label: b.name }))}
+                        selectedItem={branches.map(b => ({ key: b.id, label: b.name })).find(b => b.key === formData.branchId) || { key: 'UNASSIGNED', label: t.employeeList.unassigned }}
+                        isOpen={isBranchOpen}
+                        onToggle={() => {
+                          setIsBranchOpen(!isBranchOpen);
+                          setIsDepartmentOpen(false);
+                          setIsRoleOpen(false);
+                          setIsStatusOpen(false);
+                        }}
+                        onSelect={(item) => {
+                          setFormData({ ...formData, branchId: item.key as any });
+                          setIsBranchOpen(false);
+                        }}
+                        renderItem={(item) => <span className='text-sm'>{item.label}</span>}
+                        renderSelected={(item) => (
+                          <span className='text-sm'>
+                            {item?.label || t.employeeList.branch}
+                          </span>
+                        )}
+                        keyExtractor={(item) => item.key}
+                        variant='input'
+                        color={color}
+                      />
+                    </div>
+                  </div>
+                  <div className='col-span-3 space-y-1.5'>
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
                       {t.employeeList.department}
                     </label>
@@ -701,7 +753,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       />
                     </div>
                   </div>
-                  <div className='col-span-4 space-y-1.5'>
+                  <div className='col-span-3 space-y-1.5'>
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
                       {t.employeeList.role}
                     </label>
@@ -734,7 +786,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       />
                     </div>
                   </div>
-                  <div className='col-span-4 space-y-1.5'>
+                  <div className='col-span-3 space-y-1.5'>
                     <label className='text-xs font-semibold text-gray-500 uppercase px-1'>
                       {t.employeeList.status}
                     </label>

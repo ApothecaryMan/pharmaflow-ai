@@ -1620,6 +1620,8 @@ export const TRANSLATIONS = {
       email: 'Email Address',
       position: 'Position',
       department: 'Department',
+      branch: 'Branch',
+      unassigned: 'Unassigned',
       role: 'System Role',
       status: 'Status',
       salary: 'Salary',
@@ -1635,6 +1637,7 @@ export const TRANSLATIONS = {
         department: 'Department',
         phone: 'Phone',
         status: 'Status',
+        branch: 'Branch',
         actions: 'Actions',
       },
       departments: {
@@ -1952,6 +1955,8 @@ export const TRANSLATIONS = {
       email: 'البريد الإلكتروني',
       position: 'المسمى الوظيفي',
       department: 'القسم',
+      branch: 'الفرع',
+      unassigned: 'غير محدد',
       role: 'الدور في النظام',
       status: 'الحالة',
       salary: 'الراتب',
@@ -1967,6 +1972,7 @@ export const TRANSLATIONS = {
         department: 'القسم',
         phone: 'الهاتف',
         status: 'الحالة',
+        branch: 'الفرع',
         actions: 'إجراءات',
       },
       departments: {
