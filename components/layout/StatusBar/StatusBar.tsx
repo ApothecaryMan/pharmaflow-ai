@@ -190,7 +190,7 @@ export const StatusBar: React.FC<StatusBarProps> = React.memo(
           <VersionInfo version={t.version} />
 
           {/* Settings Menu */}
-          <SettingsMenu />
+          {currentEmployeeId && <SettingsMenu />}
 
           {/* Connection Status */}
           <ConnectionStatus onlineText={t.online} offlineText={t.offline} />

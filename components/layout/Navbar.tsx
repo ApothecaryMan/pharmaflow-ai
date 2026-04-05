@@ -418,22 +418,25 @@ const NavbarComponent: React.FC<NavbarProps> = ({
       </div>
 
       {/* Mobile: Hamburger Menu & Settings */}
-      <div className='md:hidden flex items-center gap-1'>
-        <SettingsMenu
-          dropDirection='down'
-          align='end'
-          triggerVariant='navbar'
-          triggerSize={'var(--icon-navbar-mobile)' as any}
-        />
-        <button
-          onClick={onMobileMenuToggle}
-          className='flex items-center justify-center w-10 h-10 text-gray-600 dark:text-gray-300 transition-colors'
-        >
-          <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-navbar-mobile)' }}>menu</span>
-        </button>
-      </div>
+      {currentEmployeeId && (
+        <div className='md:hidden flex items-center gap-1'>
+          <SettingsMenu
+            dropDirection='down'
+            align='end'
+            triggerVariant='navbar'
+            triggerSize={'var(--icon-navbar-mobile)' as any}
+          />
+          <button
+            onClick={onMobileMenuToggle}
+            className='flex items-center justify-center w-10 h-10 text-gray-600 dark:text-gray-300 transition-colors'
+          >
+            <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-navbar-mobile)' }}>menu</span>
+          </button>
+        </div>
+      )}
 
       {/* Right Side Actions (Desktop) */}
+      {currentEmployeeId && (
       <div className='hidden md:flex items-center gap-2 ltr:ml-4 rtl:mr-4'>
 
 
@@ -786,6 +789,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
           )}
         </div>
       </div>
+      )}
 
       {/* Printer Settings Modal */}
       <PrinterSettings

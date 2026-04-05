@@ -42,9 +42,55 @@ export const useSessionHandlers = ({
             action: 'logout',
             details: `Employee signed out`,
           });
+
+          // --- Restore the original system role on employee logout ---
+          const stored = localStorage.getItem('branch_pilot_session');
+          if (stored) {
+            const storedSession = JSON.parse(stored);
+            if (storedSession._originalRole) {
+              storedSession.role = storedSession._originalRole;
+              storedSession.department = storedSession._originalDepartment;
+              storedSession.orgRole = storedSession._originalOrgRole;
+              storedSession.username = storedSession._originalUsername;
+              delete storedSession._originalRole;
+              delete storedSession._originalDepartment;
+              delete storedSession._originalOrgRole;
+              delete storedSession._originalUsername;
+            }
+            delete storedSession.employeeId;
+            localStorage.setItem('branch_pilot_session', JSON.stringify(storedSession));
+          }
         } else {
           const selectedEmployee = employees.find((e) => e.id === id);
           if (selectedEmployee) {
+            // --- Sync employee role to session for permissionsService ---
+            const stored = localStorage.getItem('branch_pilot_session');
+            if (stored) {
+              const storedSession = JSON.parse(stored);
+              const isSuperUser =
+                selectedEmployee.id === 'SUPER-ADMIN' ||
+                selectedEmployee.username === import.meta.env.VITE_SUPER_USER;
+
+              if (isSuperUser) {
+                // Super User: preserve max privileges, only set employeeId
+                storedSession.employeeId = selectedEmployee.id;
+              } else {
+                // Regular employee: save original credentials & sync employee's role
+                if (!storedSession._originalRole) {
+                  storedSession._originalRole = storedSession.role;
+                  storedSession._originalDepartment = storedSession.department;
+                  storedSession._originalOrgRole = storedSession.orgRole;
+                  storedSession._originalUsername = storedSession.username;
+                }
+                storedSession.role = selectedEmployee.role;
+                storedSession.department = selectedEmployee.department;
+                storedSession.orgRole = selectedEmployee.orgRole || 'member';
+                storedSession.username = selectedEmployee.username || selectedEmployee.name;
+                storedSession.employeeId = selectedEmployee.id;
+              }
+              localStorage.setItem('branch_pilot_session', JSON.stringify(storedSession));
+            }
+
             const isFirstSelection = !currentEmployeeId;
             const previousEmployee = employees.find((e) => e.id === currentEmployeeId);
             const previousName = previousEmployee?.name || (currentEmployeeId ? 'unknown' : null);

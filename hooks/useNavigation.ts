@@ -28,12 +28,17 @@ const MODULE_VIEW_MAPPING: Record<string, ViewState> = {
 
 /**
  * Helper function to filter menu items based on activity status AND permissions.
+ * Returns empty when no employee is logged in (dock-level gatekeeper).
  */
 function filterMenuItems(
   menu: MenuItem[],
   hideInactiveModules: boolean,
-  developerMode: boolean
+  developerMode: boolean,
+  currentEmployeeId?: string | null
 ): MenuItem[] {
+  // No employee logged in at dock level → hide all navigation
+  if (!currentEmployeeId) return [];
+
   return menu
     .filter((module) => {
       // 1. Permission Check
@@ -211,7 +216,7 @@ export function useNavigation({
 
   // Filter menu items based on permissions and settings
   const filteredMenuItems = useMemo(
-    () => filterMenuItems(PHARMACY_MENU, hideInactiveModules, developerMode),
+    () => filterMenuItems(PHARMACY_MENU, hideInactiveModules, developerMode, currentEmployeeId),
     [hideInactiveModules, developerMode, currentEmployeeId, activeBranchId, activeOrgId]
   );
 

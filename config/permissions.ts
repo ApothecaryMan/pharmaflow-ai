@@ -374,21 +374,8 @@ export const canPerformAction = (
   role: UserRole | undefined | string,
   action: PermissionAction
 ): boolean => {
-  // Always grant permission to VITE_SUPER_USER
-  try {
-    const rawSession = localStorage.getItem('branch_pilot_session');
-    if (rawSession) {
-      const session = JSON.parse(rawSession);
-      if (session.username === import.meta.env.VITE_SUPER_USER) {
-        return true;
-      }
-    }
-  } catch (e) {
-    // ignore
-  }
-
+  // Note: Super User bypass is handled upstream by permissionsService.can()
   if (!role) return false;
-  // Fallback for string roles that might come from older data
   const permissions = ROLE_PERMISSIONS[role as UserRole];
   return permissions ? permissions.includes(action) : false;
 };
