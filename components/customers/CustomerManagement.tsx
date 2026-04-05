@@ -368,7 +368,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         header: t.headers?.points || 'Points',
         meta: { align: 'center', width: 100 },
         cell: (info) => (
-          <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+          <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-current text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
             <span className='material-symbols-rounded text-xs'>loyalty</span>
             {parseFloat(Number(info.row.original.points || 0).toFixed(2))} pts
           </span>
@@ -390,7 +390,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           const icon = isActive ? 'check_circle' : 'cancel';
           return (
             <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
+              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
             >
               <span className='material-symbols-rounded text-sm'>{icon}</span>
               {t.status[c.status?.toLowerCase()] || c.status}

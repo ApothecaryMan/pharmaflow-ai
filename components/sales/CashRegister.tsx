@@ -82,12 +82,12 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
           const type = info.getValue() as CashTransactionType;
           return (
             <span
-              className={`inline-flex items-center gap-1 px-1 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-tight bg-transparent
-                  ${type === 'in' || type === 'card_sale' || type === 'purchase_return' ? 'border-gray-200 dark:border-gray-800/50 text-gray-700 dark:text-gray-400' : ''}
-                  ${type === 'out' || type === 'closing' || type === 'purchase' ? 'border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400' : ''}
-                  ${type === 'sale' ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400' : ''}
-                  ${type === 'opening' ? 'border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400' : ''}
-                  ${type === 'return' ? 'border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400' : ''}
+              className={`inline-flex items-center gap-1 px-1 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-tight bg-transparent
+                  ${type === 'in' || type === 'card_sale' || type === 'purchase_return' ? 'text-gray-700 dark:text-gray-400' : ''}
+                  ${type === 'out' || type === 'closing' || type === 'purchase' ? 'text-red-700 dark:text-red-400' : ''}
+                  ${type === 'sale' ? 'text-emerald-700 dark:text-emerald-400' : ''}
+                  ${type === 'opening' ? 'text-violet-700 dark:text-violet-400' : ''}
+                  ${type === 'return' ? 'text-orange-700 dark:text-orange-400' : ''}
                 `}
             >
               <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>
@@ -618,7 +618,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <span className='text-sm text-gray-600 dark:text-gray-400'>
                     {t.cashRegister.messages.started}:
                   </span>
-                  <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+                  <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-gray-700 dark:text-gray-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
                     <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>schedule</span>
                     {(() => {
                       const timeStr = new Date(currentShift.openTime).toLocaleTimeString('en-US', {
@@ -658,7 +658,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <span className='text-sm text-gray-600 dark:text-gray-400'>
                     {t.cashRegister.messages.by}:
                   </span>
-                  <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-purple-200 dark:border-purple-900/50 text-purple-700 dark:text-purple-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+                  <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-purple-700 dark:text-purple-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
                     <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>person</span>
                     {currentShift.openedBy}
                   </span>
@@ -669,7 +669,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
                   <span className='text-sm text-gray-600 dark:text-gray-400'>
                     {t.cashRegister.messages.id}:
                   </span>
-                  <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+                  <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-gray-700 dark:text-gray-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
                     <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>tag</span>
                     {currentShift.id.slice(-6)}
                   </span>

@@ -13,7 +13,7 @@
  *      - Container: `inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border bg-transparent`.
  *      - Typography: `text-xs font-bold uppercase tracking-wider`.
  *      - Icons: Always include a `material-symbols-rounded` icon (size `text-sm`).
- *      - Example: `<span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider bg-transparent"><span className="material-symbols-rounded text-sm">check_circle</span>APPROVED</span>`
+ *      - Example: `<span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider bg-transparent"><span className="material-symbols-rounded text-sm">check_circle</span>APPROVED</span>`
  *
  * 3. Internationalization (i18n):
  *    - Headers: Pass translated strings (e.g., `t.headers.name`), NOT translation keys.

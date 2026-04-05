@@ -56,19 +56,26 @@ export const AuditPage: React.FC<AuditPageProps> = ({
       columnHelper.accessor('type', {
         header: t?.intelligence?.audit?.grid?.columns?.type || 'Type',
         meta: { align: 'center' },
-        cell: (info) => (
-          <span
-            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-              info.getValue() === 'SALE'
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-            }`}
-          >
-            {info.getValue() === 'SALE'
-              ? t?.intelligence?.audit?.types?.sale || 'Sale'
-              : t?.intelligence?.audit?.types?.return || 'Return'}
-          </span>
-        ),
+        cell: (info) => {
+          const type = info.getValue();
+          const isSale = type === 'SALE';
+          return (
+            <span
+              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-wider bg-transparent ${
+                isSale
+                  ? 'text-emerald-700 dark:text-emerald-400'
+                  : 'text-amber-700 dark:text-amber-400'
+              }`}
+            >
+              <span className='material-symbols-rounded text-sm'>
+                {isSale ? 'check_circle' : 'assignment_return'}
+              </span>
+              {isSale
+                ? t?.intelligence?.audit?.types?.sale || 'Sale'
+                : t?.intelligence?.audit?.types?.return || 'Return'}
+            </span>
+          );
+        },
       }),
       columnHelper.accessor('product_name', {
         header: t?.intelligence?.audit?.grid?.columns?.product || 'Product',

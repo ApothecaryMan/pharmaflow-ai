@@ -262,7 +262,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
 
           return (
             <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
+              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
             >
               <span 
                 className='material-symbols-rounded'
@@ -281,7 +281,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         cell: ({ row }) => {
           const branch = branches.find(b => b.id === row.original.branchId);
           return (
-            <span className='inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-purple-200 dark:border-purple-900/50 text-purple-700 dark:text-purple-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+            <span className='inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-current text-purple-700 dark:text-purple-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
               {branch?.name || t.employeeList.unassigned}
             </span>
           );

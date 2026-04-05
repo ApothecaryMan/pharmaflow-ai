@@ -426,14 +426,14 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                 </span>
                               </td>
                               <td style={{ width: columns[1].width }} className="py-2">
-                                <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-[10px] font-normal uppercase tracking-wider bg-transparent ${
-                                  m.type === 'sale' ? 'border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400' :
-                                  m.type === 'purchase' ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400' :
-                                  m.type === 'return_customer' ? 'border-sky-200 dark:border-sky-900/50 text-sky-700 dark:text-sky-400' :
-                                  m.type === 'return_supplier' ? 'border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400' :
-                                  m.type === 'adjustment' ? 'border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400' :
-                                  m.type === 'damage' ? 'border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400' :
-                                  'border-gray-200 dark:border-(--border-divider) text-gray-600 dark:text-gray-400'
+                                <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-normal uppercase tracking-wider bg-transparent ${
+                                  m.type === 'sale' ? 'text-rose-700 dark:text-rose-400' :
+                                  m.type === 'purchase' ? 'text-emerald-700 dark:text-emerald-400' :
+                                  m.type === 'return_customer' ? 'text-sky-700 dark:text-sky-400' :
+                                  m.type === 'return_supplier' ? 'text-orange-700 dark:text-orange-400' :
+                                  m.type === 'adjustment' ? 'text-amber-700 dark:text-amber-400' :
+                                  m.type === 'damage' ? 'text-red-700 dark:text-red-400' :
+                                  'text-gray-600 dark:text-gray-400'
                                 }`}>
                                   <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>
                                     {m.type === 'sale' ? 'north_east' :
@@ -476,7 +476,7 @@ const StockMovementReport: React.FC<StockMovementReportProps> = ({ onViewChange 
                                     const status = checkExpiryStatus(m.expiryDate);
                                     const config = getExpiryStatusConfig(status);
                                     return (
-                                      <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider bg-transparent border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400`}>
+                                      <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-wider bg-transparent text-${config.color}-700 dark:text-${config.color}-400`}>
                                         <span className="material-symbols-rounded" style={{ fontSize: 'var(--icon-sm)' }}>
                                           {status === 'invalid' ? 'event_busy' : 'event_available'}
                                         </span>

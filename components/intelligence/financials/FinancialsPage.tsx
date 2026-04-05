@@ -133,7 +133,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
 
           return (
             <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
+              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
             >
               <span className='material-symbols-rounded text-xs'>{config.icon}</span>
               {val}%
@@ -147,10 +147,10 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
           const dist = info.getValue();
           return (
             <div className='flex gap-1.5'>
-              <span className='inline-flex items-center px-1.5 py-0.5 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs font-bold bg-transparent'>
+              <span className='inline-flex items-center px-1.5 py-0.5 border border-current text-emerald-700 dark:text-emerald-400 rounded-lg text-xs font-bold bg-transparent'>
                 A:{dist.a}
               </span>
-              <span className='inline-flex items-center px-1.5 py-0.5 border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 rounded-lg text-xs font-bold bg-transparent'>
+              <span className='inline-flex items-center px-1.5 py-0.5 border border-current text-primary-700 dark:text-primary-400 rounded-lg text-xs font-bold bg-transparent'>
                 B:{dist.b}
               </span>
               <span className='inline-flex items-center px-1.5 py-0.5 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400 rounded-lg text-xs font-bold bg-transparent'>
@@ -171,12 +171,12 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
         cell: (info) => (
           <div className='flex items-center gap-2'>
             <span
-              className={`w-8 h-8 flex items-center justify-center rounded-lg border text-base font-black bg-transparent ${
+              className={`w-8 h-8 flex items-center justify-center rounded-lg border border-current text-base font-black bg-transparent ${
                 info.row.original.abc_class === 'A'
-                  ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'
+                  ? 'text-emerald-700 dark:text-emerald-400'
                   : info.row.original.abc_class === 'B'
-                    ? 'border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400'
-                    : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400'
+                    ? 'text-primary-700 dark:text-primary-400'
+                    : 'text-gray-700 dark:text-gray-400'
               }`}
             >
               {info.row.original.abc_class}
@@ -226,7 +226,7 @@ export const FinancialsPage: React.FC<FinancialsPageProps> = ({
 
           return (
             <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
+              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${config.color}-700 dark:text-${config.color}-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
             >
               <span className='material-symbols-rounded text-xs'>{config.icon}</span>
               {val.toFixed(1)}%

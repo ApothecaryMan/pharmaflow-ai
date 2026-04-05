@@ -146,7 +146,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
         accessorKey: 'orderPoints',
         header: t.loyalty?.orderPoints || 'Order',
         cell: (info) => (
-          <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900/30 text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-blue-400 bg-transparent'>
+          <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-blue-400 bg-transparent'>
             <span className='material-symbols-rounded text-sm'>stars</span>
             {(info.getValue() as number).toFixed(1)}
           </span>
@@ -157,7 +157,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
         accessorKey: 'itemPoints',
         header: t.loyalty?.itemPoints || 'Item',
         cell: (info) => (
-          <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-purple-100 dark:border-purple-900/30 text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 bg-transparent'>
+          <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 bg-transparent'>
             <span className='material-symbols-rounded text-sm'>stars</span>
             {(info.getValue() as number).toFixed(1)}
           </span>
@@ -168,7 +168,7 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
         accessorKey: 'totalPoints',
         header: t.loyalty?.totalEarned || 'Total Earned',
         cell: (info) => (
-          <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-amber-100 dark:border-amber-900/30 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-transparent'>
+          <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-transparent'>
             <span className='material-symbols-rounded text-sm'>stars</span>+
             {(info.getValue() as number).toFixed(1)}
           </span>
@@ -337,10 +337,10 @@ export const CustomerLoyaltyLookup: React.FC<CustomerLoyaltyLookupProps> = ({
                       {selectedCustomer.code || selectedCustomer.serialId}
                     </span>
                     <span
-                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider bg-transparent ${
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-current text-[10px] font-bold uppercase tracking-wider bg-transparent ${
                         selectedCustomer.status === 'active'
-                          ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'
-                          : 'border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400'
+                          ? 'text-emerald-700 dark:text-emerald-400'
+                          : 'text-gray-500 dark:text-gray-400'
                       }`}
                     >
                       <span className='material-symbols-rounded text-sm'>

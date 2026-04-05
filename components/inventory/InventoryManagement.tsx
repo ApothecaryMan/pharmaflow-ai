@@ -78,20 +78,20 @@ export const InventoryManagement: React.FC<InventoryManagementProps> = ({
           const stock = info.row.original.stock;
           if (stock === 0)
             return (
-              <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+              <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-red-700 dark:text-red-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
                 <span className='material-symbols-rounded text-sm'>cancel</span>
                 Out of Stock
               </span>
             );
           if (stock < 10)
             return (
-              <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+              <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
                 <span className='material-symbols-rounded text-sm'>warning</span>
                 Low Stock
               </span>
             );
           return (
-            <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
+            <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-emerald-700 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider bg-transparent'>
               <span className='material-symbols-rounded text-sm'>check_circle</span>
               In Stock
             </span>

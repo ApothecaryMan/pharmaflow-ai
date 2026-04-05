@@ -40,7 +40,7 @@ export const POSPageHeader: React.FC<POSPageHeaderProps> = ({
 
       <button
         onClick={() => setShowDeliveryModal(true)}
-        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent hover:bg-primary-600 dark:hover:bg-primary-500 hover:text-white dark:hover:text-white hover:border-primary-600 dark:hover:border-primary-500 transition-all duration-200 cursor-pointer shadow-sm`}
+        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-current text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent hover:bg-primary-600 dark:hover:bg-primary-500 hover:text-white dark:hover:text-white hover:border-primary-600 dark:hover:border-primary-500 transition-all duration-200 cursor-pointer shadow-sm`}
       >
         <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>
           local_shipping

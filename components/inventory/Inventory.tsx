@@ -439,7 +439,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         header: t.headers.category,
         cell: ({ row }) => (
           <span
-            className={`inline-flex items-center px-1.5 py-0.5 rounded-lg border border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
+            className={`inline-flex items-center px-1.5 py-0.5 rounded-lg border border-current text-primary-700 dark:text-primary-400 text-xs font-bold uppercase tracking-wider bg-transparent`}
           >
             {getLocalizedCategory(row.original.category || 'General', currentLang)}
           </span>

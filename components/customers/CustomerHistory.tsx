@@ -114,13 +114,13 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
           const status = info.row.original.status;
           const isCompleted = status === 'completed';
           const colorClasses = isCompleted
-            ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'
-            : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400';
+            ? 'text-emerald-700 dark:text-emerald-400'
+            : 'text-gray-600 dark:text-gray-400';
           const icon = isCompleted ? 'check_circle' : 'history';
 
           return (
             <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border bg-transparent text-[10px] font-bold uppercase tracking-wider ${colorClasses}`}
+              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current bg-transparent text-[10px] font-bold uppercase tracking-wider ${colorClasses}`}
             >
               <span className='material-symbols-rounded text-sm'>{icon}</span>
               {status}

@@ -102,7 +102,7 @@ export const ProcurementPage: React.FC<ProcurementPageProps> = ({
           <div className='flex items-center gap-2'>
             <span className='font-bold text-emerald-600 dark:text-emerald-400'>{info.getValue()}</span>
             {info.row.original.skip_reason && (
-              <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider bg-transparent'>
+              <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-current text-amber-700 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider bg-transparent'>
                 <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-sm)' }}>block</span>
                 {t?.intelligence?.procurement?.blocked || 'Low Movement'}
               </span>

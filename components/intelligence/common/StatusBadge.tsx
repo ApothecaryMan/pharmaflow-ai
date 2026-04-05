@@ -96,7 +96,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-lg border border-${color}-200 dark:border-${color}-900/50 text-${color}-700 dark:text-${color}-400 font-bold uppercase tracking-wider bg-transparent ${sizeStyles} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-lg border border-current text-${color}-700 dark:text-${color}-400 font-bold uppercase tracking-wider bg-transparent ${sizeStyles} ${className}`}
     >
       <span className='material-symbols-rounded' style={{ fontSize: iconSize }}>{config.icon}</span>
       {finalLabel}

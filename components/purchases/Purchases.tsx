@@ -392,7 +392,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
           return (
             <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
+              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
             >
               <span className='material-symbols-rounded text-xs'>{config.icon}</span>
               {config.label}
@@ -422,7 +422,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
           const val = info.getValue() as number;
           return (
             <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
+              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
             >
               <span className='material-symbols-rounded text-xs'>percent</span>
               {val.toFixed(1)}
@@ -482,7 +482,7 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
           return (
             <span
-              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-${config.color}-200 dark:border-${config.color}-900/50 text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
+              className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-current text-${config.color}-700 dark:text-${config.color}-400 text-[10px] font-bold uppercase tracking-wider bg-transparent`}
             >
               <span className='material-symbols-rounded text-xs'>{config.icon}</span>
               {config.label}

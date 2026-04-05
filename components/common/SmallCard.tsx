@@ -118,12 +118,12 @@ export const SmallCard = ({
               tooltipClassName='font-bold uppercase tracking-wider'
             >
               <span
-                className={`flex items-center gap-1.5 px-1.5 rounded-lg border bg-transparent text-[10px] font-bold uppercase tracking-wider leading-none h-[22px] min-w-0 max-w-full ${
+                className={`flex items-center gap-1.5 px-1.5 rounded-lg border border-current bg-transparent text-[10px] font-bold uppercase tracking-wider leading-none h-[22px] min-w-0 max-w-full ${
                   trend === 'up'
-                    ? 'border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'
+                    ? 'text-emerald-700 dark:text-emerald-400'
                     : trend === 'down'
-                      ? 'border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400'
-                      : 'border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-500' // Neutral/SubValue
+                      ? 'text-rose-700 dark:text-rose-400'
+                      : 'text-gray-400 dark:text-gray-500' // Neutral/SubValue
                 }`}
               >
                 {trend && trend !== 'unchanged' && (
