@@ -131,36 +131,36 @@ export const InsightTooltip: React.FC<InsightTooltipProps> = ({
   language,
 }) => {
   return (
-    <div className='space-y-4 py-2 min-w-[240px] max-w-[320px]'>
+    <div className='space-y-3 py-1.5 min-w-[240px] max-w-[320px]'>
       {/* TIER 1: PRIMARY RESULT (EXECUTIVE SUMMARY) */}
-      <div className='px-1.5 border-b border-black/10 dark:border-white/10 pb-3 flex justify-between items-end gap-4'>
-        <div className='flex flex-col gap-1'>
-          <p className='text-[11px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest flex items-center gap-1.5'>
-            <span className={`material-symbols-rounded text-[14px] ${iconColorClass}`}>{icon}</span>
+      <div className='px-1 border-b border-black/10 dark:border-white/10 pb-2 flex justify-between items-end gap-3'>
+        <div className='flex flex-col gap-0.5'>
+          <p className='text-[10.5px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest flex items-center gap-1.5'>
+            <span className={`material-symbols-rounded text-[13px] ${iconColorClass}`}>{icon}</span>
             {title}
           </p>
           {valueLabel && (
-            <span className='text-sm text-gray-400 dark:text-zinc-500 font-medium'>
+            <span className='text-[12px] text-gray-400 dark:text-zinc-500 font-medium'>
               {valueLabel}
             </span>
           )}
         </div>
-        <div className='text-3xl font-black text-gray-900 dark:text-white flex items-center gap-2 tracking-tight'>
+        <div className='text-2xl font-black text-gray-900 dark:text-white flex items-center gap-1.5 tracking-tight'>
           <CurrencyValue val={value} language={language} isHeader isCurrency={isCurrency} />
         </div>
       </div>
 
       {/* TIER 2: CALCULATION LOGIC (TRANSPARENCY) */}
-      <div className='bg-zinc-100/80 dark:bg-white/5 p-2.5 rounded-2xl space-y-3 border border-black/5 dark:border-white/5 shadow-xs'>
+      <div className='bg-zinc-100/80 dark:bg-white/5 p-2 rounded-xl space-y-2 border border-black/5 dark:border-white/5 shadow-xs'>
         {calculations.map((calc, idx) => (
           <div
             key={idx}
-            className={`space-y-1.5 ${idx > 0 ? 'border-t border-black/5 dark:border-white/5 pt-3' : ''}`}
+            className={`space-y-1 ${idx > 0 ? 'border-t border-black/5 dark:border-white/5 pt-2' : ''}`}
           >
-            <div className='flex justify-between text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-tighter opacity-80'>
+            <div className='flex justify-between text-[9px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-tighter opacity-80'>
               <span>{calc.label}</span>
             </div>
-            <div className='text-[13px] font-mono font-bold text-zinc-800 dark:text-white flex justify-between items-center gap-2 whitespace-nowrap tabular-nums'>
+            <div className='text-[12.5px] font-mono font-bold text-zinc-800 dark:text-white flex justify-between items-center gap-2 whitespace-nowrap tabular-nums'>
               {typeof calc.math === 'number' ? (
                 <CurrencyValue val={calc.math} language={language} isCurrency={calc.isCurrency} />
               ) : (
@@ -172,12 +172,12 @@ export const InsightTooltip: React.FC<InsightTooltipProps> = ({
       </div>
 
       {/* TIER 3: OPERATIONAL INSIGHTS (STRATEGIC ACTION) */}
-      <div className='space-y-3 px-1.5 pt-1'>
+      <div className='space-y-2 px-1 pt-0.5'>
         {details.map((detail, idx) => (
           <div key={idx} className='group'>
-            <div className='flex justify-between items-center text-[13px]'>
-              <span className='text-zinc-600 dark:text-zinc-400 flex items-center gap-2.5 font-medium'>
-                <span className='material-symbols-rounded text-[18px] opacity-70 group-hover:opacity-100 transition-opacity'>
+            <div className='flex justify-between items-center text-[12.5px]'>
+              <span className='text-zinc-600 dark:text-zinc-400 flex items-center gap-2 font-medium'>
+                <span className='material-symbols-rounded text-[16px] opacity-70 group-hover:opacity-100 transition-opacity'>
                   {detail.icon}
                 </span>
                 {detail.label}
@@ -193,7 +193,7 @@ export const InsightTooltip: React.FC<InsightTooltipProps> = ({
               </span>
             </div>
             {detail.subLabel && (
-              <div className='text-[10px] text-zinc-400 dark:text-zinc-500 px-2 mt-0.5 font-medium'>
+              <div className='text-[9px] text-zinc-400 dark:text-zinc-500 px-2 mt-0.5 font-medium'>
                 {detail.subLabel}
               </div>
             )}
