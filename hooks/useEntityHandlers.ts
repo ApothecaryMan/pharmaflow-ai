@@ -421,12 +421,13 @@ export function useEntityHandlers({
         error('Permission denied: Cannot add suppliers');
         return;
       }
-      setSuppliers((prev) => [...prev, { ...supplier, branchId: activeBranchId, status: 'active' }]);
+      const newId = supplier.id || idGenerator.generate('suppliers', activeBranchId);
+      setSuppliers((prev) => [...prev, { ...supplier, id: newId, branchId: activeBranchId, status: 'active' }]);
       success('Supplier added successfully');
       auditService.log('supplier.add', {
         userId: currentEmployeeId,
         details: `Added supplier: ${supplier.name}`,
-        entityId: supplier.id,
+        entityId: newId,
         branchId: activeBranchId,
       });
     },
@@ -500,6 +501,7 @@ export function useEntityHandlers({
       // Ensure critical tracking fields are present
       const enhancedCustomer: Customer = {
         ...customer,
+        id: customer.id || idGenerator.generate('customers', activeBranchId),
         branchId: activeBranchId,
         createdAt: customer.createdAt || getVerifiedDate().toISOString(),
         registeredByEmployeeId: customer.registeredByEmployeeId || currentEmployeeId || undefined,

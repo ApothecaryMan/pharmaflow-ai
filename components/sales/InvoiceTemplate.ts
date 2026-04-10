@@ -223,7 +223,7 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
       <hr class="divider">
       
       <div class="info-row">
-        <span>${sale.customerCode ? sale.customerCode : ''} ${sale.customerName || 'Guest'}</span>
+        <span>${sale.customerCode ? sale.customerCode : ''} ${sale.customerName || 'Guest'}${ (sale as any).isTemporaryInfo ? ' *' : ''}</span>
         <span>#${sale.dailyOrderNumber || 1}</span>
       </div>
       
@@ -242,8 +242,8 @@ export function generateInvoiceHTML(sale: Sale, opts: InvoiceTemplateOptions = {
           ? `
       <div class="customer-section" style="text-align: center; margin: 4px 0;">
         ${sale.customerPhone ? `<div class="customer-detail" dir="ltr" style="unicode-bidi: embed;">Tel: ${sale.customerPhone}</div>` : ''}
-        ${sale.customerAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerAddress.replace(/\n/g, '<br>')}</div>` : ''}
-        ${sale.customerStreetAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerStreetAddress.replace(/\n/g, '<br>')}</div>` : ''}
+        ${sale.customerAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerAddress.replace(/\n/g, '<br>')}${ (sale as any).isTemporaryInfo ? ' *' : ''}</div>` : ''}
+        ${sale.customerStreetAddress ? `<div class="customer-detail" dir="rtl" style="unicode-bidi: embed; text-align: center;">${sale.customerStreetAddress.replace(/\n/g, '<br>')}${ (sale as any).isTemporaryInfo ? ' *' : ''}</div>` : ''}
       </div>
       `
           : ''

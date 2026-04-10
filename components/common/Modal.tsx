@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { SegmentedControl, type SegmentedControlOption } from './SegmentedControl';
 
 export const BUTTON_CLOSE_BASE = 'border border-transparent hover:border-(--border-divider)';
@@ -97,10 +97,18 @@ interface ModalProps {
    * Useful to prevent layout jumps when switching between tabs.
    */
   height?: string;
+  /**
+   * Extra classes for the modal body (the scrollable content area).
+   * Useful for overriding the default padding (p-5).
+   */
+  bodyClassName?: string;
 }
 
 import ReactDOM from 'react-dom';
 import { LAYOUT_CONFIG } from '../../config/layoutConfig';
+
+// Global counter to ensure dynamically opened modals stack on top of each other
+let globalModalZIndex = 100;
 
 // ... (imports)
 
@@ -112,7 +120,7 @@ export const Modal: React.FC<ModalProps> = ({
   width,
   className = '',
   closeOnBackdropClick = true,
-  zIndex = 100,
+  zIndex,
   title,
   subtitle,
   icon,
@@ -123,12 +131,23 @@ export const Modal: React.FC<ModalProps> = ({
   hideCloseButton = false,
   footer,
   height,
+  bodyClassName = 'p-5',
 }) => {
-  // Handle ESC key and Body Scroll Lock
+  const [actualZIndex, setActualZIndex] = useState(() => {
+    if (isOpen) {
+      if (zIndex !== undefined) {
+        globalModalZIndex = Math.max(globalModalZIndex, zIndex);
+        return zIndex;
+      }
+      globalModalZIndex += 10;
+      return globalModalZIndex;
+    }
+    return zIndex || 100;
+  });
+
+  // Handle ESC key, Body Scroll Lock, and dynamic Z-Index
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      // Only close if it's the top-most modal?
-      // For now simple check.
       if (e.key === 'Escape' && isOpen) {
         onClose();
       }
@@ -143,24 +162,40 @@ export const Modal: React.FC<ModalProps> = ({
 
     return () => {
       window.removeEventListener('keydown', handleEsc);
-      // We only restore body scroll if we are unmounting or closing
-      // Caveat: nested modals might fight over this.
-      // But simple refactor should be fine for now.
       document.body.style.overflow = '';
     };
   }, [isOpen, onClose]);
+
+  // Compute/Update z-index dynamically when the modal state changes or prop updates
+  useEffect(() => {
+    if (isOpen) {
+      if (zIndex !== undefined) {
+        setActualZIndex(zIndex);
+        globalModalZIndex = Math.max(globalModalZIndex, zIndex);
+      } else {
+        // If we haven't assigned a dynamic z-index yet (e.g. opened after mount)
+        // or if we want to refresh it.
+        // But the initializer handles the first mount. 
+        // This handles cases where isOpen transitions from false to true.
+        setActualZIndex((prev) => {
+          if (prev <= globalModalZIndex && prev < 110) { // Simple heuristic
+             globalModalZIndex += 10;
+             return globalModalZIndex;
+          }
+          return prev;
+        });
+      }
+    }
+  }, [isOpen, zIndex]);
 
   if (!isOpen) return null;
 
   const maxWidthClass = width || LAYOUT_CONFIG.MODAL_SIZES[size] || LAYOUT_CONFIG.MODAL_SIZES.lg;
 
-  // Construct z-index class if standard, or style if custom
-  const zClass = `z-[${zIndex}]`;
-
   return ReactDOM.createPortal(
     <div
-      className={`fixed inset-0 ${zClass} flex items-center justify-center p-4 animate-fade-in`}
-      style={{ zIndex }}
+      className={`fixed inset-0 flex items-center justify-center p-4 animate-fade-in`}
+      style={{ zIndex: actualZIndex }}
     >
       {/* Backdrop */}
       <div
@@ -227,34 +262,7 @@ export const Modal: React.FC<ModalProps> = ({
             </div>
 
             {/* Content - with internal padding and independent scrolling */}
-            <div
-              className='flex-1 overflow-y-auto modal-scroll p-5 content-shift-layer'
-              style={{
-                scrollbarWidth: 'thin',
-                scrollbarColor: 'rgba(156, 163, 175, 0.6) transparent',
-              }}
-            >
-              <style>{`
-                    .modal-scroll::-webkit-scrollbar {
-                        width: 4px;
-                        background: transparent;
-                    }
-                    .modal-scroll::-webkit-scrollbar-track {
-                        background: transparent;
-                        border: none;
-                        box-shadow: none;
-                    }
-                    .modal-scroll::-webkit-scrollbar-thumb {
-                        background: rgba(156, 163, 175, 0.3);
-                        border-radius: 9999px;
-                    }
-                    .modal-scroll:hover::-webkit-scrollbar-thumb {
-                        background: rgba(156, 163, 175, 0.6);
-                    }
-                    .modal-scroll::-webkit-scrollbar-corner {
-                        background: transparent;
-                    }
-                `}</style>
+            <div className={`flex-1 overflow-y-auto custom-scrollbar ${bodyClassName} content-shift-layer`}>
               {children}
             </div>
 

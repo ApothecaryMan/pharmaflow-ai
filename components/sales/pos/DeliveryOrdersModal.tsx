@@ -14,11 +14,14 @@ import { useAlert, useSettings } from '../../../context';
 import { formatCurrency } from '../../../utils/currency';
 import { getDisplayName } from '../../../utils/drugDisplayName';
 import { FilterDropdown } from '../../common/FilterDropdown';
+import { SmartInput, SmartTextarea } from '../../common/SmartInputs';
 import { MaterialTabs } from '../../common/MaterialTabs';
 import { Modal } from '../../common/Modal';
 import { SearchInput } from '../../common/SearchInput';
 import { SegmentedControl } from '../../common/SegmentedControl';
 import { TanStackTable } from '../../common/TanStackTable';
+import { useContextMenu } from '../../common/ContextMenu';
+import { getActiveReceiptSettings, printInvoice } from '../InvoiceTemplate';
 
 const DriverSelect = ({
   driverId,
@@ -37,7 +40,7 @@ const DriverSelect = ({
   const selected = drivers.find((d) => d.id === driverId);
 
   return (
-    <div className='relative w-full h-10'>
+    <div className='relative w-full h-8'>
       <FilterDropdown
         items={drivers}
         selectedItem={selected}
@@ -47,9 +50,9 @@ const DriverSelect = ({
           onSelect(d);
           setIsOpen(false);
         }}
-        renderItem={(d) => <div className='p-2 font-medium'>{d.name}</div>}
+        renderItem={(d) => <div className='p-1.5 font-medium'>{d.name}</div>}
         renderSelected={(d) => (
-          <div className='px-2 font-bold whitespace-nowrap overflow-hidden text-ellipsis'>
+          <div className='px-1 font-bold whitespace-nowrap overflow-hidden text-ellipsis'>
             {d ? d.name : t.selectDriver || 'Select Driver'}
           </div>
         )}
@@ -59,6 +62,7 @@ const DriverSelect = ({
         color='blue'
         variant='input'
         disabled={disabled}
+        dense={true}
       />
     </div>
   );
@@ -124,6 +128,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<'items' | 'history'>('items'); // Replaces showHistory toggle
   const [expandedHistoryRecordId, setExpandedHistoryRecordId] = useState<string | null>(null);
   const [orderToCancelId, setOrderToCancelId] = useState<string | null>(null);
+  const [orderToEditGuestId, setOrderToEditGuestId] = useState<string | null>(null);
+  const [tempGuestName, setTempGuestName] = useState('');
+  const [tempGuestAddress, setTempGuestAddress] = useState('');
+  const [originalGuestInfo, setOriginalGuestInfo] = useState<{ name: string; address: string } | null>(null);
 
   const selectedSale = useMemo(() => {
     return sales.find((s) => s.id === selectedSaleId);
@@ -136,8 +144,21 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       setIsEditMode(false);
       setPendingChanges(new Map());
       setPendingDiscountChanges(new Map());
+      setOrderToEditGuestId(null);
     }
   }, [isOpen]);
+
+  // Handle guest info save
+  const handleSaveGuestInfo = useCallback(() => {
+    if (orderToEditGuestId) {
+      onUpdateSale(orderToEditGuestId, {
+        customerName: tempGuestName || t.guestCustomer || 'Guest Customer',
+        customerStreetAddress: tempGuestAddress,
+        isTemporaryInfo: true, // Special flag for visual marking
+      } as any);
+      setOrderToEditGuestId(null);
+    }
+  }, [orderToEditGuestId, tempGuestName, tempGuestAddress, onUpdateSale, t.guestCustomer]);
 
   // Check if order can be edited (only pending/active, not completed)
   const canEdit = useMemo(() => {
@@ -149,6 +170,31 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       !!currentEmployeeId
     ); // Must be logged in
   }, [selectedSale, currentEmployeeId]);
+
+  const { showMenu } = useContextMenu();
+
+  const handleRowContextMenu = useCallback((e: React.MouseEvent, sale: Sale) => {
+    e.preventDefault();
+    showMenu(e.clientX, e.clientY, [
+      {
+        label: t.printReceipt || 'Print Receipt',
+        icon: 'print',
+        action: () => {
+          const opts = getActiveReceiptSettings();
+          printInvoice(sale, opts);
+        },
+      },
+      {
+        label: t.editOrder || 'Edit Order',
+        icon: 'edit',
+        action: () => {
+          setSelectedSaleId(sale.id);
+          setIsEditMode(true);
+        },
+        disabled: sale.status === 'completed' || sale.status === 'cancelled',
+      },
+    ]);
+  }, [showMenu, t.printReceipt, t.editOrder, setSelectedSaleId, setIsEditMode]);
 
   // Get current quantity for an item (considering pending changes)
   const getItemQuantity = useCallback(
@@ -528,55 +574,100 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Customer name
       columnHelper.accessor('customerName', {
         header: t.customer || 'Customer',
-        size: 180,
-        meta: { flex: true, align: 'start' },
+        size: 220,
+        meta: { flex: true, align: 'start', dir: 'rtl' },
         cell: (info) => {
+          const s = info.row.original;
           const name = info.getValue();
-          const displayName = name === 'Guest Customer' ? t.guestCustomer || name : name;
+          const isGuest = !s.customerCode || s.customerCode === '-';
+          const hasTempInfo = (s as any).isTemporaryInfo;
+          // Support both English and Arabic identifiers for Guest Customer
+          const isGuestName = name === 'Guest Customer' || name === 'عميل غير مسجل' || name === t.guestCustomer;
+          const displayName = isGuestName ? t.guestCustomer || name : name;
+          
           return (
-            <span className='font-bold text-gray-900 dark:text-gray-100'>
-              {displayName}
-            </span>
+            <div className='flex items-center gap-1 group'>
+              <span className='font-bold text-gray-900 dark:text-gray-100' dir='auto'>
+                {displayName}
+              </span>
+              {isGuest && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOrderToEditGuestId(s.id);
+                    const isGenericGuest = s.customerName === 'Guest Customer' || s.customerName === 'عميل غير مسجل' || s.customerName === t.guestCustomer;
+                    const name = isGenericGuest ? '' : s.customerName;
+                    const address = s.customerStreetAddress || '';
+                    setTempGuestName(name);
+                    setTempGuestAddress(address);
+                    setOriginalGuestInfo({ name, address });
+                  }}
+                  className='p-1 transition-all text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                  title={t.editGuestInfo || 'Edit Guest Info'}
+                >
+                  <span 
+                    className='material-symbols-rounded'
+                    style={{ fontSize: 'var(--icon-md)' }}
+                  >
+                    edit_note
+                  </span>
+                </button>
+              )}
+            </div>
           );
         },
       }),
       // Customer address
       columnHelper.accessor('customerAddress', {
         header: t.address || 'Address',
-        size: 250,
-        cell: (info) => (
-          <div className='text-xs whitespace-normal line-clamp-2' title={info.getValue()}>
-            {info.row.original.customerStreetAddress && (
-              <div className='font-bold text-gray-900 dark:text-gray-100'>
-                {info.row.original.customerStreetAddress}
-              </div>
-            )}
-            <div className='text-gray-400'>{info.getValue() || '-'}</div>
-          </div>
-        ),
+        size: 280,
+        cell: (info) => {
+          const manualAddress = info.row.original.customerStreetAddress;
+          const standardAddress = info.getValue();
+          const displayAddress = manualAddress || standardAddress;
+          
+          return (
+            <div className='text-[11px] leading-tight whitespace-normal line-clamp-1' title={displayAddress}>
+              {manualAddress ? (
+                <span className='font-bold text-gray-900 dark:text-gray-100'>
+                  {manualAddress}
+                </span>
+              ) : (
+                <span className='text-gray-400 dark:text-gray-500'>
+                  {standardAddress || '-'}
+                </span>
+              )}
+            </div>
+          );
+        },
       }),
       // Order total amount
       columnHelper.accessor('total', {
         header: t.total || 'Total',
-        size: 110,
+        size: 80,
         meta: { align: 'center' },
-        cell: (info) => (
-          <div className='flex flex-col items-start leading-tight'>
-            <span className='font-bold text-gray-900 dark:text-gray-100'>
-              {formatCurrency(info.getValue())}
-            </span>
-            {(info.row.original.globalDiscount || 0) > 0 && (
-              <span className='text-[10px] text-red-500 font-medium'>
-                -{info.row.original.globalDiscount}%
+        cell: (info) => {
+          const method = info.row.original.paymentMethod;
+          const isCard = method === 'visa' || method === 'credit';
+          
+          return (
+            <div className='flex flex-col items-start leading-tight'>
+              <span className={`font-bold ${isCard ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                {formatCurrency(info.getValue())}
               </span>
-            )}
-          </div>
-        ),
+              {(info.row.original.globalDiscount || 0) > 0 && (
+                <span className='text-[10px] text-red-500 font-medium'>
+                  -{info.row.original.globalDiscount}%
+                </span>
+              )}
+            </div>
+          );
+        },
       }),
       // Delivery driver selection
       columnHelper.accessor('deliveryEmployeeId', {
         header: t.deliveryMan || 'Delivery Man',
-        size: 200,
+        size: 150,
         meta: { align: 'center', isId: false },
         cell: (info) => {
           const s = info.row.original;
@@ -599,7 +690,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       columnHelper.display({
         id: 'actions',
         header: '',
-        size: 260,
+        size: 200,
         meta: {
           align: 'end',
         },
@@ -607,96 +698,98 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           const s = info.row.original;
 
           return (
-            <div className='flex gap-2 flex-wrap justify-end' onClick={(e) => e.stopPropagation()}>
-              {/* Start button (when order is pending) */}
-              {s.status === 'pending' && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onUpdateSale(s.id, { status: 'with_delivery' });
-                  }}
-                  className='h-8 px-3 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-200 transition-colors flex items-center justify-center whitespace-nowrap'
-                >
-                  {t.start || 'Start'}
-                </button>
-              )}
-              {/* 'On Way' button */}
-              {s.status === 'with_delivery' && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onUpdateSale(s.id, { status: 'on_way' });
-                  }}
-                  className='h-8 px-3 bg-orange-100 text-orange-700 rounded-lg text-xs font-bold hover:bg-orange-200 transition-colors flex items-center justify-center whitespace-nowrap'
-                >
-                  {t.onWay || 'On Way'}
-                </button>
-              )}
-              {/* Complete button with Undo feature */}
-              {s.status === 'on_way' && (
-                <div className='flex items-center gap-1'>
+            <div className='flex items-center justify-end gap-1.5' onClick={(e) => e.stopPropagation()}>
+              {/* Slot 1: Cancel Button (Fixed Width) */}
+              <div className='w-8 flex justify-center shrink-0'>
+                {(s.status === 'pending' ||
+                  s.status === 'with_delivery' ||
+                  s.status === 'on_way') && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onUpdateSale(s.id, { status: 'pending' });
+                      setOrderToCancelId(s.id);
                     }}
-                    className='p-1 text-gray-400 hover:text-red-500 transition-colors'
-                    title='Back to Pending'
+                    className='p-1 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20'
+                    title={t.cancel || 'Cancel'}
                   >
-                    <span className='material-symbols-rounded text-lg text-[18px]'>undo</span>
+                    <span className='material-symbols-rounded text-[20px]'>block</span>
                   </button>
+                )}
+              </div>
+
+              {/* Slot 2: Main Action Button (Fixed Width) */}
+              <div className='w-24 flex justify-center shrink-0'>
+                {s.status === 'pending' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUpdateSale(s.id, { status: 'with_delivery' });
+                    }}
+                    className='h-7 w-full bg-blue-100 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-200 transition-colors flex items-center justify-center whitespace-nowrap'
+                  >
+                    {t.start || 'Start'}
+                  </button>
+                )}
+                {s.status === 'with_delivery' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUpdateSale(s.id, { status: 'on_way' });
+                    }}
+                    className='h-7 w-full bg-orange-100 text-orange-700 rounded-lg text-xs font-bold hover:bg-orange-200 transition-colors flex items-center justify-center whitespace-nowrap'
+                  >
+                    {t.onWay || 'On Way'}
+                  </button>
+                )}
+                {s.status === 'on_way' && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onUpdateSale(s.id, { status: 'completed' });
                     }}
-                    className='h-8 px-3 bg-green-100 text-green-700 rounded-lg text-xs font-bold hover:bg-green-200 transition-colors flex items-center justify-center whitespace-nowrap'
+                    className='h-7 w-full bg-green-100 text-green-700 rounded-lg text-xs font-bold hover:bg-green-200 transition-colors flex items-center justify-center whitespace-nowrap'
                   >
                     {t.complete || 'Complete'}
                   </button>
-                </div>
-              )}
-              {/* Cancel button (icon only) */}
-              {(s.status === 'pending' ||
-                s.status === 'with_delivery' ||
-                s.status === 'on_way') && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setOrderToCancelId(s.id);
-                  }}
-                  className='p-1 text-gray-400 hover:text-red-600 transition-colors ml-1'
-                  title={t.cancel || 'Cancel'}
-                >
-                  <span className='material-symbols-rounded text-xl'>block</span>
-                </button>
-              )}
-              {/* Final completed state (icon + text) */}
-              {s.status === 'completed' && (
-                <div
-                  className='flex items-center gap-1 text-green-600 px-1'
-                  title={t.completed || 'Completed'}
-                >
-                  <span className='material-symbols-rounded text-xl'>task_alt</span>
-                  <span className='text-[10px] font-bold uppercase'>{t.completed || 'Done'}</span>
-                </div>
-              )}
-              {/* Final cancelled state */}
-              {s.status === 'cancelled' && (
-                <div
-                  className='flex items-center gap-1 text-red-600 px-1'
-                  title={t.cancelled || 'Cancelled'}
-                >
-                  <span className='material-symbols-rounded text-xl'>cancel</span>
-                  <span className='text-[10px] font-bold uppercase'>{t.cancelled || 'Void'}</span>
-                </div>
-              )}
+                )}
+                {s.status === 'completed' && (
+                  <div className='flex items-center gap-1 text-green-600' title={t.completed || 'Completed'}>
+                    <span className='material-symbols-rounded text-lg'>task_alt</span>
+                    <span className='text-[10px] font-bold uppercase'>{t.completed || 'Done'}</span>
+                  </div>
+                )}
+                {s.status === 'cancelled' && (
+                  <div className='flex items-center gap-1 text-red-600' title={t.cancelled || 'Cancelled'}>
+                    <span className='material-symbols-rounded text-lg'>cancel</span>
+                    <span className='text-[10px] font-bold uppercase'>{t.cancelled || 'Void'}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Slot 3: Undo Button (Fixed Width) */}
+              <div className='w-8 flex justify-center shrink-0'>
+                {(s.status === 'on_way' || s.status === 'with_delivery') ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const prevStatus = s.status === 'on_way' ? 'with_delivery' : 'pending';
+                      onUpdateSale(s.id, { status: prevStatus });
+                    }}
+                    className='p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                    title={t.undo || 'Undo'}
+                  >
+                    <span className='material-symbols-rounded text-[20px]'>undo</span>
+                  </button>
+                ) : (
+                  <div className='w-8' /> // Consistent space if no undo button
+                )}
+              </div>
             </div>
           );
         },
       }),
     ],
-    [t, deliveryDrivers, onUpdateSale, activeTab]
+    [t, deliveryDrivers, onUpdateSale, activeTab, customers, onViewCustomerHistory]
   );
 
   return (
@@ -708,6 +801,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       icon='local_shipping'
       size='6xl'
       width='max-w-7xl'
+      hideCloseButton={true}
       tabs={[
         {
           label: `${t.all || 'All'} (${sales.filter((s) => s.saleType === 'delivery' && s.status !== 'completed' && s.status !== 'cancelled').length})`,
@@ -743,7 +837,6 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           </div>
         </div>
       }
-      hideCloseButton={true}
     >
       <div className='flex flex-col h-[70vh]'>
         {selectedSaleId && selectedSale ? (
@@ -1397,7 +1490,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           </div>
         ) : (
           /* Table View */
-          <div className='flex-1 overflow-hidden'>
+          <div className='flex-1 overflow-auto custom-scrollbar'>
             <TanStackTable
               data={filteredSales}
               columns={columns}
@@ -1407,7 +1500,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
               searchPlaceholder={t.searchOrder || 'Search orders...'}
               emptyMessage={t.noOrders || 'No delivery orders found'}
               onRowClick={(row) => setSelectedSaleId(row.id)}
+              onRowContextMenu={handleRowContextMenu}
               lite={true}
+              dense={true}
               enablePagination={false}
             />
           </div>
@@ -1437,7 +1532,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
             )}
             <button
               onClick={onClose}
-              className='px-6 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl transition-colors'
+              className='px-6 py-2 bg-transparent border border-transparent hover:border-gray-200 dark:hover:border-gray-700 text-gray-500 dark:text-gray-400 font-bold rounded-xl transition-all cursor-pointer'
             >
               {t.close || 'Close'}
             </button>
@@ -1454,7 +1549,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         title={t.cancel || 'Cancel Order'}
         icon='warning'
         size='sm'
-        zIndex={100}
+        hideCloseButton={true}
       >
         <div className='p-2'>
           <p className='text-gray-600 dark:text-gray-400 mb-6'>
@@ -1465,7 +1560,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           <div className='flex justify-end gap-3'>
             <button
               onClick={() => setOrderToCancelId(null)}
-              className='px-4 py-2 font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'
+              className='px-4 py-2 font-bold text-zinc-500 dark:text-zinc-400 bg-transparent border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 rounded-lg transition-all cursor-pointer'
             >
               {language === 'AR' ? 'تراجع' : 'No, Keep it'}
             </button>
@@ -1478,6 +1573,69 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
             >
               <span className='material-symbols-rounded text-sm'>block</span>
               {t.cancel || 'Yes, Cancel'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )}
+    {/* Edit Guest Info Modal */}
+    {orderToEditGuestId && (
+      <Modal
+        isOpen={!!orderToEditGuestId}
+        onClose={() => setOrderToEditGuestId(null)}
+        title={t.editGuestInfo || 'Edit Guest Info'}
+        icon='person_add'
+        size='sm'
+        bodyClassName='p-1.5'
+        hideCloseButton={true}
+      >
+        <div className='flex flex-col gap-2'>
+          <div className='bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800/50'>
+            <div className='flex flex-col gap-1'>
+              <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
+                {t.tempCustomerName || 'Temporary Name'}
+              </label>
+              <SmartInput
+                type='text'
+                value={tempGuestName}
+                onChange={(e) => setTempGuestName(e.target.value)}
+                placeholder={t.guestCustomer || 'Guest Customer'}
+                className='!py-1.5'
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <div className='bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800/50'>
+            <div className='flex flex-col gap-1'>
+              <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
+                {t.tempCustomerAddress || 'Temporary Address'}
+              </label>
+              <SmartTextarea
+                value={tempGuestAddress}
+                onChange={(e) => setTempGuestAddress(e.target.value)}
+                placeholder={t.addressPlaceholder || 'Enter full delivery address...'}
+                className='min-h-[60px] resize-none !py-1.5'
+              />
+            </div>
+          </div>
+
+          <div className='flex gap-1.5'>
+            <button
+              onClick={handleSaveGuestInfo}
+              disabled={
+                !originalGuestInfo ||
+                (tempGuestName === originalGuestInfo.name && tempGuestAddress === originalGuestInfo.address)
+              }
+              className='flex-1 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-black rounded-lg transition-all uppercase tracking-widest hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed cursor-pointer'
+            >
+              {t.saveChanges || 'Save'}
+            </button>
+            <button
+              onClick={() => setOrderToEditGuestId(null)}
+              className='px-4 py-1.5 bg-transparent text-zinc-500 dark:text-zinc-400 text-xs font-black rounded-lg transition-all uppercase tracking-widest border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 cursor-pointer'
+            >
+              {t.cancel || 'Cancel'}
             </button>
           </div>
         </div>
