@@ -22,6 +22,9 @@ import { SegmentedControl } from '../../common/SegmentedControl';
 import { TanStackTable } from '../../common/TanStackTable';
 import { useContextMenu } from '../../common/ContextMenu';
 import { getActiveReceiptSettings, printInvoice } from '../InvoiceTemplate';
+import { InsightTooltip } from '../../common/InsightTooltip';
+import { Tooltip } from '../../common/Tooltip';
+import { isToday, isAfter, subHours, parseISO } from 'date-fns';
 
 const DriverSelect = ({
   driverId,
@@ -107,7 +110,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   employees,
   inventory,
   onUpdateSale,
-  language = 'EN',
+  language,
   t,
   currentEmployeeId,
   customers = [],
@@ -115,7 +118,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<DeliveryTab>('all');
   const { error: showToastError } = useAlert();
-  const { textTransform } = useSettings();
+  const { textTransform, language: settingsLanguage } = useSettings();
+  const currentLanguage = language || settingsLanguage;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
 
@@ -136,6 +140,40 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   const selectedSale = useMemo(() => {
     return sales.find((s) => s.id === selectedSaleId);
   }, [sales, selectedSaleId]);
+
+  // Calculate Pending Value Insights
+  const pendingStats = useMemo(() => {
+    const pendingSales = sales.filter((s) => s.status === 'pending' && s.saleType === 'delivery');
+    const now = new Date();
+    const twentyFourHoursAgo = subHours(now, 24);
+
+    const stats = {
+      total: 0,
+      today: { value: 0, count: 0 },
+      last24h: { value: 0, count: 0 },
+      older: { value: 0, count: 0 },
+    };
+
+    pendingSales.forEach((s) => {
+      const saleDate = parseISO(s.date);
+      stats.total += s.total;
+
+      if (isToday(saleDate)) {
+        stats.today.value += s.total;
+        stats.today.count += 1;
+      }
+
+      if (isAfter(saleDate, twentyFourHoursAgo)) {
+        stats.last24h.value += s.total;
+        stats.last24h.count += 1;
+      } else {
+        stats.older.value += s.total;
+        stats.older.count += 1;
+      }
+    });
+
+    return stats;
+  }, [sales]);
 
   // Reset to table view when modal closes
   React.useEffect(() => {
@@ -1509,17 +1547,81 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         )}
 
         {/* Footer Summary */}
-        <div className='mt-4 flex justify-between items-center text-sm text-gray-500'>
-          <span>
-            {t.totalPending || 'Total Pending Value'}:{' '}
-            <strong>
-              {formatCurrency(
-                sales
-                  .filter((s) => s.status === 'pending' && s.saleType === 'delivery')
-                  .reduce((sum, s) => sum + s.total, 0)
-              )}
-            </strong>
-          </span>
+        <div className='mt-4 flex justify-between items-center text-sm border-t border-gray-100 dark:border-gray-800 pt-4'>
+          <div className='flex items-center gap-3'>
+            <div className='flex flex-col'>
+              <span className='text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest leading-none mb-1'>
+                {t.totalPending || 'Total Pending Value'}
+              </span>
+              <div className='flex items-center gap-2'>
+                <span className='text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight'>
+                  {formatCurrency(pendingStats.total)}
+                </span>
+                
+                <Tooltip
+                  content={
+                    <InsightTooltip
+                      title={t.pendingValueDetails}
+                      value={pendingStats.total}
+                      icon='analytics'
+                      iconColorClass='text-blue-500'
+                      language={currentLanguage}
+                      calculations={[
+                        {
+                          label: t.timeDistribution,
+                          math: (
+                            <div className='flex flex-col gap-1 w-full'>
+                              <div className='flex justify-between items-center text-[11px]'>
+                                <span className='opacity-60'>{t.today}:</span>
+                                <span>{formatCurrency(pendingStats.today.value, 'EGP', currentLanguage === 'AR' ? 'ar-EG' : 'en-US')}</span>
+                              </div>
+                              <div className='flex justify-between items-center text-[11px]'>
+                                <span className='opacity-60'>{t.last24Hours}:</span>
+                                <span>{formatCurrency(pendingStats.last24h.value, 'EGP', currentLanguage === 'AR' ? 'ar-EG' : 'en-US')}</span>
+                              </div>
+                              <div className='flex justify-between items-center text-[11px] border-t border-white/10 pt-1 mt-1'>
+                                <span className='opacity-60'>{t.older}:</span>
+                                <span>{formatCurrency(pendingStats.older.value, 'EGP', currentLanguage === 'AR' ? 'ar-EG' : 'en-US')}</span>
+                              </div>
+                            </div>
+                          ),
+                          isCurrency: false
+                        }
+                      ]}
+                      details={[
+                        {
+                          icon: 'today',
+                          label: t.todaysOrders,
+                          value: `${pendingStats.today.count} ${pendingStats.today.count === 1 ? t.orderSingular : t.orderPlural}`,
+                          isCurrency: false,
+                          colorClass: 'text-emerald-500'
+                        },
+                        {
+                          icon: 'history_toggle_off',
+                          label: t.last24Hours,
+                          value: `${pendingStats.last24h.count} ${pendingStats.last24h.count === 1 ? t.orderSingular : t.orderPlural}`,
+                          isCurrency: false,
+                          colorClass: 'text-blue-500'
+                        },
+                        {
+                          icon: 'event_busy',
+                          label: t.olderOrders,
+                          value: `${pendingStats.older.count} ${pendingStats.older.count === 1 ? t.orderSingular : t.orderPlural}`,
+                          isCurrency: false,
+                          colorClass: 'text-orange-500'
+                        }
+                      ]}
+                      footer={t.pendingValueInsightFooter}
+                    />
+                  }
+                >
+                  <span className='material-symbols-rounded text-gray-400 hover:text-blue-500 transition-colors cursor-help text-[20px]'>
+                    info
+                  </span>
+                </Tooltip>
+              </div>
+            </div>
+          </div>
 
           <div className='flex items-center gap-3'>
             {canEdit && !isEditMode && selectedSaleId && selectedSale && (
@@ -1553,16 +1655,14 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       >
         <div className='p-2'>
           <p className='text-gray-600 dark:text-gray-400 mb-6'>
-            {language === 'AR' 
-              ? 'هل أنت متأكد من إلغاء هذا الطلب؟ لا يمكن التراجع عن هذه العملية وسيتم إرجاع جميع المواد للمخزون.'
-              : 'Are you sure you want to cancel this order? This cannot be undone and all items will be returned to stock.'}
+            {t.cancelOrderConfirm}
           </p>
           <div className='flex justify-end gap-3'>
             <button
               onClick={() => setOrderToCancelId(null)}
               className='px-4 py-2 font-bold text-zinc-500 dark:text-zinc-400 bg-transparent border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 rounded-lg transition-all cursor-pointer'
             >
-              {language === 'AR' ? 'تراجع' : 'No, Keep it'}
+              {t.keepOrder}
             </button>
             <button
               onClick={() => {
