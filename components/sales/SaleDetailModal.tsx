@@ -87,9 +87,23 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
             </div>
             <div className='text-end'>
               <p className='text-gray-500 text-xs'>{t.modal.id}</p>
-              <span className='text-sm text-gray-600 dark:text-gray-400 font-medium mt-0.5'>
-                {sale.serialId || sale.id}
-              </span>
+              <div className='flex items-center justify-end gap-2 mt-0.5'>
+                {sale.status && (
+                   <span className={`text-[10px] px-1.5 py-0.5 rounded-lg border font-black uppercase tracking-wider ${
+                     sale.status === 'completed' ? 'border-emerald-500 text-emerald-500' :
+                     sale.status === 'cancelled' ? 'border-red-500 text-red-500' :
+                     sale.status === 'pending' ? 'border-blue-500 text-blue-500' :
+                     sale.status === 'with_delivery' ? 'border-indigo-500 text-indigo-500' :
+                     sale.status === 'on_way' ? 'border-orange-500 text-orange-500' :
+                     'border-gray-500 text-gray-500'
+                   }`}>
+                     {t[sale.status] || sale.status}
+                   </span>
+                )}
+                <span className='text-sm text-gray-600 dark:text-gray-400 font-medium'>
+                  {sale.serialId || sale.id}
+                </span>
+              </div>
             </div>
             <div>
               <p className='text-gray-500 text-xs'>{t.modal.customer}</p>

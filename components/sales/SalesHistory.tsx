@@ -169,6 +169,10 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         accessorFn: (sale) => {
           if (sale.status === 'cancelled') return 'cancelled';
           if (sale.hasReturns) return 'returned';
+          // If it's delivery and not completed, return its specific status
+          if (sale.saleType === 'delivery' && sale.status !== 'completed') {
+            return sale.status;
+          }
           return 'completed';
         },
         header: t.status || 'Status',
@@ -195,6 +199,30 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
             );
           }
 
+          // Delivery Specific Statuses
+          if (sale.saleType === 'delivery' && sale.status !== 'completed') {
+            const isPending = sale.status === 'pending';
+            const isWithDelivery = sale.status === 'with_delivery';
+            const isOnWay = sale.status === 'on_way';
+            
+            let colorClass = 'border-blue-500 text-blue-500';
+            let icon = 'pending';
+            if (isWithDelivery) {
+              colorClass = 'border-indigo-500 text-indigo-500';
+              icon = 'delivery_dining';
+            } else if (isOnWay) {
+              colorClass = 'border-orange-500 text-orange-500';
+              icon = 'local_shipping';
+            }
+
+            return (
+              <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border ${colorClass} text-[10px] font-black uppercase tracking-wider bg-transparent`}>
+                <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>{icon}</span>
+                {t[sale.status!] || sale.status}
+              </span>
+            );
+          }
+
           return (
             <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-emerald-500 text-emerald-500 text-[10px] font-black uppercase tracking-wider bg-transparent'>
               <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>check_circle</span>
@@ -216,6 +244,9 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         mode: 'multiple' as const,
         options: [
           { label: t.completed, value: 'completed', icon: 'check_circle' },
+          { label: t.pending, value: 'pending', icon: 'pending' },
+          { label: t.with_delivery || 'With Delivery', value: 'with_delivery', icon: 'delivery_dining' },
+          { label: t.on_way || 'On Way', value: 'on_way', icon: 'local_shipping' },
           { label: t.cancelled, value: 'cancelled', icon: 'cancel' },
           { label: t.returns?.returned || 'Returned', value: 'returned', icon: 'assignment_return' },
         ],
