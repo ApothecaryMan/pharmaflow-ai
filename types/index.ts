@@ -816,6 +816,7 @@ export type CashTransactionType =
   | 'out'
   | 'closing'
   | 'return'
+  | 'card_return'
   | 'purchase'
   | 'purchase_return';
 

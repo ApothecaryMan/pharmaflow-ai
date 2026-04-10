@@ -118,6 +118,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   >(new Map());
   const [activeSubTab, setActiveSubTab] = useState<'items' | 'history'>('items'); // Replaces showHistory toggle
   const [expandedHistoryRecordId, setExpandedHistoryRecordId] = useState<string | null>(null);
+  const [orderToCancelId, setOrderToCancelId] = useState<string | null>(null);
 
   const selectedSale = useMemo(() => {
     return sales.find((s) => s.id === selectedSaleId);
@@ -139,6 +140,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       selectedSale &&
       selectedSale.status !== 'completed' &&
       selectedSale.status !== 'cancelled' &&
+      !selectedSale.hasReturns && // Prevent conflicting edits if part of the order was returned
       !!currentEmployeeId
     ); // Must be logged in
   }, [selectedSale, currentEmployeeId]);
@@ -467,11 +469,16 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
   const columns = useMemo(
     () => [
-      // Order daily number (ID)
-      columnHelper.accessor('customerCode', {
-        header: 'ID',
-        size: 70,
+      // Order Serial ID (Order Number)
+      columnHelper.accessor('serialId', {
+        header: t.orderId || 'Order #',
+        size: 90,
         meta: { align: 'start' },
+        cell: (info) => (
+          <span className='font-mono font-bold text-gray-900 dark:text-gray-100'>
+            {info.getValue() || info.row.original.id.slice(0, 8)}
+          </span>
+        ),
       }),
       // Time and Date
       columnHelper.accessor('date', {
@@ -479,25 +486,29 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         size: 120,
         meta: { align: 'center' },
       }),
-      // Customer name and code badge
+      // Customer Code
+      columnHelper.accessor('customerCode', {
+        header: t.customerCode || 'Client ID',
+        size: 100,
+        meta: { align: 'center' },
+        cell: (info) => (
+          <span className='font-mono font-bold text-blue-600 dark:text-blue-400 text-xs'>
+            {info.getValue() || '-'}
+          </span>
+        ),
+      }),
+      // Customer name
       columnHelper.accessor('customerName', {
         header: t.customer || 'Customer',
         size: 180,
-        meta: { flex: true, align: 'center' },
+        meta: { flex: true, align: 'start' },
         cell: (info) => {
           const name = info.getValue();
           const displayName = name === 'Guest Customer' ? t.guestCustomer || name : name;
           return (
-            <div className='leading-tight'>
-              <span className='font-bold text-gray-900 dark:text-gray-100 block mb-1'>
-                {displayName}
-              </span>
-              {info.row.original.customerCode && (
-                <span className='inline-block text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full font-mono font-bold leading-none border border-gray-200 dark:border-gray-700'>
-                  #{info.row.original.customerCode}
-                </span>
-              )}
-            </div>
+            <span className='font-bold text-gray-900 dark:text-gray-100'>
+              {displayName}
+            </span>
           );
         },
       }),
@@ -624,7 +635,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onUpdateSale(s.id, { status: 'cancelled' });
+                    setOrderToCancelId(s.id);
                   }}
                   className='p-1 text-gray-400 hover:text-red-600 transition-colors ml-1'
                   title={t.cancel || 'Cancel'}
@@ -661,6 +672,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   );
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
@@ -1405,5 +1417,44 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         </div>
       </div>
     </Modal>
+
+    {/* Cancel Confirmation Modal */}
+    {orderToCancelId && (
+      <Modal
+        isOpen={!!orderToCancelId}
+        onClose={() => setOrderToCancelId(null)}
+        title={t.cancel || 'Cancel Order'}
+        icon='warning'
+        size='sm'
+        zIndex={100}
+      >
+        <div className='p-2'>
+          <p className='text-gray-600 dark:text-gray-400 mb-6'>
+            {language === 'AR' 
+              ? 'هل أنت متأكد من إلغاء هذا الطلب؟ لا يمكن التراجع عن هذه العملية وسيتم إرجاع جميع المواد للمخزون.'
+              : 'Are you sure you want to cancel this order? This cannot be undone and all items will be returned to stock.'}
+          </p>
+          <div className='flex justify-end gap-3'>
+            <button
+              onClick={() => setOrderToCancelId(null)}
+              className='px-4 py-2 font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors'
+            >
+              {language === 'AR' ? 'تراجع' : 'No, Keep it'}
+            </button>
+            <button
+              onClick={() => {
+                onUpdateSale(orderToCancelId, { status: 'cancelled' });
+                setOrderToCancelId(null);
+              }}
+              className='px-4 py-2 font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2'
+            >
+              <span className='material-symbols-rounded text-sm'>block</span>
+              {t.cancel || 'Yes, Cancel'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )}
+    </>
   );
 };

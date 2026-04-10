@@ -21,6 +21,7 @@ import {
   printInvoice,
 } from './InvoiceTemplate';
 import { SaleDetailModal } from './SaleDetailModal';
+import { formatCurrency } from '../../utils/currency';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -103,18 +104,22 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         meta: { align: 'center' },
       },
       {
+        accessorKey: 'customerCode',
+        header: t.headers.code || 'Code',
+        cell: ({ getValue }) => (
+          <span className='font-mono font-bold text-blue-600 dark:text-blue-400 text-xs'>
+            {(getValue() as string) || '-'}
+          </span>
+        ),
+      },
+      {
         accessorKey: 'customerName',
         header: t.headers.customer,
         cell: ({ row }) => {
-          const sale = row.original;
+          const name = row.original.customerName;
           return (
-            <div>
-              <div className='font-medium text-gray-900 dark:text-gray-100 text-sm'>
-                {sale.customerName || 'Guest'}
-              </div>
-              {sale.customerCode && (
-                <div className='text-sm text-gray-700 dark:text-gray-300'>{sale.customerCode}</div>
-              )}
+            <div className='font-medium text-gray-900 dark:text-gray-100 text-sm'>
+              {name || 'Guest'}
             </div>
           );
         },
@@ -153,11 +158,11 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         cell: ({ row }) => {
           const sale = row.original;
           return (
-            <div className='font-bold text-gray-900 dark:text-gray-100 tabular-nums'>
-              ${sale.total.toFixed(2)}
+            <div className='font-bold text-gray-900 dark:text-gray-100 tabular-nums text-sm'>
+              {formatCurrency(sale.total)}
               {sale.deliveryFee && sale.deliveryFee > 0 && (
                 <div className='text-[10px] text-gray-400 font-normal tabular-nums'>
-                  +${sale.deliveryFee.toFixed(2)} delivery
+                  +{formatCurrency(sale.deliveryFee)} {t.delivery || 'delivery'}
                 </div>
               )}
             </div>

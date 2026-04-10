@@ -10,6 +10,7 @@ import { stockMovementService } from '../services/inventory/stockMovement/stockM
 import { transactionService } from '../services/transactions/transactionService';
 import { migrationService } from '../services/migration';
 import { restoreStockForCancelledSale } from '../services/salesHelpers';
+import { salesService } from '../services/sales/salesService';
 import * as stockOps from '../utils/stockOperations';
 import type { AppSettings } from '../services/settings/types';
 import type {
@@ -33,6 +34,7 @@ import { calculateLoyaltyPoints } from '../utils/loyaltyPoints';
 import { measurePerformance } from '../utils/monitoring';
 import { addTransactionToOpenShift } from '../utils/shiftHelpers'; // Deprecated - replaced by useShift context
 import { storage } from '../utils/storage';
+import { getShardKey } from '../utils/sharding';
 import { validateDrug, validateSaleData, validateStockAvailability } from '../utils/validation';
 import { useShift } from './useShift';
 
@@ -1196,6 +1198,13 @@ export function useEntityHandlers({
 
       // Handle order cancellation - return all items to batches
       if (updates.status === 'cancelled' && sale.status !== 'cancelled') {
+        // Block cancellation of completed deliveries - must use Return flow for them
+        // Walk-in sales are also 'completed', but we allow cancelling (voiding) them if necessary
+        if (sale.status === 'completed' && sale.saleType === 'delivery') {
+          error('Cannot cancel a completed delivery order. Please use the Return flow instead.');
+          return;
+        }
+
         if (!permissionsService.can('sale.cancel')) {
           error('Permission denied: Cannot cancel orders');
           return;
@@ -1250,11 +1259,28 @@ export function useEntityHandlers({
           console.error('[handleUpdateSale] Cancellation Persistence Error:', e);
         }
 
+        // --- SHIFT BALANCING: Add correction if it was a walk-in or paid sale ---
+        // Walk-in sales are always 'completed' and recorded in the shift balance.
+        // Delivery sales are only recorded in the shift balance when their status changes to 'completed'.
+        if (currentShift && (sale.saleType === 'walk-in' || sale.status === 'completed')) {
+           const type = sale.paymentMethod === 'visa' ? 'card_return' : 'return';
+           addTransaction(currentShift.id, {
+             id: Date.now().toString(),
+             shiftId: currentShift.id,
+             time: new Date().toISOString(),
+             type: type, 
+             amount: sale.total,
+             reason: `Cancellation of Sale #${sale.serialId || sale.id}`,
+             userId: employee?.name || 'System',
+             relatedSaleId: sale.serialId?.toString() || sale.id
+           });
+        }
+
         success(`Order #${saleId} cancelled and stock returned.`);
       }
 
       // Handle item modifications (for delivery orders)
-      if (updates.items && sale.saleType === 'delivery' && sale.status !== 'completed') {
+      if (updates.items && sale.saleType === 'delivery' && sale.status !== 'cancelled') {
         if (!permissionsService.can('sale.modify')) {
           error('Permission denied: Cannot modify orders');
           return;
@@ -1516,7 +1542,29 @@ export function useEntityHandlers({
         updatedAt: new Date().toISOString(),
       };
 
+      // --- SHIFT BALANCING: Log to shift when a delivery order is COMPLETED ---
+      // This is the cash-in point for delivery orders.
+      if (updates.status === 'completed' && sale.status !== 'completed' && sale.saleType === 'delivery') {
+        if (currentShift) {
+          addTransaction(currentShift.id, {
+            id: Date.now().toString(),
+            shiftId: currentShift.id,
+            time: new Date().toISOString(),
+            type: sale.paymentMethod === 'visa' ? 'card_sale' : 'sale',
+            amount: sale.total,
+            reason: `Delivery Completed #${sale.serialId || sale.id}`,
+            userId: employee?.name || 'System',
+            relatedSaleId: sale.serialId?.toString() || sale.id
+          });
+        }
+      }
+
       setSales((prev) => prev.map((s) => (s.id === saleId ? { ...s, ...finalUpdates } : s)));
+
+      // --- PERSISTENCE: Save modified/completed/cancelled sale to IndexedDB via salesService ---
+      salesService.update(saleId, finalUpdates).catch((e) => {
+        console.error('[handleUpdateSale] Failed to persist sale updates:', e);
+      });
     },
     [
       sales,
@@ -1546,6 +1594,16 @@ export function useEntityHandlers({
         if (!permissionsService.can('sale.refund')) {
           error('Permission denied: Cannot process returns');
           return false;
+        }
+
+        const userRole = permissionsService.getEffectiveRole();
+        if (userRole === 'pharmacist' && returnData.totalRefund > 1000) {
+           error('Permission denied: Pharmacists cannot refund more than 1000 EGP per transaction. Please request manager approval.');
+           return false;
+        }
+        if (userRole === 'cashier' && returnData.totalRefund > 500) {
+           error('Permission denied: Cashiers cannot refund more than 500 EGP per transaction.');
+           return false;
         }
 
         // 2. Validate Return Data
@@ -1598,17 +1656,37 @@ export function useEntityHandlers({
                   (itemReturnedQuantities[item.drugId] || 0) + item.quantityReturned;
               });
 
-              return {
+              const updatedSale = {
                 ...s,
                 hasReturns: true,
                 returnIds: [...existingReturns, returnData.id],
                 netTotal: s.total - totalReturned,
                 itemReturnedQuantities,
               };
+
+              // --- PERSISTENCE: Save updated sale to IndexedDB ---
+              salesService.update(returnData.saleId, {
+                hasReturns: updatedSale.hasReturns,
+                returnIds: updatedSale.returnIds,
+                netTotal: updatedSale.netTotal,
+                itemReturnedQuantities: updatedSale.itemReturnedQuantities
+              }).catch((e) => console.error('[handleProcessReturn] Failed to persist sale update:', e));
+
+              return updatedSale;
             }
             return s;
           })
         );
+
+        // --- PERSISTENCE: Save Return locally ---
+        try {
+          const returnShardKey = getShardKey(StorageKeys.RETURNS, returnData.date || new Date().toISOString());
+          const shardReturns = storage.get<Return[]>(returnShardKey, []);
+          shardReturns.push(returnWithBranch);
+          storage.set(returnShardKey, shardReturns);
+        } catch (e) {
+          console.error('[handleProcessReturn] Failed to persist return:', e);
+        }
 
         // Update Inventory State (Optimistic mirror)
         const returnedItemsMap = new Map(returnData.items.map(i => [i.drugId, i]));

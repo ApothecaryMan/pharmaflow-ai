@@ -148,6 +148,10 @@ export const ShiftProvider: React.FC<{ children: ReactNode }> = ({ children }) =
               updatedShift.cardSales = (updatedShift.cardSales || 0) + transaction.amount;
               // Card sales don't affect expected cash balance
               break;
+            case 'card_return':
+              updatedShift.cardSales = (updatedShift.cardSales || 0) - transaction.amount;
+              // Card returns don't affect expected cash balance
+              break;
             case 'return':
               updatedShift.returns = (updatedShift.returns || 0) + transaction.amount;
               updatedShift.expectedBalance -= transaction.amount;
