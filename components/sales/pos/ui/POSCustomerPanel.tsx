@@ -1,6 +1,7 @@
 import type React from 'react';
 import { SearchInput } from '../../../common/SearchInput';
 import { SegmentedControl } from '../../../common/SegmentedControl';
+import { SearchDropdown, type SearchDropdownColumn } from '../../../common/SearchDropdown';
 import { CARD_MD } from '../../../../utils/themeStyles';
 import { getLocationName } from '../../../../data/locations';
 import type { Customer, Language } from '../../../../types';
@@ -59,6 +60,43 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
       value: 'visa' as const,
       icon: 'credit_card',
       activeColor: 'blue',
+    },
+  ];
+
+  const customerColumns: SearchDropdownColumn<Customer>[] = [
+    {
+      header: t.code || 'ID',
+      render: (c) => (
+        <span className='text-xs font-mono font-bold text-gray-900 dark:text-gray-100'>
+          {c.code || `#${c.serialId}`}
+        </span>
+      ),
+      width: 'w-20',
+      className: 'justify-center text-center',
+    },
+    {
+      header: t.name || 'Name',
+      render: (c) => <span className='font-bold text-sm truncate'>{c.name}</span>,
+      width: 'w-48',
+    },
+    {
+      header: t.address || 'Address',
+      render: (c) => (
+        <span className='text-[11px] text-gray-500 dark:text-gray-400 line-clamp-1' title={c.streetAddress || ''}>
+          {c.streetAddress || '-'}
+        </span>
+      ),
+      className: 'flex-1',
+    },
+    {
+      header: t.phone || 'Phone',
+      render: (c) => (
+        <span className='text-xs text-gray-500 font-mono w-full text-center' dir='ltr'>
+          {c.phone}
+        </span>
+      ),
+      width: 'w-32',
+      className: 'justify-center text-center',
     },
   ];
 
@@ -164,40 +202,15 @@ export const POSCustomerPanel: React.FC<POSCustomerPanelProps> = ({
               color={color}
               className=''
             />
-            {/* Customer Dropdown */}
-            {showCustomerDropdown && filteredCustomers.length > 0 && (
-              <div className='absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-50 max-h-48 overflow-y-auto'>
-                {filteredCustomers.map((customer, index) => (
-                  <div
-                    key={customer.id}
-                    className={`px-3 py-2 cursor-pointer border-b border-gray-50 dark:border-gray-700 last:border-0 flex flex-col ${
-                      index === highlightedCustomerIndex
-                        ? 'bg-gray-50 dark:bg-blue-900/30'
-                        : 'hover:bg-gray-50 dark:hover:bg-gray-700'
-                    }`}
-                    onMouseDown={(e) => {
-                      e.preventDefault(); // Prevent input blur which would close dropdown
-                      handleCustomerSelect(customer);
-                    }}
-                    onMouseEnter={() => setHighlightedCustomerIndex(index)}
-                  >
-                    <span
-                      className={`text-sm font-bold ${
-                        index === highlightedCustomerIndex
-                          ? 'text-blue-700 dark:text-blue-300'
-                          : 'text-gray-800 dark:text-gray-200'
-                      }`}
-                    >
-                      {customer.name}
-                    </span>
-                    <div className='flex gap-2 text-xs text-gray-500' dir='ltr'>
-                      <span>{customer.phone}</span>
-                      {customer.code && <span>• {customer.code}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <SearchDropdown
+              isVisible={showCustomerDropdown && customerName.trim().length > 0}
+              results={filteredCustomers}
+              highlightedIndex={highlightedCustomerIndex}
+              onSelect={handleCustomerSelect}
+              columns={customerColumns}
+              className='left-0 right-0'
+              emptyMessage={t.noResults || 'No customers found'}
+            />
           </div>
 
           <div className='flex flex-col gap-2 min-w-[140px]'>
