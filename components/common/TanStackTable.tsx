@@ -1125,7 +1125,7 @@ export function TanStackTable<TData, TValue>({
                         return (
                           <td
                             key={cell.id}
-                            className={`${dense ? 'py-1.5' : 'py-3'} px-4 text-sm font-medium text-(--text-primary) align-middle border-b border-(--border-divider) group-last/row:border-b-0
+                            className={`${dense ? 'py-1 text-xs' : 'py-3 text-sm'} px-4 font-medium text-(--text-primary) align-middle border-b border-(--border-divider) group-last/row:border-b-0
                             ${meta.isFlex ? '' : 'whitespace-nowrap'} ${meta.isActionColumn ? 'action-col' : ''}`}
                             style={{
                               width: meta.isFlex ? 'auto' : (cell.column.columnDef.meta?.width || cell.column.getSize()),

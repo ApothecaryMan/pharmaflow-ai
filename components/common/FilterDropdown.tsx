@@ -30,6 +30,8 @@ export interface FilterDropdownProps<T> {
   floating?: boolean;
   /** If true, the arrow icon will be hidden. */
   hideArrow?: boolean;
+  /** If true, the dropdown is more compact (for tables). */
+  dense?: boolean;
   /** If true, hides the arrow automatically if the rendered text is long (string length > 4). */
   autoHideArrow?: boolean;
   /**
@@ -66,6 +68,7 @@ export function FilterDropdown<T>({
   hideArrow = false,
   autoHideArrow = false,
   onBackground = false,
+  dense = false,
 }: FilterDropdownProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -128,7 +131,7 @@ export function FilterDropdown<T>({
   const isSingle = items.length <= 1;
   const isTransparent = transparentIfSingle && isSingle;
   const isInput = variant === 'input';
-  const itemPaddingClasses = 'px-3 py-1';
+  const itemPaddingClasses = dense ? 'px-2 py-0.5' : 'px-3 py-1';
 
   // Design Tokens & Variable Inversion
   const bgClosed = onBackground
@@ -181,14 +184,14 @@ export function FilterDropdown<T>({
         <div
           className={`w-full flex items-center ${
             isInput
-              ? `justify-between ${onBackground ? 'px-3 py-[9px]' : itemPaddingClasses}`
+              ? `justify-between ${onBackground ? (dense ? 'px-2 py-1' : 'px-3 py-[9px]') : itemPaddingClasses}`
               : `justify-center items-center ${itemPaddingClasses}`
           }`}
-          style={isInput ? { minHeight: minHeight || (onBackground ? '42px' : '40px') } : {}}
+          style={isInput ? { minHeight: minHeight || (onBackground ? (dense ? '34px' : '42px') : (dense ? '32px' : '40px')) } : {}}
         >
           {isInput ? (
             <>
-               <div className={`flex-1 truncate text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors group-hover:text-primary-600 dark:group-hover:text-primary-400`}>
+               <div className={`flex-1 truncate ${dense ? 'text-xs' : 'text-sm'} font-medium text-gray-700 dark:text-gray-200 transition-colors group-hover:text-primary-600 dark:group-hover:text-primary-400`}>
                 {renderSelected(selectedItem)}
               </div>
               {!(
