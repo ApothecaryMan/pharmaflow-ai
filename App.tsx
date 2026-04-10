@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { storage } from './utils/storage';
 import { StorageKeys } from './config/storageKeys';
 import { branchService } from './services/branchService';
-import { Login } from './components/auth/Login';
+import { AuthPage } from './components/auth/AuthPage';
 import { Modal } from './components/common/Modal';
 import { MainLayout } from './components/layout/MainLayout';
 import { PageRouter } from './components/layout/PageRouter';
@@ -500,10 +500,9 @@ const App: React.FC = () => {
   // 8. Not Authenticated -> Show Login
   if (!authState.isAuthenticated) {
     return (
-      <Login
+      <AuthPage
         onLoginSuccess={handleLoginSuccess}
         language={language}
-        onViewChange={handleViewChange}
       />
     );
   }

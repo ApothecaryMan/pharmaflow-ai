@@ -179,6 +179,54 @@ export const authService = {
   },
 
   /**
+   * Sign up a new user using Supabase
+   */
+  signUp: async (username: string, email: string, password: string): Promise<{ success: boolean; message?: string }> => {
+    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+    if (!isSupabaseConfigured) {
+      return { success: false, message: 'Supabase is not configured. Local fallback does not support sign up yet.' };
+    }
+
+    try {
+      const { supabase } = await import('../../lib/supabase');
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+          }
+        }
+      });
+      if (error) throw error;
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Failed to sign up' };
+    }
+  },
+
+  /**
+   * Request password reset link via Supabase
+   */
+  resetPassword: async (email: string): Promise<{ success: boolean; message?: string }> => {
+    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+    if (!isSupabaseConfigured) {
+      return { success: false, message: 'Supabase is not configured.' };
+    }
+    
+    try {
+      const { supabase } = await import('../../lib/supabase');
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password',
+      });
+      if (error) throw error;
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Failed to send reset link' };
+    }
+  },
+
+  /**
    * Login function (Checks Dev credentials then Supabase or local Employees)
    */
   login: async (username: string, password: string): Promise<UserSession | null> => {

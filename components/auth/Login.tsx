@@ -239,7 +239,7 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                       validationErrors: { ...prev.validationErrors, username: undefined },
                     }));
                   }}
-                  className={`w-full bg-zinc-900 border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-1 focus:ring-green-500/20 placeholder:text-left`}
+                  className={`w-full bg-zinc-900 border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 placeholder:text-left cursor-text focus:bg-zinc-800/50`}
                   dir='ltr'
                 />
                 {state.validationErrors.username && (
@@ -271,14 +271,14 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                         validationErrors: { ...prev.validationErrors, password: undefined },
                       }));
                     }}
-                    className={`w-full bg-zinc-900 border ${state.validationErrors.password ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-1 focus:ring-green-500/20 pr-10 placeholder:text-left`}
+                    className={`w-full bg-zinc-900 border ${state.validationErrors.password ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 pr-10 placeholder:text-left cursor-text focus:bg-zinc-800/50`}
                     dir='ltr'
                   />
                   <button
                     type='button'
                     onClick={toggleShowPassword}
                     aria-label={state.showPassword ? 'Hide password' : 'Show password'}
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors focus:outline-hidden focus:text-green-500`}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors focus:outline-hidden focus:text-green-500 cursor-pointer`}
                   >
                     {state.showPassword ? (
                       <svg
@@ -352,15 +352,19 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                   {t.rememberMe}
                 </span>
               </button>
-              <span className='text-xs text-green-500 cursor-not-allowed opacity-50'>
+              <button
+                type='button'
+                  onClick={() => onViewChange?.('forgot-password')}
+                className='text-xs text-green-500 hover:text-green-400 focus:outline-hidden transition-all duration-200 cursor-pointer hover:opacity-70 hover:underline underline-offset-4'
+              >
                 {t.forgotPassword}
-              </span>
+              </button>
             </div>
 
             <button
               type='submit'
               disabled={state.isLoading}
-              className='w-full bg-green-600 hover:bg-green-500 disabled:bg-green-600/50 text-white font-medium py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 focus:outline-hidden focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 focus:ring-offset-zinc-950'
+              className='w-full bg-green-600 hover:bg-green-500 disabled:bg-green-600/50 text-white font-medium py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 focus:outline-hidden focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 focus:ring-offset-zinc-950 cursor-pointer'
             >
               {state.isLoading ? (
                 <>
@@ -393,6 +397,17 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
             )} */}
 
             <p className='text-center text-xs text-zinc-600 pt-2'>{t.authorizedUserNotice}</p>
+            
+            <div className='flex items-center justify-center gap-1 text-sm pt-4'>
+              <span className='text-zinc-500'>{(t as any).dontHaveAccount || "Don't have an account?"}</span>
+              <button
+                type='button'
+                onClick={() => onViewChange?.('signup')}
+                className='text-green-500 hover:text-green-400 font-medium focus:outline-hidden transition-all duration-200 cursor-pointer hover:opacity-70 hover:underline underline-offset-4'
+              >
+                {(t as any).signUpLink || 'Sign Up'}
+              </button>
+            </div>
           </form>
         )}
       </div>
