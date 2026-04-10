@@ -4,8 +4,9 @@ import { useSettings } from '../../context';
 import { type UserRole } from '../../config/permissions';
 import { permissionsService } from '../../services/auth/permissions';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
-import type { Return, Sale, Shift } from '../../types';
+import type { Customer, Return, Sale, Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { POSCustomerHistoryModal } from './pos/ui/POSCustomerHistoryModal';
 import { createSearchRegex } from '../../utils/searchUtils';
 import { CARD_BASE } from '../../utils/themeStyles';
 import { DatePicker, DateRangePicker } from '../common/DatePicker';
@@ -34,6 +35,7 @@ interface SalesHistoryProps {
   currentEmployeeId?: string;
   currentShift: Shift | null;
   navigationParams?: any;
+  customers: Customer[];
 }
 
 export const SalesHistory: React.FC<SalesHistoryProps> = ({
@@ -48,6 +50,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   currentShift,
   // @ts-ignore
   navigationParams,
+  customers = [],
 }) => {
   // Determine locale based on language
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
@@ -56,6 +59,8 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   const [endDate, setEndDate] = useState('');
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [selectedCust, setSelectedCust] = useState<Customer | null>(null);
+  const [isHistOpen, setIsHistOpen] = useState(false);
   const { textTransform } = useSettings();
 
   // Calculate daily refunds for the current employee (used for pharmacist limits)
@@ -95,22 +100,50 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
       {
         accessorKey: 'serialId',
         header: t.modal.id,
-        cell: ({ row }) => row.original.serialId || row.original.id,
+        cell: ({ row }) => (
+          <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>
+            {row.original.serialId || row.original.id.slice(0, 8)}
+          </span>
+        ),
         meta: { align: 'start' },
       },
       {
         accessorKey: 'date',
         header: t.headers.date,
         meta: { align: 'center' },
+        cell: ({ getValue }) => (
+          <span className='text-sm text-gray-700 dark:text-gray-300'>
+            {getValue() as string}
+          </span>
+        ),
       },
       {
         accessorKey: 'customerCode',
         header: t.headers.code || 'Code',
-        cell: ({ getValue }) => (
-          <span className='font-mono font-bold text-blue-600 dark:text-blue-400 text-xs'>
-            {(getValue() as string) || '-'}
-          </span>
-        ),
+        cell: ({ getValue }) => {
+          const code = getValue() as string;
+          const customer = customers.find(c => c.code === code);
+          const isClickable = !!customer;
+
+          return (
+            <span 
+              onClick={(e) => {
+                if (isClickable) {
+                  e.stopPropagation();
+                  setSelectedCust(customer);
+                  setIsHistOpen(true);
+                }
+              }}
+              className={`font-mono font-bold text-sm ${
+                isClickable 
+                  ? 'text-gray-900 dark:text-gray-100 cursor-pointer hover:opacity-70 transition-opacity' 
+                  : 'text-gray-400'
+              }`}
+            >
+              {code || '-'}
+            </span>
+          );
+        },
       },
       {
         accessorKey: 'customerName',
@@ -451,6 +484,17 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         onClose={() => setShowHelp(false)}
         helpContent={helpContent as any}
         color={color}
+        language={language}
+      />
+
+      {/* Customer History Modal */}
+      <POSCustomerHistoryModal
+        isOpen={isHistOpen}
+        onClose={() => setIsHistOpen(false)}
+        customer={selectedCust}
+        sales={sales}
+        color={color}
+        t={t}
         language={language}
       />
     </div>

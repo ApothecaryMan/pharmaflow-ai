@@ -173,6 +173,7 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'language',
       'currentShift',
       'navigationParams',
+      'customers',
     ],
     permission: 'sale.view_history',
   },

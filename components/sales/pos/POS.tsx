@@ -1054,6 +1054,11 @@ export const POS: React.FC<POSProps> = ({
           color={color}
           t={t}
           currentEmployeeId={currentEmployeeId}
+          customers={customers}
+          onViewCustomerHistory={(customer) => {
+            setSelectedCustomer(customer);
+            setIsHistoryModalOpen(true);
+          }}
         />
 
         {/* Customer History Modal */}

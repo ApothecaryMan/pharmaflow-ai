@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { batchService } from '../../../services/inventory/batchService';
 import {
   type CartItem,
+  type Customer,
   type Drug,
   type Employee,
   type Language,
@@ -76,6 +77,8 @@ export interface DeliveryOrdersModalProps {
   t: any;
   color?: string;
   currentEmployeeId?: string;
+  customers?: Customer[];
+  onViewCustomerHistory?: (customer: Customer) => void;
 }
 
 // Pending item change type
@@ -103,6 +106,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   language = 'EN',
   t,
   currentEmployeeId,
+  customers = [],
+  onViewCustomerHistory,
 }) => {
   const [activeTab, setActiveTab] = useState<DeliveryTab>('all');
   const { error: showToastError } = useAlert();
@@ -475,7 +480,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         size: 90,
         meta: { align: 'start' },
         cell: (info) => (
-          <span className='font-mono font-bold text-gray-900 dark:text-gray-100'>
+          <span className='font-mono font-bold text-sm text-gray-900 dark:text-gray-100'>
             {info.getValue() || info.row.original.id.slice(0, 8)}
           </span>
         ),
@@ -485,17 +490,40 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         header: t.time || 'Time',
         size: 120,
         meta: { align: 'center' },
+        cell: (info) => (
+          <span className='text-sm text-gray-700 dark:text-gray-300'>
+            {info.getValue() as string}
+          </span>
+        ),
       }),
       // Customer Code
       columnHelper.accessor('customerCode', {
         header: t.customerCode || 'Client ID',
         size: 100,
         meta: { align: 'center' },
-        cell: (info) => (
-          <span className='font-mono font-bold text-blue-600 dark:text-blue-400 text-xs'>
-            {info.getValue() || '-'}
-          </span>
-        ),
+        cell: (info) => {
+          const code = info.getValue() as string;
+          const customer = customers.find(c => c.code === code);
+          const isClickable = !!customer && !!onViewCustomerHistory;
+
+          return (
+            <span 
+              onClick={(e) => {
+                if (isClickable) {
+                  e.stopPropagation();
+                  onViewCustomerHistory(customer);
+                }
+              }}
+              className={`font-mono font-bold text-sm ${
+                isClickable 
+                  ? 'text-gray-900 dark:text-gray-100 cursor-pointer hover:opacity-70 transition-opacity' 
+                  : 'text-gray-400'
+              }`}
+            >
+              {code || '-'}
+            </span>
+          );
+        },
       }),
       // Customer name
       columnHelper.accessor('customerName', {
