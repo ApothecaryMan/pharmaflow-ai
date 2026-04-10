@@ -1,5 +1,5 @@
-import type React from 'react';
 import { formatCompactCurrencyParts } from '../../utils/currency';
+import { useSettings } from '../../context';
 
 /**
  * @fileoverview InsightTooltip Component
@@ -93,14 +93,17 @@ export const CurrencyValue: React.FC<{
   language?: string;
   isHeader?: boolean;
   isCurrency?: boolean;
-}> = ({ val, language, isHeader, isCurrency = true }) => {
+}> = ({ val, language: propLanguage, isHeader, isCurrency = true }) => {
+  const { language: settingsLanguage } = useSettings();
+  const currentLang = propLanguage || settingsLanguage;
+  
   if (typeof val !== 'number') return <>{val}</>;
   if (!isCurrency) return <>{val}</>;
 
   const { amount, symbol } = formatCompactCurrencyParts(
     val,
     'EGP',
-    language === 'AR' ? 'ar-EG' : 'en-US'
+    currentLang === 'AR' ? 'ar-EG' : 'en-US'
   );
 
   return (
@@ -130,18 +133,20 @@ export const InsightTooltip: React.FC<InsightTooltipProps> = ({
   return (
     <div className='space-y-4 py-2 min-w-[240px] max-w-[320px]'>
       {/* TIER 1: PRIMARY RESULT (EXECUTIVE SUMMARY) */}
-      <div className='px-1.5 border-b border-black/10 dark:border-white/10 pb-3'>
-        <p className='text-[11px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5'>
-          <span className={`material-symbols-rounded text-[14px] ${iconColorClass}`}>{icon}</span>
-          {title}
-        </p>
-        <div className='text-3xl font-black text-gray-900 dark:text-white flex items-center gap-2 tracking-tight'>
-          <CurrencyValue val={value} language={language} isHeader isCurrency={isCurrency} />
+      <div className='px-1.5 border-b border-black/10 dark:border-white/10 pb-3 flex justify-between items-end gap-4'>
+        <div className='flex flex-col gap-1'>
+          <p className='text-[11px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-widest flex items-center gap-1.5'>
+            <span className={`material-symbols-rounded text-[14px] ${iconColorClass}`}>{icon}</span>
+            {title}
+          </p>
           {valueLabel && (
             <span className='text-sm text-gray-400 dark:text-zinc-500 font-medium'>
               {valueLabel}
             </span>
           )}
+        </div>
+        <div className='text-3xl font-black text-gray-900 dark:text-white flex items-center gap-2 tracking-tight'>
+          <CurrencyValue val={value} language={language} isHeader isCurrency={isCurrency} />
         </div>
       </div>
 
