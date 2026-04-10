@@ -270,7 +270,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         },
       },
     ],
-    [t, textTransform]
+    [t, textTransform, customers]
   );
 
   const filterableColumns = React.useMemo(

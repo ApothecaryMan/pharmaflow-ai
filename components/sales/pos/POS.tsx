@@ -1008,7 +1008,6 @@ export const POS: React.FC<POSProps> = ({
                 setViewingDrugTab('overview'); // Reset tab on close
               }}
               size='6xl'
-              zIndex={50}
               title={t.productDetails}
               icon='info'
               tabs={detailTabs}
