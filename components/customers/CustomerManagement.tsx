@@ -14,6 +14,10 @@ import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartEmailInput, SmartPhoneInput, useSmartDirection } from '../common/SmartInputs';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
+import { authService } from '../../services/auth/authService';
+import { Switch } from '../common/Switch';
+import { useSettings } from '../../context';
+import { branchService } from '../../services/branchService';
 
 interface CustomerManagementProps {
   customers: Customer[];
@@ -42,6 +46,14 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const { activeBranchId } = useData();
+  const { theme: currentTheme } = useSettings();
+  const [showAllBranches, setShowAllBranches] = useState(false);
+  
+  const branches = useMemo(() => branchService.getAll(), []);
+  
+  const currentUser = authService.getCurrentUserSync();
+  const isSuperAdmin =
+    currentUser?.username === import.meta.env.VITE_SUPER_USER || permissionsService.isOrgAdmin();
   const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -287,9 +299,31 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     return null;
   };
 
+  const filteredCustomers = useMemo(() => {
+    if (showAllBranches) return customers;
+    return customers.filter((c) => c.branchId === activeBranchId);
+  }, [customers, showAllBranches, activeBranchId]);
+
   // Define Columns for TanStackTable
   const columns = useMemo<ColumnDef<Customer>[]>(
     () => [
+      {
+        accessorKey: 'branchId',
+        header: t.headers?.branch || 'Branch',
+        meta: { width: 150, align: 'start' },
+        cell: (info) => {
+          const branchId = info.getValue() as string;
+          const branch = branches.find((b) => b.id === branchId);
+          return (
+            <div className='flex items-center gap-2'>
+              <span className='material-symbols-rounded text-gray-400 text-sm'>store</span>
+              <span className='text-xs font-medium text-gray-600 dark:text-gray-400'>
+                {branch?.name || branchId}
+              </span>
+            </div>
+          );
+        },
+      },
       {
         accessorKey: 'serialId',
         header: '#',
@@ -434,8 +468,13 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         },
       },
     ],
-    [language, t, color, onDeleteCustomer, handleOpenEdit]
+    [language, t, color, onDeleteCustomer, handleOpenEdit, branches]
   );
+
+  const tableColumns = useMemo(() => {
+    if (showAllBranches) return columns;
+    return columns.filter(col => (col as any).accessorKey !== 'branchId');
+  }, [columns, showAllBranches]);
 
   // Address Form Section Component
   const renderAddressForm = () => (
@@ -749,6 +788,20 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             </button>
           )}
 
+          {isSuperAdmin && (
+            <label className='flex items-center gap-3 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'>
+              <span className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider select-none'>
+                {t.globalView}
+              </span>
+              <Switch
+                checked={showAllBranches}
+                onChange={setShowAllBranches}
+                theme={currentTheme.name.toLowerCase()}
+                activeColor={currentTheme.hex}
+              />
+            </label>
+          )}
+
           <SegmentedControl
             value={mode}
             onChange={(val) => {
@@ -786,8 +839,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         <>
           {/* Table Card */}
           <TanStackTable
-            data={customers}
-            columns={columns}
+            data={filteredCustomers}
+            columns={tableColumns}
             onRowContextMenu={handleContextMenu}
             onRowLongPress={handleLongPress}
             tableId='customers_table'

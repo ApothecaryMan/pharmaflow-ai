@@ -34,6 +34,7 @@ export const createSalesService = (): SalesService => ({
     const all = loadActiveShards();
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+    if (branchId === 'all') return all;
     return all.filter((s) => s.branchId === effectiveBranchId);
   },
 

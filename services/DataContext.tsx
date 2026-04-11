@@ -227,7 +227,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
             purchaseService.getAll(finalBranchId),
             returnService.getAllPurchaseReturns(finalBranchId),
             returnService.getAllSalesReturns(finalBranchId),
-            customerService.getAll(finalBranchId),
+            customerService.getAll('all'),
             employeeService.getAll(finalBranchId),
             batchService.getAllBatches(finalBranchId),
           ]),
@@ -541,12 +541,12 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       const targetBranchId = branchId || activeBranchId;
       const [inv, sal, sup, pur, pRet, ret, cust, emp] = await Promise.all([
         inventoryService.getAll(targetBranchId),
-        salesService.getAll(targetBranchId),
+        salesService.getAll('all'),
         supplierService.getAll(targetBranchId),
         purchaseService.getAll(targetBranchId),
         returnService.getAllPurchaseReturns(targetBranchId),
         returnService.getAllSalesReturns(targetBranchId),
-        customerService.getAll(targetBranchId),
+        customerService.getAll('all'),
         employeeService.getAll(targetBranchId),
       ]);
       setRawInventory(inv);

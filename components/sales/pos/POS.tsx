@@ -156,6 +156,7 @@ export const POS: React.FC<POSProps> = ({
   const [viewingDrug, setViewingDrug] = useState<Drug | null>(null);
   const [viewingDrugTab, setViewingDrugTab] = useState<'overview' | 'branches' | 'analytics'>('overview');
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
   const [isClosedTabsModalOpen, setIsClosedTabsModalOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
@@ -1055,7 +1056,8 @@ export const POS: React.FC<POSProps> = ({
           currentEmployeeId={currentEmployeeId}
           customers={customers}
           onViewCustomerHistory={(customer) => {
-            setSelectedCustomer(customer);
+            console.log('[POS] Opening customer history for:', customer.name);
+            setHistoryCustomer(customer);
             setIsHistoryModalOpen(true);
           }}
         />
@@ -1063,8 +1065,11 @@ export const POS: React.FC<POSProps> = ({
         {/* Customer History Modal */}
         <POSCustomerHistoryModal
           isOpen={isHistoryModalOpen}
-          onClose={() => setIsHistoryModalOpen(false)}
-          customer={selectedCustomer}
+          onClose={() => {
+            setIsHistoryModalOpen(false);
+            setHistoryCustomer(null);
+          }}
+          customer={historyCustomer}
           sales={sales}
           color={color}
           t={t}
@@ -1074,8 +1079,8 @@ export const POS: React.FC<POSProps> = ({
             if (drug) {
               const group = inventory.filter(d => d.name === drug.name && d.dosageForm === drug.dosageForm);
               addGroupToCart(group);
-              if (selectedCustomer) {
-                handleCustomerSelect(selectedCustomer);
+              if (historyCustomer) {
+                handleCustomerSelect(historyCustomer);
               }
 
               success(t.itemAdded || 'Item added to cart');

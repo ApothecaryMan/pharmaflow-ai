@@ -717,7 +717,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         meta: { align: 'center' },
         cell: (info) => {
           const code = info.getValue() as string;
-          const customer = customers.find(c => c.code === code);
+          // Robust lookup: check both custom code and system serial ID
+          const customer = customers.find(c => c.code === code || c.serialId === code);
           const isClickable = !!customer && !!onViewCustomerHistory;
 
           return (
@@ -728,11 +729,12 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   onViewCustomerHistory(customer);
                 }
               }}
-              className={`font-mono font-bold text-sm ${
+              className={`font-mono font-bold text-sm select-none ${
                 isClickable 
-                  ? 'text-gray-900 dark:text-gray-100 cursor-pointer hover:opacity-70 transition-opacity' 
+                  ? 'text-primary-600 dark:text-primary-400 cursor-pointer hover:underline decoration-primary-300 dark:decoration-primary-700 underline-offset-2 transition-all active:scale-95' 
                   : 'text-gray-700 dark:text-gray-300'
               }`}
+              title={isClickable ? t.viewCustomerHistory || 'View Customer History' : undefined}
             >
               {code || '-'}
             </span>

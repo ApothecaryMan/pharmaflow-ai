@@ -98,6 +98,8 @@ const getRawAll = async (): Promise<Customer[]> => {
 export const createCustomerService = (): CustomerService => ({
   getAll: async (branchId?: string): Promise<Customer[]> => {
     const all = await getRawAll();
+    if (branchId === 'all') return all;
+    
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     return all.filter((c) => c.branchId === effectiveBranchId);

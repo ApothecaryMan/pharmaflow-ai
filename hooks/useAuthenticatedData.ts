@@ -31,8 +31,10 @@ export const useAuthenticatedData = ({
   // 2. Customer Enrichment (Loyalty/Sales stats)
   const enrichedCustomers = useMemo(() => {
     return customers.map((customer) => {
-      const customerSales = sales.filter((s) => s.customerCode === customer.code);
-      const totalSpent = customerSales.reduce((sum, s) => sum + s.total, 0);
+      const customerSales = sales.filter(
+        (s) => s.customerCode === customer.code && s.branchId === customer.branchId
+      );
+      const totalPurchases = customerSales.reduce((sum, s) => sum + s.total, 0);
       const lastVisit =
         customerSales.length > 0
           ? Math.max(...customerSales.map((s) => new Date(s.date).getTime()))
@@ -40,7 +42,7 @@ export const useAuthenticatedData = ({
 
       return {
         ...customer,
-        totalSpent,
+        totalPurchases,
         lastVisit: lastVisit ? new Date(lastVisit).toISOString() : null,
         visitCount: customerSales.length,
       };
