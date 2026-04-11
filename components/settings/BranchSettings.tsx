@@ -115,6 +115,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
   const [employeeView, setEmployeeView] = useState<'all' | 'selected'>('all');
   const [modalView, setModalView] = useState<'general' | 'employees'>('general');
+  const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -147,6 +148,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
     setModalView('general');
     setEmployeeView('all');
     setEmployeeSearchTerm('');
+    setError(null);
     setIsModalOpen(true);
   };
 
@@ -196,8 +198,9 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       setIsModalOpen(false);
       await loadData();
       await refreshAll();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to save branch:", err);
+      setError(err.message || "Failed to save branch");
     } finally {
       setIsSubmitting(false);
     }
@@ -438,6 +441,13 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       >
         <div className="space-y-6 min-h-[400px] py-2">
           {modalView === 'general' ? renderGeneralView() : renderEmployeesView()}
+          
+          {error && (
+            <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2 mt-4 animate-shake">
+              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>error</span>
+              {error}
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800/50 mt-6">

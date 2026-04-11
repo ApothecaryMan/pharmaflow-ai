@@ -20,6 +20,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
   const [branchName, setBranchName] = useState('');
   const [branchCode, setBranchCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize with the current theme from props or default to first available
   const [selectedTheme, setSelectedTheme] = useState(
@@ -66,8 +67,9 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
       });
       
       onComplete();
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to setup branch:", e);
+      setError(e.message || "Failed to setup branch");
       setIsLoading(false);
     }
   };
@@ -181,7 +183,12 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
             </p>
           </div>
 
-
+          {error && (
+            <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 text-sm font-medium flex items-center gap-3">
+              <span className="material-symbols-rounded">error</span>
+              {error}
+            </div>
+          )}
 
           <button
             type="submit"

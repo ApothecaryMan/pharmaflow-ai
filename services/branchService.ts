@@ -60,6 +60,15 @@ export const branchService = {
    */
   create(data: Omit<Branch, 'id' | 'createdAt' | 'updatedAt'>): Branch {
     const branches = this.getAll();
+    
+    // Validate unique code per organization
+    const duplicate = branches.find(
+      (b) => b.orgId === data.orgId && b.code.toLowerCase() === data.code.toLowerCase()
+    );
+    if (duplicate) {
+      throw new Error(`كود الفرع "${data.code}" مستخدم بالفعل في هذه الشركة. يرجى اختيار كود آخر.`);
+    }
+
     const now = new Date().toISOString();
     
     const newBranch: Branch = {
@@ -85,8 +94,21 @@ export const branchService = {
       throw new Error(`Branch with ID ${id} not found`);
     }
 
+    const currentBranch = branches[index];
+
+    // Validate unique code if it's being updated
+    if (data.code && data.code.toLowerCase() !== currentBranch.code.toLowerCase()) {
+      const orgId = data.orgId || currentBranch.orgId;
+      const duplicate = branches.find(
+        (b) => b.id !== id && b.orgId === orgId && b.code.toLowerCase() === data.code?.toLowerCase()
+      );
+      if (duplicate) {
+        throw new Error(`كود الفرع "${data.code}" مستخدم بالفعل في هذه الشركة.`);
+      }
+    }
+
     const updatedBranch: Branch = {
-      ...branches[index],
+      ...currentBranch,
       ...data,
       updatedAt: new Date().toISOString(),
     };
