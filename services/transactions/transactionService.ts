@@ -174,7 +174,7 @@ export const transactionService = {
     returnData: {
       id: string;
       saleId: string;
-      items: { drugId: string; quantityReturned: number; isUnit?: boolean }[];
+      items: { drugId: string; quantityReturned: number; isUnit?: boolean; refundAmount?: number }[];
       totalRefund: number;
       date: string;
     },
@@ -185,19 +185,38 @@ export const transactionService = {
   ): Promise<{ success: boolean; error?: string }> {
     const stockMutations: { id: string; quantity: number }[] = [];
     const movementEntries: Omit<StockMovement, 'id' | 'timestamp'>[] = [];
+    // Collect batch return operations to execute AFTER validation
+    const batchReturnOps: { allocations: any[]; drugId: string }[] = [];
     
     try {
-      // 1. Validate Return Quantities & Prepare Inventory Mutations
+      // --- PHASE 1: VALIDATE ALL ITEMS (no side effects) ---
+      
+      // BUG-R4: Validate cumulative refund doesn't exceed remaining sale balance
+      const previouslyRefunded = sale.netTotal !== undefined ? (sale.total - sale.netTotal) : 0;
+      const remainingBalance = sale.total - previouslyRefunded;
+      if (returnData.totalRefund > remainingBalance + 0.01) { // +0.01 for floating point tolerance
+        return {
+          success: false,
+          error: `Refund amount (${returnData.totalRefund.toFixed(2)}) exceeds remaining sale balance (${remainingBalance.toFixed(2)})`,
+        };
+      }
+
       for (const returnedItem of returnData.items) {
         const drug = inventory.find((d) => d.id === returnedItem.drugId);
-        const saleItem = sale.items.find((i) => i.id === returnedItem.drugId);
+        // BUG-R2: Match BOTH drugId AND isUnit to find the correct sale line item
+        const saleItem = sale.items.find(
+          (i) => i.id === returnedItem.drugId && (!!i.isUnit === !!returnedItem.isUnit)
+        ) || sale.items.find((i) => i.id === returnedItem.drugId); // Fallback to any match
 
         if (!saleItem) {
           return { success: false, error: `Item ${returnedItem.drugId} not found in original sale` };
         }
 
         // BUG-006: Validate return quantity doesn't exceed what's returnable
-        const alreadyReturned = sale.itemReturnedQuantities?.[returnedItem.drugId] || 0;
+        // Use a composite key that considers isUnit for accurate tracking
+        const returnKey = returnedItem.isUnit ? `${returnedItem.drugId}_unit` : returnedItem.drugId;
+        const alreadyReturned = sale.itemReturnedQuantities?.[returnKey] 
+          || sale.itemReturnedQuantities?.[returnedItem.drugId] || 0;
         const maxReturnable = saleItem.quantity - alreadyReturned;
         if (returnedItem.quantityReturned > maxReturnable) {
           return {
@@ -224,16 +243,23 @@ export const transactionService = {
           status: 'approved',
         });
 
-        // 2. Return to Batches (LocalStorage - Immediate)
+        // BUG-R1: Collect batch operations, don't execute yet
         if (saleItem?.batchAllocations) {
-          await batchService.returnStock(saleItem.batchAllocations, returnedItem.drugId, true);
+          batchReturnOps.push({ allocations: saleItem.batchAllocations, drugId: returnedItem.drugId });
         }
       }
 
-      // 3. Update Inventory in IndexedDB
+      // --- PHASE 2: EXECUTE ALL OPERATIONS (after validation passed) ---
+
+      // 2a. Return to Batches (LocalStorage)
+      for (const op of batchReturnOps) {
+        await batchService.returnStock(op.allocations, op.drugId, true);
+      }
+
+      // 2b. Update Inventory in IndexedDB
       await inventoryService.updateStockBulk(stockMutations, true);
 
-      // 4. Log Movements in LocalStorage
+      // 2c. Log Movements in LocalStorage
       await stockMovementService.logMovementsBulk(movementEntries, true);
 
       auditService.log('sale.return', {

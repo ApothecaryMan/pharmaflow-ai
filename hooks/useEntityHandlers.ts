@@ -582,7 +582,11 @@ export function useEntityHandlers({
 
       for (const purchasedItem of purchase.items) {
         const sourceDrug = currentInventory.find((d) => d.id === purchasedItem.drugId);
-        if (!sourceDrug) continue;
+        if (!sourceDrug) {
+          // BUG-P5: Log warning instead of silently skipping
+          console.warn(`[Purchase] Item ${purchasedItem.drugId} (${purchasedItem.name}) not found in inventory — skipped during stock update`);
+          continue;
+        }
 
         // BUG-008: Validate received quantity is reasonable (prevents inflation)
         if (purchasedItem.quantity <= 0) {
@@ -749,6 +753,12 @@ export function useEntityHandlers({
         return;
       }
 
+      // BUG-P1: Guard against re-approving an already completed purchase (double stock)
+      if (purchase.status === 'completed') {
+        error('This purchase has already been approved and received.');
+        return;
+      }
+
       // 0. Shift Check for Cash Purchases
       if (purchase.paymentType === 'cash' && !currentShift) {
         error('Shift must be open to process cash purchase');
@@ -822,9 +832,15 @@ export function useEntityHandlers({
         error('Permission denied: Cannot reject purchases');
         return;
       }
-      setPurchases((prev) =>
-        prev.map((p) => (p.id === purchaseId ? { ...p, status: 'rejected' } : p))
-      );
+      setPurchases((prev) => {
+        const p = prev.find((p) => p.id === purchaseId);
+        // BUG-P4: Block rejection of completed purchases (stock already added, no reversal)
+        if (p?.status === 'completed') {
+          error('Cannot reject a completed purchase. Use Purchase Returns to reverse stock.');
+          return prev;
+        }
+        return prev.map((p) => (p.id === purchaseId ? { ...p, status: 'rejected' } : p));
+      });
       info('Purchase Order Rejected');
       auditService.log('purchase.reject', {
         userId: currentEmployeeId,
@@ -843,6 +859,36 @@ export function useEntityHandlers({
       ) {
         error('Permission denied: Cannot create purchase returns');
         return;
+      }
+
+      // BUG-P3: Require open shift for cash purchase returns (same as cash sales returns)
+      const originalPurchase = purchases.find((p) => p.id === returnData.purchaseId);
+      if (originalPurchase?.paymentType === 'cash' && !currentShift) {
+        error('Shift must be open to process cash purchase return');
+        return;
+      }
+
+      // BUG-P2: Validate return quantities against original purchase
+      if (originalPurchase) {
+        for (const returnItem of returnData.items) {
+          const purchaseItem = originalPurchase.items.find((i) => i.drugId === returnItem.drugId);
+          if (!purchaseItem) {
+            error(`Item ${returnItem.name || returnItem.drugId} not found in original purchase`);
+            return;
+          }
+          // Sum already-returned qty from all previous returns
+          const alreadyReturned = purchaseReturns
+            .filter((r) => r.purchaseId === returnData.purchaseId)
+            .reduce((sum, r) => {
+              const ri = r.items.find((i) => i.drugId === returnItem.drugId);
+              return sum + (ri?.quantityReturned || 0);
+            }, 0);
+          const maxReturnable = purchaseItem.quantity - alreadyReturned;
+          if (returnItem.quantityReturned > maxReturnable) {
+            error(`Cannot return ${returnItem.quantityReturned} of ${returnItem.name}. Max returnable: ${maxReturnable}`);
+            return;
+          }
+        }
       }
 
       setPurchaseReturns((prev) => [{ ...returnData, branchId: activeBranchId }, ...prev]);
@@ -884,7 +930,6 @@ export function useEntityHandlers({
         })
       );
       // Record Shift Transaction if original purchase was cash
-      const originalPurchase = purchases.find((p) => p.id === returnData.purchaseId);
       if (originalPurchase?.paymentType === 'cash' && currentShift) {
         addTransaction(currentShift.id, {
           id: idGenerator.generate('transactions', activeBranchId),
@@ -910,6 +955,7 @@ export function useEntityHandlers({
     },
     [
       purchases,
+      purchaseReturns,
       setPurchaseReturns,
       setInventory,
       success,
@@ -1652,19 +1698,23 @@ export function useEntityHandlers({
           prev.map((s) => {
             if (s.id === returnData.saleId) {
               const existingReturns = s.returnIds || [];
-              const totalReturned = (s.netTotal !== undefined ? s.total - s.netTotal : 0) + returnData.totalRefund;
+              // BUG-R5: netTotal = sale.total - cumulative refunds (simple and correct)
+              const cumulativeRefund = (s.total - (s.netTotal ?? s.total)) + returnData.totalRefund;
+              const updatedNetTotal = s.total - cumulativeRefund;
               
               const itemReturnedQuantities = { ...(s.itemReturnedQuantities || {}) };
               returnData.items.forEach((item) => {
-                itemReturnedQuantities[item.drugId] =
-                  (itemReturnedQuantities[item.drugId] || 0) + item.quantityReturned;
+                // BUG-R6: Use composite key for unit items to avoid pack/unit collision
+                const returnKey = item.isUnit ? `${item.drugId}_unit` : item.drugId;
+                itemReturnedQuantities[returnKey] =
+                  (itemReturnedQuantities[returnKey] || 0) + item.quantityReturned;
               });
 
               const updatedSale = {
                 ...s,
                 hasReturns: true,
                 returnIds: [...existingReturns, returnData.id],
-                netTotal: s.total - totalReturned,
+                netTotal: updatedNetTotal,
                 itemReturnedQuantities,
               };
 
@@ -1720,7 +1770,8 @@ export function useEntityHandlers({
             branchId: activeBranchId,
             shiftId: currentShift.id,
             time: new Date().toISOString(),
-            type: 'return',
+            // BUG-R3: Use card_return for card/visa sales so shift balance splits correctly
+            type: (sale.paymentMethod === 'visa' || sale.paymentMethod === 'credit') ? 'card_return' : 'return',
             amount: returnData.totalRefund,
             reason: `Return for Sale #${sale.serialId}`,
             userId: employee?.name || 'System',

@@ -56,9 +56,10 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
   // Get available items for return (items that haven't been fully returned yet)
   const availableItems = useMemo(() => {
     return sale.items
-      .map((item, index) => {
-        // Create a unique key for this line item (combines drugId + index for uniqueness)
-        const lineKey = `${item.id}_${index}`;
+      .map((item) => {
+        // BUG-R6: Use stable composite key (drugId + mode) instead of fragile array index
+        const lineKey = item.isUnit ? `${item.id}_unit` : `${item.id}_pack`;
+        // Check both new composite key and legacy plain drugId for backward compatibility
         const returnedQty =
           sale.itemReturnedQuantities?.[lineKey] || sale.itemReturnedQuantities?.[item.id] || 0;
         const availableQty = item.quantity - returnedQty;
