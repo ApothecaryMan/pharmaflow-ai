@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Sale, Return, Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
+import { formatCurrency } from '../../utils/currency';
 import { permissionsService } from '../../services/auth/permissions';
 import { Modal } from '../common/Modal';
 import { MaterialTabs } from '../common/MaterialTabs';
@@ -96,7 +97,7 @@ const ModificationItem: React.FC<{
   const colorClass = typeColors[mod.type] || typeColors.default;
 
   return (
-    <div className='text-[11px] text-gray-600 dark:text-gray-400 flex items-center justify-between bg-gray-50 dark:bg-white/[0.03] px-2.5 py-1.5 rounded-xl border border-gray-100 dark:border-white/5' dir='ltr'>
+    <div className='text-[11px] text-gray-600 dark:text-gray-400 flex items-center justify-between bg-gray-50 dark:bg-white/[0.03] px-2.5 py-1.5 rounded-xl border border-gray-100 dark:border-white/5'>
       <div className='flex items-center gap-2.5 overflow-hidden'>
         <span className={`material-symbols-rounded text-[16px] shrink-0 ${colorClass}`}>{icon}</span>
         <span className='font-bold text-gray-900 dark:text-gray-200 truncate max-w-[140px]'>
@@ -254,7 +255,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                                   <p className='font-bold truncate text-[13px]'>{getDisplayName({ name: g.name, dosageForm: g.dosageForm }, textTransform)}</p>
                                   {!permissionsService.can('sale.view_assigned_only') && (
                                     <div className='text-[10px] text-gray-400 flex items-center gap-1.5 mt-0.5'>
-                                      <span>${g.itemBasePrice.toFixed(2)}</span>
+                                      <span>{formatCurrency(g.itemBasePrice)}</span>
                                       {hasDisc && <span className='px-1 rounded bg-green-500/10 text-green-600 font-black text-[9px]'>-{disc}%</span>}
                                     </div>
                                   )}
@@ -269,8 +270,8 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                                 )}
                                 {!isFullRet && (
                                   <div className='flex flex-col items-end leading-tight'>
-                                    <span className='font-bold'>${g.totalPrice.toFixed(2)}</span>
-                                    {hasDisc && <span className='text-[9px] text-gray-400 line-through opacity-60'>${g.originalPrice.toFixed(2)}</span>}
+                                    <span className='font-bold'>{formatCurrency(g.totalPrice)}</span>
+                                    {hasDisc && <span className='text-[9px] text-gray-400 line-through opacity-60'>{formatCurrency(g.originalPrice)}</span>}
                                   </div>
                                 )}
                               </div>
@@ -286,7 +287,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                   {sale.subtotal !== undefined && sale.subtotal !== sale.total && !permissionsService.can('sale.view_assigned_only') && (
                     <div className='flex justify-between items-center text-[13px] text-gray-500 px-1'>
                       <div className='flex items-center gap-2'><span className='material-symbols-rounded text-base opacity-40'>payments</span><span>{t.modal.subtotal}</span></div>
-                      <span className='font-medium'>${sale.subtotal.toFixed(2)}</span>
+                      <span className='font-medium'>{formatCurrency(sale.subtotal)}</span>
                     </div>
                   )}
                   {(() => {
@@ -296,14 +297,14 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                     if (!hasDel && !hasSav) return null;
                     return (
                       <div className='flex items-stretch gap-1'>
-                        {hasDel && <StatCapsule label={t.pos?.deliveryOrder || t.deliveryFee || 'Delivery'} value={`+$${sale.deliveryFee!.toFixed(2)}`} icon='delivery_dining' side={hasSav ? 'start' : 'full'} />}
-                        {hasSav && <StatCapsule label={language === 'AR' ? 'إجمالي الخصم' : 'Savings'} value={`-$${sav.toFixed(2)}`} icon='savings' variant='success' side={hasDel ? 'end' : 'full'} />}
+                        {hasDel && <StatCapsule label={t.pos?.deliveryOrder || t.deliveryFee || 'Delivery'} value={`+${formatCurrency(sale.deliveryFee!)}`} icon='delivery_dining' side={hasSav ? 'start' : 'full'} />}
+                        {hasSav && <StatCapsule label={language === 'AR' ? 'إجمالي الخصم' : 'Savings'} value={`-${formatCurrency(sav)}`} icon='savings' variant='success' side={hasDel ? 'end' : 'full'} />}
                       </div>
                     );
                   })()}
                   <div className={`flex justify-between items-center py-4 px-4 bg-gray-100/50 dark:bg-white/[0.03] rounded-2xl border ${bdr}`}>
                     <span className='font-bold text-[15px]'>{language === 'AR' ? 'الإجمالي النهائي' : t.modal.total}</span>
-                    <span className='text-2xl font-black tabular-nums tracking-tight'>${sale.total.toFixed(2)}</span>
+                    <span className='text-2xl font-black tabular-nums tracking-tight'>{formatCurrency(sale.total)}</span>
                   </div>
                 </div>
               </>

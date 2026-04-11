@@ -12,14 +12,20 @@ export const formatCurrency = (
   // 2. Handle EGP specific formatting (L.E vs ج.م)
 
   if (currency === 'EGP') {
-    // Force English numerals by using 'en-US' for the number formatting
     const formatter = new Intl.NumberFormat('en-US', {
       style: 'decimal',
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     });
 
-    return isArabic ? `${formatter.format(amount)} ج.م` : `${formatter.format(amount)} L.E`;
+    const formattedAmount = formatter.format(amount);
+    
+    // Use Unicode BiDi controls to ensure correct visual order [Number] [Space] [Symbol]
+    // \u200E is LRM (Left-to-Right Mark) to isolate the number and space
+    // \u00A0 is NBSP (Non-breaking space)
+    return isArabic 
+      ? `\u200E${formattedAmount}\u00A0ج.م\u200E` 
+      : `\u200E${formattedAmount}\u00A0L.E\u200E`;
   }
 
   return new Intl.NumberFormat(targetLocale, {
@@ -106,7 +112,10 @@ export const formatCompactCurrency = (
   });
 
   if (currency === 'EGP') {
-    return isArabic ? `${formatter.format(amount)} ج.م` : `${formatter.format(amount)} L.E`;
+    const formattedAmount = formatter.format(amount);
+    return isArabic 
+      ? `\u200E${formattedAmount}\u00A0ج.م\u200E` 
+      : `\u200E${formattedAmount}\u00A0L.E\u200E`;
   }
 
   return new Intl.NumberFormat(locale || (isArabic ? 'ar-EG' : 'en-US'), {
