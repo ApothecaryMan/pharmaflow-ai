@@ -46,11 +46,20 @@ export const validateSaleData = (saleData: SaleData): ValidationResult => {
     return { success: false, message: 'Cart is empty' };
   }
 
-  if (saleData.total < 0) {
-    return { success: false, message: 'Invalid total amount' };
+  if (saleData.total <= 0) {
+    return { success: false, message: 'Sale total must be greater than zero' };
   }
 
-  // Basic validation passed
+  // Validate individual item quantities
+  for (const item of saleData.items) {
+    if (!item.quantity || item.quantity <= 0) {
+      return { success: false, message: `Invalid quantity for ${item.name || 'item'}: must be positive` };
+    }
+    if (!Number.isInteger(item.quantity)) {
+      return { success: false, message: `Quantity for ${item.name || 'item'} must be a whole number` };
+    }
+  }
+
   return { success: true };
 };
 

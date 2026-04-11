@@ -26,8 +26,26 @@
  * validateStock(NaN)   // Returns: 0 (invalid input)
  */
 export const validateStock = (stock: number): number => {
-  if (isNaN(stock) || stock < 0) return 0;
+  if (isNaN(stock)) return 0;
+  if (stock < 0) {
+    console.warn(`[validateStock] Negative stock detected: ${stock}. Clamping to 0. This may indicate an oversell.`);
+    return 0;
+  }
   return Math.round(stock);
+};
+
+/**
+ * Asserts that a stock deduction will not result in negative stock.
+ * Use this in transactional paths (checkout, returns) to catch overselling.
+ * @throws Error if the resulting stock would be negative.
+ */
+export const assertStockSufficient = (currentStock: number, deduction: number, drugName?: string): void => {
+  const result = currentStock - deduction;
+  if (result < 0) {
+    throw new Error(
+      `Insufficient stock for ${drugName || 'item'}: current=${currentStock}, requested=${deduction}, deficit=${Math.abs(result)}`
+    );
+  }
 };
 
 /**

@@ -60,6 +60,27 @@ export const storage = {
   },
 
   /**
+   * Atomically read, increment, and write a numeric counter.
+   * Minimizes the race window between read and write (single synchronous call).
+   * @param key The storage key
+   * @param defaultValue Starting value if key doesn't exist (default: 0)
+   * @returns The NEW value after incrementing
+   */
+  increment: (key: string, defaultValue: number = 0): number => {
+    if (typeof localStorage === 'undefined') return defaultValue + 1;
+    try {
+      const raw = localStorage.getItem(key);
+      const current = raw !== null ? (JSON.parse(raw) as number) : defaultValue;
+      const next = current + 1;
+      localStorage.setItem(key, JSON.stringify(next));
+      return next;
+    } catch (error) {
+      console.error(`Error incrementing storage key "${key}":`, error);
+      return defaultValue + 1;
+    }
+  },
+
+  /**
    * Clear specific prefix keys or all (be careful)
    * This is just a wrapper for localStorage.clear()
    */

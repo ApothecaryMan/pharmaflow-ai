@@ -584,6 +584,12 @@ export function useEntityHandlers({
         const sourceDrug = currentInventory.find((d) => d.id === purchasedItem.drugId);
         if (!sourceDrug) continue;
 
+        // BUG-008: Validate received quantity is reasonable (prevents inflation)
+        if (purchasedItem.quantity <= 0) {
+          console.warn(`[Purchase] Skipping item with zero/negative quantity: ${purchasedItem.drugId}`);
+          continue;
+        }
+
         const purchaseExpiry = purchasedItem.expiryDate || sourceDrug.expiryDate;
 
         const sameExpiryEntry = currentInventory.find(
@@ -1528,7 +1534,8 @@ export function useEntityHandlers({
       }
 
       // Handle Delivery Completion (Status changed to completed)
-      if (updates.status === 'completed' && sale.status !== 'completed' && currentShift) {
+      // BUG-011: Only fire for delivery orders — walk-in sales already record shift tx at checkout time
+      if (updates.status === 'completed' && sale.status !== 'completed' && sale.saleType === 'delivery' && currentShift) {
         // Now we add the money to the shift
         const isCash = sale.paymentMethod === 'cash';
         addTransaction(currentShift.id, {
@@ -1608,6 +1615,12 @@ export function useEntityHandlers({
         const sale = sales.find((s) => s.id === returnData.saleId);
         if (!sale) {
           error('Original sale not found');
+          return false;
+        }
+
+        // BUG-004: Block returns on cancelled sales (stock already restored during cancellation)
+        if (sale.status === 'cancelled') {
+          error('Cannot process return for a cancelled sale. Stock was already restored during cancellation.');
           return false;
         }
 

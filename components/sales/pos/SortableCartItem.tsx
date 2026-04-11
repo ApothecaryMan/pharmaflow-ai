@@ -88,9 +88,19 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
   // The cart item might be a stale copy.
   const staleItem = commonItem;
   const freshBatch = allBatches.find((b) => b.id === staleItem.id) || staleItem;
-  // Merge to ensure we have latest props, and unify discount from pack/unit
+  // BUG-009: Only merge NON-FINANCIAL fields from live inventory.
+  // Price and costPrice are locked at add-to-cart time to prevent mid-session price changes.
   const unifiedDiscount = Math.max(packItem?.discount || 0, unitItem?.discount || 0);
-  const item = { ...staleItem, ...freshBatch, discount: unifiedDiscount }; // Use unified discount for display
+  const item = {
+    ...staleItem,
+    // Non-financial fields from fresh data:
+    maxDiscount: freshBatch.maxDiscount,
+    stock: freshBatch.stock,
+    expiryDate: freshBatch.expiryDate,
+    // Financial fields preserved from cart (scan-time lock):
+    // price, costPrice, basePackPrice — all stay from staleItem
+    discount: unifiedDiscount,
+  };
 
   const hasDualMode = item.unitsPerPack && item.unitsPerPack > 1;
 

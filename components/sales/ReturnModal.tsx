@@ -137,7 +137,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
     availableItems.length > 0 && availableItems.every((item) => selectedItems.has(item.lineKey));
 
   const calculateRefund = useMemo(() => {
-    let returnedSubtotal = 0;
+    let total = 0;
     selectedItems.forEach((quantity, lineKey) => {
       const item = availableItems.find((i) => i.lineKey === lineKey);
       if (item) {
@@ -145,16 +145,14 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price;
         const itemTotal = effectivePrice * quantity;
         const withItemDiscount = itemTotal * (1 - (item.discount || 0) / 100);
-        returnedSubtotal += withItemDiscount;
+        // Apply global discount per-item to keep totalRefund = sum(line refunds)
+        const withGlobalDiscount = sale.globalDiscount && sale.globalDiscount > 0
+          ? withItemDiscount * (1 - sale.globalDiscount / 100)
+          : withItemDiscount;
+        total += withGlobalDiscount;
       }
     });
-
-    // Apply global discount proportionally if it exists
-    if (sale.globalDiscount && sale.globalDiscount > 0) {
-      return returnedSubtotal * (1 - sale.globalDiscount / 100);
-    }
-
-    return returnedSubtotal;
+    return total;
   }, [selectedItems, availableItems, sale.globalDiscount]);
 
   const handleConfirm = () => {
@@ -218,18 +216,28 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         }
       }
 
-      // Check if refund exceeds available sales balance (sales + deposits - already processed returns)
-      const totalSales = openShift.cashSales + (openShift.cardSales || 0);
-      const totalDeposits = openShift.cashIn || 0;
-      const alreadyReturned = openShift.returns || 0;
-      const availableBalance = totalSales + totalDeposits - alreadyReturned;
-
-      if (calculateRefund > availableBalance) {
-        setValidationError(
-          t.returns.validation?.insufficientBalance ||
-            'Return amount exceeds available sales balance'
-        );
-        return;
+      // BUG-010: Split balance check by payment method
+      // Cash refunds can only be fulfilled from cash balance, not card balance
+      const isCashSale = sale.paymentMethod === 'cash';
+      if (isCashSale) {
+        const cashBalance = (openShift.cashSales || 0) + (openShift.cashIn || 0) - (openShift.returns || 0);
+        if (calculateRefund > cashBalance) {
+          setValidationError(
+            t.returns.validation?.insufficientBalance ||
+              'Cash refund amount exceeds available cash balance in the current shift'
+          );
+          return;
+        }
+      } else {
+        // For card refunds, check the general balance (card refunds are processed via the POS terminal)
+        const totalBalance = (openShift.cashSales || 0) + (openShift.cardSales || 0) + (openShift.cashIn || 0) - (openShift.returns || 0);
+        if (calculateRefund > totalBalance) {
+          setValidationError(
+            t.returns.validation?.insufficientBalance ||
+              'Return amount exceeds available sales balance'
+          );
+          return;
+        }
       }
     } catch (e) {
       console.error('Failed to validate shift:', e);
@@ -243,7 +251,11 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
         const effectivePrice =
           item.isUnit && item.unitsPerPack ? item.price / item.unitsPerPack : item.price;
         const itemTotal = effectivePrice * quantity;
-        const discountedPrice = itemTotal * (1 - (item.discount || 0) / 100);
+        const withItemDiscount = itemTotal * (1 - (item.discount || 0) / 100);
+        // BUG-005: Apply global discount per-item so sum matches calculateRefund
+        const refundAmount = sale.globalDiscount && sale.globalDiscount > 0
+          ? withItemDiscount * (1 - sale.globalDiscount / 100)
+          : withItemDiscount;
 
         returnItems.push({
           drugId: item.id, // Use actual drugId for lookup
@@ -251,7 +263,7 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
           quantityReturned: quantity,
           isUnit: item.isUnit || false,
           originalPrice: effectivePrice,
-          refundAmount: discountedPrice,
+          refundAmount: refundAmount,
           reason: returnReason,
           condition: 'sellable',
           dosageForm: item.dosageForm,

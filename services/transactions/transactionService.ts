@@ -83,18 +83,14 @@ export const transactionService = {
         };
       });
 
-      // 3. Generate Sale IDs
+      // 3. Generate Sale IDs (Atomic increment to minimize race window)
       const counterKey = `${StorageKeys.SALE_RECEIPT_COUNTER}_${activeBranchId}`;
-      const prevCounter = storage.get<number>(counterKey, 0);
-      const saleCounter = prevCounter + 1;
-      storage.set(counterKey, saleCounter);
+      const saleCounter = storage.increment(counterKey, 0);
 
-      // Generate Daily Order Number
+      // Generate Daily Order Number (Atomic increment)
       const todayString = verifiedDate.toISOString().split('T')[0];
       const dailyCounterKey = `${StorageKeys.DAILY_ORDER_COUNTER}_${activeBranchId}_${todayString}`;
-      const prevDailyCount = storage.get<number>(dailyCounterKey, 0);
-      const dailyOrderNumber = prevDailyCount + 1;
-      storage.set(dailyCounterKey, dailyOrderNumber);
+      const dailyOrderNumber = storage.increment(dailyCounterKey, 0);
 
       const serialId = (100000 + saleCounter).toString();
       const internalId = idGenerator.generate('sales', activeBranchId);
@@ -143,17 +139,22 @@ export const transactionService = {
         return { success: true, sale: createdSale };
       } catch (persistenceError) {
         // --- CRITICAL ROLLBACK ---
-        console.error('[TransactionService] Persistence failed, rolling back batch allocations...', persistenceError);
+        console.error('[TransactionService] Persistence failed, rolling back...', persistenceError);
         
         // 1. Return Batches (LocalStorage)
         for (const alloc of bulkAllocations) {
           await batchService.returnStock(alloc.allocations, alloc.drugId, true);
         }
 
-        // 2. We don't need to "rollback" IndexedDB if updateStockBulk failed halfway,
-        // because we can't easily tell which succeeded. 
-        // However, since we have Computed Inventory (Phase 3), the batches are the source of truth.
-        // Returning to batches fixes the derived state immediately.
+        // 2. Rollback IndexedDB stock mutations (reverse the deductions)
+        try {
+          await inventoryService.updateStockBulk(
+            stockMutations.map(m => ({ id: m.id, quantity: -m.quantity })),
+            true
+          );
+        } catch (rollbackError) {
+          console.error('[TransactionService] IndexedDB rollback also failed:', rollbackError);
+        }
 
         throw persistenceError;
       }
@@ -186,10 +187,24 @@ export const transactionService = {
     const movementEntries: Omit<StockMovement, 'id' | 'timestamp'>[] = [];
     
     try {
-      // 1. Prepare Inventory Mutations & Movement Logs
+      // 1. Validate Return Quantities & Prepare Inventory Mutations
       for (const returnedItem of returnData.items) {
         const drug = inventory.find((d) => d.id === returnedItem.drugId);
         const saleItem = sale.items.find((i) => i.id === returnedItem.drugId);
+
+        if (!saleItem) {
+          return { success: false, error: `Item ${returnedItem.drugId} not found in original sale` };
+        }
+
+        // BUG-006: Validate return quantity doesn't exceed what's returnable
+        const alreadyReturned = sale.itemReturnedQuantities?.[returnedItem.drugId] || 0;
+        const maxReturnable = saleItem.quantity - alreadyReturned;
+        if (returnedItem.quantityReturned > maxReturnable) {
+          return {
+            success: false,
+            error: `Cannot return ${returnedItem.quantityReturned} of ${drug?.name || returnedItem.drugId}. Max returnable: ${maxReturnable}`,
+          };
+        }
         
         const unitsToRestore = stockOps.resolveUnits(returnedItem.quantityReturned, !!returnedItem.isUnit, drug?.unitsPerPack);
 

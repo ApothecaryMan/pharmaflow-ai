@@ -106,8 +106,16 @@ export const createCashService = (): CashServiceInterface => ({
     if (index === -1) throw new Error('No open shift found');
 
     const shift = all[index];
+    // BUG-013: Include ALL cash-affecting transaction types in expectedBalance
+    // Must stay synced with CashRegister.currentBalance and useShift.addTransaction
     const expectedBalance =
-      shift.openingBalance + shift.cashIn + shift.cashSales - shift.cashOut - shift.returns;
+      shift.openingBalance +
+      shift.cashIn +
+      shift.cashSales +
+      (shift.cashPurchaseReturns || 0) -
+      shift.cashOut -
+      (shift.returns || 0) -
+      (shift.cashPurchases || 0);
 
     all[index] = {
       ...shift,
@@ -130,6 +138,11 @@ export const createCashService = (): CashServiceInterface => ({
     const all = getRawAll();
     const shiftIndex = all.findIndex((s) => s.id === shiftId);
     if (shiftIndex === -1) throw new Error('Shift not found');
+
+    // BUG-014: Prevent transactions on closed shifts
+    if (all[shiftIndex].status !== 'open') {
+      throw new Error('Cannot add transaction to a closed shift');
+    }
 
     const newTx: CashTransaction = {
       id: idGenerator.generate('transactions', all[shiftIndex].branchId),
