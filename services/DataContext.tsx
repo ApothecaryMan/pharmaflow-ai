@@ -177,15 +177,19 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         // 1. Initialize Active Org and Branch from URL OR Storage
         const { orgService } = await import('./org/orgService');
         
-        // Check URL for Org/Branch (Format: #/orgId/branchId/viewId)
+        // Check URL for Org/Branch (Format: #/orgId/branchCode/viewId)
         const hash = window.location.hash.replace(/^#\/?/, '');
         const hashParts = hash ? hash.split('/') : [];
         const urlOrgId = hashParts[0];
-        const urlBranchId = hashParts[1];
+        const urlBranchCode = hashParts[1];
 
         const defaultOrgId = urlOrgId || orgService.getActiveOrgId() || 'org_1';
         
         const allBranches = branchService.getAll(defaultOrgId);
+        
+        // Resolve URL branch code to ID
+        const matchedBranch = allBranches.find(b => b.code === urlBranchCode || b.id === urlBranchCode);
+        const resolvedBranchFromUrl = matchedBranch?.id;
         if (allBranches.length === 0) {
           setIsLoading(false);
           return;
@@ -195,7 +199,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         const session = await authService.getCurrentUser();
         
         // Dynamic Resolution: Priority: URL > session.branchId > saved active branch > first branch
-        let finalBranchId = urlBranchId || session?.branchId || activeBranch?.id || (allBranches.length > 0 ? allBranches[0].id : 'B1');
+        let finalBranchId = resolvedBranchFromUrl || session?.branchId || activeBranch?.id || (allBranches.length > 0 ? allBranches[0].id : 'B1');
 
         // Self-Healing: If finalBranchId points to a non-existent branch (bug/legacy), snap to the first actual branch
         if (allBranches.length > 0 && !allBranches.some(b => b.id === finalBranchId)) {

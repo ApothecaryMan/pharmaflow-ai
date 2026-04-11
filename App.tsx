@@ -251,10 +251,13 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   // --- URL Synchronization ---
   React.useEffect(() => {
     if (isAuthenticated && activeOrgId && activeBranchId) {
-      const currentHash = window.location.hash;
-      const newHash = `#/${activeOrgId}/${activeBranchId}/${view}`;
-      if (currentHash !== newHash) {
-        window.history.replaceState(null, '', newHash);
+      const activeBranch = branchService.getById(activeBranchId);
+      if (activeBranch) {
+        const currentHash = window.location.hash;
+        const newHash = `#/${activeOrgId}/${activeBranch.code}/${view}`;
+        if (currentHash !== newHash) {
+          window.history.replaceState(null, '', newHash);
+        }
       }
     }
 

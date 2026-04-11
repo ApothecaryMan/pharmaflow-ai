@@ -30,7 +30,6 @@ export type EntityType =
   | 'batch'
   | 'movement'
   | 'returnItem'
-  | 'branches'
   | 'customers-serial'
   | 'notification'
   | 'barcodes'
@@ -87,9 +86,7 @@ const healSequence = (type: EntityType, branchCode: string, currentSequence: num
 
   try {
     switch (type) {
-      case 'branches':
-        data = storage.get(StorageKeys.BRANCHES, []);
-        break;
+
       case 'sales': {
         const keys = getAllShardKeys(StorageKeys.SALES);
         for (const key of keys) {
@@ -179,8 +176,8 @@ export const idGenerator = {
     // 1. Get Branch Code: parameter > storage > default
     let effectiveBranchCode = branchCode;
     
-    // Global entities (like system-wide branches) use PF prefix
-    if (type === 'branches' || type === 'generic') {
+    // Global entities use PF prefix
+    if (type === 'generic') {
       effectiveBranchCode = GLOBAL_PREFIX;
     } else if (!effectiveBranchCode) {
       const settings = storage.get<Partial<AppSettings>>(StorageKeys.SETTINGS, {});
