@@ -6,7 +6,9 @@ export const usePOSSidebarResizer = () => {
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = storage.get<number | null>(StorageKeys.POS_SIDEBAR_WIDTH, null);
-      return saved ? Number(saved) : 350;
+      if (saved) return Number(saved);
+      // Default to 40% of screen width if no saved value exists
+      return window.innerWidth * 0.4;
     }
     return 350;
   });
@@ -47,7 +49,9 @@ export const usePOSSidebarResizer = () => {
         newWidth = rect.right - clientX;
       }
 
-      if (newWidth > 350 && newWidth < 800) {
+      const minWidth = 300;
+      const maxWidth = window.innerWidth * 0.6;
+      if (newWidth > minWidth && newWidth < maxWidth) {
         setSidebarWidth(newWidth);
       }
     }
