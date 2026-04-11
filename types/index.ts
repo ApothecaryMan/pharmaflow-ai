@@ -295,6 +295,8 @@ export interface BatchAllocation {
   quantity: number;
   /** Expiry date of the allocated batch */
   expiryDate: string;
+  /** Manufacturer's batch number for tracking */
+  batchNumber?: string;
 }
 
 /** Types for inventory movements */

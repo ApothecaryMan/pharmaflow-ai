@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo, useState } from 'react';
 import type { TRANSLATIONS } from '../../i18n/translations';
 import type { Customer, Return, Sale } from '../../types';
+import { SearchInput } from '../common/SearchInput';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { TanStackTable } from '../common/TanStackTable';
 
@@ -76,6 +77,11 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
         meta: { width: 110, align: 'center' },
       },
       {
+        accessorKey: 'customerCode',
+        header: t.modal.code || 'Code',
+        meta: { width: 100 },
+      },
+      {
         accessorKey: 'customerName',
         header: t.headers.name || 'Customer',
         meta: { width: 180 },
@@ -141,6 +147,11 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
         meta: { width: 110, align: 'center' },
       },
       {
+        accessorKey: 'customerCode',
+        header: t.modal.code || 'Code',
+        meta: { width: 100 },
+      },
+      {
         accessorKey: 'customerName',
         header: t.headers.name || 'Customer',
         meta: { width: 180 },
@@ -175,16 +186,16 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
             {t.customerHistory?.subtitle || 'View detailed transaction history'}
           </p>
         </div>
-      </div>
 
-      {/* Unified Transactions Table */}
-      <div className='bg-white dark:bg-gray-800 rounded-xl shadow-xs border border-gray-100 dark:border-gray-700 overflow-hidden flex-1 flex flex-col min-h-[500px]'>
-        <div className='p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800'>
-          <div className='flex items-center gap-3'>
-            <span className='material-symbols-rounded text-gray-400'>history</span>
-            <span className='font-bold text-gray-700 dark:text-gray-200'>
-              {t.customerHistory?.title || 'History'}
-            </span>
+        <div className='flex items-center gap-3 self-end md:self-center'>
+          <div className='w-64 md:w-80'>
+            <SearchInput
+              value={searchTerm}
+              onSearchChange={setSearchTerm}
+              onClear={() => setSearchTerm('')}
+              placeholder={t.customerHistory?.searchPlaceholder || 'Search...'}
+              color={color}
+            />
           </div>
           <SegmentedControl
             value={activeTab}
@@ -204,7 +215,10 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
             ]}
           />
         </div>
+      </div>
 
+      {/* Unified Transactions Table */}
+      <div className='bg-white dark:bg-gray-800 rounded-xl shadow-xs border border-gray-100 dark:border-gray-700 overflow-hidden flex-1 flex flex-col min-h-[500px]'>
         <div className='flex-1 p-0'>
           {activeTab === 'sales' ? (
             <TanStackTable
@@ -212,9 +226,9 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
               columns={salesColumns}
               tableId='cust_history_sales_v2'
               color={color}
-              searchPlaceholder={
-                t.customerHistory?.searchPlaceholder || 'Search Name, Code, Phone, Invoice...'
-              }
+              globalFilter={searchTerm}
+              onSearchChange={setSearchTerm}
+              enableSearch={false}
               enablePagination={true}
               enableVirtualization={false}
               pageSize='auto'
@@ -226,9 +240,9 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
               columns={returnsColumns}
               tableId='cust_history_returns_v2'
               color={color}
-              searchPlaceholder={
-                t.customerHistory?.searchPlaceholder || 'Search Name, Code, Phone, Return...'
-              }
+              globalFilter={searchTerm}
+              onSearchChange={setSearchTerm}
+              enableSearch={false}
               enablePagination={true}
               enableVirtualization={false}
               pageSize='auto'

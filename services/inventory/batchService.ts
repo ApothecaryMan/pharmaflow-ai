@@ -215,6 +215,7 @@ export const allocateStockBulk = async (
           batchId: batch.id,
           quantity: allocateFromThis,
           expiryDate: batch.expiryDate,
+          batchNumber: batch.batchNumber,
         });
 
         const rawBatch = allBatches.find((b) => b.id === batch.id);
@@ -283,6 +284,7 @@ export const allocateStock = async (
         batchId: batch.id,
         quantity: allocateFromThis,
         expiryDate: batch.expiryDate,
+        batchNumber: batch.batchNumber,
       });
       remaining -= allocateFromThis;
     }

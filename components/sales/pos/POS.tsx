@@ -1069,6 +1069,18 @@ export const POS: React.FC<POSProps> = ({
           color={color}
           t={t}
           language={language}
+          onAddToCart={(code) => {
+            const drug = inventory.find(d => d.internalCode === code || d.barcode === code || d.id === code);
+            if (drug) {
+              const group = inventory.filter(d => d.name === drug.name && d.dosageForm === drug.dosageForm);
+              addGroupToCart(group);
+              if (selectedCustomer) {
+                handleCustomerSelect(selectedCustomer);
+              }
+
+              success(t.itemAdded || 'Item added to cart');
+            }
+          }}
         />
 
         {/* Closed Tabs History Modal */}
