@@ -174,9 +174,16 @@ export const DataProvider: React.FC<DataProviderProps> = ({
           console.error('Migration Failed:', err);
         }
 
-        // 1. Initialize Active Org and Branch
+        // 1. Initialize Active Org and Branch from URL OR Storage
         const { orgService } = await import('./org/orgService');
-        const defaultOrgId = orgService.getActiveOrgId() || 'org_1';
+        
+        // Check URL for Org/Branch (Format: #/orgId/branchId/viewId)
+        const hash = window.location.hash.replace(/^#\/?/, '');
+        const hashParts = hash ? hash.split('/') : [];
+        const urlOrgId = hashParts[0];
+        const urlBranchId = hashParts[1];
+
+        const defaultOrgId = urlOrgId || orgService.getActiveOrgId() || 'org_1';
         
         const allBranches = branchService.getAll(defaultOrgId);
         if (allBranches.length === 0) {
@@ -187,8 +194,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         const activeBranch = branchService.getActive();
         const session = await authService.getCurrentUser();
         
-        // Dynamic Resolution: Priority: session.branchId > saved active branch > first branch
-        let finalBranchId = session?.branchId || activeBranch?.id || (allBranches.length > 0 ? allBranches[0].id : 'B1');
+        // Dynamic Resolution: Priority: URL > session.branchId > saved active branch > first branch
+        let finalBranchId = urlBranchId || session?.branchId || activeBranch?.id || (allBranches.length > 0 ? allBranches[0].id : 'B1');
 
         // Self-Healing: If finalBranchId points to a non-existent branch (bug/legacy), snap to the first actual branch
         if (allBranches.length > 0 && !allBranches.some(b => b.id === finalBranchId)) {

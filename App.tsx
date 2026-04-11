@@ -248,6 +248,26 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setView(ROUTES.DASHBOARD);
   }, [setIsAuthenticated, setActiveModule, setView]);
 
+  // --- URL Synchronization ---
+  React.useEffect(() => {
+    if (isAuthenticated && activeOrgId && activeBranchId) {
+      const currentHash = window.location.hash;
+      const newHash = `#/${activeOrgId}/${activeBranchId}/${view}`;
+      if (currentHash !== newHash) {
+        window.history.replaceState(null, '', newHash);
+      }
+    }
+
+    const handleHashChange = () => {
+      // If user manually changes hash, we might want to reload to trigger DataContext/AppState init
+      // or we can just let it be for now since full deep-linking requires more complex state management
+      // But at least if they refresh, the URL will work because of our parsing logic.
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [isAuthenticated, activeOrgId, activeBranchId, view]);
+
   // --- Memoized Props for PageRouter ---
   const handlers = React.useMemo(
     () => ({

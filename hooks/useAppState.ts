@@ -39,10 +39,19 @@ export interface AppState {
  */
 export function useAppState(): AppState {
   // --- View State ---
-  const [view, setView] = usePersistedState<ViewState>(StorageKeys.VIEW, ROUTES.DASHBOARD, false);
+  // Check URL for View (Format: #/orgId/branchId/viewId)
+  const hash = window.location.hash.replace(/^#\/?/, '');
+  const hashParts = hash ? hash.split('/') : [];
+  const urlView = hashParts[2] as ViewState;
+  
+  const [view, setView] = usePersistedState<ViewState>(
+    StorageKeys.VIEW, 
+    urlView || ROUTES.DASHBOARD, 
+    false
+  );
   const [activeModule, setActiveModule] = usePersistedState<string>(
     StorageKeys.ACTIVE_MODULE,
-    ROUTES.DASHBOARD,
+    urlView || ROUTES.DASHBOARD,
     false
   );
   const [dashboardSubView, setDashboardSubView] = useState<string>('dashboard');
