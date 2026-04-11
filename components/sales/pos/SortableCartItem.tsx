@@ -320,6 +320,8 @@ export const SortableCartItem: React.FC<SortableCartItemProps> = React.memo(({
             addToCart={addToCart}
             allBatches={allBatches}
             isMobile={isMobile}
+            t={t}
+            currentLang={currentLang}
           />
 
             {/* Total Price (Sum of both) */}

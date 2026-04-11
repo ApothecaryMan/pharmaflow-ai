@@ -171,6 +171,8 @@ export interface CartItemQuantityControlProps {
   addToCart: (drug: Drug, isUnitMode?: boolean, quantity?: number) => void;
   allBatches?: Drug[];
   isMobile?: boolean; // New prop for UI separation
+  t: any;
+  currentLang: string;
 }
 // ==========================================
 // 3. QUANTITY STEPPER (DESKTOP & MOBILE)
@@ -184,8 +186,11 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
   addToCart,
   allBatches,
   isMobile = false,
+  t,
+  currentLang,
 }) => {
   const unitsPerPack = item.unitsPerPack || 1;
+  const isRTL = currentLang === 'ar';
 
   const totalStockUnits = React.useMemo(() => {
     if (!allBatches || allBatches.length === 0) return (item.stock || 0) * unitsPerPack;
@@ -195,60 +200,65 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
   const renderDesktopUI = () => {
     return (
       <div
-        className={`flex items-center rounded-lg h-6 overflow-hidden w-16 shrink-0 transition-all bg-black/[0.03] dark:bg-white/[0.05] border border-gray-100/50 dark:border-white/5
+        className={`flex items-center rounded-lg h-6 overflow-hidden w-14 shrink-0 transition-all bg-black/[0.03] dark:bg-white/[0.05] border border-gray-100/50 dark:border-white/5
           ${hasDualMode && (!packItem || packItem.quantity === 0) && (!unitItem || unitItem.quantity === 0)
-            ? 'ring-1 ring-inset ring-yellow-500/50'
+            ? 'ring-1 ring-inset ring-amber-500/50'
             : ''}`}
       >
-        <input
-          type='number'
-          min={hasDualMode ? '0' : '1'}
-          step='any'
-          placeholder={hasDualMode ? 'P' : '1'}
-          value={packItem?.quantity === 0 ? '' : packItem?.quantity || ''}
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-          onWheel={(e) => (e.target as HTMLInputElement).blur()}
-          onChange={(e) => {
-            const val = e.target.value === '' ? (hasDualMode ? 0 : 1) : parseFloat(e.target.value);
-            if (isNaN(val)) return;
-            const minVal = hasDualMode ? 0 : 1;
-            const clampedVal = Math.max(minVal, val);
-            if (packItem) {
-              updateQuantity(packItem.id, false, clampedVal - packItem.quantity);
-            } else if (clampedVal > 0) {
-              addToCart(item, false, clampedVal);
-            }
-          }}
-          className={`h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 shrink-0 min-w-0 leading-none ${
-            hasDualMode ? 'w-full' : 'w-full'
-          } text-primary-600 dark:text-primary-400`}
-        />
-
-        {hasDualMode && <div className='w-px h-3 bg-gray-200 dark:bg-gray-700 shrink-0'></div>}
-
-        {hasDualMode && (
+        {/* Pack Section */}
+        <div className={`flex-1 h-full flex items-center min-w-0 group/qty`}>
           <input
             type='number'
-            min='0'
-            placeholder='U'
-            title={`1 Pack = ${item.unitsPerPack || 1} Units`}
-            value={unitItem?.quantity === 0 ? '' : unitItem?.quantity || ''}
+            min={hasDualMode ? '0' : '1'}
+            step='any'
+            placeholder='P'
+            value={packItem?.quantity === 0 ? '' : packItem?.quantity || ''}
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onWheel={(e) => (e.target as HTMLInputElement).blur()}
             onChange={(e) => {
-              const val = e.target.value === '' ? 0 : parseInt(e.target.value);
+              const val = e.target.value === '' ? (hasDualMode ? 0 : 1) : parseFloat(e.target.value);
               if (isNaN(val)) return;
-              const clampedVal = Math.max(0, val);
-              if (unitItem) {
-                updateQuantity(unitItem.id, true, clampedVal - unitItem.quantity);
+              const minVal = hasDualMode ? 0 : 1;
+              const clampedVal = Math.max(minVal, val);
+              if (packItem) {
+                updateQuantity(packItem.id, false, clampedVal - packItem.quantity);
               } else if (clampedVal > 0) {
-                addToCart(item, true, clampedVal);
+                addToCart(item, false, clampedVal);
               }
             }}
-            className={`flex-1 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-primary-600 dark:text-primary-400 placeholder-primary-200 shrink-0 leading-none`}
+            className={`w-full h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 dark:placeholder-gray-700 text-primary-600 dark:text-primary-400 p-0`}
           />
+        </div>
+
+        {hasDualMode && (
+          <>
+            <div className='w-px h-3 bg-gray-200 dark:bg-gray-700 shrink-0'></div>
+            {/* Unit Section */}
+            <div className={`flex-1 h-full flex items-center min-w-0`}>
+              <input
+                type='number'
+                min='0'
+                placeholder='U'
+                title={`1 Pack = ${item.unitsPerPack || 1} Units`}
+                value={unitItem?.quantity === 0 ? '' : unitItem?.quantity || ''}
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                onChange={(e) => {
+                  const val = e.target.value === '' ? 0 : parseInt(e.target.value);
+                  if (isNaN(val)) return;
+                  const clampedVal = Math.max(0, val);
+                  if (unitItem) {
+                    updateQuantity(unitItem.id, true, clampedVal - unitItem.quantity);
+                  } else if (clampedVal > 0) {
+                    addToCart(item, true, clampedVal);
+                  }
+                }}
+                className={`w-full h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-primary-600 dark:text-primary-400 placeholder-primary-200 dark:placeholder-primary-900/40 p-0`}
+              />
+            </div>
+          </>
         )}
       </div>
     );
@@ -260,7 +270,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
       const targetItem = isUnit ? unitItem : packItem;
       const qty = targetItem?.quantity || 0;
       const otherQty = (isUnit ? packItem : unitItem)?.quantity || 0;
-      const placeholder = isUnit ? 'U' : (hasDualMode ? 'P' : '1');
+      const placeholder = isUnit ? (isRTL ? 'و' : 'U') : (hasDualMode ? (isRTL ? 'ع' : 'P') : '1');
       
       const currentOtherUnits = isUnit ? (otherQty * unitsPerPack) : otherQty;
       const availableForThisModeRaw = totalStockUnits - currentOtherUnits;
@@ -269,7 +279,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
       const isAtMax = qty >= maxForThisMode;
 
       return (
-        <div className="flex items-center rounded-lg h-6 overflow-hidden transition-all bg-black/[0.03] dark:bg-white/[0.05]">
+        <div className="flex items-center rounded-lg h-6 overflow-hidden transition-all bg-black/[0.03] dark:bg-white/[0.05]" title={isUnit ? t.unit : t.pack}>
           <button
             onClick={(e) => { e.stopPropagation(); if (qty > 0 && (qty > 1 || otherQty > 0)) updateQuantity(item.id, isUnit, -1); }}
             onPointerDown={(e) => e.stopPropagation()}
