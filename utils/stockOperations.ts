@@ -1,7 +1,7 @@
 import { batchService } from '../services/inventory/batchService';
 import { stockMovementService } from '../services/inventory/stockMovement/stockMovementService';
 import type { Drug, StockBatch, BatchAllocation, StockMovementType, CartItem } from '../types';
-import { validateStock } from './inventory';
+import { validateStock, assertStockSufficient } from './inventory';
 
 /**
  * Context for stock operations to ensure accurate movement logging.
@@ -66,6 +66,10 @@ export const deductStock = async (
   referenceId?: string
 ): Promise<StockMutation | null> => {
   const unitsToDeduct = resolveUnits(quantity, isUnit, drug.unitsPerPack);
+  
+  // BUG-S1: Assert stock sufficiency BEFORE allocating batches
+  assertStockSufficient(drug.stock, unitsToDeduct, drug.name);
+  
   const allocations = await batchService.allocateStock(drug.id, unitsToDeduct, ctx.branchId, true);
 
   if (!allocations) return null;
@@ -227,6 +231,10 @@ export const deductStockSimple = (
   referenceId?: string
 ): StockMutation => {
   const unitsToRemove = resolveUnits(quantity, isUnit, drug.unitsPerPack);
+  
+  // BUG-S3: Assert stock sufficiency before deduction (purchase returns path)
+  assertStockSufficient(drug.stock, unitsToRemove, drug.name);
+  
   const previousStock = drug.stock;
   const newStock = validateStock(previousStock - unitsToRemove);
 

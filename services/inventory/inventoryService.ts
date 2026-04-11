@@ -274,10 +274,14 @@ export const createInventoryService = (): InventoryService => ({
         version: 1,
       }, branchId, true);
     } else if (quantity < 0) {
-      await batchService.allocateStock(id, Math.abs(quantity), branchId, true);
+      // BUG-S4: Check allocateStock result — null means insufficient stock
+      const allocResult = await batchService.allocateStock(id, Math.abs(quantity), branchId, true);
+      if (!allocResult) {
+        throw new Error(`Insufficient batch stock to deduct ${Math.abs(quantity)} units from drug ${id}`);
+      }
     }
 
-    const updated = { ...drug, stock: (drug.stock || 0) + quantity };
+    const updated = { ...drug, stock: Math.max(0, (drug.stock || 0) + quantity) };
     
     try {
       const dbUpdates = mapDrugToDb({ stock: updated.stock });

@@ -30,7 +30,6 @@ export interface PurchaseService {
   update(id: string, purchase: Partial<Purchase>, skipSync?: boolean): Promise<Purchase>;
   approve(id: string, approverName: string, skipSync?: boolean): Promise<Purchase>;
   reject(id: string, reason: string, skipSync?: boolean): Promise<Purchase>;
-  receive(id: string, skipSync?: boolean): Promise<Purchase>;
   delete(id: string, skipSync?: boolean): Promise<boolean>;
   getStats(): Promise<PurchaseStats>;
   save(purchases: Purchase[], branchId?: string): Promise<void>;

@@ -147,7 +147,7 @@ export const drugCacheService = {
           getReq.onsuccess = () => {
             const drug = getReq.result as Drug | undefined;
             if (drug) {
-              drug.stock = (drug.stock || 0) + mutation.quantity;
+              // BUG-S2: Prevent negative stock in persistence layer\n              drug.stock = Math.max(0, (drug.stock || 0) + mutation.quantity);
               const putReq = store.put(drug);
               putReq.onsuccess = checkDone;
               putReq.onerror = () => reject(putReq.error);

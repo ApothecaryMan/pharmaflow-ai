@@ -194,12 +194,6 @@ export const createPurchaseService = (): PurchaseService => ({
     return all[index];
   },
 
-  receive: async (id: string, skipSync = false): Promise<Purchase> => {
-    // Attempt to get current user/employee for the approval log
-    const currentEmployeeId = storage.get(StorageKeys.CURRENT_EMPLOYEE_ID, 'System');
-    return purchaseService.approve(id, currentEmployeeId, skipSync);
-  },
-
   delete: async (id: string, skipSync = false): Promise<boolean> => {
     const all = getRawAll();
     const initialLength = all.length;
