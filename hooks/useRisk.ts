@@ -42,7 +42,7 @@ export function useRisk(): UseRiskResult {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeBranchId]);
 
   useEffect(() => {
     fetchData();

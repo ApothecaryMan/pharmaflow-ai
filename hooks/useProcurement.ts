@@ -52,7 +52,7 @@ export function useProcurement(filters: UseProcurementFilters = {}): UseProcurem
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeBranchId]);
 
   useEffect(() => {
     fetchData();

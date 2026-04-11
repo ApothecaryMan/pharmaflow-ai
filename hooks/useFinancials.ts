@@ -45,7 +45,7 @@ export function useFinancials(period: FinancialPeriod = 'this_month'): UseFinanc
     } finally {
       setLoading(false);
     }
-  }, [period]);
+  }, [period, activeBranchId]);
 
   useEffect(() => {
     fetchData();

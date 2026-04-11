@@ -541,7 +541,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       const targetBranchId = branchId || activeBranchId;
       const [inv, sal, sup, pur, pRet, ret, cust, emp] = await Promise.all([
         inventoryService.getAll(targetBranchId),
-        salesService.getAll('all'),
+        salesService.getAll(targetBranchId),
         supplierService.getAll(targetBranchId),
         purchaseService.getAll(targetBranchId),
         returnService.getAllPurchaseReturns(targetBranchId),

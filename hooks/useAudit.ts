@@ -35,7 +35,7 @@ export function useAudit(limit: number = 100): UseAuditResult {
     } finally {
       setLoading(false);
     }
-  }, [limit]);
+  }, [limit, activeBranchId]);
 
   useEffect(() => {
     fetchData();
