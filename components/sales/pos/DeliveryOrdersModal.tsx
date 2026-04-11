@@ -859,7 +859,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         { label: t.history || 'History', value: 'completed', icon: 'history' },
       ]}
       activeTab={activeTab}
-      onTabChange={(val) => setActiveTab(val as DeliveryTab)}
+      onTabChange={(val) => {
+        setActiveTab(val as DeliveryTab);
+        setSelectedSaleId(null);
+      }}
       headerActions={
         <div className='flex items-center pe-2'>
           <div className='w-[300px] flex items-center'>
@@ -879,63 +882,69 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       <div className='flex flex-col h-[70vh]'>
         {selectedSaleId && selectedSale ? (
           <div className='flex-1 flex flex-col overflow-hidden'>
-            {/* Inner Header - Compact & Integrated */}
-            <div className='flex items-center justify-between mb-3 pb-3 border-b border-gray-100 dark:border-gray-800 shrink-0'>
-              {/* Left: Order Info */}
-              <div className='flex items-center gap-3 min-w-0'>
+            {/* Inner Header - High-Density Integrated Row */}
+            <div className='flex items-center justify-between h-11 mb-4 border border-zinc-200 dark:border-white/10 shrink-0 bg-white dark:bg-zinc-900/50 rounded-2xl px-1.5 shadow-sm'>
+              <div className='flex items-center h-full gap-0 min-w-0'>
+                {/* 1. Back Action */}
                 <button
                   onClick={() => setSelectedSaleId(null)}
-                  className='w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors group shrink-0 border border-gray-200 dark:border-gray-700'
+                  className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors group shrink-0'
                   title={t.back || 'Back'}
                 >
-                  <span className='material-symbols-rounded text-gray-500 group-hover:text-primary-600 transition-colors text-[18px]'>
+                  <span className='material-symbols-rounded text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors text-[20px]'>
                     arrow_back
                   </span>
                 </button>
-                <div className='flex flex-col min-w-0'>
-                  <div className='flex items-center gap-2 flex-wrap'>
-                    <span className='text-lg font-bold font-mono text-(--text-primary)'>
-                      #{selectedSale.customerCode || '-'}
-                    </span>
-                    <div
-                      className={`flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider border ${
-                        selectedSale.status === 'completed'
-                          ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800/50'
-                          : selectedSale.status === 'cancelled'
-                            ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/50'
-                            : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800/50'
-                      }`}
-                    >
-                      <span className='material-symbols-rounded text-xs'>
-                        {selectedSale.status === 'completed'
-                          ? 'task_alt'
-                          : selectedSale.status === 'cancelled'
-                            ? 'cancel'
-                            : selectedSale.status === 'on_way'
-                              ? 'local_shipping'
-                              : selectedSale.status === 'with_delivery'
-                                ? 'delivery_dining'
-                                : 'pending'}
-                      </span>
-                      <span>{t[selectedSale.status] || selectedSale.status}</span>
-                    </div>
+
+                <div className='h-4 w-px bg-zinc-200 dark:bg-white/10 mx-2.5' />
+
+                {/* 2. Order Identity */}
+                <div className='flex items-center shrink-0'>
+                  <span className='text-[16px] font-black font-mono text-zinc-900 dark:text-white leading-none tracking-tight'>
+                    #{selectedSale.serialId || selectedSale.id.slice(0, 8)}
+                  </span>
+                </div>
+
+                <div className='h-4 w-px bg-zinc-200 dark:bg-white/10 mx-2.5' />
+
+                {/* 3. Status Badge (Compact) */}
+                <div
+                  className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-black uppercase tracking-widest border shrink-0 ${
+                    selectedSale.status === 'completed'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+                      : selectedSale.status === 'cancelled'
+                        ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
+                        : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20'
+                  }`}
+                >
+                  <span className='material-symbols-rounded text-sm' style={{ fontVariationSettings: "'FILL' 1" }}>
+                    {selectedSale.status === 'completed' ? 'verified' : selectedSale.status === 'cancelled' ? 'cancel' : 'pending'}
+                  </span>
+                  <span>{t[selectedSale.status] || selectedSale.status}</span>
+                </div>
+
+                <div className='h-4 w-px bg-zinc-200 dark:bg-white/10 mx-2.5' />
+
+                {/* 4. Customer/Guest Identity */}
+                <div className='flex items-center gap-2.5 min-w-0'>
+                  <div className='w-6 h-6 rounded-full bg-zinc-200 dark:bg-white/10 flex items-center justify-center shrink-0'>
+                    <span className='material-symbols-rounded text-base text-zinc-500'>person</span>
                   </div>
-                  <div className='flex items-center gap-2 text-xs text-gray-500 truncate'>
-                    <span className='font-bold text-gray-900 dark:text-gray-100 truncate'>
+                  <div className='flex items-center gap-2 truncate'>
+                    <span className='text-[13px] font-bold text-zinc-800 dark:text-zinc-200 truncate'>
                       {selectedSale.customerName}
                     </span>
                     {selectedSale.customerPhone && (
-                      <span className='text-[10px] text-gray-400' dir='ltr'>
-                        ({selectedSale.customerPhone})
+                      <span className='text-[11px] text-zinc-400 font-mono opacity-80' dir='ltr'>
+                        {selectedSale.customerPhone}
                       </span>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Right: Actions (Tabs + Edit / Login Warning) */}
-              <div className='flex items-center gap-3'>
-                {/* Navigation Tabs */}
+              {/* 5. Navigation & Global Actions */}
+              <div className='flex items-center gap-4 h-full'>
                 {(() => {
                   const tabOptions = [
                     {
@@ -946,10 +955,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                     },
                   ];
 
-                  if (
-                    selectedSale.modificationHistory &&
-                    selectedSale.modificationHistory.length > 0
-                  ) {
+                  if (selectedSale.modificationHistory?.length) {
                     tabOptions.push({
                       label: t.history || 'History',
                       value: 'history',
@@ -960,25 +966,47 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   }
 
                   return (
-                    <SegmentedControl
-                      options={tabOptions}
-                      value={activeSubTab}
-                      onChange={(val) => setActiveSubTab(val as 'items' | 'history')}
-                      size='sm'
-                      variant='onCard'
-                      fullWidth={false}
-                    />
+                    <div className='flex items-center gap-3'>
+                      {/* Unified Edit Control Group */}
+                      {isEditMode && (
+                        <>
+                          <button
+                            onClick={handleDiscardChanges}
+                            className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-zinc-400 hover:text-rose-600 transition-colors'
+                            title={t.discard || 'Discard'}
+                          >
+                            <span className='material-symbols-rounded text-[20px]'>undo</span>
+                          </button>
+                          <button
+                            onClick={handleSaveChanges}
+                            disabled={!hasChanges}
+                            className='h-8 px-4 text-[11px] font-black uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors disabled:opacity-30 flex items-center gap-1.5 shadow-sm shadow-emerald-500/20'
+                          >
+                            <span className='material-symbols-rounded text-sm' style={{ fontVariationSettings: "'FILL' 1" }}>redo</span>
+                            {t.saveChanges || 'Save'}
+                          </button>
+                        </>
+                      )}
+
+                      <SegmentedControl
+                        options={tabOptions}
+                        value={activeSubTab}
+                        onChange={(val) => setActiveSubTab(val as 'items' | 'history')}
+                        size='xs'
+                        variant='onCard'
+                        fullWidth={false}
+                      />
+                    </div>
                   );
                 })()}
 
                 {!currentEmployeeId &&
-                  selectedSale &&
-                  selectedSale.status !== 'completed' &&
-                  selectedSale.status !== 'cancelled' && (
-                    <span className='flex items-center gap-1.5 text-xs text-red-500 font-medium bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-xl border border-red-100 dark:border-red-900/30 animate-pulse h-[42px]'>
+                  selectedSale?.status !== 'completed' &&
+                  selectedSale?.status !== 'cancelled' && (
+                    <div className='flex items-center gap-1.5 text-[10px] text-rose-500 font-black uppercase tracking-tighter bg-rose-50 dark:bg-rose-500/10 px-2 py-1 rounded-lg border border-rose-100 dark:border-rose-500/20 animate-pulse'>
                       <span className='material-symbols-rounded text-sm'>lock</span>
-                      {t.loginToEdit || 'Login to edit'}
-                    </span>
+                      {t.loginToEdit}
+                    </div>
                   )}
               </div>
             </div>
@@ -1070,9 +1098,6 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                   className={`font-bold text-sm ${isDeleted ? 'line-through text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}
                                 >
                                   {getDisplayName(common, textTransform)}
-                                </span>
-                                <span className='text-[10px] text-gray-500'>
-                                  {common.genericName}
                                 </span>
                               </div>
                             </div>
@@ -1507,24 +1532,6 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
               )}
             </div>
 
-            {/* Edit Mode Actions */}
-            {isEditMode && (
-              <div className='flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700'>
-                <button
-                  onClick={handleDiscardChanges}
-                  className='px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors'
-                >
-                  {t.discard || 'Discard'}
-                </button>
-                <button
-                  onClick={handleSaveChanges}
-                  disabled={!hasChanges}
-                  className='px-6 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-blue-700 rounded-xl transition-colors disabled:opacity-50'
-                >
-                  {t.saveChanges || 'Save Changes'}
-                </button>
-              </div>
-            )}
           </div>
         ) : (
           /* Table View */
