@@ -25,6 +25,7 @@ import { getActiveReceiptSettings, printInvoice } from '../InvoiceTemplate';
 import { InsightTooltip } from '../../common/InsightTooltip';
 import { Tooltip } from '../../common/Tooltip';
 import { isToday, isAfter, subHours, parseISO } from 'date-fns';
+import { idGenerator } from '../../../utils/idGenerator';
 
 const DriverSelect = ({
   driverId,
@@ -123,12 +124,59 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
 
-  // Edit mode state
+  // Edit mode state - Unified history stack
   const [isEditMode, setIsEditMode] = useState(false);
-  const [pendingChanges, setPendingChanges] = useState<Map<string, PendingItemChange>>(new Map());
-  const [pendingDiscountChanges, setPendingDiscountChanges] = useState<
-    Map<string, PendingDiscountChange>
-  >(new Map());
+  const [editHistory, setEditHistory] = useState<{
+    stack: Array<{
+      changes: Map<string, PendingItemChange>;
+      discounts: Map<string, PendingDiscountChange>;
+    }>;
+    index: number;
+  }>({
+    stack: [{ changes: new Map(), discounts: new Map() }],
+    index: 0,
+  });
+
+  const { changes: pendingChanges, discounts: pendingDiscountChanges } =
+    editHistory.stack[editHistory.index];
+
+  const pushState = useCallback(
+    (modifier: (current: {
+      changes: Map<string, PendingItemChange>;
+      discounts: Map<string, PendingDiscountChange>;
+    }) => {
+      changes: Map<string, PendingItemChange>;
+      discounts: Map<string, PendingDiscountChange>;
+    }) => {
+      setEditHistory((prev) => {
+        const current = prev.stack[prev.index];
+        const next = modifier(current);
+        const newStack = prev.stack.slice(0, prev.index + 1);
+        return {
+          stack: [
+            ...newStack,
+            { changes: new Map(next.changes), discounts: new Map(next.discounts) },
+          ],
+          index: newStack.length,
+        };
+      });
+    },
+    []
+  );
+
+  const undo = useCallback(() => {
+    setEditHistory((prev) => ({
+      ...prev,
+      index: Math.max(0, prev.index - 1),
+    }));
+  }, []);
+
+  const redo = useCallback(() => {
+    setEditHistory((prev) => ({
+      ...prev,
+      index: Math.min(prev.stack.length - 1, prev.index + 1),
+    }));
+  }, []);
   const [activeSubTab, setActiveSubTab] = useState<'items' | 'history'>('items'); // Replaces showHistory toggle
   const [expandedHistoryRecordId, setExpandedHistoryRecordId] = useState<string | null>(null);
   const [orderToCancelId, setOrderToCancelId] = useState<string | null>(null);
@@ -180,8 +228,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
     if (!isOpen) {
       setSelectedSaleId(null);
       setIsEditMode(false);
-      setPendingChanges(new Map());
-      setPendingDiscountChanges(new Map());
+      setEditHistory({
+        stack: [{ changes: new Map(), discounts: new Map() }],
+        index: 0,
+      });
       setOrderToEditGuestId(null);
     }
   }, [isOpen]);
@@ -303,12 +353,12 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       const key = `${item.id}-${isUnit ? 'unit' : 'pack'}`;
       const originalQtyForThisType = isUnit ? originalUnitQty : originalPackQty;
 
-      setPendingChanges((prev) => {
-        const next = new Map(prev);
+      pushState((current) => {
+        const nextChanges = new Map(current.changes);
         if (finalQty === originalQtyForThisType) {
-          next.delete(key); // Reverted to original
+          nextChanges.delete(key); // Reverted to original
         } else {
-          next.set(key, {
+          nextChanges.set(key, {
             id: item.id,
             isUnit,
             originalQuantity: originalQtyForThisType,
@@ -316,10 +366,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
             deleted: finalQty === 0,
           });
         }
-        return next;
+        return { changes: nextChanges, discounts: current.discounts };
       });
     },
-    [inventory, selectedSale, getItemQuantity]
+    [inventory, selectedSale, getItemQuantity, pushState]
   );
 
   // Check if we can increase quantity (Used for + button disable state)
@@ -359,10 +409,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   // Handle delete both pack and unit for an item
   const handleDeleteFullItem = useCallback(
     (drugId: string, packItem?: CartItem, unitItem?: CartItem) => {
-      setPendingChanges((prev) => {
-        const next = new Map(prev);
+      pushState((current) => {
+        const nextChanges = new Map(current.changes);
         if (packItem) {
-          next.set(`${drugId}-pack`, {
+          nextChanges.set(`${drugId}-pack`, {
             id: drugId,
             isUnit: false,
             originalQuantity: packItem.quantity,
@@ -371,7 +421,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           });
         }
         if (unitItem) {
-          next.set(`${drugId}-unit`, {
+          nextChanges.set(`${drugId}-unit`, {
             id: drugId,
             isUnit: true,
             originalQuantity: unitItem.quantity,
@@ -379,21 +429,24 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
             deleted: true,
           });
         }
-        return next;
+        return { changes: nextChanges, discounts: current.discounts };
       });
     },
-    []
+    [pushState]
   );
 
   // Handle restore item (undo delete)
-  const handleRestoreFullItem = useCallback((drugId: string) => {
-    setPendingChanges((prev) => {
-      const next = new Map(prev);
-      next.delete(`${drugId}-pack`);
-      next.delete(`${drugId}-unit`);
-      return next;
-    });
-  }, []);
+  const handleRestoreFullItem = useCallback(
+    (drugId: string) => {
+      pushState((current) => {
+        const nextChanges = new Map(current.changes);
+        nextChanges.delete(`${drugId}-pack`);
+        nextChanges.delete(`${drugId}-unit`);
+        return { changes: nextChanges, discounts: current.discounts };
+      });
+    },
+    [pushState]
+  );
 
   // Handle discount change for an item
   const handleDiscountChange = useCallback(
@@ -401,21 +454,21 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       const saleItems = selectedSale?.items.filter((i) => i.id === drugId) || [];
       const originalDiscount = saleItems[0]?.discount || 0;
 
-      setPendingDiscountChanges((prev) => {
-        const next = new Map(prev);
+      pushState((current) => {
+        const nextDiscounts = new Map(current.discounts);
         if (newDiscount === originalDiscount) {
-          next.delete(drugId);
+          nextDiscounts.delete(drugId);
         } else {
-          next.set(drugId, {
+          nextDiscounts.set(drugId, {
             id: drugId,
             originalDiscount,
             newDiscount: Math.min(100, Math.max(0, newDiscount)),
           });
         }
-        return next;
+        return { changes: current.changes, discounts: nextDiscounts };
       });
     },
-    [selectedSale]
+    [selectedSale, pushState]
   );
 
   // Get current discount for an item (considering pending changes)
@@ -503,26 +556,86 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       // Step 3: Add delivery fee to get final total
       const finalTotal = afterGlobalDiscount + (selectedSale.deliveryFee || 0);
 
+      // Step 4: Generate Modifications for History
+      const modifications: any[] = [];
+      const currentEmployee = employees.find((e) => e.id === currentEmployeeId);
+
+      // Add Quantity changes
+      for (const [key, change] of pendingChanges.entries()) {
+        const [drugId, type] = key.split('-');
+        const isUnit = type === 'unit';
+        const originalItem = selectedSale.items.find(
+          (i) => i.id === drugId && !!i.isUnit === isUnit
+        );
+        const drug = inventory.find((d) => d.id === drugId);
+
+        modifications.push({
+          type: change.deleted ? 'item_removed' : originalItem ? 'quantity_update' : 'item_added',
+          itemId: drugId,
+          itemName: originalItem?.name || drug?.name || 'Unknown Product',
+          dosageForm: originalItem?.dosageForm || drug?.dosageForm,
+          previousQuantity: originalItem?.quantity || 0,
+          newQuantity: change.newQuantity,
+        });
+      }
+
+      // Add Discount changes
+      for (const [drugId, change] of pendingDiscountChanges.entries()) {
+        const drug = inventory.find((d) => d.id === drugId);
+        const anyItem = selectedSale.items.find((i) => i.id === drugId);
+
+        modifications.push({
+          type: 'discount_update',
+          itemId: drugId,
+          itemName: anyItem?.name || drug?.name || 'Unknown Product',
+          dosageForm: anyItem?.dosageForm || drug?.dosageForm,
+          previousDiscount: change.originalDiscount,
+          newDiscount: change.newDiscount,
+        });
+      }
+
+      const newRecord = {
+        id: idGenerator.uuid(),
+        timestamp: new Date().toISOString(),
+        modifiedBy: currentEmployee?.name || t.system || 'System',
+        modifications,
+      };
+
       onUpdateSale(selectedSale.id, {
         items: updatedItems,
         subtotal: subtotal,
         total: finalTotal,
+        modificationHistory: [...(selectedSale.modificationHistory || []), newRecord],
       });
 
       // Reset edit state only after successful update
-      setPendingChanges(new Map());
-      setPendingDiscountChanges(new Map());
+      setEditHistory({
+        stack: [{ changes: new Map(), discounts: new Map() }],
+        index: 0,
+      });
       setIsEditMode(false);
     } catch (error) {
       console.error('Failed to save delivery order changes:', error);
-      // TODO: Show error toast to user
     }
-  }, [selectedSale, hasChanges, pendingChanges, pendingDiscountChanges, onUpdateSale, getItemDiscount]);
+  }, [
+    selectedSale,
+    hasChanges,
+    pendingChanges,
+    pendingDiscountChanges,
+    onUpdateSale,
+    getItemDiscount,
+    employees,
+    currentEmployeeId,
+    inventory,
+    t,
+  ]);
 
   // Handle discard changes
   const handleDiscardChanges = useCallback(() => {
-    setPendingChanges(new Map());
-    setPendingDiscountChanges(new Map());
+    setEditHistory({
+      stack: [{ changes: new Map(), discounts: new Map() }],
+      index: 0,
+    });
     setIsEditMode(false);
   }, []);
 
@@ -969,23 +1082,39 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                     <div className='flex items-center gap-3'>
                       {/* Unified Edit Control Group */}
                       {isEditMode && (
-                        <>
+                        <div className='flex items-center gap-1'>
+                          {/* Multi-step Undo */}
                           <button
-                            onClick={handleDiscardChanges}
-                            className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-zinc-400 hover:text-rose-600 transition-colors'
-                            title={t.discard || 'Discard'}
+                            onClick={undo}
+                            disabled={editHistory.index <= 0}
+                            className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-200 dark:hover:bg-white/10 text-zinc-500 disabled:opacity-30 transition-colors'
+                            title={t.undo || 'Undo'}
                           >
                             <span className='material-symbols-rounded text-[20px]'>undo</span>
                           </button>
+
+                          {/* Multi-step Redo */}
+                          <button
+                            onClick={redo}
+                            disabled={editHistory.index >= editHistory.stack.length - 1}
+                            className='h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-200 dark:hover:bg-white/10 text-zinc-500 disabled:opacity-30 transition-colors'
+                            title={t.redo || 'Redo'}
+                          >
+                            <span className='material-symbols-rounded text-[20px]'>redo</span>
+                          </button>
+
+                          <div className='h-4 w-px bg-zinc-200 dark:bg-white/10 mx-1' />
+
+                          {/* Commit Change */}
                           <button
                             onClick={handleSaveChanges}
                             disabled={!hasChanges}
                             className='h-8 px-4 text-[11px] font-black uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors disabled:opacity-30 flex items-center gap-1.5 shadow-sm shadow-emerald-500/20'
                           >
-                            <span className='material-symbols-rounded text-sm' style={{ fontVariationSettings: "'FILL' 1" }}>redo</span>
+                            <span className='material-symbols-rounded text-sm' style={{ fontVariationSettings: "'FILL' 1" }}>done_all</span>
                             {t.saveChanges || 'Save'}
                           </button>
-                        </>
+                        </div>
                       )}
 
                       <SegmentedControl
@@ -1215,7 +1344,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                             : 'text-gray-400'
                                         }`}
                                       >
-                                        <span className='material-symbols-rounded text-[12px]'>
+                                        <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>
                                           percent
                                         </span>
                                       </button>
@@ -1245,7 +1374,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                 <span className='text-xs text-gray-400 uppercase tracking-wider text-[10px]'>
                                   {t.price || 'Price'}
                                 </span>
-                                <span className='font-bold text-green-600 text-sm'>
+                                <span className='font-bold text-gray-900 dark:text-gray-100 text-sm'>
                                   {formatCurrency(
                                     totalPrice *
                                       (1 - getItemDiscount(common.id, common.discount || 0) / 100)
@@ -1268,10 +1397,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                     onClick={() =>
                                       handleDeleteFullItem(common.id, packItem, unitItem)
                                     }
-                                    className='w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors'
+                                    className='w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors'
                                     title={t.delete || 'Delete'}
                                   >
-                                    <span className='material-symbols-rounded'>delete</span>
+                                    <span className='material-symbols-rounded text-xl'>delete</span>
                                   </button>
                                 ))}
                             </div>
@@ -1293,7 +1422,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                     .map((record, idx) => {
                       const isExpanded = expandedHistoryRecordId === record.id;
                       const date = new Date(record.timestamp);
-                      const timeStr = date.toLocaleString(language === 'AR' ? 'ar-EG' : 'en-US', {
+                      const timeStr = date.toLocaleString(currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US', {
                         hour: 'numeric',
                         minute: 'numeric',
                         hour12: true,
@@ -1309,14 +1438,14 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
                         if (mins < 1) return t.justNow || 'Just now';
                         if (mins < 60)
-                          return language === 'AR'
+                          return currentLanguage === 'AR'
                             ? `${t.ago || 'منذ'} ${mins} د`
                             : `${mins}m ${t.ago || 'ago'}`;
                         if (hours < 24)
-                          return language === 'AR'
+                          return currentLanguage === 'AR'
                             ? `${t.ago || 'منذ'} ${hours} س`
                             : `${hours}h ${t.ago || 'ago'}`;
-                        return date.toLocaleDateString(language === 'AR' ? 'ar-EG' : 'en-US', {
+                        return date.toLocaleDateString(currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US', {
                           day: 'numeric',
                           month: 'short',
                         });
@@ -1345,7 +1474,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                           <MaterialTabs
                             index={idx}
                             total={selectedSale.modificationHistory?.length || 0}
-                            className={`h-auto! py-3 transition-all duration-300 ${isExpanded ? 'bg-[#F3F4F6] dark:bg-blue-950/20 dark:ring-1 dark:ring-blue-900/40 shadow-xs' : 'hover:bg-gray-100/50 dark:hover:bg-white/10'}`}
+                            className={`h-auto! py-3 transition-all duration-300 ${isExpanded ? 'bg-gray-100 hover:bg-gray-200/50 dark:bg-gray-900/40 dark:hover:bg-white/10 dark:ring-1 dark:ring-gray-800 shadow-xs' : 'hover:bg-gray-100/50 dark:hover:bg-white/10'}`}
                             onClick={() =>
                               setExpandedHistoryRecordId(isExpanded ? null : record.id)
                             }
@@ -1363,7 +1492,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                           {getRelativeTime(date)}
                                         </span>
                                         <span className='w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
-                                        <span className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate'>
+                                        <span className='text-sm font-bold text-gray-900 dark:text-gray-100 truncate' dir='rtl'>
                                           {record.modifications.length}{' '}
                                           {record.modifications.length === 1
                                             ? t.modification || 'Change'
@@ -1395,17 +1524,39 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                       </div>
                                     </div>
 
-                                    <div className='flex items-center gap-3 shrink-0'>
-                                      {record.modifications.some(
-                                        (m) => m.type === 'item_removed'
-                                      ) && (
-                                        <span
-                                          className='material-symbols-rounded text-xl text-red-500'
-                                          title={t.deleted || 'Deleted'}
-                                        >
-                                          delete
-                                        </span>
-                                      )}
+                                      <div className='flex items-center gap-2 shrink-0'>
+                                        {record.modifications.some((m) => m.type === 'item_removed') && (
+                                          <span
+                                            className='material-symbols-rounded text-xl text-red-600 dark:text-red-400'
+                                            title={t.deleted || 'Deleted'}
+                                          >
+                                            delete
+                                          </span>
+                                        )}
+                                        {record.modifications.some((m) => m.type === 'quantity_update') && (
+                                          <span
+                                            className='material-symbols-rounded text-xl text-orange-600 dark:text-orange-400'
+                                            title={t.quantityUpdated || 'Quantity Updated'}
+                                          >
+                                            edit_square
+                                          </span>
+                                        )}
+                                        {record.modifications.some((m) => m.type === 'discount_update') && (
+                                          <span
+                                            className='material-symbols-rounded text-xl text-blue-600 dark:text-blue-400'
+                                            title={t.discountUpdated || 'Discount Updated'}
+                                          >
+                                            percent
+                                          </span>
+                                        )}
+                                        {record.modifications.some((m) => m.type === 'item_added') && (
+                                          <span
+                                            className='material-symbols-rounded text-xl text-green-600 dark:text-green-400'
+                                            title={t.itemAdded || 'Item Added'}
+                                          >
+                                            add_circle
+                                          </span>
+                                        )}
                                       {record.modifiedBy && (
                                         <div className='flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hidden sm:flex'>
                                           <span>{record.modifiedBy}</span>
@@ -1435,7 +1586,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                         </span>
                                         <span className='text-[10px] text-gray-500 uppercase tracking-widest'>
                                           {date.toLocaleDateString(
-                                            language === 'AR' ? 'ar-EG' : 'en-US',
+                                            currentLanguage === 'AR' ? 'ar-EG-u-nu-latn' : 'en-US',
                                             { weekday: 'long', day: 'numeric', month: 'long' }
                                           )}
                                         </span>
@@ -1457,8 +1608,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
                                     <div className='space-y-1'>
                                       {record.modifications.map((mod, modIdx) => {
-                                        const isIncrease = mod.newQuantity > mod.previousQuantity;
+                                        const isIncrease = (mod.newQuantity || 0) > (mod.previousQuantity || 0);
                                         const isDeletion = mod.type === 'item_removed';
+                                        const isDiscount = mod.type === 'discount_update';
 
                                         return (
                                           <div
@@ -1468,10 +1620,12 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                             <span
                                               className={`shrink-0 ${
                                                 isDeletion
-                                                  ? 'text-red-500'
-                                                  : isIncrease
-                                                    ? 'text-green-500'
-                                                    : 'text-orange-500'
+                                                  ? 'text-red-600 dark:text-red-400'
+                                                  : isDiscount
+                                                    ? 'text-blue-600 dark:text-blue-400'
+                                                    : isIncrease
+                                                      ? 'text-green-600 dark:text-green-400'
+                                                      : 'text-orange-600 dark:text-orange-400'
                                               }`}
                                             >
                                               <span className='material-symbols-rounded text-lg'>
@@ -1495,25 +1649,40 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                                                 })()}
                                               </span>
                                               <div className='flex items-center gap-2 ml-8 shrink-0'>
-                                                {isDeletion ? (
-                                                  <span className='text-red-500 font-bold text-xs'>
-                                                    {t.deleted || 'Deleted'} {mod.previousQuantity}
-                                                  </span>
-                                                ) : (
-                                                  <div
-                                                    className={`flex items-center gap-1.5 font-bold text-xs ${
-                                                      isIncrease
-                                                        ? 'text-green-600 dark:text-green-400'
-                                                        : 'text-orange-600 dark:text-orange-400'
-                                                    }`}
-                                                  >
-                                                    <span>{mod.previousQuantity}</span>
-                                                    <span className='material-symbols-rounded text-sm opacity-50'>
-                                                      arrow_forward
+                                                <div
+                                                  className={`flex items-center gap-1.5 font-bold text-xs ${
+                                                    isDeletion
+                                                      ? 'text-red-600 dark:text-red-400'
+                                                      : isDiscount
+                                                        ? 'text-blue-600 dark:text-blue-400'
+                                                        : isIncrease
+                                                          ? 'text-green-600 dark:text-green-400'
+                                                          : 'text-orange-600 dark:text-orange-400'
+                                                  }`}
+                                                >
+                                                  {isDiscount ? (
+                                                    <>
+                                                      <span>{mod.previousDiscount}%</span>
+                                                      <span className='material-symbols-rounded text-sm opacity-50'>
+                                                        arrow_forward
+                                                      </span>
+                                                      <span>{mod.newDiscount}%</span>
+                                                    </>
+                                                  ) : isDeletion ? (
+                                                    <span className='text-red-500 font-bold text-xs'>
+                                                      {t.deleted || 'Deleted'}{' '}
+                                                      {mod.previousQuantity}
                                                     </span>
-                                                    <span>{mod.newQuantity}</span>
-                                                  </div>
-                                                )}
+                                                  ) : (
+                                                    <>
+                                                      <span>{mod.previousQuantity}</span>
+                                                      <span className='material-symbols-rounded text-sm opacity-50'>
+                                                        arrow_forward
+                                                      </span>
+                                                      <span>{mod.newQuantity}</span>
+                                                    </>
+                                                  )}
+                                                </div>
                                               </div>
                                             </div>
                                           </div>
