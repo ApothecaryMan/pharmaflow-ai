@@ -26,6 +26,20 @@ import { InsightTooltip } from '../../common/InsightTooltip';
 import { Tooltip } from '../../common/Tooltip';
 import { isToday, isAfter, subHours, parseISO } from 'date-fns';
 import { idGenerator } from '../../../utils/idGenerator';
+import { useShift } from '../../../hooks/useShift';
+
+const ShiftWarning = ({ t, compact = false }: { t: any; compact?: boolean }) => (
+  <div className={`flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 ${compact ? 'h-7 px-2 w-full' : 'h-[42px] px-4'}`}>
+    <div className='flex items-center gap-1.5 text-red-700 dark:text-red-300'>
+      <span className='material-symbols-rounded' style={{ fontSize: compact ? '16px' : '18px' }}>
+        warning
+      </span>
+      <p className={`${compact ? 'text-[10px]' : 'text-xs'} font-bold`}>
+        {t.pleaseOpenShiftToStart || 'برجاء فتح الدرج للبدء'}
+      </p>
+    </div>
+  </div>
+);
 
 const DriverSelect = ({
   driverId,
@@ -117,6 +131,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   customers = [],
   onViewCustomerHistory,
 }) => {
+  const { currentShift } = useShift();
+  const hasOpenShift = !!currentShift;
   const [activeTab, setActiveTab] = useState<DeliveryTab>('all');
   const { error: showToastError } = useAlert();
   const { textTransform, language: settingsLanguage } = useSettings();
@@ -255,9 +271,10 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       selectedSale.status !== 'completed' &&
       selectedSale.status !== 'cancelled' &&
       !selectedSale.hasReturns && // Prevent conflicting edits if part of the order was returned
-      !!currentEmployeeId
-    ); // Must be logged in
-  }, [selectedSale, currentEmployeeId]);
+      !!currentEmployeeId &&
+      hasOpenShift
+    ); // Must be logged in and shift open
+  }, [selectedSale, currentEmployeeId, hasOpenShift]);
 
   const { showMenu } = useContextMenu();
 
@@ -279,7 +296,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
           setSelectedSaleId(sale.id);
           setIsEditMode(true);
         },
-        disabled: sale.status === 'completed' || sale.status === 'cancelled',
+        disabled: sale.status === 'completed' || sale.status === 'cancelled' || !hasOpenShift,
       },
     ]);
   }, [showMenu, t.printReceipt, t.editOrder, setSelectedSaleId, setIsEditMode]);
@@ -753,8 +770,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                     setTempGuestAddress(address);
                     setOriginalGuestInfo({ name, address });
                   }}
-                  className='p-1 transition-all text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                  className='p-1 transition-all text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30'
                   title={t.editGuestInfo || 'Edit Guest Info'}
+                  disabled={!hasOpenShift}
                 >
                   <span 
                     className='material-symbols-rounded'
@@ -831,7 +849,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                 drivers={deliveryDrivers}
                 onSelect={(d) => onUpdateSale(s.id, { deliveryEmployeeId: d.id })}
                 t={t}
-                disabled={isSelectDisabled}
+                disabled={isSelectDisabled || !hasOpenShift}
               />
             </div>
           );
@@ -847,6 +865,14 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         },
         cell: (info) => {
           const s = info.row.original;
+
+          if (!hasOpenShift && s.status !== 'completed' && s.status !== 'cancelled') {
+            return (
+              <div className='flex items-center justify-end h-full' onClick={(e) => e.stopPropagation()}>
+                <ShiftWarning t={t} compact={true} />
+              </div>
+            );
+          }
 
           return (
             <div className='flex items-center justify-end gap-1.5' onClick={(e) => e.stopPropagation()}>
@@ -1129,7 +1155,14 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   );
                 })()}
 
+                {!hasOpenShift &&
+                  selectedSale?.status !== 'completed' &&
+                  selectedSale?.status !== 'cancelled' && (
+                    <ShiftWarning t={t} compact={true} />
+                  )}
+
                 {!currentEmployeeId &&
+                  hasOpenShift &&
                   selectedSale?.status !== 'completed' &&
                   selectedSale?.status !== 'cancelled' && (
                     <div className='flex items-center gap-1.5 text-[10px] text-rose-500 font-black uppercase tracking-tighter bg-rose-50 dark:bg-rose-500/10 px-2 py-1 rounded-lg border border-rose-100 dark:border-rose-500/20 animate-pulse'>
