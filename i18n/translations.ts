@@ -81,6 +81,41 @@ export const TRANSLATIONS = {
       deleteBranch: 'Delete Branch',
       deleteBranchConfirm: 'Are you sure you want to delete this branch? This will affect all data linked to it.',
     },
+    orgManagement: {
+      title: 'Organization Management',
+      subtitle: 'Centralized control for all branches and members',
+      permissionsTitle: 'Member Permission Matrix',
+      permissionsSubtitle: 'Manage access and roles across all branches',
+      roleOwner: 'Owner',
+      roleAdmin: 'Admin',
+      roleMember: 'Member',
+      primaryBranch: 'Primary Branch',
+      globalRole: 'Global Role',
+      member: 'Member',
+      email: 'Email',
+      status: 'Status',
+      active: 'Active',
+      inactive: 'Inactive',
+      saveSuccess: 'Permissions updated successfully',
+      saveError: 'Failed to update permissions',
+      multiBranchAccessNote: 'Roles (Owner/Admin) grant full access to all branches',
+      searchPlaceholder: 'Search member...',
+      lastOwnerWarning: 'Cannot change role: This is the last owner of the organization.',
+    },
+    organization: {
+      inviteMember: 'Invite Member',
+      invites: {
+        title: 'Invite New Member',
+        subtitle: 'Send an invitation link to a new employee',
+        email: 'Email Address',
+        role: 'Role',
+        send: 'Send Invite',
+        success: 'Invitation link generated!',
+        copy: 'Copy Link',
+        copied: 'Copied!',
+        close: 'Close'
+      }
+    },
 
     profile: {
       role: 'Pharmacist',
@@ -2323,6 +2358,41 @@ export const TRANSLATIONS = {
       saveBranch: 'حفظ الفرع',
       deleteBranch: 'حذف الفرع',
       deleteBranchConfirm: 'هل أنت متأكد من حذف هذا الفرع؟ سيؤثر هذا على جميع البيانات المرتبطة به.',
+    },
+    orgManagement: {
+      title: 'إدارة المنظمة',
+      subtitle: 'تحكم مركزي لجميع الفروع والأعضاء',
+      permissionsTitle: 'مصفوفة صلاحيات الأعضاء',
+      permissionsSubtitle: 'إدارة الوصول والأدوار عبر جميع الفروع',
+      roleOwner: 'مالك',
+      roleAdmin: 'مدير',
+      roleMember: 'عضو',
+      primaryBranch: 'الفرع الأساسي',
+      globalRole: 'الدور العام',
+      member: 'الموظف',
+      email: 'البريد الإلكتروني',
+      status: 'الحالة',
+      active: 'نشط',
+      inactive: 'غير نشط',
+      saveSuccess: 'تم تحديث الصلاحيات بنجاح',
+      saveError: 'فشل تحديث الصلاحيات',
+      multiBranchAccessNote: 'الأدوار (مالك/مدير) تمنح وصولاً كاملاً لجميع الفروع',
+      searchPlaceholder: 'بحث عن موظف...',
+      lastOwnerWarning: 'لا يمكن تغيير الدور: هذا هو المالك الوحيد للمنظمة.',
+    },
+    organization: {
+      inviteMember: 'دعوة عضو',
+      invites: {
+        title: 'دعوة عضو جديد',
+        subtitle: 'إرسال رابط دعوة لموظف جديد',
+        email: 'البريد الإلكتروني',
+        role: 'الدور',
+        send: 'إرسال الدعوة',
+        success: 'تم إنشاء رابط الدعوة!',
+        copy: 'نسخ الرابط',
+        copied: 'تم النسخ!',
+        close: 'إغلاق'
+      }
     },
 
     profile: {

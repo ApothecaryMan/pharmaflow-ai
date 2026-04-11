@@ -1398,3 +1398,171 @@ export const REALTIME_SALES_MONITOR_HELP = {
     },
   },
 };
+
+/**
+ * Organization Management Help Instructions
+ */
+export const ORG_MANAGEMENT_HELP = {
+  EN: {
+    title: 'How to Manage Organization',
+    overview: {
+      title: 'Overview',
+      description:
+        'The Organization Management module provides a centralized view of your entire organization. Monitor branch performance, manage employees across all branches, and track central quotas and subscriptions.',
+    },
+    usage: {
+      title: 'How to Use',
+      pulseGrid: {
+        title: '1. Monitoring Organization Pulse',
+        steps: [
+          'Review top-level metrics for the entire organization',
+          'Track total revenue, employee count, and active branches',
+          'Monitor overall performance trends at a glance',
+        ],
+      },
+      branchMonitor: {
+        title: '2. Branch Performance',
+        steps: [
+          'View individual branch performance in the monitor section',
+          'Compare branches by revenue and activity',
+          'Click on a branch to view detailed branch-specific analytics',
+        ],
+      },
+      memberMatrix: {
+        title: '3. Global Member Management',
+        steps: [
+          'Manage all organization employees in the Global Matrix',
+          'Quickly search for employees across all branches',
+          'Filter the list by branch for more focused management',
+          'Update roles and permissions directly from the matrix',
+        ],
+      },
+      quotas: {
+        title: '4. Managing Quotas',
+        steps: [
+          'Track your current subscription usage and limits',
+          'Monitor branch count, employee limits, and feature access',
+          'Get alerts when you approach your organization limits',
+        ],
+      },
+      lastOwner: {
+        title: '5. Security: The Last Owner Rule',
+        steps: [
+          'The system prevents the removal of the final organization owner',
+          'You cannot downgrade your own role if you are the only owner',
+          'This ensures your organization is never left without an administrator',
+        ],
+      },
+    },
+    features: {
+      title: 'Key Features',
+      items: [
+        'Organization-wide data aggregation',
+        'Cross-branch member list with smart search',
+        'High-density branch performance monitoring',
+        'Centralized subscription and quota tracking',
+        'RTL-first design with Material UI aesthetics',
+        'Built-in security guards for owner management',
+      ],
+    },
+    understanding: {
+      title: 'Understanding the Interface',
+      cards: [
+        'Pulse Grid: Real-time high-level organizational health metrics',
+        'Branch Monitor: Revenue and activity comparison across locations',
+        'Global Matrix: Unified directory of all organizational human resources',
+        'Quota Monitor: Visual representation of license and resource limits',
+      ],
+    },
+    tips: {
+      title: 'Tips & Best Practices',
+      items: [
+        'Use branch filters in the matrix for easier navigation',
+        'Regularly monitor quotas to avoid service interruptions',
+        'Keep employee records updated for accurate reporting',
+        'Leverage the "Last Owner Rule" for organizational stability',
+      ],
+    },
+  },
+  AR: {
+    title: 'كيفية إدارة المنظمة',
+    overview: {
+      title: 'نظرة عامة',
+      description:
+        'توفر وحدة إدارة المنظمة عرضاً مركزياً لمنظمتك بالكامل. راقب أداء الفروع، وأدر الموظفين عبر جميع الفروع، وتتبع الحصص المركزية والاشتراكات.',
+    },
+    usage: {
+      title: 'كيفية الاستخدام',
+      pulseGrid: {
+        title: '1. مراقبة نبض المنظمة',
+        steps: [
+          'راجع المقاييس عالية المستوى للمنظمة بالكامل',
+          'تتبع إجمالي الإيرادات، وعدد الموظفين، والفروع النشطة',
+          'راقب اتجاهات الأداء العام بنظرة سريعة',
+        ],
+      },
+      branchMonitor: {
+        title: '2. أداء الفروع',
+        steps: [
+          'اعرض أداء الفروع الفردية في قسم المراقب',
+          'قارن الفروع حسب الإيرادات والنشاط',
+          'انقر على فرع لعرض تحليلات مفصلة خاصة بالفرع',
+        ],
+      },
+      memberMatrix: {
+        title: '3. الإدارة العامة للأعضاء',
+        steps: [
+          'أدر جميع موظفي المنظمة في المصفوفة العامة',
+          'ابحث بسرعة عن الموظفين عبر جميع الفروع',
+          'قم بتصفية القائمة حسب الفرع لإدارة أكثر تركيزاً',
+          'حدث الأدوار والأذونات مباشرة من المصفوفة',
+        ],
+      },
+      quotas: {
+        title: '4. إدارة الحصص',
+        steps: [
+          'تتبع استخدام اشتراكك الحالي وحدوده',
+          'راقب عدد الفروع، وحدود الموظفين، والوصول إلى الميزات',
+          'احصل على تنبيهات عندما تقترب من حدود منظمتك',
+        ],
+      },
+      lastOwner: {
+        title: '5. الأمان: قاعدة المالك الأخير',
+        steps: [
+          'يمنع النظام إزالة المالك الأخير للمنظمة',
+          'لا يمكنك خفض دورك الخاص إذا كنت المالك الوحيد',
+          'يضمن ذلك عدم ترك منظمتك بدون مسؤول أبداً',
+        ],
+      },
+    },
+    features: {
+      title: 'الميزات الرئيسية',
+      items: [
+        'تجميع البيانات على مستوى المنظمة',
+        'قائمة أعضاء عبر الفروع مع بحث ذكي',
+        'مراقبة أداء الفروع عالية الكثافة',
+        'تتبع مركزي للاشتراكات والحصص',
+        'تصميم يدعم العربية أولاً بجماليات Material UI',
+        'حراس أمان مدمجون لإدارة المالكين',
+      ],
+    },
+    understanding: {
+      title: 'فهم الواجهة',
+      cards: [
+        'شبكة النبض: مقاييس صحة المنظمة عالية المستوى في الوقت الفعلي',
+        'مراقب الفروع: مقارنة الإيرادات والنشاط عبر المواقع',
+        'المصفوفة العامة: دليل موحد لجميع الموارد البشرية في المنظمة',
+        'مراقب الحصص: تمثيل مرئي لحدود الترخيص والموارد',
+      ],
+    },
+    tips: {
+      title: 'نصائح وأفضل الممارسات',
+      items: [
+        'استخدم فلاتر الفروع في المصفوفة لتنقل أسهل',
+        'راقب الحصص بانتظام لتجنب انقطاع الخدمة',
+        'حافظ على تحديث سجلات الموظفين لتقارير دقيقة',
+        'استفد من "قاعدة المالك الأخير" لاستقرار المنظمة',
+      ],
+    },
+  },
+};

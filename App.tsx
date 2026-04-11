@@ -343,8 +343,9 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
       employees,
       batches,
       activeBranchId,
+      activeOrgId,
     }),
-    [sales, inventory, enrichedCustomers, suppliers, purchases, purchaseReturns, returns, employees, batches, activeBranchId]
+    [sales, inventory, enrichedCustomers, suppliers, purchases, purchaseReturns, returns, employees, batches, activeBranchId, activeOrgId]
   );
 
   // --- TRANSITION SKELETON STATE ---

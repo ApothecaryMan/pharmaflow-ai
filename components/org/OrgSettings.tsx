@@ -177,9 +177,9 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
             <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/20 flex justify-between items-center">
               <div className="flex items-center gap-4">
                 <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <span className="material-symbols-rounded text-blue-500">group</span>
-                  {language === 'AR' ? 'أعضاء المنظمة' : 'Organization Members'}
-                </h2>
+                <span className="material-symbols-rounded text-primary-600 dark:text-primary-400" style={{ fontSize: 'var(--icon-lg)' }}>business</span>
+                {language === 'AR' ? 'الملف العام للمنظمة' : 'Organization Profile'}
+              </h2>
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
                   {members.length} {language === 'AR' ? 'أعضاء' : 'Members'}
                 </span>
@@ -240,8 +240,8 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
           <section className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
             <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/20 flex justify-between items-center">
               <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                <span className="material-symbols-rounded text-amber-500">card_membership</span>
-                {language === 'AR' ? 'الاشتراك والخطة' : 'Subscription & Plan'}
+                <span className="material-symbols-rounded text-primary-600 dark:text-primary-400" style={{ fontSize: 'var(--icon-lg)' }}>credit_card</span>
+                {language === 'AR' ? 'خطة الاشتراك' : 'Subscription Plan'}
               </h2>
               <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
                 subscription?.status === 'active' || subscription?.status === 'trial'
@@ -291,7 +291,7 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
           <section className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
             <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/20 flex justify-between items-center">
               <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                <span className="material-symbols-rounded text-zinc-500">history</span>
+                <span className="material-symbols-rounded text-zinc-500" style={{ fontSize: 'var(--icon-lg)' }}>history</span>
                 {language === 'AR' ? 'آخر النشاطات' : 'Organization Activity'}
               </h2>
               <button className="text-[10px] font-bold text-primary-600 uppercase tracking-widest hover:underline">

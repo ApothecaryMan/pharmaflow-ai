@@ -1052,7 +1052,7 @@ export const PHARMACY_MENU: MenuItem[] = [
         id: 'general-settings',
         label: 'General Settings',
         items: [
-          { label: 'Organization Settings', view: 'org-settings', icon: 'corporate_fare' },
+          { label: 'Organization Management', view: 'org-management', icon: 'corporate_fare' },
           { label: 'Branch Management', view: 'branch-management', icon: 'store' },
           { label: 'Business Hours', icon: 'schedule' },
           { label: 'Currency Settings', icon: 'attach_money' },

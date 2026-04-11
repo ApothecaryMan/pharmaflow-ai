@@ -571,6 +571,17 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
     permission: 'customer.view',
     layout: 'full-screen',
   },
+  'org-management': {
+    id: 'org-management',
+    component: React.lazy(() => import('../components/org/OrganizationManagementPage').then(m => ({ default: m.OrganizationManagementPage }))) as any,
+    menuLabel: 'Org Management',
+    menuLabelAr: 'إدارة المنظمة',
+    icon: 'corporate_fare',
+    category: 'settings',
+    requiredProps: ['color', 't', 'language', 'employees', 'currentEmployeeId', 'activeOrgId'],
+    permission: 'settings.view',
+    layout: 'standard',
+  },
 };
 
 // Helper function to get page config

@@ -947,6 +947,7 @@ export interface Employee {
 
   // --- Auth ---
   username?: string; // Login Username
+  userId?: string; // Auth User ID linked to this employee
   password?: string;
   orgRole?: 'owner' | 'admin' | 'member'; // Added for multi-tenant ownership
   biometricCredentialId?: string; // WebAuthn Credential ID

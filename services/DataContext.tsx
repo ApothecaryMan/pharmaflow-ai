@@ -51,6 +51,7 @@ export interface DataState {
   returns: Return[];
   customers: Customer[];
   employees: Employee[];
+  currentEmployee: Employee | null;
   batches: StockBatch[];
   isLoading: boolean;
   syncStatus: SyncStatus;
@@ -149,6 +150,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   const [returns, setReturnsState] = useState<Return[]>([]);
   const [customers, setCustomersState] = useState<Customer[]>([]);
   const [employees, setEmployeesState] = useState<Employee[]>([]);
+  const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null);
   const [batches, setBatchesState] = useState<StockBatch[]>([]);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
 
@@ -304,6 +306,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({
           }
         }
 
+        const currentSession = authService.getCurrentUserSync();
+        const loggedInEmployee = emp.find(e => e.id === currentSession?.employeeId) || null;
+
         // Commit all states
         setRawInventory(inv);
         setSalesState(sal);
@@ -315,6 +320,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         setReturnsState(ret);
         setCustomersState(cust);
         setEmployeesState(emp.map(({ password, biometricCredentialId, biometricPublicKey, ...safe }) => safe as Employee));
+        setCurrentEmployee(loggedInEmployee);
         setBatchesState(bat);
 
         // --- Initialize Sync Engine ---
@@ -684,6 +690,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       returns,
       customers,
       employees,
+      currentEmployee,
       batches,
       isLoading,
       syncStatus,
@@ -732,6 +739,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       returns,
       customers,
       employees,
+      currentEmployee,
       isLoading,
       activeBranchId,
       setInventory,
