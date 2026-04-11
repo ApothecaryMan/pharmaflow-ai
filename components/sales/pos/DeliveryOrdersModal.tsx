@@ -714,7 +714,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
               className={`font-mono font-bold text-sm ${
                 isClickable 
                   ? 'text-gray-900 dark:text-gray-100 cursor-pointer hover:opacity-70 transition-opacity' 
-                  : 'text-gray-400'
+                  : 'text-gray-700 dark:text-gray-300'
               }`}
             >
               {code || '-'}
@@ -904,15 +904,15 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
                   </button>
                 )}
                 {s.status === 'completed' && (
-                  <div className='flex items-center gap-1 text-green-600' title={t.completed || 'Completed'}>
+                  <div className='flex items-center gap-1 text-green-600' title={t.completed || 'تم التوصيل'}>
                     <span className='material-symbols-rounded text-lg'>task_alt</span>
-                    <span className='text-[10px] font-bold uppercase'>{t.completed || 'Done'}</span>
+                    <span className='text-[10px] font-bold uppercase'>{t.completed || 'مكتمل'}</span>
                   </div>
                 )}
                 {s.status === 'cancelled' && (
-                  <div className='flex items-center gap-1 text-red-600' title={t.cancelled || 'Cancelled'}>
+                  <div className='flex items-center gap-1 text-red-600' title={t.cancelled || 'ملغى'}>
                     <span className='material-symbols-rounded text-lg'>cancel</span>
-                    <span className='text-[10px] font-bold uppercase'>{t.cancelled || 'Void'}</span>
+                    <span className='text-[10px] font-bold uppercase'>{t.cancelled || 'ملغى'}</span>
                   </div>
                 )}
               </div>
@@ -955,21 +955,21 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       hideCloseButton={true}
       tabs={[
         {
-          label: `${t.all || 'All'} (${sales.filter((s) => s.saleType === 'delivery' && s.status !== 'completed' && s.status !== 'cancelled').length})`,
+          label: `${t.all || 'الكل'} (${sales.filter((s) => s.saleType === 'delivery' && s.status !== 'completed' && s.status !== 'cancelled').length})`,
           value: 'all',
           icon: 'list',
         },
         {
-          label: `${t.pending || 'Pending'} (${sales.filter((s) => s.status === 'pending' && s.saleType === 'delivery').length})`,
+          label: `${t.pending || 'قيد الانتظار'} (${sales.filter((s) => s.status === 'pending' && s.saleType === 'delivery').length})`,
           value: 'pending',
           icon: 'pending',
         },
         {
-          label: `${t.active || 'Active'} (${sales.filter((s) => (s.status === 'with_delivery' || s.status === 'on_way') && s.saleType === 'delivery').length})`,
+          label: `${t.active || 'النشطة'} (${sales.filter((s) => (s.status === 'with_delivery' || s.status === 'on_way') && s.saleType === 'delivery').length})`,
           value: 'active',
           icon: 'local_shipping',
         },
-        { label: t.history || 'History', value: 'completed', icon: 'history' },
+        { label: t.history || 'السجل', value: 'completed', icon: 'history' },
       ]}
       activeTab={activeTab}
       onTabChange={(val) => {

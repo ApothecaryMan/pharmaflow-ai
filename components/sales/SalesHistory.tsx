@@ -239,6 +239,15 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
           // Delivery Specific Statuses
           if (sale.saleType === 'delivery' && sale.status !== 'completed') {
+            // Local translation map for robust Arabic support
+            const STATUS_TRANSLATIONS: Record<string, string> = {
+              'pending': 'قيد الانتظار',
+              'with_delivery': 'مع المندوب',
+              'on_way': 'في الطريق',
+              'completed': 'مكتمل',
+              'cancelled': 'ملغى'
+            };
+
             const isPending = sale.status === 'pending';
             const isWithDelivery = sale.status === 'with_delivery';
             const isOnWay = sale.status === 'on_way';
@@ -253,10 +262,12 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
               icon = 'local_shipping';
             }
 
+            const statusText = t[sale.status!] || STATUS_TRANSLATIONS[sale.status!] || sale.status;
+
             return (
               <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border ${colorClass} text-[10px] font-black uppercase tracking-wider bg-transparent`}>
                 <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>{icon}</span>
-                {t[sale.status!] || sale.status}
+                {statusText}
               </span>
             );
           }
