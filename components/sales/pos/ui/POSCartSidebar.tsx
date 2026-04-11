@@ -248,7 +248,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                           </span>
                           <div className="flex justify-between gap-4 text-xs">
                             <span className="opacity-70">{currentLang === 'ar' ? 'هامش الربح المتوقع:' : 'Exp. Margin:'}</span>
-                            <span className="font-black tabular-nums text-emerald-400">
+                            <span className="font-bold tabular-nums text-emerald-400">
                               {totalProfit >= 0 ? '+' : ''}<PriceDisplay value={totalProfit} />
                             </span>
                           </div>
@@ -259,7 +259,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                           </p>
                         </div>
                       }>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-black tabular-nums bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-800/30 whitespace-nowrap animate-in fade-in zoom-in duration-300">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold tabular-nums bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-800/30 whitespace-nowrap animate-in fade-in zoom-in duration-300 leading-none">
                           {totalProfit >= 0 ? '+' : ''}<PriceDisplay value={totalProfit} />
                         </span>
                       </Tooltip>
@@ -320,39 +320,43 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
                 {mergedCartItems.map((group, index) => {
                   const itemId = group.id;
                   return (
-                    <div
-                      key={itemId}
-                      id={`cart-item-${index}`}
-                      className='w-full'
-                      onClick={() => setHighlightedIndex(index)}
-                      onMouseDown={() => setHighlightedIndex(index)}
-                    >
-                      <SortableCartItem
-                        packItem={group.pack}
-                        unitItem={group.unit}
-                        commonItem={group.common}
-                        itemId={itemId}
-                        color={color}
-                        t={t}
-                        showMenu={showMenu}
-                        removeFromCart={removeFromCart}
-                        toggleUnitMode={toggleUnitMode}
-                        updateItemDiscount={updateItemDiscount}
-                        setGlobalDiscount={setGlobalDiscount}
-                        updateQuantity={updateQuantity}
-                        addToCart={addToCart}
-                        removeDrugFromCart={removeDrugFromCart}
-                        allBatches={
-                          batchesMap.get(`${group.common.name}|${group.common.dosageForm}`) || []
-                        }
-                        onSelectBatch={switchBatchWithAutoSplit}
-                        isHighlighted={index === highlightedIndex}
-                        currentLang={currentLang as 'en' | 'ar'}
-                        globalDiscount={globalDiscount}
-                        onSearchInTable={handleSearchInTable}
-                        isMobile={isMobile}
-                      />
-                    </div>
+                    <React.Fragment key={itemId}>
+                      <div
+                        id={`cart-item-${index}`}
+                        className='w-full'
+                        onClick={() => setHighlightedIndex(index)}
+                        onMouseDown={() => setHighlightedIndex(index)}
+                      >
+                        <SortableCartItem
+                          packItem={group.pack}
+                          unitItem={group.unit}
+                          commonItem={group.common}
+                          itemId={itemId}
+                          color={color}
+                          t={t}
+                          showMenu={showMenu}
+                          removeFromCart={removeFromCart}
+                          toggleUnitMode={toggleUnitMode}
+                          updateItemDiscount={updateItemDiscount}
+                          setGlobalDiscount={setGlobalDiscount}
+                          updateQuantity={updateQuantity}
+                          addToCart={addToCart}
+                          removeDrugFromCart={removeDrugFromCart}
+                          allBatches={
+                            batchesMap.get(`${group.common.name}|${group.common.dosageForm}`) || []
+                          }
+                          onSelectBatch={switchBatchWithAutoSplit}
+                          isHighlighted={index === highlightedIndex}
+                          currentLang={currentLang as 'en' | 'ar'}
+                          globalDiscount={globalDiscount}
+                          onSearchInTable={handleSearchInTable}
+                          isMobile={isMobile}
+                        />
+                      </div>
+                      {index < mergedCartItems.length - 1 && (
+                        <div className="h-px bg-gray-200/60 dark:bg-(--border-divider)" />
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </SortableContext>
