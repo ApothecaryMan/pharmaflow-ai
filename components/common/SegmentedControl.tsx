@@ -232,15 +232,13 @@ export function SegmentedControl<T extends string | number | boolean>({
             )}
             {option.count !== undefined && (
               <span
-                className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold leading-none ${
+                className={`text-[10px] font-bold leading-none ms-1.5 ${
                   isActive
-                    ? isPill
-                      ? 'bg-white/20 text-white'
-                      : 'bg-white/50 text-gray-900 dark:bg-black/20 dark:text-white'
-                    : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                    ? 'text-gray-900 dark:text-zinc-300'
+                    : 'text-gray-400 dark:text-gray-500'
                 }`}
               >
-                {option.count}
+                ({option.count})
               </span>
             )}
           </button>
