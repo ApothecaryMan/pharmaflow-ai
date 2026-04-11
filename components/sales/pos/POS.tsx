@@ -1043,6 +1043,7 @@ export const POS: React.FC<POSProps> = ({
         <DeliveryOrdersModal
           isOpen={showDeliveryModal}
           onClose={() => setShowDeliveryModal(false)}
+          activeBranchId={activeBranchId}
           sales={sales}
           employees={employees}
           inventory={inventory}

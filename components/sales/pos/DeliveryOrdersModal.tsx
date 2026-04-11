@@ -101,6 +101,7 @@ export interface DeliveryOrdersModalProps {
   currentEmployeeId?: string;
   customers?: Customer[];
   onViewCustomerHistory?: (customer: Customer) => void;
+  activeBranchId?: string;
 }
 
 // Pending item change type
@@ -130,6 +131,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
   currentEmployeeId,
   customers = [],
   onViewCustomerHistory,
+  activeBranchId,
 }) => {
   const { currentShift } = useShift();
   const hasOpenShift = !!currentShift;
@@ -207,7 +209,11 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
   // Calculate Pending Value Insights
   const pendingStats = useMemo(() => {
-    const pendingSales = sales.filter((s) => s.status === 'pending' && s.saleType === 'delivery');
+    const pendingSales = sales.filter((s) => 
+      s.status === 'pending' && 
+      s.saleType === 'delivery' &&
+      (!activeBranchId || s.branchId === activeBranchId)
+    );
     const now = new Date();
     const twentyFourHoursAgo = subHours(now, 24);
 
@@ -237,7 +243,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
     });
 
     return stats;
-  }, [sales]);
+  }, [sales, activeBranchId]);
 
   // Reset to table view when modal closes
   React.useEffect(() => {
@@ -661,6 +667,9 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
     return sales
       .filter((s) => {
         if (s.saleType !== 'delivery') return false;
+        
+        // Branch Filter (Multi-tenant isolation)
+        if (activeBranchId && s.branchId !== activeBranchId) return false;
 
         if (activeTab === 'all') {
           // Show only active orders (pending + in-transit), exclude history
@@ -678,7 +687,7 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
         return false;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [sales, activeTab]);
+  }, [sales, activeTab, activeBranchId]);
 
   const deliveryDrivers = useMemo(() => {
     return employees.filter((e) => e.role === 'delivery');
@@ -983,17 +992,17 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
       hideCloseButton={true}
       tabs={[
         {
-          label: `${t.all || 'الكل'} (${sales.filter((s) => s.saleType === 'delivery' && s.status !== 'completed' && s.status !== 'cancelled').length})`,
+          label: `${t.all || 'الكل'} (${sales.filter((s) => s.saleType === 'delivery' && s.status !== 'completed' && s.status !== 'cancelled' && (!activeBranchId || s.branchId === activeBranchId)).length})`,
           value: 'all',
           icon: 'list',
         },
         {
-          label: `${t.pending || 'قيد الانتظار'} (${sales.filter((s) => s.status === 'pending' && s.saleType === 'delivery').length})`,
+          label: `${t.pending || 'قيد الانتظار'} (${sales.filter((s) => s.status === 'pending' && s.saleType === 'delivery' && (!activeBranchId || s.branchId === activeBranchId)).length})`,
           value: 'pending',
           icon: 'pending',
         },
         {
-          label: `${t.active || 'النشطة'} (${sales.filter((s) => (s.status === 'with_delivery' || s.status === 'on_way') && s.saleType === 'delivery').length})`,
+          label: `${t.active || 'النشطة'} (${sales.filter((s) => (s.status === 'with_delivery' || s.status === 'on_way') && s.saleType === 'delivery' && (!activeBranchId || s.branchId === activeBranchId)).length})`,
           value: 'active',
           icon: 'local_shipping',
         },
