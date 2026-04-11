@@ -79,7 +79,6 @@ export const buildSalePayload = (params: SalePayloadParams): Sale => {
   } = params;
 
   return {
-    id: `TRX-${date.getTime().toString().slice(-6)}`,
     date: date.toISOString(),
     items,
     branchId,
@@ -97,8 +96,7 @@ export const buildSalePayload = (params: SalePayloadParams): Sale => {
     deliveryEmployeeId,
     status,
     processingTimeMinutes,
-    dailyOrderNumber: 0, // Placeholder: Actual number is assigned by transactionService.processCheckout
-  };
+  } as Sale;
 };
 
 import * as stockOps from '../../../../utils/stockOperations';

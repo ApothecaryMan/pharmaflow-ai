@@ -103,6 +103,7 @@ export const transactionService = {
       movementEntries.forEach(m => m.referenceId = serialId);
 
       const newSale: Sale = {
+        ...saleData,
         id: internalId,
         serialId,
         branchId: activeBranchId,
@@ -111,7 +112,6 @@ export const transactionService = {
         status: saleData.saleType === 'delivery' ? 'pending' : 'completed',
         updatedAt: verifiedDate.toISOString(),
         dailyOrderNumber,
-        ...saleData,
         items: processedItems,
       } as Sale;
 

@@ -76,13 +76,13 @@ export const createSalesService = (): SalesService => ({
     return all.filter((s) => s.date.startsWith(today));
   },
 
-  create: async (sale: Omit<Sale, 'id'>, branchId?: string, skipSync = false): Promise<Sale> => {
+  create: async (sale: Omit<Sale, 'id'> & { id?: string }, branchId?: string, skipSync = false): Promise<Sale> => {
     // Priority: explicit param > entity's own branchId > settingsService fallback
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || (sale as any).branchId || settings.activeBranchId || settings.branchCode;
     const newSale: Sale = {
       ...sale,
-      id: idGenerator.generate('sales', effectiveBranchId),
+      id: (sale as any).id || idGenerator.generate('sales', effectiveBranchId),
       branchId: effectiveBranchId,
     } as Sale;
 
