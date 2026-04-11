@@ -25,7 +25,7 @@ export interface SalesStats {
 
 export interface SalesService {
   getAll(branchId?: string): Promise<Sale[]>;
-  getById(id: string): Promise<Sale | null>;
+  getById(id: string, branchId?: string): Promise<Sale | null>;
   getByCustomer(customerId: string, branchId?: string): Promise<Sale[]>;
   getByDateRange(from: string, to: string, branchId?: string): Promise<Sale[]>;
   getToday(branchId?: string): Promise<Sale[]>;

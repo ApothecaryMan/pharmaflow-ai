@@ -310,6 +310,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
       transactions: [
         {
           id: idGenerator.generate('transactions', activeBranchId),
+          branchId: activeBranchId,
           shiftId: newShiftId,
           time: getVerifiedDate().toISOString(),
           type: 'opening',
@@ -398,6 +399,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
         ...currentShift.transactions,
         {
           id: getVerifiedDate().getTime().toString() + '-close',
+          branchId: activeBranchId,
           shiftId: currentShift.id,
           time: getVerifiedDate().toISOString(),
           type: 'closing',
@@ -502,6 +504,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
     const type: CashTransactionType = modalMode === 'in' ? 'in' : 'out';
     const transaction: CashTransaction = {
       id: getVerifiedDate().getTime().toString(),
+      branchId: activeBranchId,
       shiftId: currentShift.id,
       time: getVerifiedDate().toISOString(),
       type: type,

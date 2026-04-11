@@ -1,5 +1,6 @@
 import { StorageKeys } from '../config/storageKeys';
 import type { CashTransaction, Shift } from '../types';
+import { idGenerator } from './idGenerator';
 
 /**
  * Transaction types for shift updates
@@ -40,7 +41,8 @@ export function addTransactionToOpenShift(params: AddShiftTransactionParams): bo
     const now = getVerifiedDate();
 
     const newTransaction: CashTransaction = {
-      id: now.getTime().toString(),
+      id: idGenerator.generate('transactions', openShift.branchId),
+      branchId: openShift.branchId,
       shiftId: openShift.id,
       time: now.toISOString(),
       type,

@@ -37,18 +37,21 @@ export const createSalesService = (): SalesService => ({
     return all.filter((s) => s.branchId === effectiveBranchId);
   },
 
-  getById: async (id: string): Promise<Sale | null> => {
+  getById: async (id: string, branchId?: string): Promise<Sale | null> => {
+    // Resolve effective branch for tenant isolation
+    const settings = await settingsService.getAll();
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+
     // 1. Try Active Shards first (Fast path)
     const active = loadActiveShards();
-    const found = active.find((s) => s.id === id);
+    const found = active.find((s) => s.id === id && s.branchId === effectiveBranchId);
     if (found) return found;
 
     // 2. Deep Search: Scan all history (Slow path, but necessary for returns)
     const allKeys = getAllShardKeys(StorageKeys.SALES);
     for (const key of allKeys) {
-      // Skip keys we already checked (optimally) or just scan all
       const shard = storage.get<Sale[]>(key, []);
-      const match = shard.find((s) => s.id === id);
+      const match = shard.find((s) => s.id === id && s.branchId === effectiveBranchId);
       if (match) return match;
     }
 

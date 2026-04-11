@@ -133,6 +133,7 @@ export const createCashService = (): CashServiceInterface => ({
 
     const newTx: CashTransaction = {
       id: idGenerator.generate('transactions', all[shiftIndex].branchId),
+      branchId: all[shiftIndex].branchId,
       ...transaction,
     };
 

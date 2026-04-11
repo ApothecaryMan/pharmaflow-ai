@@ -829,6 +829,8 @@ export type CashTransactionType =
 export interface CashTransaction {
   /** Unique transaction ID */
   id: string;
+  /** Branch this transaction belongs to — required for RLS isolation */
+  branchId: string;
   /** Shift this transaction belongs to */
   shiftId: string;
   /** Time of transaction (ISO string) */
