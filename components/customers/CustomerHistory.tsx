@@ -34,8 +34,8 @@ export const CustomerHistory: React.FC<CustomerHistoryProps> = ({
 
   const salesWithCustomer = useMemo(() => {
     return sales.filter((s) => {
-      // If no customer code, it's a guest - include it
-      if (!s.customerCode) return true;
+      // If no customer code, it's a guest - EXCLUDE it
+      if (!s.customerCode) return false;
       // If it has a code, ensure it's in our registered set
       return registeredCodes.has(s.customerCode);
     });
