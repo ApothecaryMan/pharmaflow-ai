@@ -682,7 +682,8 @@ export function useEntityHandlers({
           // Record Shift Transaction if Cash
           if (finalPurchase.paymentType === 'cash' && currentShift) {
             addTransaction(currentShift.id, {
-              id: Date.now().toString(),
+              id: idGenerator.generate('transactions', activeBranchId),
+              branchId: activeBranchId,
               shiftId: currentShift.id,
               time: new Date().toISOString(),
               type: 'purchase',
@@ -769,7 +770,8 @@ export function useEntityHandlers({
         // 3. Record Shift Transaction
         if (purchase.paymentType === 'cash' && currentShift) {
           addTransaction(currentShift.id, {
-            id: Date.now().toString(),
+            id: idGenerator.generate('transactions', activeBranchId),
+            branchId: activeBranchId,
             shiftId: currentShift.id,
             time: new Date().toISOString(),
             type: 'purchase',
@@ -879,7 +881,8 @@ export function useEntityHandlers({
       const originalPurchase = purchases.find((p) => p.id === returnData.purchaseId);
       if (originalPurchase?.paymentType === 'cash' && currentShift) {
         addTransaction(currentShift.id, {
-          id: Date.now().toString(),
+          id: idGenerator.generate('transactions', activeBranchId),
+          branchId: activeBranchId,
           shiftId: currentShift.id,
           time: new Date().toISOString(),
           type: 'purchase_return',
@@ -1139,7 +1142,8 @@ export function useEntityHandlers({
         const isImmediateComplete = !saleData.saleType || saleData.saleType === 'walk-in';
         if (isImmediateComplete && currentShift) {
           addTransaction(currentShift.id, {
-            id: Date.now().toString(),
+            id: idGenerator.generate('transactions', activeBranchId),
+            branchId: activeBranchId,
             shiftId: currentShift.id,
             time: new Date().toISOString(),
             type: saleData.paymentMethod === 'cash' ? 'sale' : 'card_sale',
@@ -1267,7 +1271,8 @@ export function useEntityHandlers({
         if (currentShift && (sale.saleType === 'walk-in' || sale.status === 'completed')) {
            const type = sale.paymentMethod === 'visa' ? 'card_return' : 'return';
            addTransaction(currentShift.id, {
-             id: Date.now().toString(),
+             id: idGenerator.generate('transactions', activeBranchId),
+             branchId: activeBranchId,
              shiftId: currentShift.id,
              time: new Date().toISOString(),
              type: type, 
@@ -1527,7 +1532,8 @@ export function useEntityHandlers({
         // Now we add the money to the shift
         const isCash = sale.paymentMethod === 'cash';
         addTransaction(currentShift.id, {
-          id: Date.now().toString(),
+          id: idGenerator.generate('transactions', activeBranchId),
+          branchId: activeBranchId,
           shiftId: currentShift.id,
           time: new Date().toISOString(),
           type: isCash ? 'sale' : 'card_sale',
@@ -1543,23 +1549,6 @@ export function useEntityHandlers({
         ...updates,
         updatedAt: new Date().toISOString(),
       };
-
-      // --- SHIFT BALANCING: Log to shift when a delivery order is COMPLETED ---
-      // This is the cash-in point for delivery orders.
-      if (updates.status === 'completed' && sale.status !== 'completed' && sale.saleType === 'delivery') {
-        if (currentShift) {
-          addTransaction(currentShift.id, {
-            id: Date.now().toString(),
-            shiftId: currentShift.id,
-            time: new Date().toISOString(),
-            type: sale.paymentMethod === 'visa' ? 'card_sale' : 'sale',
-            amount: sale.total,
-            reason: `Delivery Completed #${sale.serialId || sale.id}`,
-            userId: employee?.name || 'System',
-            relatedSaleId: sale.serialId?.toString() || sale.id
-          });
-        }
-      }
 
       setSales((prev) => prev.map((s) => (s.id === saleId ? { ...s, ...finalUpdates } : s)));
 
@@ -1714,7 +1703,8 @@ export function useEntityHandlers({
         // Update Shift
         if (currentShift) {
           addTransaction(currentShift.id, {
-            id: Date.now().toString(),
+            id: idGenerator.generate('transactions', activeBranchId),
+            branchId: activeBranchId,
             shiftId: currentShift.id,
             time: new Date().toISOString(),
             type: 'return',
