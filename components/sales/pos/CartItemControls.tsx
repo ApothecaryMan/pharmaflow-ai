@@ -25,20 +25,25 @@ export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
   showMenu,
   onSelectBatch,
 }) => {
-  const getBadgeColor = () => {
+  const getUrgencyColor = () => {
     const today = new Date();
     const expiry = parseExpiryEndOfMonth(item.expiryDate);
     const monthDiff = (expiry.getFullYear() - today.getFullYear()) * 12 + (expiry.getMonth() - today.getMonth());
-    if (monthDiff <= 0) return 'bg-red-500';
-    if (monthDiff <= 3) return 'bg-orange-500';
-    return 'bg-gray-500 dark:bg-gray-600';
+    if (monthDiff <= 0) return 'text-red-500';
+    if (monthDiff <= 3) return 'text-orange-500';
+    return 'text-gray-400 dark:text-gray-500';
   };
 
+  const currentExpiry = formatExpiryDate(item.expiryDate);
+
   return (
-    <div className='flex items-center gap-1'>
+    <div
+      className={`flex items-center rounded-lg h-6 overflow-hidden w-16 shrink-0 transition-all bg-black/[0.03] dark:bg-white/[0.05] border border-gray-100/50 dark:border-white/5`}
+      title={currentExpiry}
+    >
       <button
         type="button"
-        className={`text-[10px] font-black text-white px-2 h-6 flex items-center justify-center rounded-lg cursor-pointer transition-all active:scale-95 ${getBadgeColor()}`}
+        className={`w-6 h-full flex items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 ${getUrgencyColor()}`}
         onClick={(e) => {
           e.stopPropagation();
           const batchMenuItems = allBatches.map((batch) => ({
@@ -55,8 +60,15 @@ export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
         }}
         onPointerDown={(e) => e.stopPropagation()}
       >
-        {formatExpiryDate(item.expiryDate)}
+        <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>
+          event
+        </span>
       </button>
+      <div className="flex-1 min-w-0 h-full flex items-center justify-center pr-1">
+        <span className="text-[10px] font-bold text-gray-900 dark:text-gray-100 tabular-nums leading-none">
+          {currentExpiry}
+        </span>
+      </div>
     </div>
   );
 };
@@ -101,10 +113,10 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
   return (
     <div
       title={`Max Discount: ${effectiveMax}%\nProfit Margin: ${margin.toFixed(1)}%`}
-      className={`flex items-center rounded-lg h-6 overflow-hidden transition-all w-14 shrink-0
+      className={`flex items-center rounded-lg h-6 overflow-hidden transition-all w-14 shrink-0 border
         ${hasDiscount 
-          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
-          : 'bg-black/[0.03] dark:bg-white/[0.05] text-gray-400'}`}
+          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' 
+          : 'bg-black/[0.03] dark:bg-white/[0.05] text-gray-400 border-gray-100/50 dark:border-white/5'}`}
     >
       <button
         tabIndex={-1}
@@ -140,7 +152,7 @@ export const CartItemDiscountControl: React.FC<CartItemDiscountControlProps> = (
           if (unitItem) updateItemDiscount(unitItem.id, true, finalVal);
           if (finalVal > 0) setGlobalDiscount(0);
         }}
-        className={`w-8 min-w-0 h-full text-[10px] font-black text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+        className={`w-8 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none leading-none ${
           hasDiscount
             ? 'text-emerald-700 dark:text-emerald-300 placeholder-emerald-300'
             : 'text-gray-900 dark:text-gray-100 placeholder-gray-400'
@@ -183,7 +195,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
   const renderDesktopUI = () => {
     return (
       <div
-        className={`flex items-center rounded-lg h-6 overflow-hidden w-14 shrink-0 transition-all bg-black/[0.03] dark:bg-white/[0.05]
+        className={`flex items-center rounded-lg h-6 overflow-hidden w-16 shrink-0 transition-all bg-black/[0.03] dark:bg-white/[0.05] border border-gray-100/50 dark:border-white/5
           ${hasDualMode && (!packItem || packItem.quantity === 0) && (!unitItem || unitItem.quantity === 0)
             ? 'ring-1 ring-inset ring-yellow-500/50'
             : ''}`}
@@ -208,12 +220,12 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
               addToCart(item, false, clampedVal);
             }
           }}
-          className={`h-full text-[10px] font-black text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 shrink-0 min-w-0 ${
-            hasDualMode ? 'w-7' : 'w-full'
+          className={`h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-300 shrink-0 min-w-0 leading-none ${
+            hasDualMode ? 'w-full' : 'w-full'
           } text-primary-600 dark:text-primary-400`}
         />
 
-        {hasDualMode && <div className='w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0'></div>}
+        {hasDualMode && <div className='w-px h-3 bg-gray-200 dark:bg-gray-700 shrink-0'></div>}
 
         {hasDualMode && (
           <input
@@ -235,7 +247,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
                 addToCart(item, true, clampedVal);
               }
             }}
-            className={`w-7 min-w-0 h-full text-[10px] font-black text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-primary-600 dark:text-primary-400 placeholder-primary-200 shrink-0`}
+            className={`flex-1 min-w-0 h-full text-[10px] font-bold text-center bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-primary-600 dark:text-primary-400 placeholder-primary-200 shrink-0 leading-none`}
           />
         )}
       </div>
