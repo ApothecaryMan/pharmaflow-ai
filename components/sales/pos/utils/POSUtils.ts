@@ -97,7 +97,7 @@ export const buildSalePayload = (params: SalePayloadParams): Sale => {
     deliveryEmployeeId,
     status,
     processingTimeMinutes,
-    dailyOrderNumber: 0, // Should be assigned by server/state manager
+    dailyOrderNumber: 0, // Placeholder: Actual number is assigned by transactionService.processCheckout
   };
 };
 

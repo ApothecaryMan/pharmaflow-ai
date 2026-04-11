@@ -89,6 +89,13 @@ export const transactionService = {
       const saleCounter = prevCounter + 1;
       storage.set(counterKey, saleCounter);
 
+      // Generate Daily Order Number
+      const todayString = verifiedDate.toISOString().split('T')[0];
+      const dailyCounterKey = `${StorageKeys.DAILY_ORDER_COUNTER}_${activeBranchId}_${todayString}`;
+      const prevDailyCount = storage.get<number>(dailyCounterKey, 0);
+      const dailyOrderNumber = prevDailyCount + 1;
+      storage.set(dailyCounterKey, dailyOrderNumber);
+
       const serialId = (100000 + saleCounter).toString();
       const internalId = idGenerator.generate('sales', activeBranchId);
 
@@ -103,6 +110,7 @@ export const transactionService = {
         soldByEmployeeId: currentEmployeeId,
         status: saleData.saleType === 'delivery' ? 'pending' : 'completed',
         updatedAt: verifiedDate.toISOString(),
+        dailyOrderNumber,
         ...saleData,
         items: processedItems,
       } as Sale;

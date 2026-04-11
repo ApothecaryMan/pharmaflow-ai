@@ -39,6 +39,7 @@ export const StorageKeys = {
   SHIFTS: 'pharma_shifts',
   SHIFT_RECEIPT_COUNTER: 'pharma_shift_receipt_counter',
   SALE_RECEIPT_COUNTER: 'pharma_sale_receipt_counter',
+  DAILY_ORDER_COUNTER: 'pharma_daily_order_counter',
   STOCK_BATCHES: 'pharma_stock_batches',
   STOCK_MOVEMENTS: 'pharma_stock_movements',
 
