@@ -1708,6 +1708,7 @@ export const TRANSLATIONS = {
     employeeList: {
       title: 'Employee List',
       subtitle: 'Manage pharmacy staff',
+      globalView: 'Global View',
       addEmployee: 'Add Employee',
       editEmployee: 'Edit Employee',
       viewDetails: 'Employee Details',
@@ -2043,6 +2044,7 @@ export const TRANSLATIONS = {
     employeeList: {
       title: 'قائمة الموظفين',
       subtitle: 'إدارة طاقم الصيدلية',
+      globalView: 'العرض العام',
       addEmployee: 'إضافة موظف',
       editEmployee: 'تعديل موظف',
       viewDetails: 'تفاصيل الموظف',
@@ -2523,10 +2525,10 @@ export const TRANSLATIONS = {
     loginAudit: {
       title: 'سجل عمليات الدخول',
       subtitle: 'تتبع محاولات تسجيل الدخول والخروج والتبديل بين الحسابات',
+      globalView: 'العرض العام',
       searchPlaceholder: 'بحث باسم المستخدم أو ID...',
       emptyMessage: 'لا توجد سجلات عمليات حالياً',
       showAllBranches: 'عرض جميع الفروع',
-      globalView: 'العرض العام',
       yesterday: 'أمس',
       today: 'اليوم',
       am: 'ص',

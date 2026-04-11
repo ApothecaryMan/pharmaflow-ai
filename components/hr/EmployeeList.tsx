@@ -17,6 +17,8 @@ import { BUTTON_BASE } from '../../utils/themeStyles';
 import { FilterPill, type FilterConfig } from '../common/FilterPill';
 import { SmartEmailInput, SmartInput, SmartPhoneInput } from '../common/SmartInputs';
 import { TanStackTable } from '../common/TanStackTable';
+import { Switch } from '../common/Switch';
+import { employeeService } from '../../services/hr/employeeService';
 import { INPUT_BASE } from '../../utils/themeStyles';
 
 // --- Smart Roles Configuration ---
@@ -81,6 +83,14 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isBranchOpen, setIsBranchOpen] = useState(false);
 
+  // Global View State
+  const [showAllBranches, setShowAllBranches] = useState(false);
+  const [allEmployeesFetched, setAllEmployeesFetched] = useState<Employee[]>([]);
+  const [isFetchingGlobal, setIsFetchingGlobal] = useState(false);
+
+  const isSuperAdmin =
+    currentUser?.username === import.meta.env.VITE_SUPER_USER || permissionsService.isOrgAdmin();
+
   useEffect(() => {
     const fetchUserAndBranches = async () => {
       const user = await authService.getCurrentUser();
@@ -92,6 +102,24 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
     };
     fetchUserAndBranches();
   }, []);
+
+  // Fetch all employees when "Global View" is toggled
+  useEffect(() => {
+    if (showAllBranches && allEmployeesFetched.length === 0 && !isFetchingGlobal) {
+      const fetchAll = async () => {
+        setIsFetchingGlobal(true);
+        try {
+          const all = await employeeService.getAll('ALL');
+          setAllEmployeesFetched(all);
+        } catch (err) {
+          console.error('Failed to fetch all employees', err);
+        } finally {
+          setIsFetchingGlobal(false);
+        }
+      };
+      fetchAll();
+    }
+  }, [showAllBranches, allEmployeesFetched.length, isFetchingGlobal]);
 
   // 1. Access Matrix: Filter Departments based on User Role
   const availableDepartments = useMemo(() => {
@@ -153,6 +181,30 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   const [passwordError, setPasswordError] = useState('');
   const [wantsToChangePassword, setWantsToChangePassword] = useState(false);
 
+  // Tab Options for Modal Header (Centered)
+  const employeeTabOptions = useMemo(() => {
+    return [
+      {
+        value: 'general',
+        label: language === 'AR' ? 'معلومات عامة' : 'General',
+        icon: 'person',
+      },
+      {
+        value: 'credentials',
+        label: language === 'AR' ? 'بيانات الدخول' : 'Credentials',
+        icon: 'lock',
+      },
+      {
+        value: 'documents',
+        label: language === 'AR' ? 'المستندات' : 'Documents',
+        icon: 'description',
+      },
+    ].filter(
+      (opt) =>
+        opt.value !== 'credentials' || (formData.role || 'pharmacist') !== 'officeboy'
+    );
+  }, [language, formData.role]);
+
   // Sounds
   const { playSuccess, playError, playBeep } = usePosSounds();
 
@@ -167,6 +219,14 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
     if (confirm(t.employeeList.deleteConfirm)) {
       await onDeleteEmployee(emp.id);
       playBeep();
+      
+      // Refresh global list if in global view
+      if (showAllBranches) {
+        try {
+          const all = await employeeService.getAll('ALL');
+          setAllEmployeesFetched(all);
+        } catch (err) {}
+      }
     }
   };
 
@@ -214,9 +274,10 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   ], [t, availableDepartments]);
 
   const filteredEmployees = useMemo(() => {
+    const list = showAllBranches ? allEmployeesFetched : employees;
     // Hide Super Admin from the list
-    return employees.filter((e) => e.id !== 'SUPER-ADMIN' && e.employeeCode !== 'EMP-000');
-  }, [employees]);
+    return list.filter((e) => e.id !== 'SUPER-ADMIN' && e.employeeCode !== 'EMP-000');
+  }, [employees, allEmployeesFetched, showAllBranches]);
 
   // --- Columns ---
   const columns = useMemo<ColumnDef<Employee>[]>(
@@ -366,7 +427,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
     // Check for duplicate username
     if (formData.username && formData.username.trim().length > 0) {
       const username = formData.username.trim().toLowerCase();
-      const isDuplicate = employees.some(
+      // Check for global duplicate if in global view, otherwise check branch-local
+      const listToCheck = showAllBranches ? allEmployeesFetched : employees;
+      const isDuplicate = listToCheck.some(
         (emp) =>
           emp.id !== editingEmployee?.id && emp.username && emp.username.toLowerCase() === username
       );
@@ -427,6 +490,14 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         await onAddEmployee(newEmp);
       }
 
+      // Refresh global list if in global view to ensure local state parity
+      if (showAllBranches) {
+        try {
+          const all = await employeeService.getAll('ALL');
+          setAllEmployeesFetched(all);
+        } catch (err) {}
+      }
+
       playSuccess();
       setIsModalOpen(false);
       setEditingEmployee(null);
@@ -465,7 +536,20 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
           <p className='text-sm text-gray-500 dark:text-gray-400'>{t.employeeList.subtitle}</p>
         </div>
 
-        <div className='flex flex-col md:flex-row gap-3 w-full md:w-auto'>
+        <div className='flex flex-col md:flex-row gap-3 w-full md:w-auto items-center'>
+          {isSuperAdmin && (
+            <label className='flex items-center gap-3 px-3 h-10 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-100 dark:hover:bg-white/10 transition-colors mr-1'>
+              <span className='text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider select-none shrink-0'>
+                {t.employeeList.globalView}
+              </span>
+              <Switch
+                checked={showAllBranches}
+                onChange={setShowAllBranches}
+                activeColor={color}
+              />
+            </label>
+          )}
+
           {permissionsService.can('users.manage') && (
             <button
               onClick={() => {
@@ -473,11 +557,14 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                 setEditingEmployee(null);
                 setIsModalOpen(true);
               }}
-              className={`flex items-center justify-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all active:scale-95 whitespace-nowrap`}
+              className={`flex items-center justify-center gap-2 px-5 h-10 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl shadow-lg shadow-zinc-900/10 dark:shadow-white/5 transition-all active:scale-95 whitespace-nowrap font-bold`}
             >
               <span 
                 className='material-symbols-rounded'
-                style={{ fontSize: 'var(--icon-base)' }}
+                style={{ 
+                  fontSize: 'var(--icon-base)',
+                  fontVariationSettings: "'wght' 700" 
+                }}
               >
                 add
               </span>
@@ -511,6 +598,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         isOpen={isModalOpen}
         onClose={closeModal}
         title={editingEmployee ? t.employeeList.editEmployee : t.employeeList.addEmployee}
+        tabs={employeeTabOptions}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         icon='badge'
         size='4xl'
         height='80vh'
@@ -531,34 +621,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
               {t.employeeList.modal.save}
             </button>
           </div>
-        }
-        headerActions={
-          <SegmentedControl
-            options={[
-              {
-                value: 'general',
-                label: language === 'AR' ? 'معلومات عامة' : 'General',
-                icon: 'person',
-              },
-              {
-                value: 'credentials',
-                label: language === 'AR' ? 'بيانات الدخول' : 'Credentials',
-                icon: 'lock',
-              },
-              {
-                value: 'documents',
-                label: language === 'AR' ? 'المستندات' : 'Documents',
-                icon: 'description',
-              },
-            ].filter(
-              (opt) =>
-                opt.value !== 'credentials' || (formData.role || 'pharmacist') !== 'officeboy'
-            )}
-            value={activeTab}
-            onChange={(value) => setActiveTab(value as 'general' | 'credentials' | 'documents')}
-            color={color}
-            iconSize='--icon-lg'
-          />
         }
       >
         <div className='space-y-6'>
