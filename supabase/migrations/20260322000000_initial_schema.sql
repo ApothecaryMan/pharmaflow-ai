@@ -495,7 +495,9 @@ CREATE TRIGGER handle_updated_at_sales BEFORE UPDATE ON sales FOR EACH ROW EXECU
 CREATE OR REPLACE FUNCTION sync_drug_stock()
 RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE drugs SET stock = NEW.new_stock WHERE id = NEW.drug_id;
+  -- FIX: Apply a relative delta (NEW.quantity) to prevent concurrency drift,
+  -- instead of blindly copying NEW.new_stock which could be stale.
+  UPDATE drugs SET stock = stock + NEW.quantity WHERE id = NEW.drug_id;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
