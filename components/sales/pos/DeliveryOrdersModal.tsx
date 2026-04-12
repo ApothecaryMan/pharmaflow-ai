@@ -27,6 +27,7 @@ import { Tooltip } from '../../common/Tooltip';
 import { isToday, isAfter, subHours, parseISO } from 'date-fns';
 import { idGenerator } from '../../../utils/idGenerator';
 import { useShift } from '../../../hooks/useShift';
+import { resolvePrice } from '../../../utils/stockOperations';
 
 const ShiftWarning = ({ t, compact = false }: { t: any; compact?: boolean }) => (
   <div className={`flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 ${compact ? 'h-7 px-2 w-full' : 'h-[42px] px-4'}`}>
@@ -566,8 +567,8 @@ export const DeliveryOrdersModal: React.FC<DeliveryOrdersModalProps> = ({
 
       // Step 1: Calculate subtotal
       const subtotal = updatedItems.reduce((sum, item) => {
-        const unitsPerPack = item.unitsPerPack || 1;
-        const basePrice = item.isUnit ? item.price / unitsPerPack : item.price;
+        // BUG-D2: Use resolvePrice for consistent rounding with POS cart
+        const basePrice = resolvePrice(item.price, !!item.isUnit, item.unitsPerPack);
         const itemPrice = basePrice * item.quantity;
         const afterItemDiscount = itemPrice * (1 - (item.discount || 0) / 100);
         return sum + afterItemDiscount;

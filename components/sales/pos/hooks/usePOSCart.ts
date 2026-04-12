@@ -59,8 +59,14 @@ export const usePOSCart = ({
         return;
       }
       updateTab(activeTabId, { discount });
+      // BUG-D5: Clear all item-level discounts when setting a global discount
+      if (discount > 0) {
+        setCart((prev: CartItem[]) =>
+          prev.map((item) => (item.discount ? { ...item, discount: 0 } : item))
+        );
+      }
     },
-    [activeTabId, updateTab, showToastError]
+    [activeTabId, updateTab, showToastError, setCart]
   );
 
   // Derived state: Group cart items by Drug ID (Visual Merging)
@@ -335,12 +341,15 @@ export const usePOSCart = ({
       showToastError('Permission Denied: Cannot apply item discount');
       return;
     }
-    const validDiscount = Math.min(100, Math.max(0, discount));
-    setCart((prev: CartItem[]) =>
-      prev.map((item) =>
-        item.id === id && !!item.isUnit === isUnit ? { ...item, discount: validDiscount } : item
-      )
-    );
+    setCart((prev: CartItem[]) => {
+      const item = prev.find((i) => i.id === id && !!i.isUnit === isUnit);
+      // BUG-D1: Enforce maxDiscount from the item, not just 0-100
+      const maxDisc = item?.maxDiscount && item.maxDiscount > 0 ? item.maxDiscount : 10;
+      const validDiscount = Math.min(maxDisc, Math.max(0, discount));
+      return prev.map((i) =>
+        i.id === id && !!i.isUnit === isUnit ? { ...i, discount: validDiscount } : i
+      );
+    });
   }, [showToastError, setCart]);
 
 
