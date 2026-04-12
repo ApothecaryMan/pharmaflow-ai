@@ -72,6 +72,7 @@ import {
   getItemsAlignClass,
   getTextAlignClass,
 } from './TableAlignment';
+import { CARD_BASE } from '../../utils/themeStyles';
 
 export const PriceDisplay: React.FC<{
   value: number;
@@ -898,7 +899,7 @@ export function TanStackTable<TData, TValue>({
         className={`flex flex-col flex-1 min-h-0 ${
           lite
             ? 'bg-transparent'
-            : 'rounded-2xl border-2 dark:border border-(--border-divider) bg-(--bg-card) overflow-hidden'
+            : `${CARD_BASE} rounded-2xl overflow-hidden`
         }`}
       >
         {/* Table Scroll Area */}
