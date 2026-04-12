@@ -9,6 +9,7 @@ import { DatePicker, DateRangePicker } from '../common/DatePicker';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
+import { InteractiveCard } from '../common/InteractiveCard';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
 import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
 import { auditService } from '../../services/auditService';
@@ -338,31 +339,38 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         </div>
 
         {/* Summary Cards */}
-        <div className='flex gap-3'>
-          <div
-            className={`px-4 py-2 rounded-2xl bg-primary-50 dark:bg-primary-900/20 ${CARD_BASE} flex flex-col items-end min-w-[120px]`}
-          >
-            <span
-              className={`text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400`}
-            >
-              {t.shiftHistory?.summary?.totalShifts || 'Total Shifts'}
-            </span>
-            <span className={`text-xl font-bold text-primary-900 dark:text-primary-100`}>
-              {filteredShifts.length}
-            </span>
-          </div>
-          <div
-            className={`px-4 py-2 rounded-2xl bg-primary-50 dark:bg-primary-900/20 ${CARD_BASE} flex flex-col items-end min-w-[140px]`}
-          >
-            <span
-              className={`text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400`}
-            >
-              {t.shiftHistory?.summary?.totalRevenue || 'Total Revenue'}
-            </span>
-            <span className={`text-xl font-bold text-primary-900 dark:text-primary-100`}>
-              <PriceDisplay value={totalRevenue} />
-            </span>
-          </div>
+        <div className='flex items-center'>
+          <InteractiveCard
+            className="flex flex-col items-end min-w-[160px] px-6 py-3 rounded-2xl"
+            pages={[
+              {
+                theme: 'bg-primary-50 dark:bg-primary-900/20',
+                content: (
+                  <div className="flex flex-col items-end w-full">
+                    <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400">
+                      {t.shiftHistory?.summary?.totalShifts || 'Total Shifts'}
+                    </span>
+                    <span className="text-2xl font-bold text-primary-900 dark:text-primary-100">
+                      {filteredShifts.length}
+                    </span>
+                  </div>
+                ),
+              },
+              {
+                theme: 'bg-green-50 dark:bg-green-900/20',
+                content: (
+                  <div className="flex flex-col items-end w-full">
+                    <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
+                      {t.shiftHistory?.summary?.totalRevenue || 'Total Revenue'}
+                    </span>
+                    <span className="text-2xl font-bold text-green-900 dark:text-green-100">
+                      <PriceDisplay value={totalRevenue} />
+                    </span>
+                  </div>
+                ),
+              }
+            ]}
+          />
         </div>
       </div>
 
