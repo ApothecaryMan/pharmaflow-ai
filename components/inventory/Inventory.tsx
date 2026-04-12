@@ -11,7 +11,7 @@ import {
   isMedicineCategory,
 } from '../../data/productCategories';
 import type { Drug } from '../../types';
-import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
+import { formatCurrency, formatCurrencyParts, formatCompactCurrency } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { formatStock, formatStockParts, validateStock } from '../../utils/inventory';
 import { createSearchRegex, parseSearchTerm } from '../../utils/searchUtils';
@@ -22,7 +22,8 @@ import { useContextMenu, useContextMenuTrigger } from '../common/ContextMenu';
 import type { FilterConfig } from '../common/FilterPill';
 import { Modal } from '../common/Modal';
 import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs';
-import { TanStackTable } from '../common/TanStackTable';
+import { TanStackTable, PriceDisplay } from '../common/TanStackTable';
+import { InteractiveCard } from '../common/InteractiveCard';
 import { AddProduct } from './AddProduct';
 import { useStatusBar } from '../layout/StatusBar';
 import { useSettings } from '../../context';
@@ -331,7 +332,19 @@ export const Inventory: React.FC<InventoryProps> = ({
     });
   }, [filteredInventory]);
 
-  // Helper: Get row context menu actions
+  // Calculate summary stats
+  const summaryStats = useMemo(() => {
+    return groupedInventory.reduce(
+      (acc, drug) => {
+        acc.totalItems += 1;
+        acc.totalCost += (drug.costPrice || 0) * (drug.stock || 0);
+        acc.totalSaleValue += (drug.price || 0) * (drug.stock || 0);
+        return acc;
+      },
+      { totalItems: 0, totalCost: 0, totalSaleValue: 0 }
+    );
+  }, [groupedInventory]);
+
     const getRowActions = (drugRow: any) => {
       const groupData = drugRow as Drug & { group: Drug[]; groupId: string };
       const selectedId = selectedBatches[groupData.groupId] || groupData.id;
@@ -665,23 +678,83 @@ export const Inventory: React.FC<InventoryProps> = ({
               : t.addProductSubtitle || 'Add a new item to your inventory'}
           </p>
         </div>
-        <SegmentedControl
-          value={mode}
-          onChange={(val) => {
-            setMode(val);
-            if (val === 'add') handleOpenAdd();
-          }}
-          options={[
-            { label: t.allProducts || 'All Products', value: 'list' as const },
-            ...(permissionsService.can('inventory.add')
-              ? [{ label: t.addNewProduct || 'Add New Product', value: 'add' as const }]
-              : []),
-          ]}
-          shape='pill'
-          size='sm'
-          color={color}
-          fullWidth={false}
-        />
+
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* Summary Cards */}
+          {mode === 'list' && (
+            <>
+              <InteractiveCard
+                className="flex flex-col items-end min-w-[140px] px-5 py-2.5 rounded-2xl"
+                pages={[
+                  {
+                    theme: 'bg-primary-50 dark:bg-primary-900/20',
+                    content: (
+                      <div className="flex flex-col items-end w-full">
+                        <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400">
+                          {t.summary?.totalItems || 'Total Items'}
+                        </span>
+                        <span className="text-xl font-bold text-primary-900 dark:text-primary-100">
+                          {summaryStats.totalItems >= 1000 
+                            ? new Intl.NumberFormat('en-US', { notation: 'compact', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(summaryStats.totalItems)
+                            : summaryStats.totalItems}
+                        </span>
+                      </div>
+                    ),
+                  }
+                ]}
+              />
+              <InteractiveCard
+                className="flex flex-col items-end min-w-[180px] px-5 py-2.5 rounded-2xl"
+                pages={[
+                  {
+                    theme: 'bg-green-50 dark:bg-green-900/20',
+                    content: (
+                      <div className="flex flex-col items-end w-full">
+                        <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
+                          {t.summary?.totalCost || 'Inventory Cost'}
+                        </span>
+                        <span className="text-xl font-bold text-green-900 dark:text-primary-100 tabular-nums">
+                          <PriceDisplay value={summaryStats.totalCost} compact={summaryStats.totalCost >= 1000} />
+                        </span>
+                      </div>
+                    ),
+                  },
+                  {
+                    theme: 'bg-cyan-50 dark:bg-cyan-900/20',
+                    content: (
+                      <div className="flex flex-col items-end w-full">
+                        <span className="text-[10px] font-bold uppercase text-cyan-600 dark:text-cyan-400">
+                          {t.summary?.saleValue || 'Sale Value'}
+                        </span>
+                        <span className="text-xl font-bold text-cyan-900 dark:text-primary-100 tabular-nums">
+                          <PriceDisplay value={summaryStats.totalSaleValue} compact={summaryStats.totalSaleValue >= 1000} />
+                        </span>
+                      </div>
+                    ),
+                  }
+                ]}
+              />
+            </>
+          )}
+
+          <SegmentedControl
+            value={mode}
+            onChange={(val) => {
+              setMode(val);
+              if (val === 'add') handleOpenAdd();
+            }}
+            options={[
+              { label: t.allProducts || 'All Products', value: 'list' as const },
+              ...(permissionsService.can('inventory.add')
+                ? [{ label: t.addNewProduct || 'Add New Product', value: 'add' as const }]
+                : []),
+            ]}
+            shape='pill'
+            size='sm'
+            color={color}
+            fullWidth={false}
+          />
+        </div>
       </div>
 
       {mode === 'list' ? (

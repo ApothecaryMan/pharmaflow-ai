@@ -364,7 +364,7 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
                       {t.shiftHistory?.summary?.totalRevenue || 'Total Revenue'}
                     </span>
                     <span className="text-2xl font-bold text-green-900 dark:text-green-100">
-                      <PriceDisplay value={totalRevenue} />
+                      <PriceDisplay value={totalRevenue} compact={totalRevenue >= 1000} />
                     </span>
                   </div>
                 ),

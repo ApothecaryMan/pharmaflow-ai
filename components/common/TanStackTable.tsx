@@ -55,7 +55,7 @@ declare module '@tanstack/react-table' {
 import { useSettings } from '../../context/SettingsContext';
 import { useLongPress } from '../../hooks/useLongPress';
 import { TRANSLATIONS } from '../../i18n/translations';
-import { formatCurrencyParts } from '../../utils/currency';
+import { formatCurrencyParts, formatCompactCurrencyParts } from '../../utils/currency';
 import { getSmartDirection } from './SmartInputs';
 import {
   ContextMenuCheckboxItem,
@@ -77,8 +77,11 @@ import { CARD_BASE } from '../../utils/themeStyles';
 export const PriceDisplay: React.FC<{
   value: number;
   size?: 'sm' | 'base' | 'lg' | 'xl' | '2xl';
-}> = ({ value, size = 'base' }) => {
-  const { amount, symbol } = formatCurrencyParts(value);
+  compact?: boolean;
+}> = ({ value, size = 'base', compact = false }) => {
+  const { amount, symbol } = compact
+    ? formatCompactCurrencyParts(value, 'EGP', undefined, 2)
+    : formatCurrencyParts(value);
 
   // Scale symbol based on text size approximately
   const symbolClass =

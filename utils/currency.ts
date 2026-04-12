@@ -108,6 +108,7 @@ export const formatCompactCurrency = (
 
   const formatter = new Intl.NumberFormat('en-US', {
     notation: 'compact',
+    minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
 
@@ -122,6 +123,7 @@ export const formatCompactCurrency = (
     notation: 'compact',
     style: 'currency',
     currency: currency,
+    minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(amount);
 };
@@ -136,6 +138,7 @@ export const formatCompactCurrencyParts = (
 
   const formatter = new Intl.NumberFormat('en-US', {
     notation: 'compact',
+    minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
 
