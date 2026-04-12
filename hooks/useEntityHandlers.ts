@@ -32,7 +32,7 @@ import { idGenerator } from '../utils/idGenerator';
 import { validateStock } from '../utils/inventory';
 import { calculateLoyaltyPoints } from '../utils/loyaltyPoints';
 import { measurePerformance } from '../utils/monitoring';
-import { addTransactionToOpenShift } from '../utils/shiftHelpers'; // Deprecated - replaced by useShift context
+// BUG-C3: Removed dead import of addTransactionToOpenShift (deprecated, replaced by useShift context)
 import { storage } from '../utils/storage';
 import { getShardKey } from '../utils/sharding';
 import { validateDrug, validateSaleData, validateStockAvailability } from '../utils/validation';
@@ -1581,20 +1581,25 @@ export function useEntityHandlers({
 
       // Handle Delivery Completion (Status changed to completed)
       // BUG-011: Only fire for delivery orders — walk-in sales already record shift tx at checkout time
-      if (updates.status === 'completed' && sale.status !== 'completed' && sale.saleType === 'delivery' && currentShift) {
+      // BUG-C1: Idempotency guard — check shiftTransactionRecorded flag to prevent double recording
+      if (updates.status === 'completed' && sale.status !== 'completed' && sale.saleType === 'delivery' && currentShift && !sale.shiftTransactionRecorded) {
         // Now we add the money to the shift
         const isCash = sale.paymentMethod === 'cash';
+        // BUG-C5: Use updated total if available (order may have been edited)
+        const txAmount = (updates as any).total ?? sale.total;
         addTransaction(currentShift.id, {
           id: idGenerator.generate('transactions', activeBranchId),
           branchId: activeBranchId,
           shiftId: currentShift.id,
           time: new Date().toISOString(),
           type: isCash ? 'sale' : 'card_sale',
-          amount: sale.total, // Ensure we use the full total
+          amount: txAmount,
           reason: `Delivery Finalized #${saleId}`,
           userId: employee?.name || 'System',
           relatedSaleId: saleId.toString(),
         });
+        // Mark as recorded to prevent duplicate on rapid double-click
+        updates.shiftTransactionRecorded = true;
         success(`Delivery #${saleId} completed and payment recorded.`);
       }
 

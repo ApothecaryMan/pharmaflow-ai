@@ -571,6 +571,8 @@ export interface Sale {
   modificationHistory?: OrderModificationRecord[];
   /** Time in minutes from tab creation to checkout completion */
   processingTimeMinutes?: number;
+  /** BUG-C1: Idempotency flag — true once shift transaction has been recorded for this sale */
+  shiftTransactionRecorded?: boolean;
 }
 
 /** Type of return/refund operation */
