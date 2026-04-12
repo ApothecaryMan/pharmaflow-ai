@@ -1276,6 +1276,14 @@ export function useEntityHandlers({
           return;
         }
 
+        // 1.5. Shift Requirement Guard for Cash Refunds
+        // BUG-SH-02: Block cancellations of paid/completed sales if no shift is open
+        const needsShift = sale.saleType === 'walk-in' || sale.status === 'completed';
+        if (needsShift && !currentShift) {
+          error('Permission denied: An active shift must be open to cancel a completed or walk-in sale and issue a refund.');
+          return;
+        }
+
         const performer = employee;
         for (const item of sale.items) {
           const drug = inventory.find((d) => d.id === item.id && d.branchId === activeBranchId);
@@ -1653,6 +1661,13 @@ export function useEntityHandlers({
         if (userRole === 'cashier' && returnData.totalRefund > 500) {
            error('Permission denied: Cashiers cannot refund more than 500 EGP per transaction.');
            return false;
+        }
+
+        // 1.5. Shift Requirement Guard
+        // BUG-SH-01: Block returns if no shift is open to ensure financial tracking
+        if (!currentShift) {
+          error('Permission denied: An active shift must be open to process returns and issue refunds.');
+          return false;
         }
 
         // 2. Validate Return Data

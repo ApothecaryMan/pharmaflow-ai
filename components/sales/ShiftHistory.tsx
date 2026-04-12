@@ -11,6 +11,7 @@ import { SearchInput } from '../common/SearchInput';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
 import { getPrinterSettings, printReceiptSilently } from '../../utils/qzPrinter';
+import { auditService } from '../../services/auditService';
 
 interface ShiftHistoryProps {
   color: string;
@@ -42,6 +43,18 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
       ...shift,
       printCount: (shift.printCount || 1) + 1,
     };
+    
+    // 1.5. Audit reprint action
+    // BUG-SH-03: Add traceability for shift reprints
+    auditService.log('shift.reprint', {
+      details: { 
+        shiftId: shift.id, 
+        receiptNumber: shift.handoverReceiptNumber,
+        originalPrintCount: shift.printCount || 1 
+      },
+      entityId: shift.id,
+      entityType: 'shift'
+    });
     
     // 2. Persist update
     endShift(updatedShift);
@@ -182,7 +195,14 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         id: 'variance',
         header: t.shiftHistory?.headers?.variance || 'Variance',
         accessorFn: (row) => {
-          const expected = row.openingBalance + row.cashSales + row.cashIn - row.cashOut;
+          // BUG-SH-04: Variance must account for returns and purchases
+          const expected = row.openingBalance 
+            + row.cashSales 
+            + row.cashIn 
+            + (row.cashPurchaseReturns || 0) 
+            - row.cashOut 
+            - (row.returns || 0) 
+            - (row.cashPurchases || 0);
           return (row.closingBalance || 0) - expected;
         },
         cell: ({ getValue }) => {
@@ -250,7 +270,14 @@ export const ShiftHistory: React.FC<ShiftHistoryProps> = ({
         ? (new Date(shift.closeTime).getTime() - new Date(shift.openTime).getTime()) /
           (1000 * 60 * 60)
         : 0;
-      const expected = shift.openingBalance + shift.cashSales + shift.cashIn - shift.cashOut;
+      // BUG-SH-05: Sync CSV export math with table logic
+      const expected = shift.openingBalance 
+        + shift.cashSales 
+        + shift.cashIn 
+        + (shift.cashPurchaseReturns || 0)
+        - shift.cashOut 
+        - (shift.returns || 0)
+        - (shift.cashPurchases || 0);
       const variance = (shift.closingBalance || 0) - expected;
 
       return [
