@@ -36,6 +36,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setTheme,
     darkMode,
     setDarkMode,
+    cardBorderLight,
+    setCardBorderLight,
     setLanguage,
     availableThemes,
     availableLanguages,
@@ -349,6 +351,37 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       ]}
                     />
                   </div>
+
+                  {/* Card Border Style (Light Mode Only) */}
+                  {!darkMode && setCardBorderLight && (
+                    <div className='flex items-center justify-between'>
+                      <label
+                        className='text-xs font-medium flex items-center gap-1.5'
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        <span
+                          className='material-symbols-rounded text-(--icon-sm)'
+                          style={{ color: 'var(--text-secondary)' }}
+                        >
+                          border_style
+                        </span>
+                        {(t as any).borderStyle || (language === 'AR' ? 'شكل البطاقة' : 'Card Style')}
+                      </label>
+                      <SegmentedControl
+                        value={cardBorderLight || 'default'}
+                        onChange={(val) => setCardBorderLight(val as 'default' | 'thin' | 'none')}
+                        color={currentTheme?.name?.toLowerCase() || 'blue'}
+                        size='xs'
+                        fullWidth={false}
+                        shape='pill'
+                        options={[
+                          { label: language === 'AR' ? 'سميك' : 'Thick', value: 'default' },
+                          { label: language === 'AR' ? 'نحيف' : 'Thin', value: 'thin' },
+                          { label: language === 'AR' ? 'بدون' : 'None', value: 'none' },
+                        ]}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>

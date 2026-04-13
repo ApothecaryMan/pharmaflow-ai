@@ -768,3 +768,13 @@ input[type="search"]::-webkit-search-results-decoration {
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 }
+/* Thin Border White Mode Override */
+html:not(.dark).thin-border-mode .card-shadow {
+  border: 1px solid #d1d5db !important; /* gray-300 for darker color and 1px thickness */
+}
+
+/* None Border White Mode Override */
+html:not(.dark).none-border-mode .card-shadow {
+  border-color: transparent !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05) !important;
+}

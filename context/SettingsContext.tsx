@@ -64,6 +64,7 @@ export interface SettingsState {
   tooltipBlur: boolean;
   settingsBlur: boolean;
   sidebarVisible: boolean;
+  cardBorderLight: 'default' | 'thin' | 'none';
   // Developer
   hideInactiveModules: boolean;
   developerMode: boolean;
@@ -96,6 +97,7 @@ export interface SettingsContextType extends SettingsState {
   setTooltipBlur: (blur: boolean) => void;
   setSettingsBlur: (blur: boolean) => void;
   setSidebarVisible: (visible: boolean) => void;
+  setCardBorderLight: (style: 'default' | 'thin' | 'none') => void;
   // Developer Actions
   setHideInactiveModules: (hide: boolean) => void;
   setDeveloperMode: (mode: boolean) => void;
@@ -126,6 +128,7 @@ const defaultSettings: SettingsState = {
   tooltipBlur: false,
   settingsBlur: false,
   sidebarVisible: false,
+  cardBorderLight: 'default',
   hideInactiveModules: true,
   developerMode: false,
   showTicker: false,
@@ -185,6 +188,7 @@ const loadSettings = (): SettingsState => {
       tooltipBlur: storage.get('pharma_tooltipBlur', defaultSettings.tooltipBlur),
       settingsBlur: storage.get('pharma_settingsBlur', defaultSettings.settingsBlur),
       sidebarVisible: sidebarVisible ?? defaultSettings.sidebarVisible,
+      cardBorderLight: storage.get('pharma_cardBorderLight', defaultSettings.cardBorderLight),
       hideInactiveModules: hideInactiveModules ?? defaultSettings.hideInactiveModules,
       developerMode: developerMode ?? defaultSettings.developerMode,
       graphicStyle: storage.get('pharma_graphicStyle', defaultSettings.graphicStyle),
@@ -274,6 +278,16 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [settings.textTransform]);
 
+  // Apply light border mode
+  useEffect(() => {
+    document.documentElement.classList.remove('thin-border-mode', 'none-border-mode');
+    if (settings.cardBorderLight === 'thin') {
+      document.documentElement.classList.add('thin-border-mode');
+    } else if (settings.cardBorderLight === 'none') {
+      document.documentElement.classList.add('none-border-mode');
+    }
+  }, [settings.cardBorderLight]);
+
   // Synchronize document language and direction
   useEffect(() => {
     const lang = settings.language.toLowerCase();
@@ -343,6 +357,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, sidebarVisible }));
   }, []);
 
+  const setCardBorderLight = useCallback((cardBorderLight: 'default' | 'thin' | 'none') => {
+    setSettings((prev) => ({ ...prev, cardBorderLight }));
+  }, []);
+
   const setHideInactiveModules = useCallback((hideInactiveModules: boolean) => {
     setSettings((prev) => ({ ...prev, hideInactiveModules }));
   }, []);
@@ -389,6 +407,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setTooltipBlur,
       setSettingsBlur,
       setSidebarVisible,
+      setCardBorderLight,
       setHideInactiveModules,
       setDeveloperMode,
       setShowTicker,
@@ -411,6 +430,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setNavStyle,
       setDropdownBlur,
       setSidebarVisible,
+      setCardBorderLight,
       setHideInactiveModules,
       setDeveloperMode,
       setShowTicker,
