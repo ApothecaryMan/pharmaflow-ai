@@ -740,12 +740,12 @@ export const Inventory: React.FC<InventoryProps> = ({
           {mode === 'list' && (
             <>
               <InteractiveCard
-                className="flex flex-col items-end min-w-[140px] px-5 py-2.5 rounded-2xl"
+                className={`flex flex-col min-w-[140px] px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
                 pages={[
                   {
                     theme: 'bg-primary-50 dark:bg-primary-900/20',
                     content: (
-                      <div className="flex flex-col items-end w-full">
+                      <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
                         <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400">
                           {t.summary?.totalItems || 'Total Items'}
                         </span>
@@ -760,12 +760,12 @@ export const Inventory: React.FC<InventoryProps> = ({
                 ]}
               />
               <InteractiveCard
-                className="flex flex-col items-end min-w-[180px] px-5 py-2.5 rounded-2xl"
+                className={`flex flex-col min-w-[180px] px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
                 pages={[
                   {
                     theme: 'bg-green-50 dark:bg-green-900/20',
                     content: (
-                      <div className="flex flex-col items-end w-full">
+                      <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
                         <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
                           {t.summary?.totalCost || 'Inventory Cost'}
                         </span>
@@ -778,7 +778,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                   {
                     theme: 'bg-cyan-50 dark:bg-cyan-900/20',
                     content: (
-                      <div className="flex flex-col items-end w-full">
+                      <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
                         <span className="text-[10px] font-bold uppercase text-cyan-600 dark:text-cyan-400">
                           {t.summary?.saleValue || 'Sale Value'}
                         </span>
@@ -791,12 +791,12 @@ export const Inventory: React.FC<InventoryProps> = ({
                 ]}
               />
               <InteractiveCard
-                className="flex flex-col items-end min-w-[160px] px-5 py-2.5 rounded-2xl"
+                className={`flex flex-col min-w-[160px] px-5 py-2.5 rounded-2xl ${isRTL ? 'items-end' : 'items-start'}`}
                 pages={[
                   {
                     theme: 'bg-red-50 dark:bg-red-900/20',
                     content: (
-                      <div className="flex flex-col items-end w-full">
+                      <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
                         <span className="text-[10px] font-bold uppercase text-red-600 dark:text-red-400">
                           {t.summary?.restock || 'Critical Restock'}
                         </span>
@@ -809,7 +809,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                   {
                     theme: 'bg-amber-50 dark:bg-amber-900/20',
                     content: (
-                      <div className="flex flex-col items-end w-full">
+                      <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
                         <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">
                           {t.summary?.nearReorder || 'Near Reorder'}
                         </span>
@@ -822,7 +822,7 @@ export const Inventory: React.FC<InventoryProps> = ({
                   {
                     theme: 'bg-gray-100 dark:bg-gray-800',
                     content: (
-                      <div className="flex flex-col items-end w-full">
+                      <div className={`flex flex-col w-full ${isRTL ? 'items-end' : 'items-start'}`}>
                         <span className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400">
                           {t.summary?.discontinued || 'Discontinued'}
                         </span>

@@ -117,17 +117,46 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
       </div>
 
       {pages.length > 1 && (
-        <div className="absolute top-2 right-2 flex gap-1.5 z-10" role="tablist">
-          {pages.map((_, i) => (
-            <button
-              key={i}
-              role="tab"
-              aria-selected={activePage === i}
-              aria-label={`Page ${i + 1}`}
-              onClick={(e) => { e.stopPropagation(); navigate(i - activePage); }}
-              className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${activePage === i ? 'bg-primary-500 scale-110 shadow-sm' : 'bg-gray-300 dark:bg-gray-700 hover:bg-gray-400'}`}
-            />
-          ))}
+        <div className="absolute top-2.5 right-2.5 z-20 flex items-center justify-center">
+          <motion.div 
+            layout
+            initial="collapsed"
+            whileHover="expanded"
+            animate="collapsed"
+            className="flex items-center rounded-full bg-white/40 dark:bg-zinc-800/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-xs overflow-hidden"
+            variants={{
+              collapsed: { padding: '3px 4px', gap: '2.5px' },
+              expanded: { padding: '6px 8px', gap: '5px' }
+            }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            role="tablist"
+          >
+            {pages.map((_, i) => (
+              <motion.button
+                layout
+                key={i}
+                role="tab"
+                aria-selected={activePage === i}
+                aria-label={`Page ${i + 1}`}
+                onClick={(e) => { e.stopPropagation(); navigate(i - activePage); }}
+                className={`rounded-full transition-colors duration-300 cursor-pointer ${
+                  activePage === i 
+                    ? 'bg-primary-500' 
+                    : 'bg-zinc-400/50 dark:bg-zinc-500/50 hover:bg-zinc-500/80'
+                }`}
+                variants={{
+                  collapsed: { 
+                    width: activePage === i ? 10 : 3.5,
+                    height: 3.5 
+                  },
+                  expanded: { 
+                    width: activePage === i ? 16 : 7,
+                    height: 7 
+                  }
+                }}
+              />
+            ))}
+          </motion.div>
         </div>
       )}
     </motion.div>
