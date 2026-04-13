@@ -7,6 +7,7 @@ interface SwitchProps {
   theme?: string;
   disabled?: boolean;
   activeColor?: string; // Hex color for checked state (bypasses tailwind safelist issues)
+  animate?: boolean;
 }
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -18,6 +19,7 @@ export const Switch: React.FC<SwitchProps> = ({
   theme = 'primary',
   disabled = false,
   activeColor,
+  animate = true,
 }) => {
   const containerRef = useRef<HTMLButtonElement>(null);
   const prevDir = useRef<string | null>(null);
@@ -48,7 +50,7 @@ export const Switch: React.FC<SwitchProps> = ({
         minHeight: '24px',
         backgroundColor: checked && activeColor ? activeColor : undefined,
       }}
-      className={`w-12 h-6 rounded-full relative ${isRtlChange ? '' : 'transition-colors duration-200 ease-in-out'} focus:outline-hidden ${
+      className={`w-12 h-6 rounded-full relative ${isRtlChange || !animate ? '' : 'transition-colors duration-200 ease-in-out'} focus:outline-hidden ${
         checked ? (!activeColor ? (theme === 'primary' ? 'bg-primary-600' : `bg-${theme}-600`) : '') : 'bg-gray-200 shadow-inner dark:bg-black/30'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
     >
@@ -58,7 +60,7 @@ export const Switch: React.FC<SwitchProps> = ({
             ? 'bg-gray-50 dark:bg-gray-200' 
             : 'bg-white dark:bg-(--bg-card) border border-transparent dark:border-(--border-divider)'
         } ${
-          isRtlChange ? '' : 'transition-transform duration-200 ease-in-out'
+          isRtlChange || !animate ? '' : 'transition-transform duration-200 ease-in-out'
         } ${
           checked ? 'ltr:translate-x-6 rtl:-translate-x-6' : 'translate-x-0'
         }`}
