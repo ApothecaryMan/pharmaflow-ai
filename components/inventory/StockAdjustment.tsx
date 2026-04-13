@@ -68,6 +68,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [history, setHistory] = useState<StockMovement[]>([]);
   const [lastTransaction, setLastTransaction] = useState<StockMovement[]>([]);
+  const [editingNoteIndex, setEditingNoteIndex] = useState<number | null>(null);
 
   // State
   const searchInputRef = React.useRef<HTMLInputElement>(null);
@@ -506,7 +507,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           const drug = inventory.find(d => d.id === item.drugId);
           if (!drug) continue;
 
-          stockOps.adjustStock(
+          await stockOps.adjustStock(
             drug,
             item.newStock,
             item.reason,
@@ -635,7 +636,9 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                 {item.expiryDate ? formatExpiryDate(item.expiryDate) : 'N/A'}
               </div>
               {item.batchId && (
-                <span className='text-sm text-gray-400'>#{item.batchId.substring(0, 8)}</span>
+                <div className='mt-0.5 text-[10px] font-bold text-gray-400 opacity-80 uppercase' dir='ltr'>
+                  {item.batchId}
+                </div>
               )}
             </div>
           );
@@ -716,7 +719,6 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             color={color}
             keyExtractor={(item) => item}
             zIndexHigh='z-60'
-            autoHideArrow
           />
         ),
         meta: { width: 140 },
@@ -725,12 +727,12 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
         accessorKey: 'notes',
         header: t.stockAdjustment.table.notes,
         cell: (info) => (
-          <SmartInput
-            value={info.getValue() as string}
-            onChange={(e) => updateAdjustment(info.row.index, 'notes', e.target.value)}
-            placeholder={t.stockAdjustment.notes}
-            className='w-full text-xs px-2 py-1.5 bg-transparent border-0 border-b border-(--border-divider) focus:border-primary-500 rounded-none focus:ring-0 text-(--text-primary)'
-          />
+          <button
+            onClick={() => setEditingNoteIndex(info.row.index)}
+            className='w-full text-start text-xs px-2 py-1.5 bg-transparent border-0 border-b border-(--border-divider) hover:border-primary-500 rounded-none transition-colors text-(--text-secondary) truncate cursor-pointer italic'
+          >
+            {info.getValue() as string || t.stockAdjustment.notes}
+          </button>
         ),
       },
       {
@@ -803,11 +805,17 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
           if (!hasExpiry && !item.batchId) {
             return <span className='text-gray-400 text-xs italic'>-</span>;
           }
-
           return (
-            <span className='text-sm text-(--text-primary)'>
-              {hasExpiry ? formatExpiryDate(item.expiryDate) : (language === 'AR' ? 'عام' : 'Generic')}
-            </span>
+            <div className='flex flex-col'>
+              <span className='text-sm text-(--text-primary)'>
+                {hasExpiry ? formatExpiryDate(item.expiryDate) : (language === 'AR' ? 'عام' : 'Generic')}
+              </span>
+              {item.batchId && (
+                <div className='mt-0.5 text-[10px] font-bold text-gray-400 opacity-80 uppercase' dir='ltr'>
+                  {item.batchId}
+                </div>
+              )}
+            </div>
           );
         },
         meta: { width: 120 },
@@ -880,13 +888,13 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                 <div className='flex gap-1'>
                   <button
                     onClick={() => handleApprove(item)}
-                    className='p-1 px-2 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-bold transition-colors shadow-xs'
+                    className='p-1 px-2 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-transparent text-emerald-700 dark:text-emerald-400 text-xs font-bold transition-all hover:bg-emerald-50 dark:hover:bg-emerald-500/10 active:scale-95 cursor-pointer'
                   >
                     {t.pendingApproval.approve}
                   </button>
                   <button
                     onClick={() => handleReject(item)}
-                    className='p-1 px-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold transition-colors shadow-xs'
+                    className='p-1 px-2 rounded-lg border border-red-200 dark:border-red-500/30 bg-transparent text-red-700 dark:text-red-400 text-xs font-bold transition-all hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-95 cursor-pointer'
                   >
                     {t.pendingApproval.reject}
                   </button>
@@ -1031,7 +1039,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                 {/* Import/Print Actions */}
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className='flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 dark:border-primary-500/30 bg-gray-50 dark:bg-primary-500/5 text-primary-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-primary-500/10 transition-all active:enabled:scale-95'
+                  className='flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-(--border-divider) bg-(--bg-card) text-(--text-secondary) hover:bg-(--bg-hover) transition-all active:enabled:scale-95 cursor-pointer'
                 >
                   {t.global.actions.import}
                   <span className='material-symbols-rounded text-base'>upload_file</span>
@@ -1040,7 +1048,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                   ref={printButtonRef}
                   onClick={handlePrint}
                   disabled={adjustments.length === 0}
-                  className='flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-(--border-divider) bg-(--bg-card) text-(--text-secondary) hover:bg-(--bg-hover) transition-all active:enabled:scale-95 disabled:opacity-50 disabled:grayscale'
+                  className='flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border border-(--border-divider) bg-(--bg-card) text-(--text-secondary) hover:bg-(--bg-hover) transition-all active:enabled:scale-95 disabled:opacity-50 disabled:grayscale cursor-pointer'
                 >
                   {t.global.actions.print}
                   <span className='material-symbols-rounded text-base'>print</span>
@@ -1051,14 +1059,14 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                 <button
                   onClick={setAdjustments.bind(null, [])}
                   disabled={adjustments.length === 0}
-                  className='text-xs font-bold text-gray-500 enabled:hover:text-red-600 disabled:opacity-30 transition-colors px-2'
+                  className='text-xs font-bold text-(--text-tertiary) enabled:hover:text-red-600 disabled:opacity-30 transition-colors px-2 cursor-pointer'
                 >
                   {t.stockAdjustment.clear}
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={adjustments.length === 0}
-                  className={`px-6 py-2 rounded-xl text-xs font-bold text-white bg-primary-600 enabled:hover:bg-primary-700 disabled:opacity-40 transition-all active:enabled:scale-95 shadow-md shadow-primary-500/20`}
+                  className={`px-6 py-2 rounded-xl text-xs font-extrabold text-white dark:text-black bg-black dark:bg-white enabled:hover:bg-black/80 dark:enabled:hover:bg-white/80 disabled:opacity-40 transition-all active:enabled:scale-95 cursor-pointer`}
                 >
                   {t.stockAdjustment.save}
                 </button>
@@ -1128,7 +1136,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                   <button
                     onClick={handleApproveAll}
                     title={language === 'AR' ? 'موافقة الكل' : 'Approve All'}
-                    className='h-8 px-3 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors shadow-sm dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:text-emerald-400 font-bold text-xs'
+                    className='h-8 px-3 inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-transparent text-emerald-700 dark:text-emerald-400 font-bold text-xs transition-all hover:bg-emerald-50 dark:hover:bg-emerald-500/10 active:scale-95 cursor-pointer'
                   >
                     <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>done_all</span>
                     <span>{language === 'AR' ? 'موافقة الكل' : 'Approve All'}</span>
@@ -1136,7 +1144,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                   <button
                     onClick={handleRejectAll}
                     title={language === 'AR' ? 'رفض الكل' : 'Reject All'}
-                    className='h-8 px-3 inline-flex items-center justify-center gap-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors shadow-sm dark:bg-red-500/10 dark:hover:bg-red-500/20 dark:text-red-400 font-bold text-xs'
+                    className='h-8 px-3 inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 dark:border-red-500/30 bg-transparent text-red-700 dark:text-red-400 font-bold text-xs transition-all hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-95 cursor-pointer'
                   >
                     <span className='material-symbols-rounded' style={{ fontSize: '16px' }}>close</span>
                     <span>{language === 'AR' ? 'رفض الكل' : 'Reject All'}</span>
@@ -1212,8 +1220,8 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                       {t.inventory.headers.expiry}:{' '}
                       {new Date(batch.expiryDate).toLocaleDateString()}
                     </div>
-                    <div className='text-xs text-gray-500 font-mono'>
-                      ID: {batch.id.substring(0, 8)}...
+                    <div className='mt-0.5 text-[10px] font-bold text-gray-400 opacity-80 uppercase' dir='ltr'>
+                      {batch.id}
                     </div>
                   </div>
                   <div className='text-sm tabular-nums border border-gray-200 dark:border-gray-800 bg-transparent px-2 py-0.5 rounded-lg'>
@@ -1227,6 +1235,51 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
                 className='w-full text-center p-3 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 hover:text-primary-600 hover:border-blue-300 transition-colors text-sm font-medium'
               >
                 {t.inventory.actionsMenu.adjustStock} ({t.global.actions.all})
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Notes Modal */}
+      {editingNoteIndex !== null && (
+        <Modal
+          isOpen={true}
+          onClose={() => setEditingNoteIndex(null)}
+          hideCloseButton={true}
+          title={t.stockAdjustment.notes}
+          size='sm'
+          bodyClassName='p-1.5'
+          icon='edit_note'
+        >
+          <div className='flex flex-col gap-2'>
+            <div className='bg-zinc-50 dark:bg-zinc-900/50 p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-800/50'>
+              <div className='flex flex-col gap-1'>
+                <label className='text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest'>
+                  {t.stockAdjustment.table.notes}
+                </label>
+                <textarea
+                  autoFocus
+                  className='w-full bg-transparent border-0 outline-hidden !py-1.5 text-sm min-h-[100px] text-(--text-primary) resize-none'
+                  value={adjustments[editingNoteIndex]?.notes || ''}
+                  onChange={(e) => updateAdjustment(editingNoteIndex, 'notes', e.target.value)}
+                  placeholder={t.stockAdjustment.notes}
+                />
+              </div>
+            </div>
+
+            <div className='flex justify-end gap-1.5 p-1'>
+              <button
+                onClick={() => setEditingNoteIndex(null)}
+                className='px-4 py-1.5 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-all cursor-pointer'
+              >
+                {t.common?.cancel || 'Cancel'}
+              </button>
+              <button
+                onClick={() => setEditingNoteIndex(null)}
+                className='px-6 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest text-white dark:text-black bg-black dark:bg-white hover:opacity-90 transition-all active:scale-95 cursor-pointer shadow-lg shadow-black/10 dark:shadow-white/5'
+              >
+                {t.common?.save || 'Save'}
               </button>
             </div>
           </div>
