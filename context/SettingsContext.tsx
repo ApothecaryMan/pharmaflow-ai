@@ -274,6 +274,15 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [settings.textTransform]);
 
+  // Synchronize document language and direction
+  useEffect(() => {
+    const lang = settings.language.toLowerCase();
+    document.documentElement.lang = lang;
+    document.documentElement.dir = settings.language === 'AR' ? 'rtl' : 'ltr';
+    // Also update body class for styling
+    document.body.dir = document.documentElement.dir;
+  }, [settings.language]);
+
   // Setters
   const setTheme = useCallback((theme: ThemeColor) => {
     setSettings((prev) => ({ ...prev, theme }));

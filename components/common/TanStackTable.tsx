@@ -79,9 +79,12 @@ export const PriceDisplay: React.FC<{
   size?: 'sm' | 'base' | 'lg' | 'xl' | '2xl';
   compact?: boolean;
 }> = ({ value, size = 'base', compact = false }) => {
+  const { language } = useSettings();
+  const locale = language === 'AR' ? 'ar-EG' : 'en-US';
+
   const { amount, symbol } = compact
-    ? formatCompactCurrencyParts(value, 'EGP', undefined, 2)
-    : formatCurrencyParts(value);
+    ? formatCompactCurrencyParts(value, 'EGP', locale, 2)
+    : formatCurrencyParts(value, 'EGP', locale);
 
   // Scale symbol based on text size approximately
   const symbolClass =
