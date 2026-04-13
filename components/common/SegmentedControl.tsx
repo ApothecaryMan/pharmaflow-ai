@@ -65,6 +65,8 @@ interface SegmentedControlProps<T> {
   shape?: SegmentedControlShape; // 'rounded-sm' (default) or 'pill' for circular style
   variant?: SegmentedControlVariant; // 'onCard' (default) or 'onPage' - controls dark mode background
   iconSize?: string; // Optional custom icon size variable (e.g., '--icon-sm')
+  disableAnimation?: boolean; // If true, removes all transitions and animations
+  dir?: 'ltr' | 'rtl'; // Support explicit direction override
 }
 
 const SIZE_CLASSES = {
@@ -98,6 +100,8 @@ export function SegmentedControl<T extends string | number | boolean>({
   shape = 'rounded-sm',
   variant = 'onCard',
   iconSize,
+  disableAnimation = false,
+  dir,
 }: SegmentedControlProps<T>) {
   const isPill = shape === 'pill';
   const containerRound = isPill ? 'rounded-full' : 'rounded-xl';
@@ -173,12 +177,13 @@ export function SegmentedControl<T extends string | number | boolean>({
   return (
     <div
       ref={containerRef}
+      dir={dir}
       className={`relative flex p-1 gap-1 bg-gray-200/50 dark:bg-black/20 ${containerRound} shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] isolate ${className}`}
     >
       {indicatorStyle && (
         <div
           className={`absolute top-0 left-0 bg-white dark:bg-(--bg-card) border border-transparent dark:border-(--border-divider) ${indicatorRound} pointer-events-none z-0 ${
-            !isFirstRender.current && !isRtlChange
+            !isFirstRender.current && !isRtlChange && !disableAnimation
               ? 'transition-[transform,width,height] duration-200 ease-out'
               : ''
           }`}
@@ -205,7 +210,7 @@ export function SegmentedControl<T extends string | number | boolean>({
             data-active={isActive}
             style={{ WebkitAppearance: 'none', appearance: 'none' }}
             disabled={option.disabled}
-            className={`${fullWidth ? 'flex-1' : 'flex-none'} ${sizeClasses.button} ${buttonRound} transition-colors z-10 relative flex items-center justify-center ${hasIcon && hasLabel ? 'gap-2' : 'gap-0'} whitespace-nowrap font-bold ${
+            className={`${fullWidth ? 'flex-1' : 'flex-none'} ${sizeClasses.button} ${buttonRound} ${disableAnimation ? '' : 'transition-colors'} z-10 relative flex items-center justify-center ${hasIcon && hasLabel ? 'gap-2' : 'gap-0'} whitespace-nowrap font-bold ${
               isActive
                 ? 'text-gray-900 dark:text-white'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white'
