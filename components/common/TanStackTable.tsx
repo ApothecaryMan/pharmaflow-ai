@@ -87,17 +87,15 @@ export const PriceDisplay: React.FC<{
     : formatCurrencyParts(value, 'EGP', locale);
 
   // Scale symbol based on text size approximately
-  const symbolClass =
-    size === 'sm'
-      ? 'text-[0.75em]'
-      : size === 'base'
-        ? 'text-[0.75em]'
-        : size === 'lg'
-          ? 'text-[0.75em]'
-          : size === 'xl'
-            ? 'text-[0.6em]'
-            : // Smaller relative scale for larger text
-              'text-[0.5em]';
+  const SYMBOL_SCALES = {
+    sm: 'text-[0.75em]',
+    base: 'text-[0.75em]',
+    lg: 'text-[0.75em]',
+    xl: 'text-[0.6em]',
+    '2xl': 'text-[0.5em]'
+  } as const;
+
+  const symbolClass = SYMBOL_SCALES[size] || SYMBOL_SCALES.base;
 
   return (
     <span className='tabular-nums'>

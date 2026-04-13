@@ -1,3 +1,14 @@
+// Performance: Cache formatters to avoid costly re-allocation 
+const formatterCache = new Map<string, Intl.NumberFormat>();
+
+const getFormatter = (options: Intl.NumberFormatOptions, locale: string) => {
+  const key = `${locale}-${JSON.stringify(options)}`;
+  if (!formatterCache.has(key)) {
+    formatterCache.set(key, new Intl.NumberFormat(locale, options));
+  }
+  return formatterCache.get(key)!;
+};
+
 export const formatCurrency = (
   amount: number,
   currency: string = 'EGP',
@@ -12,11 +23,11 @@ export const formatCurrency = (
   // 2. Handle EGP specific formatting (L.E vs ج.م)
 
   if (currency === 'EGP') {
-    const formatter = new Intl.NumberFormat('en-US', {
+    const formatter = getFormatter({
       style: 'decimal',
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
-    });
+    }, 'en-US');
 
     const formattedAmount = formatter.format(amount);
     
@@ -28,12 +39,14 @@ export const formatCurrency = (
       : `\u200E${formattedAmount}\u00A0L.E\u200E`;
   }
 
-  return new Intl.NumberFormat(targetLocale, {
+  const formatter = getFormatter({
     style: 'currency',
     currency: currency,
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }).format(amount);
+  }, targetLocale);
+
+  return formatter.format(amount);
 };
 
 export const formatCurrencyParts = (
@@ -49,11 +62,11 @@ export const formatCurrencyParts = (
 
   // 2. Handle EGP specific formatting (L.E vs ج.م)
   if (currency === 'EGP') {
-    const formatter = new Intl.NumberFormat('en-US', {
+    const formatter = getFormatter({
       style: 'decimal',
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
-    });
+    }, 'en-US');
 
     return {
       amount: formatter.format(amount),
@@ -61,12 +74,14 @@ export const formatCurrencyParts = (
     };
   }
 
-  const parts = new Intl.NumberFormat(targetLocale, {
+  const formatter = getFormatter({
     style: 'currency',
     currency: currency,
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }).formatToParts(amount);
+  }, targetLocale);
+
+  const parts = formatter.formatToParts(amount);
 
   const amountPart = parts
     .filter((p) => p.type !== 'currency' && p.type !== 'literal')
@@ -88,12 +103,13 @@ export const getCurrencySymbol = (currency: string = 'EGP', locale?: string): st
     return isArabic ? 'ج.م' : 'L.E';
   }
 
+  const formatter = getFormatter({
+    style: 'currency',
+    currency,
+  }, locale || (isArabic ? 'ar-EG' : 'en-US'));
+
   return (
-    new Intl.NumberFormat(locale || (isArabic ? 'ar-EG' : 'en-US'), {
-      style: 'currency',
-      currency,
-    })
-      .formatToParts(0)
+    formatter.formatToParts(0)
       .find((p) => p.type === 'currency')?.value || currency
   );
 };
@@ -106,11 +122,11 @@ export const formatCompactCurrency = (
   const currentLang = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
   const isArabic = locale ? locale.startsWith('ar') : currentLang.startsWith('ar');
 
-  const formatter = new Intl.NumberFormat('en-US', {
+  const formatter = getFormatter({
     notation: 'compact',
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  });
+  }, 'en-US');
 
   if (currency === 'EGP') {
     const formattedAmount = formatter.format(amount);
@@ -119,13 +135,15 @@ export const formatCompactCurrency = (
       : `\u200E${formattedAmount}\u00A0L.E\u200E`;
   }
 
-  return new Intl.NumberFormat(locale || (isArabic ? 'ar-EG' : 'en-US'), {
+  const currencyFormatter = getFormatter({
     notation: 'compact',
     style: 'currency',
     currency: currency,
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }).format(amount);
+  }, locale || (isArabic ? 'ar-EG' : 'en-US'));
+
+  return currencyFormatter.format(amount);
 };
 export const formatCompactCurrencyParts = (
   amount: number,
@@ -136,11 +154,11 @@ export const formatCompactCurrencyParts = (
   const currentLang = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
   const isArabic = locale ? locale.startsWith('ar') : currentLang.startsWith('ar');
 
-  const formatter = new Intl.NumberFormat('en-US', {
+  const formatter = getFormatter({
     notation: 'compact',
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  });
+  }, 'en-US');
 
   if (currency === 'EGP') {
     return {
@@ -149,12 +167,14 @@ export const formatCompactCurrencyParts = (
     };
   }
 
-  const parts = new Intl.NumberFormat(locale || (isArabic ? 'ar-EG' : 'en-US'), {
+  const currencyFormatter = getFormatter({
     notation: 'compact',
     style: 'currency',
     currency: currency,
     maximumFractionDigits: decimals,
-  }).formatToParts(amount);
+  }, locale || (isArabic ? 'ar-EG' : 'en-US'));
+
+  const parts = currencyFormatter.formatToParts(amount);
 
   const amountPart = parts
     .filter((p) => p.type !== 'currency' && p.type !== 'literal')
