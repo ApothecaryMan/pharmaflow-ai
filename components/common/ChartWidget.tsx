@@ -227,8 +227,9 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
                   ]}
                   value={showComparison ? 'group' : 'single'}
                   onChange={(val) => onComparisonChange(val === 'group')}
-                  size='xs'
+                  size='sm'
                   fullWidth={false}
+                  shape='rounded-sm'
                 />
               </div>
             )}
@@ -244,7 +245,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
               onChange={(val) => handleChartTypeChange(val as 'area' | 'bar')}
               size='xs'
               fullWidth={false}
-              shape='pill'
+              shape='rounded-sm'
             />
           )}
 
