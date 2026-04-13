@@ -11,7 +11,6 @@ const DYNAMIC_CACHE = 'pharmaflow-dynamic-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/index.css',
   '/manifest.json',
   '/app_icon.svg',
   '/logo_full.svg',
