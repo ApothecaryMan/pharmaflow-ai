@@ -12,9 +12,19 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { useStatusBar } from '../layout/StatusBar';
 import { idGenerator } from '../../utils/idGenerator';
 import { storage } from '../../utils/storage';
-import { type PrintLabelItem, printLabels } from './LabelPrinter';
+import { 
+  type PrintLabelItem, 
+  printLabels,
+  DEFAULT_LABEL_DESIGN,
+  generateLabelHTML,
+  generatePageHTML,
+  generateTemplateCSS,
+  getReceiptSettings,
+  LABEL_PRESETS
+} from './LabelPrinter';
 import { Switch } from '../common/Switch';
 import { CARD_BASE } from '../../utils/themeStyles';
+import type { LabelDesign, LabelElement } from './studio/types';
 
 interface BarcodePrinterProps {
   inventory: Drug[];
@@ -51,6 +61,17 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
     barcode: true,
     hotline: false,
   });
+
+  const [selectedDrug, setSelectedDrug] = useState<Drug | null>(inventory[0] || null);
+  const [previewScale, setPreviewScale] = useState(1);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-select first drug if none selected and inventory becomes available
+  useEffect(() => {
+    if (!selectedDrug && inventory.length > 0) {
+      setSelectedDrug(inventory[0]);
+    }
+  }, [inventory, selectedDrug]);
 
   // Smart direction for search
   const dir = useSmartDirection(
@@ -216,6 +237,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
         expiryDateOverride: formattedExpiry,
       };
       setLastAddedId(newId);
+      setSelectedDrug(drug);
       return [...prev, newItem];
     });
 
@@ -285,6 +307,93 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
     setQueue([]);
   };
 
+  // Generate preview content
+  const previewHtml = useMemo(() => {
+    if (!selectedDrug) return '';
+
+    try {
+      // Load current design from storage (matches BarcodeStudio's autosave key)
+      const storedDesign = storage.get<any>(StorageKeys.LABEL_DESIGN, null);
+      
+      // Deep clone to prevent mutation when applying overrides
+      const design: LabelDesign = JSON.parse(
+        JSON.stringify(storedDesign || DEFAULT_LABEL_DESIGN)
+      );
+
+      // Apply dynamic visibility overrides from printConfig state
+      if (printConfig) {
+        design.elements.forEach((el: LabelElement) => {
+          if (printConfig[el.id as keyof typeof printConfig] !== undefined) {
+            el.isVisible = printConfig[el.id as keyof typeof printConfig];
+          }
+        });
+      }
+
+      const dims = design.selectedPreset === 'custom'
+        ? design.customDims || { w: 38, h: 25 }
+        : LABEL_PRESETS[design.selectedPreset] || { w: 38, h: 25 };
+
+      const isDouble = design.selectedPreset === '38x25';
+      const labelHeight = isDouble ? 12 : dims.h;
+      const renderDims = { w: dims.w, h: labelHeight };
+
+      const { css: templateCSS, classNameMap } = generateTemplateCSS(design);
+      const receiptSettings = getReceiptSettings();
+
+      const labelHTML = generateLabelHTML(
+        selectedDrug,
+        design,
+        renderDims,
+        receiptSettings,
+        undefined, // expiryOverride
+        undefined, // qrDataUrl
+        undefined, // logoDataUrl
+        classNameMap
+      );
+
+      return generatePageHTML(labelHTML, templateCSS, renderDims, labelHeight);
+    } catch (e) {
+      console.error('Failed to generate preview:', e);
+      return '';
+    }
+  }, [selectedDrug, printConfig]);
+
+  // Calculate box dimensions (1mm = 3.78px)
+  const previewDims = useMemo(() => {
+    const storedDesign = storage.get<any>(StorageKeys.LABEL_DESIGN, null);
+    const design = storedDesign || DEFAULT_LABEL_DESIGN;
+    const dims = design.selectedPreset === 'custom'
+      ? design.customDims || { w: 38, h: 25 }
+      : LABEL_PRESETS[design.selectedPreset] || { w: 38, h: 25 };
+    
+    const isDouble = design.selectedPreset === '38x25';
+    const h = isDouble ? 12 : dims.h;
+
+    return {
+      w: dims.w * 3.78,
+      h: h * 3.78,
+      labelW: dims.w,
+      labelH: h
+    };
+  }, []);
+
+  // Update scale when container size or label dimensions change
+  useEffect(() => {
+    const updateScale = () => {
+      if (previewContainerRef.current) {
+        const containerWidth = previewContainerRef.current.offsetWidth;
+        const labelWidthPx = previewDims.labelW * 3.78;
+        if (labelWidthPx > 0) {
+          setPreviewScale(containerWidth / labelWidthPx);
+        }
+      }
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, [previewDims]);
+
   return (
     <div className='h-full flex flex-col gap-6 overflow-hidden animate-fade-in'>
       {/* Header Section */}
@@ -345,6 +454,7 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
               results={searchResults}
               onSelect={(drug) => {
                 addToQueue(drug);
+                setSelectedDrug(drug);
                 setSearch('');
               }}
               columns={[
@@ -402,12 +512,13 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
                   {queue.map((item) => (
                     <div
                       key={item.id}
-                      className={`group flex items-center gap-2.5 p-2 px-3 rounded-xl border transition-all duration-200 ${
-                        lastAddedId === item.id
+                      className={`group flex items-center gap-2.5 p-2 px-3 rounded-xl border transition-all duration-200 cursor-pointer ${
+                        selectedDrug?.id === item.drug.id || lastAddedId === item.id
                           ? 'bg-primary-500/10 border-primary-500/40'
                           : 'bg-bg-card border-border/40 hover:border-border/80'
                       }`}
                       dir='ltr'
+                      onClick={() => setSelectedDrug(item.drug)}
                     >
                       {/* Drag Handle or Indicator */}
                       <div className='w-1 h-6 rounded-full bg-border/40 transition-colors group-hover:bg-primary-500/50' />
@@ -512,6 +623,42 @@ export const BarcodePrinter: React.FC<BarcodePrinterProps> = ({
 
         {/* Sidebar: Settings & Summary - Standardized with CARD_BASE */}
         <div className='lg:w-80 flex flex-col gap-6'>
+          {/* Label Preview Card */}
+          <div className={`${CARD_BASE} rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-bg-secondary/20 relative`}>
+            <div 
+              ref={previewContainerRef}
+              className="w-full flex items-center justify-center overflow-hidden transition-[height] duration-300"
+              style={{
+                height: `${previewDims.labelH * 3.78 * previewScale}px`,
+                minHeight: '80px' // Minimum height for the placeholder
+              }}
+            >
+              {queue.length > 0 && selectedDrug ? (
+                <div 
+                  className="bg-white overflow-hidden origin-center shrink-0"
+                  style={{ 
+                    width: `${previewDims.labelW}mm`, 
+                    height: `${previewDims.labelH}mm`,
+                    transform: `scale(${previewScale})`,
+                  }}
+                >
+                  <iframe
+                    srcDoc={previewHtml}
+                    scrolling="no"
+                    className="w-full h-full border-none pointer-events-none"
+                    title="Label Preview"
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center text-text-tertiary">
+                  <span className="text-sm font-bold uppercase tracking-widest opacity-40">
+                    {t.barcodePrinter?.preview || 'Label Preview'}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Summary Card */}
           <div className={`${CARD_BASE} rounded-2xl overflow-hidden flex flex-col`}>
             <div className='bg-bg-secondary/80 p-4 flex items-center gap-3 text-text-primary'>
