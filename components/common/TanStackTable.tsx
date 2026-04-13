@@ -914,7 +914,7 @@ export function TanStackTable<TData, TValue>({
               onOpen={(x, y) => onContextMenuOpen(x, y)}
             >
               <div className='h-full min-h-[400px] flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 gap-3 select-none'>
-                <span className='material-symbols-rounded opacity-50' style={{ fontSize: 'var(--icon-3xl)' }}>view_column</span>
+                <span className='material-symbols-rounded opacity-40' style={{ fontSize: 'var(--icon-5xl)' }}>view_column</span>
                 <div className='text-center'>
                   <p className='text-lg font-medium mb-1'>{t.global.table.noColumnsVisible}</p>
                   <p className='text-sm opacity-70'>{t.global.table.manageColumnsHint}</p>
@@ -1172,7 +1172,7 @@ export function TanStackTable<TData, TValue>({
                         customEmptyState
                       ) : (
                         <div className='flex flex-col items-center justify-center'>
-                          <span className='material-symbols-rounded mb-2 opacity-30' style={{ fontSize: 'var(--icon-xl)' }}>
+                          <span className='material-symbols-rounded mb-4 opacity-20' style={{ fontSize: 'var(--icon-5xl)' }}>
                             inbox
                           </span>
                           <p>{emptyMessage}</p>

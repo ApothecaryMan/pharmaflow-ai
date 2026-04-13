@@ -234,6 +234,9 @@ layer(base);
     --icon-xl: 32px;
     --icon-2xl: 48px;
     --icon-3xl: 60px;
+    --icon-4xl: 80px;
+    --icon-5xl: 120px;
+    --icon-6xl: 160px;
 
     /* Navbar Specific Icon Sizes */
     --icon-navbar-main: 22px;
