@@ -11,7 +11,7 @@
  * - Operations: Shift, CashTransaction
  * - Configuration: ThemeColor, ReturnPolicy, Language
  *
- * @version 2.0.0
+ * @version 2.011
  * @author ZINC Team
  */
 
