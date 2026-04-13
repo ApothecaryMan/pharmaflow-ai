@@ -40,6 +40,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setCardBorderLight,
     customCardCss,
     setCustomCardCss,
+    enableCustomCardCss,
+    setEnableCustomCardCss,
     setLanguage,
     availableThemes,
     availableLanguages,
@@ -401,6 +403,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           </span>
                           {(t as any).customCss || (language === 'AR' ? 'كود CSS للبطاقات' : 'Custom Card CSS')}
                         </div>
+                        <Switch
+                          checked={enableCustomCardCss}
+                          onChange={setEnableCustomCardCss}
+                          theme={currentTheme.name.toLowerCase()}
+                          activeColor={currentTheme.hex}
+                        />
                       </label>
                       <textarea
                         value={customCardCss || ''}

@@ -66,6 +66,7 @@ export interface SettingsState {
   sidebarVisible: boolean;
   cardBorderLight: 'default' | 'thin' | 'none';
   customCardCss?: string;
+  enableCustomCardCss: boolean;
   // Developer
   hideInactiveModules: boolean;
   developerMode: boolean;
@@ -100,6 +101,7 @@ export interface SettingsContextType extends SettingsState {
   setSidebarVisible: (visible: boolean) => void;
   setCardBorderLight: (style: 'default' | 'thin' | 'none') => void;
   setCustomCardCss: (css: string) => void;
+  setEnableCustomCardCss: (enable: boolean) => void;
   // Developer Actions
   setHideInactiveModules: (hide: boolean) => void;
   setDeveloperMode: (mode: boolean) => void;
@@ -132,6 +134,7 @@ const defaultSettings: SettingsState = {
   sidebarVisible: false,
   cardBorderLight: 'default',
   customCardCss: '',
+  enableCustomCardCss: true,
   hideInactiveModules: true,
   developerMode: false,
   showTicker: false,
@@ -193,6 +196,7 @@ const loadSettings = (): SettingsState => {
       sidebarVisible: sidebarVisible ?? defaultSettings.sidebarVisible,
       cardBorderLight: storage.get('pharma_cardBorderLight', defaultSettings.cardBorderLight),
       customCardCss: storage.get('pharma_customCardCss', defaultSettings.customCardCss || ''),
+      enableCustomCardCss: storage.get('pharma_enableCustomCardCss', defaultSettings.enableCustomCardCss),
       hideInactiveModules: hideInactiveModules ?? defaultSettings.hideInactiveModules,
       developerMode: developerMode ?? defaultSettings.developerMode,
       graphicStyle: storage.get('pharma_graphicStyle', defaultSettings.graphicStyle),
@@ -301,7 +305,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       document.head.appendChild(styleEl);
     }
     
-    if (settings.customCardCss) {
+    if (settings.customCardCss && settings.enableCustomCardCss) {
       // Smart CSS processing: Add !important to each property if missing
       const processedCss = settings.customCardCss
         .split(';')
@@ -324,7 +328,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     } else {
       styleEl.textContent = '';
     }
-  }, [settings.customCardCss]);
+  }, [settings.customCardCss, settings.enableCustomCardCss]);
 
   // Synchronize document language and direction
   useEffect(() => {
@@ -403,6 +407,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, customCardCss }));
   }, []);
 
+  const setEnableCustomCardCss = useCallback((enableCustomCardCss: boolean) => {
+    setSettings((prev) => ({ ...prev, enableCustomCardCss }));
+  }, []);
+
   const setHideInactiveModules = useCallback((hideInactiveModules: boolean) => {
     setSettings((prev) => ({ ...prev, hideInactiveModules }));
   }, []);
@@ -451,6 +459,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setSidebarVisible,
       setCardBorderLight,
       setCustomCardCss,
+      setEnableCustomCardCss,
       setHideInactiveModules,
       setDeveloperMode,
       setShowTicker,
@@ -475,6 +484,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setSidebarVisible,
       setCardBorderLight,
       setCustomCardCss,
+      setEnableCustomCardCss,
       setHideInactiveModules,
       setDeveloperMode,
       setShowTicker,
