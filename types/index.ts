@@ -1,5 +1,5 @@
 /**
- * @fileoverview PharmaFlow-AI Type Definitions
+ * @fileoverview ZINC Type Definitions
  *
  * This file contains all TypeScript interfaces and types used throughout
  * the pharmacy management system. Types are organized by domain:
@@ -12,7 +12,7 @@
  * - Configuration: ThemeColor, ReturnPolicy, Language
  *
  * @version 2.0.0
- * @author PharmaFlow Team
+ * @author ZINC Team
  */
 
 // ═══════════════════════════════════════════
@@ -185,6 +185,8 @@ export interface Drug {
   manufacturer?: string;
   /** Value Added Tax percentage (VAT %) */
   tax?: number;
+  /** Drug status for restock alerts */
+  status?: 'active' | 'inactive' | 'discontinued';
   /** Minimum allowed selling price */
   /** ISO date of creation */
   createdAt?: string;

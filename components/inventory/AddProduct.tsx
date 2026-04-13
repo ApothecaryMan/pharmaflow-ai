@@ -62,6 +62,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
     manufacturer: '',
     origin: 'local',
     itemRank: 'normal',
+    status: 'active',
   });
 
   const scannerBuffer = useRef<string>('');
@@ -196,6 +197,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
       manufacturer: formData.manufacturer,
       origin: formData.origin,
       itemRank: formData.itemRank,
+      status: formData.status || 'active',
       additionalBarcodes: finalAdditionalBarcodes,
     };
 
@@ -239,6 +241,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
       manufacturer: '',
       origin: 'local',
       itemRank: 'normal',
+      status: 'active',
     });
   };
 
@@ -481,6 +484,35 @@ export const AddProduct: React.FC<AddProductProps> = ({
                       className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${formData.origin === 'imported' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-600 dark:text-blue-400' : 'text-gray-400'}`}
                     >
                       {t.fields?.originImported}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1">
+                    {t.fields?.status || 'Product Status'}
+                  </label>
+                  <div className="flex bg-gray-50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, status: 'active' })}
+                      className={`flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${formData.status === 'active' || !formData.status ? 'bg-white dark:bg-gray-700 shadow-sm text-green-600 dark:text-green-400' : 'text-gray-400'}`}
+                    >
+                      {t.active || 'Active'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, status: 'inactive' })}
+                      className={`flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${formData.status === 'inactive' ? 'bg-white dark:bg-gray-700 shadow-sm text-amber-600 dark:text-amber-400' : 'text-gray-400'}`}
+                    >
+                      {t.inactive || 'Inactive'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, status: 'discontinued' })}
+                      className={`flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${formData.status === 'discontinued' ? 'bg-white dark:bg-gray-700 shadow-sm text-red-600 dark:text-red-400' : 'text-gray-400'}`}
+                    >
+                      {t.discontinued || 'Discontinued'}
                     </button>
                   </div>
                 </div>

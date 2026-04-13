@@ -42,6 +42,7 @@ const mapDrugToDb = (d: Partial<Drug>): any => {
   if (d.origin !== undefined) db.origin = d.origin;
   if (d.manufacturer !== undefined) db.manufacturer = d.manufacturer;
   if (d.tax !== undefined) db.tax = d.tax;
+  if (d.status !== undefined) db.status = d.status;
   return db;
 };
 
@@ -68,6 +69,7 @@ const mapDbToDrug = (db: any): Drug => ({
   manufacturer: db.manufacturer || undefined,
   tax: db.tax || 0,
   description: db.description || undefined,
+  status: db.status || 'active',
 });
 
 const getRawAll = async (): Promise<Drug[]> => {

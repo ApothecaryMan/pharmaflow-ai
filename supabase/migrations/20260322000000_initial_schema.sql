@@ -20,7 +20,7 @@ CREATE TYPE cash_tx_type       AS ENUM ('opening', 'sale', 'card_sale', 'in', 'o
 CREATE TYPE movement_type      AS ENUM ('initial', 'sale', 'purchase', 'return_customer', 'return_supplier', 'adjustment', 'damage', 'transfer_in', 'transfer_out', 'correction');
 CREATE TYPE movement_status    AS ENUM ('pending', 'approved', 'rejected');
 CREATE TYPE supplier_status    AS ENUM ('active', 'inactive');
-CREATE TYPE drug_status        AS ENUM ('active', 'inactive');
+CREATE TYPE drug_status        AS ENUM ('active', 'inactive', 'discontinued');
 CREATE TYPE customer_status    AS ENUM ('active', 'inactive');
 
 -- ═══════════════════════════════════════════

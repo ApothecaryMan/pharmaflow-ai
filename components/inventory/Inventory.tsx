@@ -88,6 +88,7 @@ export const Inventory: React.FC<InventoryProps> = ({
     maxDiscount: 10,
     additionalBarcodes: [],
     dosageForm: '',
+    status: 'active',
   });
 
   // Dropdown States
@@ -148,6 +149,7 @@ export const Inventory: React.FC<InventoryProps> = ({
     setFormData({
       ...drug,
       stock: stockInPacks,
+      status: drug.status || 'active',
       maxDiscount: drug.maxDiscount ?? 10,
       genericName: Array.isArray(drug.genericName)
         ? drug.genericName
@@ -339,9 +341,25 @@ export const Inventory: React.FC<InventoryProps> = ({
         acc.totalItems += 1;
         acc.totalCost += (drug.costPrice || 0) * (drug.stock || 0);
         acc.totalSaleValue += (drug.price || 0) * (drug.stock || 0);
+
+        const status = (drug as any).status || 'active';
+        if (status === 'active') {
+          if (drug.stock === 0) acc.criticalRestock += 1;
+          else if (drug.stock <= (drug.minStock || 5)) acc.nearReorder += 1;
+        } else if (status === 'discontinued') {
+          acc.discontinuedCount += 1;
+        }
+
         return acc;
       },
-      { totalItems: 0, totalCost: 0, totalSaleValue: 0 }
+      {
+        totalItems: 0,
+        totalCost: 0,
+        totalSaleValue: 0,
+        criticalRestock: 0,
+        nearReorder: 0,
+        discontinuedCount: 0,
+      }
     );
   }, [groupedInventory]);
 
@@ -457,6 +475,25 @@ export const Inventory: React.FC<InventoryProps> = ({
             {getLocalizedCategory(row.original.category || 'General', currentLang)}
           </span>
         ),
+      },
+      {
+        accessorKey: 'status',
+        header: t.headers.status || 'Status',
+        cell: ({ row }) => {
+          const status = row.original.status || 'active';
+          const colors = {
+            active: 'text-green-600 dark:text-green-400',
+            inactive: 'text-amber-600 dark:text-amber-400',
+            discontinued: 'text-red-600 dark:text-red-400',
+          }[status as 'active' | 'inactive' | 'discontinued'] || 'text-gray-500';
+          
+          return (
+             <span className={`inline-flex items-center px-1.5 py-0.5 rounded-lg border border-current bg-transparent text-xs font-bold uppercase tracking-wider ${colors}`}>
+              {t[status] || status}
+            </span>
+          );
+        },
+        size: 150,
       },
       {
         accessorKey: 'stock',
@@ -630,6 +667,19 @@ export const Inventory: React.FC<InventoryProps> = ({
         ],
         defaultValue: 'all',
       },
+      {
+        id: 'product_status_filter',
+        label: t.headers.status || 'Status',
+        icon: 'fact_check',
+        mode: 'single',
+        options: [
+          { label: t.all || 'All', value: 'all' },
+          { label: t.active || 'Active', value: 'active' },
+          { label: t.inactive || 'Inactive', value: 'inactive' },
+          { label: t.discontinued || 'Discontinued', value: 'discontinued' },
+        ],
+        defaultValue: 'all',
+      },
     ],
     [t]
   );
@@ -642,6 +692,12 @@ export const Inventory: React.FC<InventoryProps> = ({
         id: 'stock_status',
         accessorFn: (row: Drug) => (row.stock > 0 ? 'in_stock' : 'out_of_stock'),
         header: t.headers.stock,
+        meta: { hideFromSettings: true },
+      },
+      {
+        id: 'product_status_filter',
+        accessorFn: (row: Drug) => row.status || 'active',
+        header: t.headers.status,
         meta: { hideFromSettings: true },
       },
       {
@@ -728,6 +784,50 @@ export const Inventory: React.FC<InventoryProps> = ({
                         </span>
                         <span className="text-xl font-bold text-cyan-900 dark:text-primary-100 tabular-nums">
                           <PriceDisplay value={summaryStats.totalSaleValue} compact={summaryStats.totalSaleValue >= 1000} />
+                        </span>
+                      </div>
+                    ),
+                  }
+                ]}
+              />
+              <InteractiveCard
+                className="flex flex-col items-end min-w-[160px] px-5 py-2.5 rounded-2xl"
+                pages={[
+                  {
+                    theme: 'bg-red-50 dark:bg-red-900/20',
+                    content: (
+                      <div className="flex flex-col items-end w-full">
+                        <span className="text-[10px] font-bold uppercase text-red-600 dark:text-red-400">
+                          {t.summary?.restock || 'Critical Restock'}
+                        </span>
+                        <span className="text-xl font-bold text-red-900 dark:text-primary-100">
+                          {summaryStats.criticalRestock}
+                        </span>
+                      </div>
+                    ),
+                  },
+                  {
+                    theme: 'bg-amber-50 dark:bg-amber-900/20',
+                    content: (
+                      <div className="flex flex-col items-end w-full">
+                        <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">
+                          {t.summary?.nearReorder || 'Near Reorder'}
+                        </span>
+                        <span className="text-xl font-bold text-amber-900 dark:text-primary-100">
+                          {summaryStats.nearReorder}
+                        </span>
+                      </div>
+                    ),
+                  },
+                  {
+                    theme: 'bg-gray-100 dark:bg-gray-800',
+                    content: (
+                      <div className="flex flex-col items-end w-full">
+                        <span className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400">
+                          {t.summary?.discontinued || 'Discontinued'}
+                        </span>
+                        <span className="text-xl font-bold text-gray-700 dark:text-gray-300">
+                          {summaryStats.discontinuedCount}
                         </span>
                       </div>
                     ),
@@ -1047,6 +1147,35 @@ export const Inventory: React.FC<InventoryProps> = ({
                       className='w-full h-[50px]'
                       color={color}
                     />
+                  </div>
+                </div>
+
+                <div className='space-y-1.5'>
+                  <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    {t.fields?.status || 'Product Status'}
+                  </label>
+                  <div className='flex bg-gray-50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700'>
+                    <button
+                      type='button'
+                      onClick={() => setFormData({ ...formData, status: 'active' })}
+                      className={`flex-1 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all ${formData.status === 'active' || !formData.status ? 'bg-white dark:bg-gray-700 shadow-sm text-green-600 dark:text-green-400' : 'text-gray-400'}`}
+                    >
+                      {t.active || 'Active'}
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => setFormData({ ...formData, status: 'inactive' })}
+                      className={`flex-1 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all ${formData.status === 'inactive' ? 'bg-white dark:bg-gray-700 shadow-sm text-amber-600 dark:text-amber-400' : 'text-gray-400'}`}
+                    >
+                      {t.inactive || 'Inactive'}
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => setFormData({ ...formData, status: 'discontinued' })}
+                      className={`flex-1 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all ${formData.status === 'discontinued' ? 'bg-white dark:bg-gray-700 shadow-sm text-red-600 dark:text-red-400' : 'text-gray-400'}`}
+                    >
+                      {t.discontinued || 'Discontinued'}
+                    </button>
                   </div>
                 </div>
 
