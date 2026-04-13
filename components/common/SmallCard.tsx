@@ -75,7 +75,7 @@ export const SmallCard = ({
 
   return (
     // Compact design: h-[84px], p-3
-    <div className={`p-3 rounded-2xl border border-(--border-divider) ${CARD_BASE} ${CARD_HOVER} h-[84px] flex items-center gap-3`}>
+    <div className={`p-3 rounded-2xl ${CARD_BASE} ${CARD_HOVER} h-[84px] flex items-center gap-3`}>
       {/* Icon - Left Side */}
       {iconTooltip ? (
         <Tooltip content={iconTooltip} position='top' triggerClassName='shrink-0'>

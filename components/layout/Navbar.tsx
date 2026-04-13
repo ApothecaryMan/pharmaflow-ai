@@ -404,7 +404,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     }}
                     theme={theme}
                     language={language}
-                    hideInactiveModules={hideInactiveModules && !developerMode}
+                    hideInactiveModules={hideInactiveModules}
                     blur={sidebarBlur}
                     anchorEl={activeAnchor}
                     onMouseEnter={cancelClose}

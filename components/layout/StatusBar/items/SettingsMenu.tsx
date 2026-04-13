@@ -38,6 +38,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setDarkMode,
     cardBorderLight,
     setCardBorderLight,
+    customCardCss,
+    setCustomCardCss,
     setLanguage,
     availableThemes,
     availableLanguages,
@@ -352,8 +354,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     />
                   </div>
 
-                  {/* Card Border Style (Light Mode Only) */}
-                  {!darkMode && setCardBorderLight && (
+                  {/* Card Border Style (Light Mode & Developer Mode Only) */}
+                  {!darkMode && developerMode && setCardBorderLight && (
                     <div className='flex items-center justify-between'>
                       <label
                         className='text-xs font-medium flex items-center gap-1.5'
@@ -379,6 +381,34 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           { label: language === 'AR' ? 'نحيف' : 'Thin', value: 'thin' },
                           { label: language === 'AR' ? 'بدون' : 'None', value: 'none' },
                         ]}
+                      />
+                    </div>
+                  )}
+
+                  {/* Custom CSS Setting (Light Mode & Developer Mode Only) */}
+                  {!darkMode && developerMode && setCustomCardCss && (
+                    <div className='flex flex-col gap-1.5 py-1'>
+                      <label
+                        className='text-xs font-medium flex items-center justify-between'
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        <div className='flex items-center gap-1.5'>
+                          <span
+                            className='material-symbols-rounded text-(--icon-sm)'
+                            style={{ color: 'var(--text-secondary)' }}
+                          >
+                            code
+                          </span>
+                          {(t as any).customCss || (language === 'AR' ? 'كود CSS للبطاقات' : 'Custom Card CSS')}
+                        </div>
+                      </label>
+                      <textarea
+                        value={customCardCss || ''}
+                        onChange={(e) => setCustomCardCss(e.target.value)}
+                        placeholder="box-shadow: 0px 4px 6px rgba(0,0,0,0.1);"
+                        className='w-full text-xs p-2 rounded-lg bg-(--bg-input) border border-(--border-divider) text-(--text-primary) outline-hidden font-mono min-h-[60px] resize-y scrollbar-none'
+                        spellCheck={false}
+                        dir="ltr"
                       />
                     </div>
                   )}

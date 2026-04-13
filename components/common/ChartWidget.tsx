@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { SegmentedControl } from './SegmentedControl'; // Adjust path if needed
 import { formatCurrencyParts } from '../../utils/currency';
+import { CARD_BASE } from '../../utils/themeStyles';
 
 // --- Custom Tooltip Component ---
 export const CustomTooltipContent = memo(
@@ -196,7 +197,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({
 
   return (
     <div
-      className={`lg:col-span-2 bg-(--bg-card) p-5 rounded-2xl shadow-xs border border-(--border-divider) dark:border-(--border-divider) group ${className || ''}`}
+      className={`lg:col-span-2 ${CARD_BASE} p-5 rounded-3xl group ${className || ''}`}
     >
       {/* Header */}
       <div className={`flex items-center justify-between mb-4 ${headerClassName || ''}`}>

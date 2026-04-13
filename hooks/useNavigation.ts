@@ -47,7 +47,7 @@ function filterMenuItems(
       }
 
       // 2. Activity Check (if enabled)
-      if (hideInactiveModules && !developerMode) {
+      if (hideInactiveModules) {
         return (
           module.hasPage !== false ||
           module.submenus?.some((submenu) =>
