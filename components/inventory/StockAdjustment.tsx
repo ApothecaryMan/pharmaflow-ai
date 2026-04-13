@@ -61,7 +61,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
   t,
 }) => {
   const { branchCode, language, textTransform } = useSettings();
-  const { activeBranchId } = useData();
+  const { activeBranchId, currentEmployee } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [adjustments, setAdjustments] = useState<AdjustmentItem[]>([]);
   const { success, error: alertError, info, warning } = useAlert();
@@ -484,14 +484,11 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
     // Log movements for each adjustment
     try {
-      const currentEmployeeId = storage.get<string>(StorageKeys.CURRENT_EMPLOYEE_ID, 'user');
-      const currentEmployeeObject = storage
-        .get<any>(StorageKeys.EMPLOYEES, [])
-        ?.find((e: any) => e.id === currentEmployeeId);
-      const currentEmployeeName =
-        currentEmployeeId === 'user'
-          ? (import.meta.env.VITE_SUPER_USER || 'System User')
-          : (currentEmployeeObject?.name || currentEmployeeObject?.username || (language === 'AR' ? 'مستخدم' : 'User'));
+      const currentEmployeeId = currentEmployee?.id || 'user';
+      const currentEmployeeName = 
+        currentEmployee?.name || 
+        currentEmployee?.username || 
+        (import.meta.env.VITE_SUPER_USER || (language === 'AR' ? 'مستخدم النظام' : 'System User'));
 
       // RBAC Check for Approval
       const isManager = permissionsService.can('inventory.approve');
