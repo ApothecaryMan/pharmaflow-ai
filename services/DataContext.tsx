@@ -319,7 +319,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         setPurchaseReturnsState(pRet);
         setReturnsState(ret);
         setCustomersState(cust);
-        setEmployeesState(emp.map(({ password, biometricCredentialId, biometricPublicKey, ...safe }) => safe as Employee));
+        setEmployeesState(emp);
         setCurrentEmployee(loggedInEmployee);
         setBatchesState(bat);
 

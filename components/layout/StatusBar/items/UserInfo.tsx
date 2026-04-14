@@ -120,8 +120,9 @@ export const UserInfo: React.FC<UserInfoProps> = ({
           // Verify Hash
           isValid = await verifyPassword(inputPass, tempEmployee.password);
         } else {
-          // Fallback: If no password set, allow any non-empty input (Legacy Mode)
-          isValid = inputPass.length > 0;
+          // Security: If no password is set, authentication MUST fail.
+          // This prevents unconfigured or legacy users from being bypassed.
+          isValid = false;
         }
 
         if (isValid) {
