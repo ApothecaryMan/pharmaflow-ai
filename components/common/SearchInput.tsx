@@ -182,7 +182,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             border-2 dark:border border-(--border-search)
             transition-colors duration-0
             ${isFocused ? 'border-gray-400 dark:border-gray-500 shadow-sm' : ''}
-            ${rounded === 'full' ? 'rounded-4xl px-1' : 'rounded-xl px-1'} 
+            ${rounded === 'full' ? 'rounded-full ps-4 pe-2' : 'rounded-3xl ps-4 pe-2'} 
+            h-12
             ${wrapperClassName}
          `}
         dir={dir}
@@ -194,18 +195,16 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           }
         }}
       >
-        {/* Leading Icon (or Filter Button if filters exist?) */}
-        {/* If has active filters, we show them first? OR after icon? */}
-        {/* Design: [Icon] [Pill] [Pill] [Input] [Clear] [Add Filter] */}
         <div className={`
-          flex items-center select-none ps-2 transition-all duration-200
+          flex items-center h-full select-none transition-all duration-200
           ${isFocused ? 'text-black dark:text-white' : 'text-gray-400'}
         `}>
+          {/* leading icon removed ps-3 since wrapper has ps-3 */}
           {typeof icon === 'string' ? (
             <span 
               className='material-symbols-rounded' 
               style={{ 
-                fontSize: 'var(--icon-navbar-main)',
+                fontSize: '22px',
                 fontVariationSettings: isFocused ? "'FILL' 0, 'wght' 700, 'GRAD' 0, 'opsz' 24" : "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24"
               }}
             >
@@ -216,9 +215,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           )}
         </div>
 
-        {/* The Actual Input Container */}
         <div className={`
-             relative flex-1 min-w-[80px]
+             relative flex-1 h-full flex items-center
              ${hasActiveFilters ? 'ms-1' : 'ms-2'}
         `}>
             <input
@@ -236,22 +234,20 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               autoCapitalize="none"
               inputMode="search"
               className={`
-                w-full bg-transparent
+                w-full h-full bg-transparent
                 text-sm text-gray-900 dark:text-gray-100 
                 placeholder-gray-400 outline-hidden
-                py-2.5
                 ${className}
               `}
             />
-            {/* Standardized Autocomplete Badge */}
             {ghostText && (
                 <div className={`absolute inset-y-0 ${dir === 'rtl' ? 'right-0' : 'left-0'} flex items-center pointer-events-none overflow-hidden select-none`}>
-                    <span className="invisible whitespace-pre text-sm py-2.5">{value}</span>
+                    <span className="invisible whitespace-pre text-sm">{value}</span>
                     <span className={`
-                        inline-flex items-center px-1 py-1 ms-0.5
-                        rounded-[10px] 
+                        inline-flex items-center px-1.5 py-0.5 ms-1
+                        rounded-lg 
                         bg-gray-100 dark:bg-(--bg-surface-neutral) 
-                        text-[13px] font-black tracking-tight
+                        text-[12px] font-black tracking-tight
                         text-gray-600 dark:text-gray-400 
                         shadow-sm transition-all animate-in fade-in duration-100
                         ${isCapsLock ? 'uppercase' : ''}
@@ -263,83 +259,85 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             )}
         </div>
 
-        {/* Active Filter Pills */}
-        {hasActiveFilters &&
-          activeGroups.map((groupId) => {
-            const config = filterConfigs.find((c) => c.id === groupId);
-            const values = activeFilters[groupId];
+        {hasActiveFilters && (
+          <div className="flex items-center gap-1.5 h-full">
+            {activeGroups.map((groupId) => {
+              const config = filterConfigs.find((c) => c.id === groupId);
+              const values = activeFilters[groupId];
 
-            if (!config || !values) return null;
+              if (!config || !values) return null;
 
-            return (
-              <FilterPill
-                key={groupId}
-                config={config}
-                selectedValues={values}
-                collapsed={shouldCollapse}
-                onUpdate={(newVals) => onUpdateFilter && onUpdateFilter(groupId, newVals)}
-                onRemove={() => onUpdateFilter && onUpdateFilter(groupId, [])}
-                rounded={rounded}
-              />
-            );
-          })}
+              return (
+                <FilterPill
+                  key={groupId}
+                  config={config}
+                  selectedValues={values}
+                  collapsed={shouldCollapse}
+                  onUpdate={(newVals) => onUpdateFilter && onUpdateFilter(groupId, newVals)}
+                  onRemove={() => onUpdateFilter && onUpdateFilter(groupId, [])}
+                  rounded={rounded}
+                />
+              );
+            })}
+          </div>
+        )}
 
-        {/* Actions Group */}
-        <div className='flex items-center gap-1.5 ms-auto'>
-          {/* Clear Text Button - Only show if has value and onClear provided */}
+        <div className='flex items-center gap-1.5 ms-auto h-full'>
           {showClear && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onClear();
               }}
-              className='material-symbols-rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors outline-hidden p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700'
-              style={{ fontSize: 'var(--icon-md)' }}
+              className='material-symbols-rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors outline-hidden p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700'
+              style={{ fontSize: '20px' }}
             >
               close
             </button>
           )}
 
-          {/* Filter Actions Group (Restored Container) */}
           {filterConfigs.length > 0 && (
             <div className={`
-              flex items-center p-0.5 ${rounded === 'full' ? 'rounded-full ml-[-2px]' : 'rounded-xl'}
-              border transition-all duration-200 ms-0.5
+              flex items-center h-8 px-1 ${rounded === 'full' ? 'rounded-full' : 'rounded-2xl'}
+              border transition-all duration-300
               ${
                 hasActiveFilters
-                  ? 'border-gray-200/60 dark:border-(--border-divider) bg-(--bg-surface-neutral)'
-                  : 'border-transparent bg-transparent hover:border-gray-200/60 dark:hover:border-(--border-divider) hover:bg-(--bg-surface-neutral)'
+                  ? 'border-gray-200 dark:border-(--border-divider) bg-white dark:bg-(--bg-surface-neutral) shadow-xs'
+                  : 'border-transparent bg-transparent hover:border-gray-200 dark:hover:border-(--border-divider) hover:bg-gray-50 dark:hover:bg-(--bg-surface-neutral)'
               }
             `}>
-              {/* Clear All Filters Button - Only if active filters exist */}
               {hasActiveFilters && (
                 <Tooltip content={t.global.table.clearAllFilters}>
                   <button
                     type='button'
                     onClick={handleClearAllFilters}
-                    className='text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center justify-center w-6 h-6 transition-colors'
+                    className='text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center justify-center w-7 h-7 transition-colors rounded-full'
                   >
-                    <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>filter_list_off</span>
+                    <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>filter_list_off</span>
                   </button>
                 </Tooltip>
               )}
 
-              {/* Add/Tune Filter Button */}
               <Tooltip content={t.global.table.addFilter}>
                 <button
                   ref={filterButtonRef}
                   type='button'
                   onMouseEnter={handleOpenFilterMenu}
                   onMouseLeave={handleFilterMouseLeave}
-                  className='text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center w-7 h-7 transition-colors'
+                  className={`
+                    flex items-center justify-center w-7 h-7 transition-all duration-300 rounded-full
+                    ${hasActiveFilters 
+                      ? 'text-emerald-600 dark:text-emerald-400 font-bold' 
+                      : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}
+                  `}
                 >
-                  <span className='material-symbols-rounded' style={{ fontSize: '22px' }}>tune</span>
+                  <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>tune</span>
                 </button>
               </Tooltip>
             </div>
           )}
 
-          {badge && <div className='pointer-events-none flex items-center ps-1 pe-2'>{badge}</div>}
+          {badge && <div className='pointer-events-none flex items-center px-1'>{badge}</div>}
         </div>
       </div>
     );
