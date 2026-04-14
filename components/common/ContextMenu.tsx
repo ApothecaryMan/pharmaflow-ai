@@ -58,6 +58,8 @@ interface ContextMenuContextType {
   hideMenu: () => void;
   /** Whether glass effect is currently enabled for the active menu. */
   isGlass?: boolean;
+  /** Whether the mouse is currently over the menu container. */
+  isMouseOverMenu: boolean;
 }
 
 // --- Context ---
@@ -232,6 +234,7 @@ export const ContextMenuProvider: React.FC<{
 
   const hideMenu = useCallback(() => {
     setMenu((prev) => ({ ...prev, isVisible: false }));
+    setIsMouseOverMenu(false);
   }, []);
 
   // Global Context Menu Prevention & Close on interaction
@@ -308,13 +311,16 @@ export const ContextMenuProvider: React.FC<{
     setAdjustedPos({ top: y, left: x });
   }, [menu.isVisible, menu.x, menu.y]);
 
+  const [isMouseOverMenu, setIsMouseOverMenu] = useState(false);
+
   const value = React.useMemo(
     () => ({
       showMenu,
       hideMenu,
       isGlass: enableGlassEffect,
+      isMouseOverMenu,
     }),
-    [showMenu, hideMenu, enableGlassEffect]
+    [showMenu, hideMenu, enableGlassEffect, isMouseOverMenu]
   );
 
   return (
@@ -324,6 +330,8 @@ export const ContextMenuProvider: React.FC<{
       {menu.isVisible && (
         <div
           ref={menuRef}
+          onMouseEnter={() => setIsMouseOverMenu(true)}
+          onMouseLeave={() => setIsMouseOverMenu(false)}
           className={`fixed z-9999 min-w-[180px] rounded-2xl shadow-xl border border-(--border-divider) py-1 px-1 animate-scale-in origin-top-left overflow-hidden
                 ${
                   enableGlassEffect

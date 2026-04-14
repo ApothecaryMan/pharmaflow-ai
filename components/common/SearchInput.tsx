@@ -1,4 +1,4 @@
-import React, { forwardRef, useState, useEffect, useMemo } from 'react';
+import React, { forwardRef, useState, useEffect, useMemo, useRef } from 'react';
 import { useSettings } from '../../context/SettingsContext';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { ContextMenuItem, ContextMenuSeparator, useContextMenu } from './ContextMenu';
@@ -58,9 +58,10 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     const t = TRANSLATIONS[language];
     const dir = useSmartDirection(value, placeholder);
     const showClear = value && onClear;
-    const { showMenu, hideMenu } = useContextMenu();
+    const { showMenu, hideMenu, isMouseOverMenu } = useContextMenu();
+    const filterButtonRef = useRef<HTMLButtonElement>(null);
+    const filterLeaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [isCapsLock, setIsCapsLock] = useState(false);
-
 
     // --- Autocomplete Logic ---
     const [currentSuggestion, setCurrentSuggestion] = useState<string>('');
@@ -98,27 +99,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     const shouldCollapse = activeGroups.length > 1;
 
     const handleAddFilter = (config: FilterConfig) => {
-      // Initialize with empty or default?
-      // Usually opening the menu requires no initial value, but we can't "add" a filter without a value.
-      // So maybe we open the filter's specific menu immediately?
-      // Or simple Add -> Open Context Menu for that filter.
-      // For now, let's just "activate" it with empty if needed, acts as "adding pill"
-      // But better UX: Show all options for this filter immediately?
-      // Let's stick to: Click -> Pill appears (maybe with default?) -> Or open nested menu?
-      // Let's simplified: Allow adding empty pill? No.
-      // Let's TRIGGER the pill's logic.
-      // Actually, better: Click Add -> Show list of Filters -> Click Filter -> Show Options.
-      // But ContextMenu doesn't support nested easily yet.
-      // Workaround: Click Filter -> Add "Empty" Pill -> Auto Open its menu?
-      // Or: Click Filter -> Set a default value (e.g. first option)
       if (config.options.length > 0 && typeof onUpdateFilter === 'function') {
-        // select first one as default
-        if (config.mode === 'single') {
-          onUpdateFilter(config.id, [config.options[0].value]);
-        } else {
-          // For multi, also select first one to make it visible
-          onUpdateFilter(config.id, [config.options[0].value]);
-        }
+        onUpdateFilter(config.id, [config.options[0].value]);
       }
       hideMenu();
     };
@@ -128,11 +110,23 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       hideMenu();
     };
 
-    const handleFilterClick = (e: React.MouseEvent) => {
+    const handleOpenFilterMenu = (e: React.MouseEvent) => {
       e.preventDefault();
+      
+      if (filterLeaveTimeoutRef.current) clearTimeout(filterLeaveTimeoutRef.current);
 
       const menuContent = (
-        <div className='font-sans'>
+        <div 
+          className='font-sans'
+          onMouseEnter={() => {
+            if (filterLeaveTimeoutRef.current) clearTimeout(filterLeaveTimeoutRef.current);
+          }}
+          onMouseLeave={() => {
+            filterLeaveTimeoutRef.current = setTimeout(() => {
+              hideMenu();
+            }, 150);
+          }}
+        >
           <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-gray-100 dark:border-gray-800 mb-1'>
             {t.global.table.filters}
           </div>
@@ -164,7 +158,18 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         </div>
       );
 
-      showMenu(e.clientX, e.clientY, menuContent);
+      if (filterButtonRef.current) {
+        const rect = filterButtonRef.current.getBoundingClientRect();
+        showMenu(rect.left, rect.bottom + 5, menuContent);
+      }
+    };
+
+    const handleFilterMouseLeave = () => {
+      filterLeaveTimeoutRef.current = setTimeout(() => {
+        if (!isMouseOverMenu) {
+          hideMenu();
+        }
+      }, 150);
     };
 
     const [isFocused, setIsFocused] = useState(false);
@@ -183,7 +188,6 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         dir={dir}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        // Mimic input focus styles on wrapper
         onClick={() => {
           if (ref && typeof ref !== 'function' && 'current' in ref) {
             ref.current?.focus();
@@ -323,8 +327,10 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               {/* Add/Tune Filter Button */}
               <Tooltip content={t.global.table.addFilter}>
                 <button
+                  ref={filterButtonRef}
                   type='button'
-                  onClick={handleFilterClick}
+                  onMouseEnter={handleOpenFilterMenu}
+                  onMouseLeave={handleFilterMouseLeave}
                   className='text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center w-7 h-7 transition-colors'
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: '22px' }}>tune</span>

@@ -43,9 +43,11 @@ export const FilterPill: React.FC<FilterPillProps> = ({
 }) => {
   const { language } = useSettings();
   const t = TRANSLATIONS[language];
-  const { showMenu, hideMenu } = useContextMenu();
+  const { showMenu, hideMenu, isMouseOverMenu } = useContextMenu();
   const pillRef = useRef<HTMLDivElement>(null);
+  const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // --- SMART GROUPING LOGIC ---
   // Helper to get labels for selected values
   const getSelectedLabels = () => {
     return selectedValues
@@ -54,17 +56,25 @@ export const FilterPill: React.FC<FilterPillProps> = ({
       .join(', ');
   };
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleOpenMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // SMART GROUPING LOGIC
-    // 1. One Pill per Group
-    // 2. Single/Multi Mode Enforcement
-    // 3. Smart 'All' Handling (implied by logic below)
+    // Clear any pending close timeout
+    if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current);
 
     const menuContent = (
-      <div className='font-sans'>
+      <div 
+        className='font-sans'
+        onMouseEnter={() => {
+          if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current);
+        }}
+        onMouseLeave={() => {
+          leaveTimeoutRef.current = setTimeout(() => {
+            hideMenu();
+          }, 150);
+        }}
+      >
         <div className='text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase py-2 px-3 border-b border-(--border-divider) mb-1'>
           {config.label}
         </div>
@@ -74,7 +84,6 @@ export const FilterPill: React.FC<FilterPillProps> = ({
 
           let isDefault = config.defaultValue !== undefined && config.defaultValue === option.value;
           
-          // Allow label to be just text or text + badge
           const labelContent = (
               <div className="flex items-center gap-2">
                   <span>{option.label}</span>
@@ -94,16 +103,13 @@ export const FilterPill: React.FC<FilterPillProps> = ({
               onCheckedChange={(checked) => {
                 let newValues = [...selectedValues];
 
-                // Single Select Mode Logic
                 if (config.mode === 'single') {
-                  // If turning on, it replaces everything. If off, it's empty (or default handled by parent)
                   if (checked) {
                     newValues = [option.value];
                   } else {
-                    newValues = []; // Allow deselecting in single mode? usually yes.
+                    newValues = [];
                   }
                 }
-                // Multi Select Mode Logic
                 else {
                   if (checked) {
                     newValues.push(option.value);
@@ -112,10 +118,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
                   }
                 }
 
-                // Parent handles "Smart All" logic if needed (e.g. if empty -> default to All, or specific All value)
                 onUpdate(newValues);
-
-                // Close menu after selection as per user request
                 hideMenu();
               }}
             />
@@ -142,7 +145,19 @@ export const FilterPill: React.FC<FilterPillProps> = ({
     }
   };
 
-  // Content for Tooltip (Full Details)
+  const handleMouseLeave = () => {
+    // Set a small delay to allow moving to the menu
+    leaveTimeoutRef.current = setTimeout(() => {
+      // If we are not over the menu, close it
+      // Using a ref or checking state would be better, but we only have access to isMouseOverMenu via context
+      // which is reactive. The timeout should be enough to capture the latest state.
+      if (!isMouseOverMenu) {
+        hideMenu();
+      }
+    }, 150);
+  };
+
+  // Content for Tooltip (Full Details) - Keeping for potential reuse, but it's not in the render now
   const tooltipContent = (
     <div className='flex flex-col gap-0.5'>
       <span className='font-bold text-gray-300'>{config.label}</span>
@@ -152,62 +167,58 @@ export const FilterPill: React.FC<FilterPillProps> = ({
 
   // Render
   return (
-    <Tooltip content={tooltipContent} delay={500} triggerClassName='block'>
+    <div
+      ref={pillRef}
+      onMouseEnter={handleOpenMenu}
+      onMouseLeave={handleMouseLeave}
+      className={`
+        flex items-center gap-1.5 
+        leading-none select-none cursor-pointer transition-all duration-200
+        border border-(--border-divider)
+        bg-(--bg-surface-neutral) hover:bg-(--bg-menu-hover)
+        text-gray-700 dark:text-white 
+        rounded-full
+        ${collapsed ? 'ps-1.5 pe-1 py-1' : 'ps-2 pe-1 py-1'}
+      `}
+    >
+      {/* Icon */}
+      <span
+        className={`material-symbols-rounded ${collapsed ? '' : 'opacity-70'}`}
+        style={{ fontSize: collapsed ? 'var(--icon-navbar-dropdown)' : 'var(--icon-base)' }}
+      >
+        {config.icon}
+      </span>
+
+      {/* Text Content (Hidden if collapsed) */}
+      {!collapsed && (
+        <span className='text-xs font-medium whitespace-nowrap max-w-[150px] truncate'>
+          <span className='opacity-50 me-1'>{config.label}:</span><span
+            className={config.mode === 'single' ? 'text-emerald-600 dark:text-emerald-400' : ''}
+          >
+            {selectedValues.length > 2
+              ? `${selectedValues.length} ${t.global.table.selectedCount}`
+              : getSelectedLabels()}
+          </span>
+        </span>
+      )}
+
       <div
-        ref={pillRef}
-        onClick={handleClick}
+        role='button'
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
         className={`
-          flex items-center gap-1.5 
-          leading-none select-none cursor-pointer transition-all duration-200
-          border border-(--border-divider)
-          bg-(--bg-surface-neutral) hover:bg-(--bg-menu-hover)
-          text-gray-700 dark:text-white 
-          rounded-full
-          ${collapsed ? 'ps-1.5 pe-1 py-1' : 'ps-2 pe-1 py-1'}
-          active:scale-95
+          flex items-center justify-center
+          text-gray-400 hover:text-red-500 dark:hover:text-red-400
+          transition-all duration-200
+          ${collapsed ? 'w-4 h-4 ml-0.5' : 'w-4 h-4 ml-0.5'}
         `}
       >
-        {/* Icon */}
-        <span
-          className={`material-symbols-rounded ${collapsed ? '' : 'opacity-70'}`}
-          style={{ fontSize: collapsed ? 'var(--icon-navbar-dropdown)' : 'var(--icon-base)' }}
-        >
-          {config.icon}
+        <span className='material-symbols-rounded font-bold' style={{ fontSize: 'var(--icon-sm)' }}>
+          close
         </span>
-
-        {/* Text Content (Hidden if collapsed) */}
-        {!collapsed && (
-          <span className='text-xs font-medium whitespace-nowrap max-w-[150px] truncate'>
-            <span className='opacity-50 mr-1'>{config.label}:</span>
-            <span
-              className={config.mode === 'single' ? 'text-emerald-600 dark:text-emerald-400' : ''}
-            >
-              {selectedValues.length > 2
-                ? `${selectedValues.length} ${t.global.table.selectedCount}`
-                : getSelectedLabels()}
-            </span>
-          </span>
-        )}
-
-        <div
-          role='button'
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          className={`
-            flex items-center justify-center
-            text-gray-400 hover:text-red-500 dark:hover:text-red-400
-            transition-all duration-200
-            ${collapsed ? 'w-4 h-4 ml-0.5' : 'w-4 h-4 ml-0.5'}
-            active:scale-75
-          `}
-        >
-          <span className='material-symbols-rounded font-bold' style={{ fontSize: 'var(--icon-sm)' }}>
-            close
-          </span>
-        </div>
       </div>
-    </Tooltip>
+    </div>
   );
 };
