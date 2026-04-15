@@ -10,9 +10,9 @@ const MIGRATED_KEY = 'pharma_employees_indexeddb_migrated';
 
 // Export interface so it can be used if needed
 export interface EmployeeService {
-  getAll(branchId?: string | 'ALL'): Promise<Employee[]>;
+  getAll(branchId?: string | 'ALL', orgId?: string): Promise<Employee[]>;
   getById(id: string): Promise<Employee | null>;
-  create(employee: Employee, branchId?: string): Promise<Employee>;
+  create(employee: Employee, branchId?: string, orgId?: string): Promise<Employee>;
   update(id: string, employee: Partial<Employee>): Promise<Employee>;
   delete(id: string): Promise<boolean>;
   save(employees: Employee[], branchId?: string): Promise<void>;
@@ -21,6 +21,7 @@ export interface EmployeeService {
 const mapEmployeeToDb = (e: Partial<Employee>): any => {
   const db: any = {};
   if (e.id !== undefined) db.id = e.id;
+  if (e.orgId !== undefined) db.org_id = e.orgId;
   if (e.branchId !== undefined) db.branch_id = e.branchId;
   if (e.employeeCode !== undefined) db.employee_code = e.employeeCode;
   if (e.name !== undefined) db.name = e.name;
@@ -41,6 +42,7 @@ const mapEmployeeToDb = (e: Partial<Employee>): any => {
 
 const mapDbToEmployee = (db: any): Employee => ({
   id: db.id,
+  orgId: db.org_id,
   branchId: db.branch_id,
   employeeCode: db.employee_code,
   name: db.name,
@@ -111,12 +113,20 @@ const getRawAll = async (): Promise<Employee[]> => {
 };
 
 export const createEmployeeService = (): EmployeeService => ({
-  getAll: async (branchId?: string | 'ALL'): Promise<Employee[]> => {
+  getAll: async (branchId?: string | 'ALL', orgId?: string): Promise<Employee[]> => {
     const all = await getRawAll();
-    if (branchId === 'ALL') return all;
+    
+    // Primary Filter: Organization (Tenant Isolation)
+    let filtered = all;
+    if (orgId) {
+      filtered = filtered.filter(e => e.orgId === orgId);
+    }
+
+    if (branchId === 'ALL') return filtered;
+    
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    return all.filter((e) => e.branchId === effectiveBranchId);
+    return filtered.filter((e) => e.branchId === effectiveBranchId);
   },
 
   getById: async (id: string): Promise<Employee | null> => {
@@ -134,10 +144,13 @@ export const createEmployeeService = (): EmployeeService => ({
     return employeeCacheService.getById(id);
   },
 
-  create: async (employee: Employee, branchId?: string): Promise<Employee> => {
+  create: async (employee: Employee, branchId?: string, orgId?: string): Promise<Employee> => {
     const all = await getRawAll();
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || employee.branchId || settings.activeBranchId || settings.branchCode;
+    
+    // Inject orgId if provided or missing
+    if (orgId) employee.orgId = orgId;
     
     // Assign ID if missing
     if (!employee.id) {

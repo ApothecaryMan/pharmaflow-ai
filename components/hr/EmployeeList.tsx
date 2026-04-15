@@ -19,6 +19,7 @@ import { SmartEmailInput, SmartInput, SmartPhoneInput } from '../common/SmartInp
 import { TanStackTable } from '../common/TanStackTable';
 import { Switch } from '../common/Switch';
 import { employeeService } from '../../services/hr/employeeService';
+import { orgService } from '../../services/org/orgService';
 import { INPUT_BASE } from '../../utils/themeStyles';
 
 // --- Smart Roles Configuration ---
@@ -109,7 +110,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
       const fetchAll = async () => {
         setIsFetchingGlobal(true);
         try {
-          const all = await employeeService.getAll('ALL');
+          const activeOrgId = orgService.getActiveOrgId();
+          const all = await employeeService.getAll('ALL', activeOrgId);
           setAllEmployeesFetched(all);
         } catch (err) {
           console.error('Failed to fetch all employees', err);

@@ -82,13 +82,14 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
         status: 'active',
       };
       
+      const { orgService } = await import('../../services/org/orgService');
+      const activeOrgId = orgService.getActiveOrgId();
+
       // 1. Create the employee
-      const created = await employeeService.create(newEmployee);
+      const created = await employeeService.create(newEmployee, activeBranchId, activeOrgId);
 
       // 2. Claim the organization (Architectural Polish: Atomic-like sequencing)
       try {
-        const { orgService } = await import('../../services/org/orgService');
-        const activeOrgId = orgService.getActiveOrgId();
         if (activeOrgId) {
           await orgService.claimOrganization(activeOrgId, created.id);
         }

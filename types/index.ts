@@ -913,6 +913,8 @@ export interface Shift {
 export interface Employee {
   // --- Identification ---
   id: string; // Unique UUID
+  /** Organization this employee belongs to — required for tenant isolation */
+  orgId?: string;
   /** Branch this employee belongs to — required for RLS isolation */
   branchId: string;
   employeeCode: string; // Auto-generated: EMP-001, EMP-002, etc.

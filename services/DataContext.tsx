@@ -536,10 +536,14 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   }, []);
 
   const addEmployee = useCallback(async (employee: Employee) => {
-    const newEmployee = await employeeService.create({ ...employee, branchId: activeBranchId });
+    const newEmployee = await employeeService.create(
+      { ...employee, branchId: activeBranchId, orgId: activeOrgId },
+      activeBranchId,
+      activeOrgId
+    );
     setEmployeesState((prev) => [...prev, newEmployee]);
     return newEmployee;
-  }, [activeBranchId]);
+  }, [activeBranchId, activeOrgId]);
 
   const updateEmployee = useCallback(async (id: string, updates: Partial<Employee>) => {
     const updated = await employeeService.update(id, updates);

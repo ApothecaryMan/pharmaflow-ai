@@ -56,7 +56,7 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
         const orgBranches = branchesData.filter(b => b.orgId === activeOrgId);
         setStats({
           branches: orgBranches.length,
-          staff: employeesData.filter(e => orgBranches.some(b => b.id === e.branchId)).length
+          staff: employeesData.filter(e => e.orgId === activeOrgId || orgBranches.some(b => b.id === e.branchId)).length
         });
       }
     } catch (error) {
