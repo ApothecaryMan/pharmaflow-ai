@@ -47,7 +47,7 @@ export const CartItemExpiryBadge: React.FC<CartItemExpiryBadgeProps> = ({
         onClick={(e) => {
           e.stopPropagation();
           const batchMenuItems = allBatches.map((batch) => ({
-            label: `${formatExpiryDate(batch.expiryDate)} • ${batch.stock} ${t.pack || 'Pack'}`,
+            label: `${formatExpiryDate(batch.expiryDate)} • ${batch.stock} ${t?.pack || 'Pack'}`,
             icon: batch.id === item.id ? 'check_circle' : undefined,
             disabled: batch.stock <= 0,
             action: () => {
@@ -279,7 +279,7 @@ export const CartItemQuantityControl: React.FC<CartItemQuantityControlProps> = (
       const isAtMax = qty >= maxForThisMode;
 
       return (
-        <div className="flex items-center rounded-lg h-6 overflow-hidden transition-all bg-black/[0.03] dark:bg-white/[0.05]" title={isUnit ? t.unit : t.pack}>
+        <div className="flex items-center rounded-lg h-6 overflow-hidden transition-all bg-black/[0.03] dark:bg-white/[0.05]" title={isUnit ? t?.unit : t?.pack}>
           <button
             onClick={(e) => { e.stopPropagation(); if (qty > 0 && (qty > 1 || otherQty > 0)) updateQuantity(item.id, isUnit, -1); }}
             onPointerDown={(e) => e.stopPropagation()}
