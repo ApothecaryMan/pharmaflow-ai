@@ -590,35 +590,37 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               )}
             </div>
 
-            {/* Sidebar Collapse Toggle */}
-            <div className='flex items-center justify-between'>
-              <label
-                className='text-xs font-medium flex items-center gap-1.5'
-                style={{ color: 'var(--text-primary)' }}
-              >
-                <span
-                  className='material-symbols-rounded text-(--icon-sm)'
-                  style={{ color: 'var(--text-secondary)' }}
+            {/* Sidebar Collapse Toggle - Only show if Sidebar is active */}
+            {navStyle === 1 && (
+              <div className='flex items-center justify-between'>
+                <label
+                  className='text-xs font-medium flex items-center gap-1.5'
+                  style={{ color: 'var(--text-primary)' }}
                 >
-                  view_sidebar
-                </span>
-                {t.sidebarStyle}
-              </label>
-              <SegmentedControl
-                value={sidebarCollapsed}
-                onChange={(val) => setSidebarCollapsed(val as boolean)}
-                color={currentTheme.name.toLowerCase()}
-                size='xs'
-                iconSize='--icon-md'
-                fullWidth={true}
-                className='max-w-[100px]'
-                shape='pill'
-                options={[
-                  { label: '', value: false, icon: 'view_sidebar' },
-                  { label: '', value: true, icon: 'dock_to_left' },
-                ]}
-              />
-            </div>
+                  <span
+                    className='material-symbols-rounded text-(--icon-sm)'
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    view_sidebar
+                  </span>
+                  {t.sidebarStyle}
+                </label>
+                <SegmentedControl
+                  value={sidebarCollapsed}
+                  onChange={(val) => setSidebarCollapsed(val as boolean)}
+                  color={currentTheme.name.toLowerCase()}
+                  size='xs'
+                  iconSize='--icon-md'
+                  fullWidth={true}
+                  className='max-w-[100px]'
+                  shape='pill'
+                  options={[
+                    { label: '', value: false, icon: 'view_sidebar' },
+                    { label: '', value: true, icon: 'dock_to_left' },
+                  ]}
+                />
+              </div>
+            )}
 
             {/* Nav Style Switch (Redesigned to be inline with icons) */}
             {setNavStyle && (
@@ -939,7 +941,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 {/* Quick Statuses Row with Arrow */}
                 <div className='space-y-1 relative' ref={quickStatusesRef}>
                   {/* Main Row */}
-                  <div className='w-full flex items-center justify-between py-1 transition-colors'>
+                  <div className='w-full flex items-center justify-between py-1'>
                     {/* Left Side: Icon + Label */}
                     <div className='flex items-center gap-2'>
                       <span
@@ -970,7 +972,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           setStatusBarExpanded(!statusBarExpanded);
                           if (!statusBarExpanded) setThemeExpanded(false);
                         }}
-                        className='transition-colors'
+                        className=''
                         type='button'
                       >
                         <span
