@@ -207,7 +207,6 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
   const handleModuleClick = (
     moduleId: string,
-    hasPage: boolean,
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
     if (navStyle === 2) {
@@ -220,8 +219,21 @@ const NavbarComponent: React.FC<NavbarProps> = ({
         setActiveAnchor(event.currentTarget);
       }
     } else {
-      if (hasPage) {
-        onModuleChange(moduleId);
+      onModuleChange(moduleId);
+      
+      // Auto-navigate to first implemented sub-page if available
+      if (onNavigate) {
+        const module = menuItems.find(m => m.id === moduleId);
+        if (module?.submenus) {
+          for (const submenu of module.submenus) {
+            for (const item of submenu.items) {
+              if (typeof item === 'object' && item.view) {
+                onNavigate(item.view);
+                return;
+              }
+            }
+          }
+        }
       }
     }
   };
@@ -324,13 +336,13 @@ const NavbarComponent: React.FC<NavbarProps> = ({
               ) ?? false;
 
             const isEffectivelyDisabled =
-              !developerMode && (navStyle === 2 ? !hasPage && !hasImplementedSubItems : !hasPage);
+              !developerMode && !hasPage && !hasImplementedSubItems;
 
             return (
               <div key={module.id} className='relative group/item' onMouseLeave={handleMouseLeave}>
                 <button
                   onMouseEnter={(e) => handleMouseEnter(module.id, e)}
-                  onClick={(e) => handleModuleClick(module.id, hasPage, e)}
+                  onClick={(e) => handleModuleClick(module.id, e)}
                   disabled={isEffectivelyDisabled}
                   className={`main-nav-tab flex items-center gap-2 px-2.5 py-1 rounded-lg whitespace-nowrap relative type-interactive transition-all duration-200
                       ${
@@ -343,10 +355,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                               : 'text-gray-600 dark:text-gray-400 hover:bg-(--bg-navbar-hover) hover:text-gray-900 dark:hover:text-white'
                       }
                     `}
-                  title={!hasPage && navStyle !== 2 ? t.settings.comingSoon : ''}
+                  title={!hasPage && !hasImplementedSubItems && navStyle !== 2 ? t.settings.comingSoon : ''}
                 >
                   <span
-                    className={`flex items-center justify-center ${(isActive || isDropdownOpen) && hasPage ? 'icon-filled' : ''}`}
+                    className={`flex items-center justify-center ${(isActive || isDropdownOpen) && (hasPage || hasImplementedSubItems) ? 'icon-filled' : ''}`}
                   >
                     {module.id === 'sales' ? (
                       <svg
@@ -376,7 +388,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     {getMenuTranslation(module.label, language)}
                   </span>
 
-                  {isActive && hasPage && navStyle !== 2 && (
+                  {isActive && (hasPage || hasImplementedSubItems) && navStyle !== 2 && (
                     <motion.div
                       layoutId="nav-indicator"
                       className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-[1.5px] bg-primary-600 rounded-full`}

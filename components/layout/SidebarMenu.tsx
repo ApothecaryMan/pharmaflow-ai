@@ -284,16 +284,16 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                   const item = row.data;
                   const itemLabel = typeof item === 'string' ? item : item.label;
                   const itemIcon = typeof item === 'object' ? item.icon : 'radio_button_unchecked';
-                  const itemView = typeof item === 'object' && item.view ? item.view : itemLabel;
-                  const isImplemented = typeof item === 'object' && !!item.view;
-                  const isActive = itemView === currentView;
+                  const itemView = typeof item === 'object' && item.view ? item.view : null;
+                  const isImplemented = !!itemView;
+                  const isActive = !!itemView && itemView === currentView;
                   const translatedLabel = getMenuTranslation(itemLabel, language);
 
                   const buttonContent = (
                     <button
                       disabled={!isImplemented}
                       onClick={() => {
-                        if (onViewChange) {
+                        if (onViewChange && itemView) {
                           onViewChange(itemView);
                         } else {
                           handleItemClick(row.submenuLabel, itemLabel);
