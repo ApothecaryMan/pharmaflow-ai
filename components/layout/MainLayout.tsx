@@ -171,29 +171,33 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
           {/* Main Content Area */}
           <div
-            className='flex flex-1 overflow-hidden'
+            className='flex flex-1 overflow-hidden transition-all duration-300'
             style={{ backgroundColor: 'var(--bg-navbar)' }}
           >
-            {/* Sidebar */}
-            {!isStandalone && (
-              <aside
-                className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col ${LAYOUT_CONFIG.SIDEBAR_WIDTH} ${sidebarBlur ? 'backdrop-blur-xl' : ''} transition-all duration-300 ease-in-out`}
-                style={{ backgroundColor: 'var(--bg-navbar)' }}
-              >
-                <SidebarContent
-                  menuItems={filteredMenuItems}
-                  activeModule={activeModule}
-                  view={view}
-                  dashboardSubView={dashboardSubView}
-                  onNavigate={handleNavigate}
-                  onViewChange={handleViewChange}
-                  theme={theme}
-                  t={t}
-                  language={language}
-                  hideInactiveModules={hideInactiveModules}
-                />
-              </aside>
-            )}
+            {/* Layout Wrapper with Static Curves */}
+            <div
+              className={`flex-1 flex overflow-hidden ${isStandalone ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r bg-(--bg-page-surface) shadow-inner m-0'}`}
+              style={{ borderColor: 'var(--border-divider)' }}
+            >
+              {/* Sidebar */}
+              {!isStandalone && (
+                <aside
+                  className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col ${LAYOUT_CONFIG.SIDEBAR_WIDTH} transition-all duration-300 ease-in-out`}
+                >
+                  <SidebarContent
+                    menuItems={filteredMenuItems}
+                    activeModule={activeModule}
+                    view={view}
+                    dashboardSubView={dashboardSubView}
+                    onNavigate={handleNavigate}
+                    onViewChange={handleViewChange}
+                    theme={theme}
+                    t={t}
+                    language={language}
+                    hideInactiveModules={hideInactiveModules}
+                  />
+                </aside>
+              )}
 
             {/* Mobile Navigation (Drawer & Bottom Bar) */}
             <MobileNavigation
@@ -217,15 +221,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               employees={employees}
             />
 
-            {/* Actual Page Surface */}
-            <main
-              className={`flex-1 h-full overflow-hidden relative ${isStandalone ? '' : 'rounded-tl-3xl rounded-tr-3xl border-t border-l border-r bg-(--bg-page-surface) shadow-inner'}`}
-              style={{ borderColor: 'var(--border-divider)' }}
-            >
-              <div className={getContentContainerClasses(PAGE_REGISTRY[view]?.layout, isStandalone)}>
-                <div className='h-full w-full'>{children}</div>
-              </div>
-            </main>
+              {/* Actual Page Surface */}
+              <main className='flex-1 h-full overflow-hidden relative'>
+                <div
+                  className={getContentContainerClasses(PAGE_REGISTRY[view]?.layout, isStandalone)}
+                >
+                  <div className='h-full w-full'>{children}</div>
+                </div>
+              </main>
+            </div>
           </div>
 
           {/* Status Bar */}

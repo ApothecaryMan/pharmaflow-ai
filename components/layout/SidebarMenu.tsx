@@ -140,106 +140,115 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
     if (!activeModuleData) return null;
 
     return (
-      <div className='flex-1 flex flex-col w-full overflow-hidden h-full'>
-        {/* Search Bar */}
-        {!hideSearch && (
-          <div
-            className='px-3 py-3 sticky top-0 z-10'
-            style={{ backgroundColor: 'var(--bg-navbar)' }}
-          >
-            <div className='relative'>
-              <SearchInput
-                value={searchQuery}
-                onSearchChange={setSearchQuery}
-                onClear={() => setSearchQuery('')}
-                placeholder={`${language === 'AR' ? 'بحث في' : 'Search in'} ${getMenuTranslation(activeModuleData?.label || '', language)}...`}
-                color={theme}
-                wrapperClassName='!bg-(--bg-card)'
-                style={{
-                  color: 'var(--text-primary)',
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Submenus - Simplified Flat List */}
-        <nav
-          ref={navRef}
-          onScroll={handleScroll}
-          className='flex-1 space-y-1 w-full overflow-y-auto px-3 pb-3'
+      <div className='flex-1 flex flex-col w-full h-full p-2.5 overflow-hidden'>
+        {/* Unified Sidebar Card - Matches CARD_BASE style */}
+        <div
+          className='flex-1 flex flex-col w-full overflow-hidden rounded-2xl border border-(--border-divider) card-shadow'
+          style={{
+            backgroundColor: 'var(--bg-navbar)',
+          }}
         >
-          {filteredSubmenus.length === 0 ? (
-            <div className='text-center py-8 text-gray-400 text-sm'>
-              <span className='material-symbols-rounded text-[32px] mb-2 block opacity-50'>
-                search_off
-              </span>
-              No results found
-            </div>
-          ) : (
-            filteredSubmenus.map((submenu, submenuIdx) => (
-              <div key={submenu.id}>
-                {/* Subtle Divider Line (skip first one) */}
-                {submenuIdx > 0 && (
-                  <div
-                    className='my-3 mx-3'
-                    style={{
-                      height: '1px',
-                      backgroundColor: 'var(--border-divider)',
-                      opacity: 0.5,
-                    }}
-                  />
-                )}
-
-                {/* Items List */}
-                <div className='space-y-1'>
-                  {submenu.items.slice(0, 15).map((item, idx) => {
-                    const itemLabel = typeof item === 'string' ? item : item.label;
-                    const itemIcon = typeof item === 'object' ? item.icon : undefined;
-                    const itemView = typeof item === 'object' && item.view ? item.view : itemLabel;
-                    const isImplemented = typeof item === 'object' && !!item.view;
-                    const isActive = itemView === currentView;
-
-                    return (
-                      <button
-                        key={idx}
-                        disabled={!isImplemented}
-                        onClick={() => {
-                          if (onViewChange) {
-                            onViewChange(itemView);
-                          } else {
-                            handleItemClick(submenu.label, itemLabel);
-                          }
-                        }}
-                        className={`w-full flex items-center gap-2.5 ltr:text-left rtl:text-right px-3 py-1.5 rounded-lg transition-all type-interactive ${
-                          !isImplemented
-                            ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
-                            : isActive
-                              ? `bg-primary-100 dark:bg-primary-500/15 text-primary-700 dark:text-primary-400 font-semibold`
-                              : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-(--bg-menu-hover)'
-                        }`}
-                      >
-                        {itemIcon && (
-                          <span
-                            className={`material-symbols-rounded text-[18px] ${isActive ? 'font-fill' : 'opacity-60'}`}
-                          >
-                            {itemIcon}
-                          </span>
-                        )}
-                        <span className='flex-1'>{getMenuTranslation(itemLabel, language)}</span>
-                        {!isImplemented && (
-                          <span className='text-[10px] opacity-60 border border-gray-300 dark:border-gray-700 px-1 rounded-sm uppercase tracking-tighter'>
-                            Soon
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+          {/* Search Bar */}
+          {!hideSearch && (
+            <div
+              className='px-3 py-3 sticky top-0 z-10'
+              style={{ backgroundColor: 'var(--bg-navbar)' }}
+            >
+              <div className='relative'>
+                <SearchInput
+                  value={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  onClear={() => setSearchQuery('')}
+                  placeholder={`${language === 'AR' ? 'بحث في' : 'Search in'} ${getMenuTranslation(activeModuleData?.label || '', language)}...`}
+                  color={theme}
+                wrapperClassName='!bg-(--bg-card)'
+                  style={{
+                    color: 'var(--text-primary)',
+                  }}
+                />
               </div>
-            ))
+            </div>
           )}
-        </nav>
+
+          {/* Submenus - Simplified Flat List */}
+          <nav
+            ref={navRef}
+            onScroll={handleScroll}
+            className='flex-1 space-y-1 w-full overflow-y-auto px-3 pb-3 custom-scrollbar'
+          >
+            {filteredSubmenus.length === 0 ? (
+              <div className='text-center py-8 text-gray-400 text-sm'>
+                <span className='material-symbols-rounded text-[32px] mb-2 block opacity-50'>
+                  search_off
+                </span>
+                No results found
+              </div>
+            ) : (
+              filteredSubmenus.map((submenu, submenuIdx) => (
+                <div key={submenu.id}>
+                  {/* Subtle Divider Line (skip first one) */}
+                  {submenuIdx > 0 && (
+                    <div
+                      className='my-3 mx-3'
+                      style={{
+                        height: '1px',
+                        backgroundColor: 'var(--border-divider)',
+                        opacity: 0.5,
+                      }}
+                    />
+                  )}
+
+                  {/* Items List */}
+                  <div className='space-y-1'>
+                    {submenu.items.slice(0, 15).map((item, idx) => {
+                      const itemLabel = typeof item === 'string' ? item : item.label;
+                      const itemIcon = typeof item === 'object' ? item.icon : undefined;
+                      const itemView =
+                        typeof item === 'object' && item.view ? item.view : itemLabel;
+                      const isImplemented = typeof item === 'object' && !!item.view;
+                      const isActive = itemView === currentView;
+
+                      return (
+                        <button
+                          key={idx}
+                          disabled={!isImplemented}
+                          onClick={() => {
+                            if (onViewChange) {
+                              onViewChange(itemView);
+                            } else {
+                              handleItemClick(submenu.label, itemLabel);
+                            }
+                          }}
+                          className={`w-full flex items-center gap-2.5 ltr:text-left rtl:text-right px-3 py-1.5 rounded-lg transition-all type-interactive ${
+                            !isImplemented
+                              ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
+                              : isActive
+                                ? `bg-primary-100 dark:bg-primary-500/15 text-primary-700 dark:text-primary-400 font-semibold`
+                                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-(--bg-menu-hover)'
+                          }`}
+                        >
+                          {itemIcon && (
+                            <span
+                              className={`material-symbols-rounded text-[18px] ${isActive ? 'font-fill' : 'opacity-60'}`}
+                            >
+                              {itemIcon}
+                            </span>
+                          )}
+                          <span className='flex-1'>{getMenuTranslation(itemLabel, language)}</span>
+                          {!isImplemented && (
+                            <span className='text-[10px] opacity-60 border border-gray-300 dark:border-gray-700 px-1 rounded-sm uppercase tracking-tighter'>
+                              Soon
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
+            )}
+          </nav>
+        </div>
       </div>
     );
   }
