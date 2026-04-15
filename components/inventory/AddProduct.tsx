@@ -14,6 +14,7 @@ import { SmartDateInput, SmartInput, SmartTextarea } from '../common/SmartInputs
 import { Tooltip } from '../common/Tooltip';
 import { CARD_LG, INPUT_BASE } from '../../utils/themeStyles';
 import * as stockOps from '../../utils/stockOperations';
+import { SegmentedControl } from '../common/SegmentedControl';
 
 interface AddProductProps {
   inventory: Drug[];
@@ -470,51 +471,33 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1">
                     {t.fields?.origin}
                   </label>
-                  <div className="flex bg-gray-50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, origin: 'local' })}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${formData.origin === 'local' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-600 dark:text-blue-400' : 'text-gray-400'}`}
-                    >
-                      {t.fields?.originLocal}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, origin: 'imported' })}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${formData.origin === 'imported' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-600 dark:text-blue-400' : 'text-gray-400'}`}
-                    >
-                      {t.fields?.originImported}
-                    </button>
-                  </div>
+                  <SegmentedControl
+                    value={formData.origin as 'local' | 'imported'}
+                    onChange={(val) => setFormData({ ...formData, origin: val })}
+                    options={[
+                      { label: t.fields?.originLocal, value: 'local' },
+                      { label: t.fields?.originImported, value: 'imported' },
+                    ]}
+                    size="sm"
+                    color="blue"
+                  />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1">
                     {t.fields?.status || 'Product Status'}
                   </label>
-                  <div className="flex bg-gray-50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, status: 'active' })}
-                      className={`flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${formData.status === 'active' || !formData.status ? 'bg-white dark:bg-gray-700 shadow-sm text-green-600 dark:text-green-400' : 'text-gray-400'}`}
-                    >
-                      {t.active || 'Active'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, status: 'inactive' })}
-                      className={`flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${formData.status === 'inactive' ? 'bg-white dark:bg-gray-700 shadow-sm text-amber-600 dark:text-amber-400' : 'text-gray-400'}`}
-                    >
-                      {t.inactive || 'Inactive'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, status: 'discontinued' })}
-                      className={`flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${formData.status === 'discontinued' ? 'bg-white dark:bg-gray-700 shadow-sm text-red-600 dark:text-red-400' : 'text-gray-400'}`}
-                    >
-                      {t.discontinued || 'Discontinued'}
-                    </button>
-                  </div>
+                  <SegmentedControl
+                    value={formData.status || 'active'}
+                    onChange={(val) => setFormData({ ...formData, status: val })}
+                    options={[
+                      { label: t.active || 'Active', value: 'active', activeColor: 'green' },
+                      { label: t.inactive || 'Inactive', value: 'inactive', activeColor: 'amber' },
+                      { label: t.discontinued || 'Discontinued', value: 'discontinued', activeColor: 'red' },
+                    ]}
+                    size="sm"
+                    color="blue"
+                  />
                 </div>
               </div>
 

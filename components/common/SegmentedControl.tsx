@@ -75,15 +75,15 @@ const SIZE_CLASSES = {
     iconSize: '--icon-xs', // 12px
   },
   sm: {
-    button: 'py-1.5 px-3 text-sm min-w-[38px] h-[38px]',
+    button: 'py-1 px-3 text-[13px] min-w-[38px] h-[32px]',
     iconSize: '--icon-sm', // 14px
   },
   md: {
-    button: 'py-2 px-4 text-base min-w-[44px] h-[44px]',
+    button: 'py-1.5 px-4 text-sm min-w-[44px] h-[36px]',
     iconSize: '--icon-md', // 18px
   },
   lg: {
-    button: 'py-2.5 px-5 text-lg min-w-[50px] h-[50px]',
+    button: 'py-2 px-5 text-base min-w-[50px] h-[44px]',
     iconSize: '--icon-lg', // 24px
   },
 };
