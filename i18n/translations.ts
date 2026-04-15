@@ -303,9 +303,11 @@ export const TRANSLATIONS = {
         name: 'Name',
         codes: 'Codes',
         category: 'Category',
+        status: 'Status',
         stock: 'Stock',
         price: 'Price',
         cost: 'Cost',
+        expiry: 'Expiry',
         actions: 'Actions',
       },
       fields: {
@@ -2618,9 +2620,11 @@ export const TRANSLATIONS = {
         codes: 'الأكواد',
         category: 'الفئة',
         // Warehouse Management Items
+        status: 'الحالة',
         stock: 'المخزون',
         price: 'سعر البيع',
         cost: 'سعر التكلفة',
+        expiry: 'الصلاحية',
         actions: 'إجراءات',
       },
       fields: {

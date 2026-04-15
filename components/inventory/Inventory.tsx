@@ -429,10 +429,10 @@ export const Inventory: React.FC<InventoryProps> = ({
           return (
             <div className='flex flex-col gap-0.5'>
               {drug.barcode && (
-                <div className='text-gray-900 dark:text-gray-100 text-sm'>{drug.barcode}</div>
+                <div className='text-gray-900 dark:text-gray-100 text-xs'>{drug.barcode}</div>
               )}
               {drug.internalCode && (
-                <div className='text-gray-900 dark:text-gray-100 text-sm'>{drug.internalCode}</div>
+                <div className='text-gray-900 dark:text-gray-100 text-xs'>{drug.internalCode}</div>
               )}
               {!drug.barcode && !drug.internalCode && <span className='text-gray-400'>-</span>}
             </div>
@@ -452,10 +452,10 @@ export const Inventory: React.FC<InventoryProps> = ({
           const displayName = getDisplayName(drug, textTransform);
           return (
             <div className='flex flex-col whitespace-normal items-start text-start w-full'>
-              <div className='font-medium text-gray-900 dark:text-gray-100 text-sm drug-name'>
+              <div className='font-medium text-gray-900 dark:text-gray-100 text-xs drug-name'>
                 {displayName}
               </div>
-                <span>
+                <span className='text-gray-500 dark:text-gray-400'>
                   {Array.isArray(drug.genericName) 
                     ? drug.genericName.join(' + ') 
                     : (drug.genericName as any)}
@@ -514,7 +514,7 @@ export const Inventory: React.FC<InventoryProps> = ({
 
           return (
             <div
-              className={`font-medium text-sm ${row.original.stock < (row.original.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}
+              className={`font-medium text-xs ${row.original.stock < (row.original.unitsPerPack || 1) ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}
             >
               {parts.value}{' '}
               {parts.label && (
@@ -530,7 +530,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         cell: ({ row }) => {
           const parts = formatCurrencyParts(row.original.price);
           return (
-            <span className='text-gray-700 dark:text-gray-300 text-sm font-bold'>
+            <span className='text-gray-700 dark:text-gray-300 text-xs font-bold'>
               {parts.amount}{' '}
               <span className='text-[10px] text-gray-400 font-normal'>{parts.symbol}</span>
             </span>
@@ -545,10 +545,10 @@ export const Inventory: React.FC<InventoryProps> = ({
           const selectedId = selectedBatches[groupData.groupId] || groupData.id;
           const drug = groupData.group.find((d: any) => d.id === selectedId) || groupData;
 
-          if (!drug.costPrice) return <span className='text-gray-500 text-sm'>-</span>;
+          if (!drug.costPrice) return <span className='text-gray-500 text-xs'>-</span>;
           const parts = formatCurrencyParts(drug.costPrice);
           return (
-            <span className='text-gray-900 dark:text-gray-100 text-sm font-medium'>
+            <span className='text-gray-900 dark:text-gray-100 text-xs font-medium'>
               {parts.amount}{' '}
               <span className='text-[10px] text-gray-400 font-normal'>{parts.symbol}</span>
             </span>
@@ -582,7 +582,7 @@ export const Inventory: React.FC<InventoryProps> = ({
 
             return (
               <div
-                className={`flex items-center justify-center w-full gap-1 tabular-nums text-sm ${colorClass} ${isDropdownTrigger ? 'cursor-pointer hover:opacity-70' : ''}`}
+                className={`flex items-center justify-center w-full gap-1 tabular-nums text-xs ${colorClass} ${isDropdownTrigger ? 'cursor-pointer hover:opacity-70' : ''}`}
               >
                 {formatExpiryDate(val)}
               </div>
@@ -875,6 +875,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               onRowContextMenu={(e, row) => showMenu(e.clientX, e.clientY, getRowActions(row))}
               emptyMessage={t.noResults}
               lite={false} // Use standard card design
+              dense={true} // Enable compact mode
               enablePagination={true}
               enableVirtualization={false}
               pageSize='auto'
