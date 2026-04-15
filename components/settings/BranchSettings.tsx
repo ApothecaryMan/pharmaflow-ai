@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { branchService } from '../../services/branchService';
+import { orgService } from '../../services/org/orgService';
 import { employeeService } from '../../services/hr/employeeService';
 import type { Branch, Employee } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
@@ -119,7 +120,8 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
 
   const loadData = useCallback(async () => {
     try {
-      const bData = await branchService.getAll();
+      const activeOrgId = orgService.getActiveOrgId();
+      const bData = await branchService.getAll(activeOrgId || undefined);
       setBranches(bData);
       const eData = await employeeService.getAll('ALL');
       setEmployees(eData);
@@ -168,7 +170,14 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
         }
         savedBranch = await branchService.update(editingBranch.id, editingBranch);
       } else {
-        savedBranch = await branchService.create(editingBranch as Omit<Branch, 'id' | 'createdAt' | 'updatedAt'>);
+        const activeOrgId = orgService.getActiveOrgId();
+        if (!activeOrgId) {
+          throw new Error("No active organization found");
+        }
+        savedBranch = await branchService.create({
+          ...editingBranch,
+          orgId: activeOrgId
+        } as Omit<Branch, 'id' | 'createdAt' | 'updatedAt'>);
       }
 
       const allEmployees = await employeeService.getAll('ALL');

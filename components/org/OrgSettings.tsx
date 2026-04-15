@@ -40,7 +40,7 @@ export const OrgSettings: React.FC<OrgSettingsProps> = ({ language, color }) => 
           orgService.getById(activeOrgId),
           orgService.getMembers(activeOrgId),
           orgService.getSubscription(activeOrgId),
-          branchService.getAll(),
+          branchService.getAll(activeOrgId),
           employeeService.getAll(),
           auditService.getOrgLogs(activeOrgId, 10)
         ]);
