@@ -65,6 +65,7 @@ export interface SettingsState {
   settingsBlur: boolean;
   sidebarVisible: boolean;
   cardBorderLight: 'default' | 'thin' | 'none';
+  borderRadius: 'default' | 'sharp' | 'full';
   customCardCss?: string;
   enableCustomCardCss: boolean;
   // Developer
@@ -100,6 +101,7 @@ export interface SettingsContextType extends SettingsState {
   setSettingsBlur: (blur: boolean) => void;
   setSidebarVisible: (visible: boolean) => void;
   setCardBorderLight: (style: 'default' | 'thin' | 'none') => void;
+  setBorderRadius: (radius: 'default' | 'sharp' | 'full') => void;
   setCustomCardCss: (css: string) => void;
   setEnableCustomCardCss: (enable: boolean) => void;
   // Developer Actions
@@ -133,6 +135,7 @@ const defaultSettings: SettingsState = {
   settingsBlur: false,
   sidebarVisible: false,
   cardBorderLight: 'default',
+  borderRadius: 'default',
   customCardCss: '',
   enableCustomCardCss: true,
   hideInactiveModules: true,
@@ -195,6 +198,7 @@ const loadSettings = (): SettingsState => {
       settingsBlur: storage.get('pharma_settingsBlur', defaultSettings.settingsBlur),
       sidebarVisible: sidebarVisible ?? defaultSettings.sidebarVisible,
       cardBorderLight: storage.get('pharma_cardBorderLight', defaultSettings.cardBorderLight),
+      borderRadius: storage.get('pharma_borderRadius', defaultSettings.borderRadius),
       customCardCss: storage.get('pharma_customCardCss', defaultSettings.customCardCss || ''),
       enableCustomCardCss: storage.get('pharma_enableCustomCardCss', defaultSettings.enableCustomCardCss),
       hideInactiveModules: hideInactiveModules ?? defaultSettings.hideInactiveModules,
@@ -295,6 +299,15 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       document.documentElement.classList.add('none-border-mode');
     }
   }, [settings.cardBorderLight]);
+
+  // Apply border radius
+  useEffect(() => {
+    let radiusValue = '0.625rem'; // default (10px)
+    if (settings.borderRadius === 'sharp') radiusValue = '0rem'; // 0px
+    else if (settings.borderRadius === 'full') radiusValue = '0.375rem'; // 6px (smaller than default)
+
+    document.documentElement.style.setProperty('--radius', radiusValue);
+  }, [settings.borderRadius]);
 
   // Apply custom CSS
   useEffect(() => {
@@ -403,6 +416,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, cardBorderLight }));
   }, []);
 
+  const setBorderRadius = useCallback((borderRadius: 'default' | 'sharp' | 'full') => {
+    setSettings((prev) => ({ ...prev, borderRadius }));
+  }, []);
+
   const setCustomCardCss = useCallback((customCardCss: string) => {
     setSettings((prev) => ({ ...prev, customCardCss }));
   }, []);
@@ -468,6 +485,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setShowTickerCustomers,
       setShowTickerTopSeller,
       setGraphicStyle,
+      setBorderRadius,
       setFontFamilyEN,
       setFontFamilyAR,
       availableThemes: THEMES,
@@ -493,6 +511,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setShowTickerCustomers,
       setShowTickerTopSeller,
       setGraphicStyle,
+      setBorderRadius,
       setFontFamilyEN,
       setFontFamilyAR,
     ]

@@ -79,6 +79,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setShowTickerTopSeller,
     graphicStyle,
     setGraphicStyle,
+    borderRadius,
+    setBorderRadius,
   } = useSettings();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -355,6 +357,37 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                       ]}
                     />
                   </div>
+
+                  {/* Border Radius Style (Developer Mode Only) */}
+                  {developerMode && (
+                    <div className='flex items-center justify-between'>
+                      <label
+                        className='text-xs font-medium flex items-center gap-1.5'
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        <span
+                          className='material-symbols-rounded text-(--icon-sm)'
+                          style={{ color: 'var(--text-secondary)' }}
+                        >
+                          rounded_corner
+                        </span>
+                        {t.borderRadius}
+                      </label>
+                      <SegmentedControl
+                        value={borderRadius || 'default'}
+                        onChange={(val) => setBorderRadius?.(val as 'default' | 'sharp' | 'full')}
+                        color={currentTheme?.name?.toLowerCase() || 'blue'}
+                        size='xs'
+                        fullWidth={false}
+                        shape='pill'
+                        options={[
+                          { label: t.radiusSharp, value: 'sharp' },
+                          { label: t.radiusFull, value: 'full' },
+                          { label: t.radiusDefault, value: 'default' },
+                        ]}
+                      />
+                    </div>
+                  )}
 
                   {/* Card Border Style (Light Mode & Developer Mode Only) */}
                   {!darkMode && developerMode && setCardBorderLight && (
