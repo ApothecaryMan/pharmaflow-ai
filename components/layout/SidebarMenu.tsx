@@ -224,7 +224,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
                             }
                           }}
                           className={`
-                            relative flex items-center transition-all duration-200 type-interactive
+                            relative flex items-center type-interactive
                             ${sidebarCollapsed 
                               ? 'justify-center w-12 h-12 rounded-xl border border-transparent hover:border-(--border-divider)' 
                               : 'w-full gap-2.5 ltr:text-left rtl:text-right px-3 py-2 rounded-lg'

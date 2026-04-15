@@ -172,7 +172,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
           {/* Main Content Area */}
           <div
-            className='flex flex-1 overflow-hidden transition-all duration-300'
+            className='flex flex-1 overflow-hidden'
             style={{ backgroundColor: 'var(--bg-navbar)' }}
           >
             {/* Layout Wrapper with Static Curves */}
@@ -183,7 +183,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               {/* Sidebar */}
               {!isStandalone && (
                 <aside
-                  className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col ${sidebarCollapsed ? LAYOUT_CONFIG.SIDEBAR_MINI_WIDTH : LAYOUT_CONFIG.SIDEBAR_WIDTH} transition-all duration-300 ease-in-out`}
+                  className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col ${sidebarCollapsed ? LAYOUT_CONFIG.SIDEBAR_MINI_WIDTH : LAYOUT_CONFIG.SIDEBAR_WIDTH} transition-[width] duration-300 ease-in-out`}
                 >
                   <SidebarContent
                     menuItems={filteredMenuItems}
