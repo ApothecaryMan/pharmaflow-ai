@@ -171,6 +171,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
       ref={pillRef}
       onMouseEnter={handleOpenMenu}
       onMouseLeave={handleMouseLeave}
+      onClick={handleOpenMenu}
       className={`
         flex items-center gap-1.5 
         leading-none select-none cursor-pointer transition-all duration-200

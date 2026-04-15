@@ -112,6 +112,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 
     const handleOpenFilterMenu = (e: React.MouseEvent) => {
       e.preventDefault();
+      e.stopPropagation();
       
       if (filterLeaveTimeoutRef.current) clearTimeout(filterLeaveTimeoutRef.current);
 
@@ -324,6 +325,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   type='button'
                   onMouseEnter={handleOpenFilterMenu}
                   onMouseLeave={handleFilterMouseLeave}
+                  onClick={handleOpenFilterMenu}
                   className={`
                     flex items-center justify-center w-7 h-7 transition-all duration-300 rounded-full
                     ${hasActiveFilters 
