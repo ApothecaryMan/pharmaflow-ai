@@ -84,6 +84,9 @@ export const TRANSLATIONS = {
       saveBranch: 'Save Branch',
       deleteBranch: 'Delete Branch',
       deleteBranchConfirm: 'Are you sure you want to delete this branch? This will affect all data linked to it.',
+      sidebarStyle: 'Sidebar Mode',
+      sidebarFixed: 'Fixed',
+      sidebarMini: 'Mini',
     },
     orgManagement: {
       title: 'Organization Management',
@@ -2391,6 +2394,9 @@ export const TRANSLATIONS = {
       saveBranch: 'حفظ الفرع',
       deleteBranch: 'حذف الفرع',
       deleteBranchConfirm: 'هل أنت متأكد من حذف هذا الفرع؟ سيؤثر هذا على جميع البيانات المرتبطة به.',
+      sidebarStyle: 'شكل القائمة الجانبية',
+      sidebarFixed: 'ثابت',
+      sidebarMini: 'منكمش',
     },
     orgManagement: {
       title: 'إدارة المنظمة',

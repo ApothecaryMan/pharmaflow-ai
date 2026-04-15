@@ -23,6 +23,7 @@ export const LAYOUT_CONFIG = {
 
   // Sidebar width
   SIDEBAR_WIDTH: 'w-72',
+  SIDEBAR_MINI_WIDTH: 'w-20',
 
   // Modal size mappings
   MODAL_SIZES: {

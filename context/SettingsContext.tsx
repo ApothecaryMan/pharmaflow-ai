@@ -64,6 +64,7 @@ export interface SettingsState {
   tooltipBlur: boolean;
   settingsBlur: boolean;
   sidebarVisible: boolean;
+  sidebarCollapsed: boolean;
   cardBorderLight: 'default' | 'thin' | 'none';
   borderRadius: 'default' | 'sharp' | 'full';
   customCardCss?: string;
@@ -100,6 +101,7 @@ export interface SettingsContextType extends SettingsState {
   setTooltipBlur: (blur: boolean) => void;
   setSettingsBlur: (blur: boolean) => void;
   setSidebarVisible: (visible: boolean) => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
   setCardBorderLight: (style: 'default' | 'thin' | 'none') => void;
   setBorderRadius: (radius: 'default' | 'sharp' | 'full') => void;
   setCustomCardCss: (css: string) => void;
@@ -134,6 +136,7 @@ const defaultSettings: SettingsState = {
   tooltipBlur: false,
   settingsBlur: false,
   sidebarVisible: false,
+  sidebarCollapsed: false,
   cardBorderLight: 'default',
   borderRadius: 'default',
   customCardCss: '',
@@ -197,6 +200,7 @@ const loadSettings = (): SettingsState => {
       tooltipBlur: storage.get('pharma_tooltipBlur', defaultSettings.tooltipBlur),
       settingsBlur: storage.get('pharma_settingsBlur', defaultSettings.settingsBlur),
       sidebarVisible: sidebarVisible ?? defaultSettings.sidebarVisible,
+      sidebarCollapsed: storage.get('pharma_sidebarCollapsed', defaultSettings.sidebarCollapsed),
       cardBorderLight: storage.get('pharma_cardBorderLight', defaultSettings.cardBorderLight),
       borderRadius: storage.get('pharma_borderRadius', defaultSettings.borderRadius),
       customCardCss: storage.get('pharma_customCardCss', defaultSettings.customCardCss || ''),
@@ -412,6 +416,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSettings((prev) => ({ ...prev, sidebarVisible }));
   }, []);
 
+  const setSidebarCollapsed = useCallback((sidebarCollapsed: boolean) => {
+    setSettings((prev) => ({ ...prev, sidebarCollapsed }));
+  }, []);
+
   const setCardBorderLight = useCallback((cardBorderLight: 'default' | 'thin' | 'none') => {
     setSettings((prev) => ({ ...prev, cardBorderLight }));
   }, []);
@@ -474,6 +482,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setTooltipBlur,
       setSettingsBlur,
       setSidebarVisible,
+      setSidebarCollapsed,
       setCardBorderLight,
       setCustomCardCss,
       setEnableCustomCardCss,
@@ -500,6 +509,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       setNavStyle,
       setDropdownBlur,
       setSidebarVisible,
+      setSidebarCollapsed,
       setCardBorderLight,
       setCustomCardCss,
       setEnableCustomCardCss,

@@ -113,6 +113,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     menuBlur,
     navStyle,
     hideInactiveModules,
+    sidebarCollapsed,
   } = useSettings();
 
   const isStandalone = STANDALONE_VIEWS.includes(view);
@@ -182,7 +183,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               {/* Sidebar */}
               {!isStandalone && (
                 <aside
-                  className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col ${LAYOUT_CONFIG.SIDEBAR_WIDTH} transition-all duration-300 ease-in-out`}
+                  className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col ${sidebarCollapsed ? LAYOUT_CONFIG.SIDEBAR_MINI_WIDTH : LAYOUT_CONFIG.SIDEBAR_WIDTH} transition-all duration-300 ease-in-out`}
                 >
                   <SidebarContent
                     menuItems={filteredMenuItems}
