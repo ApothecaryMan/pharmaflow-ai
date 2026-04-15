@@ -921,6 +921,7 @@ export const TRANSLATIONS = {
       },
       startSearching: 'Start searching...',
       noResults: 'No drugs found matching your search.',
+      resultsLabel: 'RESULT',
       tryDifferentKeywords: 'Try different names or codes.',
       tabs: {
         newTab: 'New Tab',
@@ -3244,6 +3245,7 @@ export const TRANSLATIONS = {
       },
       startSearching: 'ابدأ البحث...',
       noResults: 'لم يتم العثور على نتائج.',
+      resultsLabel: 'نتيجـة',
       tryDifferentKeywords: 'جرب كلمات بحث مختلفة.',
       tabs: {
         newTab: 'فاتورة جديدة',

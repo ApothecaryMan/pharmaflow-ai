@@ -235,21 +235,21 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               inputMode="search"
               className={`
                 w-full h-full bg-transparent
-                text-sm text-gray-900 dark:text-gray-100 
+                text-base font-medium text-gray-900 dark:text-gray-100 
                 placeholder-gray-400 outline-hidden
                 ${className}
               `}
             />
             {ghostText && (
                 <div className={`absolute inset-y-0 ${dir === 'rtl' ? 'right-0' : 'left-0'} flex items-center pointer-events-none overflow-hidden select-none`}>
-                    <span className="invisible whitespace-pre text-sm">{value}</span>
+                    <span className="invisible whitespace-pre text-base">{value}</span>
                     <span className={`
                         inline-flex items-center px-1.5 py-0.5 ms-1
                         rounded-lg 
                         bg-gray-100 dark:bg-(--bg-surface-neutral) 
-                        text-[12px] font-black tracking-tight
+                        text-[14px] font-black tracking-tight
                         text-gray-600 dark:text-gray-400 
-                        shadow-sm transition-all animate-in fade-in duration-100
+                        transition-all animate-in fade-in duration-100
                         ${isCapsLock ? 'uppercase' : ''}
                     `}>
                         {isCapsLock ? ghostText.toUpperCase() : ghostText}
