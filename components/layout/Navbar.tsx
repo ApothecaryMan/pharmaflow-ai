@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { MenuItem } from '../../config/menuData';
+import { motion } from 'framer-motion';
 import type { UserRole } from '../../config/permissions';
 import { useSettings } from '../../context';
 import { getMenuTranslation } from '../../i18n/menuTranslations';
@@ -331,15 +332,15 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   onMouseEnter={(e) => handleMouseEnter(module.id, e)}
                   onClick={(e) => handleModuleClick(module.id, hasPage, e)}
                   disabled={isEffectivelyDisabled}
-                  className={`main-nav-tab flex items-center gap-2 px-2 py-1 rounded-lg whitespace-nowrap relative type-interactive
+                  className={`main-nav-tab flex items-center gap-2 px-2.5 py-1 rounded-lg whitespace-nowrap relative type-interactive transition-all duration-200
                       ${
                         isEffectivelyDisabled
                           ? 'opacity-40 cursor-not-allowed text-gray-400 dark:text-gray-600'
                           : isActive
-                            ? `bg-primary-100 dark:bg-primary-500/15 text-primary-700 dark:text-primary-400 font-semibold shadow-xs`
+                            ? `bg-primary-100 dark:bg-primary-500/15 text-primary-700 dark:text-primary-400 font-bold shadow-xs border-(--border-divider)`
                             : isDropdownOpen
                               ? `bg-(--bg-navbar-hover) text-gray-800 dark:text-gray-200 font-medium`
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-(--bg-navbar-hover) hover:text-gray-800 dark:hover:text-gray-200'
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-(--bg-navbar-hover) hover:text-gray-900 dark:hover:text-white'
                       }
                     `}
                   title={!hasPage && navStyle !== 2 ? t.settings.comingSoon : ''}
@@ -376,9 +377,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                   </span>
 
                   {isActive && hasPage && navStyle !== 2 && (
-                    <div
+                    <motion.div
+                      layoutId="nav-indicator"
                       className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-[1.5px] bg-primary-600 rounded-full`}
-                    ></div>
+                    />
                   )}
                 </button>
 

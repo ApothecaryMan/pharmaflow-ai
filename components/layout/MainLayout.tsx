@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutConfig';
 import { type UserRole } from '../../config/permissions';
 import { ROUTES } from '../../config/routes';
@@ -187,8 +188,18 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             >
               {/* Sidebar */}
               {!isStandalone && (
-                <aside
-                  className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col ${isActuallyCollapsed ? LAYOUT_CONFIG.SIDEBAR_MINI_WIDTH : LAYOUT_CONFIG.SIDEBAR_WIDTH} transition-[width] duration-300 ease-in-out`}
+                <motion.aside
+                  initial={false}
+                  animate={{ 
+                    width: isActuallyCollapsed ? 80 : 256,
+                  }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 260,
+                    damping: 28,
+                    mass: 0.8
+                  }}
+                  className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col overflow-hidden`}
                   onMouseEnter={() => setIsSidebarHovered(true)}
                   onMouseLeave={() => setIsSidebarHovered(false)}
                 >
@@ -205,7 +216,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     hideInactiveModules={hideInactiveModules}
                     sidebarCollapsed={isActuallyCollapsed}
                   />
-                </aside>
+                </motion.aside>
               )}
 
             {/* Mobile Navigation (Drawer & Bottom Bar) */}
