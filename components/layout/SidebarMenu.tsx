@@ -18,6 +18,7 @@ interface SidebarMenuProps {
   language: 'EN' | 'AR';
   hideInactiveModules?: boolean;
   hideSearch?: boolean;
+  sidebarCollapsed: boolean;
 }
 
 export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
@@ -33,8 +34,8 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = React.memo(
     language,
     hideInactiveModules = false,
     hideSearch = false,
+    sidebarCollapsed,
   }) => {
-    const { sidebarCollapsed } = useSettings();
     const [expandedSubmenus, setExpandedSubmenus] = useState<Set<string>>(new Set());
     const [searchQuery, setSearchQuery] = useState('');
     const navRef = useRef<HTMLElement>(null);

@@ -81,8 +81,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setGraphicStyle,
     borderRadius,
     setBorderRadius,
-    sidebarCollapsed,
-    setSidebarCollapsed,
+    sidebarStyle,
+    setSidebarStyle,
   } = useSettings();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -590,36 +590,37 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
               )}
             </div>
 
-            {/* Sidebar Collapse Toggle - Only show if Sidebar is active */}
+            {/* Sidebar Style Selection - Only show if Sidebar is active */}
             {navStyle === 1 && (
-              <div className='flex items-center justify-between'>
-                <label
-                  className='text-xs font-medium flex items-center gap-1.5'
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  <span
-                    className='material-symbols-rounded text-(--icon-sm)'
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    view_sidebar
-                  </span>
-                  {t.sidebarStyle}
-                </label>
-                <SegmentedControl
-                  value={sidebarCollapsed}
-                  onChange={(val) => setSidebarCollapsed(val as boolean)}
-                  color={currentTheme.name.toLowerCase()}
-                  size='xs'
-                  iconSize='--icon-md'
-                  fullWidth={true}
-                  className='max-w-[100px]'
-                  shape='pill'
-                  options={[
-                    { label: '', value: false, icon: 'view_sidebar' },
-                    { label: '', value: true, icon: 'dock_to_left' },
-                  ]}
-                />
-              </div>
+                <div className='flex items-center justify-between'>
+                    <label
+                    className='text-xs font-medium flex items-center gap-1.5'
+                    style={{ color: 'var(--text-primary)' }}
+                    >
+                    <span
+                        className='material-symbols-rounded text-(--icon-sm)'
+                        style={{ color: 'var(--text-secondary)' }}
+                    >
+                        view_sidebar
+                    </span>
+                    {t.sidebarStyle}
+                    </label>
+                    <SegmentedControl
+                    value={sidebarStyle}
+                    onChange={(val) => setSidebarStyle(val as 1 | 2 | 3)}
+                    color={currentTheme.name.toLowerCase()}
+                    size='xs'
+                    iconSize='--icon-md'
+                    fullWidth={true}
+                    className='min-w-[124px]'
+                    shape='pill'
+                    options={[
+                        { label: '', value: 1, icon: 'view_sidebar' }, // Normal
+                        { label: '', value: 2, icon: 'dock_to_left' }, // Mini
+                        { label: '', value: 3, icon: 'mouse' },       // Auto-Expand
+                    ]}
+                    />
+                </div>
             )}
 
             {/* Nav Style Switch (Redesigned to be inline with icons) */}

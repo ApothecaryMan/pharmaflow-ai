@@ -14,6 +14,7 @@ interface SidebarContentProps {
   t: any;
   language: 'EN' | 'AR';
   hideInactiveModules?: boolean;
+  sidebarCollapsed: boolean;
 }
 
 export const SidebarContent: React.FC<SidebarContentProps> = ({
@@ -28,6 +29,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
   t,
   language,
   hideInactiveModules = false,
+  sidebarCollapsed,
 }) => {
   return (
     <>
@@ -43,6 +45,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
         language={language}
         hideInactiveModules={hideInactiveModules}
         hideSearch={isMobile}
+        sidebarCollapsed={sidebarCollapsed}
       />
     </>
   );

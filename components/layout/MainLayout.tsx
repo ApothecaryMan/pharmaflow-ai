@@ -1,4 +1,4 @@
-import type React from 'react';
+import React, { useState } from 'react';
 import { getContentContainerClasses, LAYOUT_CONFIG } from '../../config/layoutConfig';
 import { type UserRole } from '../../config/permissions';
 import { ROUTES } from '../../config/routes';
@@ -113,11 +113,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     menuBlur,
     navStyle,
     hideInactiveModules,
-    sidebarCollapsed,
+    sidebarStyle,
   } = useSettings();
 
   const isStandalone = STANDALONE_VIEWS.includes(view);
 
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+
+  // Determine actual sidebar state (considering hover expansion)
+  // 1: Normal (Fixed), 2: Mini (Always), 3: Auto-Expand (Mini but expands on hover)
+  const isActuallyCollapsed = sidebarStyle === 2 || (sidebarStyle === 3 && !isSidebarHovered);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -183,7 +188,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               {/* Sidebar */}
               {!isStandalone && (
                 <aside
-                  className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col ${sidebarCollapsed ? LAYOUT_CONFIG.SIDEBAR_MINI_WIDTH : LAYOUT_CONFIG.SIDEBAR_WIDTH} transition-[width] duration-300 ease-in-out`}
+                  className={`hidden ${sidebarVisible && navStyle !== 2 ? 'md:flex' : ''} flex-col ${isActuallyCollapsed ? LAYOUT_CONFIG.SIDEBAR_MINI_WIDTH : LAYOUT_CONFIG.SIDEBAR_WIDTH} transition-[width] duration-300 ease-in-out`}
+                  onMouseEnter={() => setIsSidebarHovered(true)}
+                  onMouseLeave={() => setIsSidebarHovered(false)}
                 >
                   <SidebarContent
                     menuItems={filteredMenuItems}
@@ -196,6 +203,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     t={t}
                     language={language}
                     hideInactiveModules={hideInactiveModules}
+                    sidebarCollapsed={isActuallyCollapsed}
                   />
                 </aside>
               )}
