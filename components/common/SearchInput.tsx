@@ -181,7 +181,6 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             relative flex items-center flex-wrap gap-2
             bg-(--bg-input)
             border-2 dark:border border-(--border-search)
-            transition-colors duration-0
             ${isFocused ? 'border-gray-400 dark:border-gray-500 shadow-sm' : ''}
             ${rounded === 'full' ? 'rounded-full ps-4 pe-2' : 'rounded-3xl ps-4 pe-2'} 
             h-12
@@ -197,7 +196,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         }}
       >
         <div className={`
-          flex items-center h-full select-none transition-all duration-200
+          flex items-center h-full select-none
           ${isFocused ? 'text-black dark:text-white' : 'text-gray-400'}
         `}>
           {/* leading icon removed ps-3 since wrapper has ps-3 */}
@@ -250,7 +249,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                         bg-gray-100 dark:bg-(--bg-surface-neutral) 
                         text-[14px] font-black tracking-tight
                         text-gray-600 dark:text-gray-400 
-                        transition-all animate-in fade-in duration-100
+                        animate-in fade-in duration-100
                         ${isCapsLock ? 'uppercase' : ''}
                     `}>
                         {isCapsLock ? ghostText.toUpperCase() : ghostText}
@@ -290,7 +289,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                 e.stopPropagation();
                 onClear();
               }}
-              className='material-symbols-rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors outline-hidden p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700'
+              className='material-symbols-rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 outline-hidden p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700'
               style={{ fontSize: '20px' }}
             >
               close
@@ -300,7 +299,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           {filterConfigs.length > 0 && (
             <div className={`
               flex items-center h-8 px-1 ${rounded === 'full' ? 'rounded-full' : 'rounded-2xl'}
-              border transition-all duration-300
+              border
               ${
                 hasActiveFilters
                   ? 'border-gray-200 dark:border-(--border-divider) bg-white dark:bg-(--bg-surface-neutral) shadow-xs'
@@ -312,7 +311,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   <button
                     type='button'
                     onClick={handleClearAllFilters}
-                    className='text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center justify-center w-7 h-7 transition-colors rounded-full'
+                    className='text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center justify-center w-7 h-7 rounded-full'
                   >
                     <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>filter_list_off</span>
                   </button>
@@ -327,7 +326,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                   onMouseLeave={handleFilterMouseLeave}
                   onClick={handleOpenFilterMenu}
                   className={`
-                    flex items-center justify-center w-7 h-7 transition-all duration-300 rounded-full
+                    flex items-center justify-center w-7 h-7 rounded-full
                     ${hasActiveFilters 
                       ? 'text-emerald-600 dark:text-emerald-400 font-bold' 
                       : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}

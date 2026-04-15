@@ -289,7 +289,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     >
       {/* Logo & Title */}
       <div
-        className='flex items-center gap-2 ltr:mr-6 rtl:ml-6 shrink-0 cursor-pointer hover:opacity-80 transition-opacity'
+        className='flex items-center gap-2 ltr:mr-6 rtl:ml-6 shrink-0 cursor-pointer hover:opacity-80'
         onClick={onLogoClick}
       >
         {/* Dynamic Logo based on darkMode prop */}
@@ -428,7 +428,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
           />
           <button
             onClick={onMobileMenuToggle}
-            className='flex items-center justify-center w-10 h-10 text-gray-600 dark:text-gray-300 transition-colors'
+            className='flex items-center justify-center w-10 h-10 text-gray-600 dark:text-gray-300'
           >
             <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-navbar-mobile)' }}>menu</span>
           </button>
@@ -444,7 +444,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
         <div className='relative' ref={profileRef}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className={`flex items-center gap-3 p-1 ltr:pr-3 rtl:pl-3 rounded-full transition-all border border-transparent hover:border-(--border-divider) hover:bg-(--bg-navbar-hover) ${showProfileMenu ? 'border-(--border-divider) bg-(--bg-navbar-hover)' : ''}`}
+            className={`flex items-center gap-3 p-1 ltr:pr-3 rtl:pl-3 rounded-full border border-transparent hover:border-(--border-divider) hover:bg-(--bg-navbar-hover) ${showProfileMenu ? 'border-(--border-divider) bg-(--bg-navbar-hover)' : ''}`}
           >
             {profileImage ? (
               <img
@@ -514,7 +514,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         minWidth: '20px',
                         minHeight: '20px',
                       }}
-                      className='absolute bottom-0 right-0 w-5 h-5 bg-black/30 backdrop-blur-xs text-white rounded-full flex items-center justify-center hover:bg-black/50 transition-colors shadow-xs'
+                      className='absolute bottom-0 right-0 w-5 h-5 bg-black/30 backdrop-blur-xs text-white rounded-full flex items-center justify-center hover:bg-black/50 shadow-xs'
                       title='Change Photo'
                     >
                       <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-xs)' }}>edit</span>
@@ -565,7 +565,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         if (onNavigate) onNavigate('branch-management');
                         setShowProfileMenu(false);
                       }}
-                       className='text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-(--bg-menu-hover) transition-colors flex items-center gap-1 py-1 px-3 rounded-full border border-primary-100 dark:border-primary-900/50 hover:shadow-sm active:scale-95'
+                       className='text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-(--bg-menu-hover) flex items-center gap-1 py-1 px-3 rounded-full border border-primary-100 dark:border-primary-900/50 hover:shadow-sm active:scale-95'
                     >
                       <span className='material-symbols-rounded' style={{ fontSize: '13px' }}>settings</span>
                       {language === 'AR' ? 'إدارة الفروع' : 'Manage Branches'}
@@ -593,7 +593,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                             }
                             setShowProfileMenu(false);
                           }}
-                          className={`w-full p-2 text-sm font-medium rounded-lg transition-colors flex items-center justify-between
+                          className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between
                             ${
                               activeBranchId === branch.id
                                 ? 'bg-primary-50 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400'
@@ -641,7 +641,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                             setIsSwitchingOrg(false);
                           }
                         }}
-                        className={`w-full p-2 text-sm font-medium rounded-lg transition-colors flex items-center justify-between
+                        className={`w-full p-2 text-sm font-medium rounded-lg flex items-center justify-between
                           ${
                             activeOrgId === org.id
                               ? 'bg-primary-50 dark:bg-primary-500/15 text-primary-600 dark:text-primary-400'
@@ -671,7 +671,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         setShowProfileMenu(false);
                         if (onNavigate) onNavigate('org-settings');
                       }}
-                      className='flex items-center justify-center gap-2 p-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) transition-colors w-full'
+                      className='flex items-center justify-center gap-2 p-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) w-full'
                     >
                       <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>corporate_fare</span>
                       {language === 'AR' ? 'إدارة المنظمة' : 'Manage Organization'}
@@ -683,7 +683,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                         setShowProfileMenu(false);
                         if (onNavigate) onNavigate('branch-management');
                       }}
-                      className='flex items-center justify-center gap-2 p-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) transition-colors w-full'
+                      className='flex items-center justify-center gap-2 p-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) w-full'
                     >
                       <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>settings_applications</span>
                       {language === 'AR' ? 'إعدادات الفرع' : 'Branch Settings'}
@@ -701,7 +701,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     setShowPrinterSettings(true);
                     setShowProfileMenu(false);
                   }}
-                  className={`w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg transition-colors flex items-center justify-center gap-2`}
+                  className={`w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center justify-center gap-2`}
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>print</span>
                   {(t as any).printerSettings?.title || 'Printer Settings'}
@@ -723,7 +723,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                       importRef.current?.click();
                     }
                   }}
-                  className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg transition-colors flex items-center justify-center gap-2'
+                  className='w-full p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-(--bg-menu-hover) rounded-lg flex items-center justify-center gap-2'
                 >
                   <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>upload</span>
                   {t.settings.importBackup}
@@ -768,7 +768,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     }
                   }}
                   disabled={isLoggingOut}
-                  className='w-full p-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white dark:hover:bg-red-500 dark:hover:text-white rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='w-full p-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white dark:hover:bg-red-500 dark:hover:text-white rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
                 >
                   {isLoggingOut ? (
                     <>

@@ -174,7 +174,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({
       onClick={handleOpenMenu}
       className={`
         flex items-center gap-1.5 
-        leading-none select-none cursor-pointer transition-all duration-200
+        leading-none select-none cursor-pointer
         border border-(--border-divider)
         bg-(--bg-surface-neutral) hover:bg-(--bg-menu-hover)
         text-gray-700 dark:text-white 
@@ -212,7 +212,6 @@ export const FilterPill: React.FC<FilterPillProps> = ({
         className={`
           flex items-center justify-center
           text-gray-400 hover:text-red-500 dark:hover:text-red-400
-          transition-all duration-200
           ${collapsed ? 'w-4 h-4 ml-0.5' : 'w-4 h-4 ml-0.5'}
         `}
       >

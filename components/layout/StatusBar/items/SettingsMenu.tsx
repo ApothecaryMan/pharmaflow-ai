@@ -198,7 +198,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
         ) : (
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className={`flex items-center justify-center w-10 h-10 transition-colors ${isOpen ? 'text-primary-500' : 'text-gray-600 dark:text-gray-300'}`}
+            className={`flex items-center justify-center w-10 h-10 ${isOpen ? 'text-primary-500' : 'text-gray-600 dark:text-gray-300'}`}
           >
             <span className={`material-symbols-rounded text-[${triggerSize}px]`}>
               settings
@@ -266,7 +266,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         setThemeExpanded(true);
                       }
                     }}
-                    className='transition-colors'
+                    className=''
                     type='button'
                   >
                     <span
@@ -790,7 +790,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                           <button
                             key={font.value}
                             onClick={() => setFontFamilyEN(font.value)}
-                            className={`px-2.5 py-1.5 rounded-lg border text-xs transition-all duration-200 active:scale-95 flex-shrink-0 ${isSelected ? 'shadow-md border-transparent text-white' : 'bg-transparent border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}
+                            className={`px-2.5 py-1.5 rounded-lg border text-xs active:scale-95 flex-shrink-0 ${isSelected ? 'shadow-md border-transparent text-white' : 'bg-transparent border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}
                             style={{ fontFamily: font.value, backgroundColor: isSelected ? (darkMode ? 'var(--accent-primary)' : 'transparent') : 'transparent', color: isSelected ? (darkMode ? 'white' : 'black') : 'var(--text-primary)', borderColor: isSelected ? (darkMode ? 'var(--accent-primary)' : 'black') : '' }}
                           >
                             {font.label}
