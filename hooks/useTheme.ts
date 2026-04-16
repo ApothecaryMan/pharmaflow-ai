@@ -118,10 +118,18 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
       root.style.setProperty(`--primary-${shade}`, value);
     });
 
-    // Update dark mode class
+    if (darkMode || isLoginView) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+
+    // Get the computed background color of the navbar from CSS variables
+    // This makes it fully dynamic and responsive to CSS changes
+    const computedNavbarColor = getComputedStyle(root).getPropertyValue('--bg-navbar').trim();
+    const titleBarColor = isLoginView ? '#000000' : (computedNavbarColor || (darkMode ? '#1f1f1f' : '#ffffff'));
+
     // Update all theme-color meta tags to match the current mode
-    // If it's the login view, we use pure black as requested
-    const titleBarColor = isLoginView ? '#000000' : darkMode ? '#111827' : '#ffffff';
     const metaTags = document.querySelectorAll('meta[name="theme-color"]');
     if (metaTags.length > 0) {
       metaTags.forEach((tag) => tag.setAttribute('content', titleBarColor));
@@ -130,12 +138,6 @@ export const useTheme = (color: string, darkMode: boolean, isLoginView: boolean 
       meta.name = 'theme-color';
       meta.content = titleBarColor;
       document.head.appendChild(meta);
-    }
-
-    if (darkMode || isLoginView) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
     }
 
     // Update browser favicon dynamically
