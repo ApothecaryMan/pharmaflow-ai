@@ -1454,7 +1454,13 @@ export const TRANSLATIONS = {
     },
     customers: {
       title: 'Customer Management',
-      subtitle: 'Manage your customer database',
+      subtitle: 'Manage your customer database, loyalty points, and history',
+      globalView: 'Global Directory',
+      summary: {
+        total: 'Total Customers',
+        newThisMonth: 'New This Month',
+        newToday: 'New Today',
+      },
       addCustomer: 'Add Customer',
       searchPlaceholder: 'Search by name, phone, or email...',
       headers: {
@@ -1471,7 +1477,6 @@ export const TRANSLATIONS = {
       customerAddedSuccess: 'Customer added successfully!',
       addCustomerSubtitle: 'Register a new customer',
       basicInfo: 'Basic Information',
-      globalView: 'Global View',
       status: {
         active: 'Active',
         inactive: 'Inactive',
@@ -3064,7 +3069,7 @@ export const TRANSLATIONS = {
         discount: 'الخصم %',
         sale: 'البيع',
         tax: 'ض %',
-        subtotal: 'المجموع',
+        subtotal: 'المجموع الفرعي',
         totalWithTax: 'الإجمالي+ض',
       },
       summary: {
@@ -3469,6 +3474,11 @@ export const TRANSLATIONS = {
     customers: {
       title: 'إدارة العملاء',
       subtitle: 'إدارة قاعدة بيانات العملاء',
+      summary: {
+        total: 'إجمالي العملاء',
+        newThisMonth: 'جديد هذا الشهر',
+        newToday: 'جديد اليوم',
+      },
       addCustomer: 'إضافة عميل',
       searchPlaceholder: 'بحث بالاسم، الهاتف، أو البريد...',
       headers: {

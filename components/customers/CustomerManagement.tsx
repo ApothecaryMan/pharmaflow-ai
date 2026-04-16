@@ -14,6 +14,7 @@ import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartEmailInput, SmartPhoneInput, useSmartDirection } from '../common/SmartInputs';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
+import { InteractiveCard } from '../common/InteractiveCard';
 import { authService } from '../../services/auth/authService';
 import { Switch } from '../common/Switch';
 import { useSettings } from '../../context';
@@ -303,6 +304,24 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     if (showAllBranches) return customers;
     return customers.filter((c) => c.branchId === activeBranchId);
   }, [customers, showAllBranches, activeBranchId]);
+
+  // Summary Stats
+  const summaryStats = useMemo(() => {
+    const now = getVerifiedDate();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+    return customers.reduce(
+      (acc, c) => {
+        const createdTime = c.createdAt ? new Date(c.createdAt).getTime() : 0;
+        if (createdTime >= todayStart) acc.newToday += 1;
+        if (createdTime >= monthStart) acc.newThisMonth += 1;
+        acc.total += 1;
+        return acc;
+      },
+      { total: 0, newThisMonth: 0, newToday: 0 }
+    );
+  }, [customers, getVerifiedDate]);
 
   // Define Columns for TanStackTable
   const columns = useMemo<ColumnDef<Customer>[]>(
@@ -776,7 +795,55 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           </p>
         </div>
 
-        <div className='flex gap-2 items-center'>
+        <div className='flex gap-4 items-center flex-wrap'>
+          {/* Summary Cards */}
+          {mode === 'list' && (
+            <InteractiveCard
+              className={`flex flex-col min-w-[160px] px-5 py-2.5 rounded-2xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
+              pages={[
+                {
+                  theme: 'bg-primary-50 dark:bg-primary-900/20',
+                  content: (
+                    <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
+                      <span className="text-[10px] font-bold uppercase text-primary-600 dark:text-primary-400">
+                        {t.summary?.total || 'Total Customers'}
+                      </span>
+                      <span className="text-xl font-bold text-primary-900 dark:text-primary-100">
+                        {summaryStats.total}
+                      </span>
+                    </div>
+                  ),
+                },
+                {
+                  theme: 'bg-green-50 dark:bg-green-900/20',
+                  content: (
+                    <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
+                      <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400">
+                        {t.summary?.newThisMonth || 'New This Month'}
+                      </span>
+                      <span className="text-xl font-bold text-green-900 dark:text-green-100">
+                        {summaryStats.newThisMonth}
+                      </span>
+                    </div>
+                  ),
+                },
+                {
+                  theme: 'bg-cyan-50 dark:bg-cyan-900/20',
+                  content: (
+                    <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
+                      <span className="text-[10px] font-bold uppercase text-cyan-600 dark:text-cyan-400">
+                        {t.summary?.newToday || 'New Today'}
+                      </span>
+                      <span className="text-xl font-bold text-cyan-900 dark:text-cyan-100">
+                        {summaryStats.newToday}
+                      </span>
+                    </div>
+                  ),
+                }
+              ]}
+            />
+          )}
+
           {permissionsService.can('customer.add') && (
             <button
               onClick={handleOpenKiosk}
