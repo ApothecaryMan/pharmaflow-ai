@@ -24,9 +24,10 @@ import { INPUT_BASE } from '../../utils/themeStyles';
 
 import { 
   DEPARTMENT_ROLES, 
-  getRoleIcon, 
+  getRolesForDepartment,
   getRoleLabel 
 } from '../../config/employeeRoles';
+import { RoleIcon } from './RoleIcon';
 
 interface EmployeeListProps {
   color: string;

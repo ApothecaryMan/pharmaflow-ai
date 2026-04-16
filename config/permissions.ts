@@ -5,10 +5,17 @@ export { type UserRole };
 /**
  * Organization-level Access Roles
  */
-export const ORG_ROLES = [
-  { id: 'owner', translationKey: 'orgManagement.roleOwner' },
-  { id: 'admin', translationKey: 'orgManagement.roleAdmin' },
-  { id: 'member', translationKey: 'orgManagement.roleMember' },
+export type OrgRole = 'owner' | 'admin' | 'member';
+
+export interface OrgRoleConfig {
+  id: OrgRole;
+  translationKey: string;
+}
+
+export const ORG_ROLES: readonly OrgRoleConfig[] = [
+  { id: 'owner', translationKey: 'orgManagement.roles.owner' },
+  { id: 'admin', translationKey: 'orgManagement.roles.admin' },
+  { id: 'member', translationKey: 'orgManagement.roles.member' },
 ] as const;
 
 export type PermissionAction =

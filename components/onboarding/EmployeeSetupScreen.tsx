@@ -5,6 +5,7 @@ import { useSettings } from '../../context';
 import { employeeService } from '../../services/hr/employeeService';
 import { authService } from '../../services/auth/authService';
 import { branchService } from '../../services/branchService';
+import { RoleIcon } from '../hr/RoleIcon';
 import { OnboardingStepper } from './OnboardingStepper';
 
 import { SYSTEM_ROLES, getRoleLabel } from '../../config/employeeRoles';
@@ -203,17 +204,19 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
               keyExtractor={(item: any) => item.id}
               renderSelected={(item) => (
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-rounded text-xl text-zinc-500 dark:text-zinc-400">
-                    {item?.icon}
-                  </span>
+                  <RoleIcon 
+                    role={item?.id} 
+                    className="material-symbols-rounded text-xl text-zinc-500 dark:text-zinc-400" 
+                  />
                     {getRoleLabel(item.id, TRANSLATIONS[language].employeeList.roles)}
                 </div>
               )}
               renderItem={(item: any) => (
                 <div className="flex items-center gap-3 py-1">
-                  <span className="material-symbols-rounded text-xl text-zinc-400">
-                    {item.icon}
-                  </span>
+                  <RoleIcon 
+                    role={item.id} 
+                    className="material-symbols-rounded text-xl text-zinc-400" 
+                  />
                   <span className="text-zinc-700 dark:text-zinc-300">
                     {getRoleLabel(item.id, TRANSLATIONS[language].employeeList.roles)}
                   </span>
