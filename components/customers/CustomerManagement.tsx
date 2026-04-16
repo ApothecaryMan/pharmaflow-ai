@@ -310,16 +310,28 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     const now = getVerifiedDate();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    
+    // Activity thresholds
+    const thirtyDaysAgo = now.getTime() - (30 * 24 * 60 * 60 * 1000);
+    const oneYearAgo = now.getTime() - (365 * 24 * 60 * 60 * 1000);
 
     return customers.reduce(
       (acc, c) => {
         const createdTime = c.createdAt ? new Date(c.createdAt).getTime() : 0;
+        const lastVisitTime = c.lastVisit ? new Date(c.lastVisit).getTime() : 0;
+
+        // Growth stats
         if (createdTime >= todayStart) acc.newToday += 1;
         if (createdTime >= monthStart) acc.newThisMonth += 1;
         acc.total += 1;
+
+        // Activity stats
+        if (lastVisitTime >= thirtyDaysAgo) acc.activeRecently += 1;
+        if (lastVisitTime >= oneYearAgo) acc.activeTotal += 1;
+
         return acc;
       },
-      { total: 0, newThisMonth: 0, newToday: 0 }
+      { total: 0, newThisMonth: 0, newToday: 0, activeTotal: 0, activeRecently: 0 }
     );
   }, [customers, getVerifiedDate]);
 
@@ -796,7 +808,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         </div>
 
         <div className='flex gap-4 items-center flex-wrap'>
-          {/* Summary Cards */}
+          {/* Customer Growth Metrics Card (Total, Monthly, Daily) */}
           {mode === 'list' && (
             <InteractiveCard
               className={`flex flex-col min-w-[160px] px-5 py-2.5 rounded-2xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
@@ -836,6 +848,40 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       </span>
                       <span className="text-xl font-bold text-cyan-900 dark:text-cyan-100">
                         {summaryStats.newToday}
+                      </span>
+                    </div>
+                  ),
+                }
+              ]}
+            />
+          )}
+
+          {mode === 'list' && (
+            <InteractiveCard
+              className={`flex flex-col min-w-[160px] px-5 py-2.5 rounded-2xl ${language === 'AR' ? 'items-end' : 'items-start'}`}
+              pages={[
+                {
+                  theme: 'bg-indigo-50 dark:bg-indigo-900/20',
+                  content: (
+                    <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
+                      <span className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
+                        {t.summary?.activeTotal || 'Active (Yearly)'}
+                      </span>
+                      <span className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
+                        {summaryStats.activeTotal}
+                      </span>
+                    </div>
+                  ),
+                },
+                {
+                  theme: 'bg-violet-50 dark:bg-violet-900/20',
+                  content: (
+                    <div className={`flex flex-col w-full ${language === 'AR' ? 'items-end' : 'items-start'}`}>
+                      <span className="text-[10px] font-bold uppercase text-violet-600 dark:text-violet-400">
+                        {t.summary?.activeRecently || 'Active (30 Days)'}
+                      </span>
+                      <span className="text-xl font-bold text-violet-900 dark:text-violet-100">
+                        {summaryStats.activeRecently}
                       </span>
                     </div>
                   ),
