@@ -177,7 +177,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
           mobileTab === 'products' ? 'hidden lg:flex' : 'flex'
         }`}
       >
-        <div className="px-4 py-3.5 border-b border-gray-200/60 dark:border-(--border-divider) bg-white/70 dark:bg-(--bg-card) backdrop-blur-xl shrink-0 flex items-center justify-between sticky top-0 z-10 rounded-t-2xl">
+        <div className="px-4 py-3.5 border-b border-gray-200/60 dark:border-(--border-divider) bg-white/95 dark:bg-(--bg-card) backdrop-blur-xl shrink-0 flex items-center justify-between sticky top-0 z-10 rounded-t-2xl">
           <div className="flex items-center gap-3">
             {/* Title */}
             <h2 className="text-[15px] font-black text-gray-800 dark:text-gray-100 uppercase tracking-tight leading-none">
@@ -364,7 +364,7 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
           )}
         </div>
 
-        <div className="px-4 py-4 border-t border-gray-200/60 dark:border-(--border-divider) bg-white/50 dark:bg-(--bg-card) backdrop-blur-md space-y-4 shrink-0 rounded-b-2xl">
+        <div className="px-4 py-4 border-t border-gray-200/60 dark:border-(--border-divider) bg-white/90 dark:bg-(--bg-card) backdrop-blur-md space-y-4 shrink-0 rounded-b-2xl">
           {/* Summary Card with Glassmorphism */}
           <div className="bg-(--bg-surface-neutral) dark:bg-(--bg-surface-neutral) rounded-2xl p-3 border border-gray-200/50 dark:border-(--border-divider) space-y-2.5">
             {/* Subtotal Row */}
