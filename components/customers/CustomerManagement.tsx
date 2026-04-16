@@ -12,7 +12,7 @@ import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
-import { SmartEmailInput, SmartPhoneInput, useSmartDirection } from '../common/SmartInputs';
+import { SmartEmailInput, SmartPhoneInput, SmartInput, SmartTextarea, useSmartDirection } from '../common/SmartInputs';
 import { PriceDisplay, TanStackTable } from '../common/TanStackTable';
 import { InteractiveCard } from '../common/InteractiveCard';
 import { authService } from '../../services/auth/authService';
@@ -64,6 +64,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const [showSuccess, setShowSuccess] = useState(false);
   const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
   const [copyFeedback, setCopyFeedback] = useState(false);
+  const [activeTab, setActiveTab] = useState<'basic' | 'additional'>('basic');
+
+  const MODAL_TABS = [
+    { label: t.modal.basicInfo, value: 'basic', icon: 'person' },
+    { label: t.modal.additionalInfo, value: 'more_horiz', icon: 'more_horiz' },
+  ];
 
   // Form State
   const [formData, setFormData] = useState<Partial<Customer>>({});
@@ -169,6 +175,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const handleOpenEdit = (customer: Customer) => {
     setEditingCustomer(customer);
     setFormData(customer);
+    setActiveTab('basic');
     setIsModalOpen(true);
   };
 
@@ -201,6 +208,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     setEditingCustomer(null);
     setFormData({});
     setIsKioskMode(false);
+    setActiveTab('basic');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -243,12 +251,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   // Helper: Get context menu actions for a customer
   const getCustomerActions = (customer: Customer) => [
     {
-      label: t.contextMenu?.showProfile || 'Show Profile Info',
+      label: t.contextMenu.showProfile,
       icon: 'account_circle',
       action: () => handleOpenProfile(customer),
     },
     {
-      label: t.contextMenu?.viewHistory || 'View History',
+      label: t.contextMenu.viewHistory,
       icon: 'manage_search',
       action: () => onViewChange && onViewChange('customer-history', { customerId: customer.id }),
     },
@@ -260,7 +268,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       disabled: !permissionsService.can('customer.update'),
     },
     {
-      label: t.modal.delete || 'Delete',
+      label: t.modal.delete,
       icon: 'delete',
       action: () => onDeleteCustomer(customer.id),
       danger: true,
@@ -606,13 +614,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         <label className='block text-xs font-medium text-gray-500 mb-1'>
           {t.modal.streetAddress}
         </label>
-        <textarea
+        <SmartTextarea
           value={formData.streetAddress || ''}
           onChange={(e) => setFormData({ ...formData, streetAddress: e.target.value })}
           rows={2}
-          className='w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm resize-none'
+          className='resize-none'
           placeholder={t.modal.placeholders.streetAddress}
-          dir={streetDir}
         />
       </div>
     </div>
@@ -925,9 +932,9 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             shape='pill'
             size='sm'
             options={[
-              { label: t.allCustomers || 'All Customers', value: 'list' },
+              { label: t.allCustomers, value: 'list' },
               ...(permissionsService.can('customer.add')
-                ? [{ label: t.addCustomer || 'Add New Customer', value: 'add' }]
+                ? [{ label: t.addCustomer, value: 'add' }]
                 : []),
             ]}
           />
@@ -943,7 +950,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             check_circle
           </span>
           <span className={`text-sm font-medium text-primary-700 dark:text-primary-300`}>
-            {t.customerAddedSuccess || 'Customer added successfully!'}
+            {t.customerAddedSuccess}
           </span>
         </div>
       )}
@@ -988,13 +995,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       {t.modal.code} *
                     </label>
                     <div className='relative'>
-                      <input
+                      <SmartInput
                         type='text'
                         required
                         value={formData.code || ''}
                         onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                        className='w-full px-3 py-2 pr-10 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all font-mono text-sm'
-                        dir='ltr'
+                        placeholder={t.modal.placeholders.code}
                       />
                       <button
                         type='button'
@@ -1010,13 +1016,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                       {t.modal.name} *
                     </label>
-                    <input
+                    <SmartInput
                       type='text'
                       required
                       value={formData.name || ''}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      dir={nameDir}
+                      placeholder={t.modal.placeholders.johnDoe}
                     />
                   </div>
                 </div>
@@ -1052,7 +1057,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     <SmartEmailInput
                       value={formData.email || ''}
                       onChange={(val) => setFormData({ ...formData, email: val })}
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       placeholder={t.modal.placeholders.email}
                     />
                   </div>
@@ -1099,12 +1103,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t.modal.notes}
                   </label>
-                  <textarea
+                  <SmartTextarea
                     value={formData.notes || ''}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     rows={2}
-                    className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm resize-none'
-                    dir={notesDir}
+                    className='resize-none'
+                    placeholder={t.modal.placeholders.notes}
                   />
                 </div>
               </div>
@@ -1159,15 +1163,13 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                       {t.modal.location}
                     </label>
-                    <input
+                    <SmartInput
                       type='text'
                       value={formData.preferredLocation || ''}
                       onChange={(e) =>
                         setFormData({ ...formData, preferredLocation: e.target.value })
                       }
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
                       placeholder={t.modal.placeholders.downtownBranch}
-                      dir={locationDir}
                     />
                   </div>
 
@@ -1180,26 +1182,24 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                       {t.modal.insurance}
                     </label>
-                    <input
+                    <SmartInput
                       type='text'
                       value={formData.insuranceProvider || ''}
                       onChange={(e) =>
                         setFormData({ ...formData, insuranceProvider: e.target.value })
                       }
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      dir={insuranceDir}
+                      placeholder={t.modal.placeholders.insurance}
                     />
                   </div>
                   <div>
                     <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
                       {t.modal.policy}
                     </label>
-                    <input
+                    <SmartInput
                       type='text'
                       value={formData.policyNumber || ''}
                       onChange={(e) => setFormData({ ...formData, policyNumber: e.target.value })}
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      dir='ltr'
+                      placeholder={t.modal.placeholders.policy}
                     />
                   </div>
                 </div>
@@ -1209,7 +1209,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     type='submit'
                     className={`w-full py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-bold`}
                   >
-                    {t.modal.save || 'Save Customer'}
+                    {t.modal.save}
                   </button>
                   <button
                     type='button'
@@ -1231,238 +1231,233 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         onClose={handleCloseModal}
         size='2xl'
         zIndex={50}
+        title={t.modal.edit}
+        icon='edit'
+        tabs={MODAL_TABS}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        footer={
+          <div className='flex justify-end gap-3'>
+            <button
+              type='button'
+              onClick={handleCloseModal}
+              className='px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors'
+            >
+              {t.modal.cancel}
+            </button>
+            <button
+              type='submit'
+              form='customer-edit-form'
+              className={`px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-medium`}
+            >
+              {t.modal.save}
+            </button>
+          </div>
+        }
       >
         {isModalOpen && !isKioskMode && editingCustomer && (
-          <>
-            <div className='p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center shrink-0'>
-              <h3 className='text-lg font-bold text-gray-800 dark:text-white'>{t.modal.edit}</h3>
-              <button
-                onClick={handleCloseModal}
-                className='w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors'
-              >
-                <span className='material-symbols-rounded'>close</span>
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className='p-6 space-y-4 overflow-y-auto'>
-              {/* Code & Basic Info */}
-              <div className='grid grid-cols-3 gap-4'>
-                <div className='col-span-1'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t.modal.code} *
-                  </label>
-                  <div className='flex gap-2'>
-                    <input
+          <form id='customer-edit-form' onSubmit={handleSubmit} className='p-1 space-y-4'>
+            {activeTab === 'basic' ? (
+              <div className='space-y-4 animate-fade-in'>
+                {/* Code & Basic Info */}
+                <div className='grid grid-cols-3 gap-4'>
+                  <div className='col-span-1'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      {t.modal.code} *
+                    </label>
+                    <div className='flex gap-2'>
+                      <SmartInput
+                        type='text'
+                        required
+                        value={formData.code || ''}
+                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                        placeholder={t.modal.placeholders.code}
+                      />
+                    </div>
+                  </div>
+                  <div className='col-span-2'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      {t.modal.name} *
+                    </label>
+                    <SmartInput
                       type='text'
                       required
-                      value={formData.code || ''}
-                      onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                      className='w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all font-mono text-sm'
-                      dir='ltr'
+                      value={formData.name || ''}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder={t.modal.placeholders.johnDoe}
                     />
                   </div>
                 </div>
-                <div className='col-span-2'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t.modal.name} *
-                  </label>
-                  <input
-                    type='text'
-                    required
-                    value={formData.name || ''}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className='w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
-                    dir={nameDir}
-                  />
-                </div>
-              </div>
 
-              <div className='flex flex-col gap-4'>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t.modal.phone} *
-                  </label>
-                  <div className='relative'>
-                    <SmartPhoneInput
-                      required
-                      value={formData.phone || ''}
-                      onChange={(val) => setFormData({ ...formData, phone: val })}
-                      className='w-full px-4 py-2 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      {t.modal.phone} *
+                    </label>
+                    <div className='relative'>
+                      <SmartPhoneInput
+                        required
+                        value={formData.phone || ''}
+                        onChange={(val) => setFormData({ ...formData, phone: val })}
+                        placeholder={t.modal.placeholders.phone}
+                      />
+                      {getDetectedCountry(formData.phone) && (
+                        <div className='absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-sm text-[10px] font-bold'>
+                          {language === 'AR'
+                            ? getDetectedCountry(formData.phone)?.country_ar
+                            : getDetectedCountry(formData.phone)?.country_en}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      {t.modal.email}
+                    </label>
+                    <SmartEmailInput
+                      value={formData.email || ''}
+                      onChange={(val) => setFormData({ ...formData, email: val })}
+                      placeholder={t.modal.placeholders.email}
                     />
-                    {getDetectedCountry(formData.phone) && (
-                      <div className='absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-sm text-[10px] font-bold'>
-                        {language === 'AR'
-                          ? getDetectedCountry(formData.phone)?.country_ar
-                          : getDetectedCountry(formData.phone)?.country_en}
-                      </div>
-                    )}
                   </div>
                 </div>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t.modal.email}
-                  </label>
-                  <SmartEmailInput
-                    value={formData.email || ''}
-                    onChange={(val) => setFormData({ ...formData, email: val })}
-                    className='w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
-                  />
-                </div>
+
+                {/* Address Section */}
+                {renderAddressForm()}
               </div>
-
-              {/* Address Section */}
-              {renderAddressForm()}
-
-              {/* Preferences */}
-              <div className='grid grid-cols-2 gap-4'>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t.modal.contact}
-                  </label>
-                  <FilterDropdown
-                    variant='input'
-                    items={CONTACT_OPTIONS}
-                    selectedItem={CONTACT_OPTIONS.find(
-                      (o) => o.id === (formData.preferredContact || 'phone')
-                    )}
-                    isOpen={isModalContactOpen}
-                    onToggle={() => setIsModalContactOpen(!isModalContactOpen)}
-                    onSelect={(option) => {
-                      setFormData({ ...formData, preferredContact: option.id as any });
-                      setIsModalContactOpen(false);
-                    }}
-                    keyExtractor={(item) => item.id}
-                    renderSelected={(item) => (
-                      <div className='flex items-center gap-2'>
-                        <span className='material-symbols-rounded text-[18px] text-gray-500'>
-                          {item?.icon}
-                        </span>
-                        <span>{item?.label}</span>
-                      </div>
-                    )}
-                    renderItem={(item) => (
-                      <div className='flex items-center gap-2'>
-                        <span className='material-symbols-rounded text-[18px] text-gray-500'>
-                          {item.icon}
-                        </span>
-                        <span>{item.label}</span>
-                      </div>
-                    )}
-                    className='w-full h-[42px]'
-                  />
-                </div>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t.modal.location}
-                  </label>
-                  <input
-                    type='text'
-                    value={formData.preferredLocation || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, preferredLocation: e.target.value })
-                    }
-                    className='w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
-                    placeholder={t.modal.placeholders.downtownBranch}
-                    dir={locationDir}
-                  />
-                </div>
-              </div>
-
-              {/* Insurance */}
-              <div className='p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700'>
-                <h4 className='text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2'>
-                  <span className='material-symbols-rounded text-primary-500'>health_and_safety</span>
-                  {t.modal.insuranceDetails}
-                </h4>
+            ) : (
+              <div className='space-y-4 animate-fade-in'>
+                {/* Preferences */}
                 <div className='grid grid-cols-2 gap-4'>
                   <div>
-                    <label className='block text-xs text-gray-500 mb-1'>{t.modal.insurance}</label>
-                    <input
-                      type='text'
-                      value={formData.insuranceProvider || ''}
-                      onChange={(e) =>
-                        setFormData({ ...formData, insuranceProvider: e.target.value })
-                      }
-                      className='w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      dir={insuranceDir}
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      {t.modal.contact}
+                    </label>
+                    <FilterDropdown
+                      variant='input'
+                      items={CONTACT_OPTIONS}
+                      selectedItem={CONTACT_OPTIONS.find(
+                        (o) => o.id === (formData.preferredContact || 'phone')
+                      )}
+                      isOpen={isModalContactOpen}
+                      onToggle={() => setIsModalContactOpen(!isModalContactOpen)}
+                      onSelect={(option) => {
+                        setFormData({ ...formData, preferredContact: option.id as any });
+                        setIsModalContactOpen(false);
+                      }}
+                      keyExtractor={(item) => item.id}
+                      renderSelected={(item) => (
+                        <div className='flex items-center gap-2'>
+                          <span className='material-symbols-rounded text-[18px] text-gray-500'>
+                            {item?.icon}
+                          </span>
+                          <span>{item?.label}</span>
+                        </div>
+                      )}
+                      renderItem={(item) => (
+                        <div className='flex items-center gap-2'>
+                          <span className='material-symbols-rounded text-[18px] text-gray-500'>
+                            {item.icon}
+                          </span>
+                          <span>{item.label}</span>
+                        </div>
+                      )}
+                      className='w-full h-[42px]'
                     />
                   </div>
                   <div>
-                    <label className='block text-xs text-gray-500 mb-1'>{t.modal.policy}</label>
-                    <input
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      {t.modal.location}
+                    </label>
+                    <SmartInput
                       type='text'
-                      value={formData.policyNumber || ''}
-                      onChange={(e) => setFormData({ ...formData, policyNumber: e.target.value })}
-                      className='w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all text-sm'
-                      dir='ltr'
+                      value={formData.preferredLocation || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, preferredLocation: e.target.value })
+                      }
+                      placeholder={t.modal.placeholders.downtownBranch}
                     />
                   </div>
                 </div>
-              </div>
 
-              {/* Chronic Conditions */}
-              <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                  {t.modal.conditions}
-                </label>
-                <div className='flex flex-wrap gap-2'>
-                  {[
-                    'diabetes',
-                    'hypertension',
-                    'asthma',
-                    'allergies',
-                    'heartDisease',
-                    'arthritis',
-                  ].map((condition) => (
-                    <button
-                      key={condition}
-                      type='button'
-                      onClick={() => toggleCondition(condition)}
-                      className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
-                        (formData.chronicConditions || []).includes(condition)
-                          ? `border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 bg-transparent ring-1 ring-primary-200 dark:ring-primary-900/10 shadow-xs`
-                          : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
-                      }`}
-                    >
-                      {(formData.chronicConditions || []).includes(condition) && (
-                        <span className='material-symbols-rounded text-xs'>check_circle</span>
-                      )}
-                      {t.conditions[condition]}
-                    </button>
-                  ))}
+                {/* Insurance */}
+                <div className='p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700'>
+                  <h4 className='text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2'>
+                    <span className='material-symbols-rounded text-primary-500'>health_and_safety</span>
+                    {t.modal.insuranceDetails}
+                  </h4>
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div>
+                      <label className='block text-xs text-gray-500 mb-1'>{t.modal.insurance}</label>
+                      <SmartInput
+                        type='text'
+                        value={formData.insuranceProvider || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, insuranceProvider: e.target.value })
+                        }
+                        placeholder={t.modal.placeholders.insurance}
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-xs text-gray-500 mb-1'>{t.modal.policy}</label>
+                      <SmartInput
+                        type='text'
+                        value={formData.policyNumber || ''}
+                        onChange={(e) => setFormData({ ...formData, policyNumber: e.target.value })}
+                        placeholder={t.modal.placeholders.policy}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chronic Conditions */}
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    {t.modal.conditions}
+                  </label>
+                  <div className='flex flex-wrap gap-2'>
+                    {[
+                      'diabetes',
+                      'hypertension',
+                      'asthma',
+                      'allergies',
+                      'heartDisease',
+                      'arthritis',
+                    ].map((condition) => (
+                      <button
+                        key={condition}
+                        type='button'
+                        onClick={() => toggleCondition(condition)}
+                        className={`inline-flex items-center justify-center gap-1.5 px-1.5 py-0.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
+                          (formData.chronicConditions || []).includes(condition)
+                            ? `border-primary-200 dark:border-primary-900/50 text-primary-700 dark:text-primary-400 bg-transparent ring-1 ring-primary-200 dark:ring-primary-900/10 shadow-xs`
+                            : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/30'
+                        }`}
+                      >
+                        {(formData.chronicConditions || []).includes(condition) && (
+                          <span className='material-symbols-rounded text-xs'>check_circle</span>
+                        )}
+                        {t.conditions[condition]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    {t.modal.notes}
+                  </label>
+                  <SmartTextarea
+                    value={formData.notes || ''}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    rows={2}
+                    className='resize-none'
+                    placeholder={t.modal.placeholders.notes}
+                  />
                 </div>
               </div>
-
-              <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                  {t.modal.notes}
-                </label>
-                <textarea
-                  value={formData.notes || ''}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  rows={2}
-                  className='w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all resize-none'
-                  dir={notesDir}
-                />
-              </div>
-
-              <div className='pt-4 flex justify-end gap-3 shrink-0'>
-                <button
-                  type='button'
-                  onClick={handleCloseModal}
-                  className='px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors'
-                >
-                  {t.modal.cancel}
-                </button>
-                <button
-                  type='submit'
-                  className={`px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-medium`}
-                >
-                  {t.modal.save}
-                </button>
-              </div>
-            </form>
-          </>
+            )}
+          </form>
         )}
       </Modal>
 
@@ -1487,14 +1482,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                   {t.modal.name} *
                 </label>
-                <input
+                <SmartInput
                   type='text'
                   required
                   value={formData.name || ''}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className='w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
                   placeholder={t.modal.placeholders.johnDoe}
-                  dir={nameDir}
                 />
               </div>
 
@@ -1508,7 +1501,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       required
                       value={formData.phone || ''}
                       onChange={(val) => setFormData({ ...formData, phone: val })}
-                      className='w-full px-4 py-3 pr-24 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
                       placeholder={t.modal.placeholders.phone}
                     />
                     {getDetectedCountry(formData.phone) && (
@@ -1529,7 +1521,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   <SmartEmailInput
                     value={formData.email || ''}
                     onChange={(val) => setFormData({ ...formData, email: val })}
-                    className='w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-hidden transition-all'
                     placeholder={t.modal.placeholders.email}
                   />
                 </div>
