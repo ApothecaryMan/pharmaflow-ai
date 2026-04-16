@@ -5,7 +5,7 @@
 - Organization must have at least one branch.
 
 ## Accessing the Dashboard
-1. Log in to PharmaFlow-AI.
+1. Log in to ZINC.
 2. Navigate to **Settings** > **General Settings**.
 3. Click on **Organization Management**.
 

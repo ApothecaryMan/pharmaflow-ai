@@ -1007,7 +1007,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                             // 2. Options for Creation (Usually comes from backend)
                             const publicKeyCredentialCreationOptions = {
                               challenge: challengeBase64,
-                              rp: { name: 'PharmaFlow AI', id: window.location.hostname },
+                              rp: { name: 'ZINC', id: window.location.hostname },
                               user: {
                                 id: employeeId,
                                 name: formData.username || formData.name || 'user',

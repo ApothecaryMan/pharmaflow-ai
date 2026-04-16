@@ -4,7 +4,7 @@
 **Input**: Feature specification from `specs/supabase-migration/spec.md`
 
 ## Summary
-Migrate the existing PharmaFlow-AI `localStorage` architecture to a highly robust PostgreSQL database via Supabase, ensuring real-time multi-branch synchronization and strict data isolation via RLS policies.
+Migrate the existing ZINC `localStorage` architecture to a highly robust PostgreSQL database via Supabase, ensuring real-time multi-branch synchronization and strict data isolation via RLS policies.
 
 ## Technical Context
 **Language/Version**: TypeScript 5.x, React 19.x  

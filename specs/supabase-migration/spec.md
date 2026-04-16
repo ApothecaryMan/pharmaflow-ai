@@ -3,7 +3,7 @@
 **Feature Branch**: `feature/supabase-migration`  
 **Created**: 2026-03-22  
 **Status**: Ready for Planning  
-**Input**: Migrate PharmaFlow-AI from `localStorage` to a centralized PostgreSQL real-time database to ensure persistence, security, and multi-branch synchronization.
+**Input**: Migrate ZINC from `localStorage` to a centralized PostgreSQL real-time database to ensure persistence, security, and multi-branch synchronization.
 
 ## Execution Flow (main)
 

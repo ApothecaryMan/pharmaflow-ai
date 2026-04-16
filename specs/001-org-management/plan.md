@@ -1,10 +1,10 @@
 # Implementation Plan: Organization Management
 
-**Branch**: `001-org-management` | **Date**: 2026-04-11 | **Spec**: [spec.md](file:///home/x1carbon/Projects/HTML/pharmaflow-ai/specs/001-org-management/spec.md)
+**Branch**: `001-org-management` | **Date**: 2026-04-11 | **Spec**: [spec.md](file:///home/x1carbon/Projects/HTML/pZINC-ai/specs/001-org-management/spec.md)
 
 ## Summary
 
-This plan covers the centralized Organization Management system for PharmaFlow-AI, focusing on high-performance data aggregation (Phases 1-4) and the Member Permission Matrix (Phase 5). The approach uses IndexedDB for client-side caching of cross-branch metrics and a standardized `TanStackTable` for permission management.
+This plan covers the centralized Organization Management system for ZINC, focusing on high-performance data aggregation (Phases 1-4) and the Member Permission Matrix (Phase 5). The approach uses IndexedDB for client-side caching of cross-branch metrics and a standardized `TanStackTable` for permission management.
 
 ## Technical Context
 

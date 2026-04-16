@@ -1,6 +1,6 @@
-# 🎹 PharmaFlow Pro: Keyboard UX Master Plan
+# 🎹 ZINC Pro: Keyboard UX Master Plan
 
-> **Objective:** Transform PharmaFlow into a "Keyboard-First" application where power users (pharmacists) can perform 95% of tasks without touching the mouse. This document outlines the architecture, UX design, and implementation strategy for a professional-grade shortcut system.
+> **Objective:** Transform ZINC into a "Keyboard-First" application where power users (pharmacists) can perform 95% of tasks without touching the mouse. This document outlines the architecture, UX design, and implementation strategy for a professional-grade shortcut system.
 
 ---
 
@@ -287,7 +287,7 @@ A Spotlight-style search bar that lets users execute _any_ command by typing.
 ## 7. File Structure
 
 ```
-pharmaflow-ai/
+zinc-ai/
 ├── config/
 │   └── keyboardMap.ts          # Central shortcut definitions
 │

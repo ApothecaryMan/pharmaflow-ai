@@ -1,6 +1,6 @@
 # spec.md — Zinc Backup Service (Refactor)
 > SpecKit Format · Version 1.0
-> Project: PharmaFlow / Zinc
+> Project: ZINC / Zinc
 > Module: `services/backup/backupService.ts`
 > Target Scale: 1,000+ pharmacies
 
@@ -11,8 +11,8 @@
 | Property | Value |
 |---|---|
 | **Runtime** | Browser (PWA, offline-first) |
-| **Storage Layer** | Raw IndexedDB (no wrapper) — `pharmaflow_db` |
-| **LocalStorage Prefixes** | `pharma`, `pos`, `receipt`, `pharmaflow`, `branch_pilot_session`, `pharma_active_branch_id` |
+| **Storage Layer** | Raw IndexedDB (no wrapper) — `zinc_db` |
+| **LocalStorage Prefixes** | `pharma`, `pos`, `receipt`, `zinc`, `branch_pilot_session`, `pharma_active_branch_id` |
 | **Language** | TypeScript (strict) |
 | **UI Framework** | React |
 | **Existing File** | `services/backup/backupService.ts` (partial logic — export/import JSON only) |
@@ -140,7 +140,7 @@ type MigrationFn = (
 **Given** user triggers backup
 **When** export starts
 **Then** ALL keys matching these prefixes are captured:
-`pharma`, `pos`, `receipt`, `pharmaflow`, `branch_pilot_session`, `pharma_active_branch_id`
+`pharma`, `pos`, `receipt`, `zinc`, `branch_pilot_session`, `pharma_active_branch_id`
 
 ### SPEC-EXP-02: Export — Checksum
 **Given** IDB and LocalStorage data are serialized

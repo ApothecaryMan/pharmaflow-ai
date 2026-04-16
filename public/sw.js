@@ -1,11 +1,11 @@
 /**
- * PharmaFlow AI - Service Worker
+ * ZINC - Service Worker
  * Enables offline functionality and caching for PWA
  */
 
-const CACHE_NAME = 'pharmaflow-v2';
-const STATIC_CACHE = 'pharmaflow-static-v2';
-const DYNAMIC_CACHE = 'pharmaflow-dynamic-v2';
+const CACHE_NAME = 'zinc-v2';
+const STATIC_CACHE = 'zinc-static-v2';
+const DYNAMIC_CACHE = 'zinc-dynamic-v2';
 
 // Files to cache immediately on install
 const STATIC_ASSETS = [

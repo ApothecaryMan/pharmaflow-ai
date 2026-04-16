@@ -1,10 +1,10 @@
 {
   "name": "zinc",
   "description": "Comprehensive pharmacy management system with AI-powered features, POS, inventory tracking, and bilingual support (EN/AR)",
-  "author": "PharmaFlow Team",
+  "author": "ZINC Team",
   "license": "UNLICENSED",
   "private": true,
-  "version": "2.011",
+  "version": "2.012",
   "type": "module",
   "keywords": [
     "pharmacy",

@@ -5,7 +5,7 @@
 
 export const TRANSLATIONS = {
   EN: {
-    appTitle: 'Zinc',
+    appTitle: 'ZINC',
     date: 'Date',
     orderId: 'Order ID',
     orderTotal: 'Order Total',
