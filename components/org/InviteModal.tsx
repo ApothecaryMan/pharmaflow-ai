@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { SmartInput } from '../common/SmartInputs';
 import { orgMembersService } from '../../services/org/orgMembersService';
+import { ORG_ROLES } from '../../config/permissions';
+import { getRoleLabel } from '../../config/employeeRoles';
 import { TRANSLATIONS } from '../../i18n/translations';
 import type { OrgRole } from '../../types';
 
@@ -19,6 +21,7 @@ export const InviteModal: React.FC<InviteModalProps> = ({
   language
 }) => {
   const t = TRANSLATIONS[language].organization.invites;
+  const tParents = TRANSLATIONS[language].orgManagement;
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<OrgRole>('member');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,22 +90,23 @@ export const InviteModal: React.FC<InviteModalProps> = ({
               {t.role}
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {(['member', 'admin'] as OrgRole[]).map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRole(r)}
-                  className={`px-4 py-3 rounded-xl border text-xs font-bold transition-all ${
-                    role === r
-                      ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400'
-                      : 'bg-white border-zinc-200 text-zinc-500 hover:border-primary-200 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400'
-                  }`}
-                >
-                  {language === 'AR' 
-                    ? (r === 'admin' ? 'مسؤول' : 'عضو')
-                    : (r.charAt(0).toUpperCase() + r.slice(1))}
-                </button>
-              ))}
+              {ORG_ROLES.filter(r => r.id !== 'owner').map((r) => {
+                const roleLabel = getRoleLabel(r.id, tParents);
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setRole(r.id as OrgRole)}
+                    className={`px-4 py-3 rounded-xl border text-xs font-bold transition-all ${
+                      role === r.id
+                        ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400'
+                        : 'bg-white border-zinc-200 text-zinc-500 hover:border-primary-200 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400'
+                    }`}
+                  >
+                    {roleLabel}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

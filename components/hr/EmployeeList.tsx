@@ -22,24 +22,11 @@ import { employeeService } from '../../services/hr/employeeService';
 import { orgService } from '../../services/org/orgService';
 import { INPUT_BASE } from '../../utils/themeStyles';
 
-// --- Smart Roles Configuration ---
-// Dependency Matrix: Defines valid roles for each department
-const DEPT_ROLES: Record<string, string[]> = {
-  pharmacy: [
-    'pharmacist_owner',
-    'pharmacist_manager',
-    'pharmacist',
-    'assistant',
-    'inventory_officer',
-    'senior_cashier',
-    'officeboy',
-  ],
-  sales: ['cashier', 'senior_cashier'],
-  marketing: ['manager', 'officeboy'],
-  hr: ['hr_manager'],
-  it: ['admin'],
-  logistics: ['delivery', 'delivery_pharmacist'],
-};
+import { 
+  DEPARTMENT_ROLES, 
+  getRoleIcon, 
+  getRoleLabel 
+} from '../../config/employeeRoles';
 
 interface EmployeeListProps {
   color: string;
@@ -156,10 +143,10 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   // 2. Dependency Matrix: Filter Roles based on Selected Department
   const availableRoles = useMemo(() => {
     const selectedDept = formData.department || 'pharmacy';
-    const validRoles = DEPT_ROLES[selectedDept] || [];
+    const validRoles = DEPARTMENT_ROLES[selectedDept] || [];
 
     return Object.entries(t.employeeList.roles)
-      .filter(([key]) => validRoles.includes(key))
+      .filter(([key]) => (validRoles as string[]).includes(key))
       .map(([key, label]) => ({ key, label: label as string }));
   }, [t.employeeList.roles, formData.department]);
 
@@ -167,7 +154,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   useEffect(() => {
     if (!formData.department) return;
 
-    const validRoles = DEPT_ROLES[formData.department] || [];
+    const validRoles = DEPARTMENT_ROLES[formData.department] || [];
     if (formData.role && !validRoles.includes(formData.role)) {
       // Reset role if invalid for new department
       setFormData((prev) => ({ ...prev, role: undefined }));
@@ -1800,7 +1787,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                         {t.employeeList.role}
                       </div>
                       <div className='text-sm font-medium text-gray-900 dark:text-white bg-white dark:bg-(--bg-card) px-3 py-2.5 rounded-lg border border-(--border-divider) shadow-xs min-h-[42px] flex items-center'>
-                        {t.employeeList.roles[viewingEmployee.role] || '-'}
+                        {getRoleLabel(viewingEmployee.role, t.employeeList.roles)}
                       </div>
                     </div>
                     <div className='space-y-1.5'>

@@ -1,17 +1,15 @@
-export type UserRole =
-  | 'admin'
-  | 'pharmacist_owner'
-  | 'pharmacist_manager'
-  | 'pharmacist'
-  | 'inventory_officer'
-  | 'assistant'
-  | 'hr_manager'
-  | 'cashier'
-  | 'senior_cashier'
-  | 'delivery'
-  | 'delivery_pharmacist'
-  | 'officeboy'
-  | 'manager';
+import { UserRole } from './employeeRoles';
+
+export { type UserRole };
+
+/**
+ * Organization-level Access Roles
+ */
+export const ORG_ROLES = [
+  { id: 'owner', translationKey: 'orgManagement.roleOwner' },
+  { id: 'admin', translationKey: 'orgManagement.roleAdmin' },
+  { id: 'member', translationKey: 'orgManagement.roleMember' },
+] as const;
 
 export type PermissionAction =
   // Inventory

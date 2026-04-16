@@ -7,11 +7,13 @@ import { authService } from '../../services/auth/authService';
 import { branchService } from '../../services/branchService';
 import { OnboardingStepper } from './OnboardingStepper';
 
-const ROLES = [
-  { id: 'pharmacist_owner', labelEN: 'Pharmacy Owner', labelAR: 'مالك الصيدلية', icon: 'license' },
-  { id: 'admin', labelEN: 'System Admin', labelAR: 'مدير النظام (Admin)', icon: 'shield_person' },
-  { id: 'pharmacist_manager', labelEN: 'Pharmacist Manager', labelAR: 'صيدلي مدير', icon: 'medical_services' },
-] as const;
+import { SYSTEM_ROLES, getRoleLabel } from '../../config/employeeRoles';
+import { TRANSLATIONS } from '../../i18n/translations';
+
+// Roles allowed during initial setup
+const ONBOARDING_ROLES = SYSTEM_ROLES.filter(r => 
+  ['pharmacist_owner', 'admin', 'pharmacist_manager'].includes(r.id)
+);
 
 interface EmployeeSetupScreenProps {
   language: 'EN' | 'AR';
@@ -35,7 +37,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
   const [role, setRole] = useState<'admin' | 'pharmacist_manager' | 'pharmacist_owner'>('pharmacist_owner');
   const [isLoading, setIsLoading] = useState(false);
   
-  const selectedRole = ROLES.find(r => r.id === role) || ROLES[0];
+  const selectedRole = ONBOARDING_ROLES.find(r => r.id === role) || ONBOARDING_ROLES[0];
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -195,7 +197,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
               variant="input"
               floating
               minHeight="42px"
-              items={ROLES as any}
+              items={ONBOARDING_ROLES as any}
               selectedItem={selectedRole}
               onSelect={(item: any) => setRole(item.id)}
               keyExtractor={(item: any) => item.id}
@@ -204,9 +206,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
                   <span className="material-symbols-rounded text-xl text-zinc-500 dark:text-zinc-400">
                     {item?.icon}
                   </span>
-                  <span className="text-zinc-900 dark:text-zinc-100">
-                    {isRTL ? item?.labelAR : item?.labelEN}
-                  </span>
+                    {getRoleLabel(item.id, TRANSLATIONS[language].employeeList.roles)}
                 </div>
               )}
               renderItem={(item: any) => (
@@ -215,7 +215,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
                     {item.icon}
                   </span>
                   <span className="text-zinc-700 dark:text-zinc-300">
-                    {isRTL ? item.labelAR : item.labelEN}
+                    {getRoleLabel(item.id, TRANSLATIONS[language].employeeList.roles)}
                   </span>
                 </div>
               )}

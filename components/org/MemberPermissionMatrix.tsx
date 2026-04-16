@@ -3,6 +3,8 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { TanStackTable } from '../common/TanStackTable';
 import type { Employee, Branch } from '../../types';
 import { TRANSLATIONS } from '../../i18n/translations';
+import { ORG_ROLES } from '../../config/permissions';
+import { getRoleLabel } from '../../config/employeeRoles';
 import { CARD_BASE } from '../../utils/themeStyles';
 
 interface MemberPermissionMatrixProps {
@@ -81,9 +83,11 @@ export const MemberPermissionMatrix: React.FC<MemberPermissionMatrixProps> = ({
               style={{ minWidth: '100px' }}
               title={isLastOwner ? t.lastOwnerWarning : ''}
             >
-              <option value="owner">{t.roleOwner}</option>
-              <option value="admin">{t.roleAdmin}</option>
-              <option value="member">{t.roleMember}</option>
+              {ORG_ROLES.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {getRoleLabel(r.id, t)}
+                </option>
+              ))}
             </select>
             {isLastOwner && (
               <span className="text-[9px] text-amber-600 dark:text-amber-400 flex items-center gap-1 font-bold uppercase tracking-wide">

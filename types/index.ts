@@ -928,20 +928,7 @@ export interface Employee {
   // --- Employment Details ---
   position: string; // Job title (e.g., "Senior Pharmacist")
   department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics'; // Department
-  role:
-    | 'admin'
-    | 'pharmacist_owner'
-    | 'pharmacist_manager'
-    | 'pharmacist'
-    | 'inventory_officer'
-    | 'assistant'
-    | 'hr_manager'
-    | 'cashier'
-    | 'senior_cashier'
-    | 'delivery'
-    | 'delivery_pharmacist'
-    | 'officeboy'
-    | 'manager'; // System role
+  role: import('../config/permissions').UserRole; // Unified Functional Role
   startDate: string; // ISO date (YYYY-MM-DD)
   status: 'active' | 'inactive' | 'holiday'; // Employment status
 

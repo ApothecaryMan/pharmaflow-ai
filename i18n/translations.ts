@@ -1787,6 +1787,7 @@ export const TRANSLATIONS = {
         logistics: 'Logistics',
       },
       roles: {
+        admin: 'System Admin',
         pharmacist_owner: 'Pharmacy Owner',
         pharmacist_manager: 'Pharmacy Manager',
         pharmacist: 'Pharmacist',
@@ -2123,6 +2124,7 @@ export const TRANSLATIONS = {
         logistics: 'اللوجستيات / التوصيل',
       },
       roles: {
+        admin: 'مدير النظام (Admin)',
         pharmacist_owner: 'مالك الصيدلية',
         pharmacist_manager: 'مدير الصيدلية',
         pharmacist: 'صيدلي',
