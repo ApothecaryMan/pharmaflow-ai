@@ -4,7 +4,7 @@ import { useSettings } from '../../context';
 import { type UserRole } from '../../config/permissions';
 import { permissionsService } from '../../services/auth/permissions';
 import { SALES_HISTORY_HELP } from '../../i18n/helpInstructions';
-import type { Customer, Return, Sale, Shift } from '../../types';
+import type { Customer, Employee, Return, Sale, Shift } from '../../types';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { POSCustomerHistoryModal } from './pos/ui/POSCustomerHistoryModal';
 import { createSearchRegex } from '../../utils/searchUtils';
@@ -22,7 +22,7 @@ import {
   printInvoice,
 } from './InvoiceTemplate';
 import { SaleDetailModal } from './SaleDetailModal';
-import { formatCurrency } from '../../utils/currency';
+import { formatCurrency, formatCurrencyParts } from '../../utils/currency';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -36,6 +36,7 @@ interface SalesHistoryProps {
   currentShift: Shift | null;
   navigationParams?: any;
   customers: Customer[];
+  employees: Employee[];
 }
 
 export const SalesHistory: React.FC<SalesHistoryProps> = ({
@@ -51,6 +52,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
   // @ts-ignore
   navigationParams,
   customers = [],
+  employees = [],
 }) => {
   // Determine locale based on language
   const locale = language === 'AR' ? 'ar-EG' : 'en-US';
@@ -190,12 +192,19 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         header: t.headers.total,
         cell: ({ row }) => {
           const sale = row.original;
+          const totalParts = formatCurrencyParts(sale.total);
+          
           return (
-            <div className='font-bold text-gray-900 dark:text-gray-100 tabular-nums text-sm'>
-              {formatCurrency(sale.total)}
-              {sale.deliveryFee && sale.deliveryFee > 0 && (
-                <div className='text-[10px] text-gray-400 font-normal tabular-nums'>
-                  +{formatCurrency(sale.deliveryFee)} {t.delivery || 'delivery'}
+            <div className='font-bold text-gray-900 dark:text-gray-100 tabular-nums text-sm flex flex-col items-end'>
+              <div className='flex items-baseline gap-1'>
+                <span>{totalParts.amount}</span>
+                <span className='text-[10px] text-gray-400 font-medium'>{totalParts.symbol}</span>
+              </div>
+              {!!sale.deliveryFee && sale.deliveryFee > 0 && (
+                <div className='text-[10px] text-gray-400 font-normal tabular-nums flex items-baseline gap-0.5 mt-0.5'>
+                  <span>{formatCurrencyParts(sale.deliveryFee).amount}</span>
+                  <span className='text-[8px] opacity-70 ps-0.5'>{formatCurrencyParts(sale.deliveryFee).symbol}</span>
+                  <span className='ms-1'>{t.headers.delivery}</span>
                 </div>
               )}
             </div>
@@ -220,10 +229,20 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           const totalReturned = sale.netTotal !== undefined ? sale.total - sale.netTotal : 0;
 
           if (sale.hasReturns) {
+            const totalReturned = sale.netTotal !== undefined ? sale.total - sale.netTotal : 0;
+            const isFullReturn = sale.netTotal === 0;
+            const returnParts = formatCurrencyParts(totalReturned);
+            
             return (
               <span className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border border-orange-500 text-orange-500 text-[10px] font-black uppercase tracking-wider bg-transparent'>
                 <span className='material-symbols-rounded' style={{ fontSize: 'var(--icon-md)' }}>assignment_return</span>
-                -${totalReturned.toFixed(2)}
+                {isFullReturn ? (
+                  t.fullReturn
+                ) : (
+                  <span className='flex items-center gap-1'>
+                    {t.partialReturn} -{returnParts.amount} <span className='text-[8px] opacity-70'>{returnParts.symbol}</span>
+                  </span>
+                )}
               </span>
             );
           }
@@ -239,16 +258,6 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
 
           // Delivery Specific Statuses
           if (sale.saleType === 'delivery' && sale.status !== 'completed') {
-            // Local translation map for robust Arabic support
-            const STATUS_TRANSLATIONS: Record<string, string> = {
-              'pending': 'قيد الانتظار',
-              'with_delivery': 'مع المندوب',
-              'on_way': 'في الطريق',
-              'completed': 'مكتمل',
-              'cancelled': 'ملغى'
-            };
-
-            const isPending = sale.status === 'pending';
             const isWithDelivery = sale.status === 'with_delivery';
             const isOnWay = sale.status === 'on_way';
             
@@ -262,7 +271,7 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
               icon = 'local_shipping';
             }
 
-            const statusText = t[sale.status!] || STATUS_TRANSLATIONS[sale.status!] || sale.status;
+            const statusText = t[sale.status!] || sale.status;
 
             return (
               <span className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg border ${colorClass} text-[10px] font-black uppercase tracking-wider bg-transparent`}>
@@ -280,8 +289,26 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           );
         },
       },
+      {
+        accessorKey: 'soldByEmployeeId',
+        header: t.headers.soldBy,
+        cell: ({ getValue }) => {
+          const empId = getValue() as string;
+          const employee = employees.find(e => e.id === empId || e.userId === empId);
+          return (
+            <div className='flex items-center gap-1.5'>
+               <div className='w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0'>
+                <span className='material-symbols-rounded text-[14px] text-gray-400'>person</span>
+              </div>
+              <span className='text-xs font-medium text-gray-600 dark:text-gray-400'>
+                {employee ? (language === 'AR' ? (employee.nameArabic || employee.name) : employee.name) : (language === 'AR' ? 'غير معروف' : 'Unknown')}
+              </span>
+            </div>
+          );
+        },
+      },
     ],
-    [t, textTransform, customers]
+    [t, textTransform, customers, employees]
   );
 
   const filterableColumns = React.useMemo(
@@ -290,14 +317,14 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
         id: 'status',
         label: t.status,
         icon: 'dynamic_feed',
-        mode: 'multiple' as const,
+        mode: 'single' as const,
         options: [
           { label: t.completed, value: 'completed', icon: 'check_circle' },
           { label: t.pending, value: 'pending', icon: 'pending' },
-          { label: t.with_delivery || 'With Delivery', value: 'with_delivery', icon: 'delivery_dining' },
-          { label: t.on_way || 'On Way', value: 'on_way', icon: 'local_shipping' },
+          { label: t.with_delivery, value: 'with_delivery', icon: 'delivery_dining' },
+          { label: t.on_way, value: 'on_way', icon: 'local_shipping' },
           { label: t.cancelled, value: 'cancelled', icon: 'cancel' },
-          { label: t.returns?.returned || 'Returned', value: 'returned', icon: 'assignment_return' },
+          { label: t.returned, value: 'returned', icon: 'assignment_return' },
         ],
       },
       {
@@ -310,8 +337,19 @@ export const SalesHistory: React.FC<SalesHistoryProps> = ({
           { label: t.visa, value: 'visa', icon: 'credit_card' },
         ],
       },
+      {
+        id: 'soldByEmployeeId',
+        label: t.headers.soldBy,
+        icon: 'person',
+        mode: 'single' as const,
+        options: employees.map(emp => ({
+          label: emp.name,
+          value: emp.id,
+          icon: 'person'
+        })),
+      },
     ],
-    [t]
+    [t, employees]
   );
 
   const filteredSales = React.useMemo(() => {
