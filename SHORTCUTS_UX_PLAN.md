@@ -287,7 +287,7 @@ A Spotlight-style search bar that lets users execute _any_ command by typing.
 ## 7. File Structure
 
 ```
-zinc-ai/
+zinc/
 ├── config/
 │   └── keyboardMap.ts          # Central shortcut definitions
 │
