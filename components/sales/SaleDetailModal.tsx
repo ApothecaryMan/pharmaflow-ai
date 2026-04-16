@@ -168,10 +168,12 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
     <>
       <Modal
         isOpen={isOpen && !returnModalOpen} onClose={onClose} size='lg' title={t.modal.title}
-        icon='receipt_long' className='overscroll-contain' tabs={[
+        icon='receipt_long' className='overscroll-contain' 
+        tabs={sale.customerCode ? [
           { label: t.modal.items || 'Items', value: 'items', icon: 'list' },
           { label: t.modal.modificationHistory || 'History', value: 'history', icon: 'history' },
-        ]} activeTab={activeTab} onTabChange={setActiveTab}
+        ] : undefined} 
+        activeTab={activeTab} onTabChange={setActiveTab}
       >
         <div className='space-y-4'>
           <ListWrapper>
