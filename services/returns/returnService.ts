@@ -100,6 +100,7 @@ export const createReturnService = (): ReturnService => ({
           newStock: currentStock - allocation.quantity,
           referenceId: newReturn.id,
           batchId: allocation.batchId,
+          expiryDate: allocation.expiryDate,
           performedBy: storage.get(StorageKeys.CURRENT_EMPLOYEE_ID, 'System'),
           status: 'approved',
         }, true);

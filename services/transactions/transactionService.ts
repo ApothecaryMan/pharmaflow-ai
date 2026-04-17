@@ -101,18 +101,42 @@ export const transactionService = {
 
         stockMutations.push({ id: item.id, quantity: -unitsToDeduct });
         
-        movementEntries.push({
-          drugId: item.id,
-          drugName: item.name,
-          branchId: activeBranchId,
-          type: 'sale',
-          quantity: -unitsToDeduct,
-          previousStock: drug?.stock || 0,
-          newStock: (drug?.stock || 0) - unitsToDeduct,
-          reason: 'Sale Transaction',
-          performedBy: currentEmployeeId,
-          status: 'approved',
-        });
+        // Log movements per batch allocation for precise tracking
+        if (alloc?.allocations && alloc.allocations.length > 0) {
+          let runningStock = drug?.stock || 0;
+          alloc.allocations.forEach(a => {
+            movementEntries.push({
+              drugId: item.id,
+              drugName: item.name,
+              branchId: activeBranchId,
+              type: 'sale',
+              quantity: -a.quantity,
+              previousStock: runningStock,
+              newStock: runningStock - a.quantity,
+              reason: 'Sale Transaction',
+              performedBy: currentEmployeeId,
+              status: 'approved',
+              batchId: a.batchId,
+              expiryDate: a.expiryDate
+            });
+            runningStock -= a.quantity;
+          });
+        } else {
+          // Fallback if no specific batch was allocated (should not happen with strict FEFO)
+          movementEntries.push({
+            drugId: item.id,
+            drugName: item.name,
+            branchId: activeBranchId,
+            type: 'sale',
+            quantity: -unitsToDeduct,
+            previousStock: drug?.stock || 0,
+            newStock: (drug?.stock || 0) - unitsToDeduct,
+            reason: 'Sale Transaction',
+            performedBy: currentEmployeeId,
+            status: 'approved',
+            expiryDate: drug?.expiryDate // Use snapshot as fallback
+          });
+        }
 
         return {
           ...item,
@@ -265,6 +289,8 @@ export const transactionService = {
           newStock: (drug?.stock || 0) + unitsToRestore,
           reason: `Return for Sale #${sale.serialId}`,
           referenceId: returnData.id,
+          batchId: saleItem.batchAllocations?.[0]?.batchId,
+          expiryDate: saleItem.expiryDate || saleItem.batchAllocations?.[0]?.expiryDate,
           performedBy: currentEmployeeId,
           status: 'approved',
         });

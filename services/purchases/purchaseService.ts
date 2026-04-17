@@ -141,6 +141,7 @@ export const createPurchaseService = (): PurchaseService => ({
         newStock: currentStock + unitsToAdd,
         referenceId: purchase.id,
         batchId: batch.id,
+        expiryDate: batch.expiryDate,
         performedBy: approverName,
         status: 'approved',
       }, true);
