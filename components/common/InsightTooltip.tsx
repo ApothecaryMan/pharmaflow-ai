@@ -103,7 +103,7 @@ export const CurrencyValue: React.FC<{
   const { amount, symbol } = formatCompactCurrencyParts(
     val,
     'EGP',
-    currentLang === 'AR' ? 'ar-EG' : 'en-US'
+    currentLang === 'AR' ? 'ar-eg' : 'en-us'
   );
 
   return (

@@ -37,6 +37,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { useRealTimeSalesAnalytics } from './useRealTimeSalesAnalytics';
 import { useSettings } from '../../context';
+import { formatCurrency, formatCurrencyParts, getCurrencySymbol } from '../../utils/currency';
 import { getDisplayName } from '../../utils/drugDisplayName';
 import { CARD_BASE } from '../../utils/themeStyles';
 
@@ -292,7 +293,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             icon='payments'
             iconColor='primary'
             type='currency'
-            currencyLabel='$'
+            currencyLabel={getCurrencySymbol('EGP', language.toLowerCase())}
             trend={todayStats.revenueChange > 0 ? 'up' : 'neutral'}
             trendValue={`${todayStats.revenueChange > 0 ? '+' : ''}${Math.abs(todayStats.revenueChange).toFixed(1)}%`}
             iconTooltip={revenueTooltip}
@@ -312,7 +313,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             value={todayStats.transactions}
             icon='receipt_long'
             iconColor='blue'
-            subValue={`$${todayStats.avgTransactionValue.toFixed(0)} ${t.realTimeSales?.avg || 'avg'}`}
+            subValue={`${formatCurrency(todayStats.avgTransactionValue, 'EGP', language === 'AR' ? 'ar-eg' : 'en-us', 0)} ${t.realTimeSales?.avg || 'avg'}`}
             iconTooltip={transactionsTooltip}
           />
         </div>
@@ -436,7 +437,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                           {sale.items.length}
                         </td>
                         <td className='py-3 px-2 text-sm font-bold text-gray-900 dark:text-gray-100'>
-                          ${sale.total.toFixed(2)}
+                          {formatCurrency(sale.total, 'EGP', language === 'AR' ? 'ar-eg' : 'en-us')}
                         </td>
                         <td className='py-3 px-2 text-xs'>
                           <span
@@ -496,7 +497,17 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 {t.realTimeSales?.salesRate || 'Sales Rate'}
               </p>
               <div className='text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center'>
-                <AnimatedCounter value={todayStats.hourlySalesRate} prefix='$' fractionDigits={0} />
+                {(() => {
+                  const { amount, symbol } = formatCurrencyParts(todayStats.hourlySalesRate, 'EGP', language === 'AR' ? 'ar-eg' : 'en-us', 0);
+                  return (
+                    <AnimatedCounter 
+                      value={todayStats.hourlySalesRate} 
+                      prefix={language === 'EN' ? '' : symbol} 
+                      suffix={language === 'EN' ? symbol : ''} 
+                      fractionDigits={0} 
+                    />
+                  );
+                })()}
                 <span className='text-[10px] text-gray-400 font-normal ms-1'>/{t.realTimeSales?.perHour || 'hr'}</span>
               </div>
             </div>
@@ -617,12 +628,17 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   </div>
                   <div className='text-right shrink-0'>
                     <div className='text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center justify-end gap-2'>
-                      <AnimatedCounter
-                        value={p.revenue}
-                        prefix={language === 'EN' ? '$' : ''}
-                        suffix={language === 'AR' ? '$' : ''}
-                        fractionDigits={0}
-                      />
+                      {(() => {
+                        const { symbol } = formatCurrencyParts(p.revenue, 'EGP', language === 'AR' ? 'ar-eg' : 'en-us', 0);
+                        return (
+                          <AnimatedCounter
+                            value={p.revenue}
+                            prefix={language === 'EN' ? '' : symbol}
+                            suffix={language === 'EN' ? symbol : ''}
+                            fractionDigits={0}
+                          />
+                        );
+                      })()}
                       <span className='text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md whitespace-nowrap'>
                         {p.qty}
                       </span>
@@ -680,7 +696,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 </Pie>
                 <Tooltip
                   contentStyle={{ borderRadius: '12px' }}
-                  formatter={(value: number) => `${language === 'EN' ? '$' : ''}${value.toFixed(2)}${language === 'AR' ? '$' : ''}`}
+                  formatter={(value: number) => formatCurrency(value, 'EGP', language === 'AR' ? 'ar-eg' : 'en-us')}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -689,7 +705,17 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
               <div className='text-center'>
                 <p className='text-xs text-gray-400'>{t.global?.table?.total || 'Total'}</p>
                 <div className='text-xl font-bold text-gray-800 dark:text-gray-200 flex justify-center'>
-                  <AnimatedCounter value={todayStats.revenue} prefix='$' fractionDigits={0} />
+                  {(() => {
+                    const { symbol } = formatCurrencyParts(todayStats.revenue, 'EGP', language === 'AR' ? 'ar-eg' : 'en-us', 0);
+                    return (
+                      <AnimatedCounter 
+                        value={todayStats.revenue} 
+                        prefix={language === 'EN' ? '' : symbol} 
+                        suffix={language === 'EN' ? symbol : ''} 
+                        fractionDigits={0} 
+                      />
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -802,7 +828,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                                     </p>
                                   </div>
                                   <p className='text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1'>
-                                    ${Number(data.value).toFixed(2)}
+                                    {formatCurrency(Number(data.value), 'EGP', language === 'AR' ? 'ar-eg' : 'en-us')}
                                   </p>
                                 </div>
                               );
@@ -816,12 +842,12 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     <div className='absolute inset-0 flex flex-col items-center justify-center pointer-events-none'>
                       <span className='text-xs text-gray-400 font-medium uppercase'>{t.global?.table?.total || 'Total'}</span>
                       <div className='text-xl font-bold text-gray-800 dark:text-gray-200 flex justify-center'>
-                        <AnimatedCounter
-                          value={chartData.reduce((sum, item) => sum + item.value, 0)}
-                          prefix={language === 'EN' ? '$' : ''}
-                          suffix={language === 'AR' ? '$' : ''}
-                          fractionDigits={0}
-                        />
+                          <AnimatedCounter
+                            value={chartData.reduce((sum, item) => sum + item.value, 0)}
+                            prefix={language === 'AR' ? getCurrencySymbol('EGP', 'ar') : ''}
+                            suffix={language === 'EN' ? getCurrencySymbol('EGP', 'en') : ''}
+                            fractionDigits={0}
+                          />
                       </div>
                     </div>
                   </div>
@@ -839,7 +865,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                           </span>
                         </div>
                         <p className='text-sm font-bold text-gray-900 dark:text-gray-100 pl-4.5'>
-                          ${item.value.toFixed(2)}
+                          {formatCurrency(item.value, 'EGP', language === 'AR' ? 'ar-eg' : 'en-us')}
                         </p>
                       </div>
                     ))}
@@ -874,22 +900,29 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
               <div>
                 <p className='text-xs text-gray-400 uppercase'>{t.realTimeSales?.returnValue || 'Value'}</p>
                 <div className='text-lg font-bold text-rose-600 flex justify-center'>
-                  <AnimatedCounter
-                    value={todayStats.todaysSales
-                      .filter((s) => s.hasReturns)
-                      .reduce((sum, s) => {
-                        let returnValue = 0;
-                        if (s.itemReturnedQuantities) {
-                          s.items.forEach((item) => {
-                            const returnedQty = s.itemReturnedQuantities?.[item.id] || 0;
-                            returnValue += returnedQty * (item.price || 0);
-                          });
-                        }
-                        return sum + returnValue;
-                      }, 0)}
-                    prefix='$'
-                    fractionDigits={2}
-                  />
+                    {(() => {
+                      const amount = todayStats.todaysSales
+                        .filter((s) => s.hasReturns)
+                        .reduce((sum, s) => {
+                          let returnValue = 0;
+                          if (s.itemReturnedQuantities) {
+                            s.items.forEach((item) => {
+                              const returnedQty = s.itemReturnedQuantities?.[item.id] || 0;
+                              returnValue += returnedQty * (item.price || 0);
+                            });
+                          }
+                          return sum + returnValue;
+                        }, 0);
+                      const { symbol } = formatCurrencyParts(amount, 'EGP', language === 'AR' ? 'ar-eg' : 'en-us', 0);
+                      return (
+                        <AnimatedCounter
+                          value={amount}
+                          prefix={language === 'EN' ? '' : symbol}
+                          suffix={language === 'EN' ? symbol : ''}
+                          fractionDigits={2}
+                        />
+                      );
+                    })()}
                 </div>
               </div>
               <div>
@@ -956,7 +989,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tickFormatter={(val) => `${language === 'EN' ? '$' : ''}${val}${language === 'AR' ? '$' : ''}`}
+                    tickFormatter={(val) => formatCurrency(val, 'EGP', language === 'AR' ? 'ar-eg' : 'en-us', 0)}
                     tick={{ fontSize: 12, fill: '#94a3b8' }}
                   />
                   <Tooltip
@@ -974,9 +1007,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                             <p className='text-xs font-bold text-gray-500 dark:text-gray-400 mb-1'>
                               {timeLabel}
                             </p>
-                            <p className='text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1'>
-                              ${Number(payload[0].value).toFixed(2)}
-                            </p>
+                             <p className='text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1'>
+                               {formatCurrency(Number(payload[0].value), 'EGP', language === 'AR' ? 'ar-eg' : 'en-us')}
+                             </p>
                           </div>
                         );
                       }
@@ -1032,7 +1065,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   <td className='p-4 text-sm'>{sale.items.length} {t.realTimeSales?.items || 'items'}</td>
                   <td className='p-4 text-sm'>{sale.customerName}</td>
                   <td className='p-4 text-sm'>{getPaymentMethodLabel(sale.paymentMethod)}</td>
-                  <td className='p-4 text-sm font-bold text-end'>{language === 'EN' ? '$' : ''}{sale.total.toFixed(2)}{language === 'AR' ? '$' : ''}</td>
+                  <td className='p-4 text-sm font-bold text-end'>
+                    {formatCurrency(sale.total, 'EGP', language === 'AR' ? 'ar-eg' : 'en-us')}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1080,7 +1115,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   <td className='p-4 text-sm font-bold'>{getDisplayName(p, textTransform)}</td>
                   <td className='p-4 text-sm text-gray-500'>{t.realTimeSales?.general || 'General'}</td>
                   <td className='p-4 text-sm font-bold text-end'>{p.qty}</td>
-                  <td className='p-4 text-sm font-bold text-end'>{language === 'EN' ? '$' : ''}{p.revenue.toFixed(2)}{language === 'AR' ? '$' : ''}</td>
+                  <td className='p-4 text-sm font-bold text-end'>
+                    {formatCurrency(p.revenue, 'EGP', language === 'AR' ? 'ar-eg' : 'en-us')}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1129,7 +1166,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 <div className='text-right'>
                   <p className='text-xs text-gray-500 mb-0.5'>{t.realTimeSales?.todaySales || "Today's Sales"}</p>
                   <p className='font-bold text-lg'>
-                    {id <= 3 ? `${language === 'EN' ? '$' : ''}${(Math.random() * 1000).toFixed(2)}${language === 'AR' ? '$' : ''}` : '-'}
+                    {id <= 3 ? (
+                      formatCurrency(Math.random() * 1000, 'EGP', language === 'AR' ? 'ar-eg' : 'en-us')
+                    ) : '-'}
                   </p>
                 </div>
               </div>
