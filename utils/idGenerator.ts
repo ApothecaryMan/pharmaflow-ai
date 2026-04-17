@@ -34,6 +34,8 @@ export type EntityType =
   | 'notification'
   | 'barcodes'
   | 'receipts'
+  | 'branches'
+  | 'branches-code'
   | 'generic';
 
 // Sequence Map Interface
@@ -140,6 +142,10 @@ const healSequence = (type: EntityType, branchCode: string, currentSequence: num
       case 'receipts':
         data = filterByBranch(storage.get(StorageKeys.RECEIPT_TEMPLATES, []));
         break;
+      case 'branches':
+      case 'branches-code':
+        data = storage.get<any[]>(StorageKeys.BRANCHES, []).map(b => ({ ...b, id: b.id }));
+        break;
     }
 
     maxExisting = Math.max(maxExisting, findMaxSequence(data));
@@ -180,8 +186,22 @@ export const idGenerator = {
     if (type === 'generic') {
       effectiveBranchCode = GLOBAL_PREFIX;
     } else if (!effectiveBranchCode) {
+      // 1. Try unified settings
       const settings = storage.get<Partial<AppSettings>>(StorageKeys.SETTINGS, {});
-      effectiveBranchCode = settings.branchCode || settings.activeBranchId?.slice(0, 4) || 'XX';
+      effectiveBranchCode = settings.branchCode;
+      
+      // 2. Fallback to active branch ID and look up in branches list
+      if (!effectiveBranchCode) {
+        const activeBranchId = storage.get<string>('pharma_active_branch_id', settings.activeBranchId || '');
+        if (activeBranchId) {
+          const branches = storage.get<any[]>(StorageKeys.BRANCHES, []);
+          const matchedBranch = branches.find(b => b.id === activeBranchId);
+          effectiveBranchCode = matchedBranch?.code;
+        }
+      }
+      
+      // 3. Final safety default
+      effectiveBranchCode = effectiveBranchCode || 'XX';
     }
 
     // 2. Get current sequences for this specific branch

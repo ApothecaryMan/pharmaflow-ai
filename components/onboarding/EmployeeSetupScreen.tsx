@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SmartInput, SmartPasswordInput } from '../common/SmartInputs';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { useSettings } from '../../context';
@@ -24,12 +24,8 @@ interface EmployeeSetupScreenProps {
 
 export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ language, color, onBack }) => {
   const { theme } = useSettings();
-  // Read active branch synchronously — this screen renders outside DataProvider
-  // Read active branch synchronously — this screen renders outside DataProvider
-  const activeBranch = branchService.getActive() || branchService.getAll()[0];
-  const activeBranchId = activeBranch?.id || branchService.getAll()[0]?.id || '';
-  
   const activeColor = theme.hex || color;
+  const [activeBranchId, setActiveBranchId] = useState<string>('');
 
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -42,6 +38,21 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Fetch active branch on mount
+  useEffect(() => {
+    const fetchBranch = async () => {
+      let branch = await branchService.getActive();
+      if (!branch) {
+        const all = await branchService.getAll();
+        branch = all[0];
+      }
+      if (branch) {
+        setActiveBranchId(branch.id);
+      }
+    };
+    fetchBranch();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

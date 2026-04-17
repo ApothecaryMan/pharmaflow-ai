@@ -47,12 +47,9 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   currentEmployeeId,
 }) => {
   const { getVerifiedDate } = useStatusBar();
-  const { activeBranchId } = useData();
+  const { activeBranchId, branches } = useData();
   const { theme: currentTheme } = useSettings();
   const [showAllBranches, setShowAllBranches] = useState(false);
-  
-  const branches = useMemo(() => branchService.getAll(), []);
-  
   const currentUser = authService.getCurrentUserSync();
   const isSuperAdmin =
     currentUser?.username === import.meta.env.VITE_SUPER_USER || permissionsService.isOrgAdmin();

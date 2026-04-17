@@ -15,7 +15,7 @@ import { permissionsService } from '../../services/auth/permissions';
  */
 export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }) => {
   const t = TRANSLATIONS[language];
-  const { employees, activeBranchId } = useData();
+  const { employees, activeBranchId, branches } = useData();
   const { theme: currentTheme } = useSettings();
   const [showAllBranches, setShowAllBranches] = useState(false);
 
@@ -304,7 +304,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
         header: t.loginAudit.headers.branch,
         cell: (info) => {
           const id = String(info.getValue());
-          const branch = branchService.getById(id);
+          const branch = branches.find(b => b.id === id);
           return (
             <span className='font-semibold text-gray-800 dark:text-gray-200'>
               {branch?.name || id}

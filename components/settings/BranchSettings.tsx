@@ -12,6 +12,7 @@ import { MaterialTabs } from '../common/MaterialTabs';
 import { SmartInput, SmartPhoneInput } from '../common/SmartInputs';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { LocationSelector } from '../common/LocationSelector';
+import { useAlert } from '../../context';
 
 interface BranchSettingsProps {
   language: 'EN' | 'AR';
@@ -118,6 +119,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
   const [employeeView, setEmployeeView] = useState<'all' | 'selected'>('all');
   const [modalView, setModalView] = useState<'general' | 'employees'>('general');
   const [error, setError] = useState<string | null>(null);
+  const { success, error: showAlertError } = useAlert();
 
   const loadData = useCallback(async () => {
     try {
@@ -145,7 +147,11 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
         .map(e => e.id);
       setSelectedEmployees(branchEmployees);
     } else {
-      setEditingBranch({ name: '', code: '', status: 'active' });
+      setEditingBranch({ 
+        name: '', 
+        code: branchService.generateCode(), 
+        status: 'active' 
+      });
       setSelectedEmployees([]);
     }
     setModalView('general');
@@ -163,7 +169,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       let savedBranch: Branch;
       if (editingBranch.id) {
         if (editingBranch.id === activeBranchId && editingBranch.status === 'inactive') {
-          alert(language === 'AR' 
+          showAlertError(language === 'AR' 
             ? 'لا يمكن الغاء تفعيل الفرع الحالي النشط' 
             : 'Cannot deactivate the currently active branch');
           setIsSubmitting(false);
@@ -172,45 +178,25 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
         savedBranch = await branchService.update(editingBranch.id, editingBranch);
       } else {
         const activeOrgId = orgService.getActiveOrgId();
-        if (!activeOrgId) {
-          throw new Error("No active organization found");
-        }
+        if (!activeOrgId) throw new Error("No active organization found");
+        
         savedBranch = await branchService.create({
           ...editingBranch,
           orgId: activeOrgId
         } as Omit<Branch, 'id' | 'createdAt' | 'updatedAt'>);
       }
 
-      const allEmployees = await employeeService.getAll('ALL');
-      const updatedEmployees = allEmployees.map(emp => {
-        if (selectedEmployees.includes(emp.id)) {
-          // If the employee is selected for this branch, update branchId
-          return { ...emp, branchId: savedBranch.id };
-        } else if (emp.branchId === savedBranch.id) {
-          // If they WERE in this branch but are NO LONGER selected, 
-          // we need to set them to some default or leave them unassigned.
-          // However, we shouldn't completely orphan them if they only have 1 branchId limit.
-          // Actually, unassigning them by removing their branchId IS correct for a 1-to-M relationship 
-          // if they are removed from the UI checkbox. But setting it to '' causes bugs. 
-          // Let's set it to 'UNASSIGNED' or keep logic as is but handle it gracefully elsewhere.
-          return { ...emp, branchId: 'UNASSIGNED' };
-        }
-        return emp;
-      }).filter(emp => {
-        const original = allEmployees.find(e => e.id === emp.id);
-        return original?.branchId !== emp.branchId;
-      });
-
-      if (updatedEmployees.length > 0) {
-        await employeeService.save(updatedEmployees, 'ALL');
-      }
+      // Move employee assignment logic to service
+      await branchService.assignEmployees(savedBranch.id, selectedEmployees);
       
+      success(language === 'AR' ? 'تم حفظ بيانات الفرع بنجاح' : 'Branch data saved successfully');
       setIsModalOpen(false);
       await loadData();
       await refreshAll();
     } catch (err: any) {
       console.error("Failed to save branch:", err);
       setError(err.message || "Failed to save branch");
+      showAlertError(err.message || "Failed to save branch");
     } finally {
       setIsSubmitting(false);
     }
@@ -227,7 +213,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
 
   const handleDelete = async (id: string, name: string) => {
     if (id === activeBranchId) {
-      alert(language === 'AR' ? 'لا يمكن الغاء تفعيل الفرع الحالي النشط' : 'Cannot deactivate the currently active branch');
+      showAlertError(language === 'AR' ? 'لا يمكن الغاء تفعيل الفرع الحالي النشط' : 'Cannot deactivate the currently active branch');
       return;
     }
 
@@ -235,8 +221,11 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       setIsSubmitting(true);
       try {
         await branchService.update(id, { status: 'inactive' });
+        success(language === 'AR' ? 'تم إلغاء تفعيل الفرع' : 'Branch deactivated');
         await loadData();
         await refreshAll();
+      } catch (err: any) {
+        showAlertError(err.message || "Failed to delete branch");
       } finally {
         setIsSubmitting(false);
       }
@@ -260,9 +249,10 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
         <SmartInput
           type="text"
           dir="ltr"
+          readOnly
           value={editingBranch?.code || ''}
-          onChange={(e) => setEditingBranch({ ...editingBranch!, code: e.target.value })}
           placeholder="CODE-000"
+          className="opacity-60 cursor-not-allowed"
         />
       </FormField>
       

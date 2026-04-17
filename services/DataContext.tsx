@@ -53,6 +53,7 @@ export interface DataState {
   employees: Employee[];
   currentEmployee: Employee | null;
   batches: StockBatch[];
+  branches: any[];
   isLoading: boolean;
   syncStatus: SyncStatus;
 }
@@ -152,6 +153,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   const [employees, setEmployeesState] = useState<Employee[]>([]);
   const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null);
   const [batches, setBatchesState] = useState<StockBatch[]>([]);
+  const [branches, setBranches] = useState<any[]>([]);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
 
   // Compute inventory from raw data and batches
@@ -187,7 +189,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
 
         const defaultOrgId = urlOrgId || orgService.getActiveOrgId() || 'org_1';
         
-        const allBranches = branchService.getAll(defaultOrgId);
+        const allBranches = await branchService.getAll(defaultOrgId);
         
         // Resolve URL branch code to ID
         const matchedBranch = allBranches.find(b => b.code === urlBranchCode || b.id === urlBranchCode);
@@ -197,7 +199,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
           return;
         }
 
-        const activeBranch = branchService.getActive();
+        const activeBranch = await branchService.getActive();
         const session = await authService.getCurrentUser();
         
         // Dynamic Resolution: Priority: URL > session.branchId > saved active branch > first branch
@@ -208,7 +210,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
           console.warn(`Invalid branch ID ${finalBranchId} in session. Snapping to first available branch: ${allBranches[0].id}`);
           finalBranchId = allBranches[0].id;
           // Sync back to storage if possible
-          branchService.setActive(finalBranchId);
+          await branchService.setActive(finalBranchId);
           
           // PHASE 7 FIX: Sync session so audit events use the correct branchId
           const rawSession = localStorage.getItem('branch_pilot_session');
@@ -223,6 +225,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
           }
         }
 
+        setBranches(allBranches);
         setActiveBranchId(finalBranchId);
         setActiveOrgId(defaultOrgId);
 
@@ -449,7 +452,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
   );
 
   const syncBatches = useCallback(async () => {
-    const bat = batchService.getAllBatches(activeBranchId);
+    const bat = await batchService.getAllBatches(activeBranchId);
     setBatchesState(bat);
   }, [activeBranchId]);
 
@@ -589,6 +592,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         } catch { /* ignore */ }
       }
 
+      const allBranches = await branchService.getAll(activeOrgId);
+      setBranches(allBranches);
       setEmployeesState(emp);
     } catch (error) {
       console.error('Error refreshing data:', error);
@@ -606,7 +611,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         const previousBranchId = activeBranchId;
         
         // Persist new branch selection
-        branchService.setActive(branchId);
+        await branchService.setActive(branchId);
         
         // Update local state
         setActiveBranchId(branchId);
@@ -618,8 +623,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         if (previousBranchId && previousBranchId !== branchId) {
           const user = authService.getCurrentUserSync();
           if (user) {
-            const prevBranch = branchService.getById(previousBranchId);
-            const newBranch = branchService.getById(branchId);
+          const prevBranch = await branchService.getById(previousBranchId);
+          const newBranch = await branchService.getById(branchId);
             authService.logAuditEvent({
               username: user.username,
               role: user.role,
@@ -629,9 +634,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({
               employeeId: user.employeeId,
             });
             
-            // Also update the session so it reflects the new branch
-            const updatedSession = { ...user, branchId };
-            localStorage.setItem('branch_pilot_session', JSON.stringify(updatedSession));
+             // Also update the session so it reflects the new branch
+             authService.updateSession({ branchId });
           }
         }
 
@@ -656,7 +660,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         setActiveOrgId(orgId);
         
         // Pick first branch of new org
-        const branches = branchService.getAll(orgId);
+        const branches = await branchService.getAll(orgId);
         if (branches.length > 0) {
           await switchBranch(branches[0].id);
         } else {
@@ -696,6 +700,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       employees,
       currentEmployee,
       batches,
+      branches,
       isLoading,
       syncStatus,
       // Actions
@@ -744,6 +749,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       customers,
       employees,
       currentEmployee,
+      branches,
       isLoading,
       activeBranchId,
       setInventory,

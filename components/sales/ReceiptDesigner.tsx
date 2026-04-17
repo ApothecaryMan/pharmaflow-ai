@@ -11,6 +11,7 @@ import { generateInvoiceHTML, type InvoiceTemplateOptions } from '../sales/Invoi
 import { generateShiftReceiptHTML } from './ShiftReceiptTemplate';
 import { useShift } from '../../hooks/useShift';
 import { idGenerator } from '../../utils/idGenerator';
+import { useData } from '../../services/DataContext';
 
 interface ReceiptDesignerProps {
   color: string;
@@ -19,6 +20,8 @@ interface ReceiptDesignerProps {
 }
 
 export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, language }) => {
+  const { branches, activeBranchId } = useData();
+  const activeBranch = useMemo(() => branches?.find((b: any) => b.id === activeBranchId), [branches, activeBranchId]);
   const { getVerifiedDate } = useStatusBar();
   // Track if component has mounted (to avoid overwriting localStorage on first render)
   const [hasMounted, setHasMounted] = useState(false);
@@ -40,53 +43,74 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
     options: InvoiceTemplateOptions;
   }
 
-  // Define default options based on language
-  const defaultOptions: InvoiceTemplateOptions = {
-    storeName: 'ZINC',
-    storeSubtitle: 'Premium Care Center',
-    headerAddress: language === 'AR' ? '١٢٣ ابوحمص' : '123 Abu Hommos',
-    headerArea: language === 'AR' ? 'مدينة نصر' : 'Nasr City',
-    headerHotline: '19099',
-    footerMessage: 'Thank you for your visit!',
-    footerInquiry: 'For questions, call 19099',
-    showAddressBox: false,
-    termsCondition:
-      language === 'AR'
-        ? 'ادوية التلاجة ومستحضرات التجميل وشرايط الدواء لا ترجع<br>استرجاع الادوية والاجهزة السليمة خلال 14 يوم'
-        : 'Refrigerated medicines & cosmetics are non-refundable<br>Returns within 14 days',
-    language: language,
-  };
+    // Define default options based on language and active branch
+    const defaultOptions: InvoiceTemplateOptions = {
+        storeName: activeBranch?.name || 'ZINC',
+        storeSubtitle: 'Premium Care Center',
+        headerAddress: activeBranch?.address || (language === 'AR' ? '١٢٣ ابوحمص' : '123 Abu Hommos'),
+        headerArea: activeBranch?.area || (language === 'AR' ? 'مدينة نصر' : 'Nasr City'),
+        headerHotline: activeBranch?.phone || '19099',
+        footerMessage: 'Thank you for your visit!',
+        footerInquiry: 'For questions, call 19099',
+        showAddressBox: false,
+        termsCondition:
+        language === 'AR'
+            ? 'ادوية التلاجة ومستحضرات التجميل وشرايط الدواء لا ترجع<br>استرجاع الادوية والاجهزة السليمة خلال 14 يوم'
+            : 'Refrigerated medicines & cosmetics are non-refundable<br>Returns within 14 days',
+        language: language,
+    };
 
-  const [templates, setTemplates] = useState<SavedTemplate[]>(() => {
+  // Branch-scoped storage keys
+  const getTemplateKey = (key: string) => `receipt_designer_${activeBranchId}_${key}`;
+
+  const [templates, setTemplates] = useState<SavedTemplate[]>([]);
+  const [activeTemplateId, setActiveTemplateId] = useState<string>('');
+
+  // Initial load and sync when branch changes
+  useEffect(() => {
     try {
-      const saved = storage.get<SavedTemplate[]>(StorageKeys.RECEIPT_TEMPLATES, []);
-      if (saved && saved.length > 0) {
-        return saved;
+      const savedTemplates = storage.get<SavedTemplate[]>(getTemplateKey(StorageKeys.RECEIPT_TEMPLATES), []);
+      let activeId = '';
+      let templatesToSet = [];
+
+      if (savedTemplates.length > 0) {
+        templatesToSet = savedTemplates;
+        // Find saved active or default
+        const savedActive = storage.get<string | null>(getTemplateKey(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID), null);
+        if (savedActive && savedTemplates.some(t => t.id === savedActive)) {
+          activeId = savedActive;
+        } else {
+          const def = savedTemplates.find((t) => t.isDefault);
+          activeId = (def ? def.id : savedTemplates[0].id);
+        }
+      } else {
+        // Fallback to default
+        const initial = [{
+          id: 'default',
+          name: 'Standard Template',
+          isDefault: true,
+          options: defaultOptions,
+        }];
+        templatesToSet = initial;
+        activeId = 'default';
+      }
+
+      setTemplates(templatesToSet);
+      setActiveTemplateId(activeId);
+      
+      const activeTemplate = templatesToSet.find(t => t.id === activeId);
+      if (activeTemplate) {
+        setOptions(activeTemplate.options);
+        setLastSavedOptions(JSON.stringify(activeTemplate.options));
       }
     } catch (e) {
       console.error('Failed to load templates', e);
     }
-    // Fallback to a single default template if none loaded or error
-    return [
-      {
-        id: 'default',
-        name: 'Standard Template',
-        isDefault: true,
-        options: defaultOptions,
-      },
-    ];
-  });
-
-  const [activeTemplateId, setActiveTemplateId] = useState<string>(() => {
-    const savedActive = storage.get<string | null>(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, null);
-    if (savedActive) return savedActive;
-    const def = templates.find((t) => t.isDefault);
-    return def ? def.id : templates[0].id;
-  });
+  }, [activeBranchId]);
 
   const [options, setOptions] = useState<InvoiceTemplateOptions>(() => {
     const active = templates.find((t) => t.id === activeTemplateId) || templates[0];
-    return active.options;
+    return active ? active.options : defaultOptions;
   });
   const [isAddingTemplate, setIsAddingTemplate] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
@@ -98,16 +122,25 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
   const [lastSavedOptions, setLastSavedOptions] = useState<string>(() => JSON.stringify(options));
   const [quotaError, setQuotaError] = useState(false);
 
-  // Persist templates
+  // Handle template selection
+  const handleTemplateSelect = (id: string) => {
+    setActiveTemplateId(id);
+    const template = templates.find((t) => t.id === id);
+    if (template) {
+      setOptions(template.options);
+      setLastSavedOptions(JSON.stringify(template.options));
+    }
+  };
+
+  // Persist templates to branch-scoped storage
   useEffect(() => {
-    if (hasMounted) {
+    if (hasMounted && activeBranchId) {
       try {
-        storage.set(StorageKeys.RECEIPT_TEMPLATES, templates);
-        storage.set(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, activeTemplateId);
-        setQuotaError(false); // Clear error on successful save
+        storage.set(getTemplateKey(StorageKeys.RECEIPT_TEMPLATES), templates);
+        storage.set(getTemplateKey(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID), activeTemplateId);
+        setQuotaError(false);
       } catch (error) {
         console.error('Failed to save settings:', error);
-        // Only alert if it's a quota error to avoid spamming
         if (
           error instanceof DOMException &&
           (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
@@ -116,7 +149,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
         }
       }
     }
-  }, [templates, activeTemplateId, hasMounted]);
+  }, [templates, activeTemplateId, hasMounted, activeBranchId]);
 
   const handleCreateTemplate = () => {
     if (!newTemplateName.trim()) return;
@@ -167,12 +200,6 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
       prev.map((t) => (t.id === isEditingName ? { ...t, name: editingNameValue } : t))
     );
     setIsEditingName(null);
-  };
-
-  const handleSelectTemplate = (template: SavedTemplate) => {
-    setActiveTemplateId(template.id);
-    setOptions(template.options);
-    setLastSavedOptions(JSON.stringify(template.options));
   };
 
   // Auto-save changes to current template (debounced slightly by effect nature or just direct)
@@ -442,7 +469,7 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                     isOpen={isDropdownOpen}
                     onToggle={() => setIsDropdownOpen(!isDropdownOpen)}
                     onSelect={(template) => {
-                      handleSelectTemplate(template);
+                      handleTemplateSelect(template.id);
                       setIsDropdownOpen(false);
                     }}
                     minHeight={38}
@@ -540,8 +567,8 @@ export const ReceiptDesigner: React.FC<ReceiptDesignerProps> = ({ color, t, lang
                 {hasChanges && (
                   <button
                     onClick={() => {
-                      storage.set(StorageKeys.RECEIPT_TEMPLATES, templates);
-                      storage.set(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID, activeTemplateId);
+                      storage.set(getTemplateKey(StorageKeys.RECEIPT_TEMPLATES), templates);
+                      storage.set(getTemplateKey(StorageKeys.RECEIPT_ACTIVE_TEMPLATE_ID), activeTemplateId);
                       setLastSavedOptions(JSON.stringify(options));
                     }}
                     className='w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all border border-emerald-100 dark:border-emerald-800/50 animate-fadeIn'

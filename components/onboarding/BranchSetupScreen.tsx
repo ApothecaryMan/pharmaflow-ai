@@ -59,7 +59,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
     setIsLoading(true);
     try {
       const activeOrgId = orgService.getActiveOrgId() || 'org_1';
-      const newBranch = branchService.create({ 
+      const newBranch = await branchService.create({ 
         name: branchName.trim(), 
         code: branchCode.trim().toUpperCase(), 
         status: 'active',
@@ -69,7 +69,7 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
         area,
         address: streetAddress.trim()
       });
-      branchService.setActive(newBranch.id);
+      await branchService.setActive(newBranch.id);
       await settingsService.setMultiple({ 
         activeBranchId: newBranch.id, 
         branchCode: newBranch.code

@@ -132,6 +132,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
     setEmployees, // Added setEmployees
     batches,
     setBatches,
+    branches,
     isLoading,
     activeBranchId,
     activeOrgId,
@@ -251,7 +252,7 @@ const AuthenticatedContent: React.FC<AuthenticatedContentProps> = ({
   // --- URL Synchronization ---
   React.useEffect(() => {
     if (isAuthenticated && activeOrgId && activeBranchId) {
-      const activeBranch = branchService.getById(activeBranchId);
+      const activeBranch = branches.find(b => b.id === activeBranchId);
       if (activeBranch) {
         const currentHash = window.location.hash;
         const newHash = `#/${activeOrgId}/${activeBranch.code}/${view}`;

@@ -75,11 +75,10 @@ const NavbarComponent: React.FC<NavbarProps> = ({
     developerMode,
   } = useSettings();
 
-  const { activeBranchId, switchBranch, activeOrgId, switchOrg } = useData();
+  const { activeBranchId, switchBranch, activeOrgId, switchOrg, branches } = useData();
   
   const [userOrgs, setUserOrgs] = useState<Organization[]>([]);
   const [activeOrg, setActiveOrg] = useState<Organization | null>(null);
-  const [allBranches, setAllBranches] = useState<any[]>(branchService.getAll(activeOrgId));
   
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showPrinterSettings, setShowPrinterSettings] = useState(false);
@@ -88,7 +87,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
 
   const theme = currentTheme.primary;
 
-  // Load organizations and branches on mount/org switch
+  // Load organizations on mount/org switch
   useEffect(() => {
     const loadOrgContext = async () => {
       const currentUser = authService.getCurrentUserSync();
@@ -97,17 +96,12 @@ const NavbarComponent: React.FC<NavbarProps> = ({
         setUserOrgs(orgs);
         const current = orgs.find(o => o.id === activeOrgId) || orgs[0];
         setActiveOrg(current);
-        
-        // Filter branches by current org
-        if (activeOrgId) {
-          setAllBranches(branchService.getAll(activeOrgId));
-        }
       }
     };
     loadOrgContext();
   }, [activeOrgId]);
 
-  const activeBranch = allBranches.find(b => b.id === activeBranchId) || allBranches[0];
+  const activeBranch = branches.find(b => b.id === activeBranchId) || branches[0];
   const profileRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
@@ -586,23 +580,18 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                     </button>
                   </div>
 
-                  {allBranches.length > 1 ? (
+                  {branches.length > 1 ? (
                     <div className='space-y-1'>
-                      {allBranches.map((branch) => (
+                      {branches.map((branch) => (
                         <button
                           key={branch.id}
                           onClick={async () => {
                             await switchBranch(branch.id);
-                            // Super Admin stays logged in across branches
-                            if (currentEmployeeId === 'SUPER-ADMIN') {
-                              // Update session branchId to the new branch
-                              const stored = localStorage.getItem('branch_pilot_session');
-                              if (stored) {
-                                const session = JSON.parse(stored);
-                                session.branchId = branch.id;
-                                localStorage.setItem('branch_pilot_session', JSON.stringify(session));
-                              }
-                            } else if (setCurrentEmployeeId) {
+                             // Super Admin stays logged in across branches
+                             if (currentEmployeeId === 'SUPER-ADMIN') {
+                               // Update session branchId to the new branch
+                               authService.updateSession({ branchId: branch.id });
+                             } else if (setCurrentEmployeeId) {
                               setCurrentEmployeeId(null);
                             }
                             setShowProfileMenu(false);

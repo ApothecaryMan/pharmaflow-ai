@@ -43,7 +43,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
 
   // Use the shared shift hook
   const { currentShift, shifts, isLoading, startShift, endShift, addTransaction } = useShift();
-  const { purchases, purchaseReturns, sales, activeBranchId } = useData();
+  const { purchases, purchaseReturns, sales, activeBranchId, branches } = useData();
 
   // Local UI State
   const [modalMode, setModalMode] = useState<'open' | 'close' | 'in' | 'out' | null>(null);
@@ -292,7 +292,7 @@ export const CashRegister: React.FC<CashRegisterProps> = ({
 
 
 
-    const activeBranch = branchService.getById(activeBranchId);
+    const activeBranch = branches.find(b => b.id === activeBranchId);
 
     const newShift: Shift = {
       id: newShiftId,

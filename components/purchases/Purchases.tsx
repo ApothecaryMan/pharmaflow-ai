@@ -97,33 +97,31 @@ export const Purchases: React.FC<PurchasesProps> = ({
     return `${hour12}:${minuteStr} ${period}`;
   };
 
-  // Initialize from localStorage
-  const [cart, setCart] = useState<PurchaseItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('purchases_cart_items');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
+  // --- Dynamic Storage Keys ---
+  const getCartKey = (key: string) => `purchases_cart_${activeBranchId}_${key}`;
 
-  const [selectedSupplierId, setSelectedSupplierId] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('purchases_cart_supplier') || '';
-    }
-    return '';
-  });
+  // Initialize from branch-scoped localStorage
+  const [cart, setCart] = useState<PurchaseItem[]>([]);
+  const [selectedSupplierId, setSelectedSupplierId] = useState('');
+  const [selectedCartIndex, setSelectedCartIndex] = useState(-1);
+
+  // Sync state when branch changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const savedCart = localStorage.getItem(getCartKey('items'));
+    const savedSupplier = localStorage.getItem(getCartKey('supplier'));
+    const savedSelected = localStorage.getItem(getCartKey('selected'));
+
+    setCart(savedCart ? JSON.parse(savedCart) : []);
+    setSelectedSupplierId(savedSupplier || '');
+    setSelectedCartIndex(savedSelected ? parseInt(savedSelected, 10) : -1);
+  }, [activeBranchId]);
+
   const [isSupplierOpen, setIsSupplierOpen] = useState(false);
-
   const [focusedInput, setFocusedInput] = useState<{ id: string; field: string } | null>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedCartIndex, setSelectedCartIndex] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('purchases_cart_selected');
-      return saved ? parseInt(saved, 10) : -1;
-    }
-    return -1;
-  });
   const [taxRate, setTaxRate] = useState(14); // Default 14%, loaded from settings
 
   const purchaseFilterConfigs: FilterConfig[] = useMemo(() => [
@@ -146,6 +144,14 @@ export const Purchases: React.FC<PurchasesProps> = ({
 
   // Sound effects
   const { playBeep } = usePosSounds();
+
+  // Save to branch-scoped localStorage when cart changes
+  useEffect(() => {
+    if (typeof window === 'undefined' || !activeBranchId) return;
+    localStorage.setItem(getCartKey('items'), JSON.stringify(cart));
+    localStorage.setItem(getCartKey('supplier'), selectedSupplierId);
+    localStorage.setItem(getCartKey('selected'), selectedCartIndex.toString());
+  }, [cart, selectedSupplierId, selectedCartIndex, activeBranchId]);
 
   // Refs for keyboard navigation
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
@@ -562,28 +568,24 @@ export const Purchases: React.FC<PurchasesProps> = ({
     },
   });
 
-  // Sidebar Resize Logic with localStorage persistence
+  // Sidebar Resize Logic with branch-scoped persistence
   const [sidebarWidth, setSidebarWidth] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('purchases_cart_width');
-      return saved ? parseInt(saved) : 900; // Default lg:w-96 is 24rem = 384px
+    if (typeof window !== 'undefined' && activeBranchId) {
+      const saved = localStorage.getItem(`purchases_cart_${activeBranchId}_width`);
+      return saved ? parseInt(saved) : 900;
     }
     return 900;
   });
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef(false);
 
-  // Save sidebar width to localStorage
+  // Save sidebar width to branch-scoped localStorage
   useEffect(() => {
-    localStorage.setItem('purchases_cart_width', sidebarWidth.toString());
-  }, [sidebarWidth]);
+    if (activeBranchId) {
+      localStorage.setItem(`purchases_cart_${activeBranchId}_width`, sidebarWidth.toString());
+    }
+  }, [sidebarWidth, activeBranchId]);
 
-  // Persist Cart, Supplier, and Selected Index
-  useEffect(() => {
-    localStorage.setItem('purchases_cart_items', JSON.stringify(cart));
-    localStorage.setItem('purchases_cart_supplier', selectedSupplierId);
-    localStorage.setItem('purchases_cart_selected', selectedCartIndex.toString());
-  }, [cart, selectedSupplierId, selectedCartIndex]);
 
   // Load tax rate from settings
   useEffect(() => {

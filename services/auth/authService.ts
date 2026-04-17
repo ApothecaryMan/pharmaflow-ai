@@ -106,11 +106,12 @@ const ensureSuperAdmin = async (): Promise<void> => {
       let activeBranchId = 'B1'; // Minimum fallback
       try {
         const { branchService } = await import('../branchService');
-        const activeBranch = branchService.getActive();
+        const activeBranch = await branchService.getActive();
         if (activeBranch) {
           activeBranchId = activeBranch.id;
         } else {
-          const firstBranch = branchService.getAll()[0];
+          const all = await branchService.getAll();
+          const firstBranch = all[0];
           if (firstBranch) activeBranchId = firstBranch.id;
         }
       } catch { /* ignore - use fallback */ }
@@ -179,6 +180,19 @@ export const authService = {
   },
 
   /**
+   * Update current session with new metadata
+   */
+  updateSession: (updates: Partial<UserSession>): UserSession | null => {
+    const current = authService.getCurrentUserSync();
+    if (current) {
+      const updated = { ...current, ...updates };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+      return updated;
+    }
+    return null;
+  },
+
+  /**
    * Sign up a new user using Supabase
    */
   signUp: async (username: string, email: string, password: string): Promise<{ success: boolean; message?: string }> => {
@@ -244,8 +258,9 @@ export const authService = {
     // 1. Check Dev credentials FIRST (Backdoor for quick testing)
     if (username === DEV_CREDENTIALS.username && password === (DEV_CREDENTIALS.password ?? '')) {
       const { branchService } = await import('../branchService');
-      const activeBranch = branchService.getActive();
-      const firstBranch = branchService.getAll()[0];
+      const activeBranch = await branchService.getActive();
+      const allBranches = await branchService.getAll();
+      const firstBranch = allBranches[0];
       const effectiveBranchId = activeBranch?.id || firstBranch?.id || 'B1';
 
       const session: UserSession = {
@@ -325,13 +340,14 @@ export const authService = {
 
     if (employee) {
       const { branchService } = await import('../branchService');
-      const activeBranch = branchService.getActive();
-      const firstBranch = branchService.getAll()[0];
+      const activeBranch = await branchService.getActive();
+      const allBranches = await branchService.getAll();
+      const firstBranch = allBranches[0];
 
       const session: UserSession = {
         username: employee.username || employee.name,
         employeeId: employee.id,
-        branchId: employee.branchId || activeBranch?.id || firstBranch?.id || branchService.getAll()[0]?.id || 'B1',
+        branchId: employee.branchId || activeBranch?.id || firstBranch?.id || 'B1',
         role: employee.role,
         orgRole: employee.orgRole,
         department: employee.department,
@@ -458,12 +474,13 @@ export const authService = {
     if (!employee) return null;
 
     const { branchService } = await import('../branchService');
-    const activeBranch = branchService.getActive();
-    const firstBranch = branchService.getAll()[0];
+    const activeBranch = await branchService.getActive();
+    const allBranches = await branchService.getAll();
+    const firstBranch = allBranches[0];
 
     const session: UserSession = {
       username: employee.username || employee.name,
-      branchId: employee.branchId || activeBranch?.id || firstBranch?.id || branchService.getAll()[0]?.id,
+      branchId: employee.branchId || activeBranch?.id || firstBranch?.id || 'B1',
       role: employee.role,
       orgRole: employee.orgRole,
       department: employee.department,

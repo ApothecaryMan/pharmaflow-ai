@@ -54,14 +54,18 @@ interface BatchSelectionModalProps {
 }
 
 export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
-  inventory,
   batches,
   onUpdateInventory,
   color = 'blue',
   t,
 }) => {
   const { branchCode, language, textTransform } = useSettings();
-  const { activeBranchId, currentEmployee } = useData();
+  const { activeBranchId, branches, currentEmployee, inventory } = useData();
+  
+  // Try to get pharmacy name from active branch, then storage/organization fallbacks
+  const activeBranch = branches.find(b => b.id === activeBranchId);
+  const pharmacyName = activeBranch?.name || storage.get('pharma_name', 'Zinc Pharmacy');
+
   const [searchTerm, setSearchTerm] = useState('');
   const [adjustments, setAdjustments] = useState<AdjustmentItem[]>([]);
   const { success, error: alertError, info, warning } = useAlert();
@@ -88,26 +92,11 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
   // View State
   const [activeView, setActiveView] = useState<'adjust' | 'history'>('adjust');
-  const [historyTab, setHistoryTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
-  const [dateRange, setDateRange] = useState({ from: '', to: '' });
-  const [pharmacyName, setPharmacyName] = useState('ZINC');
-
-  // Load pharmacy name from settings (ReceiptDesigner)
-  React.useEffect(() => {
-    try {
-      const savedTemplates = localStorage.getItem('receipt_templates');
-      const activeId = localStorage.getItem('receipt_active_template_id');
-      if (savedTemplates && activeId) {
-        const templates = JSON.parse(savedTemplates);
-        const active = templates.find((t: any) => t.id === activeId);
-        if (active && active.options?.storeName) {
-          setPharmacyName(active.options.storeName);
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load pharmacy name', e);
-    }
-  }, []);
+  const [historyTab, setHistoryTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const [dateRange, setDateRange] = useState<{ from: string; to: string }>({
+    from: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
+    to: new Date().toISOString().split('T')[0],
+  });
 
   // Load history on mount or tab change
   const loadHistory = React.useCallback(async () => {
@@ -138,7 +127,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
   const handleApprove = async (movement: StockMovement) => {
     try {
-      const currentEmployeeId = storage.get<string>(StorageKeys.CURRENT_EMPLOYEE_ID, 'user');
+      const currentEmployeeId = currentEmployee?.id || 'user';
 
       // 1. Update Service Status
       await stockMovementService.approveMovement(movement.id, currentEmployeeId);
@@ -181,7 +170,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
 
   const handleReject = async (movement: StockMovement) => {
     try {
-      const currentEmployeeId = storage.get<string>(StorageKeys.CURRENT_EMPLOYEE_ID, 'user');
+      const currentEmployeeId = currentEmployee?.id || 'user';
       await stockMovementService.rejectMovement(movement.id, currentEmployeeId);
       loadHistory();
       info(language === 'AR' ? 'تم رفض التعديل' : 'Adjustment rejected');
@@ -218,7 +207,7 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
     }
 
     try {
-      const currentEmployeeId = storage.get<string>(StorageKeys.CURRENT_EMPLOYEE_ID, 'user');
+      const currentEmployeeId = currentEmployee?.id || 'user';
       const promises = pendingItems.map(item => stockMovementService.rejectMovement(item.id, currentEmployeeId));
       await Promise.all(promises);
       loadHistory();
@@ -509,9 +498,9 @@ export const StockAdjustment: React.FC<StockAdjustmentProps> = ({
             item.newStock,
             item.reason,
             {
-              branchId: activeBranchId, // Fixed: use activeBranchId instead of branchCode
-              performedBy: currentEmployeeId,
-              performedByName: currentEmployeeName,
+              performedBy: currentEmployee?.id || 'user',
+              performedByName: currentEmployee?.name || 'User',
+              branchId: activeBranchId,
             },
             {
               batchId: item.batchId,

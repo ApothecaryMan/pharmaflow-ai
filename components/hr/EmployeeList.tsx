@@ -51,8 +51,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   onDeleteEmployee,
 }) => {
   // --- Data Context ---
-  // Removed direct useData() call for employees/actions to enforce centralized logic
-  // const { employees, addEmployee, updateEmployee, deleteEmployee } = useData();
+  const { branches } = useData();
 
   // --- State ---
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -69,7 +68,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
 
   // --- Smart Roles Logic ---
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
-  const [branches, setBranches] = useState<Branch[]>([]);
   const [isBranchOpen, setIsBranchOpen] = useState(false);
 
   // Global View State
@@ -81,15 +79,11 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
     currentUser?.username === import.meta.env.VITE_SUPER_USER || permissionsService.isOrgAdmin();
 
   useEffect(() => {
-    const fetchUserAndBranches = async () => {
+    const fetchUser = async () => {
       const user = await authService.getCurrentUser();
       setCurrentUser(user);
-      try {
-        const bData = await branchService.getAll();
-        setBranches(bData);
-      } catch (err) {}
     };
-    fetchUserAndBranches();
+    fetchUser();
   }, []);
 
   // Fetch all employees when "Global View" is toggled

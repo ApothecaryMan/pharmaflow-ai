@@ -16,19 +16,18 @@ import {
   YAxis,
 } from 'recharts';
 import { permissionsService } from '../../services/auth/permissions';
-import { StorageKeys } from '../../config/storageKeys';
 import { COLOR_HEX_MAP } from '../../config/themeColors';
 import { useShift } from '../../hooks/useShift';
 import { analyzeEmployeePerformance } from '../../services/geminiService';
 import type { Employee, Sale, Shift, ThemeColor } from '../../types';
+import { useData } from '../../services/DataContext';
 import {
   type DateRangeFilter,
   type EmployeeSalesStats,
-  getDateRange,
   getEmployeeSalesStats,
   getPreviousDateRange,
+  getDateRange,
 } from '../../utils/employeeStats';
-import { storage } from '../../utils/storage';
 import { ChartWidget } from '../common/ChartWidget';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { Modal } from '../common/Modal';
@@ -36,12 +35,15 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { SmallCard } from '../common/SmallCard';
 import { ExpandedChartModal } from '../experiments/ExpandedChartModal';
 
+// Filter Modes for the component
+type FilterMode = 'today' | 'week' | 'month' | 'year' | 'all';
+
 // AI Performance Summary Sub-Component
 const AIPerformanceSummary: React.FC<{
   employee: Employee;
   stats: EmployeeSalesStats | null;
   previousStats: EmployeeSalesStats | null;
-  dateFilterMode: string;
+  dateFilterMode: FilterMode;
   language: 'EN' | 'AR';
   color: string;
 }> = ({ employee, stats, language }) => {
@@ -347,20 +349,24 @@ const formatCompactCurrency = (value: number) => {
 };
 
 export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
-  sales,
-  employees = [],
+  sales: propsSales,
+  employees: propsEmployees,
   color,
   t,
   language,
-  currentEmployeeId,
+  currentEmployeeId: initialEmployeeId,
 }) => {
-  // We need to manage the selected employee.
-  // Initially, it could be the first one or none.
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
+  // --- Data Context ---
+  const { employees: contextEmployees, sales: contextSales, currentEmployee } = useData();
+
+  // Prioritize props, but fallback to context
+  const employees = propsEmployees || contextEmployees || [];
+  const sales = propsSales || contextSales || [];
+  const currentEmployeeId = initialEmployeeId || currentEmployee?.id || null;
+
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>(currentEmployeeId || '');
   const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
-  const [dateFilterMode, setDateFilterMode] = useState<'today' | 'week' | 'month' | 'year' | 'all'>(
-    'month'
-  );
+  const [dateFilterMode, setDateFilterMode] = useState<FilterMode>('month');
   const [isExpandedChartOpen, setIsExpandedChartOpen] = useState(false);
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
   const [showComparison, setShowComparison] = useState(false);
@@ -383,48 +389,6 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
     }
   }, [dateFilterMode, employees]); // Re-attach when view might change logic
 
-  // Load employees if not passed (fallback)
-  const [localEmployees, setLocalEmployees] = useState<Employee[]>([]);
-
-  // Load employees from local storage and listen for updates
-  useEffect(() => {
-    if (employees.length > 0) return;
-
-    const loadEmployees = () => {
-      try {
-        const saved = storage.get<Employee[]>(StorageKeys.EMPLOYEES, []);
-        setLocalEmployees(saved);
-      } catch (e) {
-        console.error('Failed to load employees', e);
-      }
-    };
-
-    loadEmployees();
-
-    // Original listener was 'pharma_employees_updated'
-    // We can also listen to standard storage event for cross-tab updates
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === StorageKeys.EMPLOYEES) {
-        loadEmployees();
-      }
-    };
-
-    // Also keep the custom listener in case it's still dispatched by legacy code (though we should have refactored it)
-    // But since we are moving away, let's stick to storage event which is triggered by our new StorageService if we dispatched it
-    // Wait, StorageService dispatches 'local-storage' to window on set.
-    const handleLocalStorageEvent = () => loadEmployees();
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('local-storage', handleLocalStorageEvent); // For same-tab updates
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('local-storage', handleLocalStorageEvent);
-    };
-  }, [employees.length]);
-
-  const allEmployees = employees.length > 0 ? employees : localEmployees;
-
   // Set default employee if not set
   React.useEffect(() => {
     if (!permissionsService.can('users.view')) {
@@ -434,18 +398,18 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
       return;
     }
 
-    if (!selectedEmployeeId && allEmployees.length > 0) {
-      setSelectedEmployeeId(allEmployees[0].id);
+    if (!selectedEmployeeId && employees.length > 0) {
+      setSelectedEmployeeId(employees[0].id);
     }
-  }, [allEmployees, selectedEmployeeId, currentEmployeeId]);
+  }, [employees, selectedEmployeeId, currentEmployeeId]);
 
-  const selectedEmployee = allEmployees.find((e) => e.id === selectedEmployeeId);
+  const selectedEmployee = employees.find((e) => e.id === selectedEmployeeId);
   const chartColor = COLOR_HEX_MAP[color.name] || COLOR_HEX_MAP['blue'];
 
   // Date Filter Logic
   const dateRange = useMemo<DateRangeFilter | undefined>(() => {
     if (dateFilterMode === 'all') return undefined;
-    return getDateRange(dateFilterMode);
+    return getDateRange(dateFilterMode as any);
   }, [dateFilterMode]);
 
   // Calculate Stats
@@ -457,7 +421,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
   // Calculate Previous Stats for Trends
   const previousStats = useMemo(() => {
     if (!selectedEmployeeId || dateFilterMode === 'all') return null;
-    const prevRange = getPreviousDateRange(dateFilterMode);
+    const prevRange = getPreviousDateRange(dateFilterMode as any);
     return getEmployeeSalesStats(selectedEmployeeId, sales, prevRange);
   }, [selectedEmployeeId, sales, dateFilterMode]);
 
@@ -488,7 +452,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
         (!dateRange?.endDate || new Date(s.date) <= dateRange.endDate)
     );
 
-    if (dateFilterMode === 'today') {
+    if (dateFilterMode === ('today' as any)) {
       // Load shifts from hook (sharded storage)
       const shifts = allShiftsFromHook;
 
@@ -768,7 +732,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
       if (!dateRange) return;
 
       // Pre-calculated range is sufficient since 'all' is handled separately
-      const range = getDateRange(dateFilterMode as 'today' | 'week' | 'month' | 'year');
+      const range = getDateRange(dateFilterMode as any);
       const start = range.startDate || new Date();
       const end = range.endDate || new Date();
 
@@ -967,7 +931,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
               <FilterDropdown
                 className='absolute top-0 left-0 w-full text-sm'
                 minHeight='36px'
-                items={allEmployees}
+                items={employees}
                 selectedItem={selectedEmployee}
                 isOpen={isEmployeeDropdownOpen}
                 onToggle={() => setIsEmployeeDropdownOpen(!isEmployeeDropdownOpen)}
@@ -1000,7 +964,7 @@ export const EmployeeProfile: React.FC<EmployeeProfileProps> = ({
             {(['today', 'week', 'month', 'year', 'all'] as const).map((period) => (
               <button
                 key={period}
-                onClick={() => setDateFilterMode(period)}
+                onClick={() => setDateFilterMode(period as FilterMode)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                   dateFilterMode === period
                     ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-xs'
