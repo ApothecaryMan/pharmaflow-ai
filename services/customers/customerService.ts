@@ -169,20 +169,12 @@ export const createCustomerService = (): CustomerService => ({
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || (customer as any).branchId || settings.activeBranchId || settings.branchCode;
     
-    // Generate Serial IDs
-    const all = await getRawAll();
-    const branchCustomers = all.filter(c => c.branchId === effectiveBranchId);
-    const maxSerial = branchCustomers.reduce((max, c) => {
-      const num = parseInt(c.serialId?.replace(/[^0-9]/g, '') || '0');
-      return Math.max(max, isNaN(num) ? 0 : num);
-    }, 0);
-    const nextSerial = String(maxSerial + 1).padStart(4, '0');
-    
+    // Centralized ID and Code Generation
     const newCustomer: Customer = {
       ...customer,
       id: idGenerator.generate('customers', effectiveBranchId),
-      serialId: `CU-${nextSerial}`,
-      code: customer.code || `CUS-${nextSerial}`,
+      serialId: idGenerator.generate('customers-serial', effectiveBranchId),
+      code: customer.code || 'CUST-' + Math.floor(100000 + Math.random() * 900000).toString(),
       createdAt: new Date().toISOString(),
       points: customer.points || 0,
       totalPurchases: customer.totalPurchases || 0,
@@ -195,6 +187,7 @@ export const createCustomerService = (): CustomerService => ({
       if (error && import.meta.env.DEV) console.warn('Supabase insert failed', error);
     } catch {}
 
+    const all = await getRawAll();
     all.push(newCustomer);
     storage.set(StorageKeys.CUSTOMERS, all);
 
