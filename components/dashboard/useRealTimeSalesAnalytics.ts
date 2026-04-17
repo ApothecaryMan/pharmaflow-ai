@@ -583,7 +583,7 @@ export const useRealTimeSalesAnalytics = ({
     };
   }, [coreMetrics, language]);
 
-  return {
+  return useMemo(() => ({
     // Core metrics
     ...coreMetrics,
     todaysSales,
@@ -604,5 +604,10 @@ export const useRealTimeSalesAnalytics = ({
     transactionsTooltip,
     itemsSoldTooltip,
     activeCountersTooltip,
-  };
+  }), [
+    coreMetrics, todaysSales, revenueChange, hourlyAnalysis, customerAnalysis, 
+    paymentAnalysis, highValueAnalysis, itemsAnalysis, orderTypeAnalysis, 
+    topProducts, activeCountersStats, revenueTooltip, transactionsTooltip, 
+    itemsSoldTooltip, activeCountersTooltip
+  ]);
 };

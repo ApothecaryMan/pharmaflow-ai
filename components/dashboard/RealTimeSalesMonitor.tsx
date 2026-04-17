@@ -84,12 +84,12 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
   const { textTransform } = useSettings();
 
   // Create tooltip elements
-  const revenueTooltip = <InsightTooltip {...revenueTooltipData} language={language} />;
-  const transactionsTooltip = <InsightTooltip {...transactionsTooltipData} language={language} />;
-  const itemsSoldTooltip = <InsightTooltip {...itemsSoldTooltipData} language={language} />;
-  const activeCountersTooltip = (
+  const revenueTooltip = useMemo(() => <InsightTooltip {...revenueTooltipData} language={language} />, [revenueTooltipData, language]);
+  const transactionsTooltip = useMemo(() => <InsightTooltip {...transactionsTooltipData} language={language} />, [transactionsTooltipData, language]);
+  const itemsSoldTooltip = useMemo(() => <InsightTooltip {...itemsSoldTooltipData} language={language} />, [itemsSoldTooltipData, language]);
+  const activeCountersTooltip = useMemo(() => (
     <InsightTooltip {...activeCountersTooltipData} language={language} />
-  );
+  ), [activeCountersTooltipData, language]);
   const [expandedView, setExpandedView] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
 
@@ -127,7 +127,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
   // --- Statistics Calculation (Adapter) ---
   // Using values from the hook to maintain compatibility with existing render logic
-  const todayStats = {
+  const todayStats = useMemo(() => ({
     revenue,
     transactions,
     itemsSold,
@@ -150,7 +150,11 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
     registeredRate: customerAnalysis.registeredRate,
     anonymousCount: transactions - customerAnalysis.registeredTransactions,
     anonymousRate: customerAnalysis.anonymousRate,
-  };
+  }), [
+    revenue, transactions, itemsSold, activeCountersStats, highValueAnalysis,
+    revenueChange, itemsAnalysis.topCategory, todaysSales, hourlyAnalysis,
+    orderTypeAnalysis, customerAnalysis
+  ]);
 
   // Sync displayedSales with todayStats.todaysSales with animation detection
   useEffect(() => {
@@ -448,23 +452,36 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                           </span>
                         </td>
                         <td className='py-3 px-2 text-xs'>
-                          <div className='flex flex-col gap-1 items-start'>
-                            {isVIP && (
-                              <div className='flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold'>
-                                <span className='material-symbols-rounded text-[16px]'>
-                                  verified
-                                </span>
-                                {t.realTimeSales?.vipBadge || 'VIP'}
+                          <div className='flex items-center gap-2'>
+                            {isVIP && isHighValue ? (
+                              <div className='flex items-center gap-1.5'>
+                                <div className='p-1 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' title={t.realTimeSales?.vipBadge || 'VIP'}>
+                                  <span className='material-symbols-rounded text-[16px] block'>verified</span>
+                                </div>
+                                <div className='p-1 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' title={t.realTimeSales?.highValueBadge || 'High Value'}>
+                                  <span className='material-symbols-rounded text-[16px] block'>stars</span>
+                                </div>
                               </div>
-                            )}
-                            {isHighValue && (
-                              <div className='flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold'>
-                                <span className='material-symbols-rounded text-[16px]'>stars</span>
-                                {t.realTimeSales?.highValueBadge || 'High Value'}
+                            ) : (
+                              <div className='flex flex-col gap-1 items-start'>
+                                {isVIP && (
+                                  <div className='flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold'>
+                                    <span className='material-symbols-rounded text-[16px]'>
+                                      verified
+                                    </span>
+                                    {t.realTimeSales?.vipBadge || 'VIP'}
+                                  </div>
+                                )}
+                                {isHighValue && (
+                                  <div className='flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold'>
+                                    <span className='material-symbols-rounded text-[16px]'>stars</span>
+                                    {t.realTimeSales?.highValueBadge || 'High Value'}
+                                  </div>
+                                )}
+                                {!isVIP && !isHighValue && (
+                                  <span className='flex h-2 w-2 rounded-full bg-emerald-500'></span>
+                                )}
                               </div>
-                            )}
-                            {!isVIP && !isHighValue && (
-                              <span className='flex h-2 w-2 rounded-full bg-emerald-500'></span>
                             )}
                           </div>
                         </td>
