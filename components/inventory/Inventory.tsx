@@ -339,8 +339,8 @@ export const Inventory: React.FC<InventoryProps> = ({
     return groupedInventory.reduce(
       (acc, drug) => {
         acc.totalItems += 1;
-        acc.totalCost += (drug.costPrice || 0) * (drug.stock || 0);
-        acc.totalSaleValue += (drug.price || 0) * (drug.stock || 0);
+        acc.totalCost += (drug.costPrice || 0) * stockOps.convertToPacks(drug.stock || 0, drug.unitsPerPack || 1);
+        acc.totalSaleValue += (drug.price || 0) * stockOps.convertToPacks(drug.stock || 0, drug.unitsPerPack || 1);
 
         const status = (drug as any).status || 'active';
         if (status === 'active') {
