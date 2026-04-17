@@ -11,15 +11,82 @@ interface AnalyticsProps {
   branchId?: string; // Add branchId for precise filtering
 }
 
+const translations = {
+  AR: {
+    primaryMetric: 'المؤشر الأساسي',
+    netRevenue: 'صافي الإيرادات',
+    avgOrder: 'متوسط الطلب (AOV)',
+    returnRate: 'معدل المرتجعات',
+    assetInventory: 'جرد الأصول',
+    inventoryValue: 'القيمة',
+    turnoverRatioLabel: 'نسبة الدوران = التكلفة / الأصول',
+    daysStockLabel: 'أيام المخزون = الأصول / (التكلفة / 30)',
+    remVelocity: 'سرعة البيع المتبقية',
+    cogsTitle: 'تكلفة البضائع (COGS)=',
+    cogsFormula: 'COGS = مجموع (الكمية × التكلفة)',
+    financialResult: 'النتيجة المالية',
+    grossProfit: 'إجمالي الربح',
+    profitFormula: 'الربح = صافي الإيرادات - التكلفة',
+    marginFormula: 'الهامش = (الربح / الإيرادات) × 100',
+    netOperatingProfit: 'صافي الربح التشغيلي',
+    revenueAtRisk: 'إيرادات معرضة للخطر',
+    criticalStatus: 'حالة حرجة: المخزون ≤ 3',
+    criticalLevel: 'المستوى الحرج',
+    totalLowStock: 'إجمالي النواقص',
+    items: 'أصناف',
+    impacts: 'تؤثر على',
+    fastMovingItems: 'أصناف سريعة',
+    excellent: 'ممتاز',
+    healthy: 'جيد',
+    lowMargin: 'هامش منخفض',
+    days: 'يوم',
+    revenueCalculation: 'النتيجة = مجموع (المبيعات - المرتجعات)',
+  },
+  EN: {
+    primaryMetric: 'Primary Metric',
+    netRevenue: 'Net Revenue',
+    avgOrder: 'Avg. Order (AOV)',
+    returnRate: 'Return Rate',
+    assetInventory: 'Asset Inventory',
+    inventoryValue: 'Value',
+    turnoverRatioLabel: 'Turnover Ratio = COGS / Assets',
+    daysStockLabel: 'Days Stock = Assets / (COGS / 30)',
+    remVelocity: 'Rem. Velocity',
+    cogsTitle: 'Cost of Goods (COGS)=',
+    cogsFormula: 'COGS = Σ (Sold Qty × Unit Cost)',
+    financialResult: 'Financial Result',
+    grossProfit: 'Gross Profit',
+    profitFormula: 'Profit = Net Revenue - COGS',
+    marginFormula: 'Margin = (Profit / Revenue) × 100',
+    netOperatingProfit: 'Net Operating Profit',
+    revenueAtRisk: 'Revenue at Risk',
+    criticalStatus: 'Critical Status: Stock ≤ 3',
+    criticalLevel: 'Critical Level',
+    totalLowStock: 'Total Low Stock',
+    items: 'Items',
+    impacts: 'Impacts',
+    fastMovingItems: 'Fast Items',
+    excellent: 'Excellent',
+    healthy: 'Healthy',
+    lowMargin: 'Low Margin',
+    days: 'Days',
+    revenueCalculation: 'Result = Σ (Sold - Returned)',
+  },
+};
+
 export const useDashboardAnalytics = ({
   sales,
   inventory,
   totalExpenses,
-  language,
+  language = 'EN',
   branchId,
 }: AnalyticsProps) => {
+  const t = (key: keyof typeof translations.EN) => {
+    const lang = (language?.toUpperCase() === 'AR' ? 'AR' : 'EN') as 'AR' | 'EN';
+    return translations[lang][key];
+  };
+
   // 1. Core Revenue Calculation
-  // ... (unchanged)
   const { totalRevenue, totalReturns } = useMemo(() => {
     let rev = 0;
     let ret = 0;
@@ -59,7 +126,7 @@ export const useDashboardAnalytics = ({
 
     // IMPROVED Inventory Valuation: Sum of all batch values
     const allBatchesForValuation = batchService.getAllBatches(branchId);
-    const valuation = allBatchesForValuation.reduce((sum, b) => sum + (b.quantity * b.costPrice), 0);
+    const valuation = allBatchesForValuation.reduce((sum, b) => sum + b.quantity * b.costPrice, 0);
 
     return { totalCogs: cogs, inventoryValuation: valuation };
   }, [sales, inventory, branchId]);
@@ -127,23 +194,23 @@ export const useDashboardAnalytics = ({
 
   // 7. Health Grades
   const profitGrade = useMemo(() => {
-    if (profitMarginPercent > 35) return { label: 'Excellent', color: 'emerald' as const };
-    if (profitMarginPercent > 20) return { label: 'Healthy', color: 'primary' as const };
-    return { label: 'Low Margin', color: 'amber' as const };
-  }, [profitMarginPercent]);
+    if (profitMarginPercent > 35) return { label: t('excellent'), color: 'emerald' as const };
+    if (profitMarginPercent > 20) return { label: t('healthy'), color: 'primary' as const };
+    return { label: t('lowMargin'), color: 'amber' as const };
+  }, [profitMarginPercent, language]);
 
   // --- TOOLTIP CONFIGURATIONS ---
 
   const revenueTooltip = useMemo(
     () => ({
-      title: 'Primary Metric',
+      title: t('primaryMetric'),
       value: totalRevenue,
-      valueLabel: 'Net Revenue',
+      valueLabel: t('netRevenue'),
       icon: 'payments',
       iconColorClass: 'text-emerald-400',
       calculations: [
         {
-          label: 'Result = Σ (Sold - Returned)',
+          label: t('revenueCalculation'),
           math: React.createElement(
             React.Fragment,
             null,
@@ -156,10 +223,10 @@ export const useDashboardAnalytics = ({
         },
       ],
       details: [
-        { icon: 'shopping_cart', label: 'Avg. Order (AOV)', value: averageOrderValue },
+        { icon: 'shopping_cart', label: t('avgOrder'), value: averageOrderValue },
         {
           icon: 'undo',
-          label: 'Return Rate',
+          label: t('returnRate'),
           value: `${returnRate.toFixed(1)}%`,
           colorClass: 'text-rose-300',
         },
@@ -170,14 +237,14 @@ export const useDashboardAnalytics = ({
 
   const inventoryTooltip = useMemo(
     () => ({
-      title: 'Asset Inventory',
+      title: t('assetInventory'),
       value: inventoryValuation,
-      valueLabel: 'Value',
+      valueLabel: t('inventoryValue'),
       icon: 'inventory_2',
       iconColorClass: 'text-primary-400',
       calculations: [
         {
-          label: 'Turnover Ratio = COGS / Assets',
+          label: t('turnoverRatioLabel'),
           math: React.createElement(
             React.Fragment,
             null,
@@ -193,21 +260,21 @@ export const useDashboardAnalytics = ({
           ),
         },
         {
-          label: 'Days Stock = Assets / (COGS / 30)',
+          label: t('daysStockLabel'),
           math: React.createElement(
             React.Fragment,
             null,
-            React.createElement('span', null, `${daysOfInventory.toFixed(0)} Days`),
-            React.createElement('span', { className: 'opacity-50 text-[10px]' }, 'Rem. Velocity')
+            React.createElement('span', null, `${daysOfInventory.toFixed(0)} ${t('days')}`),
+            React.createElement('span', { className: 'opacity-50 text-[10px]' }, t('remVelocity'))
           ),
         },
       ],
       details: [
         {
           icon: 'local_shipping',
-          label: 'Cost of Goods (COGS)=',
+          label: t('cogsTitle'),
           value: totalCogs,
-          subLabel: 'COGS = Σ (Sold Qty × Unit Cost)',
+          subLabel: t('cogsFormula'),
         },
       ],
     }),
@@ -216,14 +283,14 @@ export const useDashboardAnalytics = ({
 
   const profitTooltip = useMemo(
     () => ({
-      title: 'Financial Result',
+      title: t('financialResult'),
       value: grossProfit,
-      valueLabel: 'Gross Profit',
+      valueLabel: t('grossProfit'),
       icon: 'account_balance',
       iconColorClass: 'text-emerald-400',
       calculations: [
         {
-          label: 'Profit = Net Revenue - COGS',
+          label: t('profitFormula'),
           math: React.createElement(
             React.Fragment,
             null,
@@ -235,7 +302,7 @@ export const useDashboardAnalytics = ({
           ),
         },
         {
-          label: 'Margin = (Profit / Revenue) × 100',
+          label: t('marginFormula'),
           math: React.createElement(
             React.Fragment,
             null,
@@ -257,7 +324,7 @@ export const useDashboardAnalytics = ({
       details: [
         {
           icon: 'monitoring',
-          label: 'Net Operating Profit',
+          label: t('netOperatingProfit'),
           value: netProfit,
           colorClass: 'text-emerald-300',
         },
@@ -268,22 +335,22 @@ export const useDashboardAnalytics = ({
 
   const lowStockTooltip = useMemo(
     () => ({
-      title: 'Revenue at Risk',
+      title: t('revenueAtRisk'),
       value: movingItemsAnalysis.revenueAtRisk,
       icon: 'warning',
       iconColorClass: 'text-rose-500',
       calculations: [
         {
-          label: 'Critical Status: Stock ≤ 3',
+          label: t('criticalStatus'),
           math: React.createElement(
             React.Fragment,
             null,
-            React.createElement('span', null, `${movingItemsAnalysis.critical.length} Items`),
-            React.createElement('span', { className: 'opacity-50' }, 'Impacts'),
+            React.createElement('span', null, `${movingItemsAnalysis.critical.length} ${t('items')}`),
+            React.createElement('span', { className: 'opacity-50' }, t('impacts')),
             React.createElement(
               'span',
               { className: 'text-amber-300' },
-              `${movingItemsAnalysis.fastMoving.length} Fast Items`
+              `${movingItemsAnalysis.fastMoving.length} ${t('fastMovingItems')}`
             )
           ),
         },
@@ -291,14 +358,14 @@ export const useDashboardAnalytics = ({
       details: [
         {
           icon: 'warning',
-          label: 'Critical Level',
+          label: t('criticalLevel'),
           value: movingItemsAnalysis.critical.length,
           colorClass: 'text-rose-300',
           isCurrency: false,
         },
         {
           icon: 'trending_down',
-          label: 'Total Low Stock',
+          label: t('totalLowStock'),
           value: inventory.filter((d) => batchService.getTotalStock(d.id, branchId) <= 10).length,
           isCurrency: false,
         },
