@@ -13,6 +13,7 @@ import { SmartInput, SmartPhoneInput } from '../common/SmartInputs';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { LocationSelector } from '../common/LocationSelector';
 import { useAlert } from '../../context';
+import { getLocationName } from '../../data/locations';
 
 interface BranchSettingsProps {
   language: 'EN' | 'AR';
@@ -67,9 +68,18 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, language, onEdit, onDel
       <div className="space-y-1.5 py-3 border-t border-zinc-100 dark:border-zinc-800/50 mt-1">
         <div className="flex items-start gap-2">
           <span className="material-symbols-rounded text-zinc-400 shrink-0" style={{ fontSize: '16px' }}>location_on</span>
-          <span className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-normal pt-0.5 truncate">
-            {branch.address || (language === 'AR' ? 'لم يتم تحديد عنوان' : 'No address set')}
-          </span>
+          <div className="flex flex-col min-w-0">
+            <span className="text-[11px] text-zinc-950 dark:text-zinc-50 font-bold leading-normal truncate">
+              {[
+                getLocationName(branch.governorate || '', 'gov', language),
+                getLocationName(branch.city || '', 'city', language),
+                getLocationName(branch.area || '', 'area', language)
+              ].filter(Boolean).join(language === 'AR' ? '، ' : ', ') || (language === 'AR' ? 'لم يتم تحديد موقع' : 'No location set')}
+            </span>
+            <span className="text-[10px] text-zinc-500 dark:text-zinc-500 leading-normal truncate">
+              {branch.address || (language === 'AR' ? 'لم يتم تحديد عنوان تفصيلي' : 'No street address set')}
+            </span>
+          </div>
         </div>
         
         {branch.phone && (
@@ -150,7 +160,11 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       setEditingBranch({ 
         name: '', 
         code: branchService.generateCode(), 
-        status: 'active' 
+        status: 'active',
+        governorate: '',
+        city: '',
+        area: '',
+        address: ''
       });
       setSelectedEmployees([]);
     }
@@ -240,7 +254,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
         <SmartInput
           type="text"
           value={editingBranch?.name || ''}
-          onChange={(e) => setEditingBranch({ ...editingBranch!, name: e.target.value })}
+          onChange={(e) => setEditingBranch(prev => ({ ...prev!, name: e.target.value }))}
           placeholder={t.settings.branchName}
         />
       </FormField>
@@ -261,7 +275,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
           variant="input"
           items={['active', 'inactive']}
           selectedItem={editingBranch?.status || 'active'}
-          onSelect={(status) => setEditingBranch({ ...editingBranch!, status })}
+          onSelect={(status) => setEditingBranch(prev => ({ ...prev!, status }))}
           keyExtractor={(s) => s}
           renderSelected={(s) => (
             <div className="flex items-center gap-2">
@@ -285,12 +299,13 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       <FormField label={t.settings?.branchAddress || 'Address'} className="col-span-2">
         <LocationSelector
           language={language}
+          t={t}
           selectedGovernorate={editingBranch?.governorate}
           selectedCity={editingBranch?.city}
           selectedArea={editingBranch?.area}
-          onGovernorateChange={(val) => setEditingBranch({ ...editingBranch!, governorate: val })}
-          onCityChange={(val) => setEditingBranch({ ...editingBranch!, city: val })}
-          onAreaChange={(val) => setEditingBranch({ ...editingBranch!, area: val })}
+          onGovernorateChange={(val) => setEditingBranch(prev => ({ ...prev!, governorate: val }))}
+          onCityChange={(val) => setEditingBranch(prev => ({ ...prev!, city: val }))}
+          onAreaChange={(val) => setEditingBranch(prev => ({ ...prev!, area: val }))}
         />
       </FormField>
 
@@ -299,7 +314,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
           type="text"
           placeholder={language === 'AR' ? 'رقم المبنى، اسم الشارع...' : 'Building no, street name...'}
           value={editingBranch?.address || ''}
-          onChange={(e) => setEditingBranch({ ...editingBranch!, address: e.target.value })}
+          onChange={(e) => setEditingBranch(prev => ({ ...prev!, address: e.target.value }))}
         />
       </FormField>
       
@@ -307,7 +322,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
         <SmartPhoneInput
           placeholder="+20..."
           value={editingBranch?.phone || ''}
-          onChange={(val) => setEditingBranch({ ...editingBranch!, phone: val })}
+          onChange={(val) => setEditingBranch(prev => ({ ...prev!, phone: val }))}
         />
       </FormField>
     </div>

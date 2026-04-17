@@ -316,7 +316,7 @@ export const CITIES: City[] = [
   { id: '1805', governorate_id: '18', name_ar: 'حي الزهور', name_en: 'Zohour District' },
   { id: '1806', governorate_id: '18', name_ar: 'حي الجنوب', name_en: 'South District' },
   { id: '1807', governorate_id: '18', name_ar: 'حي غرب', name_en: 'West District' },
-  { id: '1802', governorate_id: '18', name_ar: 'بورفؤاد', name_en: 'Port Fouad' },
+  { id: '1808', governorate_id: '18', name_ar: 'بورفؤاد', name_en: 'Port Fouad' },
 
   // Damietta (19)
   { id: '1901', governorate_id: '19', name_ar: 'دمياط', name_en: 'Damietta' },

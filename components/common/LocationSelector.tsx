@@ -60,12 +60,18 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     return AREAS.filter((a) => a.city_id === selectedCity);
   }, [selectedCity]);
 
-  // Reset dependent fields when parent changes
+  // Reset dependent fields when parent changes from outside
   useEffect(() => {
-    if (selectedGovernorate && !availableCities.find(c => c.id === selectedCity)) {
-       // Only reset if current city doesn't belong to new governorate
+    if (selectedGovernorate && selectedCity && !availableCities.find(c => c.id === selectedCity)) {
+      onCityChange('');
     }
-  }, [selectedGovernorate, availableCities, selectedCity]);
+  }, [selectedGovernorate, availableCities, selectedCity, onCityChange]);
+
+  useEffect(() => {
+    if (selectedCity && selectedArea && !availableAreas.find(a => a.id === selectedArea)) {
+      onAreaChange('');
+    }
+  }, [selectedCity, availableAreas, selectedArea, onAreaChange]);
 
   const currentGov = GOVERNORATES.find(g => g.id === selectedGovernorate);
   const currentCity = CITIES.find(c => c.id === selectedCity);
