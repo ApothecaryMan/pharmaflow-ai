@@ -24,7 +24,7 @@ self.onmessage = (e: MessageEvent) => {
   }
 
   if (type === 'FILTER') {
-    const { search, category, stockFilter } = e.data;
+    const { search, category, stockFilter, activeBranchId } = e.data;
 
     const { mode, regex } = parseSearchTerm(search || '');
     const trimmedSearch = (search || '').trim();
@@ -34,6 +34,9 @@ self.onmessage = (e: MessageEvent) => {
       mode === 'generic' ? (search || '').trimStart().substring(1).trim() : trimmedSearch;
 
     const results = inventory.filter((d) => {
+      // Branch filtering
+      if (activeBranchId && d.branchId !== activeBranchId) return false;
+
       const drugBroadCat = getBroadCategory(d.category);
       const matchesCategory = category === 'All' || drugBroadCat === category;
 

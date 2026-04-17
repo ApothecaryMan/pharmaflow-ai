@@ -7,6 +7,7 @@ interface UsePOSSearchWorkerProps {
   search: string;
   selectedCategory: string;
   stockFilter: string;
+  activeBranchId: string;
 }
 
 export const usePOSSearchWorker = ({
@@ -14,6 +15,7 @@ export const usePOSSearchWorker = ({
   search,
   selectedCategory,
   stockFilter,
+  activeBranchId,
 }: UsePOSSearchWorkerProps) => {
   const workerRef = useRef<Worker | null>(null);
   const [filteredDrugs, setFilteredDrugs] = useState<Drug[]>([]);
@@ -45,6 +47,7 @@ export const usePOSSearchWorker = ({
         search,
         category: selectedCategory,
         stockFilter,
+        activeBranchId,
       });
     }
   }, [inventory]); // Only run on inventory changes
@@ -61,11 +64,12 @@ export const usePOSSearchWorker = ({
         search,
         category: selectedCategory,
         stockFilter,
+        activeBranchId,
       });
     }, 80);
 
     return () => clearTimeout(timer);
-  }, [search, selectedCategory, stockFilter]);
+  }, [search, selectedCategory, stockFilter, activeBranchId]);
 
   return { filteredDrugs };
 };

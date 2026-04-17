@@ -158,7 +158,8 @@ export const usePOSCart = ({
 
   const addGroupToCart = useCallback((group: Drug[]) => {
     const firstDrug = group[0];
-    const selectedBatchId = selectedBatches[firstDrug.id];
+    const drugKey = `${firstDrug.name}|${firstDrug.dosageForm || ''}`;
+    const selectedBatchId = selectedBatches[drugKey];
 
     let targetBatch: Drug | undefined;
 
@@ -181,7 +182,8 @@ export const usePOSCart = ({
     }
 
     if (targetBatch) {
-      const unitMode = selectedUnits[firstDrug.id] === 'unit';
+      const drugKey = `${firstDrug.name}|${firstDrug.dosageForm || ''}`;
+      const unitMode = selectedUnits[drugKey] === 'unit';
       addToCart(targetBatch, unitMode);
     }
   }, [selectedBatches, selectedUnits, addToCart]);

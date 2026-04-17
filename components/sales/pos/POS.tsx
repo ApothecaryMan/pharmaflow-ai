@@ -252,6 +252,7 @@ export const POS: React.FC<POSProps> = ({
     search,
     selectedCategory,
     stockFilter,
+    activeBranchId,
   });
 
   // Dynamic suggestions: generic names when @ prefix, else drug names (requires 2+ chars)
@@ -328,8 +329,9 @@ export const POS: React.FC<POSProps> = ({
   const tableData = useMemo(() => {
     return groupedDrugs.map((group) => {
       const first = group[0];
+      const drugKey = `${first.name}|${first.dosageForm || ''}`;
       return {
-        id: first.id,
+        id: drugKey, // Use stable drug key as row ID
         ...first,
         group: group,
         totalStock: group.reduce((sum, d) => sum + d.stock, 0),
@@ -590,10 +592,15 @@ export const POS: React.FC<POSProps> = ({
             return <span className='text-xs text-gray-400'>-</span>;
 
           const selectedBatchId = selectedBatches[row.id];
+          
+          // Auto-fallback: Prefer the selected batch IF IT HAS STOCK, otherwise pick the earliest batch with stock
+          const selectedBatchWithInventory = selectedBatchId 
+            ? row.group.find((d: Drug) => d.id === selectedBatchId && d.stock > 0)
+            : null;
+            
           const defaultBatch = row.group.find((d: Drug) => d.stock > 0) || row.group[0];
-          const displayBatch = selectedBatchId
-            ? row.group.find((d: Drug) => d.id === selectedBatchId)
-            : defaultBatch;
+          
+          const displayBatch = selectedBatchWithInventory || defaultBatch;
 
           if (row.group.length === 1) {
             const i = displayBatch;
