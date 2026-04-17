@@ -230,15 +230,38 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                     {(() => {
                       const groups: Record<string, any> = {};
                       sale.items.forEach((item, idx) => {
-                        const g = groups[item.id] ||= { id: item.id, name: item.name, dosageForm: item.dosageForm, packQty: 0, unitQty: 0, totalPrice: 0, originalPrice: 0, returnedQty: 0, unitsPerPack: item.unitsPerPack || 1, itemBasePrice: item.price };
+                        const g = groups[item.id] ||= { 
+                          id: item.id, 
+                          name: item.name, 
+                          dosageForm: item.dosageForm, 
+                          packQty: 0, 
+                          unitQty: 0, 
+                          totalPrice: 0, 
+                          originalPrice: 0, 
+                          returnedQty: 0, 
+                          unitsPerPack: item.unitsPerPack || 1, 
+                          itemBasePrice: item.price,
+                          expiries: new Set<string>()
+                        };
+                        
                         const isUnit = item.isUnit;
                         const price = isUnit ? item.price / (item.unitsPerPack || 1) : item.price;
                         const ret = sale.itemReturnedQuantities?.[`${item.id}_${idx}`] || sale.itemReturnedQuantities?.[item.id] || 0;
+                        
                         if (isUnit) g.unitQty += item.quantity; else g.packQty += item.quantity;
                         const realQty = item.quantity - ret;
                         g.totalPrice += realQty * price * (1 - (item.discount || 0) / 100);
                         g.originalPrice += realQty * price;
                         g.returnedQty += ret;
+
+                        // Add expiry date from batch allocations or item fallback
+                        const expiry = item.batchAllocations?.[0]?.expiryDate || item.expiryDate;
+                        if (expiry) {
+                          const d = new Date(expiry);
+                          const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                          const year = d.getFullYear().toString().slice(-2);
+                          g.expiries.add(`${month}/${year}`);
+                        }
                       });
 
                       const groupList = Object.values(groups);
@@ -247,6 +270,7 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                         const isFullRet = g.returnedQty >= (g.packQty + g.unitQty);
                         const hasDisc = g.originalPrice > g.totalPrice + 0.01;
                         const disc = hasDisc ? Math.round(((g.originalPrice - g.totalPrice) / g.originalPrice) * 100) : 0;
+                        const expiryList = Array.from(g.expiries as Set<string>);
 
                         return (
                           <ListItem key={g.id} index={i} total={groupList.length} className={hasRet ? '!bg-orange-50/30 !border-orange-500/20' : ''}>
@@ -255,12 +279,20 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                                 <SmartQuantityBadge packQty={g.packQty} unitQty={g.unitQty} hasDiscount={hasDisc} avgDiscount={disc} language={language} />
                                 <div className='text-left min-w-0 flex-1 py-0.5'>
                                   <p className='font-bold truncate text-[13px]'>{getDisplayName({ name: g.name, dosageForm: g.dosageForm }, textTransform)}</p>
-                                  {!permissionsService.can('sale.view_assigned_only') && (
-                                    <div className='text-[10px] text-gray-400 flex items-center gap-1.5 mt-0.5'>
-                                      <span>{formatCurrency(g.itemBasePrice)}</span>
-                                      {hasDisc && <span className='px-1 rounded bg-green-500/10 text-green-600 font-black text-[9px]'>-{disc}%</span>}
-                                    </div>
-                                  )}
+                                  <div className='text-[10px] text-gray-400 flex items-center flex-wrap gap-1.5 mt-0.5'>
+                                    {!permissionsService.can('sale.view_assigned_only') && (
+                                      <>
+                                        <span>{formatCurrency(g.itemBasePrice)}</span>
+                                        {hasDisc && <span className='px-1 rounded bg-green-500/10 text-green-600 font-black text-[9px]'>-{disc}%</span>}
+                                        {expiryList.length > 0 && <span className='opacity-30 self-center'>•</span>}
+                                      </>
+                                    )}
+                                    {expiryList.length > 0 && (
+                                      <span className='font-mono font-bold text-gray-400'>
+                                        {expiryList.join(', ')}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                               <div className='text-right flex flex-col items-end shrink-0 pl-1'>

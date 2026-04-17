@@ -9,6 +9,7 @@ import { useSmartDirection } from '../common/SmartInputs';
 import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../services/DataContext';
 import { permissionsService } from '../../services/auth/permissions';
+import { formatCurrency } from '../../utils/currency';
 
 interface ReturnModalProps {
   isOpen: boolean;
@@ -406,6 +407,24 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                             >
                               {t.modal?.qty || 'Qty'}: {item.availableQty}
                             </span>
+                            {/* BUG-R10: Show expiry date to help user distinguish identical products from different batches */}
+                            <span className="text-[10px] font-mono font-bold text-gray-400 select-none">
+                              {item.batchAllocations?.[0]?.expiryDate ? (
+                                (() => {
+                                  const d = new Date(item.batchAllocations[0].expiryDate);
+                                  const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                                  const year = d.getFullYear().toString().slice(-2);
+                                  return `${month}/${year}`;
+                                })()
+                              ) : (
+                                item.expiryDate ? (() => {
+                                  const d = new Date(item.expiryDate);
+                                  const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                                  const year = d.getFullYear().toString().slice(-2);
+                                  return `${month}/${year}`;
+                                })() : '--/--'
+                              )}
+                            </span>
                             {item.returnedQty > 0 && (
                               <div className='inline-flex items-center gap-1 text-[9px] bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300 px-1.5 py-0 rounded-md font-bold border border-orange-100 dark:border-orange-900/30 leading-none h-3.5'>
                                 <span className='material-symbols-rounded text-[10px]'>
@@ -418,13 +437,21 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                         </div>
 
                         <div className='flex items-center gap-4 shrink-0'>
-                          <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
-                            $
-                            {(item.isUnit && item.unitsPerPack
-                              ? item.price / item.unitsPerPack
-                              : item.price
-                            ).toFixed(2)}
-                          </p>
+                          <div className='flex flex-col items-end leading-tight'>
+                            <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
+                              {formatCurrency((item.isUnit && item.unitsPerPack
+                                ? item.price / item.unitsPerPack
+                                : item.price
+                              ) * (1 - (item.discount || 0) / 100))}
+                            </p>
+                            {item.discount > 0 && (
+                              <p className='text-[10px] text-gray-400 line-through opacity-60'>
+                                {formatCurrency(item.isUnit && item.unitsPerPack
+                                  ? item.price / item.unitsPerPack
+                                  : item.price)}
+                              </p>
+                            )}
+                          </div>
                         </div>
 
                         {/* Right Side: Selection Indicator OR Counter */}
@@ -638,7 +665,22 @@ export const ReturnModal: React.FC<ReturnModalProps> = ({
                           </h4>
                         </div>
 
-                        <div className='flex items-center gap-4 shrink-0'>
+                        <div className='flex items-center gap-6 shrink-0'>
+                          <div className='flex flex-col items-end leading-tight'>
+                            <p className='font-bold text-gray-900 dark:text-gray-100 text-base'>
+                              {formatCurrency((item.isUnit && item.unitsPerPack
+                                ? item.price / item.unitsPerPack
+                                : item.price
+                              ) * (1 - (item.discount || 0) / 100))}
+                            </p>
+                            {item.discount > 0 && (
+                              <p className='text-[10px] text-gray-400 line-through opacity-60'>
+                                {formatCurrency(item.isUnit && item.unitsPerPack
+                                  ? item.price / item.unitsPerPack
+                                  : item.price)}
+                              </p>
+                            )}
+                          </div>
                           <div className='flex flex-col items-end'>
                             <span className='font-bold text-gray-900 dark:text-gray-100 text-base'>
                               {qty}{' '}

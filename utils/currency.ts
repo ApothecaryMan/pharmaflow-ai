@@ -9,6 +9,11 @@ const getFormatter = (options: Intl.NumberFormatOptions, locale: string) => {
   return formatterCache.get(key)!;
 };
 
+const getIsArabic = (locale?: string) => {
+  const currentLang = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
+  return locale ? locale.toLowerCase().startsWith('ar') : currentLang.toLowerCase().startsWith('ar');
+};
+
 export const formatCurrency = (
   amount: number,
   currency: string = 'EGP',
@@ -16,8 +21,7 @@ export const formatCurrency = (
   decimals: number = 2
 ): string => {
   // 1. Detect language from DOM if not provided
-  const currentLang = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
-  const isArabic = locale ? locale.startsWith('ar') : currentLang.startsWith('ar');
+  const isArabic = getIsArabic(locale);
   const targetLocale = locale || (isArabic ? 'ar-EG' : 'en-US');
 
   // 2. Handle EGP specific formatting (L.E vs ج.م)
@@ -56,8 +60,7 @@ export const formatCurrencyParts = (
   decimals: number = 2
 ) => {
   // 1. Detect language from DOM if not provided
-  const currentLang = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
-  const isArabic = locale ? locale.startsWith('ar') : currentLang.startsWith('ar');
+  const isArabic = getIsArabic(locale);
   const targetLocale = locale || (isArabic ? 'ar-EG' : 'en-US');
 
   // 2. Handle EGP specific formatting (L.E vs ج.م)
@@ -96,8 +99,7 @@ export const formatCurrencyParts = (
 };
 
 export const getCurrencySymbol = (currency: string = 'EGP', locale?: string): string => {
-  const currentLang = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
-  const isArabic = locale ? locale.startsWith('ar') : currentLang.startsWith('ar');
+  const isArabic = getIsArabic(locale);
 
   if (currency === 'EGP') {
     return isArabic ? 'ج.م' : 'L.E';
@@ -119,8 +121,7 @@ export const formatCompactCurrency = (
   locale?: string,
   decimals: number = 1
 ): string => {
-  const currentLang = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
-  const isArabic = locale ? locale.startsWith('ar') : currentLang.startsWith('ar');
+  const isArabic = getIsArabic(locale);
 
   const formatter = getFormatter({
     notation: 'compact',
@@ -151,8 +152,7 @@ export const formatCompactCurrencyParts = (
   locale?: string,
   decimals: number = 1
 ) => {
-  const currentLang = typeof document !== 'undefined' ? document.documentElement.lang : 'en';
-  const isArabic = locale ? locale.startsWith('ar') : currentLang.startsWith('ar');
+  const isArabic = getIsArabic(locale);
 
   const formatter = getFormatter({
     notation: 'compact',
