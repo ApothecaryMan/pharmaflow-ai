@@ -361,7 +361,7 @@ export function TanStackTable<TData, TValue>({
   const t = TRANSLATIONS[language];
 
   // Load initial state from localStorage
-  const storedSettings = React.useMemo(() => getStoredSettings(tableId), [tableId]);
+  const [storedSettings, setStoredSettings] = useState(() => getStoredSettings(tableId));
 
   // Build default visibility from defaultHiddenColumns
   const defaultVisibility = React.useMemo(() => {
@@ -498,6 +498,7 @@ export function TanStackTable<TData, TValue>({
         pagination: newPagination || pagination,
       };
       storage.set(`table-settings-${tableId}`, settings);
+      setStoredSettings(settings);
     },
     [tableId, defaultColumnAlignment, getDiff, pagination]
   );
@@ -532,8 +533,19 @@ export function TanStackTable<TData, TValue>({
   }, [enableGlobalSearchFocus, enableSearch]);
 
   // React to default prop changes (e.g. Language switch or prop updates)
+  // But preserve user overrides by checking if the alignment has actually changed
+  // between the new memoized defaults and the current state.
   React.useEffect(() => {
-    setColumnAlignment(memoizedInitialAlignment);
+    setColumnAlignment((current) => {
+      // If we already have alignments, and they are essentially the same as 
+      // the memoized ones (which include latest stored settings), we don't need to force update
+      // this helps avoid jitter during re-renders.
+      const hasChanged = Object.keys(memoizedInitialAlignment).some(
+        (key) => current[key] !== memoizedInitialAlignment[key]
+      );
+      
+      return hasChanged ? memoizedInitialAlignment : current;
+    });
   }, [memoizedInitialAlignment]);
 
   const { showMenu } = useContextMenu();
