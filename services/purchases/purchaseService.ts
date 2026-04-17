@@ -75,7 +75,7 @@ export const createPurchaseService = (): PurchaseService => ({
     const newPurchase: Purchase = {
       ...purchase,
       id: idGenerator.generate('purchases', effectiveBranchId),
-      status: 'pending',
+      status: (purchase as any).status || 'pending',
       branchId: effectiveBranchId,
     } as Purchase;
 

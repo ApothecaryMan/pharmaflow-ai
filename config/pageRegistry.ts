@@ -238,6 +238,8 @@ export const PAGE_REGISTRY: Record<string, PageConfig> = {
       'onRejectPurchase',
       'language',
       'currentShift',
+      'currentEmployeeId',
+      'employees',
     ],
     permission: 'purchase.approve',
   },
