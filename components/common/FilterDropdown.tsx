@@ -64,7 +64,7 @@ export function FilterDropdown<T>({
   centered = false,
   rounded = 'xl',
   zIndexHigh = 'z-40',
-  floating = false,
+  floating = true,
   hideArrow = false,
   autoHideArrow = false,
   onBackground = false,

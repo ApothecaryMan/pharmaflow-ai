@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useSettings } from '../../context';
 import { SmartInput } from '../common/SmartInputs';
 import { SegmentedControl } from '../common/SegmentedControl';
+import { LocationSelector } from '../common/LocationSelector';
 
 import { OnboardingStepper } from './OnboardingStepper';
 import { branchService } from '../../services/branchService';
@@ -19,6 +20,10 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
   const { availableThemes, darkMode, setDarkMode } = useSettings();
   const [branchName, setBranchName] = useState('');
   const [branchCode, setBranchCode] = useState('');
+  const [governorate, setGovernorate] = useState<string | undefined>();
+  const [city, setCity] = useState<string | undefined>();
+  const [area, setArea] = useState<string | undefined>();
+  const [streetAddress, setStreetAddress] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,7 +63,11 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
         name: branchName.trim(), 
         code: branchCode.trim().toUpperCase(), 
         status: 'active',
-        orgId: activeOrgId
+        orgId: activeOrgId,
+        governorate,
+        city,
+        area,
+        address: streetAddress.trim()
       });
       branchService.setActive(newBranch.id);
       await settingsService.setMultiple({ 
@@ -181,6 +190,36 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
                 ? 'يستخدم هذا الكود في إنشاء معرفات الفواتير والموظفين (يجب أن يكون مميزاً وقصيراً).'
                 : 'This code is used to generate invoice and employee IDs (should be unique and short).'}
             </p>
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              {isRTL ? 'موقع الفرع' : 'Branch Location'}
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+            <LocationSelector
+              language={language as 'EN' | 'AR'}
+              selectedGovernorate={governorate}
+              selectedCity={city}
+              selectedArea={area}
+              onGovernorateChange={setGovernorate}
+              onCityChange={setCity}
+              onAreaChange={setArea}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+              {isRTL ? 'العنوان بالتفصيل' : 'Street Address'}
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+            <SmartInput
+              required
+              value={streetAddress}
+              onChange={(e) => setStreetAddress(e.target.value)}
+              placeholder={isRTL ? 'رقم المبنى، اسم الشارع...' : 'e.g. 123 Nile St.'}
+              style={{ '--tw-ring-color': selectedTheme.hex } as React.CSSProperties}
+            />
           </div>
 
           {error && (

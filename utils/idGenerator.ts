@@ -209,4 +209,15 @@ export const idGenerator = {
     // 7. Format and Return
     return `${effectiveBranchCode}-${nextSeq.toString().padStart(ID_PADDING, '0')}`;
   },
+
+  /**
+   * Generates a secondary mnemonic code (e.g., CUST-123456)
+   * This is typically used for user-facing codes that need to be short but unique.
+   * @param prefix The prefix to use (e.g., 'CUST', 'DRUG')
+   * @returns Formatted code string
+   */
+  code: (prefix: 'CUST' | 'DRUG'): string => {
+    const random = Math.floor(100000 + Math.random() * 900000).toString();
+    return `${prefix}-${random}`;
+  },
 };

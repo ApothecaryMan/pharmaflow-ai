@@ -11,6 +11,7 @@ import { SegmentedControl } from '../common/SegmentedControl';
 import { MaterialTabs } from '../common/MaterialTabs';
 import { SmartInput, SmartPhoneInput } from '../common/SmartInputs';
 import { FilterDropdown } from '../common/FilterDropdown';
+import { LocationSelector } from '../common/LocationSelector';
 
 interface BranchSettingsProps {
   language: 'EN' | 'AR';
@@ -268,7 +269,6 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       <FormField label={t.settings.branchStatus}>
         <FilterDropdown<'active' | 'inactive'>
           variant="input"
-          floating={true}
           items={['active', 'inactive']}
           selectedItem={editingBranch?.status || 'active'}
           onSelect={(status) => setEditingBranch({ ...editingBranch!, status })}
@@ -293,9 +293,21 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       </FormField>
 
       <FormField label={t.settings?.branchAddress || 'Address'} className="col-span-2">
+        <LocationSelector
+          language={language}
+          selectedGovernorate={editingBranch?.governorate}
+          selectedCity={editingBranch?.city}
+          selectedArea={editingBranch?.area}
+          onGovernorateChange={(val) => setEditingBranch({ ...editingBranch!, governorate: val })}
+          onCityChange={(val) => setEditingBranch({ ...editingBranch!, city: val })}
+          onAreaChange={(val) => setEditingBranch({ ...editingBranch!, area: val })}
+        />
+      </FormField>
+
+      <FormField label={language === 'AR' ? 'العنوان بالتفصيل' : 'Street Address'} className="col-span-2">
         <SmartInput
           type="text"
-          placeholder={language === 'AR' ? 'العنوان بالتفصيل' : 'Full address'}
+          placeholder={language === 'AR' ? 'رقم المبنى، اسم الشارع...' : 'Building no, street name...'}
           value={editingBranch?.address || ''}
           onChange={(e) => setEditingBranch({ ...editingBranch!, address: e.target.value })}
         />

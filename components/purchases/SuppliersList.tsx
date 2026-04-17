@@ -17,6 +17,7 @@ import {
   SmartPhoneInput,
   useSmartDirection,
 } from '../common/SmartInputs';
+import { LocationSelector } from '../common/LocationSelector';
 import { TanStackTable } from '../common/TanStackTable';
 
 interface SuppliersListProps {
@@ -386,17 +387,34 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                       dir={nameDir}
                     />
                   </div>
-                  <div>
+                  <div className='col-span-2'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    {t.form?.location || 'Location'}
+                  </label>
+                  <LocationSelector
+                    language={language}
+                    selectedGovernorate={editForm.governorate}
+                    selectedCity={editForm.city}
+                    selectedArea={editForm.area}
+                    onGovernorateChange={(val) => setEditForm(prev => ({ ...prev, governorate: val }))}
+                    onCityChange={(val) => setEditForm(prev => ({ ...prev, city: val }))}
+                    onAreaChange={(val) => setEditForm(prev => ({ ...prev, area: val }))}
+                    t={t}
+                    color={color}
+                    showLabels={false}
+                  />
+                </div>
+                  <div className="col-span-2">
                     <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                      {t.form?.address || 'Address'}
+                      {t.form?.address || 'Street Address'}
                     </label>
                     <textarea
                       value={editForm.address}
                       onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                      rows={3}
+                      rows={2}
                       className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all resize-none'
                       style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
-                      placeholder={t.form?.enterAddress || 'Enter company address'}
+                      placeholder={t.form?.enterAddress || 'Enter street address'}
                       dir={addressDir}
                     />
                   </div>
@@ -506,6 +524,23 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                 {t.form?.companyInfo || 'Company Information'}
               </h4>
               <div className='space-y-4'>
+                <div className='col-span-2'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    {t.form?.location || 'Location'}
+                  </label>
+                  <LocationSelector
+                    language={language}
+                    selectedGovernorate={editForm?.governorate}
+                    selectedCity={editForm?.city}
+                    selectedArea={editForm?.area}
+                    onGovernorateChange={(val) => setEditForm(prev => prev ? ({ ...prev, governorate: val }) : null)}
+                    onCityChange={(val) => setEditForm(prev => prev ? ({ ...prev, city: val }) : null)}
+                    onAreaChange={(val) => setEditForm(prev => prev ? ({ ...prev, area: val }) : null)}
+                    t={t}
+                    color={color}
+                    showLabels={false}
+                  />
+                </div>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                     {t.form?.companyName || 'Company Name'} <span className='text-red-500'>*</span>
@@ -522,15 +557,15 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                 </div>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    {t.form?.address || 'Address'}
+                    {t.form?.address || 'Street Address'}
                   </label>
                   <textarea
                     value={editForm.address}
                     onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                    rows={3}
+                    rows={2}
                     className='w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 outline-hidden transition-all resize-none'
                     style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
-                    placeholder={t.form?.enterAddress || 'Enter company address'}
+                    placeholder={t.form?.enterAddress || 'Enter street address'}
                     dir={addressDir}
                   />
                 </div>

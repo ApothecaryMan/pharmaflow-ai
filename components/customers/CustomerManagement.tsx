@@ -10,6 +10,7 @@ import { idGenerator } from '../../utils/idGenerator';
 import { useData } from '../../services/DataContext';
 import { useContextMenu } from '../common/ContextMenu';
 import { FilterDropdown } from '../common/FilterDropdown';
+import { LocationSelector } from '../common/LocationSelector';
 import { Modal } from '../common/Modal';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { SmartEmailInput, SmartPhoneInput, SmartInput, SmartTextarea, useSmartDirection } from '../common/SmartInputs';
@@ -74,14 +75,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   // Form State
   const [formData, setFormData] = useState<Partial<Customer>>({});
 
-  // Location State
-  const [availableCities, setAvailableCities] = useState<typeof CITIES>([]);
-  const [availableAreas, setAvailableAreas] = useState<typeof AREAS>([]);
-
   // Dropdown States for Address
-  const [isGovernorateOpen, setIsGovernorateOpen] = useState(false);
-  const [isCityOpen, setIsCityOpen] = useState(false);
-  const [isAreaOpen, setIsAreaOpen] = useState(false);
+  const [isContactOpen, setIsContactOpen] = useState(false);
 
   // Smart Direction
   const nameDir = useSmartDirection(formData.name, t.modal.placeholders.johnDoe);
@@ -95,7 +90,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const policyDir = useSmartDirection(formData.policyNumber);
 
   // Preferred Contact Dropdown States
-  const [isContactOpen, setIsContactOpen] = useState(false);
   const [isModalContactOpen, setIsModalContactOpen] = useState(false);
 
   // Contact Options
@@ -105,42 +99,16 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     { id: 'email', label: t.contactOptions.email, icon: 'mail' },
   ];
 
-  // Update available cities when governorate changes
-  useEffect(() => {
-    if (formData.governorate) {
-      setAvailableCities(CITIES.filter((c) => c.governorate_id === formData.governorate));
-    } else {
-      setAvailableCities([]);
-    }
-  }, [formData.governorate]);
-
-  // Update available areas when city changes
-  useEffect(() => {
-    if (formData.city) {
-      setAvailableAreas(AREAS.filter((a) => a.city_id === formData.city));
-    } else {
-      setAvailableAreas([]);
-    }
-  }, [formData.city]);
+  // Contact Options
 
 
 
   /**
-   * generateUniqueCode - Generates a random 6-digit numeric code 
-   * prefixed with 'CUST-' (e.g., CUST-123456).
-   * Ensures uniqueness by checking against existing customers.
+   * generateUniqueCode - Generates a mnemonic code (e.g., CUST-123456)
+   * Centralized in idGenerator.code
    */
   const generateUniqueCode = () => {
-    let code;
-    let isUnique = false;
-    while (!isUnique) {
-      code = 'CUST-' + Math.floor(100000 + Math.random() * 900000).toString();
-      // eslint-disable-next-line no-loop-func
-      if (!customers.find((c) => c.code === code)) {
-        isUnique = true;
-      }
-    }
-    return code;
+    return idGenerator.code('CUST');
   };
 
   /**
@@ -523,91 +491,19 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         {t.modal.address}
       </h4>
 
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-        {/* Governorate */}
-        <div>
-          <label className='block text-xs font-medium text-gray-500 mb-1'>
-            {t.modal.governorate}
-          </label>
-          <FilterDropdown
-            variant='input'
-            items={GOVERNORATES}
-            selectedItem={GOVERNORATES.find((g) => g.id === formData.governorate)}
-            isOpen={isGovernorateOpen}
-            onToggle={() => setIsGovernorateOpen(!isGovernorateOpen)}
-            onSelect={(gov) => {
-              setFormData({
-                ...formData,
-                governorate: gov.id,
-                city: '',
-                area: '',
-              });
-              setIsGovernorateOpen(false);
-            }}
-            keyExtractor={(gov) => gov.id}
-            renderSelected={(gov) =>
-              gov ? (language === 'AR' ? gov.name_ar : gov.name_en) : t.modal.selectGovernorate
-            }
-            renderItem={(gov) => (language === 'AR' ? gov.name_ar : gov.name_en)}
-            className='w-full h-[42px]'
-            color={color}
-          />
-        </div>
+      <LocationSelector
+        language={language}
+        selectedGovernorate={formData.governorate}
+        selectedCity={formData.city}
+        selectedArea={formData.area}
+        onGovernorateChange={(val) => setFormData(prev => ({ ...prev, governorate: val }))}
+        onCityChange={(val) => setFormData(prev => ({ ...prev, city: val }))}
+        onAreaChange={(val) => setFormData(prev => ({ ...prev, area: val }))}
+        t={t}
+        color={color}
+      />
 
-        {/* City */}
-        <div>
-          <label className='block text-xs font-medium text-gray-500 mb-1'>{t.modal.city}</label>
-          <FilterDropdown
-            variant='input'
-            items={availableCities}
-            selectedItem={availableCities.find((c) => c.id === formData.city)}
-            isOpen={isCityOpen && !!formData.governorate}
-            onToggle={() => formData.governorate && setIsCityOpen(!isCityOpen)}
-            onSelect={(city) => {
-              setFormData({
-                ...formData,
-                city: city.id,
-                area: '',
-              });
-              setIsCityOpen(false);
-            }}
-            keyExtractor={(city) => city.id}
-            renderSelected={(city) =>
-              city ? (language === 'AR' ? city.name_ar : city.name_en) : t.modal.selectCity
-            }
-            renderItem={(city) => (language === 'AR' ? city.name_ar : city.name_en)}
-            className='w-full h-[42px]'
-            color={color}
-            transparentIfSingle={false}
-            disabled={!formData.governorate}
-          />
-        </div>
-
-        {/* Area */}
-        <div>
-          <label className='block text-xs font-medium text-gray-500 mb-1'>{t.modal.area}</label>
-          <FilterDropdown
-            variant='input'
-            items={availableAreas}
-            selectedItem={availableAreas.find((a) => a.id === formData.area)}
-            isOpen={isAreaOpen && !!formData.city}
-            onToggle={() => formData.city && setIsAreaOpen(!isAreaOpen)}
-            onSelect={(area) => {
-              setFormData({ ...formData, area: area.id });
-              setIsAreaOpen(false);
-            }}
-            keyExtractor={(area) => area.id}
-            renderSelected={(area) =>
-              area ? (language === 'AR' ? area.name_ar : area.name_en) : t.modal.selectArea
-            }
-            renderItem={(area) => (language === 'AR' ? area.name_ar : area.name_en)}
-            className='w-full h-[42px]'
-            color={color}
-            transparentIfSingle={false}
-            disabled={!formData.city}
-          />
-        </div>
-      </div>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>
 
       {/* Street Address */}
       <div>
@@ -623,7 +519,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         />
       </div>
     </div>
-  );
+  </div>
+);
 
   const renderProfileModal = () => {
     if (!viewingCustomer) return null;

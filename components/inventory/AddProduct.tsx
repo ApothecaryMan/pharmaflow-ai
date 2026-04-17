@@ -15,6 +15,7 @@ import { Tooltip } from '../common/Tooltip';
 import { CARD_LG, INPUT_BASE } from '../../utils/themeStyles';
 import * as stockOps from '../../utils/stockOperations';
 import { SegmentedControl } from '../common/SegmentedControl';
+import { idGenerator } from '../../utils/idGenerator';
 
 interface AddProductProps {
   inventory: Drug[];
@@ -133,14 +134,7 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
   // Auto-generate internal code if empty
   const generateInternalCode = () => {
-    const existing = inventory
-      .map((d) => d.internalCode)
-      .filter((c): c is string => !!c && /^\d{6}$/.test(c))
-      .map((c) => parseInt(c, 10));
-    
-    const max = existing.length > 0 ? Math.max(...existing) : 100000;
-    const next = String(max + 1).padStart(6, '0');
-    setFormData(prev => ({ ...prev, internalCode: next }));
+    setFormData(prev => ({ ...prev, internalCode: idGenerator.code('DRUG') }));
   };
 
   const margin = useMemo(() => {
@@ -411,7 +405,6 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   </label>
                   <FilterDropdown
                     variant="input"
-                    floating={true}
                     minHeight="44px"
                     items={getCategories(currentLang)}
                     selectedItem={formData.category}
@@ -435,7 +428,6 @@ export const AddProduct: React.FC<AddProductProps> = ({
                   </label>
                   <FilterDropdown
                     variant="input"
-                    floating={true}
                     minHeight="44px"
                     items={getProductTypes(formData.category || 'General', currentLang)}
                     selectedItem={formData.dosageForm || ''}

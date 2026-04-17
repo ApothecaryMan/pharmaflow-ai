@@ -4,7 +4,8 @@ import { useStatusBar } from '../../components/layout/StatusBar';
 import type { Supplier } from '../../types';
 import { Modal } from '../common/Modal';
 import { SearchInput } from '../common/SearchInput';
-import { SmartEmailInput, useSmartDirection } from '../common/SmartInputs';
+import { SmartEmailInput, SmartInput, useSmartDirection } from '../common/SmartInputs';
+import { LocationSelector } from '../common/LocationSelector';
 
 interface SuppliersProps {
   suppliers: Supplier[];
@@ -13,6 +14,7 @@ interface SuppliersProps {
   onDeleteSupplier: (id: string) => void;
   color: string;
   t: any;
+  language: 'EN' | 'AR';
 }
 
 export const Suppliers: React.FC<SuppliersProps> = ({
@@ -22,6 +24,7 @@ export const Suppliers: React.FC<SuppliersProps> = ({
   onDeleteSupplier,
   color,
   t,
+  language,
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const [searchTerm, setSearchTerm] = useState('');
@@ -228,16 +231,27 @@ export const Suppliers: React.FC<SuppliersProps> = ({
               />
             </div>
 
-            <div className='space-y-1'>
+            <div className='space-y-4'>
               <label className='text-xs font-bold text-gray-500 uppercase'>{t.modal.address}</label>
-              <textarea
+              <LocationSelector
+                language={language}
+                selectedGovernorate={formData.governorate}
+                selectedCity={formData.city}
+                selectedArea={formData.area}
+                onGovernorateChange={(val) => setFormData({ ...formData, governorate: val })}
+                onCityChange={(val) => setFormData({ ...formData, city: val })}
+                onAreaChange={(val) => setFormData({ ...formData, area: val })}
+                t={t}
+                color={color}
+              />
+              <SmartInput
                 className='w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-inset transition-all'
-                rows={2}
                 style={{ '--tw-ring-color': 'var(--color-primary-500)' } as any}
-                value={formData.address}
+                value={formData.address || ''}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder={language === 'AR' ? 'العنوان بالتفصيل' : 'Street Address'}
                 dir={addressDir}
-              ></textarea>
+              />
             </div>
 
             <div className='pt-4 flex gap-3'>

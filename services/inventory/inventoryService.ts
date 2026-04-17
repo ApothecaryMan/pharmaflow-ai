@@ -230,7 +230,7 @@ export const createInventoryService = (): InventoryService => ({
     }, undefined, true);
 
     if (!skipSync) {
-      await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'CREATE_DRUG', drug: newDrug });
+      await syncQueueService.enqueue('DRUG', { action: 'CREATE_DRUG', drug: newDrug });
     }
 
     return newDrug;
@@ -251,7 +251,7 @@ export const createInventoryService = (): InventoryService => ({
     await drugCacheService.upsert(updated);
 
     if (!skipSync) {
-      await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'UPDATE_DRUG', id, updates });
+      await syncQueueService.enqueue('DRUG', { action: 'UPDATE_DRUG', id, updates });
     }
 
     return updated;
@@ -328,7 +328,7 @@ export const createInventoryService = (): InventoryService => ({
     await drugCacheService.remove(id);
     
     if (!skipSync) {
-      await syncQueueService.enqueue('STOCK_ADJUSTMENT', { action: 'DELETE_DRUG', id });
+      await syncQueueService.enqueue('DRUG', { action: 'DELETE_DRUG', id });
     }
 
     return true;

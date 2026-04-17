@@ -118,6 +118,10 @@ export interface Branch {
   code: string;
   /** Physical address */
   address?: string;
+  /** Location details for Egyptian hierarchy */
+  governorate?: string;
+  city?: string;
+  area?: string;
   /** Contact phone number */
   phone?: string;
   /** Active status */
@@ -211,8 +215,11 @@ export interface Supplier {
   phone: string;
   /** Contact email address */
   email: string;
-  /** Business address */
-  address: string;
+  // Address Details
+  governorate?: string;
+  city?: string;
+  area?: string;
+  address: string; // Specific street address details
   /** ISO date of creation */
   createdAt?: string;
   /** ISO date of last update */

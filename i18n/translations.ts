@@ -6,6 +6,14 @@
 export const TRANSLATIONS = {
   EN: {
     appTitle: 'ZINC',
+    location: {
+      governorate: 'Governorate',
+      city: 'City',
+      area: 'Area',
+      selectGovernorate: 'Select Governorate',
+      selectCity: 'Select City',
+      selectArea: 'Select Area',
+    },
     date: 'Date',
     orderId: 'Order ID',
     orderTotal: 'Order Total',
@@ -1510,13 +1518,7 @@ export const TRANSLATIONS = {
         location: 'Preferred Pharmacy Location',
         contact: 'Preferred Contact Method',
         conditions: 'Chronic Conditions',
-        governorate: 'Governorate',
-        city: 'City',
-        area: 'Area',
         streetAddress: 'Street Address',
-        selectGovernorate: 'Select Governorate',
-        selectCity: 'Select City',
-        selectArea: 'Select Area',
 
         notes: 'Notes',
         placeholders: {
@@ -3599,13 +3601,7 @@ export const TRANSLATIONS = {
         location: 'موقع الصيدلية المفضل',
         contact: 'طريقة التواصل المفضلة',
         conditions: 'الأمراض المزمنة',
-        governorate: 'المحافظة',
-        city: 'المدينة',
-        area: 'المنطقة',
         streetAddress: 'العنوان بالتفصيل',
-        selectGovernorate: 'اختر المحافظة',
-        selectCity: 'اختر المدينة',
-        selectArea: 'اختر المنطقة',
         notes: 'ملاحظات',
         placeholders: {
           code: 'C-001',
