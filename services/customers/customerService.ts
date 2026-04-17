@@ -174,7 +174,7 @@ export const createCustomerService = (): CustomerService => ({
       ...customer,
       id: idGenerator.generate('customers', effectiveBranchId),
       serialId: idGenerator.generate('customers-serial', effectiveBranchId),
-      code: customer.code || 'CUST-' + Math.floor(100000 + Math.random() * 900000).toString(),
+      code: customer.code || idGenerator.code('CUST'),
       createdAt: new Date().toISOString(),
       points: customer.points || 0,
       totalPurchases: customer.totalPurchases || 0,

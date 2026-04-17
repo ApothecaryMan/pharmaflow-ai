@@ -126,8 +126,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     setMode('add');
     setEditingCustomer(null);
     setFormData({
-      code: generateUniqueCode(),
-      serialId: getNextSerialId(),
       status: 'active',
       points: 0,
       totalPurchases: 0,
@@ -155,8 +153,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const handleOpenKiosk = () => {
     setEditingCustomer(null);
     setFormData({
-      code: generateUniqueCode(),
-      serialId: getNextSerialId(),
       status: 'active',
       points: 0,
       totalPurchases: 0,
@@ -184,12 +180,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
       onUpdateCustomer({ ...editingCustomer, ...formData } as Customer);
       handleCloseModal();
     } else {
-      // Logic for ID, serialId, and code is centralized in useEntityActions,
-      // but we pass our generated/edited values to ensure the UI state matches the result.
-      onAddCustomer({
-        ...formData,
-        serialId: formData.serialId || getNextSerialId(),
-      } as any);
+      // Logic for ID, serialId, and code is centralized in the service layer.
+      onAddCustomer(formData as any);
 
       if (isKioskMode) {
         handleCloseModal();

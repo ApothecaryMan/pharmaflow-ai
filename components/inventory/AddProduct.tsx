@@ -16,6 +16,7 @@ import { CARD_LG, INPUT_BASE } from '../../utils/themeStyles';
 import * as stockOps from '../../utils/stockOperations';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { idGenerator } from '../../utils/idGenerator';
+import { validationService } from '../../services/validation/validationService';
 
 interface AddProductProps {
   inventory: Drug[];
@@ -134,7 +135,9 @@ export const AddProduct: React.FC<AddProductProps> = ({
 
   // Auto-generate internal code if empty
   const generateInternalCode = () => {
-    setFormData(prev => ({ ...prev, internalCode: idGenerator.code('DRUG') }));
+    // Delegation: The service layer will provide this during submission if left empty.
+    // This maintains the placeholder while ensuring centralization.
+    setFormData(prev => ({ ...prev, internalCode: '' }));
   };
 
   const margin = useMemo(() => {
@@ -160,17 +163,14 @@ export const AddProduct: React.FC<AddProductProps> = ({
       }
     }
 
-    // Auto-generate internal code if it's still missing during submission
-    let finalInternalCode = formData.internalCode;
-    if (!finalInternalCode) {
-      const existing = inventory
-        .map((d) => d.internalCode)
-        .filter((c): c is string => !!c && /^\d{6}$/.test(c))
-        .map((c) => parseInt(c, 10));
-      
-      const max = existing.length > 0 ? Math.max(...existing) : 100000;
-      finalInternalCode = String(max + 1).padStart(6, '0');
+    // Validate Primary Barcode
+    if (finalBarcode && !validationService.isValidBarcode(finalBarcode)) {
+      // In a real app, we'd use useAlert or similar. Here we rely on console + parent error handling.
+      console.warn('[AddProduct] Invalid barcode format:', finalBarcode);
     }
+
+    // Final internalCode assignment occurs in the service layer if empty
+    const finalInternalCode = formData.internalCode;
 
     const newDrug: Omit<Drug, 'id' | 'branchId' | 'createdAt' | 'updatedAt'> = {
       name: formData.name || '',
