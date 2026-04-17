@@ -11,6 +11,8 @@ import { transactionService } from '../services/transactions/transactionService'
 import { migrationService } from '../services/migration';
 import { restoreStockForCancelledSale } from '../services/salesHelpers';
 import { salesService } from '../services/sales/salesService';
+import { purchaseService } from '../services/purchases/purchaseService';
+import { returnService } from '../services/returns/returnService';
 import * as stockOps from '../utils/stockOperations';
 import type { AppSettings } from '../services/settings/types';
 import type {
@@ -669,6 +671,7 @@ export function useEntityHandlers({
         error('Permission denied: Cannot create purchase orders');
         return;
       }
+
       try {
         let finalPurchase = { ...purchase, branchId: activeBranchId };
 
@@ -677,44 +680,49 @@ export function useEntityHandlers({
             error('Permission denied: Cannot complete/approve purchase (Created as pending instead)');
             finalPurchase.status = 'pending';
           } else if (finalPurchase.paymentType === 'cash' && !currentShift) {
-            // Double Check Shift for Cash Purchases
             error('Shift must be open to process cash purchase');
             return;
           }
         }
 
-        setPurchases((prev) => [finalPurchase, ...prev]);
+        // --- PERSISTENCE: Save Purchase to Service layer ---
+        // We omit the ID if the service generates it, but if the UI already generated it, 
+        // the service's create method might overwrite it. To be safe, we use the service's result.
+        const { id: _, ...purchaseData } = finalPurchase;
+        const savedPurchase = await purchaseService.create(purchaseData as any, activeBranchId, false);
 
-        // Only update inventory if purchase is actually completed
-        if (finalPurchase.status === 'completed') {
-          await applyPurchaseToInventory(finalPurchase);
+        setPurchases((prev) => [savedPurchase, ...prev]);
 
-          // Record Shift Transaction if Cash
-          if (finalPurchase.paymentType === 'cash' && currentShift) {
+        if (savedPurchase.status === 'completed') {
+          // 1. Update Inventory
+          await applyPurchaseToInventory(savedPurchase);
+
+          // 2. Record Shift Transaction if Cash
+          if (savedPurchase.paymentType === 'cash' && currentShift) {
             addTransaction(currentShift.id, {
               id: idGenerator.generate('transactions', activeBranchId),
               branchId: activeBranchId,
               shiftId: currentShift.id,
               time: new Date().toISOString(),
               type: 'purchase',
-              amount: finalPurchase.totalCost,
-              reason: `Direct Purchase PO #${finalPurchase.invoiceId} from ${finalPurchase.supplierName}`,
+              amount: savedPurchase.totalCost,
+              reason: `Direct Purchase PO #${savedPurchase.invoiceId} from ${savedPurchase.supplierName}`,
               userId: currentEmployeeId || 'System',
             });
           }
 
           auditService.log('purchase.complete', {
             userId: currentEmployeeId,
-            details: `Completed PO #${finalPurchase.invoiceId}`,
-            entityId: finalPurchase.id,
+            details: `Completed PO #${savedPurchase.invoiceId}`,
+            entityId: savedPurchase.id,
             branchId: activeBranchId,
           });
         } else {
           info('Purchase Order Saved as Pending');
           auditService.log('purchase.create', {
             userId: currentEmployeeId,
-            details: `Created PO #${finalPurchase.invoiceId} (Pending)`,
-            entityId: finalPurchase.id,
+            details: `Created PO #${savedPurchase.invoiceId} (Pending)`,
+            entityId: savedPurchase.id,
             branchId: activeBranchId,
           });
         }
@@ -783,6 +791,9 @@ export function useEntityHandlers({
         // 2. Apply inventory logic (deduped)
         await applyPurchaseToInventory({ ...purchase, status: 'completed' });
 
+        // --- PERSISTENCE: Update status in Service layer ---
+        await purchaseService.approve(purchaseId, approverName);
+
         // 3. Record Shift Transaction
         if (purchase.paymentType === 'cash' && currentShift) {
           addTransaction(currentShift.id, {
@@ -825,50 +836,54 @@ export function useEntityHandlers({
   );
 
   const handleRejectPurchase = useCallback(
-    (purchaseId: string, reason?: string) => {
-      if (
-        !permissionsService.can('purchase.reject')
-      ) {
+    async (purchaseId: string, reason?: string) => {
+      if (!permissionsService.can('purchase.reject')) {
         error('Permission denied: Cannot reject purchases');
         return;
       }
-      setPurchases((prev) => {
-        const p = prev.find((p) => p.id === purchaseId);
-        // BUG-P4: Block rejection of completed purchases (stock already added, no reversal)
-        if (p?.status === 'completed') {
-          error('Cannot reject a completed purchase. Use Purchase Returns to reverse stock.');
-          return prev;
-        }
-        return prev.map((p) => (p.id === purchaseId ? { ...p, status: 'rejected' } : p));
-      });
-      info('Purchase Order Rejected');
-      auditService.log('purchase.reject', {
-        userId: currentEmployeeId,
-        details: `Rejected PO ID: ${purchaseId}`,
-        entityId: purchaseId,
-        branchId: activeBranchId,
-      });
+      
+      const purchase = purchases.find((p) => p.id === purchaseId);
+      // BUG-P4: Block rejection of completed purchases (stock already added, no reversal)
+      if (purchase?.status === 'completed') {
+        error('Cannot reject a completed purchase. Use Purchase Returns to reverse stock.');
+        return;
+      }
+
+      try {
+        // --- PERSISTENCE: Update status in Service layer ---
+        await purchaseService.reject(purchaseId, reason || '');
+
+        setPurchases((prev) => 
+          prev.map((p) => (p.id === purchaseId ? { ...p, status: 'rejected' } : p))
+        );
+        
+        info('Purchase Order Rejected');
+        auditService.log('purchase.reject', {
+          userId: currentEmployeeId,
+          details: `Rejected PO ID: ${purchaseId}`,
+          entityId: purchaseId,
+          branchId: activeBranchId,
+        });
+      } catch (err) {
+        error(`Failed to reject purchase: ${err instanceof Error ? err.message : String(err)}`);
+      }
     },
-    [setPurchases, info, currentEmployeeId, employees, error]
+    [purchases, setPurchases, info, currentEmployeeId, employees, error, activeBranchId]
   );
 
   const handleCreatePurchaseReturn = useCallback(
     async (returnData: PurchaseReturn) => {
-      if (
-        !permissionsService.can('purchase.return')
-      ) {
+      if (!permissionsService.can('purchase.return')) {
         error('Permission denied: Cannot create purchase returns');
         return;
       }
 
-      // BUG-P3: Require open shift for cash purchase returns (same as cash sales returns)
       const originalPurchase = purchases.find((p) => p.id === returnData.purchaseId);
       if (originalPurchase?.paymentType === 'cash' && !currentShift) {
         error('Shift must be open to process cash purchase return');
         return;
       }
 
-      // BUG-P2: Validate return quantities against original purchase
       if (originalPurchase) {
         for (const returnItem of returnData.items) {
           const purchaseItem = originalPurchase.items.find((i) => i.drugId === returnItem.drugId);
@@ -876,7 +891,6 @@ export function useEntityHandlers({
             error(`Item ${returnItem.name || returnItem.drugId} not found in original purchase`);
             return;
           }
-          // Sum already-returned qty from all previous returns
           const alreadyReturned = purchaseReturns
             .filter((r) => r.purchaseId === returnData.purchaseId)
             .reduce((sum, r) => {
@@ -891,73 +905,68 @@ export function useEntityHandlers({
         }
       }
 
-      setPurchaseReturns((prev) => [{ ...returnData, branchId: activeBranchId }, ...prev]);
+      try {
+        // --- PERSISTENCE: Save Return and handle inventory via Service layer ---
+        const { id: _, ...returnInput } = returnData;
+        const savedReturn = await returnService.createPurchaseReturn(returnInput as any, activeBranchId);
 
-      const performer = employees?.find((e) => e.id === currentEmployeeId);
+        setPurchaseReturns((prev) => [savedReturn, ...prev]);
 
-      // Reduce inventory
-      setInventory((prev) =>
-        prev.map((drug) => {
-          const returnedItem = returnData.items.find((i) => i.drugId === drug.id);
-          if (returnedItem) {
-            const isUnit = !!returnedItem.isUnit;
-            const mutation = stockOps.deductStockSimple(
-              drug,
-              returnedItem.quantityReturned,
-              isUnit,
-              'return_supplier',
-              `Purchase Return #${returnData.id}`,
-              {
-                branchId: activeBranchId,
-                performedBy: currentEmployeeId!,
-                performedByName: performer?.name,
-              },
-              returnData.id
-            );
+        const performer = employees?.find((e) => e.id === currentEmployeeId);
 
-            // --- PERSISTENCE: Immediate deduction from IndexedDB ---
-            const unitsToDeduct = isUnit
-              ? returnedItem.quantityReturned
-              : returnedItem.quantityReturned * (drug.unitsPerPack || 1);
-            inventoryService.updateStock(drug.id, -unitsToDeduct).catch(console.error);
+        // Update local state for UI responsiveness
+        setInventory((prev) =>
+          prev.map((drug) => {
+            const returnedItem = savedReturn.items.find((i) => i.drugId === drug.id);
+            if (returnedItem) {
+              const isUnit = !!returnedItem.isUnit;
+              const unitsToDeduct = isUnit
+                ? returnedItem.quantityReturned
+                : returnedItem.quantityReturned * (drug.unitsPerPack || 1);
 
-            return {
-              ...drug,
-              stock: mutation.newStock,
-            };
-          }
-          return drug;
-        })
-      );
-      // Record Shift Transaction if original purchase was cash
-      if (originalPurchase?.paymentType === 'cash' && currentShift) {
-        addTransaction(currentShift.id, {
-          id: idGenerator.generate('transactions', activeBranchId),
+              return {
+                ...drug,
+                stock: validateStock(drug.stock - unitsToDeduct),
+              };
+            }
+            return drug;
+          })
+        );
+        
+        setBatches(batchService.getAllBatches(activeBranchId));
+
+        if (originalPurchase?.paymentType === 'cash' && currentShift) {
+          addTransaction(currentShift.id, {
+            id: idGenerator.generate('transactions', activeBranchId),
+            branchId: activeBranchId,
+            shiftId: currentShift.id,
+            time: new Date().toISOString(),
+            type: 'purchase_return',
+            amount: savedReturn.totalRefund,
+            reason: `Purchase Return #${savedReturn.id} for PO #${originalPurchase.invoiceId}`,
+            userId: performer?.name || 'System',
+            relatedSaleId: originalPurchase.invoiceId,
+          });
+        }
+
+        auditService.log('purchase.return', {
+          userId: currentEmployeeId,
+          details: `Created purchase return #${savedReturn.id} for PO #${savedReturn.purchaseId}`,
+          entityId: savedReturn.id,
           branchId: activeBranchId,
-          shiftId: currentShift.id,
-          time: new Date().toISOString(),
-          type: 'purchase_return',
-          amount: returnData.totalRefund,
-          reason: `Purchase Return #${returnData.id} for PO #${originalPurchase.invoiceId}`,
-          userId: performer?.name || 'System',
-          relatedSaleId: originalPurchase.invoiceId,
         });
+
+        success('Purchase return created successfully');
+      } catch (err) {
+        error(`Failed to create return: ${err instanceof Error ? err.message : String(err)}`);
       }
-
-      auditService.log('purchase.return', {
-        userId: currentEmployeeId,
-        details: `Created purchase return #${returnData.id} for PO #${returnData.purchaseId}`,
-        entityId: returnData.id,
-        branchId: activeBranchId,
-      });
-
-      success('Purchase return created successfully');
     },
     [
       purchases,
       purchaseReturns,
       setPurchaseReturns,
       setInventory,
+      setBatches,
       success,
       currentEmployeeId,
       employees,
