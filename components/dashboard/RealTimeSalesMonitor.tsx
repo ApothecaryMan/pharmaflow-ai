@@ -270,7 +270,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             <span className='relative inline-flex rounded-full h-3 w-3 bg-emerald-500'></span>
           </span>
           <span className='text-xs font-bold text-gray-700 dark:text-gray-300 tracking-wider'>
-            LIVE
+            {t.realTimeSales?.live || 'LIVE'}
           </span>
         </div>
       </div>
@@ -312,7 +312,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             value={todayStats.transactions}
             icon='receipt_long'
             iconColor='blue'
-            subValue={`$${todayStats.avgTransactionValue.toFixed(0)} avg`}
+            subValue={`$${todayStats.avgTransactionValue.toFixed(0)} ${t.realTimeSales?.avg || 'avg'}`}
             iconTooltip={transactionsTooltip}
           />
         </div>
@@ -349,7 +349,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             icon='point_of_sale'
             iconColor='amber'
             valueSuffix={`/${todayStats.totalCounters}`}
-            subValue={`${todayStats.onHoldCount} hold`}
+            subValue={`${todayStats.onHoldCount} ${t.realTimeSales?.hold || 'hold'}`}
             iconOverlay={
               <span className='absolute -top-1 -right-1 flex h-3 w-3'>
                 <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75'></span>
@@ -383,9 +383,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 variant='onPage'
                 className='w-auto'
                 options={[
-                  { label: 'All', value: 'ALL' },
-                  { label: 'VIP', value: 'VIP' },
-                  { label: 'High Value', value: 'HIGH_VALUE' },
+                  { label: t.realTimeSales?.filterAll || 'All', value: 'ALL' },
+                  { label: t.realTimeSales?.filterVip || 'VIP', value: 'VIP' },
+                  { label: t.realTimeSales?.filterHighValue || 'High Value', value: 'HIGH_VALUE' },
                 ]}
               />
             </div>
@@ -394,12 +394,12 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
               <table className='w-full text-left rtl:text-right border-collapse'>
                 <thead className='sticky top-0 bg-(--bg-card) z-10'>
                   <tr className='border-b border-gray-100 dark:border-gray-800 text-xs font-bold text-gray-500 uppercase tracking-wider'>
-                    <th className='pb-3 px-2'>Time</th>
-                    <th className='pb-3 px-2'>ID</th>
-                    <th className='pb-3 px-2'>Items</th>
-                    <th className='pb-3 px-2'>Total</th>
-                    <th className='pb-3 px-2'>Method</th>
-                    <th className='pb-3 px-2'>Status</th>
+                    <th className='pb-3 px-2'>{t.realTimeSales?.tableTime || 'Time'}</th>
+                    <th className='pb-3 px-2'>{t.realTimeSales?.tableId || 'ID'}</th>
+                    <th className='pb-3 px-2'>{t.realTimeSales?.tableItems || 'Items'}</th>
+                    <th className='pb-3 px-2'>{t.realTimeSales?.tableTotal || 'Total'}</th>
+                    <th className='pb-3 px-2'>{t.realTimeSales?.tableMethod || 'Method'}</th>
+                    <th className='pb-3 px-2'>{t.realTimeSales?.tableStatus || 'Status'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -479,7 +479,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   {todayStats.todaysSales.length === 0 && (
                     <tr>
                       <td colSpan={6} className='py-10 text-center text-gray-400'>
-                        No transactions yet today.
+                        {t.realTimeSales?.noTransactions || 'No transactions yet today.'}
                       </td>
                     </tr>
                   )}
@@ -493,49 +493,49 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             {/* Hourly Sales Rate */}
             <div className={`md:col-span-2 p-4 rounded-2xl ${CARD_BASE} flex flex-col justify-center`}>
               <p className='text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5'>
-                Sales Rate
+                {t.realTimeSales?.salesRate || 'Sales Rate'}
               </p>
               <div className='text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center'>
                 <AnimatedCounter value={todayStats.hourlySalesRate} prefix='$' fractionDigits={0} />
-                <span className='text-[10px] text-gray-400 font-normal ms-1'>/hr</span>
+                <span className='text-[10px] text-gray-400 font-normal ms-1'>/{t.realTimeSales?.perHour || 'hr'}</span>
               </div>
             </div>
 
             {/* Hourly Invoice Rate */}
             <div className={`md:col-span-2 p-4 rounded-2xl ${CARD_BASE} flex flex-col justify-center`}>
               <p className='text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5'>
-                Invoices
+                {t.realTimeSales?.invoices || 'Invoices'}
               </p>
               <div className='text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center'>
                 <AnimatedCounter value={todayStats.hourlyInvoiceRate} fractionDigits={1} />
-                <span className='text-[10px] text-gray-400 font-normal ms-1'>/hr</span>
+                <span className='text-[10px] text-gray-400 font-normal ms-1'>/{t.realTimeSales?.perHour || 'hr'}</span>
               </div>
             </div>
 
             {/* New Customers Per Hour */}
             <div className={`md:col-span-2 p-4 rounded-2xl ${CARD_BASE} flex flex-col justify-center`}>
               <p className='text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5'>
-                New Cust.
+                {t.realTimeSales?.newCust || 'New Cust.'}
               </p>
               <div className='text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center'>
                 <AnimatedCounter value={todayStats.hourlyNewCustomerRate} fractionDigits={1} />
-                <span className='text-[10px] text-gray-400 font-normal ms-1'>/hr</span>
+                <span className='text-[10px] text-gray-400 font-normal ms-1'>/{t.realTimeSales?.perHour || 'hr'}</span>
               </div>
             </div>
 
             {/* Order Distribution (Simple) */}
             <div className='md:col-span-3'>
               <FlexDataCard
-                category='Orders'
+                category={t.realTimeSales?.orders || 'Orders'}
                 items={[
                   {
-                    label: 'Walk-in',
+                    label: t.realTimeSales?.walkIn || 'Walk-in',
                     value: `${todayStats.walkInRate.toFixed(0)}%`,
                     percentage: todayStats.walkInRate,
                     color: 'indigo',
                   },
                   {
-                    label: 'Delivery',
+                    label: t.realTimeSales?.delivery || 'Delivery',
                     value: `${todayStats.deliveryRate.toFixed(0)}%`,
                     percentage: todayStats.deliveryRate,
                     color: 'orange',
@@ -547,16 +547,16 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
             {/* Customer Loyalty (Simple) */}
             <div className='md:col-span-3'>
               <FlexDataCard
-                category='Customers'
+                category={t.realTimeSales?.customers || 'Customers'}
                 items={[
                   {
-                    label: 'Reg.',
+                    label: t.realTimeSales?.reg || 'Reg.',
                     value: `${todayStats.registeredRate.toFixed(0)}%`,
                     percentage: todayStats.registeredRate,
                     color: 'primary',
                   },
                   {
-                    label: 'Anon.',
+                    label: t.realTimeSales?.anon || 'Anon.',
                     value: `${todayStats.anonymousRate.toFixed(0)}%`,
                     percentage: todayStats.anonymousRate,
                     color: 'gray',
@@ -571,7 +571,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         <div className='lg:col-span-2 flex flex-col gap-4'>
           {/* Hourly Chart (Compact) */}
           <ChartWidget
-            title='Hourly Trend'
+            title={t.realTimeSales?.hourlyTrend || 'Hourly Trend'}
             icon='trending_up'
             data={hourlyData}
             dataKeys={{ primary: 'sales' }}
@@ -593,9 +593,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 <span className='material-symbols-rounded text-yellow-500 text-[20px]'>
                   hotel_class
                 </span>
-                Top Products
+                {t.realTimeSales?.topProducts || 'Top Products'}
               </h3>
-              <span className='text-xs text-gray-400'>by Qty</span>
+              <span className='text-xs text-gray-400'>{t.realTimeSales?.byQty || 'by Qty'}</span>
             </div>
             <div className='space-y-3'>
               {topProducts.map((p, idx) => (
@@ -632,7 +632,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
               ))}
               {topProducts.length === 0 && (
                 <div className='flex-1 flex items-center justify-center py-4 text-gray-400 text-sm'>
-                  No data yet
+                  {t.realTimeSales?.noData || 'No data yet'}
                 </div>
               )}
             </div>
@@ -645,7 +645,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* Payment Methods Chart */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} min-h-[300px] flex flex-col`}>
           <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 mb-4'>
-            Payment Methods
+            {t.realTimeSales?.paymentMethods || 'Payment Methods'}
           </h3>
           <div className='flex-1 w-full relative'>
             <ResponsiveContainer width='100%' height='100%'>
@@ -680,14 +680,14 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 </Pie>
                 <Tooltip
                   contentStyle={{ borderRadius: '12px' }}
-                  formatter={(value: number) => `$${value.toFixed(2)}`}
+                  formatter={(value: number) => `${language === 'EN' ? '$' : ''}${value.toFixed(2)}${language === 'AR' ? '$' : ''}`}
                 />
               </PieChart>
             </ResponsiveContainer>
             {/* Legend */}
             <div className='absolute inset-0 flex flex-col items-center justify-center pointer-events-none'>
               <div className='text-center'>
-                <p className='text-xs text-gray-400'>Total</p>
+                <p className='text-xs text-gray-400'>{t.global?.table?.total || 'Total'}</p>
                 <div className='text-xl font-bold text-gray-800 dark:text-gray-200 flex justify-center'>
                   <AnimatedCounter value={todayStats.revenue} prefix='$' fractionDigits={0} />
                 </div>
@@ -709,15 +709,15 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* Category Distribution */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} min-h-[300px] flex flex-col`}>
           <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200 mb-4'>
-            Sales by Category
+            {t.realTimeSales?.salesByCategory || 'Sales by Category'}
           </h3>
           <div className='w-full h-[250px] relative'>
             {(() => {
               // Group data into the 3 specific categories
               const groups = {
-                Medicine: 0,
-                Cosmetic: 0,
-                General: 0,
+                [t.realTimeSales?.medicine || 'Medicine']: 0,
+                [t.realTimeSales?.cosmetic || 'Cosmetic']: 0,
+                [t.realTimeSales?.general || 'General']: 0,
               };
 
               todayStats.todaysSales.forEach((sale) => {
@@ -739,21 +739,21 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                       /tablet|capsule|syrup|injection|antibiotic|medicine|pharmacy|drug|pill/
                     )
                   ) {
-                    groups['Medicine'] += itemTotal;
+                    groups[t.realTimeSales?.medicine || 'Medicine'] += itemTotal;
                   } else if (
                     lowerCat.match(/cream|lotion|skin|hair|cosmetic|beauty|shampoo|soap|gel/)
                   ) {
-                    groups['Cosmetic'] += itemTotal;
+                    groups[t.realTimeSales?.cosmetic || 'Cosmetic'] += itemTotal;
                   } else {
-                    groups['General'] += itemTotal;
+                    groups[t.realTimeSales?.general || 'General'] += itemTotal;
                   }
                 });
               });
 
               const chartData = [
-                { name: 'Medicine', value: groups['Medicine'], color: '#3b82f6' }, // Blue-500
-                { name: 'Cosmetic', value: groups['Cosmetic'], color: '#ec4899' }, // Pink-500
-                { name: 'General', value: groups['General'], color: '#94a3b8' }, // Slate-400
+                { name: t.realTimeSales?.medicine || 'Medicine', value: groups[t.realTimeSales?.medicine || 'Medicine'], color: '#3b82f6' }, // Blue-500
+                { name: t.realTimeSales?.cosmetic || 'Cosmetic', value: groups[t.realTimeSales?.cosmetic || 'Cosmetic'], color: '#ec4899' }, // Pink-500
+                { name: t.realTimeSales?.general || 'General', value: groups[t.realTimeSales?.general || 'General'], color: '#94a3b8' }, // Slate-400
               ].filter((d) => d.value > 0);
 
               if (chartData.length === 0) {
@@ -762,7 +762,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     <span className='material-symbols-rounded text-4xl mb-2 opacity-50'>
                       donut_small
                     </span>
-                    <p className='text-sm'>No sales data yet</p>
+                    <p className='text-sm'>{t.realTimeSales?.noSalesData || 'No sales data yet'}</p>
                   </div>
                 );
               }
@@ -814,11 +814,12 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     </ResponsiveContainer>
                     {/* Center Text */}
                     <div className='absolute inset-0 flex flex-col items-center justify-center pointer-events-none'>
-                      <span className='text-xs text-gray-400 font-medium uppercase'>Total</span>
+                      <span className='text-xs text-gray-400 font-medium uppercase'>{t.global?.table?.total || 'Total'}</span>
                       <div className='text-xl font-bold text-gray-800 dark:text-gray-200 flex justify-center'>
                         <AnimatedCounter
                           value={chartData.reduce((sum, item) => sum + item.value, 0)}
-                          prefix='$'
+                          prefix={language === 'EN' ? '$' : ''}
+                          suffix={language === 'AR' ? '$' : ''}
                           fractionDigits={0}
                         />
                       </div>
@@ -852,9 +853,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
         {/* Returns Summary */}
         <div className={`p-5 rounded-3xl ${CARD_BASE} min-h-[300px] flex flex-col`}>
           <div className='flex items-center justify-between mb-4'>
-            <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200'>Return Activity</h3>
+            <h3 className='text-lg font-bold text-gray-800 dark:text-gray-200'>{t.realTimeSales?.returnActivity || 'Return Activity'}</h3>
             <span className='text-xs font-bold px-2 py-1 bg-rose-100 text-rose-700 rounded-lg'>
-              Today
+              {t.realTimeSales?.returnsToday || 'Today'}
             </span>
           </div>
           <div className='flex-1 flex flex-col justify-center items-center text-center space-y-4'>
@@ -867,11 +868,11 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   value={todayStats.todaysSales.reduce((sum, s) => sum + (s.hasReturns ? 1 : 0), 0)}
                 />
               </div>
-              <p className='text-sm text-gray-500'>Returns Processed</p>
+              <p className='text-sm text-gray-500'>{t.realTimeSales?.returnsProcessed || 'Returns Processed'}</p>
             </div>
             <div className='w-full pt-4 border-t border-gray-100 dark:border-gray-800 grid grid-cols-2 gap-4'>
               <div>
-                <p className='text-xs text-gray-400 uppercase'>Value</p>
+                <p className='text-xs text-gray-400 uppercase'>{t.realTimeSales?.returnValue || 'Value'}</p>
                 <div className='text-lg font-bold text-rose-600 flex justify-center'>
                   <AnimatedCounter
                     value={todayStats.todaysSales
@@ -892,7 +893,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 </div>
               </div>
               <div>
-                <p className='text-xs text-gray-400 uppercase'>Rate</p>
+                <p className='text-xs text-gray-400 uppercase'>{t.realTimeSales?.returnRate || 'Rate'}</p>
                 <div className='text-lg font-bold text-gray-700 dark:text-gray-300 flex justify-center'>
                   <AnimatedCounter
                     value={
@@ -918,7 +919,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       <ExpandedModal
         isOpen={expandedView === 'revenue'}
         onClose={() => setExpandedView(null)}
-        title={(t.realTimeSales?.revenueBreakdown || 'Revenue Analysis') as string}
+        title={t.realTimeSales?.revenueBreakdown || 'Revenue Analysis'}
         color={color.name}
         t={t}
       >
@@ -946,7 +947,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                     tickFormatter={(val) => {
                       // Format "14:00" -> "2 PM"
                       const h = parseInt(val.split(':')[0]);
-                      const ampm = h >= 12 ? 'PM' : 'AM';
+                      const ampm = language === 'AR' ? (h >= 12 ? 'م' : 'ص') : (h >= 12 ? 'PM' : 'AM');
                       const hour12 = h % 12 || 12;
                       return `${hour12} ${ampm}`;
                     }}
@@ -955,7 +956,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tickFormatter={(val) => `$${val}`}
+                    tickFormatter={(val) => `${language === 'EN' ? '$' : ''}${val}${language === 'AR' ? '$' : ''}`}
                     tick={{ fontSize: 12, fill: '#94a3b8' }}
                   />
                   <Tooltip
@@ -964,7 +965,7 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                       if (active && payload && payload.length) {
                         // Parse label "14:00" -> "2 PM"
                         const h = parseInt(String(label).split(':')[0]);
-                        const ampm = h >= 12 ? 'PM' : 'AM';
+                        const ampm = language === 'AR' ? (h >= 12 ? 'م' : 'ص') : (h >= 12 ? 'PM' : 'AM');
                         const hour12 = h % 12 || 12;
                         const timeLabel = `${hour12} ${ampm}`;
 
@@ -1010,12 +1011,12 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
           <table className='w-full text-left rtl:text-right'>
             <thead className='bg-gray-50 dark:bg-gray-800/50'>
               <tr>
-                <th className='p-4 text-sm font-bold text-gray-500'>ID</th>
-                <th className='p-4 text-sm font-bold text-gray-500'>Time</th>
-                <th className='p-4 text-sm font-bold text-gray-500'>Items</th>
-                <th className='p-4 text-sm font-bold text-gray-500'>Customer</th>
-                <th className='p-4 text-sm font-bold text-gray-500'>Payment</th>
-                <th className='p-4 text-sm font-bold text-gray-500 text-end'>Total</th>
+                <th className='p-4 text-sm font-bold text-gray-500'>{t.realTimeSales?.tableId || 'ID'}</th>
+                <th className='p-4 text-sm font-bold text-gray-500'>{t.realTimeSales?.tableTime || 'Time'}</th>
+                <th className='p-4 text-sm font-bold text-gray-500'>{t.realTimeSales?.tableItems || 'Items'}</th>
+                <th className='p-4 text-sm font-bold text-gray-500'>{t.customers?.customer || 'Customer'}</th>
+                <th className='p-4 text-sm font-bold text-gray-500'>{t.realTimeSales?.tableMethod || 'Payment'}</th>
+                <th className='p-4 text-sm font-bold text-gray-500 text-end'>{t.realTimeSales?.tableTotal || 'Total'}</th>
               </tr>
             </thead>
             <tbody>
@@ -1028,10 +1029,10 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                   <td className='p-4 text-sm text-gray-500'>
                     {new Date(sale.date).toLocaleTimeString()}
                   </td>
-                  <td className='p-4 text-sm'>{sale.items.length} items</td>
+                  <td className='p-4 text-sm'>{sale.items.length} {t.realTimeSales?.items || 'items'}</td>
                   <td className='p-4 text-sm'>{sale.customerName}</td>
                   <td className='p-4 text-sm'>{getPaymentMethodLabel(sale.paymentMethod)}</td>
-                  <td className='p-4 text-sm font-bold text-end'>${sale.total.toFixed(2)}</td>
+                  <td className='p-4 text-sm font-bold text-end'>{language === 'EN' ? '$' : ''}{sale.total.toFixed(2)}{language === 'AR' ? '$' : ''}</td>
                 </tr>
               ))}
             </tbody>
@@ -1049,24 +1050,24 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
       >
         <div className={`rounded-3xl ${CARD_BASE} overflow-hidden`}>
           <div className='p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center'>
-            <h3 className='font-bold text-lg'>Top Performing Products</h3>
+            <h3 className='font-bold text-lg'>{t.realTimeSales?.topPerforming || 'Top Performing Products'}</h3>
             <div className='flex gap-2'>
               <span className='px-3 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-bold'>
-                By Quantity
+                {t.realTimeSales?.byQuantity || 'By Quantity'}
               </span>
               <span className='px-3 py-1 bg-gray-100 text-gray-500 rounded-lg text-xs font-bold'>
-                By Revenue
+                {t.realTimeSales?.byRevenue || 'By Revenue'}
               </span>
             </div>
           </div>
           <table className='w-full text-left rtl:text-right'>
             <thead className='bg-gray-50 dark:bg-gray-800/50'>
               <tr>
-                <th className='p-4 text-sm font-bold text-gray-500'>Rank</th>
-                <th className='p-4 text-sm font-bold text-gray-500'>Product Name</th>
-                <th className='p-4 text-sm font-bold text-gray-500'>Category</th>
-                <th className='p-4 text-sm font-bold text-gray-500 text-end'>Qty Sold</th>
-                <th className='p-4 text-sm font-bold text-gray-500 text-end'>Revenue</th>
+                <th className='p-4 text-sm font-bold text-gray-500'>{t.realTimeSales?.tableRank || 'Rank'}</th>
+                <th className='p-4 text-sm font-bold text-gray-500'>{t.realTimeSales?.tableName || 'Product Name'}</th>
+                <th className='p-4 text-sm font-bold text-gray-500'>{t.realTimeSales?.tableCategory || 'Category'}</th>
+                <th className='p-4 text-sm font-bold text-gray-500 text-end'>{t.realTimeSales?.tableQtySold || 'Qty Sold'}</th>
+                <th className='p-4 text-sm font-bold text-gray-500 text-end'>{t.realTimeSales?.tableRevenue || 'Revenue'}</th>
               </tr>
             </thead>
             <tbody>
@@ -1077,9 +1078,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 >
                   <td className='p-4 text-sm text-gray-500'>#{idx + 1}</td>
                   <td className='p-4 text-sm font-bold'>{getDisplayName(p, textTransform)}</td>
-                  <td className='p-4 text-sm text-gray-500'>General</td>
+                  <td className='p-4 text-sm text-gray-500'>{t.realTimeSales?.general || 'General'}</td>
                   <td className='p-4 text-sm font-bold text-end'>{p.qty}</td>
-                  <td className='p-4 text-sm font-bold text-end'>${p.revenue.toFixed(2)}</td>
+                  <td className='p-4 text-sm font-bold text-end'>{language === 'EN' ? '$' : ''}{p.revenue.toFixed(2)}{language === 'AR' ? '$' : ''}</td>
                 </tr>
               ))}
             </tbody>
@@ -1105,30 +1106,30 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 <div className='flex items-center gap-3'>
                   <span className='material-symbols-rounded text-2xl'>point_of_sale</span>
                   <div>
-                    <h4 className='font-bold text-lg'>Counter {id}</h4>
-                    <p className='text-xs text-gray-500'>Main Hall</p>
+                    <h4 className='font-bold text-lg'>{t.realTimeSales?.counter || 'Counter'} {id}</h4>
+                    <p className='text-xs text-gray-500'>{t.realTimeSales?.mainHall || 'Main Hall'}</p>
                   </div>
                 </div>
                 <span
                   className={`px-2 py-1 rounded-sm text-xs font-bold ${id <= 3 ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600'}`}
                 >
-                  {id <= 3 ? 'ONLINE' : 'OFFLINE'}
+                  {id <= 3 ? (t.realTimeSales?.online || 'ONLINE') : (t.realTimeSales?.offline || 'OFFLINE')}
                 </span>
               </div>
               <div className='flex justify-between items-end'>
                 <div>
-                  <p className='text-xs text-gray-500 mb-1'>Operator</p>
+                  <p className='text-xs text-gray-500 mb-1'>{t.realTimeSales?.operator || 'Operator'}</p>
                   <div className='flex items-center gap-2'>
                     <div className='w-6 h-6 rounded-full bg-gray-300'></div>
                     <span className='text-sm font-medium'>
-                      {id <= 3 ? `User ${id}` : 'Unmanned'}
+                      {id <= 3 ? `${t.orgManagement?.member || 'User'} ${id}` : (t.realTimeSales?.unmanned || 'Unmanned')}
                     </span>
                   </div>
                 </div>
                 <div className='text-right'>
-                  <p className='text-xs text-gray-500 mb-0.5'>Today's Sales</p>
+                  <p className='text-xs text-gray-500 mb-0.5'>{t.realTimeSales?.todaySales || "Today's Sales"}</p>
                   <p className='font-bold text-lg'>
-                    {id <= 3 ? `$${(Math.random() * 1000).toFixed(2)}` : '-'}
+                    {id <= 3 ? `${language === 'EN' ? '$' : ''}${(Math.random() * 1000).toFixed(2)}${language === 'AR' ? '$' : ''}` : '-'}
                   </p>
                 </div>
               </div>
