@@ -251,8 +251,9 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
 
   // Helper for Payment Method Visual
   const getPaymentMethodLabel = (method?: string) => {
-    if (!method) return t.cash || 'Cash';
-    return method === 'visa' ? t.visa || 'Card' : t.cash || 'Cash';
+    const rs = t.realTimeSales;
+    if (!method) return rs?.cash || t.cash || 'Cash';
+    return method === 'visa' ? rs?.visa || t.visa || 'Card' : rs?.cash || t.cash || 'Cash';
   };
 
   return (
@@ -406,18 +407,11 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                 <tbody>
                   {displayedSales.map((sale, idx) => {
                     const isHighValue = todayStats.highValueIds.has(sale.id);
-                    let isVIP = false;
-                    if (sale.customerCode) {
-                      const customer = customers.find(
-                        (c) =>
-                          c.code === sale.customerCode ||
-                          c.serialId?.toString() === sale.customerCode
-                      );
-                      if (customer && customer.totalPurchases >= 1000) isVIP = true;
-                    } else if (sale.customerName) {
-                      const customer = customers.find((c) => c.name === sale.customerName);
-                      if (customer && customer.totalPurchases >= 1000) isVIP = true;
-                    }
+                    const isVIP = sale.customerCode 
+                      ? customers.find(c => c.code === sale.customerCode || c.serialId?.toString() === sale.customerCode)?.totalPurchases >= 1000
+                      : sale.customerName 
+                        ? (customers.find(c => c.name === sale.customerName)?.totalPurchases || 0) >= 1000
+                        : false;
 
                     return (
                       <tr
@@ -460,13 +454,13 @@ export const RealTimeSalesMonitor: React.FC<RealTimeSalesMonitorProps> = ({
                                 <span className='material-symbols-rounded text-[16px]'>
                                   verified
                                 </span>
-                                VIP
+                                {t.realTimeSales?.vipBadge || 'VIP'}
                               </div>
                             )}
                             {isHighValue && (
                               <div className='flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold'>
                                 <span className='material-symbols-rounded text-[16px]'>stars</span>
-                                High Value
+                                {t.realTimeSales?.highValueBadge || 'High Value'}
                               </div>
                             )}
                             {!isVIP && !isHighValue && (
