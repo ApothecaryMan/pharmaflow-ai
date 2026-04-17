@@ -12,6 +12,7 @@ import { MaterialTabs } from '../common/MaterialTabs';
 import { SmartInput, SmartPhoneInput } from '../common/SmartInputs';
 import { FilterDropdown } from '../common/FilterDropdown';
 import { LocationSelector } from '../common/LocationSelector';
+import { Tooltip } from '../common/Tooltip';
 import { useAlert } from '../../context';
 import { getLocationName } from '../../data/locations';
 
@@ -35,83 +36,145 @@ const FormField: React.FC<FormFieldProps> = ({ label, children, className = '' }
   </div>
 );
 
+const getInitials = (name: string) => {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+};
+
 interface BranchCardProps {
   branch: Branch;
+  employees: Employee[];
   language: 'EN' | 'AR';
   onEdit: (branch: Branch) => void;
   onDelete: (id: string, name: string) => void;
   isSubmitting: boolean;
 }
 
-const BranchCard: React.FC<BranchCardProps> = ({ branch, language, onEdit, onDelete, isSubmitting }) => (
-  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 flex flex-col justify-between shadow-sm">
-    <div>
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex flex-col min-w-0">
-          <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
-            {branch.name}
-          </h3>
-          <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-0.5">
-            CODE: {branch.code}
-          </span>
-        </div>
-        <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-tight shrink-0 ${
-          branch.status === 'active' 
-            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' 
-            : 'bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-500/10 dark:text-zinc-400 dark:border-zinc-500/20'
-        }`}>
-          <span className={`w-1 h-1 rounded-full ${branch.status === 'active' ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
-          {branch.status === 'active' ? (language === 'AR' ? 'نشط' : 'Active') : (language === 'AR' ? 'ملغي' : 'Inactive')}
-        </div>
-      </div>
+const BranchCard: React.FC<BranchCardProps> = ({ branch, employees, language, onEdit, onDelete, isSubmitting }) => {
+  const maxAvatars = 9;
+  const displayEmployees = employees.slice(0, maxAvatars);
+  const remainingCount = employees.length - maxAvatars;
 
-      <div className="space-y-1.5 py-3 border-t border-zinc-100 dark:border-zinc-800/50 mt-1">
-        <div className="flex items-start gap-2">
-          <span className="material-symbols-rounded text-zinc-400 shrink-0" style={{ fontSize: '16px' }}>location_on</span>
+  return (
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 flex flex-col gap-2 shadow-sm min-h-[220px]">
+      <div>
+        <div className="flex justify-between items-start mb-3">
           <div className="flex flex-col min-w-0">
-            <span className="text-[11px] text-zinc-950 dark:text-zinc-50 font-bold leading-normal truncate">
-              {[
-                getLocationName(branch.governorate || '', 'gov', language),
-                getLocationName(branch.city || '', 'city', language),
-                getLocationName(branch.area || '', 'area', language)
-              ].filter(Boolean).join(language === 'AR' ? '، ' : ', ') || (language === 'AR' ? 'لم يتم تحديد موقع' : 'No location set')}
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">
+              {branch.name}
+            </h3>
+            <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-0.5">
+              CODE: {branch.code}
             </span>
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-500 leading-normal truncate">
-              {branch.address || (language === 'AR' ? 'لم يتم تحديد عنوان تفصيلي' : 'No street address set')}
-            </span>
+          </div>
+          <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-tight shrink-0 ${
+            branch.status === 'active' 
+              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' 
+              : 'bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-500/10 dark:text-zinc-400 dark:border-zinc-500/20'
+          }`}>
+            <span className={`w-1 h-1 rounded-full ${branch.status === 'active' ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
+            {branch.status === 'active' ? (language === 'AR' ? 'نشط' : 'Active') : (language === 'AR' ? 'ملغي' : 'Inactive')}
           </div>
         </div>
-        
-        {branch.phone && (
+
+        {/* Avatar Stack */}
+        <div className="flex items-center -space-x-2 mb-4">
+          {displayEmployees.map((emp, idx) => (
+            <Tooltip
+              key={emp.id}
+              delay={0}
+              content={
+                <div className="flex flex-col items-center">
+                  <span className="font-bold">{emp.name}</span>
+                  <span className="text-[8px] uppercase tracking-tighter opacity-70 mt-0.5">
+                    {emp.position || emp.role.replace(/_/g, ' ')}
+                  </span>
+                </div>
+              }
+            >
+              <div 
+                className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-600 dark:text-zinc-400 shadow-sm transition-transform hover:-translate-y-0.5 cursor-pointer relative overflow-hidden"
+                style={{ zIndex: 10 - idx }}
+              >
+                {emp.image ? (
+                  <img 
+                    src={emp.image} 
+                    alt={emp.name} 
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  getInitials(emp.name)
+                )}
+              </div>
+            </Tooltip>
+          ))}
+          {remainingCount > 0 && (
+            <div 
+              className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-400 dark:text-zinc-500 shadow-sm"
+              style={{ zIndex: 0 }}
+            >
+              +{remainingCount}
+            </div>
+          )}
+          {employees.length === 0 && (
+            <div className="w-8 h-8 rounded-full border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center font-bold text-zinc-300 dark:text-zinc-700">
+               <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>group</span>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-2 pt-3 border-t border-zinc-100 dark:border-zinc-800/50">
           <div className="flex items-start gap-2">
-            <span className="material-symbols-rounded text-zinc-400 shrink-0" style={{ fontSize: '16px' }}>call</span>
-            <span className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-normal font-mono pt-0.5">
-              {branch.phone}
-            </span>
+            <span className="material-symbols-rounded text-zinc-400 shrink-0" style={{ fontSize: '16px' }}>location_on</span>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[11px] text-zinc-950 dark:text-zinc-50 font-bold leading-normal truncate">
+                {branch.address || (language === 'AR' ? 'لم يتم تحديد عنوان تفصيلي' : 'No street address set')}
+              </span>
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-500 leading-normal truncate">
+                {[
+                  getLocationName(branch.governorate || '', 'gov', language),
+                  getLocationName(branch.city || '', 'city', language),
+                  getLocationName(branch.area || '', 'area', language)
+                ].filter(Boolean).join(language === 'AR' ? '، ' : ', ') || (language === 'AR' ? 'لم يتم تحديد موقع' : 'No location set')}
+              </span>
+            </div>
           </div>
-        )}
+          
+          {branch.phone && (
+            <div className="flex items-start gap-2">
+              <span className="material-symbols-rounded text-zinc-400 shrink-0" style={{ fontSize: '16px' }}>call</span>
+              <span className="text-[11px] text-zinc-950 dark:text-zinc-50 leading-normal font-bold font-mono pt-0.5">
+                {branch.phone}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 mt-auto pt-3">
+        <button
+          onClick={() => onEdit(branch)}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer transition-none"
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>edit</span>
+          {language === 'AR' ? 'تعديل' : 'Edit'}
+        </button>
+        <button
+          disabled={isSubmitting}
+          onClick={() => onDelete(branch.id, branch.name)}
+          className="p-1.5 text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 cursor-pointer flex items-center justify-center transition-none"
+          aria-label="Delete branch"
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: '22px' }}>delete</span>
+        </button>
       </div>
     </div>
-
-    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-50 dark:border-zinc-800/30">
-      <button
-        onClick={() => onEdit(branch)}
-        className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer transition-none"
-      >
-        <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>edit</span>
-        {language === 'AR' ? 'تعديل' : 'Edit'}
-      </button>
-      <button
-        disabled={isSubmitting}
-        onClick={() => onDelete(branch.id, branch.name)}
-        className="p-1.5 text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 cursor-pointer flex items-center justify-center transition-none"
-        aria-label="Delete branch"
-      >
-        <span className="material-symbols-rounded" style={{ fontSize: '22px' }}>delete</span>
-      </button>
-    </div>
-  </div>
-);
+  );
+};
 
 export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color }) => {
   const t = TRANSLATIONS[language];
@@ -216,14 +279,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
     }
   };
 
-  const getInitials = (name: string) => {
-    if (!name) return '?';
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return name.slice(0, 2).toUpperCase();
-  };
+// Deleted duplicate getInitials
 
   const handleDelete = async (id: string, name: string) => {
     if (id === activeBranchId) {
@@ -443,8 +499,12 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 overflow-y-auto pr-2 custom-scrollbar">
         {branches.map((branch) => (
           <BranchCard
-            key={branch.id} branch={branch} language={language}
-            onEdit={handleOpenModal} onDelete={handleDelete}
+            key={branch.id} 
+            branch={branch} 
+            employees={employees.filter(e => e.branchId === branch.id)}
+            language={language}
+            onEdit={handleOpenModal} 
+            onDelete={handleDelete}
             isSubmitting={isSubmitting}
           />
         ))}
