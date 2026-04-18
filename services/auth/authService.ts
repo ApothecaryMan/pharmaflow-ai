@@ -195,7 +195,7 @@ export const authService = {
   /**
    * Sign up a new user using Supabase
    */
-  signUp: async (username: string, email: string, password: string): Promise<{ success: boolean; message?: string }> => {
+  signUp: async (name: string, username: string, email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
     if (!isSupabaseConfigured) {
       return { success: false, message: 'Supabase is not configured. Local fallback does not support sign up yet.' };
@@ -208,6 +208,7 @@ export const authService = {
         password,
         options: {
           data: {
+            name,
             username,
           }
         }
@@ -237,6 +238,26 @@ export const authService = {
       return { success: true };
     } catch (err: any) {
       return { success: false, message: err.message || 'Failed to send reset link' };
+    }
+  },
+
+  /**
+   * Resend signup confirmation email
+   */
+  resendConfirmation: async (email: string): Promise<{ success: boolean; message?: string }> => {
+    const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+    if (!isSupabaseConfigured) return { success: false, message: 'Supabase not configured.' };
+
+    try {
+      const { supabase } = await import('../../lib/supabase');
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+      if (error) throw error;
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Failed to resend confirmation email.' };
     }
   },
 
@@ -287,10 +308,29 @@ export const authService = {
     if (isSupabaseConfigured) {
       try {
         const { supabase } = await import('../../lib/supabase');
-        // Map username/employee_code to a valid Supabase Auth Email format natively used by the company
-        const email = username.includes('@') ? username : `${username}@pharmaflow.local`;
         
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        // Strategy: 
+        // 1. If it's a username (no @), try to resolve its official email via our secure RPC
+        // 2. Otherwise use as provided
+        
+        let loginEmail = username;
+        
+        if (!username.includes('@')) {
+           try {
+             const { data: resolvedEmail } = await supabase.rpc('get_email_by_username', { p_username: username });
+             if (resolvedEmail) {
+               loginEmail = resolvedEmail;
+             } else {
+               // Fallback for internal local employees who might not be in the public.employees table yet
+               loginEmail = `${username}@zinc.co`;
+             }
+           } catch (err) {
+             console.warn('Failed to resolve email via RPC, using fallback:', err);
+             loginEmail = `${username}@zinc.co`;
+           }
+        }
+        
+        let { data, error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
         
         if (error) {
           // If it's a 400 error, it could be "Invalid credentials" or "Email not confirmed"

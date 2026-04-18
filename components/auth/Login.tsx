@@ -133,7 +133,9 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
       if (errorMessage.toLowerCase().includes('invalid login credentials')) {
         errorMessage = t.errorInvalidCredentials || errorMessage;
       } else if (errorMessage.toLowerCase().includes('email not confirmed')) {
-        errorMessage = language === 'AR' ? 'البريد الإلكتروني غير مؤكد' : 'Email not confirmed';
+        errorMessage = language === 'AR' 
+          ? 'البريد الإلكتروني غير مؤكد - يرجى تفعيل الحساب من الرابط المرسل لبريدك الإلكتروني أولاً.' 
+          : 'Email not confirmed - Please verify your account via the link sent to your email first.';
       }
 
       setState((prev) => ({
@@ -217,6 +219,34 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                   <line x1='12' x2='12.01' y1='16' y2='16' />
                 </svg>
                 <span>{state.error}</span>
+                {state.error.includes(language === 'AR' ? 'تفعيل' : 'verify') && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const emailInput = state.username.includes('@') ? state.username : '';
+                      if (!emailInput) {
+                        setState(prev => ({ ...prev, error: language === 'AR' ? 'يرجى إدخال البريد الإلكتروني أولاً لإعادة الإرسال.' : 'Please enter your email first to resend link.' }));
+                        return;
+                      }
+                      setState(prev => ({ ...prev, isLoading: true }));
+                      const res = await authService.resendConfirmation(emailInput);
+                      setState(prev => ({ 
+                        ...prev, 
+                        isLoading: false, 
+                        error: null,
+                        success: false // ensuring we stay on login
+                      }));
+                      if (res.success) {
+                        alert(language === 'AR' ? 'تم إعادة إرسال الرابط بنجاح!' : 'Confirmation link resent!');
+                      } else {
+                        setState(prev => ({ ...prev, error: res.message || 'Error' }));
+                      }
+                    }}
+                    className="ml-auto text-xs underline hover:text-white"
+                  >
+                    {language === 'AR' ? 'إعادة إرسال الرابط' : 'Resend Link'}
+                  </button>
+                )}
               </div>
             )}
 
@@ -226,22 +256,32 @@ export const Login: React.FC<LoginProps> = ({ onViewChange, onLoginSuccess, lang
                 <label className='text-sm font-medium text-zinc-300' htmlFor='username'>
                   {t.username}
                 </label>
-                <input
-                  id='username'
-                  type='text'
-                  placeholder={t.usernamePlaceholder}
-                  autoComplete='username'
-                  value={state.username}
-                  onChange={(e) => {
-                    setState((prev) => ({
-                      ...prev,
-                      username: e.target.value,
-                      validationErrors: { ...prev.validationErrors, username: undefined },
-                    }));
-                  }}
-                  className={`w-full bg-zinc-900 border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 placeholder:text-left cursor-text focus:bg-zinc-800/50`}
-                  dir='ltr'
-                />
+                <div className='relative'>
+                  <input
+                    id='username'
+                    type='text'
+                    placeholder={t.usernamePlaceholder}
+                    autoComplete='username'
+                    value={state.username}
+                    onChange={(e) => {
+                      setState((prev) => ({
+                        ...prev,
+                        username: e.target.value,
+                        validationErrors: { ...prev.validationErrors, username: undefined },
+                      }));
+                    }}
+                    className={`w-full bg-zinc-900 border ${state.validationErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-zinc-800 focus:border-green-500/50'} rounded-lg px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-hidden transition-all duration-200 focus:ring-2 focus:ring-green-500/10 placeholder:text-left cursor-text focus:bg-zinc-800/50 ${!state.username.includes('@') && state.username ? 'pr-20' : ''}`}
+                    dir='ltr'
+                  />
+                  {!state.username.includes('@') && state.username && (
+                    <span 
+                      dir="ltr" 
+                      className='absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm pointer-events-none animate-in fade-in slide-in-from-right-1 duration-200 font-medium'
+                    >
+                      @zinc.co
+                    </span>
+                  )}
+                </div>
                 {state.validationErrors.username && (
                   <p className='text-xs text-red-500 mt-1 pl-1'>
                     {state.validationErrors.username}

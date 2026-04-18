@@ -54,51 +54,24 @@ export const orgService = {
     if (isSupabaseConfigured()) {
       const { supabase } = await import('../../lib/supabase');
 
-      // 1. Create organization
-      const { data: org, error: orgError } = await supabase
-        .from('organizations')
-        .insert({ name, slug, owner_id: ownerId })
-        .select()
-        .single();
+      // Use a single RPC call for atomic creation (Professional way)
+      // This bypasses initial RLS hurdles for creation steps
+      const { data, error } = await supabase.rpc('setup_initial_organization', {
+        p_name: name,
+        p_slug: slug,
+        p_owner_id: ownerId
+      });
 
-      if (orgError || !org) throw new Error(orgError?.message || 'Failed to create organization');
+      if (error) {
+        console.error('Failed to setup organization via RPC:', error);
+        throw new Error(error.message);
+      }
 
-      // 2. Create owner membership
-      const { data: member, error: memberError } = await supabase
-        .from('org_members')
-        .insert({ org_id: org.id, user_id: ownerId, role: 'owner' })
-        .select()
-        .single();
-
-      if (memberError) throw new Error(memberError.message);
-
-      // 3. Create default subscription (free trial)
-      const trialEnd = new Date();
-      trialEnd.setDate(trialEnd.getDate() + 14); // 14-day trial
-
-      const { data: sub, error: subError } = await supabase
-        .from('subscriptions')
-        .insert({
-          org_id: org.id,
-          plan: 'free',
-          status: 'trial',
-          max_branches: 1,
-          max_employees: 5,
-          max_drugs: 500,
-          trial_ends_at: trialEnd.toISOString(),
-        })
-        .select()
-        .single();
-
-      if (subError) throw new Error(subError.message);
-
-      const result = {
-        org: mapOrg(org),
-        membership: mapMember(member),
-        subscription: mapSubscription(sub),
+      return {
+        org: mapOrg(data.org),
+        membership: mapMember(data.membership),
+        subscription: mapSubscription(data.subscription),
       };
-
-      return result;
     }
 
     // Local fallback
@@ -176,7 +149,7 @@ export const orgService = {
 
       if (!memberships || memberships.length === 0) return [];
 
-      const orgIds = memberships.map((m) => m.org_id);
+      const orgIds = memberships.map((m: any) => m.org_id);
       const { data: orgs } = await supabase
         .from('organizations')
         .select('*')
@@ -272,7 +245,7 @@ export const orgService = {
 
     const members = storage.get<OrgMember[]>(ORG_MEMBERS_KEY, []);
     const member = members.find((m) => m.orgId === orgId && m.userId === userId);
-    return member?.role || null;
+    return (member?.role as OrgRole) || null;
   },
 
   /**
