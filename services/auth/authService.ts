@@ -96,9 +96,9 @@ const ensureSuperAdmin = async (): Promise<void> => {
   try {
     const { employeeCacheService } = await import('../hr/employeeCacheService');
     const allEmployees = await employeeCacheService.loadAll();
-    const exists = allEmployees.some((e) => e.username === superUser);
+    const existingAdmin = allEmployees.find((e) => e.username === superUser);
 
-    if (!exists) {
+    if (!existingAdmin) {
       const { hashPassword } = await import('./hashUtils');
       const passwordHash = await hashPassword(superPass);
 
@@ -131,6 +131,10 @@ const ensureSuperAdmin = async (): Promise<void> => {
         branchId: activeBranchId,
       });
       console.log('✨ Super Admin seeded in IndexedDB (pre-login)');
+    } else {
+      // SELF-HEAL: If SUPER exists but we want to ensure password is syncable or updated
+      // We don't overwrite every time to avoid unnecessary hashing, 
+      // but DataContext will handle the NULL sync-up.
     }
   } catch (err) {
     console.warn('Failed to seed Super Admin:', err);
@@ -343,7 +347,28 @@ export const authService = {
           supabase.from('org_members').select('role, org_id').eq('user_id', authData.user.id).maybeSingle()
         ]);
 
-        const employeeData = employeeResponse.data;
+        let employeeData = employeeResponse.data;
+        
+        // Fallback: If no employee found by auth_user_id, try matching by username
+        if (!employeeData && username) {
+          const { data: fallbackData } = await supabase
+            .from('employees')
+            .select('*')
+            .eq('username', username)
+            .maybeSingle();
+            
+          if (fallbackData) {
+            employeeData = fallbackData;
+            // Proactively update the auth_user_id link if it's missing
+            if (!employeeData.auth_user_id) {
+              await supabase
+                .from('employees')
+                .update({ auth_user_id: authData.user.id })
+                .eq('id', employeeData.id);
+            }
+          }
+        }
+
         const memberData = memberResponse.data;
         
         const orgRole = memberData?.role || 'member';

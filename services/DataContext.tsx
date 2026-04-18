@@ -303,10 +303,20 @@ export const DataProvider: React.FC<DataProviderProps> = ({
             console.log('✨ Super Admin seeded successfully from ENV (DataContext guard)');
           } else {
             // Ensure the Super Admin is in the local state even if not in this branch's filtered list
-            const superAdminInList = emp.some((e) => e.username === superUser);
-            if (!superAdminInList) {
-              const superAdmin = allGlobalEmployees.find((e) => e.username === superUser);
-              if (superAdmin) emp.push(superAdmin);
+            const superAdmin = allGlobalEmployees.find((e) => e.username === superUser);
+            if (superAdmin) {
+              const superAdminInList = emp.some((e) => e.username === superUser);
+              if (!superAdminInList) emp.push(superAdmin);
+
+              // SELF-HEAL: If Super Admin exist locally but is missing password in Supabase (NULL bug), force a sync
+              try {
+                const { supabase } = await import('../lib/supabase');
+                const { data: dbSuper } = await supabase.from('employees').select('password').eq('id', superAdmin.id).maybeSingle();
+                if (dbSuper && dbSuper.password === null && superAdmin.password) {
+                  console.log('🔧 Self-healing Super Admin password in Supabase...');
+                  await supabase.from('employees').update({ password: superAdmin.password }).eq('id', superAdmin.id);
+                }
+              } catch { /* ignore */ }
             }
           }
         }

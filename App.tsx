@@ -34,7 +34,7 @@ import { type Supplier, ViewState } from './types';
 import { useOnboardingStatus } from './hooks/useOnboardingStatus';
 
 const INITIAL_SUPPLIERS: Supplier[] = [
-  { id: '1', branchId: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '', status: 'active' },
+  { id: '1', orgId: '', branchId: '1', name: 'B2B', contactPerson: 'B2B', phone: '', email: '', address: '', status: 'active' },
 ];
 
 // --- ARCHITECTURAL NOTE: THE ORCHESTRATOR PATTERN ---
@@ -465,7 +465,7 @@ const App: React.FC = () => {
   const { theme, darkMode, language } = useSettings();
 
   // 4. Onboarding Status Hook (Architectural Abstraction)
-  const { activeStep, setActiveStep, isChecking: isCheckingOnboarding, error: onboardingError } = useOnboardingStatus();
+  const { activeStep, setActiveStep, isChecking: isCheckingOnboarding, error: onboardingError } = useOnboardingStatus(authState.isAuthenticated);
 
   // 5. Dynamic Theme Hook - Handles PWA Title Bar & Global Dark Mode
   // When not authenticated, we force isLoginView=true for the black theme color override

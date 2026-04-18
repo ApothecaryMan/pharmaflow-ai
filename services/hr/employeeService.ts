@@ -38,6 +38,7 @@ const mapEmployeeToDb = (e: Partial<Employee>): any => {
   if (e.username !== undefined) db.username = e.username;
   if (e.userId !== undefined) db.user_id = e.userId;
   if ((e as any).auth_user_id !== undefined) db.auth_user_id = (e as any).auth_user_id;
+  if (e.password !== undefined) db.password = e.password;
   return db;
 };
 
@@ -59,6 +60,7 @@ const mapDbToEmployee = (db: any): Employee => ({
   notes: db.notes || undefined,
   username: db.username || undefined,
   userId: db.user_id || undefined,
+  password: db.password || undefined,
 });
 
 const getRawAll = async (): Promise<Employee[]> => {
@@ -72,22 +74,41 @@ const getRawAll = async (): Promise<Employee[]> => {
       const cached = await employeeCacheService.loadAll();
       const cachedMap = new Map(cached.map(e => [e.id, e]));
       
+      const employeesToSync: Employee[] = [];
       const finalMapped = mapped.map(e => {
         const c = (cachedMap.get(e.id) || {}) as Partial<Employee>;
-        return {
+        const merged: Employee = {
           ...e,
           biometricCredentialId: c.biometricCredentialId,
           biometricPublicKey: c.biometricPublicKey,
-          password: c.password,
+          // Fallback to local password if remote is missing (for old accounts)
+          password: e.password || c.password,
           image: c.image,
           nationalIdCard: c.nationalIdCard,
           nationalIdCardBack: c.nationalIdCardBack,
           mainSyndicateCard: c.mainSyndicateCard,
           subSyndicateCard: c.subSyndicateCard,
         };
+
+        // If we have a local password but Supabase doesn't, queue for sync-up
+        if (!e.password && c.password) {
+          employeesToSync.push(merged);
+        }
+
+        return merged;
       });
       
       await employeeCacheService.saveAll(finalMapped);
+
+      // Background sync-up for legacy passwords
+      if (employeesToSync.length > 0) {
+        console.log(`☁️ Syncing ${employeesToSync.length} legacy passwords to Supabase...`);
+        const dbEmployees = employeesToSync.map(mapEmployeeToDb);
+        supabase.from('employees').upsert(dbEmployees, { onConflict: 'id' }).then(({ error }) => {
+          if (error) console.warn('Legacy password sync failed:', error);
+        });
+      }
+
       return finalMapped;
     }
   } catch (err) {
@@ -172,8 +193,6 @@ export const createEmployeeService = (): EmployeeService => ({
 
     try {
       const dbEmployee = mapEmployeeToDb(employee);
-      // Ensure we don't send local-only fields
-      delete dbEmployee.password;
 
       // Use upsert to be resilient during onboarding/retries
       const { error } = await supabase.from('employees').upsert(dbEmployee, { onConflict: 'id' });
@@ -194,8 +213,6 @@ export const createEmployeeService = (): EmployeeService => ({
 
     try {
       const dbUpdates = mapEmployeeToDb(updates);
-      // Don't sync password changes this way
-      delete dbUpdates.password;
       
       const { error } = await supabase.from('employees').update(dbUpdates).eq('id', id);
       if (error && import.meta.env.DEV) {
@@ -233,10 +250,7 @@ export const createEmployeeService = (): EmployeeService => ({
     }));
     
     try {
-      const dbEmployees = processedEmployees.map(mapEmployeeToDb).map(e => {
-        delete e.password;
-        return e;
-      });
+      const dbEmployees = processedEmployees.map(mapEmployeeToDb);
 
       if (dbEmployees.length > 0) {
         const { error } = await supabase.from('employees').upsert(dbEmployees, { 

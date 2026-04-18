@@ -5,7 +5,7 @@ import { authService } from '../services/auth/authService';
 
 export type OnboardingStep = 1 | 2 | 3 | 0;
 
-export const useOnboardingStatus = () => {
+export const useOnboardingStatus = (isAuthenticated?: boolean) => {
   const [activeStep, setActiveStep] = useState<OnboardingStep>(0);
   const [isChecking, setIsChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,8 +38,8 @@ export const useOnboardingStatus = () => {
       }
 
       // 3. Check Employees
-      const { employeeCacheService } = await import('../services/hr/employeeCacheService');
-      const all = await employeeCacheService.loadAll();
+      const { employeeService } = await import('../services/hr/employeeService');
+      const all = await employeeService.getAll('ALL', activeOrgId || undefined);
       const superAdminId = import.meta.env.VITE_SUPER_ADMIN_ID as string;
       const hasRealEmployees = !!user?.employeeId || all.some(
         (e) => e.id !== superAdminId && e.employeeCode !== 'EMP-000'
@@ -59,8 +59,13 @@ export const useOnboardingStatus = () => {
   };
 
   useEffect(() => {
-    checkStatus();
-  }, []);
+    if (isAuthenticated === true || isAuthenticated === undefined) {
+      checkStatus();
+    } else {
+      // Not authenticated, no need to check onboarding, clearing checking state
+      setIsChecking(false);
+    }
+  }, [isAuthenticated]);
 
   return {
     activeStep,
