@@ -43,7 +43,6 @@ export interface SequenceMap {
   [key: string]: number;
 }
 
-const DEFAULT_BRANCH_CODE = 'B1';
 const ID_PADDING = 4; // B1-0001
 const GLOBAL_PREFIX = 'PF'; // Systems/Branches use PF instead of BranchCode
 

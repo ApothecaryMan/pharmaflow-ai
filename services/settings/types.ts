@@ -17,6 +17,7 @@ export interface AppSettings {
   purchaseTaxRate: number; // Tax rate percentage for purchases (e.g., 14 for 14%)
   activeBranchId: string; // Active branch UUID — used by all services for data filtering
   branchCode: string; // User-defined short code for ID generation prefix (e.g., 'HOPE01')
+  orgId?: string; // Organization UUID for multi-tenant scoping
 }
 
 export interface SettingsService {

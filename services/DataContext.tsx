@@ -187,7 +187,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         const urlOrgId = hashParts[0];
         const urlBranchCode = hashParts[1];
 
-        const defaultOrgId = urlOrgId || orgService.getActiveOrgId() || 'org_1';
+        const defaultOrgId = urlOrgId || orgService.getActiveOrgId() || '';
         
         const allBranches = await branchService.getAll(defaultOrgId);
         
@@ -203,7 +203,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         const session = await authService.getCurrentUser();
         
         // Dynamic Resolution: Priority: URL > session.branchId > saved active branch > first branch
-        let finalBranchId = resolvedBranchFromUrl || session?.branchId || activeBranch?.id || (allBranches.length > 0 ? allBranches[0].id : 'B1');
+        let finalBranchId = resolvedBranchFromUrl || session?.branchId || activeBranch?.id || (allBranches.length > 0 ? allBranches[0].id : '');
 
         // Self-Healing: If finalBranchId points to a non-existent branch (bug/legacy), snap to the first actual branch
         if (allBranches.length > 0 && !allBranches.some(b => b.id === finalBranchId)) {
@@ -232,7 +232,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         // Sync settingsService with the active branch so idGenerator (which reads storage directly) is in sync
         await settingsService.setMultiple({ 
           activeBranchId: finalBranchId,
-          branchCode: activeBranch?.code || allBranches[0]?.code || 'B1',
+          branchCode: activeBranch?.code || allBranches[0]?.code || 'BR-001',
         });
 
         const [results, _] = await Promise.all([

@@ -42,7 +42,8 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
       // Persist UI preferences (Theme & Light/Dark)
       await settingsService.setMultiple({
         theme: selectedTheme,
-        darkMode
+        darkMode,
+        orgId: result.org.id
       });
       
       onComplete(result.org.id);

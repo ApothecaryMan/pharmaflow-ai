@@ -236,7 +236,7 @@ export const branchService = {
       if (employeeIds.includes(emp.id)) {
         return { ...emp, branchId };
       } else if (emp.branchId === branchId) {
-        return { ...emp, branchId: 'UNASSIGNED' };
+        return { ...emp, branchId: null };
       }
       return emp;
     }).filter(emp => {

@@ -37,6 +37,7 @@ export const checkRealConnectivity = async (): Promise<NetworkResult> => {
 
     const response = await fetch(`${supaUrl}/rest/v1/`, {
       method: 'HEAD',
+      mode: 'cors', // Ensure CORS is handled
       signal: controller.signal,
       headers: {
         'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || ''

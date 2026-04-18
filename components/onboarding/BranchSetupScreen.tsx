@@ -3,6 +3,9 @@ import { useSettings } from '../../context';
 import { SmartInput } from '../common/SmartInputs';
 import { SegmentedControl } from '../common/SegmentedControl';
 import { LocationSelector } from '../common/LocationSelector';
+import { storage } from '../../utils/storage';
+import { StorageKeys } from '../../config/storageKeys';
+import type { AppSettings } from '../../services/settings/types';
 
 import { OnboardingStepper } from './OnboardingStepper';
 import { branchService } from '../../services/branchService';
@@ -58,7 +61,16 @@ export const BranchSetupScreen: React.FC<BranchSetupScreenProps> = ({ language, 
 
     setIsLoading(true);
     try {
-      const activeOrgId = orgService.getActiveOrgId() || 'org_1';
+      // Try to get org ID from several places
+      const activeOrgId = orgService.getActiveOrgId() || 
+                         storage.get<Partial<AppSettings>>(StorageKeys.SETTINGS, {}).orgId;
+      
+      if (!activeOrgId) {
+        throw new Error(language === 'AR' 
+          ? "فشل العثور على معرف المنظمة. يرجى إعادة تشغيل الخطوة الأولى." 
+          : "Organization ID not found. Please restart the first step.");
+      }
+
       const newBranch = await branchService.create({ 
         name: branchName.trim(), 
         code: branchCode.trim().toUpperCase(), 
