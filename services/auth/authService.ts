@@ -291,19 +291,44 @@ export const authService = {
         const email = username.includes('@') ? username : `${username}@pharmaflow.local`;
         
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error || !data.user) {
+        
+        if (error) {
+          // If it's a 400 error, it could be "Invalid credentials" or "Email not confirmed"
+          console.error(' Supabase Login Error:', {
+            status: error.status,
+            name: error.name,
+            message: error.message
+          });
+
+          // Special handling for confirmation
+          if (error.message.toLowerCase().includes('confirmed') || error.status === 400) {
+            // We re-throw but with more context if possible
+            if (error.message.toLowerCase().includes('not confirmed')) {
+               throw new Error('Email not confirmed. Please check your inbox.');
+            }
+          }
           throw error;
         }
 
+        if (!data.user) {
+          throw new Error('No user data returned');
+        }
+
         // Fetch employee metadata logic here from Supabase DB
-        const { data: employeeData } = await supabase
+        const { data: employeeData, error: dbError } = await supabase
           .from('employees')
           .select('id, name, username, branch_id, role, org_role, department')
           .eq('auth_user_id', data.user.id)
           .single();
 
+        if (dbError) {
+           console.warn('User authenticated but employee record missing:', dbError.message);
+           // If we have no employee record, we might need to create one or handle as "Authenticated but not linked"
+        }
+
         if (employeeData) {
           const session: UserSession = {
+            userId: data.user.id,
             username: employeeData.username || employeeData.name,
             employeeId: employeeData.id,
             branchId: employeeData.branch_id,
@@ -313,9 +338,23 @@ export const authService = {
           };
           localStorage.setItem(SESSION_KEY, JSON.stringify(session));
           return session;
+        } else {
+          // If login succeeded but no employee record exists, we create a partial session
+          // This allows the user to proceed to onboarding if needed
+          const session: UserSession = {
+            userId: data.user.id,
+            username: data.user.email?.split('@')[0] || username,
+            branchId: 'B1', // default fallback
+            role: 'manager', // default for new signup
+            orgRole: 'owner',
+            department: 'it',
+          };
+          localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+          return session;
         }
-      } catch (err) {
-        console.warn('Supabase auth failed, falling back to local auth if possible:', err);
+      } catch (err: any) {
+        console.warn('Supabase auth attempt failed:', err.message);
+        throw err; // Re-throw to be caught by the UI
       }
     }
 
