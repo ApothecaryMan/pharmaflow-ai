@@ -43,7 +43,7 @@ export const createReturnService = (): ReturnService => ({
     const effectiveBranchId = branchId || (ret as any).branchId || settings.activeBranchId || settings.branchCode;
     const newReturn: Return = {
       ...ret,
-      id: idGenerator.generate('returns', effectiveBranchId),
+      id: idGenerator.uuid(),
       branchId: effectiveBranchId,
     } as Return;
 
@@ -77,7 +77,7 @@ export const createReturnService = (): ReturnService => ({
     const effectiveBranchId = branchId || (ret as any).branchId || settings.activeBranchId || settings.branchCode;
     const newReturn: PurchaseReturn = {
       ...ret,
-      id: idGenerator.generate('returns', effectiveBranchId),
+      id: idGenerator.uuid(),
       branchId: effectiveBranchId,
     } as PurchaseReturn;
 

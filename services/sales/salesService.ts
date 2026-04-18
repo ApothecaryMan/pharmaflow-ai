@@ -86,7 +86,7 @@ export const createSalesService = (): SalesService => ({
     const effectiveBranchId = branchId || (sale as any).branchId || settings.activeBranchId || settings.branchCode;
     const newSale: Sale = {
       ...sale,
-      id: (sale as any).id || idGenerator.generate('sales', effectiveBranchId),
+      id: (sale as any).id || idGenerator.uuid(),
       branchId: effectiveBranchId,
     } as Sale;
 

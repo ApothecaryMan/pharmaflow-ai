@@ -206,7 +206,7 @@ export const createInventoryService = (): InventoryService => ({
     const effectiveBranchId = branchId || (drug as any).branchId || settings.activeBranchId || settings.branchCode;
     const newDrug: Drug = {
       ...drug,
-      id: idGenerator.generate('inventory', effectiveBranchId),
+      id: idGenerator.uuid(),
       internalCode: drug.internalCode || idGenerator.code('DRUG'),
       branchId: effectiveBranchId,
     } as Drug;

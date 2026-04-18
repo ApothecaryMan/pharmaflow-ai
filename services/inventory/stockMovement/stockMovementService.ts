@@ -42,7 +42,7 @@ export const createStockMovementService = (): StockMovementService => ({
     // Ensure accurate timestamp and ID
     const newMovement: StockMovement = {
       ...movement,
-      id: idGenerator.generate('movement', movement.branchId || activeBranchId),
+      id: idGenerator.uuid(),
       branchId: movement.branchId || activeBranchId,
       timestamp: new Date().toISOString(),
     };
@@ -227,7 +227,7 @@ export const createStockMovementService = (): StockMovementService => ({
       const effectiveBranchId = movement.branchId || activeBranchId;
       all.push({
         ...movement,
-        id: idGenerator.generate('movement', movement.branchId || settings.branchCode),
+        id: idGenerator.uuid(),
         branchId: effectiveBranchId,
         timestamp,
       });

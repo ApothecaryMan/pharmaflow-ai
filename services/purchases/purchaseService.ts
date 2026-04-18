@@ -74,7 +74,7 @@ export const createPurchaseService = (): PurchaseService => ({
     const effectiveBranchId = branchId || (purchase as any).branchId || settings.activeBranchId || settings.branchCode;
     const newPurchase: Purchase = {
       ...purchase,
-      id: idGenerator.generate('purchases', effectiveBranchId),
+      id: idGenerator.uuid(),
       status: (purchase as any).status || 'pending',
       branchId: effectiveBranchId,
     } as Purchase;

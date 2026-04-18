@@ -99,7 +99,7 @@ export const createSupplierService = (): SupplierService => ({
     const effectiveBranchId = branchId || (supplier as any).branchId || settings.activeBranchId || settings.branchCode;
     const newSupplier: Supplier = {
       ...supplier,
-      id: idGenerator.generate('suppliers', effectiveBranchId),
+      id: idGenerator.uuid(),
       branchId: effectiveBranchId,
     } as Supplier;
 

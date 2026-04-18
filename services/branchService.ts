@@ -138,7 +138,7 @@ export const branchService = {
     const newBranch: Branch = {
       ...data,
       code,
-      id: idGenerator.generate('branches'),
+      id: idGenerator.uuid(),
       createdAt: now,
       updatedAt: now,
     };

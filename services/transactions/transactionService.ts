@@ -154,7 +154,7 @@ export const transactionService = {
       const dailyOrderNumber = storage.increment(dailyCounterKey, 0);
 
       const serialId = (100000 + saleCounter).toString();
-      const internalId = idGenerator.generate('sales', activeBranchId);
+      const internalId = idGenerator.uuid();
 
       // Update movement references with serialId
       movementEntries.forEach(m => m.referenceId = serialId);

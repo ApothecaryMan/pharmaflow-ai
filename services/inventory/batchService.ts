@@ -102,7 +102,7 @@ export const createBatch = async (
   const effectiveBranchId = branchId || batch.branchId;
   const newBatch: StockBatch = {
     ...batch,
-    id: idGenerator.generate('batch', effectiveBranchId),
+    id: idGenerator.uuid(),
     branchId: effectiveBranchId,
     version: 1, 
   };
@@ -356,7 +356,7 @@ export const returnStock = async (
       batchesToUpdate.push(batch);
     } else if (drugId) {
       const newBatch: StockBatch = {
-        id: idGenerator.generate('batch', branchId || drugId),
+        id: idGenerator.uuid(),
         drugId,
         quantity: alloc.quantity,
         expiryDate: alloc.expiryDate,
@@ -441,7 +441,7 @@ export const migrateInventoryToBatches = async (inventory: Drug[]): Promise<Stoc
     if (existingDrugIds.has(drug.id) || drug.stock <= 0) continue;
 
     const b = {
-      id: idGenerator.generate('batch', drug.branchId),
+      id: idGenerator.uuid(),
       drugId: drug.id,
       quantity: drug.stock,
       expiryDate: drug.expiryDate,

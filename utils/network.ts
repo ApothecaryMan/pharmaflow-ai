@@ -45,7 +45,11 @@ export const checkRealConnectivity = async (): Promise<NetworkResult> => {
 
     clearTimeout(timeoutId);
     const latency = Math.round(performance.now() - startTime);
-    return { online: response.ok, latency: response.ok ? latency : undefined };
+    
+    // Any response (even 401/403) means we are online because we reached Supabase
+    const online = response.ok || (response.status >= 400 && response.status < 500);
+    
+    return { online, latency: online ? latency : undefined };
   } catch (error) {
     // Timeout or network failure implies offline
     return { online: false, latency: undefined };

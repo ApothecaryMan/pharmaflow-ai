@@ -172,7 +172,7 @@ export const createCustomerService = (): CustomerService => ({
     // Centralized ID and Code Generation
     const newCustomer: Customer = {
       ...customer,
-      id: idGenerator.generate('customers', effectiveBranchId),
+      id: idGenerator.uuid(),
       serialId: idGenerator.generate('customers-serial', effectiveBranchId),
       code: customer.code || idGenerator.code('CUST'),
       createdAt: new Date().toISOString(),

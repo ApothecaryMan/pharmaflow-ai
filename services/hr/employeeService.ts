@@ -154,7 +154,7 @@ export const createEmployeeService = (): EmployeeService => ({
     
     // Assign ID if missing
     if (!employee.id) {
-      employee.id = idGenerator.generate('employees', effectiveBranchId);
+      employee.id = idGenerator.uuid();
     }
 
     // Assign employeeCode if missing
