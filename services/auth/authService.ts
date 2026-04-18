@@ -82,65 +82,9 @@ const DEV_CREDENTIALS = {
  * Called before every login attempt to solve the chicken-and-egg problem
  * where Super Admin was previously only seeded AFTER successful login.
  */
-let _superAdminSeeded = false;
 const ensureSuperAdmin = async (): Promise<void> => {
-  if (_superAdminSeeded) return; // Only run once per session
-
-  const superUser = import.meta.env.VITE_SUPER_USER;
-  const superPass = import.meta.env.VITE_SUPER_PASS;
-  if (!superUser || !superPass) {
-    _superAdminSeeded = true;
-    return;
-  }
-
-  try {
-    const { employeeCacheService } = await import('../hr/employeeCacheService');
-    const allEmployees = await employeeCacheService.loadAll();
-    const existingAdmin = allEmployees.find((e) => e.username === superUser);
-
-    if (!existingAdmin) {
-      const { hashPassword } = await import('./hashUtils');
-      const passwordHash = await hashPassword(superPass);
-
-      // Use branchService to get the active branch dynamic fallback
-      let activeBranchId = ''; // Dynamic fallback
-      try {
-        const { branchService } = await import('../branchService');
-        const activeBranch = await branchService.getActive();
-        if (activeBranch) {
-          activeBranchId = activeBranch.id;
-        } else {
-          const all = await branchService.getAll();
-          const firstBranch = all[0];
-          if (firstBranch) activeBranchId = firstBranch.id;
-        }
-      } catch { /* ignore - use fallback */ }
-
-      await employeeCacheService.upsert({
-        id: import.meta.env.VITE_SUPER_ADMIN_ID as string,
-        employeeCode: 'EMP-000',
-        name: 'SUPER',
-        username: superUser,
-        password: passwordHash,
-        role: 'admin' as any,
-        position: 'Super Admin',
-        department: 'it',
-        phone: '00000000000',
-        startDate: new Date().toISOString().split('T')[0],
-        status: 'active',
-        branchId: activeBranchId,
-      });
-      console.log('✨ Super Admin seeded in IndexedDB (pre-login)');
-    } else {
-      // SELF-HEAL: If SUPER exists but we want to ensure password is syncable or updated
-      // We don't overwrite every time to avoid unnecessary hashing, 
-      // but DataContext will handle the NULL sync-up.
-    }
-  } catch (err) {
-    console.warn('Failed to seed Super Admin:', err);
-  }
-
-  _superAdminSeeded = true;
+  // Super Admin seeding is now handled securely in the backend via Supabase migrations.
+  // Legacy frontend seeding logic has been removed.
 };
 
 export const authService = {

@@ -270,56 +270,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({
           inv.push(...seededInventory);
         }
 
-        // Seed SUPER User logic (Secondary guard — primary seed is in authService.ensureSuperAdmin)
-        const superUser = import.meta.env.VITE_SUPER_USER;
-        const superPass = import.meta.env.VITE_SUPER_PASS;
-
-        if (superUser && superPass) {
-          const settings = await settingsService.getAll();
-          // Check ALL employees (not branch-filtered) to avoid false re-seeding on branch switch
-          const { employeeCacheService } = await import('../services/hr/employeeCacheService');
-          const allGlobalEmployees = await employeeCacheService.loadAll();
-          const superUserExists = allGlobalEmployees.some((e) => e.username === superUser);
-          if (!superUserExists) {
-            const { hashPassword } = await import('../services/auth/hashUtils');
-            const passwordHash = await hashPassword(superPass);
-            const superUserObj: Employee = {
-              id: import.meta.env.VITE_SUPER_ADMIN_ID as string,
-              employeeCode: 'EMP-000',
-              name: 'SUPER',
-              username: superUser,
-              password: passwordHash,
-              role: 'admin' as any,
-              position: 'Super Admin',
-              department: 'it',
-              phone: '00000000000',
-              startDate: new Date().toISOString().split('T')[0],
-              status: 'active',
-              branchId: finalBranchId,
-              orgId: settings.orgId,
-            };
-            await employeeService.create(superUserObj);
-            emp.push(superUserObj);
-            console.log('✨ Super Admin seeded successfully from ENV (DataContext guard)');
-          } else {
-            // Ensure the Super Admin is in the local state even if not in this branch's filtered list
-            const superAdmin = allGlobalEmployees.find((e) => e.username === superUser);
-            if (superAdmin) {
-              const superAdminInList = emp.some((e) => e.username === superUser);
-              if (!superAdminInList) emp.push(superAdmin);
-
-              // SELF-HEAL: If Super Admin exist locally but is missing password in Supabase (NULL bug), force a sync
-              try {
-                const { supabase } = await import('../lib/supabase');
-                const { data: dbSuper } = await supabase.from('employees').select('password').eq('id', superAdmin.id).maybeSingle();
-                if (dbSuper && dbSuper.password === null && superAdmin.password) {
-                  console.log('🔧 Self-healing Super Admin password in Supabase...');
-                  await supabase.from('employees').update({ password: superAdmin.password }).eq('id', superAdmin.id);
-                }
-              } catch { /* ignore */ }
-            }
-          }
-        }
+        // Super Admin seeding is now handled entirely on the backend via migrations
+        // (See supabase/migrations/20260418000006_seed_super_admin.sql)
 
         const currentSession = authService.getCurrentUserSync();
         const loggedInEmployee = emp.find(e => e.id === currentSession?.employeeId) || null;
