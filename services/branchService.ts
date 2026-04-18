@@ -153,7 +153,7 @@ export const branchService = {
     storage.set(StorageKeys.BRANCHES, updatedBranches);
 
     if (!skipSync) {
-      await syncQueueService.enqueue('DRUG', { action: 'CREATE_BRANCH', branch: newBranch }); 
+      await syncQueueService.enqueue('CREATE_BRANCH', { action: 'CREATE_BRANCH', branch: newBranch }); 
     }
 
     return newBranch;
@@ -196,7 +196,7 @@ export const branchService = {
     storage.set(StorageKeys.BRANCHES, branches);
 
     if (!skipSync) {
-      await syncQueueService.enqueue('DRUG', { action: 'UPDATE_BRANCH', id, updates: data });
+      await syncQueueService.enqueue('UPDATE_BRANCH', { action: 'UPDATE_BRANCH', id, updates: data });
     }
 
     return updatedBranch;
@@ -216,7 +216,7 @@ export const branchService = {
     storage.set(StorageKeys.BRANCHES, branches);
     
     if (!skipSync) {
-      await syncQueueService.enqueue('DRUG', { action: 'DELETE_BRANCH', id });
+      await syncQueueService.enqueue('DELETE_BRANCH', { action: 'DELETE_BRANCH', id });
     }
 
     // Clear active branch if it was the one deleted

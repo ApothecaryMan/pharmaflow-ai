@@ -17,6 +17,9 @@ export type SyncActionType =
   | 'DRUG'
   | 'CUSTOMER'
   | 'SUPPLIER'
+  | 'CREATE_BRANCH'
+  | 'UPDATE_BRANCH'
+  | 'DELETE_BRANCH'
   | 'STOCK_BATCH_UPDATE'
   | 'STOCK_MOVEMENT_LOG';
 
