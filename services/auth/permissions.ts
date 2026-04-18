@@ -29,10 +29,9 @@ export const permissionsService = {
     // Determine which roles to use (provided in context or from current session)
     const effectiveRole = context?.role || session?.role;
     const effectiveOrgRole = context?.orgRole || session?.orgRole;
-    const effectiveUsername = session?.username; // Username only comes from session
 
-    // 1. Super User check
-    if (effectiveUsername === import.meta.env.VITE_SUPER_USER) {
+    // 1. God Role check
+    if (effectiveRole === 'god') {
       return true;
     }
 
@@ -65,11 +64,19 @@ export const permissionsService = {
   },
 
   /**
+   * Check if user has God Mode
+   */
+  isGod(): boolean {
+    const session = authService.getCurrentUserSync();
+    return (session?.role as any) === 'god';
+  },
+
+  /**
    * Check if user is an Org Owner or Admin
    */
   isOrgAdmin(): boolean {
     const session = authService.getCurrentUserSync();
-    return session?.orgRole === 'owner' || session?.orgRole === 'admin';
+    return session?.orgRole === 'owner' || session?.orgRole === 'admin' || (session?.role as any) === 'god';
   },
 
   /**
@@ -81,6 +88,7 @@ export const permissionsService = {
     return (
       session?.orgRole === 'owner' || 
       session?.orgRole === 'admin' || 
+      (role as any) === 'god' ||
       role === 'manager' || 
       role === 'pharmacist_manager' ||
       role === 'admin'
@@ -94,7 +102,7 @@ export const permissionsService = {
     const session = authService.getCurrentUserSync();
     if (!session) return [];
     
-    if (session.orgRole === 'owner' || session.username === import.meta.env.VITE_SUPER_USER) {
+    if ((session.role as any) === 'god' || session.orgRole === 'owner') {
       // Return a special flag or list of all (though usually 'can' check is preferred)
       // For simplicity, return the keys from a complete mapping
       return Object.values(ROLE_PERMISSIONS).flat(); 

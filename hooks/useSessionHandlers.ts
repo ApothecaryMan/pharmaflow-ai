@@ -67,12 +67,10 @@ export const useSessionHandlers = ({
             const stored = localStorage.getItem('branch_pilot_session');
             if (stored) {
               const storedSession = JSON.parse(stored);
-              const isSuperUser =
-                selectedEmployee.id === import.meta.env.VITE_SUPER_ADMIN_ID ||
-                selectedEmployee.username === import.meta.env.VITE_SUPER_USER;
+              const isGod = selectedEmployee.role === 'god';
 
-              if (isSuperUser) {
-                // Super User: preserve max privileges, only set employeeId
+              if (isGod) {
+                // God Role: preserve max privileges, only set employeeId
                 storedSession.employeeId = selectedEmployee.id;
               } else {
                 // Regular employee: save original credentials & sync employee's role

@@ -40,9 +40,8 @@ export const useOnboardingStatus = (isAuthenticated?: boolean) => {
       // 3. Check Employees
       const { employeeService } = await import('../services/hr/employeeService');
       const all = await employeeService.getAll('ALL', activeOrgId || undefined);
-      const superAdminId = import.meta.env.VITE_SUPER_ADMIN_ID as string;
       const hasRealEmployees = !!user?.employeeId || all.some(
-        (e) => e.id !== superAdminId && e.employeeCode !== 'EMP-000'
+        (e) => e.role !== 'god' && e.employeeCode !== 'EMP-000'
       );
 
       if (!hasRealEmployees) {

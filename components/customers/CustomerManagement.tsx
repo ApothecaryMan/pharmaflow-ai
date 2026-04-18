@@ -51,8 +51,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const { theme: currentTheme } = useSettings();
   const [showAllBranches, setShowAllBranches] = useState(false);
   const currentUser = authService.getCurrentUserSync();
-  const isSuperAdmin =
-    currentUser?.username === import.meta.env.VITE_SUPER_USER || permissionsService.isOrgAdmin();
+  const isSuperAdmin = permissionsService.isOrgAdmin();
   const [mode, setMode] = useState<'list' | 'add'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);

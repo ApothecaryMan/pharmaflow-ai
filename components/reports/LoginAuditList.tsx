@@ -21,8 +21,7 @@ export const LoginAuditList: React.FC<{ language: 'EN' | 'AR' }> = ({ language }
 
   // Check if current user is Super Admin to show the toggle
   const currentUser = authService.getCurrentUserSync();
-  const isSuperAdmin =
-    currentUser?.username === import.meta.env.VITE_SUPER_USER || permissionsService.isOrgAdmin();
+  const isSuperAdmin = permissionsService.isOrgAdmin();
 
   const history: LoginAuditEntry[] = useMemo(
     () => authService.getLoginHistory(showAllBranches ? undefined : activeBranchId),

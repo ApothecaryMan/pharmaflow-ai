@@ -135,8 +135,7 @@ export const orgService = {
     if (isSupabaseConfigured()) {
       // Guard: Don't query Supabase for placeholder UUIDs
       const devOwnerId = import.meta.env.VITE_DEV_OWNER_ID as string;
-      const superAdminId = import.meta.env.VITE_SUPER_ADMIN_ID as string;
-      if (!userId || userId === devOwnerId || userId === superAdminId || !userId.includes('-')) {
+      if (!userId || userId === devOwnerId || !userId.includes('-')) {
         return [];
       }
 

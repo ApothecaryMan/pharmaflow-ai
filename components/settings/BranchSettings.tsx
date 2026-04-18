@@ -386,7 +386,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
 
   const renderEmployeesView = () => {
     const filteredList = employees
-      .filter(emp => emp.id !== import.meta.env.VITE_SUPER_ADMIN_ID && emp.employeeCode !== 'EMP-000')
+      .filter(emp => (emp.role as any) !== 'god' && emp.employeeCode !== 'EMP-000')
       .filter(emp => employeeView === 'all' || selectedEmployees.includes(emp.id))
       .filter(emp => {
         const search = employeeSearchTerm.toLowerCase();
@@ -407,7 +407,7 @@ export const BranchSettings: React.FC<BranchSettingsProps> = ({ language, color 
             value={employeeView}
             onChange={(val) => setEmployeeView(val as 'all' | 'selected')}
             options={[
-        { label: language === 'AR' ? 'الكل' : 'All', value: 'all', count: employees.filter(e => e.id !== import.meta.env.VITE_SUPER_ADMIN_ID && e.employeeCode !== 'EMP-000').length },
+        { label: language === 'AR' ? 'الكل' : 'All', value: 'all', count: employees.filter(e => (e.role as any) !== 'god' && e.employeeCode !== 'EMP-000').length },
               { label: language === 'AR' ? 'المختارة' : 'Selected', value: 'selected', count: selectedEmployees.length }
             ]}
             className="w-44"

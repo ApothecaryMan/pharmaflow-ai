@@ -234,7 +234,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         // Sync settingsService with the active branch so idGenerator (which reads storage directly) is in sync
         await settingsService.setMultiple({ 
           activeBranchId: finalBranchId,
-          branchCode: activeBranch?.code || allBranches[0]?.code || 'BR-001',
+          branchCode: activeBranch?.code || allBranches[0]?.code,
         });
 
         const [results, _] = await Promise.all([
@@ -255,31 +255,32 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         const [inv, sal, sup, pur, pRet, ret, cust, emp, bat] = results;
 
 
-        if (import.meta.env.DEV && session && inv.length === 0 && initialInventory.length > 0 && !hasSeededThisSession) {
-          hasSeededThisSession = true;
-          console.log('🌱 Seeding initial inventory for development...');
-          // Ensure every seeded item has the correct branchId
-          const seededInventory = initialInventory.map(item => ({
-            ...item,
-            branchId: finalBranchId
-          }));
-          await inventoryService.save(seededInventory, finalBranchId);
-          const updatedBatches = await batchService.migrateInventoryToBatches(seededInventory);
-          // Update local 'bat' reference to reflect migrated stock
-          const branchSpecific = updatedBatches.filter(b => b.branchId === finalBranchId);
-          bat.length = 0;
-          bat.push(...branchSpecific);
-          
-          inv.push(...seededInventory);
-        } else if (!session && import.meta.env.DEV && inv.length === 0 && initialInventory.length > 0) {
-          console.warn('⚠️ Skipping inventory seeding: No active Supabase session (likely Local Login).');
-        }
-
-        // Super Admin seeding is now handled entirely on the backend via migrations
-        // (See supabase/migrations/20260418000006_seed_super_admin.sql)
-
         const currentSession = authService.getCurrentUserSync();
         const loggedInEmployee = emp.find(e => e.id === currentSession?.employeeId) || null;
+
+        if (import.meta.env.DEV && session && inv.length === 0 && initialInventory.length > 0 && !hasSeededThisSession) {
+          const isGod = loggedInEmployee?.role === 'god';
+          
+          if (isGod) {
+            hasSeededThisSession = true;
+            console.log('🌱 Seeding initial inventory for development (God Mode)...');
+            // Ensure every seeded item has the correct branchId
+            const seededInventory = initialInventory.map(item => ({
+              ...item,
+              branchId: finalBranchId
+            }));
+            await inventoryService.save(seededInventory, finalBranchId);
+            const updatedBatches = await batchService.migrateInventoryToBatches(seededInventory);
+            // Update local 'bat' reference to reflect migrated stock
+            const branchSpecific = updatedBatches.filter(b => b.branchId === finalBranchId);
+            bat.length = 0;
+            bat.push(...branchSpecific);
+            
+            inv.push(...seededInventory);
+          } else {
+            console.log('ℹ️ Automatic seeding skipped: Not a God Mode account.');
+          }
+        }
 
         // Commit all states
         setRawInventory(inv);
@@ -549,17 +550,6 @@ export const DataProvider: React.FC<DataProviderProps> = ({
       setPurchaseReturnsState(pRet);
       setReturnsState(ret);
       setCustomersState(cust);
-
-      // Ensure Super Admin is always in the employees list regardless of branch
-      const superUser = import.meta.env.VITE_SUPER_USER;
-      if (superUser && !emp.some((e) => e.username === superUser)) {
-        try {
-          const { employeeCacheService } = await import('../services/hr/employeeCacheService');
-          const allGlobal = await employeeCacheService.loadAll();
-          const superAdmin = allGlobal.find((e) => e.username === superUser);
-          if (superAdmin) emp.push(superAdmin);
-        } catch { /* ignore */ }
-      }
 
       const allBranches = await branchService.getAll(activeOrgId);
       setBranches(allBranches);

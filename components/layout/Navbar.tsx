@@ -588,7 +588,7 @@ const NavbarComponent: React.FC<NavbarProps> = ({
                           onClick={async () => {
                             await switchBranch(branch.id);
                              // Super Admin stays logged in across branches
-                             if (currentEmployeeId === import.meta.env.VITE_SUPER_ADMIN_ID) {
+                             if (permissionsService.isGod()) {
                                // Update session branchId to the new branch
                                authService.updateSession({ branchId: branch.id });
                              } else if (setCurrentEmployeeId) {

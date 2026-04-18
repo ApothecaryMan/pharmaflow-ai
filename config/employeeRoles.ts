@@ -1,10 +1,12 @@
-import { UserRole as ImportedUserRole } from './permissions';
-
 /**
  * Core Role Definitions (The Single Source of Truth)
- * Any change here automatically updates Types and Arrays across the system.
  */
 const ROLE_DEFINITIONS = {
+  god: { 
+    translationKey: 'god',
+    defaultLabelEN: 'God Mode',
+    defaultLabelAR: 'صلاحية مطلقة'
+  },
   pharmacist_owner: { 
     translationKey: 'pharmacist_owner',
     defaultLabelEN: 'Pharmacy Owner',
@@ -13,7 +15,7 @@ const ROLE_DEFINITIONS = {
   admin: { 
     translationKey: 'admin',
     defaultLabelEN: 'System Admin',
-    defaultLabelAR: 'مدير النظام (Admin)'
+    defaultLabelAR: 'System Admin'
   },
   pharmacist_manager: { 
     translationKey: 'pharmacist_manager',
@@ -110,7 +112,7 @@ export const DEPARTMENT_ROLES: Record<string, UserRole[]> = {
   sales: ['cashier', 'senior_cashier'],
   marketing: ['manager', 'officeboy'],
   hr: ['hr_manager'],
-  it: ['admin'],
+  it: ['god', 'admin'],
   logistics: ['delivery', 'delivery_pharmacist'],
 };
 
