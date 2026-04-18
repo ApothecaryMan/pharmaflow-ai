@@ -17,11 +17,24 @@ const getLegacyDefaultBranchId = (): string => {
 
 const DEFAULT_BRANCH_ID = 'branch_main'; // Keep as key, but logic will use first available branch
 
+let hasRunInSession = false;
+
 export const branchMigration = {
   /**
    * Run all migrations
    */
   async runAll(): Promise<void> {
+    const migratedFlag = 'pharma_migration_v4_branch_idempotent';
+    
+    // 1. Session Guard (Fastest - prevent redundant runs in same JS context)
+    if (hasRunInSession) return;
+    
+    // 2. Persistent Guard (Prevent logs and redundant scans across refreshes if already done)
+    if (storage.get(migratedFlag, false)) {
+      hasRunInSession = true;
+      return;
+    }
+
     console.log('Starting branch migration...');
     
     const branches = storage.get<any[]>(StorageKeys.BRANCHES, []);
@@ -37,6 +50,8 @@ export const branchMigration = {
     this.migrateBatches(targetBranchId);
     this.migrateShifts(targetBranchId);
     
+    storage.set(migratedFlag, true);
+    hasRunInSession = true;
     console.log(`Branch migration completed using target ID: ${targetBranchId}`);
   },
 

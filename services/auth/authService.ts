@@ -224,35 +224,7 @@ export const authService = {
     // Simulate API delay for local check
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // 1. Check Dev credentials FIRST (Backdoor for quick testing)
-    if (username === DEV_CREDENTIALS.username && password === (DEV_CREDENTIALS.password ?? '')) {
-      const { branchService } = await import('../branchService');
-      const activeBranch = await branchService.getActive();
-      const allBranches = await branchService.getAll();
-      const firstBranch = allBranches[0];
-      const effectiveBranchId = activeBranch?.id || firstBranch?.id || '';
-
-      const session: UserSession = {
-        username: DEV_CREDENTIALS.username,
-        branchId: effectiveBranchId,
-        role: DEV_CREDENTIALS.role,
-        orgRole: 'owner', // DEV admin assumes owner locally
-        department: DEV_CREDENTIALS.department,
-      };
-
-      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-      authService.logAuditEvent({
-        username: session.username,
-        role: session.role,
-        branchId: session.branchId,
-        action: 'system_login',
-        details: 'Dev session started',
-      });
-
-      return session;
-    }
-
-    // 2. Try Supabase Auth if configured
+    // 1. Try Supabase Auth if configured
     if (isSupabaseConfigured) {
       try {
         const { supabase } = await import('../../lib/supabase');

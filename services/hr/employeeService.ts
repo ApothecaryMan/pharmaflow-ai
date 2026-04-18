@@ -148,7 +148,13 @@ export const createEmployeeService = (): EmployeeService => ({
     
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
-    return filtered.filter((e) => e.branchId === effectiveBranchId);
+    
+    // Always include admin-level employees regardless of branch
+    // This ensures Super Admin and owners are visible in the Quick Login
+    const ADMIN_ROLES = ['admin', 'pharmacist_owner', 'manager'];
+    return filtered.filter((e) => 
+      e.branchId === effectiveBranchId || ADMIN_ROLES.includes(e.role)
+    );
   },
 
   getById: async (id: string): Promise<Employee | null> => {

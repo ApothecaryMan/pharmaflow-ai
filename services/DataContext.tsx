@@ -135,6 +135,8 @@ interface DataProviderProps {
   initialSuppliers?: Supplier[];
 }
 
+let hasSeededThisSession = false;
+
 export const DataProvider: React.FC<DataProviderProps> = ({
   children,
   initialInventory = [],
@@ -253,7 +255,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         const [inv, sal, sup, pur, pRet, ret, cust, emp, bat] = results;
 
 
-        if (import.meta.env.DEV && inv.length === 0 && initialInventory.length > 0) {
+        if (import.meta.env.DEV && session && inv.length === 0 && initialInventory.length > 0 && !hasSeededThisSession) {
+          hasSeededThisSession = true;
           console.log('🌱 Seeding initial inventory for development...');
           // Ensure every seeded item has the correct branchId
           const seededInventory = initialInventory.map(item => ({
@@ -268,6 +271,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({
           bat.push(...branchSpecific);
           
           inv.push(...seededInventory);
+        } else if (!session && import.meta.env.DEV && inv.length === 0 && initialInventory.length > 0) {
+          console.warn('⚠️ Skipping inventory seeding: No active Supabase session (likely Local Login).');
         }
 
         // Super Admin seeding is now handled entirely on the backend via migrations
