@@ -10,6 +10,7 @@ import { PriceDisplay } from '../../../common/TanStackTable';
 import { Tooltip } from '../../../common/Tooltip';
 import { SortableCartItem } from '../SortableCartItem';
 import { resolvePrice } from '../../../../utils/stockOperations';
+import { useNetworkStatus } from '../../../../hooks/useNetworkStatus';
 
 
 const cartScrollStyles = `
@@ -116,6 +117,8 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
   paymentMethod,
   isMobile = false,
 }) => {
+  const { isOnline } = useNetworkStatus();
+
   const handleSearchInTable = useCallback(
     (term: string) => {
       setSearch(term);
@@ -406,7 +409,13 @@ export const POSCartSidebar: React.FC<POSCartSidebarProps> = React.memo(({
           </div>
 
           {/* Checkout Area Container */}
-          {!hasOpenShift ? (
+          {!isOnline ? (
+            <div className='flex h-[42px] items-center justify-center rounded-xl bg-red-500/10 border border-red-500/30'>
+              <p className='text-xs font-bold text-red-600 dark:text-red-400 text-center px-2'>
+                ⚠️ أنت غير متصل بالإنترنت. لا يمكن إتمام المبيعات حالياً.
+              </p>
+            </div>
+          ) : !hasOpenShift ? (
             <div className='flex h-[42px] items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900'>
               <div className='flex items-center gap-2 text-red-700 dark:text-red-300'>
                 <span className='material-symbols-rounded' style={{ fontSize: '18px' }}>

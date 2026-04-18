@@ -4,6 +4,7 @@
  */
 
 import { STORES, runTransaction } from './db';
+import { isOnline } from '../utils/network';
 
 export type SyncActionType = 
   | 'SALE' 
@@ -64,6 +65,11 @@ export const syncQueueService = {
    * @param branchId - Optional explicit branchId. If not provided, reads from active session.
    */
   async enqueue(type: SyncActionType, payload: any, branchId?: string): Promise<number> {
+    const online = await isOnline();
+    if (!online) {
+      throw new Error("لا يمكن إتمام العملية بدون اتصال بالإنترنت. يرجى التحقق من الاتصال والمحاولة مرة أخرى.");
+    }
+
     const effectiveBranchId = branchId || getActiveBranchId();
     const action: SyncAction = {
       type,
