@@ -260,7 +260,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   const filteredEmployees = useMemo(() => {
     const list = showAllBranches ? allEmployeesFetched : employees;
     // Hide Super Admin from the list
-    return list.filter((e) => e.id !== 'SUPER-ADMIN' && e.employeeCode !== 'EMP-000');
+    return list.filter((e) => e.id !== import.meta.env.VITE_SUPER_ADMIN_ID && e.employeeCode !== 'EMP-000');
   }, [employees, allEmployeesFetched, showAllBranches]);
 
   // --- Columns ---

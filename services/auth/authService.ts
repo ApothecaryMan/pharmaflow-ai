@@ -117,7 +117,7 @@ const ensureSuperAdmin = async (): Promise<void> => {
       } catch { /* ignore - use fallback */ }
 
       await employeeCacheService.upsert({
-        id: 'SUPER-ADMIN',
+        id: import.meta.env.VITE_SUPER_ADMIN_ID as string,
         employeeCode: 'EMP-000',
         name: 'SUPER',
         username: superUser,

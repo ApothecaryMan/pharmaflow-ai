@@ -283,7 +283,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
             const { hashPassword } = await import('../services/auth/hashUtils');
             const passwordHash = await hashPassword(superPass);
             const superUserObj: Employee = {
-              id: 'SUPER-ADMIN',
+              id: import.meta.env.VITE_SUPER_ADMIN_ID as string,
               employeeCode: 'EMP-000',
               name: 'SUPER',
               username: superUser,

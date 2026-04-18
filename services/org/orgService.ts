@@ -160,6 +160,13 @@ export const orgService = {
    */
   async getUserOrgs(userId: string): Promise<Organization[]> {
     if (isSupabaseConfigured()) {
+      // Guard: Don't query Supabase for placeholder UUIDs
+      const devOwnerId = import.meta.env.VITE_DEV_OWNER_ID as string;
+      const superAdminId = import.meta.env.VITE_SUPER_ADMIN_ID as string;
+      if (!userId || userId === devOwnerId || userId === superAdminId || !userId.includes('-')) {
+        return [];
+      }
+
       const { supabase } = await import('../../lib/supabase');
 
       const { data: memberships } = await supabase

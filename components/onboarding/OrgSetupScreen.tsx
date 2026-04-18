@@ -31,7 +31,7 @@ export const OrgSetupScreen: React.FC<OrgSetupScreenProps> = ({ language, onComp
     try {
       // Get current user ID for ownership
       const currentUser = authService.getCurrentUserSync();
-      const ownerId = currentUser?.userId || 'DEV-OWNER';
+      const ownerId = currentUser?.userId || import.meta.env.VITE_DEV_OWNER_ID as string;
 
       // Create organization (returns { org, membership, subscription })
       const result = await orgService.create(orgName.trim(), ownerId);

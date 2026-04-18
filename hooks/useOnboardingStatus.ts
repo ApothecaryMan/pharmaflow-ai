@@ -17,8 +17,12 @@ export const useOnboardingStatus = () => {
 
       // 1. Check Organizations
       const user = authService.getCurrentUserSync();
-      const ownerId = user?.userId || 'DEV-OWNER';
-      const orgs = await orgService.getUserOrgs(ownerId);
+      const devOwnerId = import.meta.env.VITE_DEV_OWNER_ID as string;
+      const ownerId = user?.userId || devOwnerId;
+      
+      // Only check orgs if we have a real ID or if we're in local mode.
+      const isDevPlaceholder = ownerId === devOwnerId;
+      const orgs = isDevPlaceholder ? [] : await orgService.getUserOrgs(ownerId);
       const activeOrgId = orgService.getActiveOrgId();
 
       if (orgs.length === 0 && !activeOrgId) {
@@ -36,8 +40,9 @@ export const useOnboardingStatus = () => {
       // 3. Check Employees
       const { employeeCacheService } = await import('../services/hr/employeeCacheService');
       const all = await employeeCacheService.loadAll();
+      const superAdminId = import.meta.env.VITE_SUPER_ADMIN_ID as string;
       const hasRealEmployees = all.some(
-        (e) => e.id !== 'SUPER-ADMIN' && e.employeeCode !== 'EMP-000'
+        (e) => e.id !== superAdminId && e.employeeCode !== 'EMP-000'
       );
 
       if (!hasRealEmployees) {

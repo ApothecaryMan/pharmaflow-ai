@@ -68,7 +68,7 @@ export const useSessionHandlers = ({
             if (stored) {
               const storedSession = JSON.parse(stored);
               const isSuperUser =
-                selectedEmployee.id === 'SUPER-ADMIN' ||
+                selectedEmployee.id === import.meta.env.VITE_SUPER_ADMIN_ID ||
                 selectedEmployee.username === import.meta.env.VITE_SUPER_USER;
 
               if (isSuperUser) {
