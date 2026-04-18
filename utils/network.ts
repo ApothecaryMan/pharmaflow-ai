@@ -35,22 +35,20 @@ export const checkRealConnectivity = async (): Promise<NetworkResult> => {
       return { online: !error, latency: !error ? latency : undefined };
     }
 
-    const response = await fetch(`${supaUrl}/rest/v1/`, {
+    // We ping the Supabase URL root directly. This usually returns a 200 or 404
+    // without triggering the auth-required headers of the REST API.
+    const response = await fetch(supaUrl, {
       method: 'HEAD',
-      mode: 'cors', // Ensure CORS is handled
-      signal: controller.signal,
-      headers: {
-        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-      }
+      mode: 'no-cors', // More silent
+      signal: controller.signal
     });
 
     clearTimeout(timeoutId);
     const latency = Math.round(performance.now() - startTime);
     
-    // Any response (even 401/403) means we are online because we reached Supabase
-    const online = response.ok || (response.status >= 400 && response.status < 500);
-    
-    return { online, latency: online ? latency : undefined };
+    // In 'no-cors' mode, response.type is 'opaque', and status is 0,
+    // but if the request finishes without catching an error, we ARE online.
+    return { online: true, latency };
   } catch (error) {
     // Timeout or network failure implies offline
     return { online: false, latency: undefined };
