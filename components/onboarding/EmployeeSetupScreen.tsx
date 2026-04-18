@@ -80,6 +80,9 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
       const { hashPassword } = await import('../../services/auth/hashUtils');
       const passwordHash = await hashPassword(password);
       
+      const currentUser = authService.getCurrentUserSync();
+      const authUserId = currentUser?.userId;
+
       const newEmployee: any = {
         id: '', 
         branchId: activeBranchId,
@@ -94,6 +97,7 @@ export const EmployeeSetupScreen: React.FC<EmployeeSetupScreenProps> = ({ langua
         phone: '',
         startDate: new Date().toISOString().split('T')[0],
         status: 'active',
+        auth_user_id: authUserId, // Crucial for linking to Supabase Auth
       };
       
       const { orgService } = await import('../../services/org/orgService');

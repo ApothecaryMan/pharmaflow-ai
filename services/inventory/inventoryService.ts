@@ -31,7 +31,11 @@ const mapDrugToDb = (d: Partial<Drug>): any => {
   if (d.costPrice !== undefined) db.cost_price = d.costPrice;
   if (d.stock !== undefined) db.stock = d.stock;
   if (d.damagedStock !== undefined) db.damaged_stock = d.damagedStock;
-  if (d.expiryDate !== undefined) db.expiry_date = d.expiryDate;
+  if (d.expiryDate !== undefined) {
+    if (d.expiryDate === '') db.expiry_date = null;
+    else if (d.expiryDate.length === 7 && /^\d{4}-\d{2}$/.test(d.expiryDate)) db.expiry_date = `${d.expiryDate}-01`;
+    else db.expiry_date = d.expiryDate;
+  }
   if (d.description !== undefined) db.description = d.description;
   if (d.barcode !== undefined) db.barcode = d.barcode;
   if (d.internalCode !== undefined) db.internal_code = d.internalCode;

@@ -41,7 +41,7 @@ export const useOnboardingStatus = () => {
       const { employeeCacheService } = await import('../services/hr/employeeCacheService');
       const all = await employeeCacheService.loadAll();
       const superAdminId = import.meta.env.VITE_SUPER_ADMIN_ID as string;
-      const hasRealEmployees = all.some(
+      const hasRealEmployees = !!user?.employeeId || all.some(
         (e) => e.id !== superAdminId && e.employeeCode !== 'EMP-000'
       );
 

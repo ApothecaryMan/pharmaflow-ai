@@ -21,7 +21,11 @@ const mapBatchToDb = (b: Partial<StockBatch>): any => {
   if (b.branchId !== undefined) db.branch_id = b.branchId;
   if (b.drugId !== undefined) db.drug_id = b.drugId;
   if (b.quantity !== undefined) db.quantity = b.quantity;
-  if (b.expiryDate !== undefined) db.expiry_date = b.expiryDate;
+  if (b.expiryDate !== undefined) {
+    if (b.expiryDate === '') db.expiry_date = null;
+    else if (b.expiryDate.length === 7 && /^\d{4}-\d{2}$/.test(b.expiryDate)) db.expiry_date = `${b.expiryDate}-01`;
+    else db.expiry_date = b.expiryDate;
+  }
   if (b.costPrice !== undefined) db.cost_price = b.costPrice;
   if (b.purchaseId !== undefined) db.purchase_id = b.purchaseId;
   if (b.dateReceived !== undefined) db.date_received = b.dateReceived;

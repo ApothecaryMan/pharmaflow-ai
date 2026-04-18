@@ -149,8 +149,8 @@ const defaultSettings: SettingsState = {
   showTickerCustomers: false,
   showTickerTopSeller: false,
   graphicStyle: false,
-  activeBranchId: 'B1',
-  branchCode: 'B1',
+  activeBranchId: '',
+  branchCode: '',
 };
 // Load settings from storage
 const loadSettings = (): SettingsState => {

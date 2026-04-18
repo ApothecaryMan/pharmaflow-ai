@@ -37,6 +37,7 @@ const mapEmployeeToDb = (e: Partial<Employee>): any => {
   if (e.notes !== undefined) db.notes = e.notes;
   if (e.username !== undefined) db.username = e.username;
   if (e.userId !== undefined) db.user_id = e.userId;
+  if ((e as any).auth_user_id !== undefined) db.auth_user_id = (e as any).auth_user_id;
   return db;
 };
 
@@ -173,7 +174,6 @@ export const createEmployeeService = (): EmployeeService => ({
       const dbEmployee = mapEmployeeToDb(employee);
       // Ensure we don't send local-only fields
       delete dbEmployee.password;
-      delete dbEmployee.auth_user_id;
 
       // Use upsert to be resilient during onboarding/retries
       const { error } = await supabase.from('employees').upsert(dbEmployee, { onConflict: 'id' });

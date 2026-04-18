@@ -103,7 +103,7 @@ const ensureSuperAdmin = async (): Promise<void> => {
       const passwordHash = await hashPassword(superPass);
 
       // Use branchService to get the active branch dynamic fallback
-      let activeBranchId = 'B1'; // Minimum fallback
+      let activeBranchId = ''; // Dynamic fallback
       try {
         const { branchService } = await import('../branchService');
         const activeBranch = await branchService.getActive();
@@ -282,7 +282,7 @@ export const authService = {
       const activeBranch = await branchService.getActive();
       const allBranches = await branchService.getAll();
       const firstBranch = allBranches[0];
-      const effectiveBranchId = activeBranch?.id || firstBranch?.id || 'B1';
+      const effectiveBranchId = activeBranch?.id || firstBranch?.id || '';
 
       const session: UserSession = {
         username: DEV_CREDENTIALS.username,
@@ -304,24 +304,18 @@ export const authService = {
       return session;
     }
 
-    // 2. Try Supabase Auth first if configured
+    // 2. Try Supabase Auth if configured
     if (isSupabaseConfigured) {
       try {
         const { supabase } = await import('../../lib/supabase');
         
-        // Strategy: 
-        // 1. If it's a username (no @), try to resolve its official email via our secure RPC
-        // 2. Otherwise use as provided
-        
         let loginEmail = username;
-        
         if (!username.includes('@')) {
            try {
              const { data: resolvedEmail } = await supabase.rpc('get_email_by_username', { p_username: username });
              if (resolvedEmail) {
                loginEmail = resolvedEmail;
              } else {
-               // Fallback for internal local employees who might not be in the public.employees table yet
                loginEmail = `${username}@zinc.co`;
              }
            } catch (err) {
@@ -330,117 +324,121 @@ export const authService = {
            }
         }
         
-        let { data, error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
         
-        if (error) {
-          // If it's a 400 error, it could be "Invalid credentials" or "Email not confirmed"
-          console.error(' Supabase Login Error:', {
-            status: error.status,
-            name: error.name,
-            message: error.message
-          });
-
-          // Special handling for confirmation
-          if (error.message.toLowerCase().includes('confirmed') || error.status === 400) {
-            // We re-throw but with more context if possible
-            if (error.message.toLowerCase().includes('not confirmed')) {
+        if (authError) {
+          if (authError.message.toLowerCase().includes('confirmed') || authError.status === 400) {
+            if (authError.message.toLowerCase().includes('not confirmed')) {
                throw new Error('Email not confirmed. Please check your inbox.');
             }
           }
-          throw error;
+          throw authError;
         }
 
-        if (!data.user) {
-          throw new Error('No user data returned');
-        }
+        if (!authData.user) throw new Error('No user data returned');
 
-        // Fetch employee metadata logic here from Supabase DB
-        const { data: employeeData, error: dbError } = await supabase
-          .from('employees')
-          .select('id, name, username, branch_id, role, org_role, department')
-          .eq('auth_user_id', data.user.id)
-          .single();
+        // Parallel fetch for metadata
+        const [employeeResponse, memberResponse] = await Promise.all([
+          supabase.from('employees').select('*').eq('auth_user_id', authData.user.id).maybeSingle(),
+          supabase.from('org_members').select('role, org_id').eq('user_id', authData.user.id).maybeSingle()
+        ]);
 
-        if (dbError) {
-           console.warn('User authenticated but employee record missing:', dbError.message);
-           // If we have no employee record, we might need to create one or handle as "Authenticated but not linked"
-        }
+        const employeeData = employeeResponse.data;
+        const memberData = memberResponse.data;
+        
+        const orgRole = memberData?.role || 'member';
+        const orgId = memberData?.org_id;
 
         if (employeeData) {
           const session: UserSession = {
-            userId: data.user.id,
+            userId: authData.user.id,
             username: employeeData.username || employeeData.name,
             employeeId: employeeData.id,
-            branchId: employeeData.branch_id,
+            branchId: employeeData.branch_id || '',
+            orgId: orgId || employeeData.org_id,
             role: employeeData.role,
-            orgRole: employeeData.org_role,
+            orgRole: orgRole as any,
             department: employeeData.department,
           };
           localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+          
+          if (session.orgId) {
+            const { orgService } = await import('../../services/org/orgService');
+            orgService.setActiveOrgId(session.orgId);
+          }
+          
           return session;
         } else {
-          // If login succeeded but no employee record exists, we create a partial session
-          // This allows the user to proceed to onboarding if needed
+          // No employee record - partial session for onboarding
+          let defaultBranchId = '';
+          try {
+            const { branchService } = await import('../branchService');
+            const branch = orgId ? await branchService.ensureDefaultBranch(orgId) : null;
+            if (branch) defaultBranchId = branch.id;
+          } catch {}
+
           const session: UserSession = {
-            userId: data.user.id,
-            username: data.user.email?.split('@')[0] || username,
-            branchId: 'B1', // default fallback
-            role: 'manager', // default for new signup
-            orgRole: 'owner',
+            userId: authData.user.id,
+            username: authData.user.email?.split('@')[0] || username,
+            branchId: defaultBranchId, 
+            orgId,
+            role: 'manager',
+            orgRole: orgRole as any,
             department: 'it',
           };
           localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+          
+          if (session.orgId) {
+            const { orgService } = await import('../../services/org/orgService');
+            orgService.setActiveOrgId(session.orgId);
+          }
+          
           return session;
         }
       } catch (err: any) {
-        console.warn('Supabase auth attempt failed:', err.message);
-        throw err; // Re-throw to be caught by the UI
+        console.warn('Supabase login failed:', err.message);
+        throw err;
       }
     }
 
-    // 2. Check real Employees (Importing dynamically to avoid circular dependencies)
+    // 3. Local Employees Fallback
     const { employeeCacheService } = await import('../hr/employeeCacheService');
     const { verifyPassword } = await import('./hashUtils');
-    
-    // Fetch all employees from IndexedDB
     const allEmployees = await employeeCacheService.loadAll();
     
-    let employee = null;
+    let matchedEmployee = null;
     for (const e of allEmployees) {
       if (e.username === username || e.employeeCode === username) {
-        // Check if password matches
-        const isPasswordMatch = await verifyPassword(password, e.password);
-        if (isPasswordMatch) {
-          employee = e;
+        if (await verifyPassword(password, e.password)) {
+          matchedEmployee = e;
           break;
         }
       }
     }
 
-    if (employee) {
+    if (matchedEmployee) {
       const { branchService } = await import('../branchService');
       const activeBranch = await branchService.getActive();
       const allBranches = await branchService.getAll();
       const firstBranch = allBranches[0];
 
       const session: UserSession = {
-        username: employee.username || employee.name,
-        employeeId: employee.id,
-        branchId: employee.branchId || activeBranch?.id || firstBranch?.id || 'B1',
-        role: employee.role,
-        orgRole: employee.orgRole,
-        department: employee.department,
+        username: matchedEmployee.username || matchedEmployee.name,
+        employeeId: matchedEmployee.id,
+        branchId: matchedEmployee.branchId || activeBranch?.id || firstBranch?.id || '',
+        role: matchedEmployee.role,
+        orgRole: matchedEmployee.orgRole,
+        department: matchedEmployee.department,
       };
 
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-
       authService.logAuditEvent({
         username: session.username,
         role: session.role,
         branchId: session.branchId,
         action: 'system_login',
-        details: 'Employee login successful',
-        employeeId: employee.id,
+        details: 'Local login successful',
+        employeeId: matchedEmployee.id,
       });
 
       return session;
@@ -559,7 +557,7 @@ export const authService = {
 
     const session: UserSession = {
       username: employee.username || employee.name,
-      branchId: employee.branchId || activeBranch?.id || firstBranch?.id || 'B1',
+      branchId: employee.branchId || activeBranch?.id || firstBranch?.id || '',
       role: employee.role,
       orgRole: employee.orgRole,
       department: employee.department,
