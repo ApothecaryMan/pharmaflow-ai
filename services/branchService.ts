@@ -126,37 +126,42 @@ export const branchService = {
     // Auto-generate code if missing
     const code = data.code || this.generateCode();
 
-    // Validate unique code per organization
-    const duplicate = branches.find(
+    // Check if branch with same code already exists in this org
+    const existing = branches.find(
       (b) => b.orgId === data.orgId && b.code.toLowerCase() === code.toLowerCase()
     );
-    if (duplicate) {
-      throw new Error(`كود الفرع "${code}" مستخدم بالفعل في هذه الشركة.`);
-    }
 
     const now = new Date().toISOString();
-    const newBranch: Branch = {
-      ...data,
-      code,
-      id: idGenerator.uuid(),
-      createdAt: now,
-      updatedAt: now,
-    };
+    const branchToSave: Branch = existing 
+      ? { ...existing, ...data, updatedAt: now }
+      : { ...data, code, id: idGenerator.uuid(), createdAt: now, updatedAt: now };
 
     try {
-      const dbBranch = mapBranchToDb(newBranch);
-      const { error } = await supabase.from('branches').insert(dbBranch);
-      if (error && import.meta.env.DEV) console.warn('Supabase branch insert failed', error);
-    } catch {}
+      const dbBranch = mapBranchToDb(branchToSave);
+      const { data: savedData, error } = await supabase
+        .from('branches')
+        .upsert(dbBranch, { onConflict: 'code' })
+        .select()
+        .single();
+        
+      if (error && import.meta.env.DEV) console.warn('Supabase branch upsert failed', error);
+      if (savedData) return mapDbToBranch(savedData);
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Error during branch upsert:', err);
+    }
 
-    const updatedBranches = [...branches, newBranch];
+    // Fallback to local update if Supabase fails
+    const updatedBranches = existing 
+      ? branches.map(b => b.id === existing.id ? branchToSave : b)
+      : [...branches, branchToSave];
+      
     storage.set(StorageKeys.BRANCHES, updatedBranches);
 
     if (!skipSync) {
-      await syncQueueService.enqueue('CREATE_BRANCH', { action: 'CREATE_BRANCH', branch: newBranch }); 
+      await syncQueueService.enqueue('CREATE_BRANCH', { action: 'CREATE_BRANCH', branch: branchToSave }); 
     }
 
-    return newBranch;
+    return branchToSave;
   },
 
   /**

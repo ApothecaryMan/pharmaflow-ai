@@ -19,6 +19,7 @@ export interface StockMovement {
   drugId: string;
   drugName: string; // Snapshot name
   branchId: string;
+  orgId: string;
 
   type: StockMovementType;
   quantity: number; // Positive for add, Negative for remove
@@ -51,6 +52,7 @@ export interface StockMovementFilters {
   endDate?: string;
   performedBy?: string;
   branchId?: string;
+  orgId?: string;
   status?: 'pending' | 'approved' | 'rejected';
   page?: number;
   pageSize?: number;

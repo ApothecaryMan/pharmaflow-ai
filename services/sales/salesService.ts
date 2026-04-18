@@ -88,6 +88,7 @@ export const createSalesService = (): SalesService => ({
       ...sale,
       id: (sale as any).id || idGenerator.uuid(),
       branchId: effectiveBranchId,
+      orgId: settings.orgId,
     } as Sale;
 
     // Write to specific shard based on Sale Date
@@ -217,8 +218,8 @@ export const createSalesService = (): SalesService => ({
       // Keep items from OTHER branches
       const otherBranchSales = currentShard.filter((s) => s.branchId && s.branchId !== effectiveBranchId);
 
-      // Combine and deduplicate by ID
-      const merged = [...otherBranchSales, ...branchSales];
+      // Combine and deduplicate by ID: Ensure orgId is present
+      const merged = [...otherBranchSales, ...branchSales.map(s => ({ ...s, orgId: s.orgId || settings.orgId }))];
       const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
       
       storage.set(key, uniqueMerged);

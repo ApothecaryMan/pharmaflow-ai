@@ -239,4 +239,14 @@ export const idGenerator = {
     const random = Math.floor(100000 + Math.random() * 900000).toString();
     return `${prefix}-${random}`;
   },
+
+  /**
+   * Validates if a string is a valid UUID
+   * @param id The string to check
+   */
+  isUuid: (id: string): boolean => {
+    if (!id || typeof id !== 'string') return false;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id);
+  },
 };

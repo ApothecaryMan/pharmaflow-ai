@@ -77,6 +77,7 @@ export const createPurchaseService = (): PurchaseService => ({
       id: idGenerator.uuid(),
       status: (purchase as any).status || 'pending',
       branchId: effectiveBranchId,
+      orgId: settings.orgId,
     } as Purchase;
 
     all.push(newPurchase);
@@ -111,6 +112,9 @@ export const createPurchaseService = (): PurchaseService => ({
     const purchase = all[index];
     if (purchase.status === 'completed') return purchase;
 
+    const settings = await settingsService.getAll();
+    const orgId = settings.orgId;
+
     // 1. Update Inventory and Create Batches
     const movements: StockMovement[] = [];
     const newBatches: StockBatch[] = [];
@@ -127,6 +131,7 @@ export const createPurchaseService = (): PurchaseService => ({
         purchaseId: purchase.id,
         dateReceived: new Date().toISOString(),
         branchId: purchase.branchId,
+        orgId: purchase.orgId || orgId,
         version: 1,
       }, purchase.branchId, true);
       newBatches.push(batch);
@@ -144,6 +149,7 @@ export const createPurchaseService = (): PurchaseService => ({
         expiryDate: batch.expiryDate,
         performedBy: approverName,
         status: 'approved',
+        orgId: purchase.orgId || orgId,
       }, true);
       movements.push(movement);
     }
@@ -232,8 +238,12 @@ export const createPurchaseService = (): PurchaseService => ({
     // 2. Keep items from OTHER branches
     const otherBranchItems = all.filter((p) => p.branchId && p.branchId !== effectiveBranchId);
     
-    // 3. Prepare Branch Items: Ensure they all have the correct branchId
-    const branchItems = purchases.map(p => ({ ...p, branchId: effectiveBranchId }));
+    // 3. Prepare Branch Items: Ensure they all have the correct branchId and orgId
+    const branchItems = purchases.map(p => ({ 
+      ...p, 
+      branchId: effectiveBranchId,
+      orgId: p.orgId || settings.orgId
+    }));
     
     // 4. Merge and deduplicate by ID
     const merged = [...otherBranchItems, ...branchItems];

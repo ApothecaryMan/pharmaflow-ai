@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabase';
 const mapSupplierToDb = (s: Partial<Supplier>): any => {
   const db: any = {};
   if (s.id !== undefined) db.id = s.id;
+  if (s.orgId !== undefined) db.org_id = s.orgId;
   if (s.branchId !== undefined) db.branch_id = s.branchId;
   if (s.name !== undefined) db.name = s.name;
   if (s.contactPerson !== undefined) db.contact_person = s.contactPerson;
@@ -27,6 +28,7 @@ const mapSupplierToDb = (s: Partial<Supplier>): any => {
 
 const mapDbToSupplier = (db: any): Supplier => ({
   id: db.id,
+  orgId: db.org_id,
   branchId: db.branch_id,
   name: db.name,
   contactPerson: db.contact_person || '',
@@ -101,12 +103,13 @@ export const createSupplierService = (): SupplierService => ({
       ...supplier,
       id: idGenerator.uuid(),
       branchId: effectiveBranchId,
+      orgId: settings.orgId,
     } as Supplier;
 
     try {
       const dbSupplier = mapSupplierToDb(newSupplier);
-      const { error } = await supabase.from('suppliers').insert(dbSupplier);
-      if (error && import.meta.env.DEV) console.warn('Supabase insert failed', error);
+      const { error } = await supabase.from('suppliers').upsert(dbSupplier, { onConflict: 'id' });
+      if (error && import.meta.env.DEV) console.warn('Supabase supplier upsert failed', error);
     } catch {}
 
     all.push(newSupplier);
@@ -167,8 +170,14 @@ export const createSupplierService = (): SupplierService => ({
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
+    const processedSuppliers = suppliers.map(s => ({
+      ...s,
+      branchId: s.branchId || effectiveBranchId,
+      orgId: s.orgId || settings.orgId
+    }));
+    
     try {
-      const dbSuppliers = suppliers.map(mapSupplierToDb);
+      const dbSuppliers = processedSuppliers.map(mapSupplierToDb);
       if (dbSuppliers.length > 0) {
         await supabase.from('suppliers').upsert(dbSuppliers, { onConflict: 'id' });
       }

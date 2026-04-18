@@ -34,12 +34,14 @@ const mapCustomerToDb = (c: Partial<Customer>): any => {
   if (c.notes !== undefined) db.notes = c.notes;
   if (c.status !== undefined) db.status = c.status;
   if (c.vip !== undefined) db.vip = c.vip;
+  if (c.orgId !== undefined) db.org_id = c.orgId;
   if (c.registeredByEmployeeId !== undefined) db.registered_by = c.registeredByEmployeeId;
   return db;
 };
 
 const mapDbToCustomer = (db: any): Customer => ({
   id: db.id,
+  orgId: db.org_id,
   branchId: db.branch_id,
   serialId: db.serial_id,
   code: db.code,
@@ -179,12 +181,13 @@ export const createCustomerService = (): CustomerService => ({
       points: customer.points || 0,
       totalPurchases: customer.totalPurchases || 0,
       branchId: effectiveBranchId,
+      orgId: settings.orgId,
     } as Customer;
     
     try {
       const dbCustomer = mapCustomerToDb(newCustomer);
-      const { error } = await supabase.from('customers').insert(dbCustomer);
-      if (error && import.meta.env.DEV) console.warn('Supabase insert failed', error);
+      const { error } = await supabase.from('customers').upsert(dbCustomer, { onConflict: 'id' });
+      if (error && import.meta.env.DEV) console.warn('Supabase customer upsert failed', error);
     } catch {}
 
     const all = await getRawAll();
@@ -296,8 +299,14 @@ export const createCustomerService = (): CustomerService => ({
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
+    const processedCustomers = customers.map(c => ({
+      ...c,
+      branchId: c.branchId || effectiveBranchId,
+      orgId: c.orgId || settings.orgId
+    }));
+    
     try {
-      const dbCustomers = customers.map(mapCustomerToDb);
+      const dbCustomers = processedCustomers.map(mapCustomerToDb);
       if (dbCustomers.length > 0) {
         await supabase.from('customers').upsert(dbCustomers, { onConflict: 'id' });
       }

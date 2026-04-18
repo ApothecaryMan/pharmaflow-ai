@@ -45,6 +45,7 @@ export const createReturnService = (): ReturnService => ({
       ...ret,
       id: idGenerator.uuid(),
       branchId: effectiveBranchId,
+      orgId: settings.orgId,
     } as Return;
 
     all.push(newReturn);
@@ -79,6 +80,7 @@ export const createReturnService = (): ReturnService => ({
       ...ret,
       id: idGenerator.uuid(),
       branchId: effectiveBranchId,
+      orgId: settings.orgId,
     } as PurchaseReturn;
 
     // 1. Process Inventory Deductions (FEFO)
@@ -103,6 +105,7 @@ export const createReturnService = (): ReturnService => ({
           expiryDate: allocation.expiryDate,
           performedBy: storage.get(StorageKeys.CURRENT_EMPLOYEE_ID, 'System'),
           status: 'approved',
+          orgId: settings.orgId,
         }, true);
         movements.push(movement);
       }
@@ -135,8 +138,12 @@ export const createReturnService = (): ReturnService => ({
     // 1. Keep items from OTHER branches
     const otherBranchItems = all.filter((r) => r.branchId && r.branchId !== effectiveBranchId);
     
-    // 2. Prepare Branch Items
-    const branchItems = returns.map(r => ({ ...r, branchId: effectiveBranchId }));
+    // 2. Prepare Branch Items: Ensure orgId is present
+    const branchItems = returns.map(r => ({ 
+      ...r, 
+      branchId: effectiveBranchId,
+      orgId: r.orgId || settings.orgId
+    }));
     
     // 3. Merge and deduplicate by ID
     const merged = [...otherBranchItems, ...branchItems];
@@ -153,8 +160,12 @@ export const createReturnService = (): ReturnService => ({
     // 1. Keep items from OTHER branches
     const otherBranchItems = all.filter((r) => r.branchId && r.branchId !== effectiveBranchId);
     
-    // 2. Prepare Branch Items
-    const branchItems = returns.map(r => ({ ...r, branchId: effectiveBranchId }));
+    // 2. Prepare Branch Items: Ensure orgId is present
+    const branchItems = returns.map(r => ({ 
+      ...r, 
+      branchId: effectiveBranchId,
+      orgId: r.orgId || settings.orgId
+    }));
     
     // 3. Merge and deduplicate by ID
     const merged = [...otherBranchItems, ...branchItems];

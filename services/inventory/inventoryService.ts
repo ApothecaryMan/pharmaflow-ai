@@ -21,6 +21,7 @@ const MIGRATED_KEY = 'pharma_inventory_indexeddb_migrated';
 const mapDrugToDb = (d: Partial<Drug>): any => {
   const db: any = {};
   if (d.id !== undefined) db.id = d.id;
+  if (d.orgId !== undefined) db.org_id = d.orgId;
   if (d.branchId !== undefined) db.branch_id = d.branchId;
   if (d.name !== undefined) db.name = d.name;
   if (d.nameArabic !== undefined) db.name_arabic = d.nameArabic;
@@ -46,8 +47,9 @@ const mapDrugToDb = (d: Partial<Drug>): any => {
   return db;
 };
 
-const mapDbToDrug = (db: any): Drug => ({
+export const mapDbToDrug = (db: any): Drug => ({
   id: db.id,
+  orgId: db.org_id,
   branchId: db.branch_id,
   name: db.name,
   nameArabic: db.name_arabic || undefined,
@@ -209,6 +211,7 @@ export const createInventoryService = (): InventoryService => ({
       id: idGenerator.uuid(),
       internalCode: drug.internalCode || idGenerator.code('DRUG'),
       branchId: effectiveBranchId,
+      orgId: settings.orgId,
     } as Drug;
     
     try {
@@ -227,6 +230,7 @@ export const createInventoryService = (): InventoryService => ({
       batchNumber: 'INITIAL',
       dateReceived: new Date().toISOString(),
       branchId: effectiveBranchId,
+      orgId: settings.orgId,
       version: 1,
     }, undefined, true);
 
@@ -274,6 +278,7 @@ export const createInventoryService = (): InventoryService => ({
         batchNumber: 'STOCK-UPDATE',
         dateReceived: new Date().toISOString(),
         branchId: branchId,
+        orgId: settings.orgId,
         version: 1,
       }, branchId, true);
     } else if (quantity < 0) {
@@ -365,14 +370,27 @@ export const createInventoryService = (): InventoryService => ({
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     
-    try {
-      const dbDrugs = inventory.map(mapDrugToDb);
-      if (dbDrugs.length > 0) {
-        await supabase.from('drugs').upsert(dbDrugs, { onConflict: 'id' });
-      }
-    } catch {}
+    // Ensure all drugs have valid UUIDs and the correct branchId before saving to DB
+    const processedInventory = inventory.map(drug => ({
+      ...drug,
+      id: idGenerator.isUuid(drug.id) ? drug.id : idGenerator.uuid(),
+      branchId: effectiveBranchId,
+      orgId: settings.orgId
+    }));
 
-    await drugCacheService.saveAll(inventory, effectiveBranchId);
+    try {
+      const dbDrugs = processedInventory.map(mapDrugToDb);
+      if (dbDrugs.length > 0) {
+        const { error } = await supabase.from('drugs').upsert(dbDrugs, { onConflict: 'id' });
+        if (error && import.meta.env.DEV) {
+          console.warn('Supabase inventory upsert failed:', error);
+        }
+      }
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Error during inventory save:', err);
+    }
+
+    await drugCacheService.saveAll(processedInventory, effectiveBranchId);
   },
 });
 

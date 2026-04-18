@@ -86,6 +86,7 @@ export const createCashService = (): CashServiceInterface => ({
       returns: 0,
       transactions: [],
       branchId: settings.activeBranchId || settings.branchCode,
+      orgId: settings.orgId,
     };
 
     // Add to beginning (newest first)
@@ -147,6 +148,7 @@ export const createCashService = (): CashServiceInterface => ({
     const newTx: CashTransaction = {
       id: idGenerator.generate('transactions', all[shiftIndex].branchId),
       branchId: all[shiftIndex].branchId,
+      orgId: all[shiftIndex].orgId,
       ...transaction,
     };
 
@@ -193,7 +195,7 @@ export const createCashService = (): CashServiceInterface => ({
     const settings = await settingsService.getAll();
     const activeBranchId = settings.activeBranchId || settings.branchCode;
     const otherBranchItems = all.filter((s) => s.branchId && s.branchId !== activeBranchId);
-    const merged = [...otherBranchItems, ...shifts];
+    const merged = [...otherBranchItems, ...shifts.map(s => ({ ...s, orgId: s.orgId || settings.orgId }))];
     storage.set(StorageKeys.SHIFTS, merged);
   },
 });

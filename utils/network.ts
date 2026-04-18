@@ -23,34 +23,18 @@ export const checkRealConnectivity = async (): Promise<NetworkResult> => {
     // We can ping the health check endpoint or just do a simple lightweight query
     // Supabase has /rest/v1/ as its root endpoint which responds correctly to HEAD/GET
     const { data: { session }, error: authError } = await supabase.auth.getSession();
-    const supaUrl = import.meta.env.VITE_SUPABASE_URL;
-
+    // We use a simple select on a table that usually has at least one row or returns empty
+    // This is the most reliable way to check both network AND Supabase availability.
     const startTime = performance.now();
-
-    if (!supaUrl) {
-      // Fallback if env check fails during ping - try a lightweight query
-      const { error } = await supabase.from('organizations').select('id').limit(1).abortSignal(controller.signal);
-      clearTimeout(timeoutId);
-      const latency = Math.round(performance.now() - startTime);
-      return { online: !error, latency: !error ? latency : undefined };
-    }
-
-    // We ping the Supabase URL root directly. This usually returns a 200 or 404
-    // without triggering the auth-required headers of the REST API.
-    const response = await fetch(supaUrl, {
-      method: 'HEAD',
-      mode: 'no-cors', // More silent
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
+    const { error } = await supabase.from('organizations').select('id', { count: 'estimated', head: true }).limit(1);
     const latency = Math.round(performance.now() - startTime);
+
+    // Any response from Supabase (including permission errors) means we are online.
+    // 401/403/404 on a table still means the server is reachable.
+    const isOffline = error && (error.code === 'PGRST301' || error.message?.includes('FetchError') || error.message?.includes('Network Error'));
     
-    // In 'no-cors' mode, response.type is 'opaque', and status is 0,
-    // but if the request finishes without catching an error, we ARE online.
-    return { online: true, latency };
+    return { online: !isOffline, latency: !isOffline ? latency : undefined };
   } catch (error) {
-    // Timeout or network failure implies offline
     return { online: false, latency: undefined };
   }
 };

@@ -17,6 +17,7 @@ import { supabase } from '../../lib/supabase';
 const mapBatchToDb = (b: Partial<StockBatch>): any => {
   const db: any = {};
   if (b.id !== undefined) db.id = b.id;
+  if (b.orgId !== undefined) db.org_id = b.orgId;
   if (b.branchId !== undefined) db.branch_id = b.branchId;
   if (b.drugId !== undefined) db.drug_id = b.drugId;
   if (b.quantity !== undefined) db.quantity = b.quantity;
@@ -31,6 +32,7 @@ const mapBatchToDb = (b: Partial<StockBatch>): any => {
 
 const mapDbToBatch = (db: any): StockBatch => ({
   id: db.id,
+  orgId: db.org_id,
   branchId: db.branch_id,
   drugId: db.drug_id,
   quantity: db.quantity,
@@ -99,17 +101,22 @@ export const createBatch = async (
   skipSync = false
 ): Promise<StockBatch> => {
   const all = getAllBatchesRaw();
-  const effectiveBranchId = branchId || batch.branchId;
+  const { settingsService } = await import('../settings/settingsService');
+  const settings = await settingsService.getAll();
+  const effectiveBranchId = branchId || batch.branchId || settings.activeBranchId;
+  
   const newBatch: StockBatch = {
     ...batch,
     id: idGenerator.uuid(),
     branchId: effectiveBranchId,
+    orgId: settings.orgId,
     version: 1, 
   };
 
   try {
-    const { error } = await supabase.from('stock_batches').insert(mapBatchToDb(newBatch));
-    if (error && import.meta.env.DEV) console.warn('Supabase batch insert failed', error);
+    const dbBatch = mapBatchToDb(newBatch);
+    const { error } = await supabase.from('stock_batches').upsert(dbBatch, { onConflict: 'id' });
+    if (error && import.meta.env.DEV) console.warn('Supabase batch upsert failed', error);
   } catch {}
 
   all.push(newBatch);
@@ -354,7 +361,9 @@ export const returnStock = async (
       batch.quantity += alloc.quantity;
       batch.version = (batch.version || 0) + 1;
       batchesToUpdate.push(batch);
-    } else if (drugId) {
+    } else if (drugId && branchId) {
+      const { settingsService } = await import('../settings/settingsService');
+      const settings = await settingsService.getAll();
       const newBatch: StockBatch = {
         id: idGenerator.uuid(),
         drugId,
@@ -363,7 +372,8 @@ export const returnStock = async (
         costPrice: 0, 
         dateReceived: new Date().toISOString(),
         batchNumber: 'RECREATED',
-        branchId: branchId as string,
+        branchId: branchId,
+        orgId: settings.orgId,
         version: 1,
       };
       all.push(newBatch);
@@ -440,7 +450,10 @@ export const migrateInventoryToBatches = async (inventory: Drug[]): Promise<Stoc
   for (const drug of inventory) {
     if (existingDrugIds.has(drug.id) || drug.stock <= 0) continue;
 
-    const b = {
+    const { settingsService } = await import('../settings/settingsService');
+    const settings = await settingsService.getAll();
+
+    const b: StockBatch = {
       id: idGenerator.uuid(),
       drugId: drug.id,
       quantity: drug.stock,
@@ -450,6 +463,7 @@ export const migrateInventoryToBatches = async (inventory: Drug[]): Promise<Stoc
       dateReceived: new Date().toISOString(),
       batchNumber: 'MIGRATED',
       branchId: drug.branchId,
+      orgId: settings.orgId,
       version: 1,
     };
     newBatches.push(b);

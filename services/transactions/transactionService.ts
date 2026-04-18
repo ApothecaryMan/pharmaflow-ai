@@ -7,6 +7,7 @@ import { salesService } from '../sales/salesService';
 import { stockMovementService } from '../inventory/stockMovement/stockMovementService';
 import { auditService } from '../auditService';
 import { syncQueueService } from '../syncQueueService';
+import { settingsService } from '../settings/settingsService';
 import * as stockOps from '../../utils/stockOperations';
 import type { Sale, CartItem, Drug, StockMovement } from '../../types';
 
@@ -70,6 +71,8 @@ export const transactionService = {
     const allocations: { drugId: string; allocations: any[] }[] = [];
     const stockMutations: { id: string; quantity: number }[] = [];
     const movementEntries: Omit<StockMovement, 'id' | 'timestamp'>[] = [];
+    const settings = await settingsService.getAll();
+    const orgId = settings.orgId;
     
     try {
       // 1. Allocate Batches (LocalStorage - Atomic in its own loop)
@@ -114,10 +117,11 @@ export const transactionService = {
               previousStock: runningStock,
               newStock: runningStock - a.quantity,
               reason: 'Sale Transaction',
-              performedBy: currentEmployeeId,
+               performedBy: currentEmployeeId,
               status: 'approved',
               batchId: a.batchId,
-              expiryDate: a.expiryDate
+              expiryDate: a.expiryDate,
+              orgId,
             });
             runningStock -= a.quantity;
           });
@@ -134,7 +138,8 @@ export const transactionService = {
             reason: 'Sale Transaction',
             performedBy: currentEmployeeId,
             status: 'approved',
-            expiryDate: drug?.expiryDate // Use snapshot as fallback
+            expiryDate: drug?.expiryDate, // Use snapshot as fallback
+            orgId,
           });
         }
 
@@ -279,10 +284,14 @@ export const transactionService = {
 
         stockMutations.push({ id: returnedItem.drugId, quantity: unitsToRestore });
 
+        const settings = await settingsService.getAll();
+        const orgId = settings.orgId;
+
         movementEntries.push({
           drugId: returnedItem.drugId,
           drugName: drug?.name || 'Unknown Drug',
           branchId: activeBranchId,
+          orgId,
           type: 'return_customer',
           quantity: unitsToRestore,
           previousStock: drug?.stock || 0,

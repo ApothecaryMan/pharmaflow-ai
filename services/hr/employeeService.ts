@@ -175,9 +175,10 @@ export const createEmployeeService = (): EmployeeService => ({
       delete dbEmployee.password;
       delete dbEmployee.auth_user_id;
 
-      const { error } = await supabase.from('employees').insert(dbEmployee);
+      // Use upsert to be resilient during onboarding/retries
+      const { error } = await supabase.from('employees').upsert(dbEmployee, { onConflict: 'id' });
       if (error && import.meta.env.DEV) {
-        console.warn('Supabase insert failed, operating in offline mode', error);
+        console.warn('Supabase employee creation/update failed', error);
       }
     } catch {}
 
@@ -219,26 +220,38 @@ export const createEmployeeService = (): EmployeeService => ({
   },
 
   save: async (employees: Employee[], branchId?: string): Promise<void> => {
-    const all = await employeeService.getAll('ALL');
     const settings = await settingsService.getAll();
     const effectiveBranchId = branchId || settings?.activeBranchId || settings?.branchCode;
-    const otherBranchItems = all.filter((e) => e.branchId && e.branchId !== effectiveBranchId);
-    
-    const merged = [...otherBranchItems, ...employees];
-    const uniqueMerged = Array.from(new Map(merged.map((item) => [item.id, item])).values());
+    const orgId = settings?.orgId;
+
+    // Process employees to ensure UUIDs and proper scoping
+    const processedEmployees = employees.map(emp => ({
+      ...emp,
+      id: idGenerator.isUuid(emp.id) ? emp.id : idGenerator.uuid(),
+      branchId: emp.branchId || effectiveBranchId,
+      orgId: emp.orgId || orgId
+    }));
     
     try {
-      const dbEmployees = employees.map(mapEmployeeToDb).map(e => {
+      const dbEmployees = processedEmployees.map(mapEmployeeToDb).map(e => {
         delete e.password;
         return e;
       });
-      // Upsert to Supabase
+
       if (dbEmployees.length > 0) {
-        await supabase.from('employees').upsert(dbEmployees, { onConflict: 'id' });
+        const { error } = await supabase.from('employees').upsert(dbEmployees, { 
+          onConflict: 'id',
+          ignoreDuplicates: false 
+        });
+        if (error && import.meta.env.DEV) {
+          console.warn('Supabase employee upsert failed:', error);
+        }
       }
-    } catch {}
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Error during employee save:', err);
+    }
     
-    await employeeCacheService.saveAll(uniqueMerged);
+    await employeeCacheService.saveAll(processedEmployees);
   },
 });
 

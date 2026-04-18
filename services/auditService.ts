@@ -13,6 +13,7 @@ export interface AuditEntry {
   entityId?: string;
   entityType?: string;
   branchId?: string;
+  orgId?: string;
   ipAddress?: string; // If applicable later
 }
 
@@ -21,6 +22,7 @@ const STORAGE_KEY_AUDIT = 'audit_logs';
 const mapAuditToDb = (a: any): any => {
   const db: any = {};
   if (a.id) db.id = a.id;
+  if (a.orgId) db.org_id = a.orgId;
   if (a.branchId) db.branch_id = a.branchId;
   if (a.userId) db.actor_id = a.userId;
   if (a.action) db.action = a.action;
@@ -38,13 +40,14 @@ const mapAuditToDb = (a: any): any => {
   db.details = Object.keys(detailsObj).length > 0 ? detailsObj : null;
   
   if (a.ipAddress) db.ip_address = a.ipAddress;
-  if (a.timestamp) db.created_at = a.timestamp;
+  if (a.timestamp) db.timestamp = a.timestamp;
   return db;
 };
 
 const mapDbToAudit = (db: any): AuditEntry => ({
   id: db.id,
-  timestamp: db.created_at,
+  timestamp: db.timestamp,
+  orgId: db.org_id || undefined,
   userId: db.actor_id || undefined,
   userName: db.details?.userName || undefined,
   action: db.action,
@@ -59,7 +62,7 @@ const mapDbToAudit = (db: any): AuditEntry => ({
 export const auditService = {
   log: async (
     action: string,
-    data: { userId?: string; userName?: string; details?: string | any; entityId?: string; entityType?: string; branchId?: string }
+    data: { userId?: string; userName?: string; details?: string | any; entityId?: string; entityType?: string; branchId?: string; orgId?: string }
   ) => {
     try {
       // Fallback for crypto.randomUUID for non-secure contexts/older browsers
@@ -74,10 +77,14 @@ export const auditService = {
         });
       };
 
+      const { settingsService } = await import('./settings/settingsService');
+      const settings = await settingsService.getAll();
+
       const entry: AuditEntry = {
         id: generateId(),
         timestamp: new Date().toISOString(),
         action,
+        orgId: data.orgId || settings.orgId,
         ...data,
       };
 
@@ -98,7 +105,7 @@ export const auditService = {
 
   getLogs: async (branchId?: string, limit = 100): Promise<AuditEntry[]> => {
     try {
-      let query = supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(limit);
+      let query = supabase.from('audit_logs').select('*').order('timestamp', { ascending: false }).limit(limit);
       if (branchId) {
         query = query.eq('branch_id', branchId);
       }
@@ -117,26 +124,15 @@ export const auditService = {
 
   getOrgLogs: async (orgId: string, limit = 50): Promise<AuditEntry[]> => {
     try {
-      // 1. Get all branch IDs for this org
-      const { data: branches, error: bError } = await supabase
-        .from('branches')
-        .select('id')
-        .eq('org_id', orgId);
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .eq('org_id', orgId)
+        .order('timestamp', { ascending: false })
+        .limit(limit);
       
-      if (!bError && branches) {
-        const branchIds = branches.map(b => b.id);
-        
-        // 2. Fetch logs for these branches
-        const { data, error } = await supabase
-          .from('audit_logs')
-          .select('*')
-          .in('branch_id', branchIds)
-          .order('created_at', { ascending: false })
-          .limit(limit);
-        
-        if (!error && data) {
-          return data.map(mapDbToAudit);
-        }
+      if (!error && data) {
+        return data.map(mapDbToAudit);
       }
     } catch (err) {
       console.error('getOrgLogs failed:', err);

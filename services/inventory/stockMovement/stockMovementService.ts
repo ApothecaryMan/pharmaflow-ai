@@ -11,16 +11,86 @@ import type {
   StockMovementKPISummary,
   PaginatedStockMovements,
 } from './types';
+import { supabase } from '../../../lib/supabase';
+
+const mapMovementToDb = (m: Partial<StockMovement>): any => {
+  const db: any = {};
+  if (m.id) db.id = m.id;
+  if (m.orgId) db.org_id = m.orgId;
+  if (m.branchId) db.branch_id = m.branchId;
+  if (m.drugId) db.drug_id = m.drugId;
+  if (m.drugName) db.drug_name_snapshot = m.drugName;
+  if (m.type) db.type = m.type;
+  if (m.quantity !== undefined) db.quantity = m.quantity;
+  if (m.previousStock !== undefined) db.previous_stock = m.previousStock;
+  if (m.newStock !== undefined) db.new_stock = m.newStock;
+  if (m.reason) db.reason = m.reason;
+  if (m.notes) db.notes = m.notes;
+  if (m.referenceId) db.reference_id = m.referenceId;
+  if (m.transactionId) db.transaction_id = m.transactionId;
+  if (m.batchId) db.batch_id = m.batchId;
+  if (m.performedBy) db.performed_by = m.performedBy;
+  if (m.performedByName) db.performed_by_name_snapshot = m.performedByName;
+  if (m.status) db.status = m.status;
+  if (m.reviewedBy) db.reviewed_by = m.reviewedBy;
+  if (m.reviewedAt) db.reviewed_at = m.reviewedAt;
+  if (m.expiryDate) db.expiry_date = m.expiryDate;
+  if (m.timestamp) db.timestamp = m.timestamp;
+  return db;
+};
+
+const mapDbToMovement = (db: any): StockMovement => ({
+  id: db.id,
+  orgId: db.org_id,
+  branchId: db.branch_id,
+  drugId: db.drug_id,
+  drugName: db.drug_name_snapshot,
+  type: db.type,
+  quantity: db.quantity,
+  previousStock: db.previous_stock,
+  newStock: db.new_stock,
+  reason: db.reason || undefined,
+  notes: db.notes || undefined,
+  referenceId: db.reference_id || undefined,
+  transactionId: db.transaction_id || undefined,
+  batchId: db.batch_id || undefined,
+  performedBy: db.performed_by,
+  performedByName: db.performed_by_name_snapshot || undefined,
+  timestamp: db.timestamp,
+  status: db.status,
+  reviewedBy: db.reviewed_by || undefined,
+  reviewedAt: db.reviewed_at || undefined,
+  expiryDate: db.expiry_date || undefined,
+});
 
 const getRawMovements = (): StockMovement[] => {
   return storage.get<StockMovement[]>(StorageKeys.STOCK_MOVEMENTS, []);
 };
 
 export const createStockMovementService = (): StockMovementService => ({
-  getAll: async (): Promise<StockMovement[]> => {
+  getAll: async (branchId?: string): Promise<StockMovement[]> => {
+    try {
+      let query = supabase.from('stock_movements').select('*').limit(1000);
+      const settings = await settingsService.getAll();
+      const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
+      
+      if (effectiveBranchId) {
+        query = query.eq('branch_id', effectiveBranchId);
+      }
+      
+      const { data, error } = await query;
+      if (!error && data) {
+        const mapped = data.map(mapDbToMovement);
+        storage.set(StorageKeys.STOCK_MOVEMENTS, mapped);
+        return mapped;
+      }
+    } catch (err) {
+      if (import.meta.env.DEV) console.warn('Supabase fetch failed for stock_movements', err);
+    }
+    
     const all = getRawMovements();
     const settings = await settingsService.getAll();
-    const effectiveBranchId = settings.activeBranchId || settings.branchCode;
+    const effectiveBranchId = branchId || settings.activeBranchId || settings.branchCode;
     return all.filter((m) => !m.branchId || m.branchId === effectiveBranchId);
   },
 
@@ -44,8 +114,15 @@ export const createStockMovementService = (): StockMovementService => ({
       ...movement,
       id: idGenerator.uuid(),
       branchId: movement.branchId || activeBranchId,
+      orgId: movement.orgId || settings.orgId,
       timestamp: new Date().toISOString(),
     };
+
+    try {
+      const dbMovement = mapMovementToDb(newMovement);
+      const { error } = await supabase.from('stock_movements').insert(dbMovement);
+      if (error && import.meta.env.DEV) console.warn('Supabase log movement failed', error);
+    } catch {}
 
     // Add to storage (prepend for newest first, or append? usually append is faster, sort on read)
     all.push(newMovement);
@@ -179,6 +256,18 @@ export const createStockMovementService = (): StockMovementService => ({
       all[index].status = 'approved';
       all[index].reviewedBy = userId;
       all[index].reviewedAt = new Date().toISOString();
+
+      try {
+        await supabase
+          .from('stock_movements')
+          .update({ 
+            status: 'approved', 
+            reviewed_by: userId, 
+            reviewed_at: all[index].reviewedAt 
+          })
+          .eq('id', id);
+      } catch {}
+
       storage.set(StorageKeys.STOCK_MOVEMENTS, all);
       
       if (!skipSync) {
@@ -199,6 +288,18 @@ export const createStockMovementService = (): StockMovementService => ({
       all[index].status = 'rejected';
       all[index].reviewedBy = userId;
       all[index].reviewedAt = new Date().toISOString();
+
+      try {
+        await supabase
+          .from('stock_movements')
+          .update({ 
+            status: 'rejected', 
+            reviewed_by: userId, 
+            reviewed_at: all[index].reviewedAt 
+          })
+          .eq('id', id);
+      } catch {}
+
       storage.set(StorageKeys.STOCK_MOVEMENTS, all);
 
       if (!skipSync) {
@@ -229,9 +330,17 @@ export const createStockMovementService = (): StockMovementService => ({
         ...movement,
         id: idGenerator.uuid(),
         branchId: effectiveBranchId,
+        orgId: movement.orgId || settings.orgId,
         timestamp,
       });
     }
+
+    try {
+      const lastN = all.slice(-movements.length);
+      const dbMovements = lastN.map(m => mapMovementToDb(m));
+      const { error } = await supabase.from('stock_movements').insert(dbMovements);
+      if (error && import.meta.env.DEV) console.warn('Supabase bulk log movement failed', error);
+    } catch {}
 
     storage.set(StorageKeys.STOCK_MOVEMENTS, all);
 

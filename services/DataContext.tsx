@@ -275,6 +275,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
         const superPass = import.meta.env.VITE_SUPER_PASS;
 
         if (superUser && superPass) {
+          const settings = await settingsService.getAll();
           // Check ALL employees (not branch-filtered) to avoid false re-seeding on branch switch
           const { employeeCacheService } = await import('../services/hr/employeeCacheService');
           const allGlobalEmployees = await employeeCacheService.loadAll();
@@ -295,6 +296,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({
               startDate: new Date().toISOString().split('T')[0],
               status: 'active',
               branchId: finalBranchId,
+              orgId: settings.orgId,
             };
             await employeeService.create(superUserObj);
             emp.push(superUserObj);
