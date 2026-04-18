@@ -37,6 +37,7 @@ interface InventoryProps {
   onDeleteDrug: (id: string) => void;
   color: string;
   t: any;
+  isLoading?: boolean;
 }
 
 export const Inventory: React.FC<InventoryProps> = ({
@@ -46,6 +47,7 @@ export const Inventory: React.FC<InventoryProps> = ({
   onDeleteDrug,
   color,
   t,
+  isLoading = false,
 }) => {
   const { getVerifiedDate } = useStatusBar();
   const { showMenu } = useContextMenu();
@@ -66,6 +68,24 @@ export const Inventory: React.FC<InventoryProps> = ({
   const [activeFilters, setActiveFilters] = useState<Record<string, any[]>>({});
   const [selectedBatches, setSelectedBatches] = useState<Record<string, string>>({}); // groupId -> drugId
   const [openBatchDropdown, setOpenBatchDropdown] = useState<string | null>(null);
+  const [isDataSettled, setIsDataSettled] = useState(false);
+
+  // Synchronization Buffer: Ensures skeleton stays until data is actually available
+  useEffect(() => {
+    if (!isLoading) {
+      // If we have data, settle quickly but not instantly to avoid flicker
+      if (inventory.length > 0) {
+        const timer = setTimeout(() => setIsDataSettled(true), 200);
+        return () => clearTimeout(timer);
+      } else {
+        // If it's truly empty, wait a bit longer to be absolutely sure before showing "No results"
+        const timer = setTimeout(() => setIsDataSettled(true), 1000);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      setIsDataSettled(false);
+    }
+  }, [isLoading, inventory.length]);
 
   // Print Label Modal State
   const [printModalDrug, setPrintModalDrug] = useState<Drug | null>(null);
@@ -884,6 +904,7 @@ export const Inventory: React.FC<InventoryProps> = ({
               filterableColumns={filterConfigs}
               onFilterChange={setActiveFilters}
               defaultHiddenColumns={[]} // Helpers are now hidden via metadata
+              isLoading={isLoading || !isDataSettled}
             />
           </div>
         </>

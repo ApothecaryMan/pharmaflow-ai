@@ -1,6 +1,5 @@
-import type { ColumnDef } from '@tanstack/react-table';
-import type React from 'react';
-import { useMemo } from 'react';
+import { type ColumnDef } from '@tanstack/react-table';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { Drug } from '../../types';
 import { TanStackTable } from '../common/TanStackTable';
 
@@ -10,6 +9,7 @@ interface InventoryManagementProps {
   t: any;
   language: string;
   darkMode?: boolean;
+  isLoading?: boolean;
 }
 
 export const InventoryManagement: React.FC<InventoryManagementProps> = ({
@@ -17,7 +17,25 @@ export const InventoryManagement: React.FC<InventoryManagementProps> = ({
   color,
   t,
   language,
+  isLoading = false,
 }) => {
+  const [isDataSettled, setIsDataSettled] = useState(false);
+
+  // Synchronization Buffer: Ensures skeleton stays until data is actually available
+  React.useEffect(() => {
+    if (!isLoading) {
+      if (inventory.length > 0) {
+        const timer = setTimeout(() => setIsDataSettled(true), 200);
+        return () => clearTimeout(timer);
+      } else {
+        const timer = setTimeout(() => setIsDataSettled(true), 1000);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      setIsDataSettled(false);
+    }
+  }, [isLoading, inventory.length]);
+
   const columns = useMemo<ColumnDef<Drug>[]>(
     () => [
       {
@@ -121,6 +139,7 @@ export const InventoryManagement: React.FC<InventoryManagementProps> = ({
         tableId='inventory_management_table'
         color={color}
         searchPlaceholder={language === 'AR' ? 'بحث في المخزون...' : 'Search inventory...'}
+        isLoading={isLoading || !isDataSettled}
       />
     </div>
   );

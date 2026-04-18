@@ -1023,16 +1023,17 @@ export function TanStackTable<TData, TValue>({
               {/* Enforce var(--icon-sm) on all material-symbols-rounded icons inside table cells using arbitrary variants, except action columns */}
               <tbody className='[&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-[length:var(--icon-sm)] [&_td:not(.action-col):not(.empty-state)_.material-symbols-rounded]:!text-sm'>
                 {isLoading ? (
-                  <tr>
-                    <td colSpan={columns.length} className='h-32 text-center'>
-                      <div className='flex flex-col items-center justify-center p-4'>
-                        <div
-                          className={`w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mb-2`}
-                        ></div>
-                        <span className='text-sm text-gray-500'>{t.global.table.loadingData}</span>
-                      </div>
-                    </td>
-                  </tr>
+                  <>
+                    {[...Array(Math.max(5, typeof pageSize === 'number' ? pageSize : 10))].map((_, i) => (
+                      <tr key={`skeleton-row-${i}`} className='animate-pulse border-b border-(--border-divider)'>
+                        {table.getVisibleLeafColumns().map((col) => (
+                          <td key={`skeleton-cell-${col.id}-${i}`} className={`${dense ? 'py-2' : 'py-4'} px-4`}>
+                            <div className='h-4 bg-gray-100 dark:bg-neutral-800/60 rounded-sm w-3/4' />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </>
                 ) : rows.length > 0 ? (
                   <>
                     {enableVirtualization && paddingTop > 0 && (
