@@ -40,7 +40,6 @@ export interface UserSession {
   branchId: string;
   department: 'sales' | 'pharmacy' | 'marketing' | 'hr' | 'it' | 'logistics';
   role:
-    | 'god'
     | 'admin'
     | 'pharmacist_owner'
     | 'pharmacist_manager'
@@ -110,7 +109,13 @@ export const authService = {
     }
     
     // Fallback to local cache (contains role/branch metadata not in standard JWT)
-    return authService.getCurrentUserSync();
+    const session = authService.getCurrentUserSync();
+    // Auto-migrate legacy 'god' sessions to 'admin'
+    if (session && (session.role as any) === 'god') {
+      session.role = 'admin';
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    }
+    return session;
   },
 
   /**
@@ -224,34 +229,7 @@ export const authService = {
 
     // Simulate API delay for local check
     await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // 1. Try Supabase Auth if configured
     if (isSupabaseConfigured) {
-      // --- DEV DIRECT BYPASS FOR SUPER USER ---
-      if (import.meta.env.DEV && (username === 'Super' || username === 'super')) {
-        const { supabase } = await import('../../lib/supabase');
-        // Because of the 'god' permissions policy, we actually need a valid JWT token
-        // to pass RLS, if they don't want to use auth. But to do "Direct Access",
-        // we can return a mock session if we strictly want a frontend bypass.
-        // Let's attempt to fetch the local employee:
-        const { data: godUser } = await supabase.from('employees').select('*').eq('role', 'god').maybeSingle();
-        if (godUser) {
-           console.log('⚡ Using Direct God Bypass for Dev');
-           const session: UserSession = {
-            userId: godUser.auth_user_id || 'dev-god-id',
-            username: godUser.username || 'Super',
-            employeeId: godUser.id,
-            branchId: godUser.branch_id || '',
-            orgId: godUser.org_id || '79e11c07-d632-4acc-b10e-8876cf4f41fa',
-            role: 'god',
-            orgRole: 'owner',
-            department: 'it',
-          };
-          localStorage.setItem('branch_pilot_session', JSON.stringify(session));
-          return session;
-        }
-      }
-
       try {
         const { supabase } = await import('../../lib/supabase');
         
@@ -293,12 +271,37 @@ export const authService = {
               const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
               if (retryError) throw retryError;
               
-              // Remap variables to proceed with the normal flow
-              authData.user = retryData.user;
+              const retryUser = retryData.user;
+              if (!retryUser) throw new Error('No user data after auto-signup');
+
               // Link this new auth.user.id to the pre-seeded public.employees record
-              await supabase.from('employees').update({ auth_user_id: retryData.user.id }).eq('username', 'Super');
-            } else {
-              throw signUpError;
+              await supabase.from('employees').update({ auth_user_id: retryUser.id }).eq('username', 'Super');
+              
+              // Proceed with the retryUser
+              const [employeeResponse, memberResponse] = await Promise.all([
+                supabase.from('employees').select('*').eq('auth_user_id', retryUser.id).maybeSingle(),
+                supabase.from('org_members').select('role, org_id').eq('user_id', retryUser.id).maybeSingle()
+              ]);
+              
+              let employeeData = employeeResponse.data;
+              const memberData = memberResponse.data;
+              const orgRole = memberData?.role || 'member';
+              const orgId = memberData?.org_id;
+
+              if (employeeData) {
+                const session: UserSession = {
+                  userId: retryUser.id,
+                  username: employeeData.username || employeeData.name,
+                  employeeId: employeeData.id,
+                  branchId: employeeData.branch_id || '',
+                  orgId: orgId || employeeData.org_id,
+                  role: employeeData.role as any,
+                  orgRole: orgRole as any,
+                  department: employeeData.department,
+                };
+                localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+                return session;
+              }
             }
           } else {
             if (authError.message.toLowerCase().includes('confirmed') || authError.status === 400) {
@@ -352,7 +355,7 @@ export const authService = {
             employeeId: employeeData.id,
             branchId: employeeData.branch_id || '',
             orgId: orgId || employeeData.org_id,
-            role: employeeData.role,
+            role: (employeeData.role as any) === 'god' ? 'admin' : employeeData.role as any,
             orgRole: orgRole as any,
             department: employeeData.department,
           };
@@ -462,7 +465,7 @@ export const authService = {
         await supabase.auth.signOut();
       }
 
-      const user = await authService.getCurrentUserSync();
+      const user = authService.getCurrentUserSync();
       if (user) {
         authService.logAuditEvent({
           username: user.username,

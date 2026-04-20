@@ -97,8 +97,8 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
           (emp.username && emp.username.toLowerCase() === query)
       );
 
-      console.log('🔍 [UserInfo Auth] Search Query:', query);
-      console.log('🔍 [UserInfo Auth] Found Employee:', found);
+      console.log('🔍 [QuickLogin Auth] Search Query:', query);
+      console.log('🔍 [QuickLogin Auth] Found Employee:', found);
 
       if (found) {
         setTempEmployee(found);
@@ -106,7 +106,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
         setInputVal(''); // Clear for password
         setIsError(false);
       } else {
-        console.warn('❌ [UserInfo Auth] Employee not found in local list!');
+        console.warn('❌ [QuickLogin Auth] Employee not found in local list!');
         setIsError(true);
         playError();
       }
@@ -121,24 +121,24 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
         let isValid = false;
 
         if (tempEmployee.password) {
-          console.log('🔐 [UserInfo Auth] Verifying password hatch for:', tempEmployee.username);
+          console.log('🔐 [QuickLogin Auth] Verifying password hatch for:', tempEmployee.username);
           // Verify Hash
           isValid = await verifyPassword(inputPass, tempEmployee.password);
-          console.log('🔐 [UserInfo Auth] verification result:', isValid);
+          console.log('🔐 [QuickLogin Auth] verification result:', isValid);
         } else {
-          console.warn('❌ [UserInfo Auth] No password hash exists for this employee!');
+          console.warn('❌ [QuickLogin Auth] No password hash exists for this employee!');
           // Security: If no password is set, authentication MUST fail.
           // This prevents unconfigured or legacy users from being bypassed.
           isValid = false;
         }
 
         if (isValid) {
-          console.log('✅ [UserInfo Auth] Login successful!');
+          console.log('✅ [QuickLogin Auth] Login successful!');
           playSuccess();
           onSelectEmployee(tempEmployee.id);
           resetState();
         } else {
-          console.error('❌ [UserInfo Auth] Incorrect password or internal error!');
+          console.error('❌ [QuickLogin Auth] Incorrect password or internal error!');
           setIsError(true);
           playError();
         }
