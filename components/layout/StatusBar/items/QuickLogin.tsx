@@ -86,15 +86,12 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({
   const checkAuth = async () => {
     if (step === 'username') {
       // Validate Username
-      const query = inputVal.trim().toLowerCase();
+      const query = inputVal.trim();
       if (!query) return;
 
-      // Find employee by name, code OR username
+      // Find employee by Username ONLY (Case-Sensitive Match)
       const found = employees.find(
-        (emp) =>
-          emp.name.toLowerCase().includes(query) ||
-          emp.employeeCode.toLowerCase() === query ||
-          (emp.username && emp.username.toLowerCase() === query)
+        (emp) => emp.username === query
       );
 
       console.log('🔍 [QuickLogin Auth] Search Query:', query);
